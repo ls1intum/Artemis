@@ -1,5 +1,9 @@
 apply plugin: 'java'
-sourceCompatibility = 17
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
 version = '1.0.0'
 compileJava.options.encoding = 'UTF-8'
 

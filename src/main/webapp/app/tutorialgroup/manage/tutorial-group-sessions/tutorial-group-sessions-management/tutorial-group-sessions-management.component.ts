@@ -21,7 +21,7 @@ import { TutorialGroupSessionsTableComponent } from 'app/tutorialgroup/shared/tu
 import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { getDayTranslationKey } from 'app/tutorialgroup/shared/util/weekdays';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-session-management',
@@ -42,7 +42,7 @@ import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-
 export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
-    private calendarEventService = inject(CalendarEventService);
+    private calendarService = inject(CalendarService);
     private modalService = inject(NgbModal);
     private activeModal = inject(NgbActiveModal);
     private cdr = inject(ChangeDetectorRef);
@@ -92,7 +92,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
                             this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
                         }
                     }
-                    this.calendarEventService.refresh();
+                    this.calendarService.reloadEvents();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             })

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
+import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -18,6 +18,6 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * create {@link CalendarEventDTO}s.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NonQuizExerciseCalendarEventDTO(@NotNull CalendarEventRelatedEntity type, @NotNull String title, @Nullable ZonedDateTime releaseDate,
+public record NonQuizExerciseCalendarEventDTO(long originEntityId, @NotNull CalendarEventType type, @NotNull String title, @Nullable ZonedDateTime releaseDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate) {
 }

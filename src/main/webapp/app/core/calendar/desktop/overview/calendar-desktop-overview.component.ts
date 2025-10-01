@@ -12,31 +12,42 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
 import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
+import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 
 @Component({
     selector: 'jhi-calendar-desktop-overview',
-    imports: [CalendarDesktopMonthPresentationComponent, CalendarDesktopWeekPresentationComponent, CalendarEventFilterComponent, NgClass, FaIconComponent, TranslateDirective],
+    imports: [
+        CalendarDesktopMonthPresentationComponent,
+        CalendarDesktopWeekPresentationComponent,
+        CalendarEventFilterComponent,
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        CalendarSubscriptionPopoverComponent,
+    ],
     templateUrl: './calendar-desktop-overview.component.html',
     styleUrl: './calendar-desktop-overview.component.scss',
 })
 export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
-    private calendarEventService = inject(CalendarEventService);
+    private calendarService = inject(CalendarService);
     private translateService = inject(TranslateService);
     private activatedRoute = inject(ActivatedRoute);
     private activatedRouteSubscription?: Subscription;
-    private courseId?: number;
-    private currentLocale = signal(this.translateService.currentLang);
     private currentLocaleSubscription?: Subscription;
+    private currentLocale = signal(this.translateService.currentLang);
 
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
+
     presentation = signal<'week' | 'month'>('month');
     firstDayOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     firstDayOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
     isLoading = signal<boolean>(false);
+    calendarSubscriptionToken = this.calendarService.subscriptionToken;
+    currentCourseId = signal<number | undefined>(undefined);
 
     ngOnInit(): void {
         this.currentLocaleSubscription = this.translateService.onLangChange.subscribe((event) => {
@@ -46,10 +57,12 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
         this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
             const courseIdParameter = parameterMap.get('courseId');
             if (courseIdParameter) {
-                this.courseId = +courseIdParameter;
+                this.currentCourseId.set(+courseIdParameter);
                 this.loadEventsForCurrentMonth();
             }
         });
+
+        this.calendarService.loadSubscriptionToken().subscribe();
     }
 
     ngOnDestroy() {
@@ -109,10 +122,11 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
     }
 
     private loadEventsForCurrentMonth(): void {
-        if (!this.courseId) return;
+        const courseId = this.currentCourseId();
+        if (!courseId) return;
         this.isLoading.set(true);
-        this.calendarEventService
-            .loadEventsForCurrentMonth(this.courseId, this.firstDayOfCurrentMonth())
+        this.calendarService
+            .loadEventsForCurrentMonth(courseId, this.firstDayOfCurrentMonth())
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe();
     }

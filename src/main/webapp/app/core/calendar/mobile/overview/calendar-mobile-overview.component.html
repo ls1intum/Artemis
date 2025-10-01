@@ -1,0 +1,60 @@
+<div class="frame">
+    <div class="header">
+        <button type="button" class="header-button primary-button" (click)="goToPrevious()">
+            <div class="chevron">
+                <fa-icon [icon]="faChevronLeft" />
+            </div>
+        </button>
+        <button data-testid="today-button" type="button" class="header-button secondary-button" (click)="goToToday()">
+            <span class="today-label" jhiTranslate="artemisApp.calendar.todayButtonLabel"></span>
+        </button>
+        @let courseId = currentCourseId();
+        @let subscriptionToken = calendarSubscriptionToken();
+        @if (courseId && subscriptionToken) {
+            <div>
+                <button data-testid="subscribe-button" type="button" class="header-button secondary-button" (click)="subscriptionPopover.open($event)">
+                    <span class="today-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
+                </button>
+                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="courseId" [isMobile]="true" #subscriptionPopover />
+            </div>
+        }
+        <button type="button" class="header-button primary-button" (click)="goToNext()">
+            <div class="chevron">
+                <fa-icon [icon]="faChevronRight" />
+            </div>
+        </button>
+    </div>
+    <div class="calendar-presentation-container">
+        <div class="presentation-header">
+            <div class="title-close-button-row">
+                <div class="header-spacer">
+                    @if (selectedDate()) {
+                        <button type="button" class="close-button" (click)="unselectDate()">
+                            <fa-icon [icon]="faXmark" />
+                        </button>
+                    }
+                </div>
+                <div class="month-title">{{ firstDateOfCurrentMonth().format('MMMM YYYY') }}</div>
+                <div class="header-spacer">
+                    <jhi-calendar-event-filter [variant]="CalendarEventFilterComponentVariant.MOBILE" />
+                </div>
+            </div>
+            <div class="day-name-row">
+                @for (dayNameKey of weekdayNameKeys; track dayNameKey) {
+                    <div class="weekday-label" jhiTranslate="{{ dayNameKey }}"></div>
+                }
+            </div>
+        </div>
+        @let day = selectedDate();
+        @if (day) {
+            <jhi-calendar-mobile-day-presentation [selectedDate]="day" />
+        } @else {
+            <jhi-calendar-mobile-month-presentation [firstDateOfMonth]="firstDateOfCurrentMonth()" (selectDate)="selectDate($event)" />
+        }
+        @if (isLoading()) {
+            <div class="loading-overlay">
+                <div class="spinner-border" role="status"></div>
+            </div>
+        }
+    </div>
+</div>

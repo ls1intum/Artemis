@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
@@ -27,6 +26,7 @@ import org.springframework.util.MultiValueMap;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.ChannelSubType;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
@@ -860,23 +860,24 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     void getExerciseChannel_asCourseStudent_shouldGetExerciseChannel() throws Exception {
         Course course = courseRepository.findById(exampleCourseId).orElseThrow();
         var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(7), ZonedDateTime.now().plusMinutes(14));
-        var publicChannelWhereMember = createChannel(true, TEST_PREFIX + "1");
-        Channel channel = channelRepository.findById(publicChannelWhereMember.getId()).orElseThrow();
+        var publicExerciseChannel = createChannel(true, TEST_PREFIX + "1");
+        Channel channel = channelRepository.findById(publicExerciseChannel.getId()).orElseThrow();
         channel.setExercise(exercise);
         channelRepository.save(channel);
-        addUsersToConversation(publicChannelWhereMember.getId(), "student1");
-        addUsersToConversation(publicChannelWhereMember.getId(), "student2");
+        addUsersToConversation(publicExerciseChannel.getId(), "student1");
+        addUsersToConversation(publicExerciseChannel.getId(), "student2");
 
-        assertParticipants(publicChannelWhereMember.getId(), 3, "student1", "student2", "instructor1");
+        assertParticipants(publicExerciseChannel.getId(), 3, "student1", "student2", "instructor1");
 
         // switch to student1
         userUtilService.changeUser(testPrefix + "student1");
 
-        Channel exerciseChannel = request.get("/api/communication/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
-        assertThat(exerciseChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
-        assertThat(exerciseChannel.getExercise()).isNull();
+        ChannelDTO exerciseChannel = request.get("/api/communication/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, ChannelDTO.class);
+        assertThat(exerciseChannel.getId()).isEqualTo(publicExerciseChannel.getId());
+        assertThat(exerciseChannel.getSubTypeReferenceId()).isEqualTo(exercise.getId());
+        assertThat(exerciseChannel.getSubType()).isEqualTo(ChannelSubType.EXERCISE);
 
-        conversationRepository.deleteById(publicChannelWhereMember.getId());
+        conversationRepository.deleteById(publicExerciseChannel.getId());
     }
 
     @Test
@@ -916,28 +917,29 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         lecture.setDescription("Test Lecture");
         lecture.setCourse(course);
         lecture = lectureRepository.save(lecture);
-        var publicChannelWhereMember = createChannel(true, TEST_PREFIX + "1");
-        Channel channel = channelRepository.findById(publicChannelWhereMember.getId()).orElseThrow();
+        var publicLectureChannel = createChannel(true, TEST_PREFIX + "1");
+        Channel channel = channelRepository.findById(publicLectureChannel.getId()).orElseThrow();
         channel.setLecture(lecture);
         channelRepository.save(channel);
-        addUsersToConversation(publicChannelWhereMember.getId(), "student1");
-        addUsersToConversation(publicChannelWhereMember.getId(), "student2");
+        addUsersToConversation(publicLectureChannel.getId(), "student1");
+        addUsersToConversation(publicLectureChannel.getId(), "student2");
 
-        assertParticipants(publicChannelWhereMember.getId(), 3, "student1", "student2", "instructor1");
+        assertParticipants(publicLectureChannel.getId(), 3, "student1", "student2", "instructor1");
 
         userUtilService.changeUser(testPrefix + "student1");
 
-        Channel lectureChannel = request.get("/api/communication/courses/" + exampleCourseId + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
-        assertThat(lectureChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
-        assertThat(lectureChannel.getLecture()).isNull();
+        ChannelDTO lectureChannel = request.get("/api/communication/courses/" + exampleCourseId + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, ChannelDTO.class);
+        assertThat(lectureChannel.getId()).isEqualTo(publicLectureChannel.getId());
+        assertThat(lectureChannel.getSubTypeReferenceId()).isEqualTo(lecture.getId());
+        assertThat(lectureChannel.getSubType()).isEqualTo(ChannelSubType.LECTURE);
 
-        conversationRepository.deleteById(publicChannelWhereMember.getId());
+        conversationRepository.deleteById(publicLectureChannel.getId());
         lectureRepository.deleteById(lecture.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void createFeedbackChannel_asStudent_shouldReturnForbidden() {
+    void createFeedbackChannel_asStudent_shouldReturnForbidden() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
@@ -950,20 +952,15 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
-        String BASE_ENDPOINT = "api/communication/courses/{courseId}/{exerciseId}/feedback-channel";
+        String BASE_ENDPOINT = "api/communication/courses/{courseId}/exercises/{exerciseId}/feedback-channel";
 
-        try {
-            request.postWithoutResponseBody(BASE_ENDPOINT.replace("{courseId}", course.getId().toString()).replace("{exerciseId}", programmingExercise.getId().toString()),
-                    feedbackChannelRequest, HttpStatus.FORBIDDEN);
-        }
-        catch (Exception e) {
-            fail("There was an error executing the post request.", e);
-        }
+        request.postWithoutResponseBody(BASE_ENDPOINT.replace("{courseId}", course.getId().toString()).replace("{exerciseId}", programmingExercise.getId().toString()),
+                feedbackChannelRequest, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createFeedbackChannel_asInstructor_shouldCreateChannel() {
+    void createFeedbackChannel_asInstructor_shouldCreateChannel() throws Exception {
         long courseId = 1L;
         long exerciseId = 1L;
         ChannelDTO channelDTO = new ChannelDTO();
@@ -975,16 +972,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
-        String BASE_ENDPOINT = "/api/communication/courses/{courseId}/{exerciseId}/feedback-channel";
+        String BASE_ENDPOINT = "/api/communication/courses/{courseId}/exercises/{exerciseId}/feedback-channel";
 
-        ChannelDTO response = null;
-        try {
-            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", Long.toString(courseId)).replace("{exerciseId}", Long.toString(exerciseId)),
-                    feedbackChannelRequest, ChannelDTO.class, HttpStatus.CREATED);
-        }
-        catch (Exception e) {
-            fail("Failed to create feedback channel", e);
-        }
+        ChannelDTO response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", Long.toString(courseId)).replace("{exerciseId}", Long.toString(exerciseId)),
+                feedbackChannelRequest, ChannelDTO.class, HttpStatus.CREATED);
 
         assertThat(response).isNotNull();
         assertThat(response.getName()).isEqualTo("feedback-channel");

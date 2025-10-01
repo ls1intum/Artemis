@@ -10,10 +10,9 @@
             @for (index of zeroToTwentyFour; track index) {
                 <div class="hour-segment"></div>
             }
-            @for (eventAndMetadata of day.eventsAndMetadata; track eventAndMetadata.event.id) {
-                @let event = eventAndMetadata.event;
-                @let position = eventAndMetadata.position;
-                @let eventSubtypeDescriptor = eventAndMetadata.eventSubtypeDescriptor;
+            @for (eventAndPosition of day.eventsAndPositions; track eventAndPosition.event.id) {
+                @let event = eventAndPosition.event;
+                @let position = eventAndPosition.position;
                 <div
                     class="event"
                     [ngClass]="{
@@ -37,11 +36,7 @@
                     #popover="ngbPopover"
                     [attr.data-testid]="event.title"
                 >
-                    @if (eventSubtypeDescriptor) {
-                        {{ eventSubtypeDescriptor | artemisTranslate }}: {{ event.title }}
-                    } @else {
-                        {{ event.title }}
-                    }
+                    {{ event.title }}
                 </div>
             }
         </div>
