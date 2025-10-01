@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.HttpStatus.OK;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -54,7 +55,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         quizTrainingLeaderboard.setLeague(5);
         quizTrainingLeaderboard.setAnsweredCorrectly(10);
         quizTrainingLeaderboard.setAnsweredWrong(10);
-        quizTrainingLeaderboard.setDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+        quizTrainingLeaderboard.setDueDate(ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MINUTES));
         quizTrainingLeaderboard.setStreak(0);
         quizTrainingLeaderboard.setShowInLeaderboard(true);
         return quizTrainingLeaderboard;
@@ -99,12 +100,12 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard);
         quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard2);
         quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard3);
-        LeaderboardEntryDTO testEntry1 = LeaderboardEntryDTO.of(quizTrainingLeaderboard, 2, 5, 10);
-        LeaderboardEntryDTO testEntry2 = LeaderboardEntryDTO.of(quizTrainingLeaderboard2, 1, 5, 10);
+        LeaderboardEntryDTO testEntry1 = LeaderboardEntryDTO.of(quizTrainingLeaderboard, 2, 5, 0);
+        LeaderboardEntryDTO testEntry2 = LeaderboardEntryDTO.of(quizTrainingLeaderboard2, 1, 5, 0);
         List<LeaderboardEntryDTO> testList = List.of(testEntry2, testEntry1);
         List<LeaderboardEntryDTO> leaderboardEntryDTO = request.getList("/api/quiz/courses/" + course.getId() + "/training/leaderboard", OK, LeaderboardEntryDTO.class);
         assertThat(leaderboardEntryDTO.size()).isEqualTo(2);
-        assertThat(leaderboardEntryDTO.equals(testList));
+        assertThat(leaderboardEntryDTO).isEqualTo(testList);
         assertThat(leaderboardEntryDTO.getFirst().answeredCorrectly()).isEqualTo(10);
         assertThat(leaderboardEntryDTO.getFirst().answeredWrong()).isEqualTo(10);
         assertThat(leaderboardEntryDTO.getFirst().score()).isEqualTo(50);
