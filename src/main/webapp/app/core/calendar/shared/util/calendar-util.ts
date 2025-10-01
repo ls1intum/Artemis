@@ -14,11 +14,6 @@ export function getDatesInWeekOf(date: Dayjs): Dayjs[] {
     return week;
 }
 
-export function getWeekDayNameKey(day: Dayjs): string {
-    const keys = getWeekDayNameKeys();
-    return keys[day.isoWeekday() - 1];
-}
-
 export function getHoursOfDay(): string[] {
     const hours = Array.from({ length: 23 }, (_, i) => `${(i + 1).toString().padStart(2, '0')}:00`);
     hours.push('00:00');
