@@ -97,3 +97,18 @@ const filterOptionNameKeyMap: Record<CalendarEventFilterOption, string> = {
 export function getFilterOptionNameKey(option: CalendarEventFilterOption): string {
     return filterOptionNameKeyMap[option];
 }
+
+const eventTypeToColorClassMap: Record<CalendarEventType, string> = {
+    [CalendarEventType.Exam]: 'var(--pastel-teal)',
+    [CalendarEventType.Lecture]: 'var(--pastel-blue)',
+    [CalendarEventType.Tutorial]: 'var(--pastel-purple)',
+    [CalendarEventType.TextExercise]: 'var(--pastel-cyan)',
+    [CalendarEventType.ModelingExercise]: 'var(--pastel-cyan)',
+    [CalendarEventType.ProgrammingExercise]: 'var(--pastel-cyan)',
+    [CalendarEventType.FileUploadExercise]: 'var(--pastel-cyan)',
+    [CalendarEventType.QuizExercise]: 'var(--pastel-cyan)',
+};
+
+export function getColorFor(event: CalendarEvent): string {
+    return eventTypeToColorClassMap[event.type];
+}

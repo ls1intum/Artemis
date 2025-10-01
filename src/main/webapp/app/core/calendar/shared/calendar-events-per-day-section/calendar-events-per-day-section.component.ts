@@ -1,18 +1,19 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
-import { NgClass, NgStyle } from '@angular/common';
+import { NgStyle } from '@angular/common';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
-import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { Dayjs } from 'dayjs/esm';
-import { CalendarEventAndPosition, PositionInfo } from 'app/core/calendar/shared/entities/calendar-event-and-position.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 
-type Day = { date: Dayjs; eventsAndPositions: CalendarEventAndPosition[]; id: string };
+type PositionInfo = { top: number; height: number; left: number; width: number };
+type CalendarEventAndMetadata = { event: CalendarEvent; position: PositionInfo; color: string };
+type Day = { date: Dayjs; eventsAndMetadata: CalendarEventAndMetadata[]; id: string };
 
 @Component({
     selector: 'jhi-calendar-events-per-day-section',
-    imports: [NgClass, NgStyle, CalendarEventDetailPopoverComponent, NgbPopover],
+    imports: [NgStyle, CalendarEventDetailPopoverComponent, NgbPopover],
     templateUrl: './calendar-events-per-day-section.component.html',
     styleUrl: './calendar-events-per-day-section.component.scss',
 })
@@ -38,20 +39,12 @@ export class CalendarEventsPerDaySectionComponent {
     private dateToEventAndPositionMap = computed(() => this.computeDateToEventAndPositionMap(this.calendarService.eventMap(), this.dates()));
     private popover?: NgbPopover;
 
-    readonly CalendarEventType = CalendarEventType;
-
     dates = input.required<Dayjs[]>();
     isEventSelected = output<boolean>();
     selectedEvent = signal<CalendarEvent | undefined>(undefined);
     hoursOfDay = utils.getHoursOfDay();
     zeroToTwentyFour = utils.range(24);
-    days = computed<Day[]>(() => {
-        return this.dates().map((date) => ({
-            date: date,
-            eventsAndPositions: this.getEventsAndPositions(date),
-            id: utils.identify(date),
-        }));
-    });
+    days = computed<Day[]>(() => this.computeDays(this.dates()));
 
     constructor() {
         effect(() => {
@@ -76,11 +69,7 @@ export class CalendarEventsPerDaySectionComponent {
         this.selectedEvent.set(undefined);
     }
 
-    private getEventsAndPositions(date: Dayjs): CalendarEventAndPosition[] {
-        return this.dateToEventAndPositionMap().get(date.format('YYYY-MM-DD')) ?? [];
-    }
-
-    private computeDateToEventAndPositionMap(eventMap: Map<string, CalendarEvent[]>, dates: Dayjs[]): Map<string, CalendarEventAndPosition[]> {
+    private computeDateToEventAndPositionMap(eventMap: Map<string, CalendarEvent[]>, dates: Dayjs[]): Map<string, CalendarEventAndMetadata[]> {
         const dateKeysToBeIncluded = new Set(dates.map((date) => date.format('YYYY-MM-DD')));
         return new Map(
             Array.from(eventMap)
@@ -98,11 +87,11 @@ export class CalendarEventsPerDaySectionComponent {
      * @param calendarEvents - The list of calendar events to position.
      * @returns A list of calendar events with associated positions.
      */
-    private addPositionsToCalendarEvents(calendarEvents: CalendarEvent[]): CalendarEventAndPosition[] {
+    private addPositionsToCalendarEvents(calendarEvents: CalendarEvent[]): CalendarEventAndMetadata[] {
         if (calendarEvents.length === 0) {
             return [];
         }
-        const eventsWithPositions: CalendarEventAndPosition[] = [];
+        const eventsWithPositions: CalendarEventAndMetadata[] = [];
         let currentGroup: CalendarEvent[] = [];
         for (const event of calendarEvents) {
             if (currentGroup.length === 0 || currentGroup.some((otherEvent) => this.doEventsOverlap(otherEvent, event))) {
@@ -117,7 +106,7 @@ export class CalendarEventsPerDaySectionComponent {
         return eventsWithPositions;
     }
 
-    private addPositionsToEventGroup(group: CalendarEvent[]): CalendarEventAndPosition[] {
+    private addPositionsToEventGroup(group: CalendarEvent[]): CalendarEventAndMetadata[] {
         const widthAndLeftOffsetFunction = this.getWidthAndLeftOffsetFunction(group.length);
         return group.map((event, index) => {
             const top = this.getTop(event);
@@ -125,7 +114,7 @@ export class CalendarEventsPerDaySectionComponent {
             const left = widthAndLeftOffsetFunction.leftOffset(index);
 
             const position: PositionInfo = { top, height, left, width: widthAndLeftOffsetFunction.eventWidth };
-            return { event: event, position: position };
+            return { event: event, position: position, color: utils.getColorFor(event) };
         });
     }
 
@@ -181,5 +170,15 @@ export class CalendarEventsPerDaySectionComponent {
 
     private doesFirstRangeEngulfSecondRange(firstRangeStart: Dayjs, firstRangeEnd: Dayjs, secondRangeStart: Dayjs, secondRangeEnd: Dayjs): boolean {
         return firstRangeStart.isSameOrBefore(secondRangeStart, 'minute') && secondRangeEnd.isSameOrBefore(firstRangeEnd, 'minute');
+    }
+
+    private computeDays(dates: Dayjs[]): Day[] {
+        return dates.map((date) => {
+            return { date: date, eventsAndMetadata: this.getEventsAndPositionsFor(date), id: date.format('YYYY-MM-DD') };
+        });
+    }
+
+    private getEventsAndPositionsFor(date: Dayjs): CalendarEventAndMetadata[] {
+        return this.dateToEventAndPositionMap().get(date.format('YYYY-MM-DD')) ?? [];
     }
 }

@@ -1,7 +1,7 @@
 import { Directive, computed, inject, input } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 
@@ -13,21 +13,11 @@ export type CalendarMonthPresentationDay = {
     id: string;
 };
 export type CalendarMonthPresentationWeek = { days: CalendarMonthPresentationDay[]; id: string };
-export type CalendarMonthPresentationEventAndMetadata = { event: CalendarEvent; icon: IconProp; colorClass: string };
+export type CalendarMonthPresentationEventAndMetadata = { event: CalendarEvent; icon: IconProp; color: string };
 
 @Directive()
 export class CalendarMonthPresentationComponent {
     private dateToEventsMap = inject(CalendarService).eventMap;
-    private colorClassMap: Record<CalendarEventType, string> = {
-        [CalendarEventType.Exam]: 'exam',
-        [CalendarEventType.Lecture]: 'lecture',
-        [CalendarEventType.Tutorial]: 'tutorial',
-        [CalendarEventType.TextExercise]: 'exercise',
-        [CalendarEventType.ModelingExercise]: 'exercise',
-        [CalendarEventType.ProgrammingExercise]: 'exercise',
-        [CalendarEventType.FileUploadExercise]: 'exercise',
-        [CalendarEventType.QuizExercise]: 'exercise',
-    };
 
     firstDateOfCurrentMonth = input.required<Dayjs>();
     weeks = computed<CalendarMonthPresentationWeek[]>(() => {
@@ -45,7 +35,7 @@ export class CalendarMonthPresentationComponent {
                     return {
                         event: event,
                         icon: utils.getIconForEvent(event),
-                        colorClass: this.colorClassMap[event.type],
+                        color: utils.getColorFor(event),
                     };
                 });
                 const firstTwoEventsAndMetadata = eventsAndMetadata.slice(0, 2);

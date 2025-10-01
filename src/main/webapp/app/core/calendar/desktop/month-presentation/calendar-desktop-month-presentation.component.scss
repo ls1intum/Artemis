@@ -52,22 +52,6 @@
                 cursor: pointer;
             }
 
-            &.exam {
-                background-color: var(--pastel-teal);
-            }
-
-            &.lecture {
-                background-color: var(--pastel-blue);
-            }
-
-            &.tutorial {
-                background-color: var(--pastel-purple);
-            }
-
-            &.exercise {
-                background-color: var(--pastel-cyan);
-            }
-
             .event-label {
                 white-space: nowrap;
                 overflow: hidden;

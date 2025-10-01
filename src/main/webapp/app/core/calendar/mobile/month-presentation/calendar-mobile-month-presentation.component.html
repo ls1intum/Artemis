@@ -31,6 +31,6 @@
 </div>
 
 <ng-template #eventCell let-eventAndMetadata>
-    @let colorClass = eventAndMetadata.colorClass;
-    <div class="event-cell" [ngClass]="colorClass"></div>
+    @let color = eventAndMetadata.color;
+    <div class="event-cell" [style.background-color]="color"></div>
 </ng-template>

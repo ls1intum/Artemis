@@ -36,11 +36,11 @@
 
 <ng-template #eventCell let-eventAndMetadata>
     @let event = eventAndMetadata.event;
-    @let colorClass = eventAndMetadata.colorClass;
+    @let color = eventAndMetadata.color;
     @let icon = eventAndMetadata.icon;
     <div
         class="event-cell"
-        [ngClass]="colorClass"
+        [style.background-color]="color"
         [ngbPopover]="eventPopover"
         triggers="manual"
         [autoClose]="false"

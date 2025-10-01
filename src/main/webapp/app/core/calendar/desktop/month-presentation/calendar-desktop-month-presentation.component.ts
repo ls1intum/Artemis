@@ -1,5 +1,5 @@
 import { Component, signal } from '@angular/core';
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -11,7 +11,7 @@ import { CalendarMonthPresentationComponent } from 'app/core/calendar/shared/cal
 
 @Component({
     selector: 'jhi-calendar-desktop-month-presentation',
-    imports: [NgClass, NgTemplateOutlet, NgbPopover, FaIconComponent, TranslateDirective, CalendarDayBadgeComponent, CalendarEventDetailPopoverComponent],
+    imports: [NgTemplateOutlet, NgbPopover, FaIconComponent, TranslateDirective, CalendarDayBadgeComponent, CalendarEventDetailPopoverComponent],
     templateUrl: './calendar-desktop-month-presentation.component.html',
     styleUrls: ['./calendar-desktop-month-presentation.component.scss'],
 })
