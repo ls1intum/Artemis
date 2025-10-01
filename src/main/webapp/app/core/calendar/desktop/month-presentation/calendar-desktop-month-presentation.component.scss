@@ -52,6 +52,22 @@
                 cursor: pointer;
             }
 
+            &.exam {
+                background-color: var(--pastel-teal);
+            }
+
+            &.lecture {
+                background-color: var(--pastel-blue);
+            }
+
+            &.tutorial {
+                background-color: var(--pastel-purple);
+            }
+
+            &.exercise {
+                background-color: var(--pastel-cyan);
+            }
+
             .event-label {
                 white-space: nowrap;
                 overflow: hidden;
@@ -59,23 +75,7 @@
             }
         }
 
-        .exam-event-cell {
-            background-color: var(--pastel-teal);
-        }
-
-        .lecture-event-cell {
-            background-color: var(--pastel-blue);
-        }
-
-        .tutorial-event-cell {
-            background-color: var(--pastel-purple);
-        }
-
-        .exercise-event-cell {
-            background-color: var(--pastel-cyan);
-        }
-
-        .more-events-info {
+        .more-events-label {
             width: 100%;
             font-size: 0.5rem;
             text-align: center;

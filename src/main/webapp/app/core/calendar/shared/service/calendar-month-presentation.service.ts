@@ -1,0 +1,64 @@
+import { Injectable, Signal, computed, inject } from '@angular/core';
+import { Dayjs } from 'dayjs/esm';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import * as utils from 'app/core/calendar/shared/util/calendar-util';
+
+export type CalendarMonthPresentationDay = {
+    date: Dayjs;
+    eventsAndMetadata: CalendarMonthPresentationEventAndMetadata[];
+    firstTwoEventsAndMetadata: CalendarMonthPresentationEventAndMetadata[];
+    isInDisplayedMonth: boolean;
+    id: string;
+};
+export type CalendarMonthPresentationWeek = { days: CalendarMonthPresentationDay[]; id: string };
+export type CalendarMonthPresentationEventAndMetadata = { event: CalendarEvent; icon: IconProp; colorClass: string };
+
+@Injectable({
+    providedIn: 'root',
+})
+export class CalendarMonthPresentationService {
+    private dateToEventsMap = inject(CalendarService).eventMap;
+    private colorClassMap: Record<CalendarEventType, string> = {
+        [CalendarEventType.Exam]: 'exam',
+        [CalendarEventType.Lecture]: 'lecture',
+        [CalendarEventType.Tutorial]: 'tutorial',
+        [CalendarEventType.TextExercise]: 'exercise',
+        [CalendarEventType.ModelingExercise]: 'exercise',
+        [CalendarEventType.ProgrammingExercise]: 'exercise',
+        [CalendarEventType.FileUploadExercise]: 'exercise',
+        [CalendarEventType.QuizExercise]: 'exercise',
+    };
+
+    getWeeks(firstDateOfMonth: Signal<Dayjs>): Signal<CalendarMonthPresentationWeek[]> {
+        return computed<CalendarMonthPresentationWeek[]>(() => {
+            const monthStart = firstDateOfMonth();
+            const start = monthStart.startOf('month').startOf('isoWeek');
+            const end = monthStart.endOf('month').endOf('isoWeek');
+            const weeks: CalendarMonthPresentationWeek[] = [];
+            let date = start;
+            while (date.isBefore(end)) {
+                const days: CalendarMonthPresentationDay[] = [];
+                for (let i = 0; i < 7; i++) {
+                    const id = date.format('YYYY-MM-DD');
+                    const calendarEvents = this.dateToEventsMap().get(id) ?? [];
+                    const eventsAndMetadata = calendarEvents.map((event) => {
+                        return {
+                            event: event,
+                            icon: utils.getIconForEvent(event),
+                            colorClass: this.colorClassMap[event.type],
+                        };
+                    });
+                    const firstTwoEventsAndMetadata = eventsAndMetadata.slice(0, 2);
+                    const isInDisplayedMonth = utils.areDatesInSameMonth(date, monthStart);
+                    days.push({ date, eventsAndMetadata, firstTwoEventsAndMetadata, isInDisplayedMonth, id });
+                    date = date.add(1, 'day');
+                }
+                const id = days[0].id;
+                weeks.push({ days, id });
+            }
+            return weeks;
+        });
+    }
+}

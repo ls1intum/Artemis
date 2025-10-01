@@ -10,15 +10,15 @@ import dayjs, { Dayjs } from 'dayjs/esm';
     styleUrls: ['./calendar-day-badge.component.scss'],
 })
 export class CalendarDayBadgeComponent {
-    day = input.required<Dayjs>();
+    date = input.required<Dayjs>();
     minimalTodayIndication = input(false);
     isSelectedDay = input(false);
 
     get dayNumber(): number {
-        return this.day().date();
+        return this.date().date();
     }
 
     isToday(): boolean {
-        return this.day().isSame(dayjs(), 'day');
+        return this.date().isSame(dayjs(), 'day');
     }
 }
