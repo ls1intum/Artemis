@@ -9,7 +9,6 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
     selector: 'jhi-calendar-overview',
     imports: [CalendarDesktopOverviewComponent, CalendarMobileOverviewComponent],
     templateUrl: './calendar-overview.component.html',
-    styleUrl: './calendar-overview.component.scss',
 })
 export class CalendarOverviewComponent {
     private breakpointObserver = inject(BreakpointObserver);
