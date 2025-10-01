@@ -132,9 +132,9 @@
         "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
         "emojiIdMissing": "emojiId muss gesetzt sein.",
         "exampleSubmission": {
-            "isNull": "ExampleSubmission darf nicht null sein",
-            "submissionIsNull": "Submission darf nicht null sein",
-            "submissionIdMissing": "Submission ID muss vor der Konvertierung persistent sein"
+            "isNull": "Es wurde keine Beispielabgabe übermittelt.",
+            "submissionIsNull": "Diese Beispielabgabe enthält keine Lösung.",
+            "submissionIdMissing": "Die Abgabe muss zuerst gespeichert werden, bevor sie umgewandelt werden kann."
         }
     }
 }
