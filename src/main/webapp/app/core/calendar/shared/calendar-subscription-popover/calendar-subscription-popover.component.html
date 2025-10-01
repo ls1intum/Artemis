@@ -1,0 +1,127 @@
+<p-popover #calendarSubscriptionPopover>
+    <div class="popover-content" [ngClass]="isMobile() ? 'mobile' : 'desktop'">
+        <h5 jhiTranslate="artemisApp.calendar.subscriptionPopover.title"></h5>
+        <span jhiTranslate="artemisApp.calendar.subscriptionPopover.configurationExplanation"></span>
+        @if (isMobile()) {
+            <p-selectbutton
+                [options]="languageOptions()"
+                [ngModel]="selectedLanguage()"
+                (ngModelChange)="selectedLanguage.set($event)"
+                [unselectable]="true"
+                optionLabel="label"
+                optionValue="value"
+            />
+            <div class="configuration-controls-row">
+                <div class="configuration-controls-column">
+                    <div class="events-checkbox-and-label">
+                        <p-checkbox
+                            inputId="lectureEventsCheckbox"
+                            [disabled]="lecturesIsLastSelectedEventType()"
+                            [binary]="true"
+                            [ngModel]="includeLectureEvents()"
+                            (ngModelChange)="includeLectureEvents.set($event)"
+                        />
+                        <label for="lectureEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.lectures"></label>
+                    </div>
+                    <div class="events-checkbox-and-label">
+                        <p-checkbox
+                            inputId="tutorialEventsCheckbox"
+                            [disabled]="tutorialsIsLastSelectedEventType()"
+                            [binary]="true"
+                            [ngModel]="includeTutorialEvents()"
+                            (ngModelChange)="includeTutorialEvents.set($event)"
+                        />
+                        <label for="tutorialEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.tutorials"></label>
+                    </div>
+                </div>
+                <div class="configuration-controls-column">
+                    <div class="events-checkbox-and-label">
+                        <p-checkbox
+                            inputId="exerciseEventsCheckbox"
+                            [disabled]="exercisesIsLastSelectedEventType()"
+                            [binary]="true"
+                            [ngModel]="includeExerciseEvents()"
+                            (ngModelChange)="includeExerciseEvents.set($event)"
+                        />
+                        <label for="exerciseEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.exercises"></label>
+                    </div>
+                    <div class="events-checkbox-and-label">
+                        <p-checkbox
+                            inputId="examEventsCheckbox"
+                            [disabled]="examsIsLastSelectedEventType()"
+                            [binary]="true"
+                            [ngModel]="includeExamEvents()"
+                            (ngModelChange)="includeExamEvents.set($event)"
+                        />
+                        <label for="examEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.exams"></label>
+                    </div>
+                </div>
+            </div>
+        } @else {
+            <div class="configuration-controls-row">
+                <p-selectbutton
+                    data-testid="language-select"
+                    [options]="languageOptions()"
+                    [ngModel]="selectedLanguage()"
+                    (ngModelChange)="selectedLanguage.set($event)"
+                    [unselectable]="true"
+                    optionLabel="label"
+                    optionValue="value"
+                />
+                <div class="events-checkbox-and-label">
+                    <p-checkbox
+                        inputId="lectureEventsCheckbox"
+                        [disabled]="lecturesIsLastSelectedEventType()"
+                        [binary]="true"
+                        [ngModel]="includeLectureEvents()"
+                        (ngModelChange)="includeLectureEvents.set($event)"
+                    />
+                    <label data-testid="lecture-events-checkbox-label" for="lectureEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.lectures"></label>
+                </div>
+                <div class="events-checkbox-and-label">
+                    <p-checkbox
+                        inputId="exerciseEventsCheckbox"
+                        [disabled]="exercisesIsLastSelectedEventType()"
+                        [binary]="true"
+                        [ngModel]="includeExerciseEvents()"
+                        (ngModelChange)="includeExerciseEvents.set($event)"
+                    />
+                    <label data-testid="exercise-events-checkbox-label" for="exerciseEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.exercises"></label>
+                </div>
+                <div class="events-checkbox-and-label">
+                    <p-checkbox
+                        inputId="tutorialEventsCheckbox"
+                        [disabled]="tutorialsIsLastSelectedEventType()"
+                        [binary]="true"
+                        [ngModel]="includeTutorialEvents()"
+                        (ngModelChange)="includeTutorialEvents.set($event)"
+                    />
+                    <label data-testid="tutorial-events-checkbox-label" for="tutorialEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.tutorials"></label>
+                </div>
+                <div class="events-checkbox-and-label">
+                    <p-checkbox
+                        inputId="examEventsCheckbox"
+                        [disabled]="examsIsLastSelectedEventType()"
+                        [binary]="true"
+                        [ngModel]="includeExamEvents()"
+                        (ngModelChange)="includeExamEvents.set($event)"
+                    />
+                    <label data-testid="exam-events-checkbox-label" for="examEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.exams"></label>
+                </div>
+            </div>
+        }
+        <span jhiTranslate="artemisApp.calendar.subscriptionPopover.copyExplanation"></span>
+        <div class="subscription-link-copy-section">
+            <div class="subscription-link-field">
+                <textarea cdkTextareaAutosize cdkAutosizeMinRows="1" cdkAutosizeMaxRows="10" [ngModel]="subscriptionUrl()" readonly></textarea>
+            </div>
+            <button class="subscription-link-copy-button" type="button" [class.hover-indication]="!copiedUrl()" (click)="copySubscriptionUrlToClipboard()">
+                @if (copiedUrl()) {
+                    <fa-icon [icon]="faCheck" />
+                } @else {
+                    <fa-icon [icon]="faCopy" />
+                }
+            </button>
+        </div>
+    </div>
+</p-popover>

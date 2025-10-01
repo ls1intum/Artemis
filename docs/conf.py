@@ -56,7 +56,7 @@ linkcheck_ignore = [
 # do not check anchors on websites that need JavaScript to load the content
 # the anchor points to
 linkcheck_anchors_ignore_for_url = [
-    r"https://angular.io/guide/.*",
+    r"https://angular.dev/guide/.*",
     r"https://github.com/.*",
     r"https://k3d.io/.*"
 ]

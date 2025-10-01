@@ -1,5 +1,6 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
-import isMobile from 'ismobilejs-es5';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { Component, ViewEncapsulation, inject, input } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { CdkDrag, CdkDragPlaceholder, CdkDragPreview } from '@angular/cdk/drag-drop';
@@ -7,6 +8,7 @@ import { ImageComponent } from 'app/shared/image/image.component';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { map } from 'rxjs';
 
 @Component({
     selector: 'jhi-drag-item',
@@ -15,20 +17,15 @@ import { addPublicFilePrefix } from 'app/app.constants';
     encapsulation: ViewEncapsulation.None,
     imports: [NgClass, NgStyle, CdkDrag, ImageComponent, CdkDragPlaceholder, FitTextDirective, CdkDragPreview, TranslateDirective],
 })
-export class DragItemComponent implements OnInit {
-    @Input() minWidth: string;
-    @Input() dragItem: DragItem;
-    @Input() clickDisabled: boolean;
-    @Input() invalid: boolean;
-    @Input() filePreviewPaths: Map<string, string> = new Map<string, string>();
-    isMobile = false;
+export class DragItemComponent {
+    private breakpointObserver = inject(BreakpointObserver);
+    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
 
-    /**
-     * Initializes device information and whether the device is a mobile device
-     */
-    ngOnInit(): void {
-        this.isMobile = isMobile(window.navigator.userAgent).any;
-    }
+    minWidth = input<string>();
+    dragItem = input.required<DragItem>();
+    clickDisabled = input<boolean>();
+    invalid = input<boolean>();
+    filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

@@ -308,8 +308,6 @@ describe('ProgrammingExercise Service', () => {
     it('should reset Exercise', fakeAsync(() => {
         const exerciseId = 1;
         const options = {
-            deleteBuildPlans: true,
-            deleteRepositories: true,
             deleteParticipationsSubmissionsAndResults: true,
             recreateBuildPlans: true,
         };

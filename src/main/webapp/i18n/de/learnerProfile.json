@@ -47,10 +47,18 @@
                     "friendly": "Freundlich"
                 },
                 "profileSaved": "Feedback-Lernprofil gespeichert",
-                "invalidRange": "Werte müssen true oder false sein",
+                "invalidRange": "Werte müssen zwischen 1 und 3 liegen",
                 "error": "Feedback-Lernprofil konnte nicht gespeichert werden",
                 "setPreferencesButton": "Feedback-Präferenzen festlegen",
                 "replayOnboardingButton": "Onboarding wiederholen"
+            },
+            "insightsLearnerProfile": {
+                "title": "Erkenntnisse unseres Systems",
+                "iris": {
+                    "title": "Iris",
+                    "description": "Hier findest du Erkenntnisse, die Iris in Form von Erinnerungen über dich erstellt hat. Diese Erinnerungen basieren auf deinen Interaktionen mit Iris. Iris nutzt diese Erinnerungen, um dir personalisiertes Feedback und individuelle Unterstützung zu bieten.",
+                    "memirisEnabledToggle": "Erstellung und Nutzung von Erinnerungen aktivieren"
+                }
             },
             "onboardingModal": {
                 "title": "Welches Feedback gefällt dir besser?",

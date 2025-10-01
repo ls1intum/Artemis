@@ -14,6 +14,7 @@ import jakarta.annotation.PostConstruct;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -36,13 +37,13 @@ public class PlantUmlService {
 
     private static final String LIGHT_THEME_FILE_NAME = "puml-theme-artemislight.puml";
 
-    // TODO: we should use a different directory and not the tmp directory
-    private static final Path PATH_TMP_THEME = Path.of(System.getProperty("java.io.tmpdir"), "artemis-puml-theme");
+    private final Path PATH_TMP_THEME;
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public PlantUmlService(ResourceLoaderService resourceLoaderService) {
+    public PlantUmlService(ResourceLoaderService resourceLoaderService, @Value("${artemis.temp-path}") Path tempPath) {
         this.resourceLoaderService = resourceLoaderService;
+        this.PATH_TMP_THEME = tempPath.resolve("artemis-puml-theme");
     }
 
     /**

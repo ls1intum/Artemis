@@ -43,7 +43,6 @@ import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulle
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { faAngleDown, faGripLines, faQuestionCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { v4 as uuid } from 'uuid';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
@@ -337,7 +336,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly EditType = PostingEditType;
 
     constructor() {
-        this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
+        this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
     }
 
     ngAfterContentInit(): void {
@@ -446,9 +445,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.resizeObserver?.disconnect();
     }
 
-    onTextChanged(text: string): void {
-        this.markdown = text;
-        this.markdownChange.emit(text);
+    onTextChanged(event: { text: string; fileName: string }): void {
+        this.markdown = event.text;
+        this.markdownChange.emit(event.text);
     }
 
     /**

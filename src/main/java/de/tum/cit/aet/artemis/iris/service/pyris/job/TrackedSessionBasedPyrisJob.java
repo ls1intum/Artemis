@@ -8,6 +8,14 @@ public interface TrackedSessionBasedPyrisJob extends PyrisJob {
 
     long sessionId();
 
+    Long userMessageId();
+
+    TrackedSessionBasedPyrisJob withUserMessageId(long messageId);
+
+    Long assistantMessageId();
+
+    TrackedSessionBasedPyrisJob withAssistantMessageId(long messageId);
+
     Long traceId();
 
     TrackedSessionBasedPyrisJob withTraceId(long traceId);
