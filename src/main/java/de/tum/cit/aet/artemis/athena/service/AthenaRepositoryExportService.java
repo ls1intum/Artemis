@@ -17,11 +17,15 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * Service for exporting programming exercise repositories for Athena.
@@ -83,11 +87,11 @@ public class AthenaRepositoryExportService {
     public Map<String, String> getStudentRepositoryFilesContent(long exerciseId, Long submissionId) throws IOException {
         log.debug("Retrieving student repository file contents for exercise {}, submission {}", exerciseId, submissionId);
 
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        var submission = programmingSubmissionRepository.findByIdElseThrow(submissionId);
-        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(submission.getParticipation().getId());
-        var repoUri = participation.getVcsRepositoryUri();
+        ProgrammingSubmission submission = programmingSubmissionRepository.findByIdElseThrow(submissionId);
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(submission.getParticipation().getId());
+        LocalVCRepositoryUri repoUri = participation.getVcsRepositoryUri();
         if (repoUri == null) {
             throw new BadRequestAlertException(
                     "Repository URI is null for student participation " + participation.getId() + ". This may indicate that the student repository has not been set up yet.",
@@ -121,11 +125,11 @@ public class AthenaRepositoryExportService {
                     Map.of("repositoryType", repositoryType, "validTypes", ATHENA_INSTRUCTOR_REPOSITORY_TYPES));
         }
 
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
 
-        var repoUri = programmingExercise.getRepositoryURI(repositoryType);
+        LocalVCRepositoryUri repoUri = programmingExercise.getRepositoryURI(repositoryType);
         if (repoUri == null) {
             String errorKey = "error.invalid." + repositoryType.name().toLowerCase() + ".repository.url";
             throw new BadRequestAlertException("Repository URI is null for exercise " + exerciseId + " and repository type " + repositoryType + ". This may indicate that the "

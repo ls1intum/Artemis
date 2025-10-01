@@ -73,7 +73,7 @@
                 "repository.url": "Die Studenten-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist."
             },
             "instructor": {
-                "repository.type": "{{repositoryType}} ist kein gültiger Lehrenden-Repository-Typ. Nur {{validTypes}} sind erlaubt."
+                "repository.type": "{{repositoryType}} ist kein gültiger Instruktor-Repository-Typ. Nur {{validTypes}} sind erlaubt."
             },
             "auxiliary.repository": {
                 "id": "Die ID eines Hilfs-Repositories scheint gesetzt zu sein. Stelle bitte sicher, dass die ID nicht gesetzt ist.",
