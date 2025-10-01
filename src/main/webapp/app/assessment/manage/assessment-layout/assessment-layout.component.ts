@@ -1,32 +1,39 @@
-import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
+import { Subscription, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
+
 import { AssessmentHeaderComponent } from '../assessment-header/assessment-header.component';
 import { AssessmentComplaintAlertComponent } from '../assessment-complaint-alert/assessment-complaint-alert.component';
 import { AssessmentNoteComponent } from '../assessment-note/assessment-note.component';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 
-/**
- * The <jhi-assessment-layout> component provides the basic layout for an assessment page.
- * It shows the header, alerts for complaints on top and the complaint form at the bottom of the page.
- * The actual assessment needs to be inserted using content projection.
- * Components using this component need to provide Inputs and handle Outputs. This component does not perform assessment logic.
- */
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
+
 @Component({
     selector: 'jhi-assessment-layout',
     templateUrl: './assessment-layout.component.html',
     styleUrls: ['./assessment-layout.component.scss'],
     imports: [AssessmentHeaderComponent, AssessmentComplaintAlertComponent, AssessmentNoteComponent, ComplaintsForTutorComponent],
 })
-export class AssessmentLayoutComponent {
+export class AssessmentLayoutComponent implements OnChanges, OnDestroy {
     @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;
+    private exerciseService = inject(ExerciseService);
+
+    /** Subscription to the stats endpoint so we can clean it up on destroy */
+    private statsSub?: Subscription;
 
     @Output() navigateBack = new EventEmitter<void>();
     MORE_FEEDBACK = ComplaintType.MORE_FEEDBACK;
+
     @Input() isLoading: boolean;
     @Input() saveBusy: boolean;
     @Input() submitBusy: boolean;
@@ -45,6 +52,17 @@ export class AssessmentLayoutComponent {
     @Input() complaint?: Complaint;
     @Input() exercise?: Exercise;
     @Input() submission?: Submission;
+
+    /**
+     * Flag: whether there are unassessed submissions left
+     * for the current exercise **in the current correction round**.
+     *
+     * This is dynamically refreshed from the backend stats endpoint.
+     * Bound into <jhi-assessment-header> and used to hide/show
+     * the “Assess Next” button and internal notes section.
+     */
+    @Input() hasUnassessedSubmissions = true;
+
     @Input() hasAssessmentDueDatePassed: boolean;
     @Input() isProgrammingExercise: boolean; // remove once diff view activated for programming exercises
 
@@ -54,7 +72,6 @@ export class AssessmentLayoutComponent {
         this._highlightDifferences = highlightDifferences;
         this.highlightDifferencesChange.emit(this.highlightDifferences);
     }
-
     get highlightDifferences() {
         return this._highlightDifferences;
     }
@@ -63,6 +80,66 @@ export class AssessmentLayoutComponent {
         if (this.result) {
             this.result.assessmentNote = assessmentNote;
         }
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        // Refresh stats when exercise/result/correctionRound changes
+        if (changes['exercise'] || changes['result'] || changes['correctionRound']) {
+            this.refreshHasUnassessedSubmissions();
+        }
+    }
+
+    ngOnDestroy() {
+        // Clean up subscription to avoid memory leaks
+        this.statsSub?.unsubscribe();
+    }
+
+    /**
+     * Calls the backend tutor stats endpoint for this exercise.
+     * Computes the number of remaining unassessed submissions
+     * = submitted - assessed - locked,
+     * where “assessed” is taken from the stats of the
+     * **currently active correction round** (if available).
+     */
+    private refreshHasUnassessedSubmissions() {
+        const exerciseId = this.exercise?.id;
+        if (!exerciseId) {
+            this.hasUnassessedSubmissions = false;
+            this.statsSub?.unsubscribe();
+            return;
+        }
+
+        this.statsSub?.unsubscribe();
+        this.statsSub = this.exerciseService
+            .getStatsForTutors(exerciseId)
+            .pipe(
+                map((r: HttpResponse<StatsForDashboard>) => r.body ?? null),
+                map((stats: StatsForDashboard | null) => {
+                    if (!stats) return false;
+
+                    // Backend sends submissions split into “inTime” and “late”
+                    const submitted = (stats as any).numberOfSubmissions?.inTime + (stats as any).numberOfSubmissions?.late || 0;
+
+                    // Assessments are given per correction round
+                    let assessed = 0;
+                    const rounds = (stats as any).numberOfAssessmentsOfCorrectionRounds as Array<{ inTime?: number; late?: number }> | undefined;
+                    if (rounds && Number.isInteger(this.correctionRound) && rounds[this.correctionRound!]) {
+                        assessed = (rounds[this.correctionRound!].inTime ?? 0) + (rounds[this.correctionRound!].late ?? 0);
+                    } else {
+                        // Fallback if correctionRound not provided: total across all rounds
+                        assessed = (stats as any).totalNumberOfAssessments ?? 0;
+                    }
+
+                    const locked = (stats as any).totalNumberOfAssessmentLocks ?? 0;
+
+                    const remaining = Math.max(0, submitted - assessed - locked);
+
+                    // true if there’s at least one submission left to assess
+                    return remaining > 0;
+                }),
+                catchError(() => of(false)), // On error, fall back to “no submissions left”
+            )
+            .subscribe((v: boolean) => (this.hasUnassessedSubmissions = v));
     }
 
     @Output() save = new EventEmitter<void>();
