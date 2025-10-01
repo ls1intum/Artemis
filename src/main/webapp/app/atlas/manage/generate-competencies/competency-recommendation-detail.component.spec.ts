@@ -79,7 +79,7 @@ describe('CompetencyRecommendationDetailComponent', () => {
         const saveSpy = jest.spyOn(component, 'save');
 
         //component should not start out in edit mode
-        expect(component.isInEditMode).toBeFalse();
+        expect(component.isInEditMode()).toBeFalse();
         expect(component.form()!.controls.competency.disabled).toBeTrue();
 
         const editButton = fixture.debugElement.nativeElement.querySelector('#editButton-0 > .jhi-btn');
