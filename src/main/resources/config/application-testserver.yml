@@ -1,9 +1,0 @@
-# Properties to be exposed on the /info management endpoint
-info:
-    testServer: true  # false --> production, true --> test server, --> empty == local
-
-# Overrides for sample rate and environment
-# This is a workaround for a known bug in the Sentry SDK
-sentry:
-  environment: test
-  traces-sample-rate: 1.0

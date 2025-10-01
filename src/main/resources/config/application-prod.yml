@@ -29,9 +29,8 @@ spring:
         livereload:
             enabled: false
     datasource:
-        driver-class-name: com.p6spy.engine.spy.P6SpyDriver
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:p6spy:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+        url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
         username: root
         password:
         hikari:
