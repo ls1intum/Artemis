@@ -4,10 +4,14 @@ import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
  * Configuration for Spring AI chat clients.
@@ -38,16 +42,11 @@ public class SpringAIConfiguration {
     /**
      * Condition that enables Spring AI configuration when either Atlas or Hyperion is enabled.
      */
-    public static class SpringAIEnabled implements org.springframework.context.annotation.Condition {
-
-        private final ArtemisConfigHelper artemisConfigHelper;
-
-        public SpringAIEnabled() {
-            this.artemisConfigHelper = new ArtemisConfigHelper();
-        }
+    public static class SpringAIEnabled implements Condition {
 
         @Override
-        public boolean matches(org.springframework.context.annotation.ConditionContext context, org.springframework.core.type.AnnotatedTypeMetadata metadata) {
+        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+            ArtemisConfigHelper artemisConfigHelper = new ArtemisConfigHelper();
             return artemisConfigHelper.isAtlasEnabled(context.getEnvironment()) || artemisConfigHelper.isHyperionEnabled(context.getEnvironment());
         }
     }
