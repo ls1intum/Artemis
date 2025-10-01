@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { LeaderboardEntry } from 'app/quiz/overview/course-training-quiz/leaderboard/leaderboard-types';
+import { LeaderboardEntry } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @Component({

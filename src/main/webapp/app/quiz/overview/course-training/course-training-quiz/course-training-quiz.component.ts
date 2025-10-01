@@ -18,9 +18,9 @@ import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-dr
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
+import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training/course-training-quiz/SubmittedAnswerAfterEvaluation';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { QuizQuestionTraining } from 'app/quiz/overview/course-training-quiz/quiz-question-training.model';
+import { QuizQuestionTraining } from 'app/quiz/overview/course-training/course-training-quiz/quiz-question-training.model';
 import { DialogModule } from 'primeng/dialog';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
 
