@@ -4,7 +4,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 
@@ -36,7 +35,7 @@ export class CalendarEventFilterComponent {
         const includedOptions = this.calendarService.includedEventFilterOptions();
         return this.calendarService.eventFilterOptions.map((option) => ({
             option: option,
-            nameKey: utils.getFilterOptionNameKey(option),
+            nameKey: this.filterOptionNameKeyMap[option],
             isIncluded: includedOptions.includes(option),
         }));
     });
