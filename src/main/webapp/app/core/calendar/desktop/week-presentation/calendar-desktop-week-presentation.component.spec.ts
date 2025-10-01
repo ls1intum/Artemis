@@ -9,7 +9,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('CalendarDesktopWeekPresentationComponent', () => {
-    let component: CalendarDesktopWeekPresentationComponent;
     let fixture: ComponentFixture<CalendarDesktopWeekPresentationComponent>;
 
     const startOfMonday = dayjs('2025-05-05');
@@ -26,7 +25,6 @@ describe('CalendarDesktopWeekPresentationComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(CalendarDesktopWeekPresentationComponent);
-        component = fixture.componentInstance;
 
         fixture.componentRef.setInput('firstDayOfCurrentWeek', startOfMonday);
         fixture.detectChanges();
