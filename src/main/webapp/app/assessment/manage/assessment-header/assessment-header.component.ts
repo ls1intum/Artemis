@@ -53,20 +53,21 @@ export class AssessmentHeaderComponent {
     @Input() complaintType?: ComplaintType;
     @Input() assessmentsAreValid: boolean;
     @Input() hasAssessmentDueDatePassed: boolean;
-    @Input() isProgrammingExercise = false; // remove once diff view activated for programming exercises
+    @Input() hasUnassessedSubmissions: boolean;
 
+    @Input() isProgrammingExercise = false; // remove once diff view activated for programming exercises
     @Output() save = new EventEmitter<void>();
     @Output() onSubmit = new EventEmitter<void>();
     @Output() onCancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
-    @Output() useAsExampleSubmission = new EventEmitter<void>();
 
+    @Output() useAsExampleSubmission = new EventEmitter<void>();
     private _highlightDifferences: boolean;
     readonly ExerciseType = ExerciseType;
     readonly ComplaintType = ComplaintType;
-    readonly AssessmentType = AssessmentType;
 
+    readonly AssessmentType = AssessmentType;
     // Icons
     faSpinner = faSpinner;
     faSave = faSave;
@@ -90,7 +91,14 @@ export class AssessmentHeaderComponent {
     }
 
     get assessNextVisible() {
-        return this.result?.completionDate && (this.isAssessor || this.exercise?.isAtLeastInstructor) && !this.hasComplaint && !this.isTeamMode && !this.isTestRun;
+        return (
+            this.result?.completionDate &&
+            (this.isAssessor || this.exercise?.isAtLeastInstructor) &&
+            !this.hasComplaint &&
+            !this.isTeamMode &&
+            !this.isTestRun &&
+            this.hasUnassessedSubmissions
+        );
     }
 
     get saveDisabled() {
