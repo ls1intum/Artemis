@@ -8,28 +8,28 @@
     font-weight: 600;
     font-size: 0.75rem;
     text-align: center;
-}
 
-.day-badge.today-normal {
-    background-color: var(--primary);
-    color: var(--white);
-}
+    &.today-normal {
+        background-color: var(--primary);
+        color: var(--white);
+    }
 
-.day-badge.today-minimal {
-    background-color: var(--body-bg);
-    color: var(--primary);
-}
+    &.today-minimal {
+        background-color: var(--body-bg);
+        color: var(--primary);
 
-.day-badge.not-today {
-    background-color: var(--body-bg);
-}
+        &.selected-day {
+            background-color: var(--calendar-day-badge-selected);
+            color: var(--primary);
+        }
+    }
 
-.day-badge.selected-day {
-    background-color: var(--calendar-day-badge-selected);
-    color: var(--black);
-}
+    &.not-today {
+        background-color: var(--body-bg);
+    }
 
-.day-badge.today-minimal.selected-day {
-    background-color: var(--calendar-day-badge-selected);
-    color: var(--primary);
+    &.selected-day {
+        background-color: var(--calendar-day-badge-selected);
+        color: var(--black);
+    }
 }

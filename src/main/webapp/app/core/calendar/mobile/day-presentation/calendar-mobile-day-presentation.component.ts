@@ -29,8 +29,9 @@ export class CalendarMobileDayPresentationComponent implements AfterViewInit {
     }
 
     private computeWeekdaysFor(date: Dayjs): Day[] {
+        const selectedDate = this.date();
         const dates = this.getDatesInWeekOf(date);
-        return dates.map((date) => ({ date: date, isSelected: date.isSame(date, 'day'), id: date.format('YYYY-MM-DD') }));
+        return dates.map((date) => ({ date: date, isSelected: date.isSame(selectedDate, 'day'), id: date.format('YYYY-MM-DD') }));
     }
 
     private getDatesInWeekOf(date: Dayjs): Dayjs[] {
