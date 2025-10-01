@@ -18,6 +18,12 @@ import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-fo
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 
+/**
+ * The <jhi-assessment-layout> component provides the basic layout for an assessment page.
+ * It shows the header, alerts for complaints on top and the complaint form at the bottom of the page.
+ * The actual assessment needs to be inserted using content projection.
+ * Components using this component need to provide Inputs and handle Outputs. This component does not perform assessment logic.
+ */
 @Component({
     selector: 'jhi-assessment-layout',
     templateUrl: './assessment-layout.component.html',
