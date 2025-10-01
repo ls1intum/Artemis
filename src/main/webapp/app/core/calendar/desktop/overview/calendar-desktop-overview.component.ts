@@ -1,6 +1,7 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, Signal, computed, effect, inject, signal } from '@angular/core';
+import { distinctUntilChanged, map } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -16,6 +17,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 
+type Presentation = 'week' | 'month';
+
 @Component({
     selector: 'jhi-calendar-desktop-overview',
     imports: [
@@ -30,44 +33,34 @@ import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/c
     templateUrl: './calendar-desktop-overview.component.html',
     styleUrl: './calendar-desktop-overview.component.scss',
 })
-export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
+export class CalendarDesktopOverviewComponent implements OnInit {
     private calendarService = inject(CalendarService);
     private translateService = inject(TranslateService);
     private activatedRoute = inject(ActivatedRoute);
-    private activatedRouteSubscription?: Subscription;
-    private currentLocaleSubscription?: Subscription;
-    private currentLocale = signal(this.translateService.currentLang);
+    private currentLocale = this.getCurrentLocaleSignal();
 
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
 
-    presentation = signal<'week' | 'month'>('month');
+    presentation = signal<Presentation>('month');
     firstDayOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     firstDayOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
     isLoading = signal<boolean>(false);
     calendarSubscriptionToken = this.calendarService.subscriptionToken;
-    currentCourseId = signal<number | undefined>(undefined);
+    currentCourseId: Signal<number | undefined> = this.getCurrentCourseIdSignal();
+    monthDescription = computed<string>(() => this.computeMonthDescription(this.currentLocale(), this.presentation(), this.firstDayOfCurrentMonth(), this.firstDayOfCurrentWeek()));
 
-    ngOnInit(): void {
-        this.currentLocaleSubscription = this.translateService.onLangChange.subscribe((event) => {
-            this.currentLocale.set(event.lang);
-        });
-
-        this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
-            const courseIdParameter = parameterMap.get('courseId');
-            if (courseIdParameter) {
-                this.currentCourseId.set(+courseIdParameter);
+    constructor() {
+        effect(() => {
+            if (this.currentCourseId() !== undefined) {
                 this.loadEventsForCurrentMonth();
             }
         });
-
-        this.calendarService.loadSubscriptionToken().subscribe();
     }
 
-    ngOnDestroy() {
-        this.currentLocaleSubscription?.unsubscribe();
-        this.activatedRouteSubscription?.unsubscribe();
+    ngOnInit(): void {
+        this.calendarService.loadSubscriptionToken().subscribe();
     }
 
     goToPrevious(): void {
@@ -106,17 +99,35 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
         this.loadEventsForCurrentMonth();
     }
 
-    getMonthDescription(): string {
-        const currentLocale = this.currentLocale();
-        if (this.presentation() === 'month') {
-            return this.firstDayOfCurrentMonth().locale(currentLocale).format('MMMM YYYY');
+    private getCurrentLocaleSignal(): Signal<string> {
+        return toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), {
+            initialValue: this.translateService.currentLang,
+        });
+    }
+
+    private getCurrentCourseIdSignal(): Signal<number | undefined> {
+        return toSignal(
+            this.activatedRoute.parent!.paramMap.pipe(
+                map((parameterMap) => {
+                    const courseIdParameter = parameterMap.get('courseId');
+                    return courseIdParameter !== null ? Number(courseIdParameter) : undefined;
+                }),
+                distinctUntilChanged(),
+            ),
+            { initialValue: undefined },
+        );
+    }
+
+    private computeMonthDescription(currentLocale: string, presentation: Presentation, firstDayOfCurrentMonth: Dayjs, firstDayOfCurrentWeek: Dayjs): string {
+        if (presentation === 'month') {
+            return firstDayOfCurrentMonth.locale(currentLocale).format('MMMM YYYY');
         } else {
-            const firstDayOfCurrentWeek = this.firstDayOfCurrentWeek().locale(currentLocale);
-            const lastDayOfCurrentWeek = this.firstDayOfCurrentWeek().endOf('isoWeek').locale(currentLocale);
-            if (lastDayOfCurrentWeek.isSame(firstDayOfCurrentWeek, 'month')) {
-                return firstDayOfCurrentWeek.format('MMMM YYYY');
+            const localizedFirstDayOfCurrentWeek = firstDayOfCurrentWeek.locale(currentLocale);
+            const localizedLastDayOfCurrentWeek = firstDayOfCurrentWeek.endOf('isoWeek').locale(currentLocale);
+            if (localizedLastDayOfCurrentWeek.isSame(firstDayOfCurrentWeek, 'month')) {
+                return localizedFirstDayOfCurrentWeek.format('MMMM YYYY');
             } else {
-                return firstDayOfCurrentWeek.format('MMMM') + ' | ' + lastDayOfCurrentWeek.format('MMMM YYYY');
+                return localizedFirstDayOfCurrentWeek.format('MMMM') + ' | ' + localizedLastDayOfCurrentWeek.format('MMMM YYYY');
             }
         }
     }
