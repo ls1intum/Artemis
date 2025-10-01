@@ -1,15 +1,12 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, catchError, distinctUntilChanged, map, throwError } from 'rxjs';
+import { Observable, catchError, map, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import timezone from 'dayjs/esm/plugin/timezone';
 import { CalendarEvent, CalendarEventDTO, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 import { AlertService } from 'app/shared/service/alert.service';
-
-dayjs.extend(timezone);
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 
 type CalendarEventMapResponse = HttpResponse<Record<string, CalendarEventDTO[]>>;
 
@@ -17,38 +14,25 @@ type CalendarEventMapResponse = HttpResponse<Record<string, CalendarEventDTO[]>>
     providedIn: 'root',
 })
 export class CalendarService {
-    private httpClient = inject(HttpClient);
-    private alertService = inject(AlertService);
-    private translateService = inject(TranslateService);
+    private readonly httpClient = inject(HttpClient);
+    private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
     private readonly resourceUrl = '/api/core/calendar';
 
-    private currentLanguage = toSignal(
-        this.translateService.onLangChange.pipe(
-            map((event) => (event.lang === 'de' ? 'GERMAN' : 'ENGLISH')),
-            distinctUntilChanged(),
-        ),
-        {
-            initialValue: this.translateService.currentLang === 'de' ? 'GERMAN' : 'ENGLISH',
-        },
-    );
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
     private currentCourseId?: number;
     private firstDayOfCurrentMonth?: Dayjs;
     private currentSubscriptionToken = signal<string | undefined>(undefined);
     private currentEventMap = signal<Map<string, CalendarEvent[]>>(new Map());
-    readonly subscriptionToken = computed<string | undefined>(() => this.currentSubscriptionToken());
-    readonly eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
 
-    eventFilterOptions: CalendarEventFilterOption[] = [
-        CalendarEventFilterOption.LectureEvents,
-        CalendarEventFilterOption.ExerciseEvents,
-        CalendarEventFilterOption.TutorialEvents,
-        CalendarEventFilterOption.ExamEvents,
-    ];
+    subscriptionToken = computed<string | undefined>(() => this.currentSubscriptionToken());
+    eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
+    eventFilterOptions: CalendarEventFilterOption[] = this.buildEventFilterOptions();
     includedEventFilterOptions = signal<CalendarEventFilterOption[]>(this.eventFilterOptions);
 
     constructor() {
         effect(() => {
-            this.currentLanguage();
+            this.currentLocale();
             this.reloadEvents();
         });
     }
@@ -83,7 +67,7 @@ export class CalendarService {
         const nextMonthKey = firstDayOfCurrentMonth.add(1, 'month').format('YYYY-MM');
         const monthKeys = `${previousMonthKey},${currentMonthKey},${nextMonthKey}`;
         const timeZone = dayjs.tz.guess();
-        const language = this.currentLanguage() ?? 'ENGLISH';
+        const language = this.currentLocale() === 'de' ? 'GERMAN' : 'ENGLISH';
         const parameters = new HttpParams().set('monthKeys', monthKeys).set('timeZone', timeZone).set('language', language);
 
         return this.httpClient
@@ -113,6 +97,10 @@ export class CalendarService {
                 return [...currentOptions, option];
             }
         });
+    }
+
+    private buildEventFilterOptions(): CalendarEventFilterOption[] {
+        return [CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExerciseEvents, CalendarEventFilterOption.TutorialEvents, CalendarEventFilterOption.ExamEvents];
     }
 
     private createCalendarEventMap(dtoMap: Record<string, CalendarEventDTO[]>): Map<string, CalendarEvent[]> {
