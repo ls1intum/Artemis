@@ -1,6 +1,6 @@
 <div class="frame">
     <div class="header">
-        <button pButton size="small" (click)="goToPrevious()">
+        <button pButton size="small" (click)="goToPrevious()" data-testid="previous-button">
             <div class="chevron">
                 <fa-icon [icon]="faChevronLeft" />
             </div>
@@ -19,7 +19,7 @@
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="courseId" [isMobile]="true" #subscriptionPopover />
             </div>
         }
-        <button pButton size="small" (click)="goToNext()">
+        <button pButton size="small" (click)="goToNext()" data-testid="next-button">
             <div class="chevron">
                 <fa-icon [icon]="faChevronRight" />
             </div>

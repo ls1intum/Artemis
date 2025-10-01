@@ -1,11 +1,11 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { NgClass, NgStyle } from '@angular/common';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { Dayjs } from 'dayjs/esm';
 import { CalendarEventAndPosition, PositionInfo } from 'app/core/calendar/shared/entities/calendar-event-and-position.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-new-component/calendar-event-detail-popover.component';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
 
 type Day = { date: Dayjs; eventsAndPositions: CalendarEventAndPosition[]; id: string };
 
@@ -39,8 +39,6 @@ export class CalendarEventsPerDaySectionComponent {
     readonly CalendarEventType = CalendarEventType;
 
     dates = input.required<Dayjs[]>();
-    isEventSelected = output<boolean>();
-    selectedEvent = signal<CalendarEvent | undefined>(undefined);
     hoursOfDay = utils.getHoursOfDay();
     zeroToTwentyFour = utils.range(24);
     days = computed<Day[]>(() => {
@@ -50,12 +48,6 @@ export class CalendarEventsPerDaySectionComponent {
             id: utils.identify(date),
         }));
     });
-
-    constructor() {
-        effect(() => {
-            this.isEventSelected.emit(this.selectedEvent() !== undefined);
-        });
-    }
 
     private getEventsAndPositions(date: Dayjs): CalendarEventAndPosition[] {
         return this.dateToEventAndPositionMap().get(date.format('YYYY-MM-DD')) ?? [];

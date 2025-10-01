@@ -7,7 +7,7 @@ import { faClock, faLocationDot, faUser, faXmark } from '@fortawesome/free-solid
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 
 @Component({
-    selector: 'jhi-calendar-event-detail-popover-new-component',
+    selector: 'jhi-calendar-event-detail-popover-component',
     imports: [PopoverModule, TranslateDirective, FaIconComponent],
     templateUrl: './calendar-event-detail-popover.component.html',
     styleUrl: './calendar-event-detail-popover.component.scss',

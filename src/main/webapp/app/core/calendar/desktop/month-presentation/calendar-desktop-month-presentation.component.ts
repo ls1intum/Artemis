@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Dayjs } from 'dayjs/esm';
@@ -7,7 +7,7 @@ import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-new-component/calendar-event-detail-popover.component';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
 
 @Component({
     selector: 'jhi-calendar-desktop-month-presentation',
@@ -18,12 +18,11 @@ import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/ca
 export class CalendarDesktopMonthPresentationComponent {
     private eventMap = inject(CalendarService).eventMap;
 
-    firstDayOfCurrentMonth = input.required<Dayjs>();
-    selectedEvent = signal<CalendarEvent | undefined>(undefined);
-
     readonly utils = utils;
     readonly CalendarEventType = CalendarEventType;
-    readonly weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
+
+    firstDayOfCurrentMonth = input.required<Dayjs>();
+    weeks = computed(() => this.computeWeeksFrom(this.firstDayOfCurrentMonth()));
 
     getEventsOf(day: Dayjs): CalendarEvent[] {
         const key = day.format('YYYY-MM-DD');

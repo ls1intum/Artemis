@@ -36,16 +36,4 @@ describe('CalendarDesktopWeekPresentationComponent', () => {
         const dayInfoElements = fixture.debugElement.queryAll(By.css('.day-info'));
         expect(dayInfoElements).toHaveLength(7);
     });
-
-    it('should apply "no-scroll" class only when isEventSelected is true', () => {
-        const scrollContainer = fixture.debugElement.query(By.css('.scroll-container'));
-        expect(scrollContainer).toBeTruthy();
-
-        expect(component.isEventSelected()).toBeFalse();
-        expect(scrollContainer.nativeElement.classList).not.toContain('no-scroll');
-
-        component.isEventSelected.set(true);
-        fixture.detectChanges();
-        expect(scrollContainer.nativeElement.classList).toContain('no-scroll');
-    });
 });
