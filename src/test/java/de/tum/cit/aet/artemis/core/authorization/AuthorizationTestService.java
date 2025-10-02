@@ -178,7 +178,7 @@ public class AuthorizationTestService {
                 for (String pattern : patterns) {
                     if (!pattern.matches(REST_INTERNAL_PATH)) {
                         addElement(methodReports, javaMethod,
-                                "Expect path of method " + javaMethod.getName() + " annotated with @EnforceNothing to start with " + REST_PUBLIC_PATH + " but is " + pattern + ".");
+                                "Expect path of method " + javaMethod.getName() + " annotated with @Internal to start with " + REST_PUBLIC_PATH + " but is " + pattern + ".");
                     }
                 }
             }
