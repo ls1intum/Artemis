@@ -38,7 +38,6 @@ export enum LectureDraftState {
     REGULAR = 'regular',
 }
 
-// TODO: add input validation
 // TODO: add loading indicator while saving
 // TODO: adapt lecture numbering to existing lectures
 @Component({
@@ -69,7 +68,7 @@ export class LectureSeriesCreateComponent {
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faXmark = faXmark;
     protected readonly LectureDraftState = LectureDraftState;
-    protected readonly minEndDate = new Date();
+    protected readonly minimumEndDate = new Date();
 
     courseId = input.required<number>();
     lectureDrafts = signal<LectureDraft[]>([]);
