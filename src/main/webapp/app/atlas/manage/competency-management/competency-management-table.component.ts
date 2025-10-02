@@ -39,7 +39,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 export class CompetencyManagementTableComponent {
     courseId = input.required<number>();
     courseCompetencies = input<CourseCompetency[]>([]);
-    competencyType = input<CourseCompetencyType>(CourseCompetencyType.COMPETENCY);
+    competencyType = input.required<CourseCompetencyType>();
     standardizedCompetenciesEnabled = input<boolean>();
 
     allCompetencies = model.required<CourseCompetency[]>();
