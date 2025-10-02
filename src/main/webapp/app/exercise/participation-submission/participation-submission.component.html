@@ -108,7 +108,7 @@
                     </div>
                 </ng-template>
             </ngx-datatable-column>
-            @if (isTmpOrSolutionProgrParticipation || participation?.type === ParticipationType.PROGRAMMING) {
+            @if (isTmpOrSolutionProgrParticipation() || participation?.type === ParticipationType.PROGRAMMING) {
                 <ngx-datatable-column prop="commitHash" [minWidth]="80" [width]="80">
                     <ng-template ngx-datatable-header-template>
                         <span jhiTranslate="artemisApp.programmingSubmission.commitHash"></span>

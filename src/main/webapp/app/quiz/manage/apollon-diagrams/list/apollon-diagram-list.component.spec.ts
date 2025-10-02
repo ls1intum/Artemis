@@ -1,8 +1,7 @@
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -29,10 +28,8 @@ describe('ApollonDiagramList Component', () => {
 
     const course: Course = { id: 123 } as Course;
 
-    beforeEach(() => {
-        const route = { params: of({ courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
-
-        TestBed.configureTestingModule({
+    beforeEach(waitForAsync(async () => {
+        await TestBed.configureTestingModule({
             imports: [ApollonDiagramListComponent],
             declarations: [],
             providers: [
@@ -42,7 +39,6 @@ describe('ApollonDiagramList Component', () => {
                 ApollonDiagramService,
                 MockProvider(SortService),
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(CourseManagementService),
@@ -50,20 +46,19 @@ describe('ApollonDiagramList Component', () => {
             ],
         })
             .overrideTemplate(ApollonDiagramListComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ApollonDiagramListComponent);
-                apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-                courseService = fixture.debugElement.injector.get(CourseManagementService);
-                modalService = fixture.debugElement.injector.get(NgbModal);
-            });
-    });
+            .compileComponents();
+        fixture = TestBed.createComponent(ApollonDiagramListComponent);
+        fixture.componentRef.setInput('courseId', course.id);
+        apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
+        courseService = fixture.debugElement.injector.get(CourseManagementService);
+        modalService = fixture.debugElement.injector.get(NgbModal);
+    }));
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('ngOnInit', () => {
+    it('initialization', () => {
         const apollonDiagrams: ApollonDiagram[] = [new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!), new ApollonDiagram(UMLDiagramType.ActivityDiagram, course.id!)];
         const diagramResponse: HttpResponse<ApollonDiagram[]> = new HttpResponse({ body: apollonDiagrams });
         const courseResponse: HttpResponse<Course> = new HttpResponse({ body: course });
@@ -72,7 +67,7 @@ describe('ApollonDiagramList Component', () => {
         jest.spyOn(courseService, 'find').mockReturnValue(of(courseResponse));
 
         // test
-        fixture.componentInstance.ngOnInit();
+        fixture.detectChanges();
         expect(isEqual(fixture.componentInstance.apollonDiagrams, apollonDiagrams)).toBeTruthy();
     });
 

@@ -1,10 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { HttpResponse } from '@angular/common/http';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
@@ -28,8 +26,8 @@ describe('Example Solution Component', () => {
         exampleSolution: 'Example Solution',
     } as TextExercise;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(waitForAsync(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
                 ExampleSolutionComponent,
                 MockComponent(HeaderExercisePageWithDetailsComponent),
@@ -37,21 +35,14 @@ describe('Example Solution Component', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(HtmlForMarkdownPipe),
             ],
-            providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: new MockActivatedRoute({ exerciseId: 10 }),
-                },
-                MockProvider(ExerciseService),
-                MockProvider(ArtemisMarkdownService),
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [MockProvider(ExerciseService), MockProvider(ArtemisMarkdownService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(ExampleSolutionComponent);
+        fixture.componentRef.setInput('exerciseId', 10);
         comp = fixture.componentInstance;
         exerciseService = TestBed.inject(ExerciseService);
         artemisMarkdownService = TestBed.inject(ArtemisMarkdownService);
-    });
+    }));
 
     afterEach(() => {
         jest.restoreAllMocks();
@@ -60,7 +51,6 @@ describe('Example Solution Component', () => {
     it('should initialize', () => {
         const exerciseServiceSpy = jest.spyOn(exerciseService, 'getExerciseForExampleSolution').mockReturnValue(of({ body: exercise } as HttpResponse<Exercise>));
         const exampleSolutionInfo = { programmingExercise: { id: 1, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') } } as ExampleSolutionInfo;
-
         const extractExampleSolutionInfoSpy = jest.spyOn(ExerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
         fixture.detectChanges();
         expect(exerciseServiceSpy).toHaveBeenCalledOnce();

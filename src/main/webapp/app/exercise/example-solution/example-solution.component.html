@@ -1,6 +1,6 @@
 @if (exercise) {
     <div>
-        @if (displayHeader) {
+        @if (displayHeader()) {
             <jhi-header-exercise-page-with-details [exercise]="exercise!" [course]="exercise?.exerciseGroup?.exam?.course">
                 <span pagetitle>{{ exercise?.exerciseGroup ? exercise.exerciseGroup!.title : exercise!.title }}</span>
             </jhi-header-exercise-page-with-details>

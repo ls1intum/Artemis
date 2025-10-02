@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick, waitForAsync } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -39,7 +39,6 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
 import { FileService } from 'app/shared/service/file.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
@@ -52,8 +51,8 @@ describe('FileUploadSubmissionComponent', () => {
 
     const result = { id: 1 } as Result;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(waitForAsync(async () => {
+        await TestBed.configureTestingModule({
             imports: [NgxDatatableModule, FaIconComponent],
             declarations: [
                 FileUploadSubmissionComponent,
@@ -79,18 +78,14 @@ describe('FileUploadSubmissionComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                provideRouter([]),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(FileUploadSubmissionComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                alertService = TestBed.inject(AlertService);
-                fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
-            });
-    });
+        }).compileComponents();
+        fixture = TestBed.createComponent(FileUploadSubmissionComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        alertService = TestBed.inject(AlertService);
+        fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
+    }));
 
     afterEach(fakeAsync(() => {
         tick();
@@ -368,7 +363,6 @@ describe('FileUploadSubmissionComponent', () => {
         expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDueDateMissed');
 
         submission.participation.exercise = undefined;
-        comp.ngOnInit();
         fixture.detectChanges();
         comp.submitExercise();
 
@@ -397,9 +391,9 @@ describe('FileUploadSubmissionComponent', () => {
         const getDataForFileUploadEditorSpy = jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor');
         const fileUploadSubmission = createFileUploadSubmission();
         fileUploadSubmission.submitted = true;
-        comp.inputExercise = fileUploadExercise;
-        comp.inputSubmission = fileUploadSubmission;
-        comp.inputParticipation = fileUploadParticipation;
+        fixture.componentRef.setInput('inputExercise', fileUploadExercise);
+        fixture.componentRef.setInput('inputSubmission', fileUploadSubmission);
+        fixture.componentRef.setInput('inputParticipation', fileUploadParticipation);
 
         fixture.detectChanges();
 

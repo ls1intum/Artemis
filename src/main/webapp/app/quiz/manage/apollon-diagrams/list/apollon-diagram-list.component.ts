@@ -1,6 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Output, effect, inject, input } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -25,19 +24,18 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
     providers: [ApollonDiagramService],
     imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, DeleteButtonDirective],
 })
-export class ApollonDiagramListComponent implements OnInit {
+export class ApollonDiagramListComponent {
     private apollonDiagramsService = inject(ApollonDiagramService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
     private sortService = inject(SortService);
-    private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
 
     apollonDiagrams: ApollonDiagram[] = [];
     predicate = 'id';
     reverse = true;
 
-    @Input() courseId: number;
+    readonly courseId = input.required<number>();
 
     @Output() openDiagram = new EventEmitter<number>();
     @Output() closeDialog = new EventEmitter();
@@ -55,23 +53,20 @@ export class ApollonDiagramListComponent implements OnInit {
 
     ButtonSize = ButtonSize;
 
-    /**
-     * Initializes Apollon diagrams from the server
-     */
-    ngOnInit() {
-        this.courseId ??= Number(this.route.snapshot.paramMap.get('courseId'));
-
-        this.courseService.find(this.courseId).subscribe((courseResponse: HttpResponse<Course>) => {
-            this.course = courseResponse.body!;
+    constructor() {
+        effect(() => {
+            this.courseService.find(this.courseId()).subscribe((courseResponse: HttpResponse<Course>) => {
+                this.course = courseResponse.body!;
+            });
+            this.loadDiagrams();
         });
-        this.loadDiagrams();
     }
 
     /**
      * Loads the Apollon diagrams of this course which will be shown
      */
     loadDiagrams() {
-        this.apollonDiagramsService.getDiagramsByCourse(this.courseId).subscribe({
+        this.apollonDiagramsService.getDiagramsByCourse(this.courseId()).subscribe({
             next: (response) => {
                 this.apollonDiagrams = response.body!;
             },
@@ -86,7 +81,7 @@ export class ApollonDiagramListComponent implements OnInit {
      * @param apollonDiagram
      */
     delete(apollonDiagram: ApollonDiagram) {
-        this.apollonDiagramsService.delete(apollonDiagram.id!, this.courseId).subscribe({
+        this.apollonDiagramsService.delete(apollonDiagram.id!, this.courseId()).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
                 this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {

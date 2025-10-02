@@ -1,5 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, effect, inject, input } from '@angular/core';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { Subject, Subscription, combineLatest, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -41,7 +40,6 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
     imports: [TranslateDirective, NgClass, NgxDatatableModule, ResultComponent, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisTimeAgoPipe],
 })
 export class ParticipationSubmissionComponent implements OnInit {
-    private route = inject(ActivatedRoute);
     private submissionService = inject(SubmissionService);
     private translateService = inject(TranslateService);
     private participationService = inject(ParticipationService);
@@ -61,11 +59,12 @@ export class ParticipationSubmissionComponent implements OnInit {
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    @Input() participationId: number;
+    readonly participationId = input.required<number>();
+
+    readonly isTmpOrSolutionProgrParticipation = input<boolean>(false);
+    readonly exerciseId = input.required<number>();
 
     public exerciseStatusBadge = 'bg-success';
-
-    isTmpOrSolutionProgrParticipation = false;
     exercise?: Exercise;
     participation?: Participation;
     dueDate?: dayjs.Dayjs;
@@ -77,11 +76,16 @@ export class ParticipationSubmissionComponent implements OnInit {
     // Icons
     faTrash = faTrash;
 
+    constructor() {
+        effect(() => {
+            this.setupPage();
+        });
+    }
+
     /**
      * Initialize component by setting up page and subscribe to eventManager
      */
     ngOnInit() {
-        this.setupPage();
         this.eventSubscriber = this.eventManager.subscribe('submissionsModification', () => this.setupPage());
     }
 
@@ -90,66 +94,57 @@ export class ParticipationSubmissionComponent implements OnInit {
      */
     setupPage() {
         this.isLoading = true;
+        this.participationService.getBuildJobIdsForResultsOfParticipation(this.participationId()).subscribe((resultIdToBuildJobIdMap) => {
+            this.resultIdToBuildJobIdMap = resultIdToBuildJobIdMap;
+            if (this.isTmpOrSolutionProgrParticipation()) {
+                // Find programming exercise of template and solution programming participation
+                this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exerciseId(), true).subscribe((exerciseResponse) => {
+                    this.exercise = exerciseResponse.body!;
+                    this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exercise.dueDate!)) ? 'bg-danger' : 'bg-success';
+                    const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
+                    const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
 
-        // If no query parameters are set, this.route.queryParams will be undefined so we need a fallback dummy observable
-        combineLatest([this.route.params, this.route.queryParams ?? of(undefined)]).subscribe(([params, queryParams]) => {
-            this.participationId = +params['participationId'];
-            if (queryParams?.['isTmpOrSolutionProgrParticipation'] != undefined) {
-                this.isTmpOrSolutionProgrParticipation = queryParams['isTmpOrSolutionProgrParticipation'] === 'true';
-            }
-            this.participationService.getBuildJobIdsForResultsOfParticipation(this.participationId).subscribe((resultIdToBuildJobIdMap) => {
-                this.resultIdToBuildJobIdMap = resultIdToBuildJobIdMap;
-                if (this.isTmpOrSolutionProgrParticipation) {
-                    // Find programming exercise of template and solution programming participation
-                    this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
-                        this.exercise = exerciseResponse.body!;
-                        this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exercise.dueDate!)) ? 'bg-danger' : 'bg-success';
-                        const templateParticipation = (this.exercise as ProgrammingExercise).templateParticipation;
-                        const solutionParticipation = (this.exercise as ProgrammingExercise).solutionParticipation;
+                    // Check if requested participationId belongs to the template or solution participation
+                    if (this.participationId() === templateParticipation?.id) {
+                        this.participation = templateParticipation;
+                        this.submissions = templateParticipation.submissions!;
+                        // This is needed to access the exercise in the result details
+                        templateParticipation.programmingExercise = this.exercise;
+                    } else if (this.participationId() === solutionParticipation?.id) {
+                        this.participation = solutionParticipation;
+                        this.submissions = solutionParticipation.submissions!;
+                        // This is needed to access the exercise in the result details
+                        solutionParticipation.programmingExercise = this.exercise;
+                    } else {
+                        // Should not happen
+                        alert(this.translateService.instant('artemisApp.participation.noParticipation'));
+                    }
 
-                        // Check if requested participationId belongs to the template or solution participation
-                        if (this.participationId === templateParticipation?.id) {
-                            this.participation = templateParticipation;
-                            this.submissions = templateParticipation.submissions!;
-                            // This is needed to access the exercise in the result details
-                            templateParticipation.programmingExercise = this.exercise;
-                        } else if (this.participationId === solutionParticipation?.id) {
-                            this.participation = solutionParticipation;
-                            this.submissions = solutionParticipation.submissions!;
-                            // This is needed to access the exercise in the result details
-                            solutionParticipation.programmingExercise = this.exercise;
-                        } else {
-                            // Should not happen
-                            alert(this.translateService.instant('artemisApp.participation.noParticipation'));
-                        }
+                    if (this.submissions) {
+                        this.submissions.forEach((submission: ProgrammingSubmission) => {
+                            if (submission.results) {
+                                submission.results.forEach((result: Result) => {
+                                    result.buildJobId = this.resultIdToBuildJobIdMap?.[result.id!];
+                                });
+                            }
+                        });
+                    }
 
-                        if (this.submissions) {
-                            this.submissions.forEach((submission: ProgrammingSubmission) => {
-                                if (submission.results) {
-                                    submission.results.forEach((result: Result) => {
-                                        result.buildJobId = this.resultIdToBuildJobIdMap?.[result.id!];
-                                    });
-                                }
-                            });
-                        }
-
-                        this.isLoading = false;
-                    });
-                } else {
-                    // Get exercise for release and due dates
-                    this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                        this.exercise = exerciseResponse.body!;
-                        this.updateStatusBadgeColor();
-                    });
-                    this.fetchParticipationAndSubmissionsForStudent();
                     this.isLoading = false;
-                }
-            });
+                });
+            } else {
+                // Get exercise for release and due dates
+                this.exerciseService.find(this.exerciseId()).subscribe((exerciseResponse) => {
+                    this.exercise = exerciseResponse.body!;
+                    this.updateStatusBadgeColor();
+                });
+                this.fetchParticipationAndSubmissionsForStudent();
+                this.isLoading = false;
+            }
         });
     }
-
     fetchParticipationAndSubmissionsForStudent() {
-        combineLatest([this.participationService.find(this.participationId), this.submissionService.findAllSubmissionsOfParticipation(this.participationId)])
+        combineLatest([this.participationService.find(this.participationId()), this.submissionService.findAllSubmissionsOfParticipation(this.participationId())])
             .pipe(
                 map((res) => [res[0].body, res[1].body]),
                 catchError(() => of(null)),
@@ -228,28 +223,28 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     deleteResult(submission: Submission, result: Result) {
-        if (this.exercise && submission.id && result.id && this.participationId) {
+        if (this.exercise && submission.id && result.id && this.participationId()) {
             switch (this.exercise.type) {
                 case ExerciseType.TEXT:
-                    this.textAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe({
+                    this.textAssessmentService.deleteAssessment(this.participationId(), submission.id, result.id).subscribe({
                         next: () => this.updateResults(submission, result),
                         error: (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     });
                     break;
                 case ExerciseType.MODELING:
-                    this.modelingAssessmentsService.deleteAssessment(this.participationId, submission.id, result.id).subscribe({
+                    this.modelingAssessmentsService.deleteAssessment(this.participationId(), submission.id, result.id).subscribe({
                         next: () => this.updateResults(submission, result),
                         error: (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     });
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    this.fileUploadAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe({
+                    this.fileUploadAssessmentService.deleteAssessment(this.participationId(), submission.id, result.id).subscribe({
                         next: () => this.updateResults(submission, result),
                         error: (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     });
                     break;
                 case ExerciseType.PROGRAMMING:
-                    this.programmingAssessmentService.deleteAssessment(this.participationId, submission.id, result.id).subscribe({
+                    this.programmingAssessmentService.deleteAssessment(this.participationId(), submission.id, result.id).subscribe({
                         next: () => this.updateResults(submission, result),
                         error: (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     });

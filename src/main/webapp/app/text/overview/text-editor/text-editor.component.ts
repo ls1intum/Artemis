@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, effect, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -147,31 +147,31 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     sortedHistoryResults: Result[];
     hasAthenaResultForLatestSubmission = false;
     showHistory = false;
-    submissionId: number | undefined;
 
-    ngOnInit() {
-        if (this.inputValuesArePresent()) {
-            this.setupComponentWithInputValues();
-        } else {
-            const participationId = this.participationId() !== undefined ? this.participationId() : Number(this.route.snapshot.paramMap.get('participationId'));
-            this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
+    submissionId = input<number>();
+    exerciseId = input.required<number>();
 
-            if (Number.isNaN(participationId)) {
-                return this.alertService.error('artemisApp.textExercise.error');
+    constructor() {
+        effect(() => {
+            if (this.inputValuesArePresent()) {
+                this.setupComponentWithInputValues();
+            } else {
+                const participationId = this.participationId();
+                const submissionId = this.submissionId();
+                if (!participationId || Number.isNaN(participationId)) {
+                    return this.alertService.error('artemisApp.textExercise.error');
+                }
+                this.updateParticipation(this.participation, submissionId);
+                this.textService.get(participationId!).subscribe({
+                    next: (data: StudentParticipation) => this.updateParticipation(data, submissionId),
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+
+                this.isReadOnlyWithShowResult = !!this.submissionId;
             }
-
-            this.route.params?.subscribe(() => {
-                this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
-                this.updateParticipation(this.participation, this.submissionId);
-            });
-
-            this.textService.get(participationId!).subscribe({
-                next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
-
-            this.isReadOnlyWithShowResult = !!this.submissionId;
-        }
+        });
+    }
+    ngOnInit() {
         this.participationUpdateListener?.unsubscribe();
         // Triggers on new result received
         this.participationUpdateListener = this.participationWebsocketService
@@ -209,7 +209,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         // only load the settings if Iris is available and this is not an exam exercise
         if (this.profileService.isProfileActive(PROFILE_IRIS) && !this.examMode) {
             this.route.params.subscribe((params) => {
-                this.irisSettingsService.getCombinedExerciseSettings(params['exerciseId']).subscribe((irisSettings) => {
+                this.irisSettingsService.getCombinedExerciseSettings(this.exerciseId()).subscribe((irisSettings) => {
                     this.irisSettings = irisSettings;
                 });
             });

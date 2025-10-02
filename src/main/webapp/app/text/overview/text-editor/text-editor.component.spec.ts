@@ -2,8 +2,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { input } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick, waitForAsync } from '@angular/core/testing';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from 'test/helpers/mocks/service/mock-text-editor.service';
@@ -13,7 +12,6 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
-import { textEditorRoute } from 'app/text/overview/text-editor.route';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
@@ -61,7 +59,6 @@ describe('TextEditorComponent', () => {
     let profileService: ProfileService;
     let irisSettingsService: IrisSettingsService;
 
-    const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
     const textExercise = { id: 1 } as TextExercise;
     const participation = new StudentParticipation();
     const result = new Result();
@@ -73,9 +70,8 @@ describe('TextEditorComponent', () => {
         result.id = 1;
     });
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([textEditorRoute[0]]), FaIconComponent],
+    beforeEach(waitForAsync(async () => {
+        await TestBed.configureTestingModule({
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),
@@ -95,7 +91,6 @@ describe('TextEditorComponent', () => {
             ],
             providers: [
                 AlertService,
-                { provide: ActivatedRoute, useValue: route },
                 { provide: TextEditorService, useClass: MockTextEditorService },
                 LocalStorageService,
                 SessionStorageService,
@@ -107,18 +102,17 @@ describe('TextEditorComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TextEditorComponent);
-                comp = fixture.componentInstance;
-                textService = TestBed.inject(TextEditorService);
-                textSubmissionService = TestBed.inject(TextSubmissionService);
-                profileService = TestBed.inject(ProfileService);
-                irisSettingsService = TestBed.inject(IrisSettingsService);
-                getTextForParticipationStub = jest.spyOn(textService, 'get');
-            });
-    });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TextEditorComponent);
+        comp = fixture.componentInstance;
+        textService = TestBed.inject(TextEditorService);
+        textSubmissionService = TestBed.inject(TextSubmissionService);
+        profileService = TestBed.inject(ProfileService);
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        getTextForParticipationStub = jest.spyOn(textService, 'get');
+        fixture.componentRef.setInput('participationId', participation.id);
+    }));
 
     afterEach(() => {
         jest.restoreAllMocks();
@@ -478,9 +472,10 @@ describe('TextEditorComponent', () => {
         const mockIrisSettings = { id: 123 } as IrisSettings;
         jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(mockIrisSettings));
 
-        route.params = of({ exerciseId: '456' });
+        fixture.componentRef.setInput('exerciseId', 456);
 
         comp.examMode = false;
+        fixture.detectChanges();
 
         comp['loadIrisSettings']();
         tick();
@@ -498,9 +493,9 @@ describe('TextEditorComponent', () => {
 
         jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings');
 
-        route.params = of({ exerciseId: '456' });
-
+        fixture.componentRef.setInput('exerciseId', 456);
         comp.examMode = true;
+        fixture.detectChanges();
 
         comp['loadIrisSettings']();
         tick();
@@ -518,9 +513,9 @@ describe('TextEditorComponent', () => {
 
         jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings');
 
-        route.params = of({ exerciseId: '456' });
-
+        fixture.componentRef.setInput('exerciseId', 456);
         comp.examMode = false;
+        fixture.detectChanges();
 
         comp['loadIrisSettings']();
         tick();

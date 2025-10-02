@@ -1,11 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick, waitForAsync } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { DebugElement } from '@angular/core';
@@ -64,8 +63,6 @@ describe('ParticipationSubmissionComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let findAllSubmissionsOfParticipationStub: jest.SpyInstance;
     let debugElement: DebugElement;
-    let router: Router;
-    const route = () => ({ params: of({ participationId: 1, exerciseId: 42 }) });
 
     const result1 = { id: 44 } as Result;
     const result2 = { id: 45 } as Result;
@@ -82,9 +79,9 @@ describe('ParticipationSubmissionComponent', () => {
     const fileUploadExercise = { id: 100, type: ExerciseType.FILE_UPLOAD } as Exercise;
     const textExercise = { id: 100, type: ExerciseType.TEXT } as Exercise;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [NgxDatatableModule, RouterModule.forRoot([]), FaIconComponent],
+    beforeEach(waitForAsync(async () => {
+        await TestBed.configureTestingModule({
+            imports: [NgxDatatableModule, FaIconComponent],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),
@@ -104,36 +101,32 @@ describe('ParticipationSubmissionComponent', () => {
                 SessionStorageService,
                 LocalStorageService,
                 { provide: ComplaintService, useClass: MockComplaintService },
-                { provide: ActivatedRoute, useValue: route() },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ParticipationSubmissionComponent);
-                comp = fixture.componentInstance;
-                comp.participationId = 1;
-                debugElement = fixture.debugElement;
-                router = TestBed.inject(Router);
-                participationService = TestBed.inject(ParticipationService);
-                submissionService = TestBed.inject(SubmissionService);
-                textAssessmentService = TestBed.inject(TextAssessmentService);
-                modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
-                programmingAssessmentService = TestBed.inject(ProgrammingAssessmentManualResultService);
-                fileUploadAssessmentService = TestBed.inject(FileUploadAssessmentService);
+        }).compileComponents();
 
-                exerciseService = TestBed.inject(ExerciseService);
-                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
-                findAllSubmissionsOfParticipationStub = jest.spyOn(submissionService, 'findAllSubmissionsOfParticipation');
+        fixture = TestBed.createComponent(ParticipationSubmissionComponent);
+        comp = fixture.componentInstance;
+        fixture.componentRef.setInput('participationId', 1);
+        fixture.componentRef.setInput('exerciseId', 42);
+        debugElement = fixture.debugElement;
+        participationService = TestBed.inject(ParticipationService);
+        submissionService = TestBed.inject(SubmissionService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
+        modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
+        programmingAssessmentService = TestBed.inject(ProgrammingAssessmentManualResultService);
+        fileUploadAssessmentService = TestBed.inject(FileUploadAssessmentService);
 
-                deleteFileUploadAssessmentStub = jest.spyOn(fileUploadAssessmentService, 'deleteAssessment');
-                deleteProgrammingAssessmentStub = jest.spyOn(programmingAssessmentService, 'deleteAssessment');
-                deleteModelingAssessmentStub = jest.spyOn(modelingAssessmentService, 'deleteAssessment');
-                deleteTextAssessmentStub = jest.spyOn(textAssessmentService, 'deleteAssessment');
-                fixture.ngZone!.run(() => router.initialNavigation());
-            });
-    });
+        exerciseService = TestBed.inject(ExerciseService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        findAllSubmissionsOfParticipationStub = jest.spyOn(submissionService, 'findAllSubmissionsOfParticipation');
+
+        deleteFileUploadAssessmentStub = jest.spyOn(fileUploadAssessmentService, 'deleteAssessment');
+        deleteProgrammingAssessmentStub = jest.spyOn(programmingAssessmentService, 'deleteAssessment');
+        deleteModelingAssessmentStub = jest.spyOn(modelingAssessmentService, 'deleteAssessment');
+        deleteTextAssessmentStub = jest.spyOn(textAssessmentService, 'deleteAssessment');
+    }));
 
     afterEach(() => {
         jest.restoreAllMocks();
@@ -186,8 +179,9 @@ describe('ParticipationSubmissionComponent', () => {
     }));
 
     it('Template Submission is correctly loaded', fakeAsync(() => {
-        TestBed.inject(ActivatedRoute).params = of({ participationId: 2, exerciseId: 42 });
-        TestBed.inject(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
+        fixture.componentRef.setInput('participationId', 2);
+        fixture.componentRef.setInput('exerciseId', 42);
+        fixture.componentRef.setInput('isTmpOrSolutionProgrParticipation', true);
         const templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.id = 2;
         templateParticipation.submissions = [
@@ -226,8 +220,9 @@ describe('ParticipationSubmissionComponent', () => {
     }));
 
     it('Solution Submission is correctly loaded', fakeAsync(() => {
-        TestBed.inject(ActivatedRoute).params = of({ participationId: 3, exerciseId: 42 });
-        TestBed.inject(ActivatedRoute).queryParams = of({ isTmpOrSolutionProgrParticipation: 'true' });
+        fixture.componentRef.setInput('participationId', 3);
+        fixture.componentRef.setInput('exerciseId', 42);
+        fixture.componentRef.setInput('isTmpOrSolutionProgrParticipation', true);
         const solutionParticipation = new SolutionProgrammingExerciseParticipation();
         solutionParticipation.id = 3;
         solutionParticipation.submissions = [

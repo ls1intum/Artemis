@@ -1,6 +1,5 @@
-import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, ViewChild, effect, inject, input } from '@angular/core';
 import { UpperCasePipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
@@ -58,8 +57,7 @@ import { FileService } from 'app/shared/service/file.service';
         HtmlForMarkdownPipe,
     ],
 })
-export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
-    private route = inject(ActivatedRoute);
+export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
     private fileUploadSubmissionService = inject(FileUploadSubmissionService);
     private alertService = inject(AlertService);
     private fileService = inject(FileService);
@@ -70,14 +68,14 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     readonly addParticipationToResult = addParticipationToResult;
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
 
-    @Input() participationId?: number;
-    @Input() displayHeader = true;
-    @Input() expandProblemStatement = true;
-    @Input() displayedInExamSummary = false;
+    readonly participationId = input<number>();
+    readonly displayHeader = input(true);
+    readonly expandProblemStatement = input(true);
+    readonly displayedInExamSummary = input(false);
 
-    @Input() inputExercise?: FileUploadExercise;
-    @Input() inputSubmission?: FileUploadSubmission;
-    @Input() inputParticipation?: StudentParticipation;
+    readonly inputExercise = input<FileUploadExercise>();
+    readonly inputSubmission = input<FileUploadSubmission>();
+    readonly inputParticipation = input<StudentParticipation>();
 
     submission?: FileUploadSubmission;
     submittedFileName: string;
@@ -104,63 +102,64 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     // Icons
     farListAlt = faListAlt;
 
-    /**
-     * Initializes data for file upload editor
-     */
-    ngOnInit() {
-        if (this.inputValuesArePresent()) {
-            this.setupComponentWithInputValues();
-        } else {
-            const participationId = this.participationId ?? Number(this.route.snapshot.paramMap.get('participationId'));
-            if (Number.isNaN(participationId)) {
-                return this.alertService.error('artemisApp.fileUploadExercise.error');
+    constructor() {
+        /**
+         * Initializes data for file upload editor
+         */
+        effect(() => {
+            if (this.inputValuesArePresent()) {
+                this.setupComponentWithInputValues();
+            } else {
+                const participationId = this.participationId();
+                if (!participationId || Number.isNaN(participationId)) {
+                    return this.alertService.error('artemisApp.fileUploadExercise.error');
+                }
+                this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe({
+                    next: (submission: FileUploadSubmission) => {
+                        const tmpResult = getLatestSubmissionResult(submission);
+                        this.participation = <StudentParticipation>submission.participation;
+
+                        // reconnect participation <--> submission
+                        this.participation.submissions = [<FileUploadSubmission>omit(submission, 'participation')];
+
+                        this.submission = submission;
+                        this.result = tmpResult!;
+                        this.resultWithComplaint = getFirstResultWithComplaint(submission);
+                        this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
+                        this.examMode = !!this.fileUploadExercise.exerciseGroup;
+                        this.fileUploadExercise.studentParticipations = [this.participation];
+                        this.course = getCourseFromExercise(this.fileUploadExercise);
+
+                        // checks if the student started the exercise after the due date
+                        this.isLate =
+                            this.fileUploadExercise &&
+                            !!this.fileUploadExercise.dueDate &&
+                            !!this.participation.initializationDate &&
+                            dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.fileUploadExercise, this.participation));
+
+                        this.acceptedFileExtensions = this.fileUploadExercise
+                            .filePattern!.split(',')
+                            .map((extension) => `.${extension}`)
+                            .join(',');
+                        this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || dayjs().isAfter(this.fileUploadExercise.assessmentDueDate);
+
+                        if (this.submission?.submitted) {
+                            this.setSubmittedFile();
+                        }
+                        if (this.submission?.submitted && this.result?.completionDate) {
+                            this.fileUploadAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
+                                this.result = assessmentResult;
+                            });
+                        }
+                        this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
+                    },
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
             }
-            this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe({
-                next: (submission: FileUploadSubmission) => {
-                    const tmpResult = getLatestSubmissionResult(submission);
-                    this.participation = <StudentParticipation>submission.participation;
-
-                    // reconnect participation <--> submission
-                    this.participation.submissions = [<FileUploadSubmission>omit(submission, 'participation')];
-
-                    this.submission = submission;
-                    this.result = tmpResult!;
-                    this.resultWithComplaint = getFirstResultWithComplaint(submission);
-                    this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
-                    this.examMode = !!this.fileUploadExercise.exerciseGroup;
-                    this.fileUploadExercise.studentParticipations = [this.participation];
-                    this.course = getCourseFromExercise(this.fileUploadExercise);
-
-                    // checks if the student started the exercise after the due date
-                    this.isLate =
-                        this.fileUploadExercise &&
-                        !!this.fileUploadExercise.dueDate &&
-                        !!this.participation.initializationDate &&
-                        dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.fileUploadExercise, this.participation));
-
-                    this.acceptedFileExtensions = this.fileUploadExercise
-                        .filePattern!.split(',')
-                        .map((extension) => `.${extension}`)
-                        .join(',');
-                    this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || dayjs().isAfter(this.fileUploadExercise.assessmentDueDate);
-
-                    if (this.submission?.submitted) {
-                        this.setSubmittedFile();
-                    }
-                    if (this.submission?.submitted && this.result?.completionDate) {
-                        this.fileUploadAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
-                            this.result = assessmentResult;
-                        });
-                    }
-                    this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
-        }
+        });
     }
-
     private inputValuesArePresent(): boolean {
-        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
+        return !!(this.inputExercise() || this.inputSubmission() || this.inputParticipation());
     }
 
     /**
@@ -171,14 +170,17 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * @private
      */
     private setupComponentWithInputValues() {
-        if (this.inputExercise) {
-            this.fileUploadExercise = this.inputExercise;
+        const inputExercise = this.inputExercise();
+        if (inputExercise) {
+            this.fileUploadExercise = inputExercise;
         }
-        if (this.inputSubmission) {
-            this.submission = this.inputSubmission;
+        const inputSubmission = this.inputSubmission();
+        if (inputSubmission) {
+            this.submission = inputSubmission;
         }
-        if (this.inputParticipation) {
-            this.participation = this.inputParticipation;
+        const inputParticipation = this.inputParticipation();
+        if (inputParticipation) {
+            this.participation = inputParticipation;
         }
 
         if (this.submission?.submitted) {
