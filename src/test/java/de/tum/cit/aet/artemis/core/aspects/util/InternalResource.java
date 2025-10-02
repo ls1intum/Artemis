@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 
 @Profile(PROFILE_CORE)
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 public class InternalResource {
 
     @GetMapping("test")
-    @EnforceNothing
     @Internal
     public ResponseEntity<Void> internalTest() {
         return ResponseEntity.ok().build();
