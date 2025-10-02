@@ -87,7 +87,7 @@ public class FeatureToggleService {
             features.put(Feature.Science, scienceEnabledOnStart);
         }
 
-        if (!features.containsKey(Feature.Science)) {
+        if (!features.containsKey(Feature.AtlasAgent)) {
             features.put(Feature.AtlasAgent, false);
         }
 
