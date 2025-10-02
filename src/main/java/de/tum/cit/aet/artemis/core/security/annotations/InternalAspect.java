@@ -41,11 +41,16 @@ public class InternalAspect {
         this.allowedMatchers = props.getAllowedCidrs().stream().map(IpAddressMatcher::new).toList();
     }
 
+    /**
+     * Check access to methods or classes annotated with @Internal.
+     * Access is allowed only from IP addresses defined in {@link de.tum.cit.aet.artemis.core.config.InternalAccessConfiguration}.
+     */
     @Before("@within(Internal) || @annotation(Internal)")
     public void checkAccess() {
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attrs == null)
+        if (attrs == null) {
             return;
+        }
 
         HttpServletRequest request = attrs.getRequest();
         String clientIp = getIpStringFromRequest(request);
