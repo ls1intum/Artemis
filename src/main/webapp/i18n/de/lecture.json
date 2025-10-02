@@ -100,7 +100,8 @@
                     "endDate": "End Date"
                 },
                 "generatedLecturesHeading": "Generierte Vorlesungen",
-                "editLectureModalTitle": "Vorlesungsdetails bearbeiten"
+                "editLectureModalTitle": "Vorlesungsdetails bearbeiten",
+                "seriesCreationError": "Beim Erstellen der Vorlesungsserie ist etwas schief gegangen. Bitte versuche es erneut."
             }
         },
         "attachment": {

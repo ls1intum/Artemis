@@ -96,7 +96,8 @@
                     "seriesEndDate": "End Date"
                 },
                 "generatedLecturesHeading": "Generated Lectures",
-                "editLectureModalTitle": "Edit Lecture Details"
+                "editLectureModalTitle": "Edit Lecture Details",
+                "seriesCreationError": "Something went wrong while creating the lecture series. Please try again."
             }
         },
         "attachment": {

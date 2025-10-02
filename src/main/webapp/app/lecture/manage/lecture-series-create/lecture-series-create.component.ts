@@ -113,7 +113,7 @@ export class LectureSeriesCreateComponent {
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: () => this.router.navigate(['course-management', courseId, 'lectures']),
-                error: () => this.alertService.addErrorAlert('Something went wrong. Please try again.'),
+                error: () => this.alertService.addErrorAlert('artemisApp.lecture.createSeries.seriesCreationError'),
             });
     }
 
