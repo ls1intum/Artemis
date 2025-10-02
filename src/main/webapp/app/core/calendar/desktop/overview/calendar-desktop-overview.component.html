@@ -7,7 +7,7 @@
             [ngModel]="selectedFilterOptions()"
             (ngModelChange)="onSelectionOptionsChange($event)"
             optionLabel="name"
-            placeholder="Select Events"
+            [placeholder]="filterComponentPlaceholder()"
             [showHeader]="false"
         >
             <ng-template pTemplate="selectedItems">
@@ -17,7 +17,9 @@
                             <div class="chip" [attr.data-testid]="'chip-' + optionWithMetadata.option">
                                 <div class="legend-circle" [class]="optionWithMetadata.colorClassName"></div>
                                 <span>{{ optionWithMetadata.name }}</span>
-                                <fa-icon [icon]="faXmark" class="remove-button" (click)="removeOption(optionWithMetadata.option); $event.stopPropagation()" />
+                                <button class="remove-button" (click)="removeOption(optionWithMetadata.option); $event.stopPropagation()">
+                                    <fa-icon [icon]="faXmark" />
+                                </button>
                             </div>
                         }
                     </div>

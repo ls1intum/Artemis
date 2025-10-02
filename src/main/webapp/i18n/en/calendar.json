@@ -24,7 +24,7 @@
                 "tutorials": "Tutorials",
                 "exams": "Exams"
             },
-            "filterButtonLabel": "Filter",
+            "filterComponentPlaceholder": "Choose Event-Types",
             "subscribeButtonLabel": "Subscribe",
             "todayButtonLabel": "Today",
             "weekButtonLabel": "Week",

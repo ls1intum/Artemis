@@ -21,7 +21,11 @@ import { ButtonGroupModule } from 'primeng/buttongroup';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 
-type CalendarEventFilterOptionAndMetadata = { option: CalendarEventFilterOption; name: string; colorClassName: string };
+interface CalendarEventFilterOptionAndMetadata {
+    option: CalendarEventFilterOption;
+    name: string;
+    colorClassName: string;
+}
 
 @Component({
     selector: 'jhi-calendar-desktop-overview',
@@ -67,6 +71,10 @@ export class CalendarDesktopOverviewComponent implements OnInit {
     presentationOptions = computed<{ label: string; value: 'week' | 'month' }[]>(() => {
         this.currentLocale();
         return this.buildPresentationOptions();
+    });
+    filterComponentPlaceholder = computed(() => {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.calendar.filterComponentPlaceholder');
     });
     selectedFilterOptions = computed<CalendarEventFilterOptionAndMetadata[]>(() => {
         this.currentLocale();

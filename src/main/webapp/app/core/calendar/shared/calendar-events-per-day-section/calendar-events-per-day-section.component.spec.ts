@@ -112,7 +112,7 @@ describe('CalendarEventsPerDaySectionComponent', () => {
         expect(textExerciseStyle.left).toBeCloseTo(67.17, 1);
     });
 
-    it('should open popover', () => {
+    it('should open popover', async () => {
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         expect(examEventCell).toBeTruthy();
 
@@ -121,8 +121,8 @@ describe('CalendarEventsPerDaySectionComponent', () => {
 
         examEventCell.nativeElement.click();
         fixture.detectChanges();
-
-        expect(popoverComponent.isOpen).toBeTruthy();
+        await fixture.whenStable();
+        expect(popoverComponent.isOpen()).toBeTrue();
     });
 
     it('should close popover', () => {

@@ -71,7 +71,7 @@ describe('CalendarDesktopOverviewComponent', () => {
 
         const previousButton = fixture.debugElement.query(By.css('#previous-button')).nativeElement;
         const nextButton = fixture.debugElement.query(By.css('#next-button')).nativeElement;
-        const selectButton = fixture.debugElement.queryAll(By.css('#presentation-select-button'));
+        const selectButton = fixture.debugElement.query(By.css('#presentation-select-button'));
         expect(previousButton).toBeTruthy();
         expect(nextButton).toBeTruthy();
         expect(selectButton).toBeTruthy();

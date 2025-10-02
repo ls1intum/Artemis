@@ -4,7 +4,9 @@
         <div class="frame">
             <div class="header">
                 <div>{{ eventToDisplay.title }}</div>
-                <fa-icon [icon]="faXmark" class="close-button" (click)="close()" />
+                <button class="close-button" (click)="close()">
+                    <fa-icon [icon]="faXmark" />
+                </button>
             </div>
             <div class="info-row">
                 <div class="icon-frame">
