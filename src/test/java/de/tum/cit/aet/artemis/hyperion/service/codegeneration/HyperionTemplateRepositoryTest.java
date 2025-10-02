@@ -93,14 +93,15 @@ class HyperionTemplateRepositoryServiceTest {
         String renderedPrompt = "Rendered prompt for template plan";
         String jsonResponse = "{\"solutionPlan\":\"" + expectedPlan + "\",\"files\":[]}";
 
-        when(templates.render(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class))).thenReturn(renderedPrompt);
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class))).thenReturn(renderedPrompt);
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         CodeGenerationResponseDTO result = templateRepository.generateSolutionPlan(user, exercise, "build logs", "repo structure");
 
         assertThat(result).isNotNull();
         assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
-        verify(templates).render(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
+        verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
         verify(chatModel).call(any(Prompt.class));
     }
 
@@ -108,24 +109,26 @@ class HyperionTemplateRepositoryServiceTest {
     void generateSolutionPlan_includesSolutionCodeInTemplateVariables() throws Exception {
         String jsonResponse = "{\"solutionPlan\":\"test plan\",\"files\":[]}";
 
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         templateRepository.generateSolutionPlan(user, exercise, "logs", "structure");
 
-        verify(templates).render(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
+        verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
         verify(chatModel).call(any(Prompt.class));
     }
 
     @Test
     void generateSolutionPlan_withFailedRepositoryCheckout_usesWarningMessage() throws Exception {
         String jsonResponse = "{\"solutionPlan\":\"test plan\",\"files\":[]}";
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         templateRepository.generateSolutionPlan(user, exercise, "logs", "structure");
 
-        verify(templates).render(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
+        verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
         verify(chatModel).call(any(Prompt.class));
     }
 
@@ -133,12 +136,13 @@ class HyperionTemplateRepositoryServiceTest {
     void generateSolutionPlan_withMultipleJavaFiles_concatenatesContent() throws Exception {
         String jsonResponse = "{\"solutionPlan\":\"test plan\",\"files\":[]}";
 
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         templateRepository.generateSolutionPlan(user, exercise, "logs", "structure");
 
-        verify(templates).render(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
+        verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
         verify(chatModel).call(any(Prompt.class));
     }
 
@@ -146,18 +150,20 @@ class HyperionTemplateRepositoryServiceTest {
     void generateSolutionPlan_withIOExceptionDuringWalk_returnsErrorMessage() throws Exception {
         String jsonResponse = "{\"solutionPlan\":\"test plan\",\"files\":[]}";
 
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         templateRepository.generateSolutionPlan(user, exercise, "logs", "structure");
 
-        verify(templates).render(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
+        verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
         verify(chatModel).call(any(Prompt.class));
     }
 
     @Test
     void generateSolutionPlan_withRepositoryAccessException_throwsNetworkingException() throws Exception {
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("Repository access failed"));
 
         assertThatThrownBy(() -> templateRepository.generateSolutionPlan(user, exercise, "logs", "structure")).isInstanceOf(RuntimeException.class)
@@ -168,12 +174,13 @@ class HyperionTemplateRepositoryServiceTest {
     void generateSolutionPlan_withNoJavaFiles_returnsNoFilesMessage() throws Exception {
         String jsonResponse = "{\"solutionPlan\":\"test plan\",\"files\":[]}";
 
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         templateRepository.generateSolutionPlan(user, exercise, "logs", "structure");
 
-        verify(templates).render(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
+        verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
         verify(chatModel).call(any(Prompt.class));
     }
 
@@ -182,7 +189,7 @@ class HyperionTemplateRepositoryServiceTest {
         List<GeneratedFileDTO> expectedFiles = List.of(new GeneratedFileDTO("Template.java", "class Template {}"));
         String jsonResponse = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Template.java\",\"content\":\"class Template {}\"}]}";
 
-        when(templates.render(eq("/prompts/hyperion/template/2_file_structure.st"), any(Map.class))).thenReturn("rendered");
+        when(templates.renderObject(eq("/prompts/hyperion/template/2_file_structure.st"), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         CodeGenerationResponseDTO result = templateRepository.defineFileStructure(user, exercise, "solution plan", "repo structure");
@@ -198,8 +205,8 @@ class HyperionTemplateRepositoryServiceTest {
         String fileStructureJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Template.java\",\"content\":\"stub\"}]}";
         String headersJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Template.java\",\"content\":\"class Template { void method(); }\"}]}";
 
-        when(templates.render(eq("/prompts/hyperion/template/2_file_structure.st"), any(Map.class))).thenReturn("rendered");
-        when(templates.render(eq("/prompts/hyperion/template/3_headers.st"), any(Map.class))).thenReturn("rendered");
+        when(templates.renderObject(eq("/prompts/hyperion/template/2_file_structure.st"), any(Map.class))).thenReturn("rendered");
+        when(templates.renderObject(eq("/prompts/hyperion/template/3_headers.st"), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(fileStructureJson)).thenReturn(createChatResponse(headersJson));
 
         CodeGenerationResponseDTO result = templateRepository.generateClassAndMethodHeaders(user, exercise, "solution plan", "repo structure");
@@ -215,7 +222,7 @@ class HyperionTemplateRepositoryServiceTest {
         String headersJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Template.java\",\"content\":\"class Template { void method(); }\"}]}";
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Template.java\",\"content\":\"class Template { void method() { /* TODO */ } }\"}]}";
 
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(fileStructureJson)).thenReturn(createChatResponse(headersJson))
                 .thenReturn(createChatResponse(coreLogicJson));
 
@@ -224,7 +231,7 @@ class HyperionTemplateRepositoryServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getFiles().get(0).content()).contains("TODO");
         verify(chatModel, org.mockito.Mockito.times(3)).call(any(Prompt.class));
-        verify(templates).render(eq("/prompts/hyperion/template/4_logic.st"), any(Map.class));
+        verify(templates).renderObject(eq("/prompts/hyperion/template/4_logic.st"), any(Map.class));
     }
 
     @Test
@@ -236,7 +243,8 @@ class HyperionTemplateRepositoryServiceTest {
 
     @Test
     void generateSolutionPlan_withNonTransientAiException_throwsNetworkingException() throws Exception {
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenThrow(new NonTransientAiException("AI service error"));
 
         assertThatThrownBy(() -> templateRepository.generateSolutionPlan(user, exercise, "logs", "structure")).isInstanceOf(NetworkingException.class)
@@ -247,12 +255,13 @@ class HyperionTemplateRepositoryServiceTest {
     void generateSolutionPlan_withNullBuildLogs_usesEmptyString() throws Exception {
         String jsonResponse = "{\"solutionPlan\":\"test plan\",\"files\":[]}";
 
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         templateRepository.generateSolutionPlan(user, exercise, null, "repo structure");
 
-        verify(templates).render(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
+        verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
         verify(chatModel).call(any(Prompt.class));
     }
 
@@ -260,12 +269,13 @@ class HyperionTemplateRepositoryServiceTest {
     void generateSolutionPlan_withNullRepositoryStructure_usesEmptyString() throws Exception {
         String jsonResponse = "{\"solutionPlan\":\"test plan\",\"files\":[]}";
 
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         templateRepository.generateSolutionPlan(user, exercise, "logs", null);
 
-        verify(templates).render(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
+        verify(templates).renderObject(eq("/prompts/hyperion/template/1_plan.st"), any(Map.class));
         verify(chatModel).call(any(Prompt.class));
     }
 

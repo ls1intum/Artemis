@@ -85,10 +85,10 @@ class HyperionCodeGenerationServiceTest {
 
         // Verify all 4 steps were called in correct order
         verify(chatModel, times(4)).call(any(Prompt.class));
-        verify(templates).render(eq("test-plan-template"), any(Map.class));
-        verify(templates).render(eq("test-structure-template"), any(Map.class));
-        verify(templates).render(eq("test-headers-template"), any(Map.class));
-        verify(templates).render(eq("test-logic-template"), any(Map.class));
+        verify(templates).renderObject(eq("test-plan-template"), any(Map.class));
+        verify(templates).renderObject(eq("test-structure-template"), any(Map.class));
+        verify(templates).renderObject(eq("test-headers-template"), any(Map.class));
+        verify(templates).renderObject(eq("test-logic-template"), any(Map.class));
     }
 
     @Test
@@ -155,10 +155,10 @@ class HyperionCodeGenerationServiceTest {
         String structureResponse = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"stub\",\"content\":\"stub\"}]}";
         String headersResponse = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"headers\",\"content\":\"headers\"}]}";
 
-        when(templates.render(eq("test-plan-template"), any(Map.class))).thenReturn("rendered plan");
-        when(templates.render(eq("test-structure-template"), any(Map.class))).thenReturn("rendered structure");
-        when(templates.render(eq("test-headers-template"), any(Map.class))).thenReturn("rendered headers");
-        when(templates.render(eq("test-logic-template"), any(Map.class))).thenReturn("rendered logic");
+        when(templates.renderObject(eq("test-plan-template"), any(Map.class))).thenReturn("rendered plan");
+        when(templates.renderObject(eq("test-structure-template"), any(Map.class))).thenReturn("rendered structure");
+        when(templates.renderObject(eq("test-headers-template"), any(Map.class))).thenReturn("rendered headers");
+        when(templates.renderObject(eq("test-logic-template"), any(Map.class))).thenReturn("rendered logic");
 
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(planResponse)).thenReturn(createChatResponse(structureResponse))
                 .thenReturn(createChatResponse(headersResponse)).thenReturn(createChatResponse(finalResponse));

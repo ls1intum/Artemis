@@ -72,14 +72,14 @@ class HyperionSolutionRepositoryServiceTest {
         String renderedPrompt = "Rendered prompt for solution plan";
         String jsonResponse = "{\"solutionPlan\":\"" + expectedPlan + "\",\"files\":[]}";
 
-        when(templates.render(eq("/prompts/hyperion/solution/1_plan.st"), any(Map.class))).thenReturn(renderedPrompt);
+        when(templates.renderObject(eq("/prompts/hyperion/solution/1_plan.st"), any(Map.class))).thenReturn(renderedPrompt);
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         CodeGenerationResponseDTO result = solutionRepository.generateSolutionPlan(user, exercise, "build logs", "repo structure");
 
         assertThat(result).isNotNull();
         assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
-        verify(templates).render(eq("/prompts/hyperion/solution/1_plan.st"), any(Map.class));
+        verify(templates).renderObject(eq("/prompts/hyperion/solution/1_plan.st"), any(Map.class));
         verify(chatModel).call(any(Prompt.class));
     }
 
@@ -88,7 +88,7 @@ class HyperionSolutionRepositoryServiceTest {
         List<GeneratedFileDTO> expectedFiles = List.of(new GeneratedFileDTO("Sort.java", "class Sort {}"));
         String jsonResponse = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"class Sort {}\"}]}";
 
-        when(templates.render(eq("/prompts/hyperion/solution/2_file_structure.st"), any(Map.class))).thenReturn("rendered");
+        when(templates.renderObject(eq("/prompts/hyperion/solution/2_file_structure.st"), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse));
 
         CodeGenerationResponseDTO result = solutionRepository.defineFileStructure(user, exercise, "solution plan", "repo structure");
@@ -104,8 +104,8 @@ class HyperionSolutionRepositoryServiceTest {
         String fileStructureJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"stub\"}]}";
         String headersJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"class Sort { void sort(); }\"}]}";
 
-        when(templates.render(eq("/prompts/hyperion/solution/2_file_structure.st"), any(Map.class))).thenReturn("rendered");
-        when(templates.render(eq("/prompts/hyperion/solution/3_headers.st"), any(Map.class))).thenReturn("rendered");
+        when(templates.renderObject(eq("/prompts/hyperion/solution/2_file_structure.st"), any(Map.class))).thenReturn("rendered");
+        when(templates.renderObject(eq("/prompts/hyperion/solution/3_headers.st"), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(fileStructureJson)).thenReturn(createChatResponse(headersJson));
 
         CodeGenerationResponseDTO result = solutionRepository.generateClassAndMethodHeaders(user, exercise, "solution plan", "repo structure");
@@ -121,7 +121,7 @@ class HyperionSolutionRepositoryServiceTest {
         String headersJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"class Sort { void sort(); }\"}]}";
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"class Sort { void sort() { /* implementation */ } }\"}]}";
 
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(fileStructureJson)).thenReturn(createChatResponse(headersJson))
                 .thenReturn(createChatResponse(coreLogicJson));
 
@@ -141,7 +141,7 @@ class HyperionSolutionRepositoryServiceTest {
 
     @Test
     void generateSolutionPlan_withNonTransientAiException_throwsNetworkingException() {
-        when(templates.render(any(String.class), any(Map.class))).thenReturn("rendered");
+        when(templates.renderObject(any(String.class), any(Map.class))).thenReturn("rendered");
         when(chatModel.call(any(Prompt.class))).thenThrow(new NonTransientAiException("AI service error"));
 
         assertThatThrownBy(() -> solutionRepository.generateSolutionPlan(user, exercise, "logs", "structure")).isInstanceOf(NetworkingException.class)
