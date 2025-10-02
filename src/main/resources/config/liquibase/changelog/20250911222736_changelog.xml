@@ -59,55 +59,55 @@
 
     <changeSet author="tobias-lippert" id="20250911222736-2">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="auxiliary_repository"/>
-            <columnExists tableName="auxiliary_repository" columnName="repository_url"/>
+            <tableExists tableName="programming_exercise_auxiliary_repositories"/>
+            <columnExists tableName="programming_exercise_auxiliary_repositories" columnName="repository_url"/>
         </preConditions>
 
-        <comment>Conversion of repository_url in auxiliary_repository</comment>
+        <comment>Conversion of repository_url in programming_exercise_auxiliary_repositories</comment>
 
-        <addColumn tableName="auxiliary_repository">
+        <addColumn tableName="programming_exercise_auxiliary_repositories">
             <column name="repository_url_new" type="varchar(150)"/>
         </addColumn>
 
         <sql dbms="postgresql">
-            UPDATE auxiliary_repository
+            UPDATE programming_exercise_auxiliary_repositories
             SET repository_url_new = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(?:\.git)?(?:\?.*)?$', '\1')
             WHERE repository_url IS NOT NULL
               AND repository_url LIKE '%/git/%';
         </sql>
         <sql dbms="mysql">
-            UPDATE auxiliary_repository
+            UPDATE programming_exercise_auxiliary_repositories
             SET repository_url_new = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
             WHERE repository_url IS NOT NULL
               AND repository_url LIKE '%/git/%';
         </sql>
         <sql dbms="h2">
-            UPDATE auxiliary_repository
+            UPDATE programming_exercise_auxiliary_repositories
             SET repository_url_new = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
             WHERE repository_url IS NOT NULL
               AND repository_url LIKE '%/git/%';
         </sql>
 
-        <renameColumn tableName="auxiliary_repository"
+        <renameColumn tableName="programming_exercise_auxiliary_repositories"
                       oldColumnName="repository_url"
                       newColumnName="repository_url_old"
                       columnDataType="varchar(255)"/>
 
-        <renameColumn tableName="auxiliary_repository"
+        <renameColumn tableName="programming_exercise_auxiliary_repositories"
                       oldColumnName="repository_url_new"
                       newColumnName="repository_url"
                       columnDataType="varchar(150)"/>
 
         <rollback>
-            <renameColumn tableName="auxiliary_repository"
+            <renameColumn tableName="programming_exercise_auxiliary_repositories"
                           oldColumnName="repository_url"
                           newColumnName="repository_url_new"
                           columnDataType="varchar(150)"/>
-            <renameColumn tableName="auxiliary_repository"
+            <renameColumn tableName="programming_exercise_auxiliary_repositories"
                           oldColumnName="repository_url_old"
                           newColumnName="repository_url"
                           columnDataType="varchar(255)"/>
-            <dropColumn tableName="auxiliary_repository" columnName="repository_url_new"/>
+            <dropColumn tableName="programming_exercise_auxiliary_repositories" columnName="repository_url_new"/>
         </rollback>
     </changeSet>
 
