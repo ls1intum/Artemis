@@ -77,6 +77,11 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         return localPath;
     }
 
+    /**
+     * Closes the Git repository before deletion to release file handles.
+     * This method ensures that the repository is properly closed to avoid
+     * file lock issues during deletion operations.
+     */
     public void closeBeforeDelete() {
         try {
             super.close();

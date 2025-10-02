@@ -320,7 +320,8 @@ public class HyperionProgrammingExerciseContextRendererService {
      * This method retrieves source files from the solution repository
      * and concatenates their content as a string for test generation.
      *
-     * @param exercise the programming exercise
+     * @param exercise   the programming exercise
+     * @param gitService the git service for repository operations
      * @return concatenated content of all solution source files
      * @throws NetworkingException if repository access fails
      */
