@@ -1,14 +1,16 @@
 package de.tum.cit.aet.artemis.core.security.annotations;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
 
-import java.util.Arrays;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -25,6 +27,8 @@ import de.tum.cit.aet.artemis.core.config.InternalAccessConfiguration;
 @Aspect
 @EnableConfigurationProperties(InternalAccessConfiguration.class)
 public class InternalAspect {
+
+    private static final Logger log = LoggerFactory.getLogger(InternalAspect.class);
 
     private final List<IpAddressMatcher> allowedMatchers;
 
@@ -44,30 +48,12 @@ public class InternalAspect {
             return;
 
         HttpServletRequest request = attrs.getRequest();
-        String clientIp = resolve(request);
+        String clientIp = getIpStringFromRequest(request);
 
         boolean allowed = allowedMatchers.isEmpty() || allowedMatchers.stream().anyMatch(m -> m.matches(clientIp));
         if (!allowed) {
+            log.error("Access to internal endpoint from forbidden IP address: {}", clientIp);
             throw new SecurityException("Forbidden: internal endpoint");
         }
-    }
-
-    private static String resolve(HttpServletRequest request) {
-        String value = request.getHeader("X-Forwarded-For");
-        if (value != null && !value.isBlank()) {
-            String first = Arrays.stream(value.split(",")).map(String::trim).filter(s -> !s.isBlank()).findFirst().orElse(null);
-            if (first != null)
-                return stripPort(first);
-        }
-        return stripPort(request.getRemoteAddr());
-    }
-
-    private static String stripPort(String hostPort) {
-        int lastColon = hostPort.lastIndexOf(':');
-        int lastBracket = hostPort.lastIndexOf(']');
-        if (lastColon > -1 && lastColon > lastBracket) {
-            return hostPort.substring(0, lastColon);
-        }
-        return hostPort;
     }
 }

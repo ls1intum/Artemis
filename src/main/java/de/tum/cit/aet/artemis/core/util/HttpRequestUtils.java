@@ -29,7 +29,7 @@ public final class HttpRequestUtils {
      * @param request Http Request
      * @return String representation of IP Address
      */
-    private static String getIpStringFromRequest(@NotNull HttpServletRequest request) {
+    public static String getIpStringFromRequest(@NotNull HttpServletRequest request) {
         for (String header : IP_HEADER_CANDIDATES) {
             String ipList = request.getHeader(header);
             if (ipList != null && !ipList.isEmpty() && !"unknown".equalsIgnoreCase(ipList)) {
