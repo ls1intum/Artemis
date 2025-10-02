@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,6 +19,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 
 class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
@@ -26,7 +28,13 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @BeforeEach
     void setup() {
         courseTestService.setup(TEST_PREFIX, this);
+        userUtilService.createAndSaveUser("ab12cde");
         jenkinsRequestMockProvider.enableMockingOfRequests();
+    }
+
+    @AfterEach
+    void resetClock() {
+        TimeUtil.resetClock();
     }
 
     @Test
@@ -777,6 +785,7 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCourseManagementDetailData() throws Exception {
+        // This test uses a fixed clock to prevent flakiness related to weeks either included in the interval or not depending on the weekday.
         courseTestService.testGetCourseManagementDetailData();
     }
 
