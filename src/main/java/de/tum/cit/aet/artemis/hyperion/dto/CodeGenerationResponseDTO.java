@@ -18,13 +18,13 @@ public record CodeGenerationResponseDTO(
         /**
          * List of generated files with path and content
          */
-        List<GeneratedFile> files) {
+        List<GeneratedFileDTO> files) {
 
     public String getSolutionPlan() {
         return solutionPlan;
     }
 
-    public List<GeneratedFile> getFiles() {
+    public List<GeneratedFileDTO> getFiles() {
         return files;
     }
 }

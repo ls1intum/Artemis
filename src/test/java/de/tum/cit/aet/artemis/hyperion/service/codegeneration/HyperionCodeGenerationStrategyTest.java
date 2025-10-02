@@ -28,17 +28,17 @@ import org.springframework.ai.retry.TransientAiException;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFile;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class HyperionCodeGenerationServiceTest {
 
     @Mock
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Mock
     private ChatModel chatModel;
@@ -71,13 +71,13 @@ class HyperionCodeGenerationServiceTest {
 
     @Test
     void generateCode_withValidInput_orchestratesAllStepsAndReturnsFiles() throws Exception {
-        List<GeneratedFile> expectedFiles = List.of(new GeneratedFile("Sort.java", "class Sort { void sort() { /* implementation */ } }"),
-                new GeneratedFile("SortTest.java", "@Test void testSort() { /* test */ }"));
+        List<GeneratedFileDTO> expectedFiles = List.of(new GeneratedFileDTO("Sort.java", "class Sort { void sort() { /* implementation */ } }"),
+                new GeneratedFileDTO("SortTest.java", "@Test void testSort() { /* test */ }"));
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"class Sort { void sort() { /* implementation */ } }\"},{\"path\":\"SortTest.java\",\"content\":\"@Test void testSort() { /* test */ }\"}]}";
 
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFile> result = strategy.generateCode(user, exercise, "build logs", "repo structure");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, "build logs", "repo structure");
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).path()).isEqualTo("Sort.java");
@@ -96,7 +96,7 @@ class HyperionCodeGenerationServiceTest {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFile> result = strategy.generateCode(user, exercise, null, "repo structure");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, null, "repo structure");
 
         assertThat(result).hasSize(1);
         verify(chatModel, times(4)).call(any(Prompt.class));
@@ -107,7 +107,7 @@ class HyperionCodeGenerationServiceTest {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFile> result = strategy.generateCode(user, exercise, "logs", null);
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, "logs", null);
 
         assertThat(result).hasSize(1);
         verify(chatModel, times(4)).call(any(Prompt.class));
@@ -172,7 +172,7 @@ class HyperionCodeGenerationServiceTest {
 
     private static class TestCodeGenerationStrategy extends HyperionCodeGenerationService {
 
-        public TestCodeGenerationStrategy(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates) {
+        public TestCodeGenerationStrategy(ProgrammingExerciseTestRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates) {
             super(programmingExerciseRepository, chatClient, templates);
         }
 

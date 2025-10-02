@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFile;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -60,7 +60,7 @@ public abstract class HyperionCodeGenerationService {
      * @return list of generated code files
      * @throws NetworkingException if AI service communication fails
      */
-    public List<GeneratedFile> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure) throws NetworkingException {
+    public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure) throws NetworkingException {
         var solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure);
         defineFileStructure(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);
         generateClassAndMethodHeaders(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);

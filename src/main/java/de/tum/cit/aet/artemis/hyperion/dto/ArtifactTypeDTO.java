@@ -1,17 +1,19 @@
 package de.tum.cit.aet.artemis.hyperion.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * Enum for artifact types in consistency checks.
  */
-public enum ArtifactType {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public enum ArtifactTypeDTO {
 
     PROBLEM_STATEMENT("PROBLEM_STATEMENT"), TEMPLATE_REPOSITORY("TEMPLATE_REPOSITORY"), SOLUTION_REPOSITORY("SOLUTION_REPOSITORY"), TESTS_REPOSITORY("TESTS_REPOSITORY");
 
     private final String value;
 
-    ArtifactType(String value) {
+    ArtifactTypeDTO(String value) {
         this.value = value;
     }
 

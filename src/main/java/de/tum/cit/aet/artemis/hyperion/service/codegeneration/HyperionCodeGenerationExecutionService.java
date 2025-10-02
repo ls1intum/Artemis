@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
-import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFile;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -176,7 +176,7 @@ public class HyperionCodeGenerationExecutionService {
      * @param exercise   the programming exercise (for logging)
      * @throws IOException if file operations fail
      */
-    private void updateSingleFile(Repository repository, GeneratedFile file, ProgrammingExercise exercise) throws IOException {
+    private void updateSingleFile(Repository repository, GeneratedFileDTO file, ProgrammingExercise exercise) throws IOException {
         // Check if file exists before attempting to delete
         if (gitService.getFileByName(repository, file.path()).isPresent()) {
             try {
@@ -210,8 +210,8 @@ public class HyperionCodeGenerationExecutionService {
      * @param exercise       the programming exercise (for logging)
      * @throws IOException if file operations fail
      */
-    private void processGeneratedFiles(Repository repository, List<GeneratedFile> generatedFiles, ProgrammingExercise exercise) throws IOException {
-        for (GeneratedFile file : generatedFiles) {
+    private void processGeneratedFiles(Repository repository, List<GeneratedFileDTO> generatedFiles, ProgrammingExercise exercise) throws IOException {
+        for (GeneratedFileDTO file : generatedFiles) {
             updateSingleFile(repository, file, exercise);
         }
     }
@@ -278,7 +278,7 @@ public class HyperionCodeGenerationExecutionService {
         try {
             String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
 
-            List<GeneratedFile> generatedFiles = strategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure);
+            List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure);
 
             if (generatedFiles == null || generatedFiles.isEmpty()) {
                 log.warn("No files generated for exercise {} on attempt {}. Skipping repository update.", exercise.getId(), iteration);

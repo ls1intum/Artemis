@@ -20,7 +20,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueCategoryDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -87,6 +87,6 @@ class HyperionConsistencyCheckServiceTest {
 
         assertThat(resp).isNotNull();
         assertThat(resp.issues()).isNotEmpty();
-        assertThat(resp.issues().getFirst().category()).isEqualTo(ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH);
+        assertThat(resp.issues().getFirst().category()).isEqualTo(ConsistencyIssueCategoryDTO.METHOD_PARAMETER_MISMATCH);
     }
 }

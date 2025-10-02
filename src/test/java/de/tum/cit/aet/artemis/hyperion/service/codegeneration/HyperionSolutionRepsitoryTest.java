@@ -25,17 +25,17 @@ import org.springframework.ai.retry.NonTransientAiException;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFile;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class HyperionSolutionRepositoryServiceTest {
 
     @Mock
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Mock
     private ChatModel chatModel;
@@ -85,7 +85,7 @@ class HyperionSolutionRepositoryServiceTest {
 
     @Test
     void defineFileStructure_withValidInput_returnsFileStructure() throws Exception {
-        List<GeneratedFile> expectedFiles = List.of(new GeneratedFile("Sort.java", "class Sort {}"));
+        List<GeneratedFileDTO> expectedFiles = List.of(new GeneratedFileDTO("Sort.java", "class Sort {}"));
         String jsonResponse = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"class Sort {}\"}]}";
 
         when(templates.render(eq("/prompts/hyperion/solution/2_file_structure.st"), any(Map.class))).thenReturn("rendered");

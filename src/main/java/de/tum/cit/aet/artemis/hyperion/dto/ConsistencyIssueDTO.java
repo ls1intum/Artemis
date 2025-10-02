@@ -15,9 +15,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Individual consistency issue details")
 public record ConsistencyIssueDTO(
 
-        @NotNull @Schema(description = "Severity of the issue", example = "HIGH") Severity severity,
+        @NotNull @Schema(description = "Severity of the issue", example = "HIGH") SeverityDTO severity,
 
-        @NotNull @Schema(description = "Category of the issue", example = "METHOD_RETURN_TYPE_MISMATCH") ConsistencyIssueCategory category,
+        @NotNull @Schema(description = "Category of the issue", example = "METHOD_RETURN_TYPE_MISMATCH") ConsistencyIssueCategoryDTO category,
 
         @NotNull @Schema(description = "Detailed description of the issue", example = "Problem statement does not match test cases") String description,
 
