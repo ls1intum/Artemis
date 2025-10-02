@@ -10,6 +10,7 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { addOneMinuteTo, isFirstAfterOrEqualSecond } from 'app/lecture/manage/util/lecture-management.utils';
 
 @Component({
     selector: 'jhi-lecture-series-edit-modal',
@@ -26,11 +27,11 @@ export class LectureSeriesEditModalComponent {
     isTitleInvalid = computed(() => this.title() === '');
     visibleDate = signal<Date | undefined>(undefined);
     startDate = signal<Date | undefined>(undefined);
-    minimumStartDate = computed(() => this.addOneMinuteTo(this.visibleDate()));
-    isStartDateInvalid = computed(() => this.isFirstAfterOrEqualSecond(this.visibleDate(), this.startDate()));
+    minimumStartDate = computed(() => addOneMinuteTo(this.visibleDate()));
+    isStartDateInvalid = computed(() => isFirstAfterOrEqualSecond(this.visibleDate(), this.startDate()));
     endDate = signal<Date | undefined>(undefined);
-    minimumEndDate = computed(() => this.addOneMinuteTo(this.startDate()) ?? this.addOneMinuteTo(this.visibleDate()));
-    isEndDateInvalid = computed(() => this.isFirstAfterOrEqualSecond(this.visibleDate(), this.endDate()) || this.isFirstAfterOrEqualSecond(this.startDate(), this.endDate()));
+    minimumEndDate = computed(() => addOneMinuteTo(this.startDate()) ?? addOneMinuteTo(this.visibleDate()));
+    isEndDateInvalid = computed(() => isFirstAfterOrEqualSecond(this.visibleDate(), this.endDate()) || isFirstAfterOrEqualSecond(this.startDate(), this.endDate()));
     show = signal<boolean>(false);
     areInputsInvalid = computed(() => this.isTitleInvalid() || this.isStartDateInvalid() || this.isEndDateInvalid());
     headerTitle = computed<string>(() => {
@@ -80,22 +81,6 @@ export class LectureSeriesEditModalComponent {
 
     onEndDateChange(value: Date | null) {
         this.endDate.set(value ? value : undefined);
-    }
-
-    private isFirstAfterOrEqualSecond(firstDate?: Date, secondDate?: Date): boolean {
-        if (!firstDate || !secondDate) {
-            return false;
-        }
-        return firstDate.getTime() >= secondDate.getTime();
-    }
-
-    private addOneMinuteTo(referenceDate?: Date) {
-        if (!referenceDate) {
-            return undefined;
-        }
-        const minimumDate = new Date(referenceDate.getTime());
-        minimumDate.setMinutes(minimumDate.getMinutes() + 1);
-        return minimumDate;
     }
 
     private clearDraftRelatedFields() {

@@ -39,12 +39,24 @@
         </p-floatlabel>
         <p-floatlabel variant="on">
             <p-datepicker
-                inputId="end-date"
-                [ngModel]="endDate() ?? null"
-                (ngModelChange)="endDate.set($event ?? undefined)"
+                inputId="start-date"
+                [ngModel]="startDate() ?? null"
+                (ngModelChange)="onStartDateChange($event)"
                 style="width: 9rem"
                 [firstDayOfWeek]="1"
-                [minDate]="minimumEndDate"
+                [minDate]="minimumStartDate"
+            />
+            <label for="start-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesStartDate"></label>
+        </p-floatlabel>
+        <p-floatlabel variant="on">
+            <p-datepicker
+                inputId="end-date"
+                [ngModel]="endDate() ?? null"
+                (ngModelChange)="onEndDateChange($event)"
+                style="width: 9rem"
+                [firstDayOfWeek]="1"
+                [minDate]="minimumEndDate()"
+                [invalid]="isEndDateInvalid()"
             />
             <label for="end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
         </p-floatlabel>

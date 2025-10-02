@@ -88,16 +88,13 @@
                 "sectionsThatContainUnsavedChangesPlural": "Die folgenden Abschnitte enthalten ungespeicherte Änderungen:"
             },
             "createSeries": {
-                "explanationText": "Lege mehrere Vorlesungen gleichzeitig an, indem du einen Wochentag, eine Uhrzeit und ein Enddatum festlegst. Die Inhalte kannst du später ergänzen. So informierst du User schon frühzeitig über die Vorlesungstermine im Semester.",
+                "explanationText": "Lege mehrere Vorlesungen gleichzeitig an, indem du einen Wochentag, eine Uhrzeit und einen Zeitraum für die Vorlesungsserie festlegst. Die Vorlesungsinhalte kannst du später ergänzen. So informierst du User schon frühzeitig über Vorlesungstermine des Semesters.",
                 "inputLabel": {
                     "weekday": "Weekday",
                     "startTime": "Startzeit",
                     "endTime": "Endzeit",
-                    "seriesEndDate": "Enddatum",
-                    "title": "Titel",
-                    "visibleDate": "Visible Date",
-                    "startDate": "Start Date",
-                    "endDate": "End Date"
+                    "seriesStartDate": "Startdatum",
+                    "seriesEndDate": "Enddatum"
                 },
                 "generatedLecturesHeading": "Generierte Vorlesungen",
                 "editLectureModalTitle": "Vorlesungsdetails bearbeiten",

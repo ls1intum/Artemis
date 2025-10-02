@@ -88,11 +88,12 @@
                 "sectionsThatContainUnsavedChangesPlural": "The following sections contain unsaved changes:"
             },
             "createSeries": {
-                "explanationText": "Scaffold multiple lectures by defining a weekday, time and series end date. Create lecture contents later. Like this you can inform user early about lectures taking place during the semester.",
+                "explanationText": "Scaffold multiple lectures by defining a weekday, time and time period for the lecture series. Create lecture contents later. With this you can inform user early about lectures taking place during the semester.",
                 "inputLabel": {
                     "weekday": "Weekday",
                     "startTime": "Start Time",
                     "endTime": "End Time",
+                    "seriesStartDate": "Start Date",
                     "seriesEndDate": "End Date"
                 },
                 "generatedLecturesHeading": "Generated Lectures",

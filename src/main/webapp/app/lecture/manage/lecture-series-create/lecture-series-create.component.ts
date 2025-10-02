@@ -18,6 +18,7 @@ import { LectureCreateDTO } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { addOneMinuteTo, isFirstAfterOrEqualSecond } from 'app/lecture/manage/util/lecture-management.utils';
 import { finalize } from 'rxjs';
 
 type WeekdayIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -67,7 +68,7 @@ export class LectureSeriesCreateComponent {
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faXmark = faXmark;
     protected readonly LectureDraftState = LectureDraftState;
-    protected readonly minimumEndDate = new Date();
+    protected readonly minimumStartDate = new Date();
 
     courseId = input.required<number>();
     lectureDrafts = signal<LectureDraft[]>([]);
@@ -79,11 +80,15 @@ export class LectureSeriesCreateComponent {
     startTime = signal<string | undefined>(undefined);
     endTime = signal<string | undefined>(undefined);
     isStartAndEndTimeCombinationInvalid = computed(() => this.isStartTimeSameOrAfterEndTime(this.startTime(), this.endTime()));
+    startDate = signal<Date | undefined>(undefined);
     endDate = signal<Date | undefined>(undefined);
+    minimumEndDate = computed(() => addOneMinuteTo(this.startDate()) ?? new Date());
+    isEndDateInvalid = computed(() => isFirstAfterOrEqualSecond(this.startDate(), this.endDate()));
     isLoading = signal(false);
+    areInputsInvalid = computed(() => this.isStartAndEndTimeCombinationInvalid() || this.isEndDateInvalid());
 
     constructor() {
-        effect(() => this.updateLectureDrafts(this.isStartAndEndTimeCombinationInvalid(), this.selectedWeekdayIndex(), this.startTime(), this.endTime(), this.endDate()));
+        effect(() => this.updateLectureDrafts(this.areInputsInvalid(), this.selectedWeekdayIndex(), this.startTime(), this.endTime(), this.startDate(), this.endDate()));
     }
 
     onSelectedWeekdayOptionChange(optionWeekdayIndex: WeekdayIndex) {
@@ -96,6 +101,14 @@ export class LectureSeriesCreateComponent {
 
     onEndTimeChange(time: string) {
         this.endTime.set(time);
+    }
+
+    onStartDateChange(date: Date) {
+        this.startDate.set(date);
+    }
+
+    onEndDateChange(date: Date) {
+        this.endDate.set(date);
     }
 
     deleteLectureDraft(lectureDraft: LectureDraft) {
@@ -145,10 +158,10 @@ export class LectureSeriesCreateComponent {
         return false;
     }
 
-    private updateLectureDrafts(isStartAndEndTimeCombinationInvalid: boolean, selectedWeekdayIndex?: number, startTime?: string, endTime?: string, endDate?: Date) {
-        if (isStartAndEndTimeCombinationInvalid || !selectedWeekdayIndex || !startTime || !endTime || !endDate) return;
+    private updateLectureDrafts(areInputsInvalid: boolean, selectedWeekdayIndex?: number, startTime?: string, endTime?: string, startDate?: Date, endDate?: Date) {
+        if (areInputsInvalid || !selectedWeekdayIndex || !startTime || !endTime || !startDate || !endDate) return;
 
-        const lectureDates = this.generateDatePairsFromToday(selectedWeekdayIndex, startTime, endTime, endDate);
+        const lectureDates = this.generateDatePairs(selectedWeekdayIndex, startTime, endTime, startDate, endDate);
         this.lectureDrafts.update((oldDrafts) => {
             const keyToOldDraftMap = new Map(oldDrafts.map((draft) => [draft.key, draft]));
             const newDrafts: LectureDraft[] = [];
@@ -177,10 +190,10 @@ export class LectureSeriesCreateComponent {
         });
     }
 
-    private generateDatePairsFromToday(weekdayIndex: number, startTime: string, endTime: string, seriesEndDate: Date): [Dayjs, Dayjs][] {
+    private generateDatePairs(weekdayIndex: number, startTime: string, endTime: string, seriesStartDate: Date, seriesEndDate: Date): [Dayjs, Dayjs][] {
         const [startHour, startMinute] = this.getHourAndMinute(startTime);
         const [endHour, endMinute] = this.getHourAndMinute(endTime);
-        const seriesStart = dayjs();
+        const seriesStart = dayjs(seriesStartDate);
         const seriesEnd = dayjs(seriesEndDate).endOf('day');
         let firstStart = seriesStart.isoWeekday(weekdayIndex).hour(startHour).minute(startMinute).second(0).millisecond(0);
         if (firstStart.isBefore(seriesStart)) {
