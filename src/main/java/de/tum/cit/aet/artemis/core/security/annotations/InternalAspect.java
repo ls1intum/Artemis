@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -55,10 +56,10 @@ public class InternalAspect {
         HttpServletRequest request = attrs.getRequest();
         String clientIp = getIpStringFromRequest(request);
 
-        boolean allowed = allowedMatchers.isEmpty() || allowedMatchers.stream().anyMatch(m -> m.matches(clientIp));
+        boolean allowed = allowedMatchers.stream().anyMatch(m -> m.matches(clientIp));
         if (!allowed) {
             log.error("Access to internal endpoint from forbidden IP address: {}", clientIp);
-            throw new SecurityException("Forbidden: internal endpoint");
+            throw new AccessDeniedException("Forbidden: internal endpoint");
         }
     }
 }

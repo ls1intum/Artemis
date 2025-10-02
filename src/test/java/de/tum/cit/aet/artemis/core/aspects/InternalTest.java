@@ -13,7 +13,7 @@ class InternalTest extends AbstractSpringIntegrationIndependentTest {
         var authHeaders = new HttpHeaders();
         authHeaders.add("X-Forwarded-For", "127.0.0.1");
 
-        request.get("/api/core/public/test/internal", HttpStatus.OK, Void.class, authHeaders);
+        request.get("/api/core/internal/test", HttpStatus.OK, Void.class, authHeaders);
     }
 
     @Test
@@ -21,7 +21,7 @@ class InternalTest extends AbstractSpringIntegrationIndependentTest {
         var authHeaders = new HttpHeaders();
         authHeaders.add("X-Forwarded-For", "10.0.0.1");
 
-        request.get("/api/core/public/test/internal", HttpStatus.INTERNAL_SERVER_ERROR, Void.class, authHeaders);
+        request.get("/api/core/internal/test", HttpStatus.FORBIDDEN, Void.class, authHeaders);
     }
 
 }

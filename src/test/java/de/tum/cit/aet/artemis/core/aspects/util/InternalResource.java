@@ -15,10 +15,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/core/public/test/")
+@RequestMapping("api/core/internal/")
 public class InternalResource {
 
-    @GetMapping("internal")
+    @GetMapping("test")
     @EnforceNothing
     @Internal
     public ResponseEntity<Void> internalTest() {
