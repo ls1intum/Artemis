@@ -15,8 +15,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    // science, TutorSuggestions, Memiris disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 3;
+    // science, TutorSuggestions, Memiris, AtlasAgent disabled by default
+    private static final int FEATURES_DISABLED_DEFAULT = 4;
 
     @Autowired
     private FeatureToggleService featureToggleService;
@@ -35,6 +35,8 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.Science)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.TutorSuggestions)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).isFalse();
+
     }
 
     private void resetToDefaultState() {
@@ -45,11 +47,11 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         featureToggleService.enableFeature(Feature.LearningPaths);
         featureToggleService.enableFeature(Feature.StandardizedCompetencies);
         featureToggleService.enableFeature(Feature.StudentCourseAnalyticsDashboard);
-        featureToggleService.enableFeature(Feature.AtlasAgent);
 
         // Disable features that should be disabled by default
         featureToggleService.disableFeature(Feature.Science);
         featureToggleService.disableFeature(Feature.TutorSuggestions);
+        featureToggleService.disableFeature(Feature.AtlasAgent);
     }
 
     @Test
