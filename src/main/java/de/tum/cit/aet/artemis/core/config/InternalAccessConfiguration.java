@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "security.internal")
+@ConfigurationProperties(prefix = "artemis.security.internal")
 public class InternalAccessConfiguration {
 
     /**
