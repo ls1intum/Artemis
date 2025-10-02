@@ -69,6 +69,7 @@ export class LectureSeriesCreateComponent {
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faXmark = faXmark;
     protected readonly LectureDraftState = LectureDraftState;
+    protected readonly minEndDate = new Date();
 
     courseId = input.required<number>();
     lectureDrafts = signal<LectureDraft[]>([]);
@@ -79,10 +80,11 @@ export class LectureSeriesCreateComponent {
     selectedWeekdayIndex = signal<WeekdayIndex | undefined>(undefined);
     startTime = signal<string | undefined>(undefined);
     endTime = signal<string | undefined>(undefined);
+    isStartAndEndTimeCombinationInvalid = computed(() => this.isStartTimeSameOrAfterEndTime(this.startTime(), this.endTime()));
     endDate = signal<Date | undefined>(undefined);
 
     constructor() {
-        effect(() => this.updateLectureDrafts(this.selectedWeekdayIndex(), this.startTime(), this.endTime(), this.endDate()));
+        effect(() => this.updateLectureDrafts(this.isStartAndEndTimeCombinationInvalid(), this.selectedWeekdayIndex(), this.startTime(), this.endTime(), this.endDate()));
     }
 
     onSelectedWeekdayOptionChange(optionWeekdayIndex: WeekdayIndex) {
@@ -133,8 +135,19 @@ export class LectureSeriesCreateComponent {
         ];
     }
 
-    private updateLectureDrafts(selectedWeekdayIndex?: number, startTime?: string, endTime?: string, endDate?: Date) {
-        if (!selectedWeekdayIndex || !startTime || !endTime || !endDate) return;
+    private isStartTimeSameOrAfterEndTime(startTime?: string, endTime?: string): boolean {
+        if (startTime && endTime) {
+            const [startHour, startMinute] = this.getHourAndMinute(startTime);
+            const [endHour, endMinute] = this.getHourAndMinute(endTime);
+            if (startHour > endHour || (startHour === endHour && startMinute >= endMinute)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private updateLectureDrafts(isStartAndEndTimeCombinationInvalid: boolean, selectedWeekdayIndex?: number, startTime?: string, endTime?: string, endDate?: Date) {
+        if (isStartAndEndTimeCombinationInvalid || !selectedWeekdayIndex || !startTime || !endTime || !endDate) return;
 
         const lectureDates = this.generateDatePairsFromToday(selectedWeekdayIndex, startTime, endTime, endDate);
         this.lectureDrafts.update((oldDrafts) => {

@@ -14,15 +14,38 @@
             <label for="weekday" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.weekday"></label>
         </p-floatlabel>
         <p-floatlabel variant="on">
-            <p-inputMask inputId="start-time" mask="99 : 99" slotChar="-" [ngModel]="startTime() ?? ''" (ngModelChange)="onStartTimeChange($event)" [style]="{ width: '9rem' }" />
+            <p-inputMask
+                inputId="start-time"
+                mask="99 : 99"
+                slotChar="-"
+                [ngModel]="startTime() ?? ''"
+                (ngModelChange)="onStartTimeChange($event)"
+                [invalid]="isStartAndEndTimeCombinationInvalid()"
+                [style]="{ width: '9rem' }"
+            />
             <label for="start-time" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.startTime"></label>
         </p-floatlabel>
         <p-floatlabel variant="on">
-            <p-inputMask inputId="end-time" mask="99 : 99" slotChar="-" [ngModel]="endTime() ?? ''" (ngModelChange)="onEndTimeChange($event)" [style]="{ width: '9rem' }" />
+            <p-inputMask
+                inputId="end-time"
+                mask="99 : 99"
+                slotChar="-"
+                [ngModel]="endTime() ?? ''"
+                (ngModelChange)="onEndTimeChange($event)"
+                [invalid]="isStartAndEndTimeCombinationInvalid()"
+                [style]="{ width: '9rem' }"
+            />
             <label for="end-time" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.endTime"></label>
         </p-floatlabel>
         <p-floatlabel variant="on">
-            <p-datepicker inputId="end-date" [ngModel]="endDate() ?? null" (ngModelChange)="endDate.set($event ?? undefined)" style="width: 9rem" [firstDayOfWeek]="1" />
+            <p-datepicker
+                inputId="end-date"
+                [ngModel]="endDate() ?? null"
+                (ngModelChange)="endDate.set($event ?? undefined)"
+                style="width: 9rem"
+                [firstDayOfWeek]="1"
+                [minDate]="minEndDate"
+            />
             <label for="end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
         </p-floatlabel>
     </div>
