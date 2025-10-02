@@ -11,8 +11,8 @@ describe('CompetencyRings', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            declarations: [CompetencyRingsComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [MockModule(NgbTooltipModule), CompetencyRingsComponent],
+            declarations: [MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {
