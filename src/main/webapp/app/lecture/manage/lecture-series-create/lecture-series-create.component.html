@@ -80,6 +80,13 @@
             <button pButton size="small" (click)="save()" jhiTranslate="entity.action.save"></button>
         </div>
     }
+    @if (isLoading()) {
+        <div class="loading-overlay">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden" jhiTranslate="loading"></span>
+            </div>
+        </div>
+    }
 </div>
 
 <jhi-lecture-series-edit-modal #editModal />

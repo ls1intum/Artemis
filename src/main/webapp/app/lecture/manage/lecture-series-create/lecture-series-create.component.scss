@@ -64,4 +64,21 @@
         justify-content: end;
         gap: 1rem;
     }
+
+    .loading-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: delayLoading 0s 0.5s forwards;
+        opacity: 0;
+    }
+}
+
+@keyframes delayLoading {
+    to {
+        opacity: 1;
+    }
 }

@@ -18,6 +18,7 @@ import { LectureCreateDTO } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { finalize } from 'rxjs';
 
 type WeekdayIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -38,8 +39,6 @@ export enum LectureDraftState {
     REGULAR = 'regular',
 }
 
-// TODO: add loading indicator while saving
-// TODO: adapt lecture numbering to existing lectures
 @Component({
     selector: 'jhi-lecture-series-create',
     imports: [
@@ -81,6 +80,7 @@ export class LectureSeriesCreateComponent {
     endTime = signal<string | undefined>(undefined);
     isStartAndEndTimeCombinationInvalid = computed(() => this.isStartTimeSameOrAfterEndTime(this.startTime(), this.endTime()));
     endDate = signal<Date | undefined>(undefined);
+    isLoading = signal(false);
 
     constructor() {
         effect(() => this.updateLectureDrafts(this.isStartAndEndTimeCombinationInvalid(), this.selectedWeekdayIndex(), this.startTime(), this.endTime(), this.endDate()));
@@ -103,18 +103,18 @@ export class LectureSeriesCreateComponent {
     }
 
     save() {
+        this.isLoading.set(true);
         const lecturesToSave = this.lectureDrafts()
-            .filter((draft) => draft.state !== LectureDraftState.DELETED)
-            .map((draft) => draft.dto);
+            .filter((d) => d.state !== LectureDraftState.DELETED)
+            .map((d) => d.dto);
         const courseId = this.courseId();
-        this.lectureService.createSeries(lecturesToSave, courseId).subscribe({
-            next: () => {
-                this.router.navigate(['course-management', courseId, 'lectures']);
-            },
-            error: () => {
-                this.alertService.addErrorAlert('Something went wrong. Please try again.');
-            },
-        });
+        this.lectureService
+            .createSeries(lecturesToSave, courseId)
+            .pipe(finalize(() => this.isLoading.set(false)))
+            .subscribe({
+                next: () => this.router.navigate(['course-management', courseId, 'lectures']),
+                error: () => this.alertService.addErrorAlert('Something went wrong. Please try again.'),
+            });
     }
 
     cancel() {
