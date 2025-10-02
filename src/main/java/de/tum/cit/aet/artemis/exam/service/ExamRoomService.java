@@ -328,7 +328,6 @@ public class ExamRoomService {
      * Purges the DB of all exam room related data.
      */
     public void deleteAllExamRooms() {
-        examUserRepository.resetAllPlannedRoomsAndSeats();
         examRoomRepository.deleteAll();
     }
 
