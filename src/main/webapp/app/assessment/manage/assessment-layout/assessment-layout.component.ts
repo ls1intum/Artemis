@@ -123,17 +123,20 @@ export class AssessmentLayoutComponent implements OnChanges, OnDestroy {
                 map((stats: StatsForDashboard | null) => {
                     if (!stats) return false;
 
-                    const toNum = (x?: { inTime?: number; late?: number; total?: number } | null) => x?.total ?? (x?.inTime ?? 0) + (x?.late ?? 0);
+                    // Ignore `total`, sum parts with 0-defaults; handle null/undefined
+                    const toNum = (x?: { inTime?: number; late?: number; total?: number } | null) => (x?.inTime ?? 0) + (x?.late ?? 0);
 
                     const submitted = toNum(stats.numberOfSubmissions);
-                    let assessed = 0;
-
                     const rounds = stats.numberOfAssessmentsOfCorrectionRounds as Array<{ inTime?: number; late?: number; total?: number }> | undefined;
 
-                    if (Array.isArray(rounds) && Number.isInteger(this.correctionRound) && rounds[this.correctionRound!]) {
-                        assessed = toNum(rounds[this.correctionRound!]);
+                    // Safeguard: capture `correctionRound`, validate before indexing (no non-null assertion)
+
+                    const round = this.correctionRound;
+                    let assessed: number;
+                    if (Array.isArray(rounds) && Number.isInteger(round) && round >= 0 && round < rounds.length && rounds[round] != null) {
+                        assessed = toNum(rounds[round]);
                     } else {
-                        assessed = toNum(stats.totalNumberOfAssessments); // <-- numeric now
+                        assessed = toNum(stats.totalNumberOfAssessments);
                     }
 
                     const locked = stats.totalNumberOfAssessmentLocks ?? 0;
