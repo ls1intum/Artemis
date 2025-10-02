@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -7,22 +7,31 @@ import { ButtonModule } from 'primeng/button';
 import { AutoFocusModule } from 'primeng/autofocus';
 import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import dayjs, { Dayjs } from 'dayjs/esm';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 
-// TODO: create strings
 // TODO: add input validation
 @Component({
     selector: 'jhi-lecture-series-edit-modal',
-    imports: [FormsModule, DialogModule, InputTextModule, DatePickerModule, ButtonModule, AutoFocusModule],
+    imports: [FormsModule, DialogModule, InputTextModule, DatePickerModule, ButtonModule, AutoFocusModule, TranslateDirective],
     templateUrl: './lecture-series-edit-modal.component.html',
     styleUrl: './lecture-series-edit-modal.component.scss',
 })
 export class LectureSeriesEditModalComponent {
+    private translateService = inject(TranslateService);
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
+
     lectureDraft: LectureDraft | undefined;
     title = signal<string>('');
     visibleDate = signal<Date | undefined>(undefined);
     startDate = signal<Date | undefined>(undefined);
     endDate = signal<Date | undefined>(undefined);
     show = signal<boolean>(false);
+    headerTitle = computed(() => {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.lecture.createSeries.editLectureModalTitle');
+    });
 
     open(draft: LectureDraft) {
         this.lectureDraft = draft;

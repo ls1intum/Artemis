@@ -1,9 +1,9 @@
-<p-dialog header="Edit Lecture Details" [modal]="true" [visible]="show()" [closable]="false" [focusOnShow]="false" appendTo="body">
+<p-dialog [header]="headerTitle()" [modal]="true" [visible]="show()" [closable]="false" [focusOnShow]="false" appendTo="body">
     <div class="frame">
         <div class="form-grid">
-            <label for="title">Title</label>
+            <label for="title" jhiTranslate="artemisApp.lecture.title"></label>
             <input pInputText id="title" [pAutoFocus]="true" [ngModel]="title()" (ngModelChange)="onTitleChange($event)" />
-            <label for="visibleDate">Visible date</label>
+            <label for="visibleDate" jhiTranslate="artemisApp.lecture.visibleDate"></label>
             <p-datepicker
                 inputId="visibleDate"
                 [ngModel]="visibleDate() ?? null"
@@ -13,7 +13,7 @@
                 [firstDayOfWeek]="1"
                 appendTo="body"
             />
-            <label for="startDate">Start</label>
+            <label for="startDate" jhiTranslate="artemisApp.lecture.startDate"></label>
             <p-datepicker
                 inputId="startDate"
                 [ngModel]="startDate() ?? null"
@@ -23,7 +23,7 @@
                 [firstDayOfWeek]="1"
                 appendTo="body"
             />
-            <label for="endDate">End</label>
+            <label for="endDate" jhiTranslate="artemisApp.lecture.endDate"></label>
             <p-datepicker
                 inputId="endDate"
                 [ngModel]="endDate() ?? null"
@@ -35,8 +35,8 @@
             />
         </div>
         <div class="controls-section">
-            <button pButton severity="secondary" size="small" (click)="cancel()">Cancel</button>
-            <button pButton size="small" (click)="save()">Save</button>
+            <button pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+            <button pButton size="small" (click)="save()" jhiTranslate="entity.action.save"></button>
         </div>
     </div>
 </p-dialog>

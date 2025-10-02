@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
@@ -15,6 +15,9 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { LectureCreateDTO } from 'app/lecture/shared/entities/lecture.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 
 type WeekdayIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -35,21 +38,33 @@ export enum LectureDraftState {
     REGULAR = 'regular',
 }
 
-// TODO: create strings
-// TODO: adapt lecture numbering to existing lectures
-// TODO: add loading indicator while saving
 // TODO: add input validation
+// TODO: add loading indicator while saving
+// TODO: adapt lecture numbering to existing lectures
 @Component({
     selector: 'jhi-lecture-series-create',
-    imports: [SelectModule, FormsModule, DatePickerModule, FloatLabelModule, InputMaskModule, ButtonModule, FaIconComponent, LectureSeriesEditModalComponent, NgClass],
+    imports: [
+        SelectModule,
+        FormsModule,
+        DatePickerModule,
+        FloatLabelModule,
+        InputMaskModule,
+        ButtonModule,
+        FaIconComponent,
+        LectureSeriesEditModalComponent,
+        NgClass,
+        TranslateDirective,
+    ],
     templateUrl: './lecture-series-create.component.html',
     styleUrl: './lecture-series-create.component.scss',
 })
 export class LectureSeriesCreateComponent {
     private lectureService = inject(LectureService);
     private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
     private router = inject(Router);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faXmark = faXmark;
@@ -57,15 +72,10 @@ export class LectureSeriesCreateComponent {
 
     courseId = input.required<number>();
     lectureDrafts = signal<LectureDraft[]>([]);
-    weekdayOptions: WeekdayOption[] = [
-        { label: 'Monday', weekdayIndex: 1 },
-        { label: 'Tuesday', weekdayIndex: 2 },
-        { label: 'Wednesday', weekdayIndex: 3 },
-        { label: 'Thursday', weekdayIndex: 4 },
-        { label: 'Friday', weekdayIndex: 5 },
-        { label: 'Saturday', weekdayIndex: 6 },
-        { label: 'Sunday', weekdayIndex: 7 },
-    ];
+    weekdayOptions = computed<WeekdayOption[]>(() => {
+        this.currentLocale();
+        return this.computeWeekdayOptions();
+    });
     selectedWeekdayIndex = signal<WeekdayIndex | undefined>(undefined);
     startTime = signal<string | undefined>(undefined);
     endTime = signal<string | undefined>(undefined);
@@ -109,6 +119,18 @@ export class LectureSeriesCreateComponent {
     cancel() {
         const courseId = this.courseId();
         this.navigationUtilService.navigateBack(['course-management', courseId, 'lectures']);
+    }
+
+    private computeWeekdayOptions(): WeekdayOption[] {
+        return [
+            { label: this.translateService.instant('global.weekdays.monday'), weekdayIndex: 1 },
+            { label: this.translateService.instant('global.weekdays.tuesday'), weekdayIndex: 2 },
+            { label: this.translateService.instant('global.weekdays.wednesday'), weekdayIndex: 3 },
+            { label: this.translateService.instant('global.weekdays.thursday'), weekdayIndex: 4 },
+            { label: this.translateService.instant('global.weekdays.friday'), weekdayIndex: 5 },
+            { label: this.translateService.instant('global.weekdays.saturday'), weekdayIndex: 6 },
+            { label: this.translateService.instant('global.weekdays.sunday'), weekdayIndex: 7 },
+        ];
     }
 
     private updateLectureDrafts(selectedWeekdayIndex?: number, startTime?: string, endTime?: string, endDate?: Date) {

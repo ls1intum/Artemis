@@ -86,6 +86,17 @@
                 "message": "Are you sure you want to discard your unsaved changes?",
                 "sectionsThatContainUnsavedChangesSingular": "The following section contains unsaved changes:",
                 "sectionsThatContainUnsavedChangesPlural": "The following sections contain unsaved changes:"
+            },
+            "createSeries": {
+                "explanationText": "Scaffold multiple lectures by defining a weekday, time and series end date. Create lecture contents later. Like this you can inform user early about lectures taking place during the semester.",
+                "inputLabel": {
+                    "weekday": "Weekday",
+                    "startTime": "Start Time",
+                    "endTime": "End Time",
+                    "seriesEndDate": "End Date"
+                },
+                "generatedLecturesHeading": "Generated Lectures",
+                "editLectureModalTitle": "Edit Lecture Details"
             }
         },
         "attachment": {
