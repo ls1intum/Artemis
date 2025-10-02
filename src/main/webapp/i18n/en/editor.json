@@ -80,6 +80,10 @@
                 "compressTree": "Combine empty folders",
                 "fileBadgeTooltips": {
                     "feedbackSuggestions": "Number of feedback suggestions in this file/folder"
+                },
+                "autoResolve": {
+                    "title": "Reset repository?",
+                    "text": "The working copy contains uncommitted changes or conflicts. Resetting will discard those changes and show the latest committed state. Do you want to reset the repository now?"
                 }
             },
             "errors": {

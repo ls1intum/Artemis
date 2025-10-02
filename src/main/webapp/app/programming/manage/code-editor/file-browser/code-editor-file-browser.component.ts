@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, Subscription, of, throwError } from 'rxjs';
+import { Observable, Subscription, from, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { fromPairs, toPairs } from 'lodash-es';
 import { Interactable } from '@interactjs/core/Interactable';
@@ -33,6 +33,7 @@ import {
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
 
 export type InteractableEvent = {
@@ -212,20 +213,30 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 tap((commitState) => {
                     this.commitState = commitState;
                 }),
-                // In tutor assessment mode, automatically resolve dirty/conflicted working copies
+                // In tutor assessment mode, offer to resolve dirty/conflicted working copies
                 // by resetting to the last commit so that the latest committed state is shown.
                 switchMap((commitState) => {
                     const needsAutoResolve = this.isTutorAssessment && (commitState === CommitState.UNCOMMITTED_CHANGES || commitState === CommitState.CONFLICT);
                     if (needsAutoResolve) {
-                        return this.repositoryService.resetRepository().pipe(
-                            // After reset, re-check status before continuing
-                            switchMap(() => this.checkIfRepositoryIsClean()),
-                            tap((resolvedState) => {
-                                this.commitState = resolvedState;
-                                if (resolvedState !== CommitState.CONFLICT) {
-                                    this.conflictService.notifyConflictState(GitConflictState.OK);
-                                }
-                            }),
+                        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent);
+                        modalRef.componentInstance.title = 'artemisApp.editor.fileBrowser.autoResolve.title';
+                        modalRef.componentInstance.text = 'artemisApp.editor.fileBrowser.autoResolve.text';
+                        modalRef.componentInstance.translateText = true;
+
+                        return from(modalRef.result).pipe(
+                            switchMap(() =>
+                                this.repositoryService.resetRepository().pipe(
+                                    // After reset, re-check status before continuing
+                                    switchMap(() => this.checkIfRepositoryIsClean()),
+                                    tap((resolvedState) => {
+                                        this.commitState = resolvedState;
+                                        if (resolvedState !== CommitState.CONFLICT) {
+                                            this.conflictService.notifyConflictState(GitConflictState.OK);
+                                        }
+                                    }),
+                                ),
+                            ),
+                            catchError(() => of(commitState)),
                         );
                     }
                     return of(commitState);

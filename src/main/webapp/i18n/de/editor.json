@@ -80,6 +80,10 @@
                 "compressTree": "Leere Verzeichnisse zusammenfassen",
                 "fileBadgeTooltips": {
                     "feedbackSuggestions": "Anzahl von Feedback-Vorschlägen in dieser Datei / diesem Ordner"
+                },
+                "autoResolve": {
+                    "title": "Repository zurücksetzen?",
+                    "text": "Die Arbeitskopie enthält nicht übernommene Änderungen oder Konflikte. Durch das Zurücksetzen werden diese Änderungen verworfen und der zuletzt commitete Zustand angezeigt. Möchtest Du das Repository jetzt zurücksetzen?"
                 }
             },
             "errors": {
