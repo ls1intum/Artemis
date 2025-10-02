@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFile;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -47,6 +48,9 @@ class HyperionTestRepositoryServiceTest {
     @Mock
     private GitService gitService;
 
+    @Mock
+    private HyperionProgrammingExerciseContextRendererService contextRenderer;
+
     private ChatClient chatClient;
 
     private HyperionTestRepositoryService testRepository;
@@ -59,7 +63,7 @@ class HyperionTestRepositoryServiceTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         this.chatClient = ChatClient.create(chatModel);
-        this.testRepository = new HyperionTestRepositoryService(programmingExerciseRepository, chatClient, templates, gitService);
+        this.testRepository = new HyperionTestRepositoryService(programmingExerciseRepository, chatClient, templates, gitService, contextRenderer);
 
         this.user = new User();
         user.setLogin("testuser");

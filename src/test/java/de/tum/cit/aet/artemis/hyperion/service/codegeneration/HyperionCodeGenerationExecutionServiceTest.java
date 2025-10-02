@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.context.ApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -29,9 +28,6 @@ class HyperionCodeGenerationExecutionServiceTest {
 
     @Mock
     private GitService gitService;
-
-    @Mock
-    private ApplicationContext applicationContext;
 
     @Mock
     private RepositoryService repositoryService;
@@ -55,6 +51,15 @@ class HyperionCodeGenerationExecutionServiceTest {
     private HyperionProgrammingExerciseContextRendererService repositoryStructureService;
 
     @Mock
+    private HyperionSolutionRepositoryService solutionStrategy;
+
+    @Mock
+    private HyperionTemplateRepositoryService templateStrategy;
+
+    @Mock
+    private HyperionTestRepositoryService testStrategy;
+
+    @Mock
     private HyperionCodeGenerationService mockStrategy;
 
     private HyperionCodeGenerationExecutionService service;
@@ -66,8 +71,9 @@ class HyperionCodeGenerationExecutionServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        this.service = new HyperionCodeGenerationExecutionService(gitService, applicationContext, repositoryService, solutionProgrammingExerciseParticipationRepository,
-                programmingSubmissionRepository, resultRepository, continuousIntegrationTriggerService, programmingExerciseParticipationService, repositoryStructureService);
+        this.service = new HyperionCodeGenerationExecutionService(gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
+                programmingSubmissionRepository, resultRepository, continuousIntegrationTriggerService, programmingExerciseParticipationService, repositoryStructureService,
+                solutionStrategy, templateStrategy, testStrategy);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -80,29 +86,23 @@ class HyperionCodeGenerationExecutionServiceTest {
 
     @Test
     void resolveStrategy_withSolutionRepositoryType_returnsSolutionStrategy() throws Exception {
-        when(applicationContext.getBean("solutionRepositoryStrategy", HyperionCodeGenerationService.class)).thenReturn(mockStrategy);
-
         HyperionCodeGenerationService result = (HyperionCodeGenerationService) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.SOLUTION);
 
-        assertThat(result).isEqualTo(mockStrategy);
+        assertThat(result).isEqualTo(solutionStrategy);
     }
 
     @Test
     void resolveStrategy_withTemplateRepositoryType_returnsTemplateStrategy() throws Exception {
-        when(applicationContext.getBean("templateRepositoryStrategy", HyperionCodeGenerationService.class)).thenReturn(mockStrategy);
-
         HyperionCodeGenerationService result = (HyperionCodeGenerationService) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TEMPLATE);
 
-        assertThat(result).isEqualTo(mockStrategy);
+        assertThat(result).isEqualTo(templateStrategy);
     }
 
     @Test
     void resolveStrategy_withTestsRepositoryType_returnsTestStrategy() throws Exception {
-        when(applicationContext.getBean("testRepositoryStrategy", HyperionCodeGenerationService.class)).thenReturn(mockStrategy);
-
         HyperionCodeGenerationService result = (HyperionCodeGenerationService) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TESTS);
 
-        assertThat(result).isEqualTo(mockStrategy);
+        assertThat(result).isEqualTo(testStrategy);
     }
 
     @Test
