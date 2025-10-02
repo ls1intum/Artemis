@@ -309,24 +309,22 @@ describe('CodeEditorMonacoComponent', () => {
         expect(setAnnotationsStub).toHaveBeenNthCalledWith(3, [buildAnnotations[1]], false);
     });
 
-    it('should display feedback when viewing a tutor assessment', fakeAsync(() => {
+    it('should display feedback when viewing a tutor assessment', async () => {
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
         fixture.componentRef.setInput('isTutorAssessment', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
         fixture.detectChanges();
-        // Use .then() here instead of await so fakeAsync does not break.
-        comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) }).then(() => {
-            // Rendering of the feedback items happens after one tick to allow the renderer to catch up with the DOM nodes.
-            tick(1);
-            expect(addLineWidgetStub).toHaveBeenCalledTimes(2);
-            expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1`, document.createElement('div'));
-            expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2`, document.createElement('div'));
-            expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(2);
-            expect(selectFileInEditorStub).toHaveBeenCalledOnce();
-        });
-    }));
+        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) });
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(addLineWidgetStub).toHaveBeenCalledTimes(6); // as we trigger changes three times
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1-line-2`, document.createElement('div'));
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2-line-3`, document.createElement('div'));
+        expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(6);
+        expect(selectFileInEditorStub).toHaveBeenCalled();
+    });
 
     it('should add a new feedback widget', fakeAsync(() => {
         // Feedback is stored as 0-based line numbers, but the editor requires 1-based line numbers.
