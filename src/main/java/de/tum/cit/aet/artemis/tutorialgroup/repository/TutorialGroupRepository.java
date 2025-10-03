@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -140,6 +141,30 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
             WHERE tutorialGroup.id = :tutorialGroupId
             """)
     Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO(
+                tutorialGroup.id,
+                tutorialGroup.title,
+                tutorialGroup.language,
+                tutorialGroup.isOnline,
+                tutorialGroup.capacity,
+                tutorialGroup.campus,
+                CONCAT(tutorialGroup.teachingAssistant.firstName, CONCAT(' ', tutorialGroup.teachingAssistant.lastName)),
+                tutorialGroup.teachingAssistant.login,
+                tutorialGroup.teachingAssistant.imageUrl,
+                channel.id,
+                schedule.dayOfWeek,
+                schedule.startTime,
+                schedule.endTime,
+                schedule.location
+            )
+            FROM TutorialGroup tutorialGroup
+                LEFT JOIN tutorialGroup.tutorialGroupChannel channel
+                LEFT JOIN tutorialGroup.tutorialGroupSchedule schedule
+            WHERE tutorialGroup.id = :tutorialGroupId AND tutorialGroup.course.id = :courseId
+            """)
+    Optional<RawTutorialGroupDetailGroupDTO> getTutorialGroupDetailData(@Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
 
     default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
         return getValueElseThrow(findByIdWithSessions(tutorialGroupId), tutorialGroupId);

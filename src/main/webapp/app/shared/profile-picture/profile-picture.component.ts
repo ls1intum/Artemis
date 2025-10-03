@@ -13,18 +13,18 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     imports: [RouterLink, CommonModule, FontAwesomeModule],
 })
 export class ProfilePictureComponent implements OnInit, OnChanges {
-    readonly imageSizeInRem = input<string>('2.15');
-    readonly fontSizeInRem = input<string>('0.9');
+    imageSizeInRem = input<string>('2.15');
+    fontSizeInRem = input<string>('0.9');
     authorName = input<string | undefined>(undefined);
     authorId = input<number | undefined>(undefined);
     imageUrl = input<string | undefined>(undefined);
-    readonly imageClass = input<string>('');
-    readonly defaultPictureClass = input<string>('');
-    readonly imageId = input<string>('');
-    readonly defaultPictureId = input<string>('');
-    readonly isEditable = input<boolean>(false);
-    readonly isGray = input<boolean>(false);
-    readonly isBoxShadow = input<boolean>(false);
+    imageClass = input<string>('');
+    defaultPictureClass = input<string>('');
+    imageId = input<string>('');
+    defaultPictureId = input<string>('');
+    isEditable = input<boolean>(false);
+    isGray = input<boolean>(false);
+    isBoxShadow = input<boolean>(false);
 
     profilePictureBackgroundColor: string;
     userProfilePictureInitials: string;
@@ -44,7 +44,7 @@ export class ProfilePictureComponent implements OnInit, OnChanges {
 
     private updateImageData() {
         this.userProfilePictureInitials = this.authorName() === undefined ? 'NA' : getInitialsFromString(this.authorName()!);
-        this.profilePictureBackgroundColor = getBackgroundColorHue(this.authorId()?.toString());
+        this.profilePictureBackgroundColor = getBackgroundColorHue(this.authorId()?.toString() ?? this.authorName());
         this.imageSize = this.imageSizeInRem().replaceAll('rem', '') + 'rem';
         this.fontSize = this.fontSizeInRem().replaceAll('rem', '') + 'rem';
     }
