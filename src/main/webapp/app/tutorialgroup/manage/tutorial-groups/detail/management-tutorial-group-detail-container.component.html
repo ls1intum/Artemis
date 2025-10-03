@@ -2,7 +2,7 @@
     <div class="row justify-content-center">
         @if (tutorialGroup) {
             <div class="col-12">
-                <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup" [timeZone]="course.timeZone" [course]="course">
+                <jhi-management-tutorial-group-detail [tutorialGroup]="tutorialGroup" [timeZone]="course.timeZone" [course]="course">
                     <ng-template let-tutorialGroup>
                         <td>
                             <jhi-tutorial-group-row-buttons
@@ -13,7 +13,7 @@
                             />
                         </td>
                     </ng-template>
-                </jhi-tutorial-group-detail>
+                </jhi-management-tutorial-group-detail>
             </div>
         }
     </div>
