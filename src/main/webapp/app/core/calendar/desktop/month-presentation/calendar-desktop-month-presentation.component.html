@@ -28,13 +28,6 @@
     }
 </div>
 
-<ng-template #eventPopover let-pop="popover">
-    @let event = selectedEvent();
-    @if (event) {
-        <jhi-calendar-event-detail-popover [event]="event" (onClosePopover)="closePopover()" />
-    }
-</ng-template>
-
 <ng-template #eventCell let-event>
     <div
         class="event-cell"
@@ -44,15 +37,12 @@
             'tutorial-event-cell': event.isOfType(CalendarEventType.Tutorial),
             'exercise-event-cell': event.isOfExerciseType(),
         }"
-        [ngbPopover]="eventPopover"
-        triggers="manual"
-        [autoClose]="false"
-        [placement]="['bottom', 'right', 'left', 'top']"
-        (click)="openPopover(event, popover)"
-        #popover="ngbPopover"
+        (click)="eventDetailPopover.open($event, event)"
         [attr.data-testid]="event.title"
     >
         <div class="event-label">{{ event.title }}</div>
         <fa-icon [icon]="utils.getIconForEvent(event)" />
     </div>
 </ng-template>
+
+<jhi-calendar-event-detail-popover-component #eventDetailPopover />

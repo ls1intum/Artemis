@@ -17,7 +17,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
+import { ManagementTutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/management-tutorial-group-detail.component';
 import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { IconCardComponent } from 'app/tutorialgroup/shared/icon-card/icon-card.component';
@@ -30,25 +30,25 @@ class MockHeaderComponent {
 @Component({
     selector: 'jhi-mock-wrapper',
     template: `
-        <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup()">
+        <jhi-management-tutorial-group-detail [tutorialGroup]="tutorialGroup()">
             <ng-template>
                 <jhi-mock-header [tutorialGroup]="tutorialGroup()" />
             </ng-template>
-        </jhi-tutorial-group-detail>
+        </jhi-management-tutorial-group-detail>
     `,
-    imports: [TutorialGroupDetailComponent, MockHeaderComponent],
+    imports: [ManagementTutorialGroupDetailComponent, MockHeaderComponent],
 })
 class MockWrapperComponent {
     readonly tutorialGroup = input.required<TutorialGroup>();
 
-    tutorialGroupDetailInstance = viewChild.required(TutorialGroupDetailComponent);
+    tutorialGroupDetailInstance = viewChild.required(ManagementTutorialGroupDetailComponent);
     mockHeaderInstance = viewChild.required(MockHeaderComponent);
 }
 
 describe('TutorialGroupDetailWrapperTest', () => {
     let fixture: ComponentFixture<MockWrapperComponent>;
     let component: MockWrapperComponent;
-    let detailInstance: TutorialGroupDetailComponent;
+    let detailInstance: ManagementTutorialGroupDetailComponent;
     let headerInstance: MockHeaderComponent;
     let exampleTutorialGroup: TutorialGroup;
 
@@ -56,7 +56,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
         TestBed.configureTestingModule({
             imports: [RouterModule.forRoot([]), FaIconComponent],
             declarations: [
-                TutorialGroupDetailComponent,
+                ManagementTutorialGroupDetailComponent,
                 MockWrapperComponent,
                 MockHeaderComponent,
                 MockComponent(IconCardComponent),
@@ -100,14 +100,14 @@ describe('TutorialGroupDetailWrapperTest', () => {
 });
 
 describe('TutorialGroupDetailComponent', () => {
-    let fixture: ComponentFixture<TutorialGroupDetailComponent>;
-    let component: TutorialGroupDetailComponent;
+    let fixture: ComponentFixture<ManagementTutorialGroupDetailComponent>;
+    let component: ManagementTutorialGroupDetailComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [RouterModule.forRoot([]), FaIconComponent],
             declarations: [
-                TutorialGroupDetailComponent,
+                ManagementTutorialGroupDetailComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(IconCardComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
@@ -119,7 +119,7 @@ describe('TutorialGroupDetailComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(TutorialGroupDetailComponent);
+                fixture = TestBed.createComponent(ManagementTutorialGroupDetailComponent);
                 component = fixture.componentInstance;
                 fixture.componentRef.setInput('tutorialGroup', generateExampleTutorialGroup({}));
                 fixture.detectChanges();

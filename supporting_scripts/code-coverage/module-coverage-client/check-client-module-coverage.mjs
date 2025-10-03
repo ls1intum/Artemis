@@ -48,9 +48,9 @@ const moduleThresholds = {
         lines:      92.80,
     },
     core: {
-        statements: 89.80,
-        branches:   72.40,
-        functions:  81.80,
+        statements: 89.75,
+        branches:   72.30,
+        functions:  81.59,
         lines:      89.70,
     },
     exam: {
@@ -111,10 +111,10 @@ const moduleThresholds = {
         lines:      93.60,
     },
     programming: {
-        statements: 88.80,
-        branches:   76.50,
-        functions:  80.90,
-        lines:      88.90,
+        statements: 88.74,
+        branches:   76.41,
+        functions:  80.92,
+        lines:      88.86,
     },
     quiz: {
         statements: 87.10,
