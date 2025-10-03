@@ -97,7 +97,7 @@ module.exports = {
             statements: 89.66,
             branches: 75.85,
             functions: 83.68,
-            lines: 89.73    ,
+            lines: 89.73,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
