@@ -13,6 +13,49 @@
             flex: 1;
             height: 100%;
         }
+
+        .chips-section {
+            display: flex;
+            gap: 0.375rem;
+            min-width: 6rem;
+
+            .chip {
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+                box-sizing: border-box;
+                padding: 0.125rem 0.35rem;
+                border-radius: 0.25rem;
+                background: var(--body-bg);
+                font-size: 0.75rem;
+
+                .remove-button {
+                    all: unset;
+                }
+            }
+
+            .exam-chip {
+                background-color: var(--pastel-teal);
+            }
+
+            .lecture-chip {
+                background-color: var(--pastel-blue);
+            }
+
+            .tutorial-chip {
+                background-color: var(--pastel-purple);
+            }
+
+            .exercise-chip {
+                background-color: var(--pastel-cyan);
+            }
+
+            .legend-circle {
+                width: 0.75rem;
+                height: 0.75rem;
+                border-radius: 0.25rem;
+            }
+        }
     }
 
     .calendar-presentation-container {
