@@ -1,4 +1,4 @@
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 
 /**
  * Converts a date in order to send it to the server
@@ -78,4 +78,28 @@ export function dayOfWeekZeroSundayToZeroMonday(dayOfWeekZeroSunday: number): nu
 export function isDateLessThanAWeekInTheFuture(date: dayjs.Dayjs, compareTime?: dayjs.Dayjs): boolean {
     const now = compareTime ?? dayjs();
     return date.isBetween(now.add(1, 'week'), now);
+}
+
+export function isFirstDateAfterOrEqualSecond(firstDate?: Date, secondDate?: Date): boolean {
+    if (!firstDate || !secondDate) {
+        return false;
+    }
+    return firstDate.getTime() >= secondDate.getTime();
+}
+
+export function addOneMinuteTo(referenceDate?: Date) {
+    if (!referenceDate) {
+        return undefined;
+    }
+    const minimumDate = new Date(referenceDate.getTime());
+    minimumDate.setMinutes(minimumDate.getMinutes() + 1);
+    return minimumDate;
+}
+
+export function convertDayjsDateToDate(dayjsDate?: Dayjs): Date | undefined {
+    return dayjsDate ? dayjsDate.toDate() : undefined;
+}
+
+export function convertDateToDayjsDate(date?: Date): Dayjs | undefined {
+    return date ? dayjs(date) : undefined;
 }

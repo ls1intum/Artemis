@@ -1,0 +1,56 @@
+<div class="frame">
+    <div class="form-grid">
+        <label for="title" jhiTranslate="artemisApp.lecture.title"></label>
+        <input pInputText id="title" [ngModel]="title()" (ngModelChange)="onTitleChange($event)" [invalid]="isTitleInvalid()" />
+        <label for="releaseDate" jhiTranslate="artemisApp.exercise.releaseDate"></label>
+        <p-datepicker
+            inputId="releaseDate"
+            [ngModel]="releaseDate() ?? null"
+            (ngModelChange)="onReleaseDateChange($event)"
+            [showTime]="true"
+            [hourFormat]="'24'"
+            [firstDayOfWeek]="1"
+            appendTo="body"
+        />
+        <label for="startDate" jhiTranslate="artemisApp.exercise.startDate"></label>
+        <p-datepicker
+            inputId="startDate"
+            [ngModel]="startDate() ?? null"
+            (ngModelChange)="onStartDateChange($event)"
+            [showTime]="true"
+            [hourFormat]="'24'"
+            [firstDayOfWeek]="1"
+            [minDate]="minimumStartDate() ?? null"
+            [invalid]="isStartDateInvalid()"
+            appendTo="body"
+        />
+        <label for="dueDate" jhiTranslate="artemisApp.exercise.dueDate"></label>
+        <p-datepicker
+            inputId="dueDate"
+            [ngModel]="dueDate() ?? null"
+            (ngModelChange)="onDueDateChange($event)"
+            [showTime]="true"
+            [hourFormat]="'24'"
+            [firstDayOfWeek]="1"
+            [minDate]="minimumDueDate() ?? null"
+            [invalid]="isDueDateInvalid()"
+            appendTo="body"
+        />
+        <label for="assessmentDueDate" jhiTranslate="artemisApp.exercise.assessmentDueDate"></label>
+        <p-datepicker
+            inputId="assessmentDueDate"
+            [ngModel]="assessmentDueDate() ?? null"
+            (ngModelChange)="onAssessmentDueDateChange($event)"
+            [showTime]="true"
+            [hourFormat]="'24'"
+            [firstDayOfWeek]="1"
+            [minDate]="minimumAssessmentDueDate() ?? null"
+            [invalid]="isAssessmentDueDateInvalid()"
+            appendTo="body"
+        />
+    </div>
+    <div class="controls-section">
+        <button pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+        <button pButton size="small" [disabled]="areInputsInvalid()" (click)="save()" jhiTranslate="entity.action.save"></button>
+    </div>
+</div>

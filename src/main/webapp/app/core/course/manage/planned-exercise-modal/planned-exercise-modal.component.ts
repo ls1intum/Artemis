@@ -7,12 +7,21 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { ButtonModule } from 'primeng/button';
 import { AutoFocusModule } from 'primeng/autofocus';
 //import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
-//import dayjs, { Dayjs } from 'dayjs/esm';
+import { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { PlannedExerciseSeriesCreateComponent } from 'app/core/course/manage/planned-exercise-modal/planned-exercise-series-create/planned-exercise-series-create.component';
+import { PlannedExerciseCreateComponent } from 'app/core/course/manage/planned-exercise-modal/planned-exercise-create/planned-exercise-create.component';
 //import { addOneMinuteTo, isFirstAfterOrEqualSecond } from 'app/lecture/manage/util/lecture-management.utils';
+
+export interface PlannedExercise {
+    title: string;
+    releaseDate?: Dayjs;
+    startDate?: Dayjs;
+    dueDate?: Dayjs;
+    assessmentDueDate?: Dayjs;
+}
 
 @Component({
     selector: 'jhi-planned-exercise-modal',
@@ -26,6 +35,7 @@ import { PlannedExerciseSeriesCreateComponent } from 'app/core/course/manage/pla
         FloatLabelModule,
         TranslateDirective,
         PlannedExerciseSeriesCreateComponent,
+        PlannedExerciseCreateComponent,
     ],
     templateUrl: './planned-exercise-modal.component.html',
     styleUrl: './planned-exercise-modal.component.scss',
