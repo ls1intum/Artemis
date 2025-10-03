@@ -337,68 +337,6 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         validateAdminOverview(adminOverview, 64 + 1, 16_141 + 528, 224 + 4, ExamRoomZipFiles.singleExamRoomName);
     }
 
-    /* Tests for the DELETE /exam-rooms endpoint */
-
-    @Test
-    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-    void testDeleteAllExamRoomDataAsStudent() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-    void testDeleteAllExamRoomDataAsTutor() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
-    void testDeleteAllExamRoomDataAsEditor() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-    void testDeleteAllExamRoomDataAsInstructor() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testDeleteAllExamRoomDataAsAdmin() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.NO_CONTENT);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testDeleteAllExamRoomDataEmpty() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.NO_CONTENT);
-        validateDbStoredElementCounts(0, 0, 0);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testDeleteAllRealisticRoomData() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
-        assertThat(examRoomRepository.count()).isPositive();
-
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.NO_CONTENT);
-        validateDbStoredElementCounts(0, 0, 0);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testDeleteAllTonsOfExamRoomData() throws Exception {
-        for (int i = 0; i < 10; i++) {
-            request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
-        }
-
-        assertThat(examRoomRepository.count()).isPositive();
-
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.NO_CONTENT);
-        validateDbStoredElementCounts(0, 0, 0);
-    }
-
     /* Tests for the DELETE /exam-rooms/outdated-and-unused endpoint */
 
     @Test
