@@ -1,13 +1,41 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    computed,
+    effect,
+    inject,
+    input,
+    signal,
+} from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { fromPairs, toPairs } from 'lodash-es';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/programming/manage/code-editor/file-browser/delete/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
-import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
+import {
+    faAngleDoubleDown,
+    faAngleDoubleUp,
+    faChevronLeft,
+    faChevronRight,
+    faCircleNotch,
+    faFile,
+    faFolder,
+    faFolderOpen,
+    faListAlt,
+    faPlus,
+} from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -15,6 +43,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeEditorFileBrowserCreateNodeComponent } from './create-node/code-editor-file-browser-create-node.component';
 import { CodeEditorFileBrowserFolderComponent } from './folder/code-editor-file-browser-folder.component';
 import { CodeEditorFileBrowserFileComponent } from './file/code-editor-file-browser-file.component';
+import { CodeEditorFileBrowserProblemStatementComponent } from './problem-statement/code-editor-file-browser-problem-statement.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TreeItem, TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/tree-view/tree-view.component';
@@ -29,6 +58,7 @@ import {
     FileChange,
     FileType,
     GitConflictState,
+    PROBLEM_STATEMENT_IDENTIFIER,
     RenameFileChange,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -61,6 +91,7 @@ export interface FileTreeItem extends TreeItem<string> {
         CodeEditorFileBrowserCreateNodeComponent,
         TreeViewComponent,
         CodeEditorStatusComponent,
+        CodeEditorFileBrowserProblemStatementComponent,
         CodeEditorFileBrowserFolderComponent,
         CodeEditorFileBrowserFileComponent,
         ArtemisTranslatePipe,
@@ -72,16 +103,33 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     private repositoryService = inject(CodeEditorRepositoryService);
     private fileService = inject(CodeEditorFileService);
     private conflictService = inject(CodeEditorConflictStateService);
-
     CommitState = CommitState;
     FileType = FileType;
+    constructor() {
+        // React to participation() signal changes
+        effect(() => {
+            const p = this.participation();
+            if (p !== undefined) {
+                this.initializeRepositoryFiles();
+            }
+        });
+
+        // React to showEditorInstructions signal changes
+        effect(() => {
+            this.showEditorInstructions();
+            if (this.participation()) {
+                this.handleProblemStatementVisibility();
+            }
+        });
+    }
 
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
     @ViewChild('treeview', { static: false }) treeview: TreeViewComponent<string>;
-
+    participation = input<Participation>();
+    showEditorInstructions = input(true);
     @Input()
     get selectedFile(): string | undefined {
-        return this.selectedFileValue;
+        return this.selectedFileSignal();
     }
     @Input()
     disableActions = false;
@@ -118,11 +166,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     onError = new EventEmitter<string>();
 
     isLoadingFiles: boolean;
-    selectedFileValue?: string;
+    selectedFileSignal = signal<string | undefined>(undefined);
+    isProblemStatementSelected = computed(() => this.selectedFileSignal() === PROBLEM_STATEMENT_IDENTIFIER);
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
     repositoryFilesWithInformationAboutChange: { [fileName: string]: boolean } | undefined;
-    filesTreeViewItem: TreeViewItem<string>[];
+    filesTreeViewItem: TreeViewItem<string>[] = [];
     compressFolders = true;
 
     collapsed = false;
@@ -153,12 +202,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     faChevronLeft = faChevronLeft;
     faCircleNotch = faCircleNotch;
     faFile = faFile;
+    faListAlt = faListAlt;
     faAngleDoubleUp = faAngleDoubleUp;
     faAngleDoubleDown = faAngleDoubleDown;
 
     set selectedFile(file: string | undefined) {
-        this.selectedFileValue = file;
-        this.selectedFileChange.emit(this.selectedFile);
+        this.selectedFileSignal.set(file);
+        this.selectedFileChange.emit(file);
     }
 
     set commitState(commitState: CommitState) {
@@ -174,6 +224,29 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             }
             this.gitConflictState = gitConflictState;
         });
+
+        // Initial setup (kept so PS shows even before participation arrives)
+        this.initializeRepositoryFiles();
+    }
+
+    /**
+     * Initialize repositoryFiles with Problem Statement as a first-class file type
+     */
+    private initializeRepositoryFiles(): void {
+        if (!this.repositoryFiles) {
+            this.repositoryFiles = {};
+        }
+
+        // Add Problem Statement as a first-class file type (not in display-only/repository-view mode)
+        if (!this.displayOnly && this.showEditorInstructions()) {
+            const existing = this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
+            if (!existing || existing === FileType.PROBLEM_STATEMENT) {
+                this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
+            }
+        } else {
+            // Ensure Problem Statement is removed when in repository view mode
+            delete this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
+        }
     }
 
     /**
@@ -201,6 +274,32 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.renamingFile = undefined;
             this.setupTreeview();
         }
+
+        // Handle displayOnly changes - add/remove Problem Statement from repositoryFiles
+        if (changes.displayOnly) {
+            this.handleProblemStatementVisibility();
+        }
+    }
+
+    /**
+     * Handle displayOnly mode changes by adding/removing Problem Statement from repositoryFiles
+     */
+    private handleProblemStatementVisibility(): void {
+        // Ensure the map exists before we mutate / render
+        if (!this.repositoryFiles) {
+            this.repositoryFiles = {};
+        }
+
+        if (this.displayOnly || !this.showEditorInstructions()) {
+            delete this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
+            if (this.isProblemStatementSelected()) {
+                this.selectedFile = undefined;
+            }
+        } else {
+            this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
+        }
+
+        this.setupTreeview();
     }
 
     initializeComponent = () => {
@@ -223,6 +322,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 }),
                 tap((files) => {
                     this.repositoryFiles = files;
+                    // Ensure Problem Statement is present if not in display-only mode
+                    this.initializeRepositoryFiles();
                     this.unsavedFiles = [];
                 }),
                 switchMap(() => {
@@ -241,6 +342,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             .subscribe({
                 error: (error: Error) => {
                     this.isLoadingFiles = false;
+                    this.initializeRepositoryFiles();
+                    this.setupTreeview();
                     this.onError.emit(error.message);
                 },
             });
@@ -308,7 +411,19 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * Process the file array, compress it and then transforms it to a TreeViewItem
      */
     setupTreeview() {
-        let tree = this.buildTree(Object.keys(this.repositoryFiles).sort());
+        // nothing to render yet
+        if (!this.repositoryFiles) {
+            this.filesTreeViewItem = [];
+            return;
+        }
+
+        const fileKeys = Object.keys(this.repositoryFiles).sort((a, b) => {
+            if (a === PROBLEM_STATEMENT_IDENTIFIER) return -1;
+            if (b === PROBLEM_STATEMENT_IDENTIFIER) return 1;
+            return a.localeCompare(b);
+        });
+
+        let tree = this.buildTree(fileKeys);
         if (this.compressFolders) {
             tree = tree.map(this.compressTree.bind(this));
         }
@@ -455,7 +570,14 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * Enter rename file mode and focus the created input.
      **/
     setRenamingFile(item: TreeViewItem<string>) {
-        this.renamingFile = [item.value, item.text, this.repositoryFiles[item.value]];
+        const fileType = this.repositoryFiles[item.value];
+
+        // Guard against PROBLEM_STATEMENT rename - only allow FILE and FOLDER
+        if (fileType !== FileType.FILE && fileType !== FileType.FOLDER) {
+            return;
+        }
+
+        this.renamingFile = [item.value, item.text, fileType];
     }
 
     /**
@@ -564,7 +686,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     openDeleteFileModal(item: TreeViewItem<string>) {
         const { value: filePath } = item;
         const fileType = this.repositoryFiles[filePath];
-        if (filePath) {
+        if (filePath && fileType !== FileType.PROBLEM_STATEMENT) {
             const modalRef = this.modalService.open(CodeEditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.parent = this;
             modalRef.componentInstance.fileNameToDelete = filePath;

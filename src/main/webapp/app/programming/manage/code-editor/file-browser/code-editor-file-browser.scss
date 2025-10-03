@@ -89,3 +89,44 @@ File browser tree
         }
     }
 }
+
+/* Problem Statement */
+.file-browser {
+    ::ng-deep .treeview-container {
+        .list-group-item.problem-statement-entry {
+            position: relative;
+
+            &:not(.node-selected) {
+                &::before {
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    top: 6px;
+                    bottom: 6px;
+                    width: 3px;
+                    border-radius: 2px;
+                    background: var(--bs-primary);
+                }
+
+                .problem-statement-icon {
+                    color: var(--bs-primary);
+                }
+
+                .list-group-item__fileName {
+                    color: var(--bs-primary);
+                    font-weight: 600;
+                }
+            }
+
+            &.node-selected::before {
+                display: none;
+            }
+
+            &.node-selected .problem-statement-icon,
+            &.node-selected .list-group-item__fileName {
+                color: inherit;
+                font-weight: inherit;
+            }
+        }
+    }
+}
