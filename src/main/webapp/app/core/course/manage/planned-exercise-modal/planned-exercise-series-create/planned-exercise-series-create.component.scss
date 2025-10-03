@@ -1,0 +1,16 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .form-section {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .controls-section {
+        display: flex;
+        justify-content: end;
+        gap: 1rem;
+    }
+}

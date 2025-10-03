@@ -187,7 +187,10 @@
                         "file-upload": "Dateiupload-Aufgaben"
                     }
                 },
-                "planExercisesButtonLabel": "Aufgaben Planen"
+                "planExercisesButtonLabel": "Aufgaben Planen",
+                "planExercisesModal": {
+                    "explanationText": "Plane Aufgaben um Aufgabenevents im Kalendar anzuzeigen, ohne die Aufgabe selbst erstellen zu müssen. Wenn du die tatsächliche Aufgabe erstellst, kannst du eine geplante Aufgabe benutzen um den Titel und Datumsfelder automatisch auszufüllen."
+                }
             },
             "students": "Studierende",
             "participations": "Teilnahmen",

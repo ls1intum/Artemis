@@ -1,50 +1,12 @@
-<p-dialog [header]="headerTitle()" [modal]="true" [visible]="show()" [closable]="false" [focusOnShow]="false" appendTo="body">
-    <div class="frame">
-        <!--
-        <div class="form-grid">
-            <label for="title" jhiTranslate="artemisApp.lecture.title"></label>
-            <input pInputText id="title" [pAutoFocus]="true" [ngModel]="title()" (ngModelChange)="onTitleChange($event)" [invalid]="isTitleInvalid()" />
-            <label for="visibleDate" jhiTranslate="artemisApp.lecture.visibleDate"></label>
-            <p-datepicker
-                inputId="visibleDate"
-                [ngModel]="visibleDate() ?? null"
-                (ngModelChange)="onVisibleDateChange($event)"
-                [showTime]="true"
-                [hourFormat]="'24'"
-                [firstDayOfWeek]="1"
-                appendTo="body"
-            />
-            <label for="startDate" jhiTranslate="artemisApp.lecture.startDate"></label>
-            <p-datepicker
-                inputId="startDate"
-                [ngModel]="startDate() ?? null"
-                (ngModelChange)="onStartDateChange($event)"
-                [showTime]="true"
-                [hourFormat]="'24'"
-                [firstDayOfWeek]="1"
-                [minDate]="minimumStartDate() ?? null"
-                [invalid]="isStartDateInvalid()"
-                appendTo="body"
-            />
-            <label for="endDate" jhiTranslate="artemisApp.lecture.endDate"></label>
-            <p-datepicker
-                inputId="endDate"
-                [ngModel]="endDate() ?? null"
-                (ngModelChange)="onEndDateChange($event)"
-                [showTime]="true"
-                [hourFormat]="'24'"
-                [firstDayOfWeek]="1"
-                [minDate]="minimumEndDate() ?? null"
-                [invalid]="isEndDateInvalid()"
-                appendTo="body"
-            />
-        </div>
-        -->
-        <div class="controls-section">
-            <button pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
-            <!--
-            <button pButton size="small" [disabled]="areInputsInvalid()" (click)="save()" jhiTranslate="entity.action.save"></button>
-            -->
-        </div>
-    </div>
+<p-dialog
+    [header]="headerTitle()"
+    [modal]="true"
+    [visible]="show()"
+    (visibleChange)="cancel()"
+    [closable]="true"
+    [focusOnShow]="false"
+    [style]="{ 'max-width': '70rem' }"
+    appendTo="body"
+>
+    <jhi-planned-exercise-series-create />
 </p-dialog>

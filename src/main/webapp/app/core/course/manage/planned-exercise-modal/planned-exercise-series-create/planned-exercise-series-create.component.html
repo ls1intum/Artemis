@@ -1,0 +1,44 @@
+<div class="frame">
+    <p jhiTranslate="artemisApp.course.exercise.planExercisesModal.explanationText"></p>
+    <p>First, specify the date properties of the first exercise within the series:</p>
+    <div class="form-section">
+        <p-floatlabel variant="on">
+            <p-datepicker inputId="release-date" [ngModel]="releaseDate() ?? null" (ngModelChange)="onReleaseDateChange($event)" [firstDayOfWeek]="1" appendTo="body" />
+            <label for="release-date" jhiTranslate="artemisApp.exercise.releaseDate"></label>
+        </p-floatlabel>
+        <p-floatlabel variant="on">
+            <p-datepicker inputId="start-date" [ngModel]="startDate() ?? null" (ngModelChange)="onStartDateChange($event)" [firstDayOfWeek]="1" appendTo="body" />
+            <label for="start-date" jhiTranslate="artemisApp.exercise.startDate"></label>
+        </p-floatlabel>
+        <p-floatlabel variant="on">
+            <p-datepicker inputId="due-date" [ngModel]="dueDate() ?? null" (ngModelChange)="onDueDateChange($event)" [firstDayOfWeek]="1" appendTo="body" />
+            <label for="due-date" jhiTranslate="artemisApp.exercise.dueDate"></label>
+        </p-floatlabel>
+        <p-floatlabel variant="on">
+            <p-datepicker
+                inputId="assessment-due-date"
+                [ngModel]="assessmentDueDate() ?? null"
+                (ngModelChange)="onAssessmentDueDateChange($event)"
+                [firstDayOfWeek]="1"
+                appendTo="body"
+            />
+            <label for="assessment-due-date" jhiTranslate="artemisApp.exercise.assessmentDueDate"></label>
+        </p-floatlabel>
+    </div>
+    <p>Artemis will generate weekly repetitions of the first planned exercise. Please choose a date on which the series should end:</p>
+    <p-floatlabel variant="on">
+        <p-datepicker
+            inputId="series-end-date"
+            [ngModel]="seriesEndDate() ?? null"
+            (ngModelChange)="onSeriesEndDateChange($event)"
+            style="width: 13rem"
+            [firstDayOfWeek]="1"
+            appendTo="body"
+        />
+        <label for="series-end-date" jhiTranslate="artemisApp.exercise.assessmentDueDate"></label>
+    </p-floatlabel>
+    <div class="controls-section">
+        <button pButton severity="secondary" size="small" jhiTranslate="entity.action.cancel"></button>
+        <button pButton size="small" jhiTranslate="entity.action.save"></button>
+    </div>
+</div>

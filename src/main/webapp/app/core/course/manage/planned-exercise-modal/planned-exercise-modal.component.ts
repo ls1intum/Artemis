@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { DatePickerModule } from 'primeng/datepicker';
+import { FloatLabelModule } from 'primeng/floatlabel';
 import { ButtonModule } from 'primeng/button';
 import { AutoFocusModule } from 'primeng/autofocus';
 //import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
@@ -10,11 +11,22 @@ import { AutoFocusModule } from 'primeng/autofocus';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { PlannedExerciseSeriesCreateComponent } from 'app/core/course/manage/planned-exercise-modal/planned-exercise-series-create/planned-exercise-series-create.component';
 //import { addOneMinuteTo, isFirstAfterOrEqualSecond } from 'app/lecture/manage/util/lecture-management.utils';
 
 @Component({
     selector: 'jhi-planned-exercise-modal',
-    imports: [FormsModule, DialogModule, InputTextModule, DatePickerModule, ButtonModule, AutoFocusModule, TranslateDirective],
+    imports: [
+        FormsModule,
+        DialogModule,
+        InputTextModule,
+        DatePickerModule,
+        ButtonModule,
+        AutoFocusModule,
+        FloatLabelModule,
+        TranslateDirective,
+        PlannedExerciseSeriesCreateComponent,
+    ],
     templateUrl: './planned-exercise-modal.component.html',
     styleUrl: './planned-exercise-modal.component.scss',
 })
@@ -23,10 +35,9 @@ export class PlannedExerciseModalComponent {
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     show = signal<boolean>(false);
-
     headerTitle = computed<string>(() => {
         this.currentLocale();
-        return this.translateService.instant('artemisApp.lecture.createSeries.editLectureModalTitle');
+        return this.translateService.instant('artemisApp.course.exercise.planExercisesButtonLabel');
     });
 
     open() {
