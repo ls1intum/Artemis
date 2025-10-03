@@ -106,6 +106,10 @@ artemis:
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
 
+  nebula: # The nebula module is used for llm features such as faq-rewriting and lecture transcription
+    enabled: false
+    url: <your-nebula-url>
+    secret: <your-secret>
 
 # Configure Spring AI, if you want to use Hyperion
 spring:
