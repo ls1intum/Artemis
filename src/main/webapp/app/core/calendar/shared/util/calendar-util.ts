@@ -106,14 +106,3 @@ export enum CalendarEventFilterOption {
     TutorialEvents = 'tutorialEvents',
     ExerciseEvents = 'exerciseEvents',
 }
-
-const filterOptionNameKeyMap: Record<CalendarEventFilterOption, string> = {
-    exerciseEvents: 'artemisApp.calendar.filterOption.exercises',
-    lectureEvents: 'artemisApp.calendar.filterOption.lectures',
-    tutorialEvents: 'artemisApp.calendar.filterOption.tutorials',
-    examEvents: 'artemisApp.calendar.filterOption.exams',
-};
-
-export function getFilterOptionNameKey(option: CalendarEventFilterOption): string {
-    return filterOptionNameKeyMap[option];
-}
