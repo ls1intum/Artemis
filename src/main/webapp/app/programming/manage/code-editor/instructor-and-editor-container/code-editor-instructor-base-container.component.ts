@@ -19,6 +19,8 @@ import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { isExamExercise } from 'app/shared/util/utils';
+import { Subject } from 'rxjs';
+import { debounceTime, shareReplay } from 'rxjs/operators';
 /**
  * Enumeration specifying the loading state
  */
@@ -44,6 +46,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
+    /** Raw markdown changes from the center editor for debounce logic */
+    private problemStatementChanges$ = new Subject<string>();
 
     ButtonSize = ButtonSize;
     LOADING_STATE = LOADING_STATE;
@@ -74,12 +78,22 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     loadingState = LOADING_STATE.CLEAR;
 
     protected isCreateAssignmentRepoDisabled: boolean;
+    /** Debounced tick stream consumed by the sidebar preview */
+    previewEvents$ = this.problemStatementChanges$.pipe(
+        debounceTime(200),
+        map(() => void 0), // Observable<void>
+        shareReplay({ bufferSize: 1, refCount: true }), // replay latest for late subscribers
+    );
 
     /**
      * Initialize the route params subscription.
      * On route param change load the exercise and the selected participation OR the test repository.
      */
     ngOnInit(): void {
+        /** Initial render if we already have content */
+        if (this.exercise?.problemStatement != undefined) {
+            this.problemStatementChanges$.next(this.exercise.problemStatement);
+        }
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
@@ -94,6 +108,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     tap((exercise) => {
                         this.exercise = exercise;
                         this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
+                        // Emit initial markdown to drive the preview after loading the exercise
+                        if (exercise.problemStatement != undefined) {
+                            this.problemStatementChanges$.next(exercise.problemStatement);
+                        }
                     }),
                     // Set selected participation
                     tap(() => {
@@ -137,6 +155,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     },
                 });
         });
+    }
+    /** Called by the center editor on every markdown change */
+    onInstructionChanged(markdown: string) {
+        this.problemStatementChanges$.next(markdown);
     }
 
     /**

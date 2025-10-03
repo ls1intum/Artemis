@@ -7,6 +7,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -17,11 +21,22 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.GitCommand;
+import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.TransportCommand;
+import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
+import org.eclipse.jgit.errors.UnsupportedCredentialItem;
+import org.eclipse.jgit.transport.CredentialItem;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.SshConfigStore;
+import org.eclipse.jgit.transport.SshConstants;
+import org.eclipse.jgit.transport.SshTransport;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.transport.sshd.JGitKeyCache;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,21 +65,19 @@ public class BuildJobGitService extends AbstractGitService {
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
     private boolean useSshForBuildAgent;
 
+    @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
+    private Optional<String> gitSshPrivateKeyPath;
+
+    @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
+    private Optional<String> sshUrlTemplate;
+
     private CredentialsProvider credentialsProvider;
 
-    /**
-     * Determines whether to use SSH.
-     * <p>
-     * This method overrides the default behavior of {@code AbstractGitService} and returns the configuration flag
-     * {@code useSshForBuildAgent} to indicate if SSH should be used.
-     * </p>
-     *
-     * @return {@code true} if SSH should be used; {@code false} otherwise.
-     */
-    @Override
-    protected boolean useSsh() {
-        return useSshForBuildAgent;
-    }
+    private JGitKeyCache jgitKeyCache;
+
+    protected TransportConfigCallback sshCallback;
+
+    private SshdSessionFactory sshdSessionFactory;
 
     /**
      * initialize the BuildJobGitService, in particular which authentication mechanism should be used
@@ -89,10 +102,108 @@ public class BuildJobGitService extends AbstractGitService {
         }
     }
 
+    protected boolean useSsh() {
+        return useSshForBuildAgent;
+    }
+
+    /**
+     * Configures the SSH settings for the JGit SSH session factory.
+     */
+    protected void configureSsh() {
+        CredentialsProvider.setDefault(new CustomCredentialsProvider());
+        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, localVCBaseUri);
+        jgitKeyCache = new JGitKeyCache();
+        sshdSessionFactory = sshSessionFactoryBuilder.build(jgitKeyCache);
+        sshCallback = transport -> {
+            if (transport instanceof SshTransport sshTransport) {
+                transport.setTimeout(JGIT_TIMEOUT_IN_SECONDS);
+                sshTransport.setSshSessionFactory(sshdSessionFactory);
+            }
+            else {
+                log.error("Cannot use ssh properly because of mismatch of Jgit transport object: {}", transport);
+            }
+        };
+    }
+
+    protected static SshdSessionFactoryBuilder getSshdSessionFactoryBuilder(Optional<String> gitSshPrivateKeyPath, URI gitUri) {
+        // @formatter:off
+        return new SshdSessionFactoryBuilder()
+            .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUri))
+            .setSshDirectory(Path.of(gitSshPrivateKeyPath.orElseThrow()).toFile())
+            .setHomeDirectory(Path.of(System.getProperty("user.home")).toFile());
+        // @formatter:on
+    }
+
     @PreDestroy
-    @Override
     public void cleanup() {
-        super.cleanup();
+        if (useSsh()) {
+            jgitKeyCache.close();
+            sshdSessionFactory.close();
+        }
+    }
+
+    static class CustomCredentialsProvider extends CredentialsProvider {
+
+        @Override
+        public boolean isInteractive() {
+            return false;
+        }
+
+        @Override
+        public boolean supports(CredentialItem... items) {
+            return true;
+        }
+
+        // Note: the following method allows us to store known hosts
+        @Override
+        public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
+            for (CredentialItem item : items) {
+                if (item instanceof CredentialItem.YesNoType yesNoItem) {
+                    yesNoItem.setValue(true);
+                }
+            }
+            return true;
+        }
+    }
+
+    record CustomSshConfigStore(URI gitUri) implements SshConfigStore {
+
+        @Override
+        public HostConfig lookup(String hostName, int port, String userName) {
+            return new HostConfig() {
+
+                @Override
+                public String getValue(String key) {
+                    return null;
+                }
+
+                @Override
+                public List<String> getValues(String key) {
+                    return Collections.emptyList();
+                }
+
+                @Override
+                public Map<String, String> getOptions() {
+                    log.debug("getOptions: {}:{}", hostName, port);
+                    if (hostName.equals(gitUri.getHost())) {
+                        return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
+                    }
+                    else {
+                        return Collections.emptyMap();
+                    }
+                }
+
+                @Override
+                public Map<String, List<String>> getMultiValuedOptions() {
+                    return Collections.emptyMap();
+                }
+            };
+        }
+
+        @Override
+        public HostConfig lookupDefault(String hostName, int port, String userName) {
+            return lookup(hostName, port, userName);
+        }
     }
 
     /**
@@ -182,5 +293,14 @@ public class BuildJobGitService extends AbstractGitService {
             credentialsProvider = new UsernamePasswordCredentialsProvider(buildAgentGitUsername, buildAgentGitPassword);
         }
         return credentialsProvider;
+    }
+
+    @Override
+    protected LsRemoteCommand lsRemoteCommand() {
+        return authenticate(Git.lsRemoteRepository());
+    }
+
+    private CloneCommand cloneCommand() {
+        return authenticate(Git.cloneRepository());
     }
 }

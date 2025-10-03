@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -66,6 +67,21 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
                 WHERE tutorialGroup.id IN :tutorialGroupIds AND session.status = 'ACTIVE'
             """)
     Set<CalendarEventDTO> getCalendarEventDTOsFromActiveSessionsForTutorialGroupIds(@Param("tutorialGroupIds") Set<Long> tutorialGroupIds);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO(
+                session.start,
+                session.end,
+                session.location,
+                session.status,
+                session.attendanceCount
+            )
+            FROM TutorialGroupSession session
+                JOIN session.tutorialGroup tutorialGroup
+            WHERE tutorialGroup.id = :tutorialGroupId
+            ORDER BY session.start ASC
+            """)
+    List<RawTutorialGroupDetailSessionDTO> getTutorialGroupDetailSessionData(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
             SELECT session
