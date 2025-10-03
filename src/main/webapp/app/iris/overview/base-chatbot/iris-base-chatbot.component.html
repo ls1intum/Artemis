@@ -30,6 +30,12 @@
                     <fa-icon [icon]="faCircleInfo" class="info-button" />
                 </a>
             }
+            <label class="switch">
+                <fa-icon [icon]="faDownload" class="icon-left" title="Local" />
+                <input type="checkbox" [(ngModel)]="isCloudEnabled" />
+                <span class="slider round"></span>
+                <fa-icon [icon]="faCloud" class="icon-right" title="Cloud" />
+            </label>
         </div>
         <div class="d-flex gap-2">
             @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {

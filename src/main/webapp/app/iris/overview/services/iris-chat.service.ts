@@ -17,6 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { Router } from '@angular/router';
 import { captureException } from '@sentry/angular';
+import { HttpHeaders } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
 export enum ChatServiceMode {
@@ -177,8 +178,9 @@ export class IrisChatService implements OnDestroy {
     /**
      * Sends a message to the server and returns the created message.
      * @param message to be created
+     * @param extraHeaders to be sent
      */
-    public sendMessage(message: string): Observable<undefined> {
+    public sendMessage(message: string, extraHeaders?: HttpHeaders): Observable<undefined> {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
@@ -187,9 +189,18 @@ export class IrisChatService implements OnDestroy {
         // Trim messages (Spaces, newlines)
         message = message.trim();
 
+        let headers = new HttpHeaders({
+            'Content-Type': 'application/json',
+        });
+
+        if (extraHeaders) {
+            extraHeaders.keys().forEach((key) => {
+                headers = headers.set(key, extraHeaders.get(key)!);
+            });
+        }
         const newMessage = new IrisUserMessage();
         newMessage.content = [new IrisTextMessageContent(message)];
-        return this.http.createMessage(this.sessionId, newMessage).pipe(
+        return this.http.createMessage(this.sessionId, newMessage, headers).pipe(
             tap((m) => {
                 this.replaceOrAddMessage(m.body!);
             }),
