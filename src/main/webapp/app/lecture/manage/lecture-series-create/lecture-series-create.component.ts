@@ -18,7 +18,7 @@ import { LectureCreateDTO } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
-import { addOneMinuteTo, isFirstAfterOrEqualSecond } from 'app/lecture/manage/util/lecture-management.utils';
+import { addOneMinuteTo, isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
 import { finalize } from 'rxjs';
 
 type WeekdayIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -83,7 +83,7 @@ export class LectureSeriesCreateComponent {
     startDate = signal<Date | undefined>(undefined);
     endDate = signal<Date | undefined>(undefined);
     minimumEndDate = computed(() => addOneMinuteTo(this.startDate()) ?? new Date());
-    isEndDateInvalid = computed(() => isFirstAfterOrEqualSecond(this.startDate(), this.endDate()));
+    isEndDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(this.startDate(), this.endDate()));
     isLoading = signal(false);
     areInputsInvalid = computed(() => this.isStartAndEndTimeCombinationInvalid() || this.isEndDateInvalid());
 

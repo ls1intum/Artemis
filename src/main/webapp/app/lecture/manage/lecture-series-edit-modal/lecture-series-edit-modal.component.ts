@@ -10,7 +10,7 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
-import { addOneMinuteTo, isFirstAfterOrEqualSecond } from 'app/lecture/manage/util/lecture-management.utils';
+import { addOneMinuteTo, isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
 
 @Component({
     selector: 'jhi-lecture-series-edit-modal',
@@ -28,10 +28,10 @@ export class LectureSeriesEditModalComponent {
     visibleDate = signal<Date | undefined>(undefined);
     startDate = signal<Date | undefined>(undefined);
     minimumStartDate = computed(() => addOneMinuteTo(this.visibleDate()));
-    isStartDateInvalid = computed(() => isFirstAfterOrEqualSecond(this.visibleDate(), this.startDate()));
+    isStartDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(this.visibleDate(), this.startDate()));
     endDate = signal<Date | undefined>(undefined);
     minimumEndDate = computed(() => addOneMinuteTo(this.startDate()) ?? addOneMinuteTo(this.visibleDate()));
-    isEndDateInvalid = computed(() => isFirstAfterOrEqualSecond(this.visibleDate(), this.endDate()) || isFirstAfterOrEqualSecond(this.startDate(), this.endDate()));
+    isEndDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(this.visibleDate(), this.endDate()) || isFirstDateAfterOrEqualSecond(this.startDate(), this.endDate()));
     show = signal<boolean>(false);
     areInputsInvalid = computed(() => this.isTitleInvalid() || this.isStartDateInvalid() || this.isEndDateInvalid());
     headerTitle = computed<string>(() => {
