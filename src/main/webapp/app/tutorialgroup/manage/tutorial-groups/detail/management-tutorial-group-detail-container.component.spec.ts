@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TutorialGroupManagementDetailComponent } from 'app/tutorialgroup/manage/tutorial-groups/detail/tutorial-group-management-detail.component';
+import { ManagementTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/manage/tutorial-groups/detail/management-tutorial-group-detail-container.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -14,8 +14,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorialGroupManagementDetailComponent', () => {
-    let fixture: ComponentFixture<TutorialGroupManagementDetailComponent>;
-    let component: TutorialGroupManagementDetailComponent;
+    let fixture: ComponentFixture<ManagementTutorialGroupDetailContainerComponent>;
+    let component: ManagementTutorialGroupDetailContainerComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -41,7 +41,7 @@ describe('TutorialGroupManagementDetailComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(TutorialGroupManagementDetailComponent);
+                fixture = TestBed.createComponent(ManagementTutorialGroupDetailContainerComponent);
                 component = fixture.componentInstance;
             });
     });

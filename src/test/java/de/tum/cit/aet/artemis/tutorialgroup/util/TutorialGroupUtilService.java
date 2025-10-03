@@ -14,12 +14,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
@@ -27,6 +29,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRe
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistrationTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupScheduleTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 
 /**
@@ -45,6 +48,9 @@ public class TutorialGroupUtilService {
 
     @Autowired
     private TutorialGroupSessionRepository tutorialGroupSessionRepository;
+
+    @Autowired
+    protected TutorialGroupScheduleTestRepository tutorialGroupScheduleTestRepository;
 
     @Autowired
     private TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
@@ -151,4 +157,58 @@ public class TutorialGroupUtilService {
         persistedConfiguration.setCourse(course);
         return persistedConfiguration;
     }
+
+    public TutorialGroup createAndSaveTutorialGroup(Course course, String title, User teachingAssistant, int capacity, String campus) {
+        TutorialGroup group = createTutorialGroup(course, title, teachingAssistant, capacity, campus);
+        group.setCourse(course);
+        tutorialGroupRepository.saveAndFlush(group);
+        return group;
+    }
+
+    TutorialGroup createTutorialGroup(Course course, String title, User teachingAssistant, int capacity, String campus) {
+        var tutorialGroup = new TutorialGroup();
+        tutorialGroup.setCourse(course);
+        tutorialGroup.setTitle(title);
+        tutorialGroup.setTeachingAssistant(teachingAssistant);
+        tutorialGroup.setCapacity(capacity);
+        tutorialGroup.setCampus(campus);
+        return tutorialGroup;
+    }
+
+    public TutorialGroupSchedule createAndSaveTutorialGroupSchedule(int dayOfWeek, String startTime, String endTime, String validFromInclusive, String validToInclusive,
+            String location, int repetitionFrequency, TutorialGroup tutorialGroup) {
+        TutorialGroupSchedule schedule = createTutorialGroupSchedule(dayOfWeek, startTime, endTime, validFromInclusive, validToInclusive, location, repetitionFrequency);
+        schedule.setTutorialGroup(tutorialGroup);
+        tutorialGroupScheduleTestRepository.saveAndFlush(schedule);
+        tutorialGroup.setTutorialGroupSchedule(schedule);
+        tutorialGroupRepository.saveAndFlush(tutorialGroup);
+        return schedule;
+    }
+
+    public TutorialGroupSchedule createTutorialGroupSchedule(int dayOfWeek, String startTime, String endTime, String validFromInclusive, String validToInclusive, String location,
+            int repetitionFrequency) {
+        TutorialGroupSchedule newTutorialGroupSchedule = new TutorialGroupSchedule();
+        newTutorialGroupSchedule.setDayOfWeek(dayOfWeek);
+        newTutorialGroupSchedule.setStartTime(startTime);
+        newTutorialGroupSchedule.setEndTime(endTime);
+        newTutorialGroupSchedule.setValidFromInclusive(validFromInclusive);
+        newTutorialGroupSchedule.setValidToInclusive(validToInclusive);
+        newTutorialGroupSchedule.setLocation(location);
+        newTutorialGroupSchedule.setRepetitionFrequency(repetitionFrequency);
+        return newTutorialGroupSchedule;
+    }
+
+    public TutorialGroupSession createTutorialGroupSession(ZonedDateTime start, ZonedDateTime end, String location, Integer attendanceCount, TutorialGroupSessionStatus status,
+            TutorialGroup group, TutorialGroupSchedule schedule) {
+        TutorialGroupSession session = new TutorialGroupSession();
+        session.setTutorialGroup(group);
+        session.setTutorialGroupSchedule(schedule);
+        session.setStart(start);
+        session.setEnd(end);
+        session.setLocation(location);
+        session.setAttendanceCount(attendanceCount);
+        session.setStatus(status);
+        return session;
+    }
+
 }
