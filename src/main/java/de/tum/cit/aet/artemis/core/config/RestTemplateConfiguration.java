@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
@@ -24,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 
 /**
@@ -116,6 +118,12 @@ public class RestTemplateConfiguration {
     @Profile(PROFILE_IRIS)
     public RestTemplate shortTimeoutPyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    }
+
+    @Bean
+    @Conditional(NebulaEnabled.class)
+    public RestTemplate nebulaRestTemplate() {
+        return createRestTemplate();
     }
 
     /**
