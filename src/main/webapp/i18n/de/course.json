@@ -186,7 +186,8 @@
                         "text": "Textaufgaben",
                         "file-upload": "Dateiupload-Aufgaben"
                     }
-                }
+                },
+                "planExercisesButtonLabel": "Aufgaben Planen"
             },
             "students": "Studierende",
             "participations": "Teilnahmen",

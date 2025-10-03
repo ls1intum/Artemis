@@ -20,6 +20,7 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
+import { PlannedExerciseModalComponent } from 'app/core/course/manage/planned-exercise-modal/planned-exercise-modal.component';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -39,6 +40,7 @@ import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directive
         ArtemisTranslatePipe,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
+        PlannedExerciseModalComponent,
     ],
 })
 export class CourseManagementExercisesComponent implements OnInit {

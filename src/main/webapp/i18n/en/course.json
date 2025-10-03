@@ -186,7 +186,8 @@
                         "text": "Text Exercises",
                         "file-upload": "File Upload Exercises"
                     }
-                }
+                },
+                "planExercisesButtonLabel": "Plan Exercises"
             },
             "students": "Students",
             "participations": "Participation",

@@ -11,7 +11,8 @@
         </div>
     </div>
 
-    <div *titleBarActions>
+    <div class="d-flex gap-2" *titleBarActions>
+        <button class="btn btn-primary btn-sm" (click)="plannedExerciseModal.open()" jhiTranslate="artemisApp.course.exercise.planExercisesButtonLabel"></button>
         <button id="toggleSearchButton" class="btn btn-primary btn-sm" type="button" (click)="toggleSearch()">
             {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
         </button>
@@ -105,3 +106,5 @@
         />
     </jhi-course-exercise-card>
 }
+
+<jhi-planned-exercise-modal #plannedExerciseModal />
