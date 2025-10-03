@@ -272,8 +272,8 @@ public abstract class AbstractGitService {
         URI templateUri = new URI(sshUrlTemplate.orElseThrow());
         // Example: ssh://git@artemis.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
         final var repositoryUri = vcsRepositoryUri.getURI();
-        final var path = repositoryUri.getPath().replace("/scm", "");
-        throw new RuntimeException(repositoryUri.getPath());
+        final var path = repositoryUri.getPath();
+        return new URI(templateUri.getScheme(), templateUri.getUserInfo(), templateUri.getHost(), templateUri.getPort(), path, null, repositoryUri.getFragment());
     }
 
     /**
