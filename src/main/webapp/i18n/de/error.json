@@ -70,7 +70,7 @@
                 "repository.url": "Die Lösungs-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist."
             },
             "student": {
-                "repository.url": "Die Studenten-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist."
+                "repository.url": "Die Studierenden-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist."
             },
             "instructor": {
                 "repository.type": "{{repositoryType}} ist kein gültiger Instruktor-Repository-Typ. Nur {{validTypes}} sind erlaubt."
