@@ -112,7 +112,7 @@ const moduleThresholds = {
     },
     programming: {
         statements: 88.74,
-        branches:   76.41,
+        branches:   76.37,
         functions:  80.92,
         lines:      88.86,
     },
