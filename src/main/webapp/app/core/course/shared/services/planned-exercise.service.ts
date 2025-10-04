@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 //import { AlertService } from 'app/shared/service/alert.service';
 //import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import dayjs, { Dayjs } from 'dayjs/esm';
+import { Dayjs } from 'dayjs/esm';
 
 export interface PlannedExercise {
     id: number;
@@ -23,6 +23,7 @@ export class PlannedExerciseCreateDTO {
     ) {}
 }
 
+/*
 const plannedExercises: PlannedExercise[] = [
     {
         id: 1,
@@ -65,6 +66,7 @@ const plannedExercises: PlannedExercise[] = [
         assessmentDueDate: dayjs('2025-10-14T12:00:00'),
     },
 ];
+ */
 
 @Injectable({
     providedIn: 'root',
@@ -84,7 +86,7 @@ export class PlannedExerciseService {
     load() {
         this._loading.set(true);
         setTimeout(() => {
-            this._plannedExercises.set(plannedExercises);
+            this._plannedExercises.set([]);
             this._loading.set(false);
         }, 1000);
     }

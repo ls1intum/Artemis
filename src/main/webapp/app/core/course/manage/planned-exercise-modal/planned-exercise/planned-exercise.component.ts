@@ -2,7 +2,7 @@ import { Component, inject, input, output } from '@angular/core';
 import { TableModule } from 'primeng/table';
 import { PlannedExercise, PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faGhost, faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-planned-exercise',
@@ -14,6 +14,7 @@ export class PlannedExerciseComponent {
     private plannedExerciseService = inject(PlannedExerciseService);
     protected readonly faTrash = faTrash;
     protected readonly faPenToSquare = faPenToSquare;
+    protected readonly faGhost = faGhost;
 
     plannedExercises = input.required<PlannedExercise[]>();
     onSelectPlannedExerciseToEdit = output<PlannedExercise>();
