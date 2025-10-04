@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 //import { AlertService } from 'app/shared/service/alert.service';
 //import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Dayjs } from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 
 export interface PlannedExercise {
     id: number;
@@ -23,6 +23,49 @@ export class PlannedExerciseCreateDTO {
     ) {}
 }
 
+const plannedExercises: PlannedExercise[] = [
+    {
+        id: 1,
+        title: 'Exercise 1',
+        releaseDate: dayjs('2025-10-01T09:00:00'),
+        startDate: dayjs('2025-10-01T10:00:00'),
+        dueDate: dayjs('2025-10-08T23:59:00'),
+        assessmentDueDate: dayjs('2025-10-10T12:00:00'),
+    },
+    {
+        id: 2,
+        title: 'Exercise 2',
+        releaseDate: dayjs('2025-10-02T09:00:00'),
+        startDate: dayjs('2025-10-02T10:00:00'),
+        dueDate: dayjs('2025-10-09T23:59:00'),
+        assessmentDueDate: dayjs('2025-10-11T12:00:00'),
+    },
+    {
+        id: 3,
+        title: 'Exercise 3',
+        releaseDate: dayjs('2025-10-03T09:00:00'),
+        startDate: dayjs('2025-10-03T10:00:00'),
+        dueDate: dayjs('2025-10-10T23:59:00'),
+        assessmentDueDate: dayjs('2025-10-12T12:00:00'),
+    },
+    {
+        id: 4,
+        title: 'Exercise 4',
+        releaseDate: dayjs('2025-10-04T09:00:00'),
+        startDate: dayjs('2025-10-04T10:00:00'),
+        dueDate: dayjs('2025-10-11T23:59:00'),
+        assessmentDueDate: dayjs('2025-10-13T12:00:00'),
+    },
+    {
+        id: 5,
+        title: 'Exercise 5',
+        releaseDate: dayjs('2025-10-05T09:00:00'),
+        startDate: dayjs('2025-10-05T10:00:00'),
+        dueDate: dayjs('2025-10-12T23:59:00'),
+        assessmentDueDate: dayjs('2025-10-14T12:00:00'),
+    },
+];
+
 @Injectable({
     providedIn: 'root',
 })
@@ -41,6 +84,7 @@ export class PlannedExerciseService {
     load() {
         this._loading.set(true);
         setTimeout(() => {
+            this._plannedExercises.set(plannedExercises);
             this._loading.set(false);
         }, 1000);
     }
