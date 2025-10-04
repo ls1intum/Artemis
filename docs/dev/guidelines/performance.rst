@@ -39,8 +39,58 @@ Example:
           """)
    List<ExerciseDTO> findExerciseDTOsByCourseAndReleaseDate(@Param("courseId") Long courseId, @Param("releaseDate") ZonedDateTime releaseDate);
 
+**Avoid Adding Rarely Used Columns to Frequently Queried Tables**
+
+For frequently queried tables (e.g., ``User``), carefully evaluate whether you need to extend the table with additional columns that are rarely used. Since such tables are often fetched, adding more columns increases memory and network load unnecessarily.
+Instead, consider introducing a new table and query the additional data only when needed.
+
+Example:
+
+Instead of storing the calendar subscription (ICS) token directly in the ``user`` table, an extra table was introduced:
+
+.. code-block:: java
+
+   package de.tum.cit.aet.artemis.core.domain;
+
+   import jakarta.persistence.Column;
+   import jakarta.persistence.Entity;
+   import jakarta.persistence.JoinColumn;
+   import jakarta.persistence.OneToOne;
+   import jakarta.persistence.Table;
+
+   import com.fasterxml.jackson.annotation.JsonIgnore;
+
+   @Entity
+   @Table(name = "calendar_subscription_token_store")
+   public class CalendarSubscriptionTokenStore extends DomainObject {
+
+       @Column(name = "token", length = 32, nullable = false, unique = true)
+       private String token;
+
+       @OneToOne
+       @JsonIgnore
+       @JoinColumn(name = "jhi_user_id", nullable = false, unique = true)
+       private User user;
+
+       public String getToken() {
+           return token;
+       }
+
+       public void setToken(String token) {
+           this.token = token;
+       }
+
+       public User getUser() {
+           return user;
+       }
+
+       public void setUser(User user) {
+           this.user = user;
+       }
+   }
+
 2. Large Scale Testing
-=======================
+======================
 
 **Test with Realistic Data Loads**
 
@@ -67,9 +117,27 @@ Example:
 
    Page<Exercise> findByCourseId(Long courseId, Pageable pageable);
 
+**Prefer Slice over Page When Counts Are Not Needed**
+
+When you do not need numbered pages or total element counts, prefer using ``Slice`` instead of ``Page``.
+``Page`` always triggers an additional count query (even if not explicitly specified), which can negatively affect performance.
+If you need Page, think about providing your own count query using the ``countQuery`` attribute of the ``@Query`` annotation.
+
+Example:
+
+.. code-block:: java
+
+   @Query("""
+          SELECT b.id
+          FROM BuildJob b
+          WHERE b.buildStatus NOT IN (de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.QUEUED,
+                                      de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.BUILDING)
+          """)
+   Slice<Long> findFinishedIds(Pageable pageable);
+
 **Caution with Collection Fetching and Pagination**
 
-Avoid combining `LEFT JOIN FETCH` with pagination, as this can cause performance issues or even fail due to the Cartesian Product problem.
+Avoid combining ``LEFT JOIN FETCH`` with pagination, as this can cause performance issues or even fail due to the Cartesian Product problem.
 
 Example:
 
@@ -111,7 +179,7 @@ You can find out more on https://vladmihalcea.com/hibernate-query-fail-on-pagina
 
 **Eager Fetching and Left Join Fetch**
 
-The N+1 query issue occurs when lazy-loaded collections cause multiple queries to be executed — one for the parent entity and additional queries for each related entity. To avoid this issue, consider using eager fetching or `JOIN FETCH` for collections that are critical to performance.
+The N+1 query issue occurs when lazy-loaded collections cause multiple queries to be executed — one for the parent entity and additional queries for each related entity. To avoid this issue, consider using eager fetching or ``JOIN FETCH`` for collections that are critical to performance.
 
 Example:
 
@@ -127,17 +195,16 @@ Example:
 
 In this example, the query fetches exercises along with their submissions in a single query, avoiding the N+1 problem. Be cautious, however, as fetching too many collections eagerly can lead to performance degradation due to large result sets.
 
-
 5. Optimal Use of Left Join Fetch
 =================================
 
 **Balance Between Queries**
 
-While reducing the number of queries by using `LEFT JOIN FETCH` is often beneficial, overusing this strategy can lead to performance issues, especially when fetching multiple `OneToMany` relationships. As a best practice, avoid fetching more than three `OneToMany` collections in a single query.
+While reducing the number of queries by using ``LEFT JOIN FETCH`` is often beneficial, overusing this strategy can lead to performance issues, especially when fetching multiple ``OneToMany`` relationships. As a best practice, avoid fetching more than three ``OneToMany`` collections in a single query.
 
-To avoid fetching too many entities at once, we have a script that checks for @EntityGraph or JOIN FETCH usages in the codebase and warns if too many relationships are fetched at once. The script can be found at `supporting_scripts/find_slow_queries.py`
+To avoid fetching too many entities at once, we have a script that checks for ``@EntityGraph`` or ``JOIN FETCH`` usages in the codebase and warns if too many relationships are fetched at once. The script can be found at ``supporting_scripts/find_slow_queries.py``
 
-This script is also automatically invoked in the CI pipeline as Github Action called `Query Quality Check`. When it fails, check the output of the Github Action to see which violating queries were found and reduce the number of fetched relationships in these queries.
+This script is also automatically invoked in the CI pipeline as GitHub Action called ``Query Quality Check``. When it fails, check the output of the GitHub Action to see which violating queries were found and reduce the number of fetched relationships in these queries.
 
 Example:
 
@@ -156,7 +223,7 @@ This query efficiently fetches a course with its exercises and their submissions
 
 **Selective Fetching**
 
-Use lazy loading by default, and override with `JOIN FETCH` only when necessary for performance-critical queries. This approach minimizes the risk of performance degradation due to large query results.
+Use lazy loading by default, and override with ``JOIN FETCH`` only when necessary for performance-critical queries. This approach minimizes the risk of performance degradation due to large query results.
 
 Example:
 
@@ -171,18 +238,20 @@ Example:
        // Other fields and methods
    }
 
-By default, participations are lazily loaded. When you need to fetch them, use a specific `JOIN FETCH` query only in performance-sensitive situations. Alternatively, consider using ``@EntityGraph`` to define fetch plans for specific queries.
+By default, participations are lazily loaded. When you need to fetch them, use a specific ``JOIN FETCH`` query only in performance-sensitive situations. Alternatively, consider using ``@EntityGraph`` to define fetch plans for specific queries.
 
 6. General SQL Database Best Practices
 ======================================
 
 **Indexing**
 
-Indexes are critical for query performance, especially on columns that are frequently used in `WHERE` clauses, `JOIN` conditions, or are sorted. Ensure that all key fields, such as `releaseDate` and `courseId`, are properly indexed.
+Indexes are critical for query performance, especially on columns that are frequently used in ``WHERE`` clauses, ``JOIN`` conditions, or are sorted. Ensure that all key fields, such as ``releaseDate`` and ``courseId``, are properly indexed.
+
+Indexes come with tradeoffs: while they speed up reads, they increase storage and can slow down writes (INSERT/UPDATE/DELETE). Evaluate these tradeoffs carefully.
 
 Example:
 
-Create an index on the `releaseDate` column to speed up queries filtering exercises by date:
+Create an index on the ``releaseDate`` column to speed up queries filtering exercises by date:
 
 .. code-block:: sql
 
@@ -206,7 +275,7 @@ This foreign key ensures that submissions are always linked to a valid exercise,
 
 **Query Optimization**
 
-Regularly review and optimize SQL queries to ensure they are performing efficiently. Use tools like `EXPLAIN` to analyze query execution plans and make adjustments where necessary.
+Regularly review and optimize SQL queries to ensure they are performing efficiently. Use tools like ``EXPLAIN`` to analyze query execution plans and make adjustments where necessary.
 
 Example:
 
@@ -214,10 +283,44 @@ Example:
 
    EXPLAIN SELECT * FROM exercise WHERE course_id = 1 AND release_date > '2024-01-01';
 
-Use the `EXPLAIN` output to identify slow-running queries and optimize them by adding indexes, rewriting queries, or adjusting table structures.
+Use the ``EXPLAIN`` output to identify slow-running queries and optimize them by adding indexes, rewriting queries, or adjusting table structures.
+
+**Sorting and Counting at the Database Level**
+
+Perform sorting and counting operations at the database level whenever possible. This leverages the database’s optimized query engine and avoids unnecessary data transfer or in-memory processing.
 
 **Avoid Transactions**
 
 Transactions are generally very slow and should be avoided when possible.
 
-By following these best practices, you can build Spring Boot applications with Hibernate that are optimized for performance, even under the demands of large-scale data processing.
+7. Server Startup Performance
+=============================
+
+**Why It Matters**
+
+Fast startup improves developer feedback cycles and enables rolling deployments without user-facing disruptions or degraded performance.
+
+**What Has Been Done**
+
+All Spring beans are now marked as *@Lazy*, preventing their instantiation at startup by default. This ensures that only the required beans are initialized immediately.
+
+However, lazy initialization introduces latency on the first request. To mitigate this, a *Deferred Eager Bean Instantiation* mechanism was added, which initializes all remaining lazy beans after startup.
+If a bean fails to instantiate, the application shuts down to avoid running in a partially functional state.
+
+**Keeping the Number of Beans Minimal**
+
+A GitHub Action — *Check Bean Instantiations on Startup and with Deferred Eager Initialization* — verifies:
+
+* The number of beans instantiated at startup
+* The length of dependency chains
+
+It fails when thresholds are exceeded. The output provides:
+
+* By how much the number of beans exceeds the threshold
+* Which dependency chains are too long
+
+If long dependency chains are reported, review and refactor dependencies to reduce initialization complexity and startup time.
+
+---
+
+By following these best practices, you can build Spring Boot applications with Hibernate that are optimized for performance — both at runtime and during startup.
