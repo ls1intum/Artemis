@@ -75,13 +75,13 @@ export function getIconForEvent(event: CalendarEvent): IconProp {
 
 export function getWeekDayNameKeys(): string[] {
     return [
-        'artemisApp.calendar.mondayShort',
-        'artemisApp.calendar.tuesdayShort',
-        'artemisApp.calendar.wednesdayShort',
-        'artemisApp.calendar.thursdayShort',
-        'artemisApp.calendar.fridayShort',
-        'artemisApp.calendar.saturdayShort',
-        'artemisApp.calendar.sundayShort',
+        'global.weekdays.mondayShort',
+        'global.weekdays.tuesdayShort',
+        'global.weekdays.wednesdayShort',
+        'global.weekdays.thursdayShort',
+        'global.weekdays.fridayShort',
+        'global.weekdays.saturdayShort',
+        'global.weekdays.sundayShort',
     ];
 }
 
@@ -105,15 +105,4 @@ export enum CalendarEventFilterOption {
     LectureEvents = 'lectureEvents',
     TutorialEvents = 'tutorialEvents',
     ExerciseEvents = 'exerciseEvents',
-}
-
-const filterOptionNameKeyMap: Record<CalendarEventFilterOption, string> = {
-    exerciseEvents: 'artemisApp.calendar.filterOption.exercises',
-    lectureEvents: 'artemisApp.calendar.filterOption.lectures',
-    tutorialEvents: 'artemisApp.calendar.filterOption.tutorials',
-    examEvents: 'artemisApp.calendar.filterOption.exams',
-};
-
-export function getFilterOptionNameKey(option: CalendarEventFilterOption): string {
-    return filterOptionNameKeyMap[option];
 }
