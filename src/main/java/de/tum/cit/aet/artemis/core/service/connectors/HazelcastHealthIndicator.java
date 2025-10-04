@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.core.config.CoreOrHazelcastBuildAgent;
 
 @Conditional(CoreOrHazelcastBuildAgent.class)
 @Component
-@Lazy
+@Lazy(false)
 public class HazelcastHealthIndicator implements HealthIndicator {
 
     private final HazelcastInstance hazelcastInstance;

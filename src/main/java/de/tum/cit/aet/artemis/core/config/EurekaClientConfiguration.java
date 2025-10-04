@@ -27,7 +27,7 @@ import org.springframework.web.client.RestClient;
  */
 @Conditional(CoreOrHazelcastBuildAgent.class)
 @Configuration
-@Lazy
+@Lazy(false)
 public class EurekaClientConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(EurekaClientConfiguration.class);
