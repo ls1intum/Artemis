@@ -1,0 +1,21 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+
+    .button-column {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .icon-button {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+
+            &.delete {
+                color: var(--danger);
+            }
+        }
+    }
+}

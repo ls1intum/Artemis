@@ -1,21 +1,25 @@
-import { Component, computed, effect, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ButtonModule } from 'primeng/button';
 import { AutoFocusModule } from 'primeng/autofocus';
+import { FloatLabelModule } from 'primeng/floatlabel';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { PlannedExercise } from 'app/core/course/manage/planned-exercise-modal/planned-exercise-modal.component';
-import { addOneMinuteTo, convertDayjsDateToDate, isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
+import { PlannedExercise, PlannedExerciseCreateDTO, PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
+import { addOneMinuteTo, convertDateToDayjsDate, convertDayjsDateToDate, isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
+import { take } from 'rxjs';
 
 @Component({
     selector: 'jhi-planned-exercise-create',
-    imports: [FormsModule, DialogModule, InputTextModule, DatePickerModule, ButtonModule, AutoFocusModule, TranslateDirective],
-    templateUrl: './planned-exercise-create.component.html',
-    styleUrl: './planned-exercise-create.component.scss',
+    imports: [FormsModule, DialogModule, InputTextModule, DatePickerModule, ButtonModule, AutoFocusModule, TranslateDirective, FloatLabelModule],
+    templateUrl: './planned-exercise-create-or-update.component.html',
+    styleUrl: './planned-exercise-create-or-update.component.scss',
 })
-export class PlannedExerciseCreateComponent {
+export class PlannedExerciseCreateOrUpdateComponent {
+    private plannedExerciseService = inject(PlannedExerciseService);
+
     plannedExercise = input<PlannedExercise>();
     title = signal<string>('');
     isTitleInvalid = computed(() => this.title() === '');
@@ -28,23 +32,57 @@ export class PlannedExerciseCreateComponent {
     isDueDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(this.releaseDate(), this.dueDate()) || isFirstDateAfterOrEqualSecond(this.startDate(), this.dueDate()));
     assessmentDueDate = signal<Date | undefined>(undefined);
     minimumAssessmentDueDate = computed(() => addOneMinuteTo(this.dueDate()) ?? addOneMinuteTo(this.startDate()) ?? addOneMinuteTo(this.releaseDate()));
-    isAssessmentDueDateInvalid = computed(() => this._isAssessmentDueDateInvalid(this.releaseDate(), this.startDate(), this.dueDate(), this.assessmentDueDate()));
+    isAssessmentDueDateInvalid = computed(() => this.isOtherDateAfterOrEqualAssessmentDueDate(this.releaseDate(), this.startDate(), this.dueDate(), this.assessmentDueDate()));
     areInputsInvalid = computed(() => this.isTitleInvalid() || this.isStartDateInvalid() || this.isDueDateInvalid());
+    onOperationFinished = output<void>();
 
     constructor() {
         effect(() => {
             const plannedExercise = this.plannedExercise();
             if (plannedExercise) {
                 this.title.set(plannedExercise.title);
+                this.releaseDate.set(convertDayjsDateToDate(plannedExercise.releaseDate));
                 this.startDate.set(convertDayjsDateToDate(plannedExercise.startDate));
                 this.dueDate.set(convertDayjsDateToDate(plannedExercise.dueDate));
                 this.assessmentDueDate.set(convertDayjsDateToDate(plannedExercise.assessmentDueDate));
             }
         });
     }
-    cancel() {}
 
-    save() {}
+    cancel() {
+        this.onOperationFinished.emit();
+    }
+
+    save() {
+        const plannedExercise = this.plannedExercise();
+        if (plannedExercise) {
+            plannedExercise.title = this.title();
+            plannedExercise.releaseDate = convertDateToDayjsDate(this.releaseDate());
+            plannedExercise.startDate = convertDateToDayjsDate(this.startDate());
+            plannedExercise.dueDate = convertDateToDayjsDate(this.dueDate());
+            plannedExercise.assessmentDueDate = convertDateToDayjsDate(this.assessmentDueDate());
+            this.plannedExerciseService
+                .update(plannedExercise)
+                .pipe(take(1))
+                .subscribe(() => {
+                    this.onOperationFinished.emit();
+                });
+        } else {
+            const plannedExerciseCreateDTO = new PlannedExerciseCreateDTO(
+                this.title(),
+                convertDateToDayjsDate(this.releaseDate()),
+                convertDateToDayjsDate(this.startDate()),
+                convertDateToDayjsDate(this.dueDate()),
+                convertDateToDayjsDate(this.assessmentDueDate()),
+            );
+            this.plannedExerciseService
+                .create(plannedExerciseCreateDTO)
+                .pipe(take(1))
+                .subscribe(() => {
+                    this.onOperationFinished.emit();
+                });
+        }
+    }
 
     onTitleChange(value: string) {
         this.title.set(value);
@@ -66,7 +104,7 @@ export class PlannedExerciseCreateComponent {
         this.assessmentDueDate.set(value ? value : undefined);
     }
 
-    private _isAssessmentDueDateInvalid(releaseDate?: Date, startDate?: Date, dueDate?: Date, assessmentDueDate?: Date): boolean {
+    private isOtherDateAfterOrEqualAssessmentDueDate(releaseDate?: Date, startDate?: Date, dueDate?: Date, assessmentDueDate?: Date): boolean {
         return (
             isFirstDateAfterOrEqualSecond(releaseDate, assessmentDueDate) ||
             isFirstDateAfterOrEqualSecond(startDate, assessmentDueDate) ||

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -6,21 +6,26 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { ButtonModule } from 'primeng/button';
 import { AutoFocusModule } from 'primeng/autofocus';
-//import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
-import { Dayjs } from 'dayjs/esm';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { SelectModule } from 'primeng/select';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { PlannedExerciseSeriesCreateComponent } from 'app/core/course/manage/planned-exercise-modal/planned-exercise-series-create/planned-exercise-series-create.component';
-import { PlannedExerciseCreateComponent } from 'app/core/course/manage/planned-exercise-modal/planned-exercise-create/planned-exercise-create.component';
+import { PlannedExerciseCreateOrUpdateComponent } from 'app/core/course/manage/planned-exercise-modal/planned-exercise-create/planned-exercise-create-or-update.component';
+import { PlannedExerciseComponent } from 'app/core/course/manage/planned-exercise-modal/planned-exercise/planned-exercise.component';
+import { PlannedExercise, PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
 //import { addOneMinuteTo, isFirstAfterOrEqualSecond } from 'app/lecture/manage/util/lecture-management.utils';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 
-export interface PlannedExercise {
-    title: string;
-    releaseDate?: Dayjs;
-    startDate?: Dayjs;
-    dueDate?: Dayjs;
-    assessmentDueDate?: Dayjs;
+interface CreatePlannedExerciseOption {
+    label: string;
+    mode: PlannedExerciseCreationMode;
+}
+
+enum PlannedExerciseCreationMode {
+    SINGLE = 'SINGLE',
+    SERIES = 'SERIES',
 }
 
 @Component({
@@ -31,24 +36,47 @@ export interface PlannedExercise {
         InputTextModule,
         DatePickerModule,
         ButtonModule,
+        SelectButtonModule,
+        SelectModule,
         AutoFocusModule,
         FloatLabelModule,
-        TranslateDirective,
         PlannedExerciseSeriesCreateComponent,
-        PlannedExerciseCreateComponent,
+        PlannedExerciseCreateOrUpdateComponent,
+        PlannedExerciseComponent,
+        FaIconComponent,
     ],
     templateUrl: './planned-exercise-modal.component.html',
     styleUrl: './planned-exercise-modal.component.scss',
 })
-export class PlannedExerciseModalComponent {
+export class PlannedExerciseModalComponent implements OnInit {
     private translateService = inject(TranslateService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
+    private plannedExerciseService = inject(PlannedExerciseService);
 
+    protected readonly PlannedExerciseCreationMode = PlannedExerciseCreationMode;
+    protected readonly faSquarePlus = faPlus;
+    protected readonly faXmark = faXmark;
+
+    plannedExercises = this.plannedExerciseService.plannedExercises;
+    plannedExerciseToEdit = signal<PlannedExercise | undefined>(undefined);
+    createPlannedExerciseOrSeries = signal(false);
     show = signal<boolean>(false);
     headerTitle = computed<string>(() => {
         this.currentLocale();
         return this.translateService.instant('artemisApp.course.exercise.planExercisesButtonLabel');
     });
+    createPlannedExerciseOptions: CreatePlannedExerciseOption[] = [
+        { label: 'Single Lecture', mode: PlannedExerciseCreationMode.SINGLE },
+        { label: 'Lecture Series', mode: PlannedExerciseCreationMode.SERIES },
+    ];
+    selectedPlannedExerciseCreationMode = signal<PlannedExerciseCreationMode>(PlannedExerciseCreationMode.SINGLE);
+    onSelectedPlannedExerciseCreationModeChange(optionMode: PlannedExerciseCreationMode) {
+        this.selectedPlannedExerciseCreationMode.set(optionMode);
+    }
+
+    ngOnInit() {
+        this.plannedExerciseService.load();
+    }
 
     open() {
         this.show.set(true);
@@ -56,6 +84,10 @@ export class PlannedExerciseModalComponent {
 
     cancel() {
         this.show.set(false);
+    }
+
+    add() {
+        this.createPlannedExerciseOrSeries.set(true);
     }
 }
 

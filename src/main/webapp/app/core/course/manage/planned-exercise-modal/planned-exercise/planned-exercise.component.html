@@ -1,0 +1,33 @@
+<div class="frame">
+    <p-table [value]="plannedExercises()">
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Title</th>
+                <th>Release Date</th>
+                <th>Start Date</th>
+                <th>Due Date</th>
+                <th>Assessment Due Date</th>
+                <th>Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-exercise>
+            <tr>
+                <td>{{ exercise.title }}</td>
+                <td>{{ exercise.releaseDate.format('YYYY-MM-DD HH:mm') }}</td>
+                <td>{{ exercise.startDate.format('YYYY-MM-DD HH:mm') }}</td>
+                <td>{{ exercise.dueDate.format('YYYY-MM-DD HH:mm') }}</td>
+                <td>{{ exercise.assessmentDueDate.format('YYYY-MM-DD HH:mm') }}</td>
+                <td>
+                    <div class="button-column">
+                        <button class="icon-button" (click)="edit(exercise)">
+                            <fa-icon [icon]="faPenToSquare" />
+                        </button>
+                        <button class="icon-button delete" (click)="delete(exercise)">
+                            <fa-icon [icon]="faTrash" />
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

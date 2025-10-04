@@ -3,13 +3,52 @@
     [modal]="true"
     [visible]="show()"
     (visibleChange)="cancel()"
-    [closable]="true"
+    [closable]="false"
     [focusOnShow]="false"
-    [style]="{ 'max-width': '70rem' }"
+    [draggable]="false"
+    [style]="{ 'max-width': '70rem', 'max-height': '60rem' }"
     appendTo="body"
 >
-    <jhi-planned-exercise-create />
-    <!--
-    <jhi-planned-exercise-series-create />
-    -->
+    <ng-template pTemplate="header">
+        <div class="header">
+            <h2>{{ headerTitle() }}</h2>
+            <div class="header-actions">
+                @if (createPlannedExerciseOrSeries()) {
+                    <p-select
+                        [options]="createPlannedExerciseOptions"
+                        [ngModel]="selectedPlannedExerciseCreationMode()"
+                        (ngModelChange)="onSelectedPlannedExerciseCreationModeChange($event)"
+                        optionLabel="label"
+                        optionValue="mode"
+                        size="small"
+                    />
+                }
+                <div class="action-box">
+                    @if (!createPlannedExerciseOrSeries() && !plannedExerciseToEdit()) {
+                        <button class="icon-button" (click)="add()">
+                            <fa-icon [icon]="faSquarePlus" size="lg" />
+                        </button>
+                    }
+                    <button class="icon-button">
+                        <fa-icon [icon]="faXmark" size="lg" (click)="cancel()" />
+                    </button>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+    @let exerciseToUpdate = plannedExerciseToEdit();
+    @if (exerciseToUpdate) {
+        <jhi-planned-exercise-create [plannedExercise]="exerciseToUpdate" (onOperationFinished)="plannedExerciseToEdit.set(undefined)" />
+    } @else if (createPlannedExerciseOrSeries()) {
+        @switch (selectedPlannedExerciseCreationMode()) {
+            @case (PlannedExerciseCreationMode.SINGLE) {
+                <jhi-planned-exercise-create (onOperationFinished)="createPlannedExerciseOrSeries.set(false)" />
+            }
+            @case (PlannedExerciseCreationMode.SERIES) {
+                <jhi-planned-exercise-series-create (onCreateFinished)="createPlannedExerciseOrSeries.set(false)" />
+            }
+        }
+    } @else {
+        <jhi-planned-exercise [plannedExercises]="plannedExercises()" (onSelectPlannedExerciseToEdit)="plannedExerciseToEdit.set($event)" />
+    }
 </p-dialog>
