@@ -526,5 +526,5 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam exam
             WHERE exam.course.id = :courseId
             """)
-    Set<Long> findExamIdsByCourseId(long courseId);
+    Set<Long> findExamIdsByCourseId(@Param("courseId") long courseId);
 }
