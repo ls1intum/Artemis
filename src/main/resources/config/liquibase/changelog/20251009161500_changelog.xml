@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20251009161500-create-planned-exercise" author="marlonnienaber">
+        <createTable tableName="planned_exercise">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+
+            <column name="title" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="release_date" type="datetime(3)"/>
+            <column name="start_date" type="datetime(3)"/>
+            <column name="due_date" type="datetime(3)"/>
+            <column name="assessment_due_date" type="datetime(3)"/>
+
+            <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="planned_exercise"
+                baseColumnNames="course_id"
+                referencedTableName="course"
+                referencedColumnNames="id"
+                constraintName="fk_planned_exercise_course"
+                deferrable="false"
+                initiallyDeferred="false"
+                onDelete="CASCADE"
+                onUpdate="RESTRICT"
+                validate="true"/>
+
+        <createIndex tableName="planned_exercise" indexName="idx_planned_exercise_course_id">
+            <column name="course_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_planned_exercise_dates" tableName="planned_exercise">
+            <column name="release_date"/>
+            <column name="start_date"/>
+            <column name="due_date"/>
+            <column name="assessment_due_date"/>
+        </createIndex>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="planned_exercise" constraintName="fk_planned_exercise_course"/>
+            <dropIndex tableName="planned_exercise" indexName="idx_planned_exercise_dates"/>
+            <dropIndex tableName="planned_exercise" indexName="idx_planned_exercise_course_id"/>
+            <dropTable tableName="planned_exercise"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

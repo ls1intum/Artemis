@@ -4,11 +4,18 @@ import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
@@ -30,6 +37,11 @@ public class PlannedExercise extends DomainObject {
 
     @Column(name = "assessment_due_date")
     private ZonedDateTime assessmentDueDate;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Course course;
 
     public String getTitle() {
         return title;
@@ -69,5 +81,13 @@ public class PlannedExercise extends DomainObject {
 
     public void setAssessmentDueDate(ZonedDateTime assessmentDueDate) {
         this.assessmentDueDate = assessmentDueDate;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
     }
 }
