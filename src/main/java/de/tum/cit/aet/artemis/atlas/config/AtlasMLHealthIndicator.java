@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
  * Reports the health status of the AtlasML service to Spring Boot Actuator.
  */
 @Profile(PROFILE_CORE)
+@Conditional(AtlasEnabled.class)
 @Component
 @Lazy
 public class AtlasMLHealthIndicator implements HealthIndicator {

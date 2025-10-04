@@ -8,7 +8,7 @@
             "acceptSuggestion": "Diesen Kompetenzvorschlag akzeptieren",
             "dismissSuggestion": "Diesen Kompetenzvorschlag verwerfen",
             "suggestions": {
-                "loadError": "Kompetenzvorschläge konnten nicht geladen werden. Bitte versuchen Sie es später erneut."
+                "loadError": "Kompetenzvorschläge konnten nicht geladen werden. Bitte versuch es später erneut."
             },
             "competencyButton": "Kompetenzen",
             "title": "Titel",

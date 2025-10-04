@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -15,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
  * Provides RestTemplate beans for communicating with the AtlasML microservice.
  */
 @Profile(PROFILE_CORE)
+@Conditional(AtlasEnabled.class)
 @Configuration
 @Lazy
 public class AtlasMLRestTemplateConfiguration {
