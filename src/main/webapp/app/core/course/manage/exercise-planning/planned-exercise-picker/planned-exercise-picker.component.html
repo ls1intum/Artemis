@@ -1,0 +1,11 @@
+<p-select
+    [placeholder]="placeholder()"
+    [disabled]="loading()"
+    [filter]="true"
+    [options]="plannedExerciseOptions()"
+    [ngModel]="selectedPlannedExerciseId()"
+    (ngModelChange)="onSelectedPlannedExerciseChange($event)"
+    optionLabel="label"
+    optionValue="plannedExerciseId"
+    size="small"
+/>

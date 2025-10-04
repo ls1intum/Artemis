@@ -190,7 +190,8 @@
                 "planExercisesButtonLabel": "Aufgaben Planen",
                 "planExercisesModal": {
                     "explanationText": "Plane Aufgaben um Aufgabenevents im Kalendar anzuzeigen, ohne die Aufgabe selbst erstellen zu müssen. Wenn du die tatsächliche Aufgabe erstellst, kannst du eine geplante Aufgabe benutzen um den Titel und Datumsfelder automatisch auszufüllen."
-                }
+                },
+                "plannedExercisePickerPlaceholder": "geplante Aufgabe nutzen"
             },
             "students": "Studierende",
             "participations": "Teilnahmen",

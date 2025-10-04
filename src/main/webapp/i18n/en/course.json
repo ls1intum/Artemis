@@ -190,7 +190,8 @@
                 "planExercisesButtonLabel": "Plan Exercises",
                 "planExercisesModal": {
                     "explanationText": "Plan exercises to display exercise events in the calendar without having to create the exercise itself. When you later create the actual exercise, use a planned exercise to automatically fill in title and date properties."
-                }
+                },
+                "plannedExercisePickerPlaceholder": "Use a planned exercise"
             },
             "students": "Students",
             "participations": "Participation",
