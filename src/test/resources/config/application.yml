@@ -98,6 +98,12 @@ artemis:
         matlab:
             license-server: "1234@license-server"
 
+    # Nebula configuration for tests
+    nebula:
+        enabled: false
+        url: http://localhost:8080  # dummy URL for tests
+        secret: test-secret         # dummy secret for tests
+
 spring:
     application:
         name: Artemis
