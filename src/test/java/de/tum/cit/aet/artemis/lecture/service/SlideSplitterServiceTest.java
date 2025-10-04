@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static com.hazelcast.jet.core.test.JetAssert.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
