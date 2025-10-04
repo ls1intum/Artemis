@@ -30,7 +30,7 @@ public class ResultExerciseIdMigrationEntry extends MigrationEntry {
             long updatedCount = resultRepository.backfillExerciseIdBatch(ids);
             log.info("{} results updated", updatedCount);
 
-            lastId = ids.getLast(); // Java 21 List#reversed/stream alternative if needed
+            lastId = ids.getLast();
         }
 
     }
