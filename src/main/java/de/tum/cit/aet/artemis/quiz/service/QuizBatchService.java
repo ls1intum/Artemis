@@ -20,8 +20,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.QuizJoinException;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -48,8 +46,7 @@ public class QuizBatchService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    public QuizBatchService(QuizBatchRepository quizBatchRepository, QuizSubmissionRepository quizSubmissionRepository, ParticipationRepository participationRepository,
-            ParticipationService participationService) {
+    public QuizBatchService(QuizBatchRepository quizBatchRepository, QuizSubmissionRepository quizSubmissionRepository) {
         this.quizBatchRepository = quizBatchRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
     }
