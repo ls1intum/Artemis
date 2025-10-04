@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
@@ -13,6 +14,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.PlaceholderResolutionException;
 
@@ -34,8 +36,11 @@ public class DeferredEagerBeanInitializer {
 
     private final ConfigurableApplicationContext context;
 
-    public DeferredEagerBeanInitializer(ConfigurableApplicationContext context) {
+    private final Environment env;
+
+    public DeferredEagerBeanInitializer(ConfigurableApplicationContext context, Environment env) {
         this.context = context;
+        this.env = env;
     }
 
     /**
@@ -44,13 +49,16 @@ public class DeferredEagerBeanInitializer {
      */
     public void initializeDeferredEagerBeans() {
         log.info("Start deferred eager initialization of all lazy singleton beans");
-        // Force eager initialization of HazelcastConnection first, so that connections are established as early as possible.
-        try {
-            context.getBean(HazelcastConnection.class);
-            log.debug("Priority initialization of HazelcastConnection completed");
-        }
-        catch (Throwable ex) {
-            shutdownOnDeferredInitFailure("HazelcastConnection", ex);
+        String dataStoreConfig = env.getProperty("artemis.continuous-integration.data-store", HAZELCAST);
+        if (dataStoreConfig.equalsIgnoreCase(HAZELCAST)) {
+            try {
+                // Force eager initialization of HazelcastConnection first, so that connections are established as early as possible.
+                context.getBean(HazelcastConnection.class);
+                log.debug("Priority initialization of HazelcastConnection completed");
+            }
+            catch (Throwable ex) {
+                shutdownOnDeferredInitFailure("HazelcastConnection", ex);
+            }
         }
 
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) context.getBeanFactory();

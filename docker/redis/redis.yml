@@ -1,0 +1,30 @@
+services:
+  redis:
+    image: redis/redis-stack-server:7.2.0-v18
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ${REDIS_CONFIG:-./redis/redis.conf}:/usr/local/etc/redis/redis.conf
+      - ${REDIS_DATA_VOLUME:-./.docker-data/redis-data}:/data
+    command: [
+      "redis-server",
+      "/usr/local/etc/redis/redis.conf",
+      "--requirepass ${REDIS_PASSWORD:-artemis}",
+      "--user artemis on >${REDIS_PASSWORD:-artemis} +@all &* ~*",
+      "--user default off nopass nocommands",
+      "--protected-mode no" # Needed, as redis does not detect that the default user has a password if it is disabled
+    ]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-artemis}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - artemis
+
+networks:
+  artemis:
+    driver: "bridge"
+    name: artemis
+

@@ -30,6 +30,7 @@ artemis:
             expiry-days: 2
             # Time of cleanup (cron expression)
             cleanup-schedule-time: 0 0 3 * * *
+        data-store: Hazelcast # set Hazelcast, Redis, Local as data store for Local CI data
         # This specifies the options that are shown to the instructor when creating a new programming exercise. Max value also defines the max timeout for the build.
         # The max value should be the same specified in application-buildagent.yml
         build-timeout-seconds:

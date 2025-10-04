@@ -1,21 +1,20 @@
 package de.tum.cit.aet.artemis.core.service.connectors;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.hazelcast.core.HazelcastInstance;
 
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+import de.tum.cit.aet.artemis.core.config.CoreOrHazelcastBuildAgent;
+
+@Conditional(CoreOrHazelcastBuildAgent.class)
 @Component
 @Lazy(false)
 public class HazelcastHealthIndicator implements HealthIndicator {

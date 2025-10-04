@@ -12,11 +12,7 @@ public final class LocalCIPriorityQueueComparator implements Comparator<BuildJob
 
     @Override
     public int compare(BuildJobQueueItem o1, BuildJobQueueItem o2) {
-        int priorityComparison = Integer.compare(o1.priority(), o2.priority());
-        if (priorityComparison == 0) {
-            return o1.jobTimingInfo().submissionDate().compareTo(o2.jobTimingInfo().submissionDate());
-        }
-        return priorityComparison;
+        return o1.compareTo(o2);
     }
 
 }

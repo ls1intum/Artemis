@@ -25,9 +25,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.hazelcast.collection.ItemEvent;
-import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -54,6 +51,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueListener;
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
@@ -116,7 +114,7 @@ public class LocalCIResultProcessingService {
     @PostConstruct
     public void init() {
         initResultProcessingExecutor();
-        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addItemListener(new ResultQueueListener(), true);
+        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addListener(new ResultQueueListener());
     }
 
     private void initResultProcessingExecutor() {
@@ -135,18 +133,10 @@ public class LocalCIResultProcessingService {
      */
     @PreDestroy
     public void removeListener() {
-        // check if Hazelcast is still active, before invoking this
-        try {
-            if (distributedDataAccessService.isInstanceRunning()) {
-                distributedDataAccessService.getDistributedBuildResultQueue().removeItemListener(this.listenerId);
-            }
+        if (distributedDataAccessService.isInstanceRunning() && this.listenerId != null) {
+            distributedDataAccessService.getDistributedBuildResultQueue().removeListener(this.listenerId);
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Could not remove listener as hazelcast instance is not active.");
-        }
-        finally {
-            shutdownResultProcessingExecutor();
-        }
+        shutdownResultProcessingExecutor();
     }
 
     private void shutdownResultProcessingExecutor() {
@@ -347,17 +337,17 @@ public class LocalCIResultProcessingService {
         }
     }
 
-    public class ResultQueueListener implements ItemListener<ResultQueueItem> {
+    public class ResultQueueListener implements QueueListener {
 
         @Override
-        public void itemAdded(ItemEvent<ResultQueueItem> event) {
-            log.debug("Result of build job with id {} added to queue", event.getItem().buildJobQueueItem().id());
+        public void itemAdded() {
+            log.debug("Result added to queue");
             processResultAsync();
         }
 
         @Override
-        public void itemRemoved(ItemEvent<ResultQueueItem> event) {
-
+        public void itemRemoved() {
+            log.debug("Result of removed from queue");
         }
     }
 
