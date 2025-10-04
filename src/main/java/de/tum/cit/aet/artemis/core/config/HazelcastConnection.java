@@ -81,8 +81,7 @@ public class HazelcastConnection {
      * and registers them in the Hazelcast configuration for joining the cluster.
      *
      * <p>
-     * Called once after the {@link FullStartupEvent} is fired to avoid premature initialization
-     * before all services are available.
+     * Called once after the bean has been instantiated
      */
     // we should use @PostConstruct here because the lazy instantiation works properly and FullStartupEvent is sent too early.
     @PostConstruct
