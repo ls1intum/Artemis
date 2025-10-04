@@ -56,6 +56,8 @@ import { FileService } from 'app/shared/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { PlannedExercisePickerComponent } from 'app/core/course/manage/exercise-planning/planned-exercise-picker/planned-exercise-picker.component';
+import { PlannedExercise } from 'app/core/course/shared/entities/planned-exercise.model';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -76,6 +78,7 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
         FeatureOverlayComponent,
+        PlannedExercisePickerComponent,
     ],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
@@ -152,6 +155,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isLocalCIEnabled: boolean;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
+    plannedExercise = signal<PlannedExercise | undefined>(undefined);
     backupExercise: ProgrammingExercise;
     isSaving: boolean;
     goBackAfterSaving = false;

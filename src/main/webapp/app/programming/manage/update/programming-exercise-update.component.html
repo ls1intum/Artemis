@@ -8,12 +8,14 @@
             <h2 id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel"></h2>
         }
         <jhi-documentation-button [type]="documentationType" />
+        <jhi-planned-exercise-picker [courseId]="courseId" (selectedPlannedExercise)="plannedExercise.set($event)" />
     </div>
     <jhi-form-status-bar [formStatusSections]="formStatusSections()" />
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
         <div class="update-programming-exercise">
             <jhi-programming-exercise-info
                 [programmingExercise]="programmingExercise"
+                [plannedExerciseTitle]="plannedExercise()?.title"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isExamMode]="isExamMode"
                 [isImport]="isImportFromExistingExercise || isImportFromFile"

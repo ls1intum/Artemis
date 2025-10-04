@@ -16,6 +16,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     courseId = input<number>();
 
     @Input() exercise: Exercise;
+    plannedExerciseTitle = input<string>();
     @Input() titlePattern: string;
     @Input() minTitleLength: number;
     @Input() isExamMode: boolean;

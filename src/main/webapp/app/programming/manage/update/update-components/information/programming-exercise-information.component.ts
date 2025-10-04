@@ -87,6 +87,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isImport = input.required<boolean>();
     isExamMode = input.required<boolean>();
     programmingExercise = input.required<ProgrammingExercise>();
+    plannedExerciseTitle = input<string>();
     importOptions = input.required<ImportOptions>();
     isSimpleMode = input.required<boolean>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
