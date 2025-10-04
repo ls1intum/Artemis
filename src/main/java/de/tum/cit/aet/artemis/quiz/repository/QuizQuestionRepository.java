@@ -67,7 +67,7 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             FROM QuizQuestion q
             WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
             """)
-    boolean areQuizQuestionsAvailableForPractice(@Param("courseId") Long courseId);
+    boolean areQuizQuestionsAvailableForPractice(@Param("courseId") long courseId);
 
     @Query("""
             SELECT COUNT(q)
