@@ -13,10 +13,10 @@
         <ng-template pTemplate="body" let-exercise>
             <tr>
                 <td>{{ exercise.title }}</td>
-                <td>{{ exercise.releaseDate.format('YYYY-MM-DD HH:mm') }}</td>
-                <td>{{ exercise.startDate.format('YYYY-MM-DD HH:mm') }}</td>
-                <td>{{ exercise.dueDate.format('YYYY-MM-DD HH:mm') }}</td>
-                <td>{{ exercise.assessmentDueDate.format('YYYY-MM-DD HH:mm') }}</td>
+                <td>{{ exercise.releaseDate?.format('DD-MM-YYYY HH:mm') ?? '' }}</td>
+                <td>{{ exercise.startDate?.format('DD-MM-YYYY HH:mm') ?? '' }}</td>
+                <td>{{ exercise.dueDate?.format('DD-MM-YYYY HH:mm') ?? '' }}</td>
+                <td>{{ exercise.assessmentDueDate?.format('DD-MM-YYYY HH:mm') ?? '' }}</td>
                 <td>
                     <div class="button-column">
                         <button class="icon-button" (click)="edit(exercise)">

@@ -94,7 +94,7 @@ export class PlannedExerciseService {
         return new Observable<void>((subscriber) => {
             setTimeout(() => {
                 const dtos = Array.isArray(plannedExercise) ? plannedExercise : [plannedExercise];
-                const newExercises: PlannedExercise[] = dtos.map((dto, index) => ({
+                const newExercises: PlannedExercise[] = dtos.map((dto, _) => ({
                     id: this.idCount,
                     title: dto.title,
                     releaseDate: dto.releaseDate,
