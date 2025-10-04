@@ -14,6 +14,12 @@ tasks.withType(Test).configureEach {
         failOnPassedAfterRetry.set(false)
     }
 
+    reports {
+        junitXml {
+            mergeReruns = true
+        }
+    }
+
     testLogging {
         // set options for log level LIFECYCLE
         events TestLogEvent.FAILED,
