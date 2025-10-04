@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -10,10 +10,11 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { SelectModule } from 'primeng/select';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
-import { PlannedExerciseSeriesCreateComponent } from 'app/core/course/manage/planned-exercise-modal/planned-exercise-series-create/planned-exercise-series-create.component';
-import { PlannedExerciseCreateOrUpdateComponent } from 'app/core/course/manage/planned-exercise-modal/planned-exercise-create/planned-exercise-create-or-update.component';
-import { PlannedExerciseComponent } from 'app/core/course/manage/planned-exercise-modal/planned-exercise/planned-exercise.component';
-import { PlannedExercise, PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
+import { PlannedExerciseSeriesCreateComponent } from 'app/core/course/manage/exercise-planning/planned-exercise-series-create/planned-exercise-series-create.component';
+import { PlannedExerciseCreateOrUpdateComponent } from 'app/core/course/manage/exercise-planning/planned-exercise-create/planned-exercise-create-or-update.component';
+import { PlannedExerciseComponent } from 'app/core/course/manage/exercise-planning/planned-exercise/planned-exercise.component';
+import { PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
+import { PlannedExercise } from 'app/core/course/shared/entities/planned-exercise.model';
 //import { addOneMinuteTo, isFirstAfterOrEqualSecond } from 'app/lecture/manage/util/lecture-management.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -57,6 +58,7 @@ export class PlannedExerciseModalComponent implements OnInit {
     protected readonly faSquarePlus = faPlus;
     protected readonly faXmark = faXmark;
 
+    courseId = input.required<number>();
     plannedExercises = this.plannedExerciseService.plannedExercises;
     plannedExerciseToEdit = signal<PlannedExercise | undefined>(undefined);
     createPlannedExerciseOrSeries = signal(false);
@@ -75,7 +77,7 @@ export class PlannedExerciseModalComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.plannedExerciseService.load();
+        this.plannedExerciseService.getAll(this.courseId());
     }
 
     open() {

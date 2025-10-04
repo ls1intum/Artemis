@@ -1,4 +1,4 @@
-import { Component, computed, inject, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -7,9 +7,11 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { ButtonModule } from 'primeng/button';
 import { AutoFocusModule } from 'primeng/autofocus';
-import { PlannedExercise, PlannedExerciseCreateDTO, PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
+import { PlannedExercise, PlannedExerciseCreateDTO } from 'app/core/course/shared/entities/planned-exercise.model';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { take } from 'rxjs';
+import { getFirstAvailableDatePropertyOf } from 'app/core/course/manage/exercise-planning/planned-exercise.util';
+import { PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
 
 @Component({
     selector: 'jhi-planned-exercise-series-create',
@@ -20,6 +22,7 @@ import { take } from 'rxjs';
 export class PlannedExerciseSeriesCreateComponent {
     private plannedExerciseService = inject(PlannedExerciseService);
 
+    courseId = input.required<number>();
     releaseDate = signal<Date | undefined>(undefined);
     startDate = signal<Date | undefined>(undefined);
     dueDate = signal<Date | undefined>(undefined);
@@ -50,7 +53,7 @@ export class PlannedExerciseSeriesCreateComponent {
 
     save() {
         this.plannedExerciseService
-            .create(this.plannedExercises())
+            .createAll(this.plannedExercises(), this.courseId())
             .pipe(take(1))
             .subscribe(() => {
                 this.onCreateFinished.emit();
@@ -109,12 +112,12 @@ export class PlannedExerciseSeriesCreateComponent {
             ...existingPlannedExercises.map((exercise) => ({
                 type: SortItemType.EXISTING,
                 exercise: exercise,
-                date: this.getFirstAvailableDatePropertyOf(exercise),
+                date: getFirstAvailableDatePropertyOf(exercise),
             })),
             ...dtos.map((dto) => ({
                 type: SortItemType.NEW,
                 exercise: dto,
-                date: this.getFirstAvailableDatePropertyOf(dto),
+                date: getFirstAvailableDatePropertyOf(dto),
             })),
         ];
         sortItems.sort((first, second) => first.date.valueOf() - second.date.valueOf());
@@ -125,12 +128,5 @@ export class PlannedExerciseSeriesCreateComponent {
         });
 
         return sortItems.filter((item) => item.type === SortItemType.NEW).map((item) => item.exercise);
-    }
-
-    private getFirstAvailableDatePropertyOf(plannedExerciseOrDto: { releaseDate?: Dayjs; startDate?: Dayjs; dueDate?: Dayjs; assessmentDueDate?: Dayjs }): Dayjs {
-        if (plannedExerciseOrDto.releaseDate) return plannedExerciseOrDto.releaseDate;
-        if (plannedExerciseOrDto.startDate) return plannedExerciseOrDto.startDate;
-        if (plannedExerciseOrDto.dueDate) return plannedExerciseOrDto.dueDate;
-        return plannedExerciseOrDto.assessmentDueDate!; // guaranteed to exist
     }
 }

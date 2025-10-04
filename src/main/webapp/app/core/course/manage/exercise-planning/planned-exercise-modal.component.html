@@ -38,17 +38,17 @@
     </ng-template>
     @let exerciseToUpdate = plannedExerciseToEdit();
     @if (exerciseToUpdate) {
-        <jhi-planned-exercise-create [plannedExercise]="exerciseToUpdate" (onOperationFinished)="plannedExerciseToEdit.set(undefined)" />
+        <jhi-planned-exercise-create [plannedExercise]="exerciseToUpdate" [courseId]="courseId()" (onOperationFinished)="plannedExerciseToEdit.set(undefined)" />
     } @else if (createPlannedExerciseOrSeries()) {
         @switch (selectedPlannedExerciseCreationMode()) {
             @case (PlannedExerciseCreationMode.SINGLE) {
-                <jhi-planned-exercise-create (onOperationFinished)="createPlannedExerciseOrSeries.set(false)" />
+                <jhi-planned-exercise-create [courseId]="courseId()" (onOperationFinished)="createPlannedExerciseOrSeries.set(false)" />
             }
             @case (PlannedExerciseCreationMode.SERIES) {
-                <jhi-planned-exercise-series-create (onCreateFinished)="createPlannedExerciseOrSeries.set(false)" />
+                <jhi-planned-exercise-series-create [courseId]="courseId()" (onCreateFinished)="createPlannedExerciseOrSeries.set(false)" />
             }
         }
     } @else {
-        <jhi-planned-exercise [plannedExercises]="plannedExercises()" (onSelectPlannedExerciseToEdit)="plannedExerciseToEdit.set($event)" />
+        <jhi-planned-exercise [plannedExercises]="plannedExercises()" [courseId]="courseId()" (onSelectPlannedExerciseToEdit)="plannedExerciseToEdit.set($event)" />
     }
 </p-dialog>

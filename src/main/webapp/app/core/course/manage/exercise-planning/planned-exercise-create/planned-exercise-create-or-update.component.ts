@@ -7,7 +7,8 @@ import { ButtonModule } from 'primeng/button';
 import { AutoFocusModule } from 'primeng/autofocus';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { PlannedExercise, PlannedExerciseCreateDTO, PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
+import { PlannedExercise, PlannedExerciseCreateDTO } from 'app/core/course/shared/entities/planned-exercise.model';
+import { PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
 import { addOneMinuteTo, convertDateToDayjsDate, convertDayjsDateToDate, isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
 import { take } from 'rxjs';
 
@@ -20,6 +21,7 @@ import { take } from 'rxjs';
 export class PlannedExerciseCreateOrUpdateComponent {
     private plannedExerciseService = inject(PlannedExerciseService);
 
+    courseId = input.required<number>();
     plannedExercise = input<PlannedExercise>();
     title = signal<string>('');
     isTitleInvalid = computed(() => this.title() === '');
@@ -55,6 +57,7 @@ export class PlannedExerciseCreateOrUpdateComponent {
 
     save() {
         const plannedExercise = this.plannedExercise();
+        const courseId = this.courseId();
         if (plannedExercise) {
             plannedExercise.title = this.title();
             plannedExercise.releaseDate = convertDateToDayjsDate(this.releaseDate());
@@ -62,7 +65,7 @@ export class PlannedExerciseCreateOrUpdateComponent {
             plannedExercise.dueDate = convertDateToDayjsDate(this.dueDate());
             plannedExercise.assessmentDueDate = convertDateToDayjsDate(this.assessmentDueDate());
             this.plannedExerciseService
-                .update(plannedExercise)
+                .update(plannedExercise, courseId)
                 .pipe(take(1))
                 .subscribe(() => {
                     this.onOperationFinished.emit();
@@ -76,7 +79,7 @@ export class PlannedExerciseCreateOrUpdateComponent {
                 convertDateToDayjsDate(this.assessmentDueDate()),
             );
             this.plannedExerciseService
-                .create(plannedExerciseCreateDTO)
+                .create(plannedExerciseCreateDTO, courseId)
                 .pipe(take(1))
                 .subscribe(() => {
                     this.onOperationFinished.emit();

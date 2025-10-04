@@ -1,6 +1,7 @@
 import { Component, inject, input, output } from '@angular/core';
 import { TableModule } from 'primeng/table';
-import { PlannedExercise, PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
+import { PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
+import { PlannedExercise } from 'app/core/course/shared/entities/planned-exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faGhost, faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 
@@ -16,6 +17,7 @@ export class PlannedExerciseComponent {
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faGhost = faGhost;
 
+    courseId = input.required<number>();
     plannedExercises = input.required<PlannedExercise[]>();
     onSelectPlannedExerciseToEdit = output<PlannedExercise>();
 
@@ -24,6 +26,6 @@ export class PlannedExerciseComponent {
     }
 
     delete(plannedExercise: PlannedExercise) {
-        this.plannedExerciseService.delete(plannedExercise.id);
+        this.plannedExerciseService.delete(plannedExercise.id, this.courseId());
     }
 }

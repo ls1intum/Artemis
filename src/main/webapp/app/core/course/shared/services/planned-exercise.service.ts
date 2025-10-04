@@ -1,134 +1,124 @@
-import { Injectable, signal } from '@angular/core';
-//import { AlertService } from 'app/shared/service/alert.service';
-//import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { Dayjs } from 'dayjs/esm';
-
-export interface PlannedExercise {
-    id: number;
-    title: string;
-    releaseDate?: Dayjs;
-    startDate?: Dayjs;
-    dueDate?: Dayjs;
-    assessmentDueDate?: Dayjs;
-}
-
-export class PlannedExerciseCreateDTO {
-    constructor(
-        public title: string,
-        public releaseDate?: Dayjs,
-        public startDate?: Dayjs,
-        public dueDate?: Dayjs,
-        public assessmentDueDate?: Dayjs,
-    ) {}
-}
-
-/*
-const plannedExercises: PlannedExercise[] = [
-    {
-        id: 1,
-        title: 'Exercise 1',
-        releaseDate: dayjs('2025-10-01T09:00:00'),
-        startDate: dayjs('2025-10-01T10:00:00'),
-        dueDate: dayjs('2025-10-08T23:59:00'),
-        assessmentDueDate: dayjs('2025-10-10T12:00:00'),
-    },
-    {
-        id: 2,
-        title: 'Exercise 2',
-        releaseDate: dayjs('2025-10-02T09:00:00'),
-        startDate: dayjs('2025-10-02T10:00:00'),
-        dueDate: dayjs('2025-10-09T23:59:00'),
-        assessmentDueDate: dayjs('2025-10-11T12:00:00'),
-    },
-    {
-        id: 3,
-        title: 'Exercise 3',
-        releaseDate: dayjs('2025-10-03T09:00:00'),
-        startDate: dayjs('2025-10-03T10:00:00'),
-        dueDate: dayjs('2025-10-10T23:59:00'),
-        assessmentDueDate: dayjs('2025-10-12T12:00:00'),
-    },
-    {
-        id: 4,
-        title: 'Exercise 4',
-        releaseDate: dayjs('2025-10-04T09:00:00'),
-        startDate: dayjs('2025-10-04T10:00:00'),
-        dueDate: dayjs('2025-10-11T23:59:00'),
-        assessmentDueDate: dayjs('2025-10-13T12:00:00'),
-    },
-    {
-        id: 5,
-        title: 'Exercise 5',
-        releaseDate: dayjs('2025-10-05T09:00:00'),
-        startDate: dayjs('2025-10-05T10:00:00'),
-        dueDate: dayjs('2025-10-12T23:59:00'),
-        assessmentDueDate: dayjs('2025-10-14T12:00:00'),
-    },
-];
- */
+import { Injectable, inject, signal } from '@angular/core';
+import { AlertService } from 'app/shared/service/alert.service';
+import { HttpClient } from '@angular/common/http';
+import { Observable, catchError, finalize, map, of, tap } from 'rxjs';
+import { PlannedExercise, PlannedExerciseCreateDTO, RawPlannedExercise } from 'app/core/course/shared/entities/planned-exercise.model';
+import { getFirstAvailableDatePropertyOf } from 'app/core/course/manage/exercise-planning/planned-exercise.util';
 
 @Injectable({
     providedIn: 'root',
 })
 export class PlannedExerciseService {
-    //private readonly apiUrl = 'api/planned-exercises';
+    private readonly urlBase = 'api/planned-exercise';
 
-    //private httpClient = inject(HttpClient);
-    //private alertService = inject(AlertService);
+    private httpClient = inject(HttpClient);
+    private alertService = inject(AlertService);
     private _plannedExercises = signal<PlannedExercise[]>([]);
     private _loading = signal(false);
-    private idCount = 0;
 
     plannedExercises = this._plannedExercises.asReadonly();
     loading = this._loading.asReadonly();
 
-    load() {
+    getAll(courseId: number) {
         this._loading.set(true);
-        setTimeout(() => {
-            this._plannedExercises.set([]);
-            this._loading.set(false);
-        }, 1000);
+        const url = `${this.urlBase}/courses/${courseId}/planned-exercises`;
+        this.httpClient
+            .get<RawPlannedExercise[]>(url)
+            .pipe(
+                map((rawExercises) => rawExercises.map((raw) => new PlannedExercise(raw))),
+                catchError(() => {
+                    this.alertService.addErrorAlert('Something went wrong while loading the planned exercises. Please try again.');
+                    return of([] as PlannedExercise[]);
+                }),
+                finalize(() => this._loading.set(false)),
+            )
+            .subscribe((plannedExercises) => {
+                this._plannedExercises.set(plannedExercises);
+            });
     }
 
-    create(plannedExercise: PlannedExerciseCreateDTO | PlannedExerciseCreateDTO[]): Observable<void> {
+    create(plannedExercise: PlannedExerciseCreateDTO, courseId: number): Observable<void> {
         this._loading.set(true);
-        return new Observable<void>((subscriber) => {
-            setTimeout(() => {
-                const dtos = Array.isArray(plannedExercise) ? plannedExercise : [plannedExercise];
-                const newExercises: PlannedExercise[] = dtos.map((dto, _) => ({
-                    id: this.idCount,
-                    title: dto.title,
-                    releaseDate: dto.releaseDate,
-                    startDate: dto.startDate,
-                    dueDate: dto.dueDate,
-                    assessmentDueDate: dto.assessmentDueDate,
-                }));
-                this.idCount++;
-                this._plannedExercises.update((exercises) => [...exercises, ...newExercises]);
-                this._loading.set(false);
-                subscriber.next();
-                subscriber.complete();
-            }, 1000);
-        });
+        const url = this.urlBase + `/courses/${courseId}/planned-exercises`;
+        return this.httpClient.post<RawPlannedExercise>(url, plannedExercise).pipe(
+            map((rawExercise) => {
+                const newExercises = [new PlannedExercise(rawExercise)];
+                this._plannedExercises.update((oldExercises) => this.mergeOldWithNewExercises(oldExercises, newExercises));
+            }),
+            map(() => undefined),
+            catchError(() => {
+                this.alertService.addErrorAlert('Something went wrong while creating the planned exercise. Please try again.');
+                return of(undefined);
+            }),
+            finalize(() => this._loading.set(false)),
+        );
     }
 
-    update(plannedExercise: PlannedExercise): Observable<void> {
+    createAll(plannedExercises: PlannedExerciseCreateDTO[], courseId: number): Observable<void> {
         this._loading.set(true);
-        return new Observable<void>((subscriber) => {
-            setTimeout(() => {
-                this._loading.set(false);
-                subscriber.next();
-                subscriber.complete();
-            }, 1000);
-        });
+        const url = this.urlBase + `/courses/${courseId}/planned-exercises/batch`;
+        return this.httpClient.post<RawPlannedExercise[]>(url, plannedExercises).pipe(
+            map((rawExercises) => {
+                const newExercises = rawExercises.map((raw) => new PlannedExercise(raw));
+                this._plannedExercises.update((oldExercises) => this.mergeOldWithNewExercises(oldExercises, newExercises));
+            }),
+            map(() => undefined),
+            catchError(() => {
+                this.alertService.addErrorAlert('Something went wrong while creating the planned exercise. Please try again.');
+                return of(undefined);
+            }),
+            finalize(() => this._loading.set(false)),
+        );
     }
 
-    delete(plannedExerciseId: number) {
+    private mergeOldWithNewExercises(oldExercises: PlannedExercise[], newExercises: PlannedExercise[]): PlannedExercise[] {
+        const result: PlannedExercise[] = [];
+        let oldIndex = 0;
+        let newIndex = 0;
+        while (oldIndex < oldExercises.length && newIndex < newExercises.length) {
+            const nextNewExercise = newExercises[newIndex];
+            const nextOldExercise = oldExercises[oldIndex];
+            if (getFirstAvailableDatePropertyOf(nextNewExercise).isBefore(getFirstAvailableDatePropertyOf(nextOldExercise))) {
+                result.push(nextNewExercise);
+                newIndex++;
+            } else {
+                result.push(nextOldExercise);
+                oldIndex++;
+            }
+        }
+        if (oldIndex < oldExercises.length) result.push(...oldExercises.slice(oldIndex));
+        if (newIndex < newExercises.length) result.push(...newExercises.slice(newIndex));
+        return result;
+    }
+
+    update(plannedExercise: PlannedExercise, courseId: number): Observable<void> {
         this._loading.set(true);
-        setTimeout(() => {
-            this._plannedExercises.update((exercises) => exercises.filter((exercise) => exercise.id !== plannedExerciseId));
-            this._loading.set(false);
-        }, 1000);
+        const url = this.urlBase + `/courses/${courseId}/planned-exercises`;
+        return this.httpClient.put<RawPlannedExercise>(url, plannedExercise).pipe(
+            map(() => undefined),
+            catchError(() => {
+                this.alertService.addErrorAlert('Something went wrong while updating the planned exercise. Please try again.');
+                return of(undefined);
+            }),
+            finalize(() => this._loading.set(false)),
+        );
+    }
+
+    delete(plannedExerciseId: number, courseId: number) {
+        this._loading.set(true);
+        const url = `${this.urlBase}/courses/${courseId}/planned-exercises/${plannedExerciseId}`;
+        this.httpClient
+            .delete<void>(url)
+            .pipe(
+                tap(() => {
+                    this._plannedExercises.update((exercises) => exercises.filter((exercise) => exercise.id !== plannedExerciseId));
+                }),
+                catchError(() => {
+                    this.alertService.addErrorAlert('Something went wrong while deleting the planned exercise. Please try again.');
+                    return of(undefined);
+                }),
+                finalize(() => this._loading.set(false)),
+            )
+            .subscribe();
     }
 }

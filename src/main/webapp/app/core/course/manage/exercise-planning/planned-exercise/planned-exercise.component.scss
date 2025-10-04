@@ -1,7 +1,9 @@
 .frame {
     display: flex;
     flex-direction: column;
+    justify-content: start;
     min-width: 30rem;
+    min-height: 20rem;
 
     .button-column {
         display: flex;
