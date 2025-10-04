@@ -174,12 +174,12 @@ public class ComplaintService {
         }
     }
 
-    public long countComplaintsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
+    public long countComplaintsByExerciseIds(Set<Long> exerciseIds) {
+        return complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
     }
 
-    public long countMoreFeedbackRequestsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+    public long countMoreFeedbackRequestsByCourseId(Set<Long> exerciseIds) {
+        return complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
     }
 
     /**
@@ -188,9 +188,8 @@ public class ComplaintService {
      * @param courseId the id of the course
      * @return the number of responses
      */
-    public long countComplaintResponsesByCourseId(long courseId) {
-        return complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
-                ComplaintType.COMPLAINT);
+    public long countComplaintResponsesByExerciseIds(Set<Long> exerciseIds) {
+        return complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
     }
 
     /**
@@ -199,9 +198,8 @@ public class ComplaintService {
      * @param courseId the id of the course
      * @return the number of responses
      */
-    public long countMoreFeedbackRequestResponsesByCourseId(long courseId) {
-        return complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
-                ComplaintType.MORE_FEEDBACK);
+    public long countMoreFeedbackRequestResponsesByExerciseIds(Set<Long> exerciseIds) {
+        return complaintResponseRepository.countNumberOfComplaintsByComplaintTypeAndSubmittedTimeIsNotNullForExerciseIds(exerciseIds, ComplaintType.MORE_FEEDBACK);
     }
 
     /**

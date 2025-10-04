@@ -29,12 +29,21 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
     /**
      * This magic method counts the number of complaints responses by complaint type associated to a course id
      *
-     * @param courseId      - the id of the course we want to filter by
      * @param complaintType - complaint type we want to filter by
      * @return number of complaints response associated to course courseId
      *
      */
-    long countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(Long courseId, ComplaintType complaintType);
+
+    @Query("""
+            SELECT COUNT(DISTINCT cr)
+            FROM ComplaintResponse cr
+            JOIN cr.complaint c
+            JOIN c.result r
+            WHERE r.exerciseId IN :exerciseIds
+                AND cr.submittedTime IS NOT NULL
+                AND c.complaintType = :complaintType
+            """)
+    long countComplaintResponsesForExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
     @Query("""
                 SELECT COUNT(DISTINCT cr)
@@ -47,16 +56,6 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
             """)
     long countNumberOfComplaintsByComplaintTypeAndSubmittedTimeIsNotNullForExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds,
             @Param("complaintType") ComplaintType complaintType);
-
-    /**
-     * This magic method counts the number of complaints responses by complaint type associated to an exam id
-     *
-     * @param examId        - the id of the exam we want to filter by
-     * @param complaintType - complaint type we want to filter by
-     * @return number of complaints response associated to exam examId
-     */
-    long countByComplaint_Result_Submission_Participation_Exercise_ExerciseGroup_Exam_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(Long examId,
-            ComplaintType complaintType);
 
     /**
      * This magic method counts the number of complaints responses by complaint type associated to an exercise id
