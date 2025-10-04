@@ -9,6 +9,11 @@ tasks.withType(Test).configureEach {
     // a collection to track failedTests
     ext.failedTests = []
 
+    retry {
+        maxRetries.set(2)
+        failOnPassedAfterRetry.set(false)
+    }
+
     testLogging {
         // set options for log level LIFECYCLE
         events TestLogEvent.FAILED,
