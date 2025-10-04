@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.iris.repository.IrisExerciseSettingsRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -76,11 +77,14 @@ public class ExerciseDeletionService {
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
+    private final IrisExerciseSettingsRepository irisExerciseSettingsRepository;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository,
-            ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
+            ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi,
+            IrisExerciseSettingsRepository irisExerciseSettingsRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -95,6 +99,7 @@ public class ExerciseDeletionService {
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsApi = irisSettingsApi;
+        this.irisExerciseSettingsRepository = irisExerciseSettingsRepository;
     }
 
     /**
@@ -134,6 +139,10 @@ public class ExerciseDeletionService {
      *                                      all other exercise types)
      */
     public void delete(long exerciseId, boolean deleteBaseReposBuildPlans) {
+        // Delete iris settings to avoid foreign key constraint violations
+        // TODO: move to optional IrisSettingsApi
+        irisExerciseSettingsRepository.deleteByExerciseId(exerciseId);
+
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
@@ -141,7 +150,7 @@ public class ExerciseDeletionService {
         long start = System.nanoTime();
         Channel exerciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
         channelService.deleteChannel(exerciseChannel);
-        log.info("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
 
         if (exercise instanceof TextExercise) {
             log.info("Cancel scheduled operations of exercise {}", exercise.getId());
