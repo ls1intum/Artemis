@@ -7,7 +7,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { ButtonModule } from 'primeng/button';
 import { AutoFocusModule } from 'primeng/autofocus';
-import { PlannedExerciseCreateDTO, PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
+import { PlannedExercise, PlannedExerciseCreateDTO, PlannedExerciseService } from 'app/core/course/shared/services/planned-exercise.service';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { take } from 'rxjs';
 
@@ -65,19 +65,25 @@ export class PlannedExerciseSeriesCreateComponent {
         if (!seriesEndDate || (!releaseDate && !startDate && !dueDate && !assessmentDueDate)) {
             return [];
         }
-        const dtos: PlannedExerciseCreateDTO[] = [];
+        const dtosWithoutTitles: PlannedExerciseCreateDTO[] = [];
         let currentDTO = new PlannedExerciseCreateDTO(
-            'hey',
+            '',
             releaseDate ? dayjs(releaseDate) : undefined,
             startDate ? dayjs(startDate) : undefined,
             dueDate ? dayjs(dueDate) : undefined,
             assessmentDueDate ? dayjs(assessmentDueDate) : undefined,
         );
         while (this.allDatePropertiesOnOrBeforeSeriesEndDate(currentDTO, dayjs(seriesEndDate))) {
-            dtos.push(currentDTO);
+            dtosWithoutTitles.push(currentDTO);
             currentDTO = this.generateNextDTOFromCurrentDTO(currentDTO);
         }
-        return dtos;
+        return this.assignSequentialTitlesTo(dtosWithoutTitles);
+    }
+
+    private allDatePropertiesOnOrBeforeSeriesEndDate(dto: PlannedExerciseCreateDTO, end: Dayjs): boolean {
+        const dates = [dto.releaseDate, dto.startDate, dto.dueDate, dto.assessmentDueDate].filter((date): date is Dayjs => !!date);
+        if (dates.length === 0) return false;
+        return dates.every((date) => date.isSameOrBefore(end, 'day'));
     }
 
     private generateNextDTOFromCurrentDTO(dto: PlannedExerciseCreateDTO): PlannedExerciseCreateDTO {
@@ -90,9 +96,41 @@ export class PlannedExerciseSeriesCreateComponent {
         );
     }
 
-    private allDatePropertiesOnOrBeforeSeriesEndDate(dto: PlannedExerciseCreateDTO, end: Dayjs): boolean {
-        const dates = [dto.releaseDate, dto.startDate, dto.dueDate, dto.assessmentDueDate].filter((date): date is Dayjs => !!date);
-        if (dates.length === 0) return false;
-        return dates.every((date) => date.isSameOrBefore(end, 'day'));
+    private assignSequentialTitlesTo(dtos: PlannedExerciseCreateDTO[]): PlannedExerciseCreateDTO[] {
+        const existingPlannedExercises = this.plannedExerciseService.plannedExercises();
+
+        enum SortItemType {
+            EXISTING = 'EXISTING',
+            NEW = 'NEW',
+        }
+        type SortItem = { type: SortItemType; exercise: PlannedExercise; date: Dayjs } | { type: SortItemType; exercise: PlannedExerciseCreateDTO; date: Dayjs };
+
+        const sortItems: SortItem[] = [
+            ...existingPlannedExercises.map((exercise) => ({
+                type: SortItemType.EXISTING,
+                exercise: exercise,
+                date: this.getFirstAvailableDatePropertyOf(exercise),
+            })),
+            ...dtos.map((dto) => ({
+                type: SortItemType.NEW,
+                exercise: dto,
+                date: this.getFirstAvailableDatePropertyOf(dto),
+            })),
+        ];
+        sortItems.sort((first, second) => first.date.valueOf() - second.date.valueOf());
+        sortItems.forEach((item, index) => {
+            if (item.type === SortItemType.NEW) {
+                item.exercise.title = `Planned Exercise ${index + 1}`;
+            }
+        });
+
+        return sortItems.filter((item) => item.type === SortItemType.NEW).map((item) => item.exercise);
+    }
+
+    private getFirstAvailableDatePropertyOf(plannedExerciseOrDto: { releaseDate?: Dayjs; startDate?: Dayjs; dueDate?: Dayjs; assessmentDueDate?: Dayjs }): Dayjs {
+        if (plannedExerciseOrDto.releaseDate) return plannedExerciseOrDto.releaseDate;
+        if (plannedExerciseOrDto.startDate) return plannedExerciseOrDto.startDate;
+        if (plannedExerciseOrDto.dueDate) return plannedExerciseOrDto.dueDate;
+        return plannedExerciseOrDto.assessmentDueDate!; // guaranteed to exist
     }
 }
