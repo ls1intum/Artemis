@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -39,6 +39,8 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { PlannedExercisePickerComponent } from 'app/core/course/manage/exercise-planning/planned-exercise-picker/planned-exercise-picker.component';
+import { PlannedExercise } from 'app/core/course/shared/entities/planned-exercise.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -64,6 +66,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
+        PlannedExercisePickerComponent,
     ],
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
@@ -95,6 +98,8 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     isExamMode: boolean;
     fileUploadExercise: FileUploadExercise;
     backupExercise: FileUploadExercise;
+    plannedExercise = signal<PlannedExercise | undefined>(undefined);
+    courseId = signal<number>(Number(this.activatedRoute.snapshot.params['courseId']));
     isSaving: boolean;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -121,6 +126,26 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
         effect(() => {
             this.updateFormSectionsOnIsValidChange();
         });
+        effect(() => this.updateExerciseWithPlannedExerciseIfNotExamMode());
+    }
+
+    private updateExerciseWithPlannedExerciseIfNotExamMode() {
+        const plannedExercise = this.plannedExercise();
+        if (!this.isExamMode) {
+            this.fileUploadExercise.releaseDate = plannedExercise?.releaseDate;
+            this.fileUploadExercise.startDate = plannedExercise?.startDate;
+            this.fileUploadExercise.dueDate = plannedExercise?.dueDate;
+            this.fileUploadExercise.assessmentDueDate = plannedExercise?.assessmentDueDate;
+        }
+    }
+
+    private resetPlannedExerciseFieldsOnExerciseIfExamMode() {
+        if (this.isExamMode) {
+            this.fileUploadExercise.releaseDate = undefined;
+            this.fileUploadExercise.startDate = undefined;
+            this.fileUploadExercise.dueDate = undefined;
+            this.fileUploadExercise.assessmentDueDate = undefined;
+        }
     }
 
     /**
@@ -147,10 +172,11 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
 
         this.activatedRoute.url
             .pipe(
-                tap(
-                    (segments) =>
-                        (this.isImport = segments.some((segment) => segment.path === 'import', (this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups')))),
-                ),
+                tap((segments) => {
+                    this.isImport = segments.some((segment) => segment.path === 'import');
+                    this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups');
+                    this.resetPlannedExerciseFieldsOnExerciseIfExamMode(); // actually only needed if we go from non-exam exercise directly to exam exercise
+                }),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     this.handleExerciseSettings();
@@ -222,7 +248,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
             if (this.isExamMode) {
                 // The target exerciseId where we want to import into
                 const exerciseGroupId = params['exerciseGroupId'];
-                const courseId = params['courseId'];
+                const courseId = this.courseId();
                 const examId = params['examId'];
 
                 this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.fileUploadExercise.exerciseGroup = res.body!));
@@ -230,7 +256,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
                 this.fileUploadExercise.course = undefined;
             } else {
                 // The target course where we want to import into
-                const targetCourseId = params['courseId'];
+                const targetCourseId = this.courseId();
                 this.courseService.find(targetCourseId).subscribe((res) => (this.fileUploadExercise.course = res.body!));
                 // We reference normal exercises by their course, having both would lead to conflicts on the server
                 this.fileUploadExercise.exerciseGroup = undefined;

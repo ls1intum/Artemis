@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -45,6 +45,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { PlannedExercise } from 'app/core/course/shared/entities/planned-exercise.model';
+import { PlannedExercisePickerComponent } from 'app/core/course/manage/exercise-planning/planned-exercise-picker/planned-exercise-picker.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -71,6 +73,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         FormFooterComponent,
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
+        PlannedExercisePickerComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -110,6 +113,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
     textExercise: TextExercise;
     backupExercise: TextExercise;
+    plannedExercise = signal<PlannedExercise | undefined>(undefined);
+    courseId = signal<number>(Number(this.activatedRoute.snapshot.params['courseId']));
     isSaving: boolean;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
@@ -128,6 +133,26 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         effect(() => {
             this.updateFormSectionsOnIsValidChange();
         });
+        effect(() => this.updateExerciseWithPlannedExerciseIfNotExamMode());
+    }
+
+    private updateExerciseWithPlannedExerciseIfNotExamMode() {
+        const plannedExercise = this.plannedExercise();
+        if (!this.isExamMode) {
+            this.textExercise.releaseDate = plannedExercise?.releaseDate;
+            this.textExercise.startDate = plannedExercise?.startDate;
+            this.textExercise.dueDate = plannedExercise?.dueDate;
+            this.textExercise.assessmentDueDate = plannedExercise?.assessmentDueDate;
+        }
+    }
+
+    private resetPlannedExerciseFieldsOnExerciseIfExamMode() {
+        if (this.isExamMode) {
+            this.textExercise.releaseDate = undefined;
+            this.textExercise.startDate = undefined;
+            this.textExercise.dueDate = undefined;
+            this.textExercise.assessmentDueDate = undefined;
+        }
     }
 
     get editType(): EditType {
@@ -169,10 +194,11 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
         this.activatedRoute.url
             .pipe(
-                tap(
-                    (segments) =>
-                        (this.isImport = segments.some((segment) => segment.path === 'import', (this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups')))),
-                ),
+                tap((segments) => {
+                    this.isImport = segments.some((segment) => segment.path === 'import');
+                    this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups');
+                    this.resetPlannedExerciseFieldsOnExerciseIfExamMode(); // actually only needed if we go from non-exam exercise directly to exam exercise
+                }),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
@@ -191,8 +217,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                         }
                     }
                     if (this.isImport) {
-                        const courseId = params['courseId'];
-
+                        const courseId = this.courseId();
                         if (this.isExamMode) {
                             // The target exerciseId where we want to import into
                             const exerciseGroupId = params['exerciseGroupId'];

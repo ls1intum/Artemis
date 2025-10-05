@@ -8,12 +8,17 @@
             <h2 id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel"></h2>
         }
         <jhi-documentation-button [type]="documentationType" />
+        @let currentCourseId = courseId();
+        @if (currentCourseId && !isExamMode) {
+            <jhi-planned-exercise-picker [courseId]="currentCourseId" (selectedPlannedExercise)="plannedExercise.set($event)" />
+        }
     </div>
     <jhi-form-status-bar [formStatusSections]="formStatusSections" />
     <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general"></h3>
     <div>
         <jhi-exercise-title-channel-name
             [exercise]="fileUploadExercise"
+            [plannedExerciseTitle]="plannedExercise()?.title"
             [course]="fileUploadExercise.course"
             [minTitleLength]="3"
             [isExamMode]="isExamMode"
