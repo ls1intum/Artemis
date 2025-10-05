@@ -36,7 +36,7 @@
             @if ((isEditFieldDisplayedRecord()?.dueDate || !isEditFieldDisplayedRecord()) && !isExamMode) {
                 <jhi-programming-exercise-test-schedule-date-picker
                     [(ngModel)]="exercise.dueDate"
-                    (ngModelChange)="updateExampleSolutionPublicationDate($event)"
+                    (ngModelChange)="onDueDateChange($event)"
                     (onDateReset)="exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined"
                     [startAt]="exercise.startDate ?? exercise.releaseDate"
                     [min]="exercise.startDate ?? exercise.releaseDate"

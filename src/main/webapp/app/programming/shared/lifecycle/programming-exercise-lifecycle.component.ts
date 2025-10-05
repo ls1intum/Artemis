@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, effect, inject, input } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -22,6 +22,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PlannedExercise } from 'app/core/course/shared/entities/planned-exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -51,6 +52,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     protected readonly faUserSlash = faUserSlash;
 
     @Input() exercise: ProgrammingExercise;
+    plannedExercise = input<PlannedExercise>();
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
     @Input() importOptions?: ImportOptions;
@@ -69,6 +71,19 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     isImport = false;
     private urlSubscription: Subscription;
+
+    constructor() {
+        effect(() => {
+            this.isEditFieldDisplayedRecord();
+            const onlyIfPropertiesUndefined = true;
+            this.updateExerciseDatesWithPlannedExercise(onlyIfPropertiesUndefined);
+        });
+        effect(() => {
+            this.plannedExercise();
+            const onlyIfOldValuesUndefined = false;
+            this.updateExerciseDatesWithPlannedExercise(onlyIfOldValuesUndefined);
+        });
+    }
 
     /**
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
@@ -113,6 +128,10 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
                 this.updateExampleSolutionPublicationDate(newExercise.dueDate);
                 this.updateReleaseDate(newExercise.releaseDate);
             }
+        }
+        if (simpleChanges.isExamMode) {
+            const onlyIfOldValuesUndefined = true;
+            this.updateExerciseDatesWithPlannedExercise(onlyIfOldValuesUndefined);
         }
     }
 
@@ -159,6 +178,10 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             this.exercise.assessmentDueDate = undefined;
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         }
+
+        const newAssessmentDueDate = this.plannedExercise()?.assessmentDueDate;
+        const onlyIfOldValueUndefined = true;
+        this.updateIfVisible('assessmentDueDate', this.isAssessmentDueDatePickerVisible(), newAssessmentDueDate, onlyIfOldValueUndefined);
     }
 
     /**
@@ -177,6 +200,10 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             this.exercise.allowComplaintsForAutomaticAssessments = false;
             this.exercise.allowFeedbackRequests = false;
         }
+
+        const newAssessmentDueDate = this.plannedExercise()?.assessmentDueDate;
+        const onlyIfOldValueUndefined = true;
+        this.updateIfVisible('assessmentDueDate', this.isAssessmentDueDatePickerVisible(), newAssessmentDueDate, onlyIfOldValueUndefined);
     }
 
     /**
@@ -251,6 +278,14 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         }
     }
 
+    onDueDateChange(newDate: Dayjs) {
+        this.updateExampleSolutionPublicationDate(newDate);
+
+        const newAssessmentDueDate = this.plannedExercise()?.assessmentDueDate;
+        const onlyIfOldValueUndefined = true;
+        this.updateIfVisible('assessmentDueDate', this.isAssessmentDueDatePickerVisible(), newAssessmentDueDate, onlyIfOldValueUndefined);
+    }
+
     /**
      * Updates the example solution publication date of the programming exercise if it is set and not after release or due date.
      * Due date check is not performed if exercise is not included in the grade.
@@ -270,5 +305,40 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
                 this.exercise.releaseTestsWithExampleSolution = false;
             }
         }
+    }
+
+    private updateExerciseDatesWithPlannedExercise(onlyIfPropertiesUndefined: boolean) {
+        this.updateIfVisible('assessmentDueDate', this.isAssessmentDueDatePickerVisible(), this.plannedExercise()?.assessmentDueDate, onlyIfPropertiesUndefined);
+        this.updateIfVisible('dueDate', this.isDueDatePickerVisible(), this.plannedExercise()?.dueDate, onlyIfPropertiesUndefined);
+        this.updateIfVisible('startDate', this.isStartDatePickerVisible(), this.plannedExercise()?.startDate, onlyIfPropertiesUndefined);
+        this.updateIfVisible('releaseDate', this.isReleaseDatePickerVisible(), this.plannedExercise()?.releaseDate, onlyIfPropertiesUndefined);
+    }
+
+    private updateIfVisible<K extends keyof ProgrammingExercise>(key: K, visible: boolean, newValue: ProgrammingExercise[K], onlyIfOldValueUndefined: boolean) {
+        if (visible && (!onlyIfOldValueUndefined || !this.exercise[key])) {
+            this.exercise[key] = newValue;
+        }
+    }
+
+    private isReleaseDatePickerVisible(): boolean {
+        return (this.isEditFieldDisplayedRecord()?.releaseDate || !this.isEditFieldDisplayedRecord()) && !this.isExamMode;
+    }
+
+    private isStartDatePickerVisible(): boolean {
+        return (this.isEditFieldDisplayedRecord()?.startDate || !this.isEditFieldDisplayedRecord()) && !this.isExamMode;
+    }
+
+    private isDueDatePickerVisible(): boolean {
+        return (this.isEditFieldDisplayedRecord()?.dueDate || !this.isEditFieldDisplayedRecord()) && !this.isExamMode;
+    }
+
+    private isAssessmentDueDatePickerVisible(): boolean {
+        return (
+            this.isAssessmentTypePickerVisible() && this.exercise.assessmentType === this.assessmentType.SEMI_AUTOMATIC && !this.isExamMode && !this.exercise.allowFeedbackRequests
+        );
+    }
+
+    private isAssessmentTypePickerVisible(): boolean {
+        return (this.isEditFieldDisplayedRecord()?.assessmentDueDate || !this.isEditFieldDisplayedRecord()) && (this.isExamMode || this.isImport || !!this.exercise.dueDate);
     }
 }

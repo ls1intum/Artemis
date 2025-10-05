@@ -21,6 +21,7 @@ import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PlannedExercise } from 'app/core/course/shared/entities/planned-exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -53,6 +54,7 @@ export class ProgrammingExerciseGradingComponent implements AfterContentInit, On
 
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    plannedExercise = input<PlannedExercise>();
     @Input() importOptions: ImportOptions;
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
