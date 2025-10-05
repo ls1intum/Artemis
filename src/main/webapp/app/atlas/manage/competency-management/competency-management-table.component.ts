@@ -70,7 +70,7 @@ export class CompetencyManagementTableComponent {
         });
 
         inject(DestroyRef).onDestroy(() => {
-            this.dialogErrorSource.unsubscribe();
+            this.dialogErrorSource.complete();
         });
     }
 

@@ -1,7 +1,7 @@
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { Component, ContentChild, TemplateRef, input } from '@angular/core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { KnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-competency.model';
+import { KnowledgeAreaForTree, StandardizedCompetencyForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 import { MatTreeModule, MatTreeNestedDataSource } from '@angular/material/tree';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
@@ -18,8 +18,8 @@ export class KnowledgeAreaTreeComponent {
     dataSource = input(new MatTreeNestedDataSource<KnowledgeAreaForTree>());
     treeControl = input(new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children));
 
-    @ContentChild('knowledgeAreaTemplate') knowledgeAreaTemplate: TemplateRef<any>;
-    @ContentChild('competencyTemplate') competencyTemplate: TemplateRef<any>;
+    @ContentChild('knowledgeAreaTemplate') knowledgeAreaTemplate: TemplateRef<{ knowledgeArea: KnowledgeAreaForTree }>;
+    @ContentChild('competencyTemplate') competencyTemplate: TemplateRef<{ competency: StandardizedCompetencyForTree; knowledgeArea: KnowledgeAreaForTree }>;
 
     //Icons
     protected readonly faChevronRight = faChevronRight;

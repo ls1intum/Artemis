@@ -26,4 +26,12 @@ export class StandardizedCompetencyFilterComponent implements OnInit, OnDestroy 
     ngOnDestroy(): void {
         this.titleFilterSubject.unsubscribe();
     }
+
+    onTitleChange(value: string): void {
+        this.titleFilterSubject.next(value);
+    }
+
+    onKnowledgeAreaChange(value: KnowledgeAreaDTO | undefined): void {
+        this.knowledgeAreaFilterChange.emit(value);
+    }
 }
