@@ -45,18 +45,6 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
             """)
     long countComplaintResponsesForExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
-    @Query("""
-                SELECT COUNT(DISTINCT cr)
-                FROM ComplaintResponse cr
-                JOIN cr.complaint c
-                JOIN c.result r
-                WHERE r.exerciseId IN :exerciseIds
-                    AND c.complaintType = :complaintType
-                    AND cr.submittedTime IS NOT NULL
-            """)
-    long countNumberOfComplaintsByComplaintTypeAndSubmittedTimeIsNotNullForExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds,
-            @Param("complaintType") ComplaintType complaintType);
-
     /**
      * This magic method counts the number of complaints responses by complaint type associated to an exercise id
      *

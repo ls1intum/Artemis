@@ -199,7 +199,7 @@ public class ComplaintService {
      * @return the number of responses
      */
     public long countMoreFeedbackRequestResponsesByExerciseIds(Set<Long> exerciseIds) {
-        return complaintResponseRepository.countNumberOfComplaintsByComplaintTypeAndSubmittedTimeIsNotNullForExerciseIds(exerciseIds, ComplaintType.MORE_FEEDBACK);
+        return complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
     }
 
     /**

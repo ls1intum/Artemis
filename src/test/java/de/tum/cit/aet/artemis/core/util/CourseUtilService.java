@@ -1098,6 +1098,7 @@ public class CourseUtilService {
 
             if ((i % 3) == 0) {
                 ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(releaseDate, dueDate, assessmentDueDate, DiagramType.ClassDiagram, course);
+                modelingExercise.setAssessmentType(AssessmentType.MANUAL);
                 modelingExercise.setTitle("Modeling" + i);
                 modelingExercise.setCourse(course);
                 modelingExercise = exerciseRepository.save(modelingExercise);
@@ -1121,6 +1122,7 @@ public class CourseUtilService {
             else if ((i % 3) == 1) {
                 TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
                 textExercise.setTitle("Text" + i);
+                textExercise.setAssessmentType(AssessmentType.MANUAL);
                 textExercise.setCourse(course);
                 textExercise = exerciseRepository.save(textExercise);
                 course.addExercises(textExercise);
@@ -1139,6 +1141,7 @@ public class CourseUtilService {
             else { // i.e. (i % 3) == 2
                 FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(releaseDate, dueDate, assessmentDueDate, "png,pdf", course);
                 fileUploadExercise.setTitle("FileUpload" + i);
+                fileUploadExercise.setAssessmentType(AssessmentType.MANUAL);
                 fileUploadExercise.setCourse(course);
                 fileUploadExercise = exerciseRepository.save(fileUploadExercise);
                 course.addExercises(fileUploadExercise);

@@ -235,6 +235,7 @@ public class ParticipationUtilService {
 
         Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         result.completionDate(ZonedDateTime.now());
         submission.addResult(result);
         resultRepository.save(result);
@@ -650,6 +651,7 @@ public class ParticipationUtilService {
     public Result generateResult(Submission submission, User assessor) {
         Result result = new Result();
         result.setSubmission(submission);
+        result.setExerciseId(submission.getParticipation().getExercise().getId());
         result.completionDate(pastTimestamp);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);

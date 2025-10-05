@@ -225,7 +225,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE r.completionDate IS NOT NULL
                 AND r.assessor IS NOT NULL
                 AND p.testRun = FALSE
-                AND p.exercise.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
             """)
     long countAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIdsWithManualAssessment);
 
