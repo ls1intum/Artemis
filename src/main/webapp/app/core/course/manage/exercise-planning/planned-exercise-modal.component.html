@@ -49,6 +49,11 @@
             }
         }
     } @else {
-        <jhi-planned-exercise [plannedExercises]="plannedExercises()" [courseId]="courseId()" (onSelectPlannedExerciseToEdit)="plannedExerciseToEdit.set($event)" />
+        <jhi-planned-exercise
+            [plannedExercises]="plannedExercises()"
+            [courseId]="courseId()"
+            [isAtLeastInstructor]="isAtLeastInstructor()"
+            (onSelectPlannedExerciseToEdit)="plannedExerciseToEdit.set($event)"
+        />
     }
 </p-dialog>

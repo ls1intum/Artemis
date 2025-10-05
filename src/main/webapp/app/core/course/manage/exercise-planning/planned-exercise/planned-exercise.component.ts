@@ -18,6 +18,7 @@ export class PlannedExerciseComponent {
     protected readonly faGhost = faGhost;
 
     courseId = input.required<number>();
+    isAtLeastInstructor = input.required<boolean>();
     plannedExercises = input.required<PlannedExercise[]>();
     onSelectPlannedExerciseToEdit = output<PlannedExercise>();
 

@@ -24,9 +24,11 @@
                             <button class="icon-button" (click)="edit(exercise)">
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
-                            <button class="icon-button delete" (click)="delete(exercise)">
-                                <fa-icon [icon]="faTrash" />
-                            </button>
+                            @if (isAtLeastInstructor()) {
+                                <button class="icon-button delete" (click)="delete(exercise)">
+                                    <fa-icon [icon]="faTrash" />
+                                </button>
+                            }
                         </div>
                     </td>
                 </tr>

@@ -59,6 +59,7 @@ export class PlannedExerciseModalComponent implements OnInit {
     protected readonly faXmark = faXmark;
 
     courseId = input.required<number>();
+    isAtLeastInstructor = input.required<boolean>();
     plannedExercises = this.plannedExerciseService.plannedExercises;
     plannedExerciseToEdit = signal<PlannedExercise | undefined>(undefined);
     createPlannedExerciseOrSeries = signal(false);
