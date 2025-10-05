@@ -335,16 +335,6 @@ public class TutorialGroupService {
     }
 
     /**
-     * Find all tutorial groups for which the given user should be able to receive notifications.
-     *
-     * @param user The user for which to find the tutorial groups.
-     * @return A list of tutorial groups for which the user should receive notifications.
-     */
-    public Set<Long> findAllForNotifications(User user) {
-        return tutorialGroupRepository.findAllActiveTutorialGroupIdsWhereUserIsRegisteredOrTutor(ZonedDateTime.now(), user.getId());
-    }
-
-    /**
      * Import registrations
      * <p>
      * Important to note: A registration must contain a title of the tutorial group, but it must not contain a student.
