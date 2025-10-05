@@ -1,20 +1,21 @@
 export class LeaderboardDTO {
     public currentUserId: number;
-    public entries: LeaderboardEntry[];
+    public leaderboardEntryDTO: LeaderboardEntry[];
 }
 
 export class LeaderboardEntry {
     public rank?: number;
-    public league?: number;
-    public studentLeague?: number;
-    //public student?: User;
-    //public leaderboardName?: string;
-    public student?: string; // Only for mock data purposes
-    public userId?: number; // Only for mock data purposes
+    public selectedLeague?: number;
+    public userName?: string;
+    public userId?: number;
     public score?: number;
     public answeredCorrectly?: number;
     public answeredWrong?: number;
     public totalQuestions?: number;
-    public dueDate?: Date;
+    public dueDate?: string;
     public streak?: number;
+}
+
+export class LeaderboardSettingsDTO {
+    public showInLeaderboard?: boolean;
 }

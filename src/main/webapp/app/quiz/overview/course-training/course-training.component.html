@@ -1,141 +1,166 @@
-<div class="course-training-container">
-    <div class="header-section d-flex">
-        <div class="ms-auto d-flex align-items-center">
-            <jhi-button (onClick)="navigateToTraining()" class="button-class" [title]="'artemisApp.exercise.startTraining'" />
-        </div>
-    </div>
+@if (!isLoading()) {
+    <div class="course-training-container">
+        <p-dialog [(visible)]="showDialog" [modal]="true" [draggable]="false" [closable]="false" [style]="{ width: '450px' }">
+            <ng-template pTemplate="header">
+                <h5 jhiTranslate="artemisApp.quizQuestion.unratedConfirmationTitle"></h5>
+            </ng-template>
 
-    <hr class="mt-2 mb-4" />
+            <div class="training-description mb-3">
+                <p>Im Trainingsmodus kannst du Quizfragen üben, deine Fortschritte verfolgen und deine Punktzahl verbessern. Deine Antworten beeinflussen nicht deine Note.</p>
+            </div>
 
-    <div class="main-body-section">
-        <div class="legend-section p-3">
-            <h5>Scorecard</h5>
-            <div class="league-display">
-                @if (league() === 'Bronze') {
-                    <div class="league-badge bronze">
-                        <app-league-bronze-icon [league]="league()" />
-                        <div class="league-info">
-                            <div class="league-header">
-                                <div class="league-name-points-container">
-                                    <div class="league-name">Bronze</div>
-                                    <div class="league-points">{{ points() }} / {{ pointsBronzeLeague }}</div>
-                                </div>
-                                <div class="info-button">i</div>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar">
-                                    <div class="progress" [style.width]="(points() / 100) * 100 + '%'"></div>
-                                </div>
-                                <div class="next-league-icon">
-                                    <app-league-silver-icon [league]="'Silver'" class="small-icon" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-                @if (league() === 'Silver') {
-                    <div class="league-badge silver">
-                        <app-league-silver-icon [league]="league()" />
-                        <div class="league-info">
-                            <div class="league-header">
-                                <div class="league-name-points-container">
-                                    <div class="league-name">Silver</div>
-                                    <div class="league-points">{{ points() }} / {{ pointsSilverLeague }}</div>
-                                </div>
-                                <div class="info-button">i</div>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar">
-                                    <div class="progress" [style.width]="((points() - pointsBronzeLeague) / (pointsSilverLeague - pointsBronzeLeague)) * 100 + '%'"></div>
-                                </div>
-                                <div class="next-league-icon">
-                                    <app-league-gold-icon [league]="'Gold'" class="small-icon" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-                @if (league() === 'Gold') {
-                    <div class="league-badge gold">
-                        <app-league-gold-icon [league]="league()" />
-                        <div class="league-info">
-                            <div class="league-header">
-                                <div class="league-name-points-container">
-                                    <div class="league-name">Gold</div>
-                                    <div class="league-points">{{ points() }} / {{ pointsGoldLeague }}</div>
-                                </div>
-                                <div class="info-button">i</div>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar">
-                                    <div class="progress" [style.width]="((points() - pointsSilverLeague) / (pointsGoldLeague - pointsSilverLeague)) * 100 + '%'"></div>
-                                </div>
-                                <div class="next-league-icon">
-                                    <app-league-diamond-icon [league]="'Diamond'" class="small-icon" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-                @if (league() === 'Diamond') {
-                    <div class="league-badge diamond">
-                        <app-league-diamond-icon [league]="league()" />
-                        <div class="league-info">
-                            <div class="league-header">
-                                <div class="league-name-points-container">
-                                    <div class="league-name">Diamond</div>
-                                    <div class="league-points">{{ points() }} / {{ pointsDiamondLeague }}</div>
-                                </div>
-                                <div class="info-button">i</div>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar">
-                                    <div class="progress" [style.width]="((points() - pointsGoldLeague) / (pointsDiamondLeague - pointsGoldLeague)) * 100 + '%'"></div>
-                                </div>
-                                <div class="next-league-icon">
-                                    <app-league-master-icon [league]="'Master'" class="small-icon" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-                @if (league() === 'Master') {
-                    <div class="league-badge master">
-                        <app-league-master-icon [league]="league()" />
-                        <div class="league-info">
-                            <div class="league-header">
-                                <div class="league-name-points-container">
-                                    <div class="league-name">Master</div>
-                                    <div class="league-points">{{ points() }}</div>
-                                </div>
-                                <div class="info-button">i</div>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar">
-                                    <div class="progress" [style.width]="100 + '%'"></div>
-                                </div>
-                                <div class="next-league-icon">
-                                    <span class="max-level">⭐</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-                @if (league() === 'No League') {
-                    <div class="league-badge no-league">
-                        <span>Keine Liga</span>
-                    </div>
-                }
+            <div class="leaderboard-toggle mb-3">
+                <label>
+                    <input type="checkbox" [(ngModel)]="showInLeaderboard" />
+                    Im Leaderboard angezeigt werden
+                </label>
             </div>
-            <div class="due-date-container mt-5">
-                <span class="emoji">⏰</span> <span>Next questions due in {{ dueIn() }} days</span>
+
+            <ng-template pTemplate="footer">
+                <jhi-button [title]="'Save'" (click)="onSaveDialog()" />
+            </ng-template>
+        </p-dialog>
+
+        @if (!isFirstVisit() && isDataLoaded()) {
+            <div class="header-section d-flex">
+                <div class="ms-auto d-flex align-items-center">
+                    <jhi-button (onClick)="navigateToTraining()" class="button-class" [title]="'artemisApp.exercise.startTraining'" />
+                </div>
             </div>
-            <div class="streak-container mt-2">
-                <span class="emoji">🔥</span> <span class="streak-display">{{ streak() }} days streak</span>
+
+            <hr class="mt-2 mb-4" />
+
+            <div class="main-body-section">
+                <div class="legend-section p-3">
+                    <h5>Scorecard</h5>
+                    <div class="league-display">
+                        @if (league() === 'Bronze') {
+                            <div class="league-badge bronze">
+                                <app-league-bronze-icon [league]="league()" />
+                                <div class="league-info">
+                                    <div class="league-header">
+                                        <div class="league-name-points-container">
+                                            <div class="league-name">Bronze League</div>
+                                            <div class="league-points">{{ points() }} / {{ pointsBronzeLeague }}</div>
+                                        </div>
+                                        <div class="info-button">i</div>
+                                    </div>
+                                    <div class="progress-container">
+                                        <div class="progress-bar">
+                                            <div class="progress" [style.width]="(points() / 100) * 100 + '%'"></div>
+                                        </div>
+                                        <div class="next-league-icon">
+                                            <app-league-silver-icon [league]="'Silver'" class="small-icon" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (league() === 'Silver') {
+                            <div class="league-badge silver">
+                                <app-league-silver-icon [league]="league()" />
+                                <div class="league-info">
+                                    <div class="league-header">
+                                        <div class="league-name-points-container">
+                                            <div class="league-name">Silver League</div>
+                                            <div class="league-points">{{ points() }} / {{ pointsSilverLeague }}</div>
+                                        </div>
+                                        <div class="info-button">i</div>
+                                    </div>
+                                    <div class="progress-container">
+                                        <div class="progress-bar">
+                                            <div class="progress" [style.width]="((points() - pointsBronzeLeague) / (pointsSilverLeague - pointsBronzeLeague)) * 100 + '%'"></div>
+                                        </div>
+                                        <div class="next-league-icon">
+                                            <app-league-gold-icon [league]="'Gold'" class="small-icon" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (league() === 'Gold') {
+                            <div class="league-badge gold">
+                                <app-league-gold-icon [league]="league()" />
+                                <div class="league-info">
+                                    <div class="league-header">
+                                        <div class="league-name-points-container">
+                                            <div class="league-name">Gold League</div>
+                                            <div class="league-points">{{ points() }} / {{ pointsGoldLeague }}</div>
+                                        </div>
+                                        <div class="info-button">i</div>
+                                    </div>
+                                    <div class="progress-container">
+                                        <div class="progress-bar">
+                                            <div class="progress" [style.width]="((points() - pointsSilverLeague) / (pointsGoldLeague - pointsSilverLeague)) * 100 + '%'"></div>
+                                        </div>
+                                        <div class="next-league-icon">
+                                            <app-league-diamond-icon [league]="'Diamond'" class="small-icon" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (league() === 'Diamond') {
+                            <div class="league-badge diamond">
+                                <app-league-diamond-icon [league]="league()" />
+                                <div class="league-info">
+                                    <div class="league-header">
+                                        <div class="league-name-points-container">
+                                            <div class="league-name">Diamond League</div>
+                                            <div class="league-points">{{ points() }} / {{ pointsDiamondLeague }}</div>
+                                        </div>
+                                        <div class="info-button">i</div>
+                                    </div>
+                                    <div class="progress-container">
+                                        <div class="progress-bar">
+                                            <div class="progress" [style.width]="((points() - pointsGoldLeague) / (pointsDiamondLeague - pointsGoldLeague)) * 100 + '%'"></div>
+                                        </div>
+                                        <div class="next-league-icon">
+                                            <app-league-master-icon [league]="'Master'" class="small-icon" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (league() === 'Master') {
+                            <div class="league-badge master">
+                                <app-league-master-icon [league]="league()" />
+                                <div class="league-info">
+                                    <div class="league-header">
+                                        <div class="league-name-points-container">
+                                            <div class="league-name">Master League</div>
+                                            <div class="league-points">{{ points() }}</div>
+                                        </div>
+                                        <div class="info-button">i</div>
+                                    </div>
+                                    <div class="progress-container">
+                                        <div class="progress-bar">
+                                            <div class="progress" [style.width]="100 + '%'"></div>
+                                        </div>
+                                        <div class="next-league-icon">
+                                            <span class="max-level">⭐</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        @if (league() === 'No League') {
+                            <div class="league-badge no-league">
+                                <span>Keine Liga</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="due-date-container mt-5">
+                        <span class="emoji">⏰</span> <span>Next questions due in {{ dueIn() }} days</span>
+                    </div>
+                    <div class="streak-container mt-2">
+                        <span class="emoji">🔥</span> <span class="streak-display">{{ streak() }} days streak</span>
+                    </div>
+                </div>
+                <div class="leaderboard-section">
+                    <jhi-leaderboard [leaderboard]="leaderboardEntries()" [currentUserId]="currentUserId()" [leaderboardName]="leaderboardName()" />
+                </div>
             </div>
-        </div>
-        <div class="leaderboard-section">
-            <jhi-leaderboard [leaderboard]="mockLeaderboard().entries" [currentUserId]="currentUserId()" [leaderboardName]="leaderboardName()" />
-        </div>
+        }
     </div>
-</div>
+}

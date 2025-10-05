@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserIdDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizTrainingLeaderboardRepository;
@@ -56,14 +58,15 @@ public class QuizTrainingLeaderboardService {
      * @param courseId the id of the course
      * @return a list of leaderboard entry DTOs
      */
-    public List<LeaderboardEntryDTO> getLeaderboard(long userId, long courseId) {
+    public LeaderboardWithCurrentUserIdDTO getLeaderboard(long userId, long courseId) {
         long totalQuestions = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
         int league;
         league = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).map(QuizTrainingLeaderboard::getLeague).orElse(BRONZE_LEAGUE);
 
         List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdAndShowInLeaderboardTrueOrderByScoreDescUserAscId(league,
                 courseId);
-        return getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
+        List<LeaderboardEntryDTO> leaderboardEntryDTOs = getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
+        return new LeaderboardWithCurrentUserIdDTO(leaderboardEntryDTOs, userId);
     }
 
     /**
@@ -151,8 +154,24 @@ public class QuizTrainingLeaderboardService {
         double lastScore = answeredQuestion.getLastScore();
         int box = answeredQuestion.getBox();
 
-        // Preliminary formula for score calculation
+        boolean hadFailedAttemptToday = false;
+        List<QuizQuestionProgressData.Attempt> attempts = answeredQuestion.getAttempts();
+
+        if (attempts != null && attempts.size() > 1) {
+            QuizQuestionProgressData.Attempt currentAttempt = attempts.getLast();
+            LocalDate currentDate = currentAttempt.getAnsweredAt().toLocalDate();
+
+            QuizQuestionProgressData.Attempt previousAttempt = attempts.get(attempts.size() - 2);
+            if (previousAttempt.getAnsweredAt().toLocalDate().equals(currentDate) && previousAttempt.getScore() < 1.0) {
+                hadFailedAttemptToday = true;
+            }
+        }
+
         double questionDelta = 2 * lastScore + box * lastScore;
+
+        if (hadFailedAttemptToday && lastScore == 1.0) {
+            questionDelta = lastScore;
+        }
 
         delta += (int) Math.round(questionDelta);
         return delta;

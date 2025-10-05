@@ -35,8 +35,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserIdDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
@@ -133,10 +133,10 @@ public class QuizTrainingResource {
      */
     @GetMapping("courses/{courseId}/training/leaderboard")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<LeaderboardEntryDTO>> getQuizTrainingLeaderboard(@PathVariable long courseId) {
+    public ResponseEntity<LeaderboardWithCurrentUserIdDTO> getQuizTrainingLeaderboard(@PathVariable long courseId) {
         log.info("REST request to get leaderboard for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        List<LeaderboardEntryDTO> leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
+        LeaderboardWithCurrentUserIdDTO leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
         return ResponseEntity.ok(leaderboard);
     }
 
@@ -157,7 +157,7 @@ public class QuizTrainingResource {
         log.debug("Rest request to set leaderboard settings: {}", leaderboardSettingDTO);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Boolean shownInLeaderboard = leaderboardSettingDTO.shownInLeaderboard();
+        Boolean shownInLeaderboard = leaderboardSettingDTO.showInLeaderboard();
         if (shownInLeaderboard != null) {
             quizTrainingLeaderboardService.updateShownInLeaderboard(user.getId(), shownInLeaderboard);
         }
@@ -182,7 +182,7 @@ public class QuizTrainingResource {
         log.debug("REST request to initialize or update leaderboard entry: {}", leaderboardEntryDTO);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        boolean shownInLeaderboard = leaderboardEntryDTO.shownInLeaderboard() != null ? leaderboardEntryDTO.shownInLeaderboard() : false;
+        boolean shownInLeaderboard = leaderboardEntryDTO.showInLeaderboard() != null ? leaderboardEntryDTO.showInLeaderboard() : false;
         quizTrainingLeaderboardService.setInitialLeaderboardEntry(user.getId(), courseId, shownInLeaderboard);
         return ResponseEntity.ok().build();
     }

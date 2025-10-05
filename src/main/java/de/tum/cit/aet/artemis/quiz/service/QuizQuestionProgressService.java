@@ -285,13 +285,13 @@ public class QuizQuestionProgressService {
             updateProgressCalculations(data, score, existingProgress, answeredAt);
             existingProgress.setProgressJson(data);
             existingProgress.setLastAnsweredAt(answeredAt);
-            quizTrainingLeaderboardService.updateLeaderboardScore(userId, courseId, data);
             try {
                 quizQuestionProgressRepository.save(existingProgress);
             }
             catch (DataIntegrityViolationException e) {
                 updateExistingProgress(userId, question, data, answeredAt);
             }
+            quizTrainingLeaderboardService.updateLeaderboardScore(userId, courseId, data);
         }
     }
 

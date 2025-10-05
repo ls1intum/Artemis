@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserIdDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizTrainingLeaderboardRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -103,7 +104,8 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         LeaderboardEntryDTO testEntry1 = LeaderboardEntryDTO.of(quizTrainingLeaderboard, 2, 5, 0);
         LeaderboardEntryDTO testEntry2 = LeaderboardEntryDTO.of(quizTrainingLeaderboard2, 1, 5, 0);
         List<LeaderboardEntryDTO> testList = List.of(testEntry2, testEntry1);
-        List<LeaderboardEntryDTO> leaderboardEntryDTO = request.getList("/api/quiz/courses/" + course.getId() + "/training/leaderboard", OK, LeaderboardEntryDTO.class);
+        LeaderboardWithCurrentUserIdDTO leaderboardDTO = request.get("/api/quiz/courses/" + course.getId() + "/training/leaderboard", OK, LeaderboardWithCurrentUserIdDTO.class);
+        List<LeaderboardEntryDTO> leaderboardEntryDTO = leaderboardDTO.leaderboardEntryDTO();
         assertThat(leaderboardEntryDTO.size()).isEqualTo(2);
         assertThat(leaderboardEntryDTO).isEqualTo(testList);
         assertThat(leaderboardEntryDTO.getFirst().answeredCorrectly()).isEqualTo(10);
