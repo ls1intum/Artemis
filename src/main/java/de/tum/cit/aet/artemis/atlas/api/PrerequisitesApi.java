@@ -9,7 +9,6 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 
 @Controller
 @Conditional(AtlasEnabled.class)
@@ -22,12 +21,12 @@ public class PrerequisitesApi extends AbstractAtlasApi {
         this.prerequisiteRepository = prerequisiteRepository;
     }
 
-    public long countByCourse(Course course) {
-        return prerequisiteRepository.countByCourse(course);
+    public long countByCourseId(long courseId) {
+        return prerequisiteRepository.countByCourseId(courseId);
     }
 
-    public void deleteAll(Iterable<Prerequisite> prerequisites) {
-        prerequisiteRepository.deleteAll(prerequisites);
+    public void deleteAllByCourseId(long courseId) {
+        prerequisiteRepository.deleteAllByCourseId(courseId);
     }
 
     public Set<Prerequisite> findAllByCourseId(long courseId) {
