@@ -967,6 +967,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                  AND r.id > :afterId
             ORDER BY r.id
             """)
-    List<Long> findNextIds(long afterId, Pageable pageable);
+    List<Long> findNextIds(@Param("afterId") long afterId, Pageable pageable);
 
 }

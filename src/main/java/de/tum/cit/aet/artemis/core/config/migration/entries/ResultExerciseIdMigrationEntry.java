@@ -2,13 +2,18 @@ package de.tum.cit.aet.artemis.core.config.migration.entries;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.migration.MigrationEntry;
 
 @Component
+@Lazy
+@Profile(Constants.PROFILE_CORE_AND_SCHEDULING)
 public class ResultExerciseIdMigrationEntry extends MigrationEntry {
 
     private static final Logger log = LoggerFactory.getLogger(ResultExerciseIdMigrationEntry.class);
