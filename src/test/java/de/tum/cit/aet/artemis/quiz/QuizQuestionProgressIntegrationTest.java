@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
+import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -70,6 +71,9 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private QuizExerciseService quizExerciseService;
+
+    @Autowired
+    private QuizTrainingLeaderboardService quizTrainingLeaderboardService;
 
     private QuizQuestionProgress quizQuestionProgress;
 
@@ -283,6 +287,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
         submittedAnswer.setQuizQuestion(mcQuestion);
         submittedAnswer.setSelectedOptions(Set.of());
+
+        quizTrainingLeaderboardService.setInitialLeaderboardEntry(userId, course.getId(), true);
 
         SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody(
                 "/api/quiz/courses/" + course.getId() + "/training-questions/" + mcQuestion.getId() + "/submit?isRated=true", submittedAnswer,
