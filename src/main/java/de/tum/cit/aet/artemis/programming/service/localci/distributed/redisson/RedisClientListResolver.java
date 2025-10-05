@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.types.RedisClientInfo;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +25,7 @@ public class RedisClientListResolver {
 
     private final ReactiveRedisConnectionFactory reactiveRedisConnectionFactory;
 
-    public RedisClientListResolver(RedisConnectionFactory redisConnectionFactory, ReactiveRedisConnectionFactory reactiveRedisConnectionFactory) {
+    public RedisClientListResolver(ReactiveRedisConnectionFactory reactiveRedisConnectionFactory) {
         this.reactiveRedisConnectionFactory = reactiveRedisConnectionFactory;
     }
 

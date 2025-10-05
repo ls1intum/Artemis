@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.LocalCiBuildAgentRedisDataCondition;
+import de.tum.cit.aet.artemis.core.config.LocalCIBuildAgentRedisDataCondition;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.
 
 @Lazy
 @Service
-@Conditional(LocalCiBuildAgentRedisDataCondition.class)
+@Conditional(LocalCIBuildAgentRedisDataCondition.class)
 public class RedissonDistributedDataProviderService implements DistributedDataProvider {
 
     @Value("${spring.data.redis.client-name:artemis-node}")

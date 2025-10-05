@@ -160,12 +160,12 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
                 log.warn("No listener found for UUID: {}", uuid);
                 return;
             }
-            notificationTopic.removeListener(listenerRegistrations.get(uuid));
+            notificationTopic.removeListener(listenerId);
             queue.removeListener(listenerId);
             listenerRegistrations.remove(uuid);
         }
         catch (RedisConnectionException e) {
-            log.error("Could not remove listener due to Redis connection exception.");
+            log.error("Could not remove listener due to Redis connection exception.", e);
         }
     }
 

@@ -30,9 +30,11 @@ public interface DistributedDataProvider {
     <T> DistributedQueue<T> getQueue(String name);
 
     /**
-     * Returns a priority queue with the given name.<br>
-     * For internal Hazelcast IQueue usage the comparator needs to be set in the config at startup, see {@link de.tum.cit.aet.artemis.core.config.CacheConfiguration#}
-     * for an example*
+     * Returns a priority queue with the given name.
+     *
+     * <p>
+     * For internal Hazelcast IQueue usage the comparator needs to be set in the config at startup, see {@link de.tum.cit.aet.artemis.core.config.CacheConfiguration}
+     * for an example.
      *
      * @param name the name of the priority queue
      * @param <T>  the type of elements in the queue

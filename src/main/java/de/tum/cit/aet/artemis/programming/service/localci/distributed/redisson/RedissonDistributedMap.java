@@ -164,7 +164,7 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
             listenerRegistrations.remove(uuid);
         }
         catch (RedisConnectionException e) {
-            log.error("Could not remove listener due to Redis connection exception.");
+            log.error("Could not remove listener due to Redis connection exception.", e);
         }
     }
 }
