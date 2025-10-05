@@ -24,7 +24,7 @@
                 "tutorials": "Tutorials",
                 "exams": "Exams"
             },
-            "filterButtonLabel": "Filter",
+            "filterComponentPlaceholder": "Choose Event-Types",
             "subscribeButtonLabel": "Subscribe",
             "todayButtonLabel": "Today",
             "weekButtonLabel": "Week",
@@ -33,7 +33,7 @@
             "tokenLoadingError": "Data that is needed to configure calendar subscriptions could not be loaded. Please refresh the page to try again and display the option to configure a subscription.",
             "subscriptionPopover": {
                 "title": "iCalendar subscription",
-                "configurationExplanation": "To configure your subscription, please choose a language and select course contents for which you would like to include events:",
+                "configurationExplanation": "To configure a subscription, please choose a language and select course contents for which you would like to include events:",
                 "copyExplanation": "You can use the following link to subscribe external calendar applications to the Artemis calendar.",
                 "languageOption": {
                     "german": "German",
