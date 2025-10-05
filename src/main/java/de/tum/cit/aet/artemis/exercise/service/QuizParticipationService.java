@@ -68,6 +68,13 @@ public class QuizParticipationService {
         this.quizExerciseRepository = quizExerciseRepository;
     }
 
+    /**
+     * Handles the request of a student to participate in a quiz exercise.
+     *
+     * @param quizExercise the quiz exercise the user wants to participate in
+     * @param user         the user that wants to participate
+     * @return a DTO containing the participation and possibly the quiz questions
+     */
     @Nullable
     // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
     public MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
@@ -135,7 +142,7 @@ public class QuizParticipationService {
      * @param quizBatch    the quiz batch of quiz exercise which user participated in
      * @return the found or created participation with a result
      */
-    public StudentParticipation participationForQuizWithSubmissionAndResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
+    private StudentParticipation participationForQuizWithSubmissionAndResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
         // try getting participation from database
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 
