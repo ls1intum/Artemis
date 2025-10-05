@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, inject } from '@angular/core';
+import { AfterViewInit, Component, inject, input, model } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -28,17 +28,17 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     QuizQuestionType = QuizQuestionType;
     ScoringType = ScoringType;
 
-    @Input() score: number; // Score of the student that has been achieved
-    @Input() questionIndex: number; // Question Index of the question
-    @Input() question: QuizQuestion;
-    @Input() dragAndDropMapping = new Array<DragAndDropMapping>();
-    @Input() incorrectlyMappedDragAndDropItems: number;
-    @Input() mappedLocations: number;
-    @Input() multipleChoiceMapping = new Array<AnswerOption>();
-    @Input() shortAnswerText = new Array<ShortAnswerSubmittedText>();
-    @Input() correctlyMappedDragAndDropItems: number; // Amount of correctly mapped drag and drop items
-    @Input() multipleChoiceSubmittedResult: Result;
-    @Input() quizQuestions: QuizQuestion[] | undefined;
+    score = model<number>(); // Score of the student that has been achieved
+    questionIndex = input<number>(); // Question Index of the question
+    question = input.required<QuizQuestion>();
+    dragAndDropMapping = input<DragAndDropMapping[]>([]);
+    incorrectlyMappedDragAndDropItems = input<number>();
+    mappedLocations = input<number>();
+    multipleChoiceMapping = input<AnswerOption[]>([]);
+    shortAnswerText = input<ShortAnswerSubmittedText[]>([]);
+    correctlyMappedDragAndDropItems = input<number>(); // Amount of correctly mapped drag and drop items
+    multipleChoiceSubmittedResult = input<Result>();
+    quizQuestions = input<QuizQuestion[] | undefined>();
 
     /* Multiple Choice Counting Variables*/
     multipleChoiceCorrectAnswerCorrectlyChosen: number; // Amount of right options chosen by the student
@@ -80,7 +80,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     ngAfterViewInit() {
         this.checkForSingleOrPluralPoints();
-        switch (this.question.type) {
+        switch (this.question().type) {
             case QuizQuestionType.MULTIPLE_CHOICE:
                 this.countMultipleChoice();
                 break;
@@ -105,21 +105,21 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private submittedAnswerCorrectValues() {
         let answerOptionsOfQuestion = new Array<AnswerOption>();
-        for (const question of this.quizQuestions || []) {
+        for (const question of this.quizQuestions() || []) {
             const mcQuizQuestion = question as MultipleChoiceQuestion;
-            if (mcQuizQuestion.id === this.question.id) {
+            if (mcQuizQuestion.id === this.question().id) {
                 answerOptionsOfQuestion = mcQuizQuestion.answerOptions!;
                 this.correctMultipleChoiceAnswers = mcQuizQuestion.answerOptions!.filter((option) => option.isCorrect).length;
             }
         }
 
-        if (!this.multipleChoiceSubmittedResult || !this.multipleChoiceSubmittedResult.submission) {
+        if (!this.multipleChoiceSubmittedResult() || !this.multipleChoiceSubmittedResult()!.submission) {
             return;
         }
-        const submittedQuizSubmission = this.multipleChoiceSubmittedResult.submission as QuizSubmission;
+        const submittedQuizSubmission = this.multipleChoiceSubmittedResult()!.submission as QuizSubmission;
         const submittedAnswerLength = submittedQuizSubmission.submittedAnswers?.length ?? 0;
         for (let i = 0; i < submittedAnswerLength; i++) {
-            if (submittedQuizSubmission.submittedAnswers![i].quizQuestion!.id === this.question.id) {
+            if (submittedQuizSubmission.submittedAnswers![i].quizQuestion!.id === this.question().id) {
                 const multipleChoiceSubmittedAnswers = submittedQuizSubmission.submittedAnswers![i] as MultipleChoiceSubmittedAnswer;
                 if (multipleChoiceSubmittedAnswers.selectedOptions === undefined) {
                     this.checkForCorrectAnswers = [];
@@ -145,7 +145,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     private countMultipleChoice() {
         this.submittedAnswerCorrectValues();
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
-        const mcmQuestion = this.question as MultipleChoiceQuestion;
+        const mcmQuestion = this.question() as MultipleChoiceQuestion;
         this.isSingleChoice = mcmQuestion.singleChoice ?? false;
         this.multipleChoiceAnswerOptions = mcmQuestion.answerOptions!.length;
         this.multipleChoiceCorrectAnswerCorrectlyChosen = this.checkForCorrectAnswers.length;
@@ -174,15 +174,15 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private countDragAndDrop() {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
-        this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.incorrectlyMappedDragAndDropItems;
+        this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems()! - this.incorrectlyMappedDragAndDropItems()!;
 
-        if (this.correctlyMappedDragAndDropItems === 1) {
+        if (this.correctlyMappedDragAndDropItems() === 1) {
             this.rightMap = this.translateService.instant(translationBasePath + 'item');
         } else {
             this.rightMap = this.translateService.instant(translationBasePath + 'items');
         }
 
-        if (this.incorrectlyMappedDragAndDropItems === 1) {
+        if (this.incorrectlyMappedDragAndDropItems() === 1) {
             this.wrongMap = this.translateService.instant(translationBasePath + 'item');
         } else {
             this.wrongMap = this.translateService.instant(translationBasePath + 'items');
@@ -194,9 +194,9 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private countShortAnswer() {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
-        const shortAnswer = this.question as ShortAnswerQuestion;
+        const shortAnswer = this.question() as ShortAnswerQuestion;
         this.shortAnswerSpots = shortAnswer.spots!.length;
-        this.shortAnswerCorrectAnswers = this.shortAnswerText.filter((option) => option.isCorrect).length;
+        this.shortAnswerCorrectAnswers = this.shortAnswerText()!.filter((option) => option.isCorrect).length;
         this.shortAnswerWrongAnswers = this.shortAnswerSpots - this.shortAnswerCorrectAnswers;
         this.differenceShortAnswer = this.shortAnswerCorrectAnswers - this.shortAnswerWrongAnswers;
 
@@ -218,17 +218,17 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
      */
     private checkForSingleOrPluralPoints() {
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
-        if (this.question.points === 1) {
+        if (this.question().points === 1) {
             this.questionPoint = this.translateService.instant(translationBasePath + 'point');
         } else {
             this.questionPoint = this.translateService.instant(translationBasePath + 'points');
         }
 
-        if (this.score === undefined) {
-            this.score = 0;
+        if (this.score() === undefined) {
+            this.score.set(0);
         }
 
-        if (this.score === 1) {
+        if (this.score() === 1) {
             this.scorePoint = this.translateService.instant(translationBasePath + 'point');
         } else {
             this.scorePoint = this.translateService.instant(translationBasePath + 'points');

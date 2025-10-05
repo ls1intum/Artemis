@@ -52,6 +52,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Value;
@@ -105,6 +106,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 // concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
 // or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
 @Execution(ExecutionMode.SAME_THREAD)
+@Isolated
 class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localciint";
@@ -132,6 +134,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
+    @Value("${artemis.continuous-integration.max-missing-job-retries:3}")
+    private int maxMissingJobRetries;
+
     @BeforeAll
     void setupAll() {
         buildJobRepository.deleteAll();
@@ -140,7 +145,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @AfterAll
     void cleanupAll() {
-        gitService.init();
         buildJobRepository.deleteAll();
     }
 
@@ -301,7 +305,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         }
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMissingBuildJobCheck() {
@@ -326,9 +329,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(6));
         buildJobRepository.save(buildJob);
 
-        hazelcastInstance.getQueue("buildJobQueue").clear();
+        queuedJobs.clear();
 
-        localCIEventListenerService.checkPendingBuildJobsStatus();
+        localCIMissingJobService.checkPendingBuildJobsStatus();
 
         buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
         buildJob = buildJobOptional.orElseThrow();
@@ -336,6 +339,55 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // resume the build agent
         sharedQueueProcessingService.init();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMissingBuildJobRetry() {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
+
+        await().until(() -> {
+            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+            return buildJobOptional.isPresent() && buildJobOptional.get().getBuildStatus() == BuildStatus.QUEUED;
+        });
+
+        BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
+        buildJob.setBuildStatus(BuildStatus.MISSING);
+        buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        buildJobRepository.save(buildJob);
+
+        localCIMissingJobService.retryMissingJobs();
+
+        // job for participation should be retried so retry count should be 1 and status QUEUED
+        await().until(() -> {
+            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId());
+            if (buildJobOptional.isEmpty()) {
+                return false;
+            }
+            BuildJob retriedBuildJob = buildJobOptional.get();
+            return (retriedBuildJob.getBuildStatus() == BuildStatus.QUEUED || retriedBuildJob.getBuildStatus() == BuildStatus.BUILDING) && retriedBuildJob.getRetryCount() == 1;
+        });
+        processingJobs.clear();
+        queuedJobs.clear();
+    }
+
+    @Test
+    void testMissingBuildJobRetryLimit() {
+        BuildJob buildJob = new BuildJob();
+        buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        buildJob.setBuildStatus(BuildStatus.MISSING);
+        buildJob.setRetryCount(maxMissingJobRetries);
+        buildJob.setParticipationId(1L);
+        buildJob = buildJobRepository.save(buildJob);
+
+        localCIMissingJobService.retryMissingJobs();
+
+        // latest build job for the participation should be the same because no retry over the limit
+        BuildJob latestJob = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId()).orElseThrow();
+        assertThat(latestJob.getBuildJobId()).isEqualTo(buildJob.getBuildJobId());
+        assertThat(latestJob.getBuildStatus()).isEqualTo(BuildStatus.MISSING);
+        assertThat(latestJob.getRetryCount()).isEqualTo(maxMissingJobRetries);
     }
 
     @Test
@@ -752,9 +804,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
         await().until(() -> {
-            IQueue<BuildJobQueueItem> buildQueue = hazelcastInstance.getQueue("buildJobQueue");
             IMap<String, BuildJobQueueItem> buildJobMap = hazelcastInstance.getMap("processingJobs");
-            BuildJobQueueItem buildJobQueueItem = buildQueue.peek();
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
 
             return buildJobQueueItem != null && buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash) && !buildJobMap.containsKey(buildJobQueueItem.id());
         });
