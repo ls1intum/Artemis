@@ -83,7 +83,6 @@ public class HazelcastConnection {
      * <p>
      * Called once after the bean has been instantiated
      */
-    // we should use @PostConstruct here because the lazy instantiation works properly and FullStartupEvent is sent too early.
     @PostConstruct
     private void connectHazelcast() {
         if (registration.isEmpty()) {
