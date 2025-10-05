@@ -1,4 +1,17 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    HostListener,
+    OnChanges,
+    OnInit,
+    SimpleChanges,
+    ViewEncapsulation,
+    effect,
+    inject,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -47,6 +60,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { PlannedExercise } from 'app/core/course/shared/entities/planned-exercise.model';
+import { PlannedExercisePickerComponent } from 'app/core/course/manage/exercise-planning/planned-exercise-picker/planned-exercise-picker.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -73,6 +88,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         NgClass,
         JsonPipe,
         ArtemisTranslatePipe,
+        PlannedExercisePickerComponent,
     ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
@@ -89,22 +105,33 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private modalService = inject(NgbModal);
     private calendarService = inject(CalendarService);
 
+    protected readonly faPlus = faPlus;
+    protected readonly faXmark = faXmark;
+    protected readonly faExclamationCircle = faExclamationCircle;
+
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
+    readonly QuizMode = QuizMode;
+    readonly documentationType: DocumentationType = 'Quiz';
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
+    readonly defaultSecondLayerDialogOptions: NgbModalOptions = {
+        size: 'md',
+        scrollable: false,
+        backdrop: 'static',
+        backdropClass: 'second-layer-modal-bg',
+        centered: true,
+    };
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
     courseRepository: CourseManagementService;
     notificationText?: string;
-
     isImport = false;
-
-    /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
-
     exams: Exam[] = [];
-
     courses: Course[] = [];
     quizExercises: QuizExercise[];
+    plannedExercise = signal<PlannedExercise | undefined>(undefined);
     allExistingQuestions: QuizQuestion[];
     existingQuestions: QuizQuestion[];
     importFile?: File;
@@ -113,38 +140,18 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     dndFilterEnabled: boolean;
     mcqFilterEnabled: boolean;
     shortAnswerFilterEnabled: boolean;
-
-    /** Duration object **/
     duration = new Duration(0, 0);
-
-    /** Status constants **/
     isSaving = false;
     scheduleQuizStart = false;
-
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
-
-    /** Route params **/
     examId?: number;
-    courseId?: number;
+    courseId = signal(Number(this.route.snapshot.paramMap.get('courseId')));
 
-    // Icons
-    faPlus = faPlus;
-    faXmark = faXmark;
-    faExclamationCircle = faExclamationCircle;
-
-    readonly QuizMode = QuizMode;
-    readonly documentationType: DocumentationType = 'Quiz';
-    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
-    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
-    readonly defaultSecondLayerDialogOptions: NgbModalOptions = {
-        size: 'md',
-        scrollable: false,
-        backdrop: 'static',
-        backdropClass: 'second-layer-modal-bg',
-        centered: true,
-    };
+    constructor() {
+        super();
+        effect(() => this.updateExerciseWithPlannedExerciseIfNotExamMode());
+    }
 
     /**
      * Initialize variables and load course and quiz from server.
@@ -163,45 +170,43 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.shortAnswerFilterEnabled = true;
         this.notificationText = undefined;
 
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         const quizId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         if (this.examId && groupId) {
             this.isExamMode = true;
         }
+        this.resetPlannedExerciseFieldsOnExerciseIfExamMode();
 
         if (this.router.url.includes('/import')) {
             this.isImport = true;
         }
 
         /** Query the courseService for the participationId given by the params */
-        if (this.courseId) {
-            this.courseService.find(this.courseId).subscribe((response: HttpResponse<Course>) => {
-                this.course = response.body!;
-                // Load exerciseGroup and set exam mode
-                if (this.isExamMode) {
-                    this.exerciseGroupService.find(this.courseId!, this.examId!, groupId).subscribe((groupResponse: HttpResponse<ExerciseGroup>) => {
-                        // Make sure to call init if we didn't receive an id => new quiz-exercise
-                        this.exerciseGroup = groupResponse.body || undefined;
-                        if (!quizId) {
-                            this.init();
-                        } else if (this.quizExercise) {
-                            this.quizExercise.exerciseGroup = this.exerciseGroup;
-                            this.savedEntity.exerciseGroup = this.exerciseGroup;
-                        }
-                    });
-                } else {
+        this.courseService.find(this.courseId()).subscribe((response: HttpResponse<Course>) => {
+            this.course = response.body!;
+            // Load exerciseGroup and set exam mode
+            if (this.isExamMode) {
+                this.exerciseGroupService.find(this.courseId(), this.examId!, groupId).subscribe((groupResponse: HttpResponse<ExerciseGroup>) => {
                     // Make sure to call init if we didn't receive an id => new quiz-exercise
+                    this.exerciseGroup = groupResponse.body || undefined;
                     if (!quizId) {
                         this.init();
                     } else if (this.quizExercise) {
-                        this.quizExercise.course = this.course;
-                        this.savedEntity.course = this.course;
+                        this.quizExercise.exerciseGroup = this.exerciseGroup;
+                        this.savedEntity.exerciseGroup = this.exerciseGroup;
                     }
+                });
+            } else {
+                // Make sure to call init if we didn't receive an id => new quiz-exercise
+                if (!quizId) {
+                    this.init();
+                } else if (this.quizExercise) {
+                    this.quizExercise.course = this.course;
+                    this.savedEntity.course = this.course;
                 }
-            });
-        }
+            }
+        });
         if (quizId) {
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
@@ -247,6 +252,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.prepareEntity(this.quizExercise);
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }
+        this.updateExerciseWithPlannedExerciseIfNotExamMode();
 
         if (this.isImport || this.isExamMode) {
             resetQuizForImport(this.quizExercise);
@@ -266,7 +272,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
         if (!this.isExamMode) {
             this.exerciseCategories = this.quizExercise.categories || [];
-            this.courseService.findAllCategoriesOfCourse(this.courseId!).subscribe({
+            this.courseService.findAllCategoriesOfCourse(this.courseId()).subscribe({
                 next: (response: HttpResponse<string[]>) => {
                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(response.body!);
                 },
@@ -299,6 +305,18 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             const endTime = startTime.add(dayjs.duration(this.duration.minutes, 'minutes')).add(dayjs.duration(this.duration.seconds, 'seconds'));
             batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || (dueDate != undefined && endTime.isAfter(dueDate));
         });
+    }
+
+    onQuizModeChange() {
+        this.cacheValidation();
+        this.updateExerciseWithPlannedExerciseIfNotExamMode();
+    }
+
+    onScheduleQuizStartToggle() {
+        this.cacheValidation();
+        if (this.scheduleQuizStart) {
+            this.updateStartDateWithPlannedExerciseIfNotExamMode();
+        }
     }
 
     cacheValidation() {
@@ -430,6 +448,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return numberOfCorrectMappings * numberOfDragItems * numberOfDropLocations > 2197;
         });
     }
+
     checkItemCountShortAnswer(shortAnswerQuestions: ShortAnswerQuestion[]): boolean {
         if (!shortAnswerQuestions) return false;
         return shortAnswerQuestions?.some((shortAnswerQuestion) => {
@@ -539,45 +558,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     /**
-     * Callback function for when the save succeeds
-     * Terminates the saving process and assign the returned quizExercise to the local entities
-     * @param quizExercise Saved quizExercise entity
-     * @param isCreate Flag if the quizExercise was created or updated
-     */
-    private onSaveSuccess(quizExercise: QuizExercise, isCreate: boolean): void {
-        this.isSaving = false;
-        this.pendingChangesCache = false;
-        this.prepareEntity(quizExercise);
-        this.quizQuestionListEditComponent().fileMap.clear();
-        this.quizExercise = quizExercise;
-        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
-        this.exerciseService.validateDate(this.quizExercise);
-        this.savedEntity = cloneDeep(this.quizExercise);
-        this.changeDetector.detectChanges();
-
-        // Navigate back only if it's an import
-        // If we edit the exercise, a user might just want to save the current state of the added quiz questions without going back
-        if (this.isImport) {
-            this.previousState();
-        } else if (isCreate) {
-            this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route, skipLocationChange: true });
-        }
-        this.calendarService.reloadEvents();
-    }
-
-    /**
-     * Callback function for when the save fails
-     */
-    private onSaveError = (errorRes?: HttpErrorResponse): void => {
-        if (errorRes?.error && errorRes.error.title) {
-            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
-        }
-        this.alertService.error('artemisApp.quizExercise.saveError');
-        this.isSaving = false;
-        this.changeDetector.detectChanges();
-    };
-
-    /**
      * Makes sure the entity is well-formed and its fields are of the correct types
      * @param quizExercise {QuizExercise} exercise which will be prepared
      */
@@ -665,5 +645,77 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     handleQuestionChanged() {
         this.cacheValidation();
+    }
+
+    /**
+     * Callback function for when the save succeeds
+     * Terminates the saving process and assign the returned quizExercise to the local entities
+     * @param quizExercise Saved quizExercise entity
+     * @param isCreate Flag if the quizExercise was created or updated
+     */
+    private onSaveSuccess(quizExercise: QuizExercise, isCreate: boolean): void {
+        this.isSaving = false;
+        this.pendingChangesCache = false;
+        this.prepareEntity(quizExercise);
+        this.quizQuestionListEditComponent().fileMap.clear();
+        this.quizExercise = quizExercise;
+        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
+        this.exerciseService.validateDate(this.quizExercise);
+        this.savedEntity = cloneDeep(this.quizExercise);
+        this.changeDetector.detectChanges();
+
+        // Navigate back only if it's an import
+        // If we edit the exercise, a user might just want to save the current state of the added quiz questions without going back
+        if (this.isImport) {
+            this.previousState();
+        } else if (isCreate) {
+            this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route, skipLocationChange: true });
+        }
+        this.calendarService.reloadEvents();
+    }
+
+    /**
+     * Callback function for when the save fails
+     */
+    private onSaveError = (errorRes?: HttpErrorResponse): void => {
+        if (errorRes?.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        }
+        this.alertService.error('artemisApp.quizExercise.saveError');
+        this.isSaving = false;
+        this.changeDetector.detectChanges();
+    };
+
+    private updateExerciseWithPlannedExerciseIfNotExamMode() {
+        const plannedExercise = this.plannedExercise();
+        const quizExercise = this.quizExercise;
+        if (quizExercise && !this.isExamMode) {
+            this.quizExercise.releaseDate = plannedExercise?.releaseDate;
+            const batches = this.quizExercise.quizBatches;
+            if (batches && batches.length === 1) {
+                const batch = batches[0];
+                batch.startTime = plannedExercise?.startDate;
+            }
+            this.quizExercise.dueDate = plannedExercise?.dueDate;
+        }
+    }
+
+    private updateStartDateWithPlannedExerciseIfNotExamMode() {
+        const plannedExercise = this.plannedExercise();
+        if (!this.isExamMode) {
+            const batches = this.quizExercise.quizBatches;
+            if (batches && batches.length === 1) {
+                const batch = batches[0];
+                batch.startTime = plannedExercise?.startDate;
+            }
+        }
+    }
+
+    private resetPlannedExerciseFieldsOnExerciseIfExamMode() {
+        if (this.isExamMode) {
+            this.quizExercise.releaseDate = undefined;
+            this.quizExercise.startDate = undefined;
+            this.quizExercise.dueDate = undefined;
+        }
     }
 }

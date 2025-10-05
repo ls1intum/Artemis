@@ -14,6 +14,10 @@
                     }
                     <jhi-documentation-button [type]="documentationType" />
                 </div>
+                @let currentCourseId = courseId();
+                @if (currentCourseId && !isExamMode) {
+                    <jhi-planned-exercise-picker [courseId]="currentCourseId" (selectedPlannedExercise)="plannedExercise.set($event)" />
+                }
                 <h4>
                     <span class="badge bg-info align-text-top float-end">
                         <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
@@ -34,6 +38,7 @@
                 <form name="editForm" role="form" novalidate>
                     <jhi-exercise-title-channel-name
                         [exercise]="quizExercise"
+                        [plannedExerciseTitle]="plannedExercise()?.title"
                         [course]="quizExercise.course"
                         (onTitleChange)="cacheValidation()"
                         (onChannelNameChange)="cacheValidation()"
@@ -111,7 +116,7 @@
                             @if (!isExamMode) {
                                 <label for="quizMode" jhiTranslate="artemisApp.quizExercise.quizMode.title" class="colon-suffix no-flex-shrink"></label>
                                 <jhi-help-icon text="artemisApp.quizExercise.quizMode.explanation" />
-                                <select id="quizMode" class="form-select" [(ngModel)]="quizExercise.quizMode" (ngModelChange)="cacheValidation()">
+                                <select id="quizMode" class="form-select" [(ngModel)]="quizExercise.quizMode" (ngModelChange)="onQuizModeChange()">
                                     <option [value]="QuizMode.SYNCHRONIZED" jhiTranslate="artemisApp.quizExercise.quizMode.synchronized"></option>
                                     <option [value]="QuizMode.BATCHED" jhiTranslate="artemisApp.quizExercise.quizMode.batched"></option>
                                     <option [value]="QuizMode.INDIVIDUAL" jhiTranslate="artemisApp.quizExercise.quizMode.individual"></option>
@@ -150,7 +155,7 @@
                                             id="cbScheduleQuizStart"
                                             class="form-check-input custom-control-input"
                                             [(ngModel)]="scheduleQuizStart"
-                                            (ngModelChange)="cacheValidation()"
+                                            (ngModelChange)="onScheduleQuizStartToggle()"
                                         />
                                         <label class="form-check-label custom-control-label" for="cbScheduleQuizStart" jhiTranslate="artemisApp.quizExercise.setStartTime"></label>
                                         <jhi-help-icon text="artemisApp.quizExercise.startTimeExplanation" />
@@ -226,10 +231,10 @@
                         </div>
                     }
                 </div>
-                @if (courseId) {
+                @if (courseId()) {
                     <jhi-quiz-question-list-edit
                         #quizQuestionsEdit
-                        [courseId]="courseId!"
+                        [courseId]="courseId()"
                         [quizQuestions]="quizExercise.quizQuestions ?? []"
                         (onQuestionAdded)="handleQuestionChanged()"
                         (onQuestionDeleted)="handleQuestionChanged()"
