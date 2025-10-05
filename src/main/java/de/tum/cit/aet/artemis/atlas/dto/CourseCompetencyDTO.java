@@ -6,9 +6,9 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseCompetencyDTO(long id, String title, CompetencyTaxonomy taxonomy) {
+public record CourseCompetencyDTO(long id, String title, String description, CompetencyTaxonomy taxonomy) {
 
     public static CourseCompetencyDTO of(CourseCompetency competency) {
-        return new CourseCompetencyDTO(competency.getId(), competency.getTitle(), competency.getTaxonomy());
+        return new CourseCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy());
     }
 }
