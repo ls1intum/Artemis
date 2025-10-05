@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, input, output } from '@angular/core';
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
-import { Subject, debounceTime } from 'rxjs';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -18,13 +18,15 @@ export class StandardizedCompetencyFilterComponent implements OnInit, OnDestroy 
     knowledgeAreaFilterChange = output<KnowledgeAreaDTO | undefined>();
 
     protected titleFilterSubject = new Subject<string>();
+    private titleFilterSubscription?: Subscription;
 
     ngOnInit(): void {
-        this.titleFilterSubject.pipe(debounceTime(500)).subscribe((value) => this.competencyTitleFilterChange.emit(value));
+        this.titleFilterSubscription = this.titleFilterSubject.pipe(debounceTime(500)).subscribe((value) => this.competencyTitleFilterChange.emit(value));
     }
 
     ngOnDestroy(): void {
-        this.titleFilterSubject.unsubscribe();
+        this.titleFilterSubscription?.unsubscribe();
+        this.titleFilterSubject.complete();
     }
 
     onTitleChange(value: string): void {
