@@ -80,56 +80,68 @@ public class QuizParticipationService {
     public MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
         // 1st case the quiz has already ended
         if (quizExercise.isQuizEnded()) {
-            // quiz has ended => get participation from database and add full quizExercise
-            quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
-            StudentParticipation participation = participationForQuizWithSubmissionAndResult(quizExercise, user.getLogin(), null);
-            if (participation == null) {
-                return null;
-            }
-
-            return new MappingJacksonValue(participation);
+            return handleQuizEnded(quizExercise, user);
         }
         quizExercise.setQuizBatches(null); // not available here
         var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
 
         if (quizBatch.isPresent() && quizBatch.get().isStarted()) {
-            // Quiz is active => construct Participation from
-            // filtered quizExercise and submission from HashMap
-            quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
-            quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
-            quizExercise.filterForStudentsDuringQuiz();
-            StudentParticipation participation = participationForQuizWithSubmissionAndResult(quizExercise, user.getLogin(), quizBatch.get());
-
-            // TODO: Duplicate
-            Object responseDTO = null;
-            if (participation != null) {
-                var submissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(participation.getId());
-                participation.setSubmissions(new HashSet<>(submissions));
-                if (quizExercise.isQuizEnded()) {
-                    responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
-                }
-                else if (quizBatch.get().isStarted()) {
-                    responseDTO = StudentQuizParticipationWithQuestionsDTO.of(participation);
-                }
-                else {
-                    responseDTO = StudentQuizParticipationWithoutQuestionsDTO.of(participation);
-                }
-            }
-
-            return responseDTO != null ? new MappingJacksonValue(responseDTO) : null;
+            return handleQuizBatchStarted(quizExercise, user, quizBatch);
         }
         else {
-            // Quiz hasn't started yet => no Result, only quizExercise without questions
-            quizExercise.filterSensitiveInformation();
-            quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
-            if (quizExercise.getAllowedNumberOfAttempts() != null) {
-                var attempts = submissionRepository.countByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin());
-                quizExercise.setRemainingNumberOfAttempts(quizExercise.getAllowedNumberOfAttempts() - attempts);
-            }
-            StudentParticipation participation = new StudentParticipation().exercise(quizExercise);
-            return new MappingJacksonValue(participation);
+            return handleQuizNotStarted(quizExercise, user, quizBatch);
         }
 
+    }
+
+    private MappingJacksonValue handleQuizNotStarted(QuizExercise quizExercise, User user, Optional<QuizBatch> quizBatch) {
+        // Quiz hasn't started yet => no Result, only quizExercise without questions
+        quizExercise.filterSensitiveInformation();
+        quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
+        if (quizExercise.getAllowedNumberOfAttempts() != null) {
+            var attempts = submissionRepository.countByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin());
+            quizExercise.setRemainingNumberOfAttempts(quizExercise.getAllowedNumberOfAttempts() - attempts);
+        }
+        StudentParticipation participation = new StudentParticipation().exercise(quizExercise);
+        return new MappingJacksonValue(participation);
+    }
+
+    private MappingJacksonValue handleQuizBatchStarted(QuizExercise quizExercise, User user, Optional<QuizBatch> quizBatch) {
+        // Quiz is active => construct Participation from
+        // filtered quizExercise and submission from HashMap
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
+        quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
+        quizExercise.filterForStudentsDuringQuiz();
+        StudentParticipation participation = participationForQuizWithSubmissionAndResult(quizExercise, user.getLogin(), quizBatch.get());
+
+        // TODO: Duplicate
+        Object responseDTO = null;
+        if (participation != null) {
+            var submissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(participation.getId());
+            participation.setSubmissions(new HashSet<>(submissions));
+            if (quizExercise.isQuizEnded()) {
+                responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
+            }
+            else if (quizBatch.get().isStarted()) {
+                responseDTO = StudentQuizParticipationWithQuestionsDTO.of(participation);
+            }
+            else {
+                responseDTO = StudentQuizParticipationWithoutQuestionsDTO.of(participation);
+            }
+        }
+
+        return responseDTO != null ? new MappingJacksonValue(responseDTO) : null;
+    }
+
+    private MappingJacksonValue handleQuizEnded(QuizExercise quizExercise, User user) {
+        // quiz has ended => get participation from database and add full quizExercise
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
+        StudentParticipation participation = participationForQuizWithSubmissionAndResult(quizExercise, user.getLogin(), null);
+        if (participation == null) {
+            return null;
+        }
+
+        return new MappingJacksonValue(participation);
     }
 
     /**
