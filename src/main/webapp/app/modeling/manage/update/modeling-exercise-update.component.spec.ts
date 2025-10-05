@@ -353,12 +353,11 @@ describe('ModelingExerciseUpdateComponent', () => {
     describe('Enter key navigation handling', () => {
         beforeEach(() => {
             jest.spyOn(console, 'error').mockImplementation(); // Suppress console errors
+            comp.ngOnInit();
+            fixture.detectChanges();
         });
 
         it('should have hidden submit button to intercept Enter key', () => {
-            comp.ngOnInit();
-            fixture.detectChanges();
-
             const form = fixture.debugElement.nativeElement.querySelector('form');
             const hiddenButton = form.querySelector('button[type="submit"][style*="display: none"]');
 
@@ -393,6 +392,148 @@ describe('ModelingExerciseUpdateComponent', () => {
             expect(preventDefaultSpy).toHaveBeenCalledOnce();
             expect(stopPropagationSpy).toHaveBeenCalledOnce();
             expect(realEnterEvent.defaultPrevented).toBeTrue();
+        });
+
+        it('should not navigate when focused on TEXTAREA', () => {
+            const textarea = document.createElement('textarea');
+            document.body.appendChild(textarea);
+            textarea.focus();
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
+            document.body.removeChild(textarea);
+        });
+
+        it('should not navigate when focused on contentEditable element', () => {
+            const editableDiv = document.createElement('div');
+            editableDiv.contentEditable = 'true';
+            document.body.appendChild(editableDiv);
+            editableDiv.focus();
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
+            document.body.removeChild(editableDiv);
+        });
+
+        it('should return early when editFormEl is not available', () => {
+            comp.editFormEl = undefined;
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
+        });
+
+        it('should not navigate when focused inside Apollon Editor', () => {
+            const form = document.createElement('form');
+            const apollonContainer = document.createElement('div');
+            apollonContainer.classList.add('apollon-container');
+            const inputInApollon = document.createElement('input');
+            apollonContainer.appendChild(inputInApollon);
+            form.appendChild(apollonContainer);
+
+            comp.editFormEl = { nativeElement: form } as ElementRef;
+            inputInApollon.focus();
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
+        });
+
+        it('should move focus to next input field when Enter is pressed', () => {
+            const form = document.createElement('form');
+            const input1 = document.createElement('input');
+            const input2 = document.createElement('input');
+            form.appendChild(input1);
+            form.appendChild(input2);
+            document.body.appendChild(form);
+
+            comp.editFormEl = { nativeElement: form } as ElementRef;
+            input1.focus();
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            const focusSpy = jest.spyOn(input2, 'focus');
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(focusSpy).toHaveBeenCalledOnce();
+            document.body.removeChild(form);
+        });
+
+        it('should not move focus when on last input field', () => {
+            const form = document.createElement('form');
+            const input1 = document.createElement('input');
+            const input2 = document.createElement('input');
+            form.appendChild(input1);
+            form.appendChild(input2);
+            document.body.appendChild(form);
+
+            comp.editFormEl = { nativeElement: form } as ElementRef;
+            input2.focus();
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(document.activeElement).toBe(input2);
+            document.body.removeChild(form);
+        });
+
+        it('should skip disabled and hidden inputs in navigation', () => {
+            const form = document.createElement('form');
+            const input1 = document.createElement('input');
+            const disabledInput = document.createElement('input');
+            disabledInput.disabled = true;
+            const input3 = document.createElement('input');
+            form.appendChild(input1);
+            form.appendChild(disabledInput);
+            form.appendChild(input3);
+            document.body.appendChild(form);
+
+            comp.editFormEl = { nativeElement: form } as ElementRef;
+            input1.focus();
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            const focusSpy = jest.spyOn(input3, 'focus');
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(focusSpy).toHaveBeenCalledOnce();
+            document.body.removeChild(form);
         });
     });
 
