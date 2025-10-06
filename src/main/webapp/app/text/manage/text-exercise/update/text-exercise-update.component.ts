@@ -133,7 +133,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         effect(() => {
             this.updateFormSectionsOnIsValidChange();
         });
-        effect(() => this.updateExerciseWithPlannedExerciseIfNotExamMode());
+        effect(() => this.updateExerciseWithPlannedExerciseIfNotExamOrUpdateMode());
     }
 
     isEditMode(): boolean {
@@ -331,7 +331,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.isSaving = false;
     }
 
-    private updateExerciseWithPlannedExerciseIfNotExamMode() {
+    private updateExerciseWithPlannedExerciseIfNotExamOrUpdateMode() {
         const plannedExercise = this.plannedExercise();
         const isUpdateMode = this.editType === EditType.UPDATE;
         if (!this.isExamMode && !isUpdateMode) {

@@ -135,50 +135,19 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         return this.modelingExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
     }
 
+    constructor() {
+        effect(() => {
+            this.updateFormSectionsOnIsValidChange();
+        });
+        effect(() => this.updateExerciseWithPlannedExerciseIfNotExamOrUpdateMode());
+    }
+
     ngAfterViewInit() {
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
-    constructor() {
-        effect(() => {
-            this.updateFormSectionsOnIsValidChange();
-        });
-        effect(() => this.updateExerciseWithPlannedExerciseIfNotExamMode());
-    }
-
-    private updateExerciseWithPlannedExerciseIfNotExamMode() {
-        const plannedExercise = this.plannedExercise();
-        if (!this.isExamMode) {
-            this.modelingExercise.releaseDate = plannedExercise?.releaseDate;
-            this.modelingExercise.startDate = plannedExercise?.startDate;
-            this.modelingExercise.dueDate = plannedExercise?.dueDate;
-            this.modelingExercise.assessmentDueDate = plannedExercise?.assessmentDueDate;
-        }
-    }
-
-    private resetPlannedExerciseFieldsOnExerciseIfExamMode() {
-        if (this.isExamMode) {
-            this.modelingExercise.releaseDate = undefined;
-            this.modelingExercise.startDate = undefined;
-            this.modelingExercise.dueDate = undefined;
-            this.modelingExercise.assessmentDueDate = undefined;
-        }
-    }
-
-    /**
-     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
-     */
-    private updateFormSectionsOnIsValidChange() {
-        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // triggers effect on change
-
-        this.calculateFormSectionStatus().then();
-    }
-
-    /**
-     * Initializes all relevant data for creating or editing modeling exercise
-     */
     ngOnInit(): void {
         scrollToTopOfPage();
 
@@ -196,14 +165,14 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
         this.activatedRoute.url
             .pipe(
-                tap((segments) => {
-                    this.isImport = segments.some((segment) => segment.path === 'import');
-                    this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups');
-                    this.resetPlannedExerciseFieldsOnExerciseIfExamMode(); // actually only needed if we go from non-exam exercise directly to exam exercise
-                }),
+                tap(
+                    (segments) =>
+                        (this.isImport = segments.some((segment) => segment.path === 'import', (this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups')))),
+                ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
-                    const courseId = this.courseId();
+                    const courseId = params['courseId'];
+                    this.courseId.set(courseId);
 
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.modelingExercise.categories || [];
@@ -334,6 +303,36 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.modelingExercise);
     }
 
+    /**
+     * When the diagram type changes, we need to check whether {@link AssessmentType.SEMI_AUTOMATIC} is available for the type. If not, we revert to {@link AssessmentType.MANUAL}
+     */
+    diagramTypeChanged() {
+        if (!this.semiAutomaticAssessmentAvailable) {
+            this.modelingExercise.assessmentType = AssessmentType.MANUAL;
+        }
+    }
+
+    private updateExerciseWithPlannedExerciseIfNotExamOrUpdateMode() {
+        const plannedExercise = this.plannedExercise();
+        const isUpdateMode = this.editType === EditType.UPDATE;
+        if (!this.isExamMode && !isUpdateMode) {
+            this.modelingExercise.title = plannedExercise?.title;
+            this.modelingExercise.releaseDate = plannedExercise?.releaseDate;
+            this.modelingExercise.startDate = plannedExercise?.startDate;
+            this.modelingExercise.dueDate = plannedExercise?.dueDate;
+            this.modelingExercise.assessmentDueDate = plannedExercise?.assessmentDueDate;
+        }
+    }
+
+    /**
+     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
+     */
+    private updateFormSectionsOnIsValidChange() {
+        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // triggers effect on change
+
+        this.calculateFormSectionStatus().then();
+    }
+
     private onSaveSuccess(exercise: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
@@ -349,14 +348,5 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             onError(this.alertService, errorRes);
         }
         this.isSaving = false;
-    }
-
-    /**
-     * When the diagram type changes, we need to check whether {@link AssessmentType.SEMI_AUTOMATIC} is available for the type. If not, we revert to {@link AssessmentType.MANUAL}
-     */
-    diagramTypeChanged() {
-        if (!this.semiAutomaticAssessmentAvailable) {
-            this.modelingExercise.assessmentType = AssessmentType.MANUAL;
-        }
     }
 }

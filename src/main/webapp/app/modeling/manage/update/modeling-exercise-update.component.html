@@ -1,13 +1,15 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
-    <div class="d-flex align-items-center gap-2">
-        @if (!modelingExercise.id) {
-            <h2 id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel"></h2>
-        } @else if (!isImport && modelingExercise.id) {
-            <h2 id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel"></h2>
-        } @else if (isImport) {
-            <h2 id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel"></h2>
-        }
-        <jhi-documentation-button [type]="documentationType" />
+    <div class="d-flex justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+            @if (!modelingExercise.id) {
+                <h2 id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel"></h2>
+            } @else if (!isImport && modelingExercise.id) {
+                <h2 id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel"></h2>
+            } @else if (isImport) {
+                <h2 id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel"></h2>
+            }
+            <jhi-documentation-button [type]="documentationType" />
+        </div>
         @let currentCourseId = courseId();
         @if (currentCourseId && !isExamMode) {
             <jhi-planned-exercise-picker [courseId]="currentCourseId" (selectedPlannedExercise)="plannedExercise.set($event)" />

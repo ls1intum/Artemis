@@ -124,7 +124,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
         effect(() => {
             this.updateFormSectionsOnIsValidChange();
         });
-        effect(() => this.updateExerciseWithPlannedExerciseIfNotExamMode());
+        effect(() => this.updateExerciseWithPlannedExerciseIfNotExamOrUpdateMode());
     }
 
     isEditMode(): boolean {
@@ -267,7 +267,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
         this.isSaving = false;
     }
 
-    private updateExerciseWithPlannedExerciseIfNotExamMode() {
+    private updateExerciseWithPlannedExerciseIfNotExamOrUpdateMode() {
         const plannedExercise = this.plannedExercise();
         const isUpdateMode = this.editType === EditType.UPDATE;
         if (!this.isExamMode && !isUpdateMode) {
