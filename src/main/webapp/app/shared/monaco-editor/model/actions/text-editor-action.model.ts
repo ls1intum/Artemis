@@ -12,7 +12,6 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { WritableSignal } from '@angular/core';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 export abstract class TextEditorAction implements Disposable {
@@ -342,39 +341,5 @@ export abstract class TextEditorAction implements Disposable {
                 resultSignal.set(response.issues ?? []);
             },
         });
-
-        //TODO: Remove
-        const issues: ConsistencyIssue[] = [
-            {
-                severity: ConsistencyIssue.SeverityEnum.High,
-                category: ConsistencyIssue.CategoryEnum.MethodReturnTypeMismatch,
-                description: 'Return type mismatch between method declaration and implementation.',
-                suggestedFix: 'Ensure both methods use the same return type.',
-                relatedLocations: [
-                    {
-                        type: ArtifactLocation.TypeEnum.SolutionRepository,
-                        filePath: 'src/TEST/BubbleSort.java',
-                        startLine: 1,
-                        endLine: 2,
-                    },
-                ],
-            },
-            {
-                severity: ConsistencyIssue.SeverityEnum.Medium,
-                category: ConsistencyIssue.CategoryEnum.IdentifierNamingInconsistency,
-                description: 'Variable naming does not follow the project convention.',
-                suggestedFix: 'Rename variable to match camelCase convention.',
-                relatedLocations: [
-                    {
-                        type: ArtifactLocation.TypeEnum.TemplateRepository,
-                        filePath: 'src/TEST/Client.java',
-                        startLine: 4,
-                        endLine: 5,
-                    },
-                ],
-            },
-        ];
-
-        resultSignal.set(issues);
     }
 }
