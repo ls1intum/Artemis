@@ -108,9 +108,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     domainActionsExampleSolution = [new FormulaAction()];
     isImport: boolean;
     examCourseId?: number;
-
     formStatusSections: FormSectionStatus[];
-
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
@@ -129,32 +127,8 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
         effect(() => this.updateExerciseWithPlannedExerciseIfNotExamMode());
     }
 
-    private updateExerciseWithPlannedExerciseIfNotExamMode() {
-        const plannedExercise = this.plannedExercise();
-        if (!this.isExamMode) {
-            this.fileUploadExercise.releaseDate = plannedExercise?.releaseDate;
-            this.fileUploadExercise.startDate = plannedExercise?.startDate;
-            this.fileUploadExercise.dueDate = plannedExercise?.dueDate;
-            this.fileUploadExercise.assessmentDueDate = plannedExercise?.assessmentDueDate;
-        }
-    }
-
-    private resetPlannedExerciseFieldsOnExerciseIfExamMode() {
-        if (this.isExamMode) {
-            this.fileUploadExercise.releaseDate = undefined;
-            this.fileUploadExercise.startDate = undefined;
-            this.fileUploadExercise.dueDate = undefined;
-            this.fileUploadExercise.assessmentDueDate = undefined;
-        }
-    }
-
-    /**
-     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
-     */
-    private updateFormSectionsOnIsValidChange() {
-        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // trigger the effect
-
-        this.calculateFormSectionStatus();
+    isEditMode(): boolean {
+        return this.editType === EditType.UPDATE;
     }
 
     /**
@@ -172,11 +146,10 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
 
         this.activatedRoute.url
             .pipe(
-                tap((segments) => {
-                    this.isImport = segments.some((segment) => segment.path === 'import');
-                    this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups');
-                    this.resetPlannedExerciseFieldsOnExerciseIfExamMode(); // actually only needed if we go from non-exam exercise directly to exam exercise
-                }),
+                tap(
+                    (segments) =>
+                        (this.isImport = segments.some((segment) => segment.path === 'import', (this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups')))),
+                ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     this.handleExerciseSettings();
@@ -243,51 +216,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.fileUploadExercise);
     }
 
-    private handleImport(params: Params) {
-        if (this.isImport) {
-            if (this.isExamMode) {
-                // The target exerciseId where we want to import into
-                const exerciseGroupId = params['exerciseGroupId'];
-                const courseId = this.courseId();
-                const examId = params['examId'];
-
-                this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.fileUploadExercise.exerciseGroup = res.body!));
-                // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
-                this.fileUploadExercise.course = undefined;
-            } else {
-                // The target course where we want to import into
-                const targetCourseId = this.courseId();
-                this.courseService.find(targetCourseId).subscribe((res) => (this.fileUploadExercise.course = res.body!));
-                // We reference normal exercises by their course, having both would lead to conflicts on the server
-                this.fileUploadExercise.exerciseGroup = undefined;
-            }
-            resetForImport(this.fileUploadExercise);
-        }
-    }
-
-    private handleExerciseSettings() {
-        if (!this.isExamMode) {
-            this.exerciseCategories = this.fileUploadExercise.categories || [];
-            if (this.examCourseId) {
-                this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({
-                    next: (categoryRes: HttpResponse<string[]>) => {
-                        this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                    },
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
-            }
-        } else {
-            // Lock individual mode for exam exercises
-            this.fileUploadExercise.mode = ExerciseMode.INDIVIDUAL;
-            this.fileUploadExercise.teamAssignmentConfig = undefined;
-            this.fileUploadExercise.teamMode = false;
-            // Exam exercises cannot be not included into the total score
-            if (this.fileUploadExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-                this.fileUploadExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
-            }
-        }
-    }
-
     save() {
         this.isSaving = true;
 
@@ -337,5 +265,71 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
             disableTranslation: true,
         });
         this.isSaving = false;
+    }
+
+    private updateExerciseWithPlannedExerciseIfNotExamMode() {
+        const plannedExercise = this.plannedExercise();
+        const isUpdateMode = this.editType === EditType.UPDATE;
+        if (!this.isExamMode && !isUpdateMode) {
+            this.fileUploadExercise.title = plannedExercise?.title;
+            this.fileUploadExercise.releaseDate = plannedExercise?.releaseDate;
+            this.fileUploadExercise.startDate = plannedExercise?.startDate;
+            this.fileUploadExercise.dueDate = plannedExercise?.dueDate;
+            this.fileUploadExercise.assessmentDueDate = plannedExercise?.assessmentDueDate;
+        }
+    }
+
+    /**
+     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
+     */
+    private updateFormSectionsOnIsValidChange() {
+        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // trigger the effect
+
+        this.calculateFormSectionStatus();
+    }
+
+    private handleImport(params: Params) {
+        if (this.isImport) {
+            const courseId = params['courseId'];
+            this.courseId.set(courseId);
+            if (this.isExamMode) {
+                // The target exerciseId where we want to import into
+                const exerciseGroupId = params['exerciseGroupId'];
+                const examId = params['examId'];
+
+                this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.fileUploadExercise.exerciseGroup = res.body!));
+                // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
+                this.fileUploadExercise.course = undefined;
+            } else {
+                // The target course where we want to import into
+                this.courseService.find(courseId).subscribe((res) => (this.fileUploadExercise.course = res.body!));
+                // We reference normal exercises by their course, having both would lead to conflicts on the server
+                this.fileUploadExercise.exerciseGroup = undefined;
+            }
+            resetForImport(this.fileUploadExercise);
+        }
+    }
+
+    private handleExerciseSettings() {
+        if (!this.isExamMode) {
+            this.exerciseCategories = this.fileUploadExercise.categories || [];
+            if (this.examCourseId) {
+                this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({
+                    next: (categoryRes: HttpResponse<string[]>) => {
+                        this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+                    },
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+            }
+        } else {
+            // Lock individual mode for exam exercises
+            this.fileUploadExercise.mode = ExerciseMode.INDIVIDUAL;
+            this.fileUploadExercise.teamAssignmentConfig = undefined;
+            this.fileUploadExercise.teamMode = false;
+            // Exam exercises cannot be not included into the total score
+            if (this.fileUploadExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                this.fileUploadExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            }
+        }
     }
 }

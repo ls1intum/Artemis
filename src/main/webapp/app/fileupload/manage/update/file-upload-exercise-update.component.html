@@ -1,15 +1,17 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
-    <div class="d-flex align-items-center gap-2">
-        @if (fileUploadExercise.id && !isImport) {
-            <h2 id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel"></h2>
-        } @else if (!fileUploadExercise.id) {
-            <h2 id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel"></h2>
-        } @else if (isImport) {
-            <h2 id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel"></h2>
-        }
-        <jhi-documentation-button [type]="documentationType" />
+    <div class="d-flex justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+            @if (fileUploadExercise.id && !isImport) {
+                <h2 id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel"></h2>
+            } @else if (!fileUploadExercise.id) {
+                <h2 id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel"></h2>
+            } @else if (isImport) {
+                <h2 id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel"></h2>
+            }
+            <jhi-documentation-button [type]="documentationType" />
+        </div>
         @let currentCourseId = courseId();
-        @if (currentCourseId && !isExamMode) {
+        @if (currentCourseId && !isExamMode && !isEditMode()) {
             <jhi-planned-exercise-picker [courseId]="currentCourseId" (selectedPlannedExercise)="plannedExercise.set($event)" />
         }
     </div>
