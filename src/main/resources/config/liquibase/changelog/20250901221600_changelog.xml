@@ -4,27 +4,43 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet id="20250901221600" author="tobias-lippert">
-        <preConditions onFail="HALT">
-            <tableExists tableName="result"/>
-            <tableExists tableName="exercise"/>
-            <not>
-                <columnExists tableName="result" columnName="exercise_id"/>
-            </not>
-        </preConditions>
-
         <addColumn tableName="result">
             <column name="exercise_id" type="BIGINT">
                 <constraints nullable="true"/>
             </column>
         </addColumn>
+
+        <!-- Backfill exercise_id using result->submission->participation->exercise relationship -->
+        <sql>
+            UPDATE result
+            SET exercise_id = (
+                SELECT p.exercise_id
+                FROM Submission s, Participation p
+                WHERE result.submission_id = s.id
+                  AND s.participation_id = p.id
+            )
+            WHERE exercise_id IS NULL;
+        </sql>
+
+        <!-- Delete results that still have no exercise_id after backfill because the relationship mentioned above is non-existent-->
+        <sql>
+            DELETE FROM result
+            WHERE exercise_id IS NULL;
+        </sql>
+
+        <addNotNullConstraint tableName="result"
+                              columnName="exercise_id"
+                              columnDataType="BIGINT"/>
+
         <createIndex tableName="result" indexName="idx_result_exercise_id">
             <column name="exercise_id"/>
         </createIndex>
 
-        <rollback>
-            <dropIndex tableName="result" indexName="idx_result_exercise_id"/>
-            <dropColumn tableName="result" columnName="exercise_id"/>
-
-        </rollback>
+        <addForeignKeyConstraint
+                baseTableName="result"
+                baseColumnNames="exercise_id"
+                referencedTableName="exercise"
+                referencedColumnNames="id"
+                constraintName="fk_result_exercise_id"/>
     </changeSet>
 </databaseChangeLog>
