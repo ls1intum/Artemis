@@ -111,12 +111,12 @@ artemis:
     url: <your-nebula-url>
     secret: <your-secret>
 
-# Configure Spring AI, if you want to use Hyperion
+# Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
   ai:
     chat:
       client:
-        enabled: ${artemis.hyperion.enabled}
+        enabled: #{${artemis.hyperion.enabled} or ${artemis.atlas.enabled}}
     # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
     azure:
       openai:

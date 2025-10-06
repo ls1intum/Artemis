@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class AtlasAgentService {
 
     private final AtlasPromptTemplateService templateService;
 
-    public AtlasAgentService(ChatClient chatClient, AtlasPromptTemplateService templateService) {
+    public AtlasAgentService(@Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
     }
