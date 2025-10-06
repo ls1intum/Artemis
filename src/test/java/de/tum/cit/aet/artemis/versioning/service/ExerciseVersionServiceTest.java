@@ -14,20 +14,16 @@ import java.util.function.BiPredicate;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -41,6 +37,7 @@ import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -49,15 +46,11 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
-import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
@@ -65,26 +58,17 @@ import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.versioning.repository.FileUploadExerciseVersioningRepository;
 import de.tum.cit.aet.artemis.versioning.repository.TextExerciseVersioningRepository;
 
-class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "exerciseversiontest";
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVersionServiceTest.class);
-
-    @Value("${artemis.version-control.url}")
-    private String localVCBaseUrl;
-
-    @LocalServerPort
-    private int port;
 
     @Autowired
     private ExerciseVersionTestRepository exerciseVersionRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
@@ -94,9 +78,6 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;
-
-    @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseRepository;
@@ -111,12 +92,6 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     private FileUploadExerciseVersioningRepository fileUploadExerciseRepository;
 
     @Autowired
-    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    @Autowired
-    protected CompetencyUtilService competencyUtilService;
-
-    @Autowired
     private SubmissionPolicyRepository submissionPolicyRepository;
 
     private static final long TEST_WAIT_TIME = 100L;
@@ -126,10 +101,9 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     private static final BiPredicate<ZonedDateTime, ZonedDateTime> zonedDateTimeBiPredicate = (a,
             b) -> Math.abs(a.toInstant().getEpochSecond() - b.toInstant().getEpochSecond()) < 1;
 
-    @BeforeEach
-    void init() {
-        localVCLocalCITestService.setPort(port);
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
     }
 
     @AfterEach
@@ -323,7 +297,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         AuxiliaryRepository auxRepo = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
         String auxRepoSlug = programmingExercise.generateRepositoryName(auxRepo.getRepositoryName());
-        String auxRepoUri = localVCBaseUrl + "/git/" + programmingExercise.getProjectKey() + "/" + auxRepoSlug + ".git";
+        String auxRepoUri = localVCBaseUri + "/git/" + programmingExercise.getProjectKey() + "/" + auxRepoSlug + ".git";
         auxRepo.setRepositoryUri(auxRepoUri);
         localVCLocalCITestService.createAndConfigureLocalRepository(programmingExercise.getProjectKey(), auxRepoSlug);
         auxiliaryRepositoryRepository.save(auxRepo);
@@ -447,20 +421,20 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
             String templateRepositorySlug = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
             TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
-            templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+            templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
             localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
             templateProgrammingExerciseParticipationRepository.save(templateParticipation);
             programmingExercise.setTemplateParticipation(templateParticipation);
 
             String solutionRepositorySlug = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
             SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
-            solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
+            solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
             localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
             solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
             programmingExercise.setSolutionParticipation(solutionParticipation);
 
             String testSlug = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
-            String testRepositoryUri = localVCBaseUrl + "/git/" + projectKey + "/" + testSlug + ".git";
+            String testRepositoryUri = localVCBaseUri + "/git/" + projectKey + "/" + testSlug + ".git";
             programmingExercise.setTestRepositoryUri(testRepositoryUri);
             programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
             localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testSlug);
