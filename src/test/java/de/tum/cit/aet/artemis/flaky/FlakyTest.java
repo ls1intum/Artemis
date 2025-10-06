@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.flaky;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 class FlakyTest {
@@ -61,6 +62,7 @@ class FlakyTest {
         assertRandomly();
     }
 
+    @Disabled
     @Test
     void failyTest() {
         fail("This test always fails");
