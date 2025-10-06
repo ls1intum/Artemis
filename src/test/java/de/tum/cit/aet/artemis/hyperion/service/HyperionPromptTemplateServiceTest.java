@@ -4,10 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -28,7 +29,7 @@ class HyperionPromptTemplateServiceTest {
     void render_withValidStringVariables_replacesPlaceholders() throws IOException {
         // Create a temporary template file
         Path templatePath = tempDir.resolve("test-template.txt");
-        Files.writeString(templatePath, "Hello {{name}}, your score is {{score}}!");
+        FileUtils.writeStringToFile(templatePath.toFile(), "Hello {{name}}, your score is {{score}}!", StandardCharsets.UTF_8);
 
         // Mock ClassPathResource by creating a test resource that exists
         String templateContent = "Hello {{name}}, your score is {{score}}!";
