@@ -14,6 +14,8 @@ import { Leaderboard } from 'app/quiz/overview/course-training/course-training-q
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
+import { faCheck, faClock, faQuestion, faStar, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-course-practice',
@@ -29,6 +31,7 @@ import { FormsModule } from '@angular/forms';
         TranslateDirective,
         DialogModule,
         FormsModule,
+        FontAwesomeModule,
     ],
     templateUrl: './course-training.component.html',
     styleUrl: './course-training.component.scss',
@@ -37,6 +40,12 @@ export class CourseTrainingComponent {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private leaderboardService = inject(LeaderboardService);
+
+    faClock = faClock;
+    faStar = faStar;
+    faQuestion = faQuestion;
+    faXmark = faXmark;
+    faCheck = faCheck;
 
     readonly pointsBronzeLeague = 100;
     readonly pointsSilverLeague = 200;
@@ -136,12 +145,29 @@ export class CourseTrainingComponent {
         return { isValid: true, isPast: false, days: diffDays, hours: diffHours, minutes: diffMinutes };
     });
 
-    streak = computed(() => {
+    totalQuestions = computed(() => {
         const entries = this.leaderboardEntries();
 
-        if (!entries) {
-            return 0;
-        }
+        const userEntry = entries.find((entry) => entry.userId === this.currentUserId());
+        return userEntry?.totalQuestions ?? 0;
+    });
+
+    correctQuestions = computed(() => {
+        const entries = this.leaderboardEntries();
+
+        const userEntry = entries.find((entry) => entry.userId === this.currentUserId());
+        return userEntry?.answeredCorrectly ?? 0;
+    });
+
+    wrongQuestions = computed(() => {
+        const entries = this.leaderboardEntries();
+
+        const userEntry = entries.find((entry) => entry.userId === this.currentUserId());
+        return userEntry?.answeredWrong ?? 0;
+    });
+
+    streak = computed(() => {
+        const entries = this.leaderboardEntries();
 
         const userEntry = entries.find((entry) => entry.userId === this.currentUserId());
         return userEntry?.streak ?? 0;

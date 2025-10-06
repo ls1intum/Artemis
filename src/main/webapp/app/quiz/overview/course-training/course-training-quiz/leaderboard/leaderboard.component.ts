@@ -2,10 +2,11 @@ import { Component, computed, input } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { LeaderboardEntry } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-leaderboard',
-    imports: [FontAwesomeModule, ProfilePictureComponent],
+    imports: [FontAwesomeModule, ProfilePictureComponent, TranslateDirective],
     templateUrl: './leaderboard.component.html',
     styleUrl: './leaderboard.component.scss',
 })

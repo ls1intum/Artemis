@@ -2,8 +2,23 @@
     "artemisApp": {
         "quizTraining": {
             "noData": "keine Daten",
-            "now": "jetzt",
-            "nextQuestionsDue": "Nächste Fragen fällig in "
+            "dueNow": "Nächste Fragen jetzt fällig",
+            "nextQuestionsDue": "Nächste Fragen fällig in ",
+            "totalQuestions": "Gesamtanzahl an Fragen",
+            "description": "tbd",
+            "showInLeaderboard": "Im Leaderboard anzeigen",
+            "bronzeLeague": "Bronze Liga",
+            "silverLeague": "Silber Liga",
+            "goldLeague": "Gold Liga",
+            "diamondLeague": "Diamant Liga",
+            "masterLeague": "Master Liga",
+            "noLeague": "Keine Liga",
+            "rank": "Rang",
+            "student": "Student",
+            "score": "Punkte",
+            "scorecard": "Punktekarte",
+            "correctQuestions": "richtige Antowrten",
+            "wrongQuestions": "falsche Antworten"
         }
     }
 }

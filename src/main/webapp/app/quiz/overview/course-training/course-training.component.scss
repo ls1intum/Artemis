@@ -101,9 +101,9 @@
 }
 
 .league-name-points-container {
-    text-align: center;
-    margin-right: auto;
-    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .info-button {
@@ -119,14 +119,6 @@
     font-weight: bold;
     cursor: pointer;
     margin-right: 10px;
-}
-
-.league-header {
-    display: flex;
-    width: 100%;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 10px;
 }
 
 .league-name {
@@ -153,7 +145,17 @@
     height: 6px;
     background-color: #e0e0e0;
     border-radius: 3px;
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
+    margin-top: 5px;
+}
+
+.progress-bar .small-icon {
+    position: absolute;
+    right: -30px;
+    top: -12px;
+    width: 30px;
+    height: 30px;
 }
 
 .progress {
