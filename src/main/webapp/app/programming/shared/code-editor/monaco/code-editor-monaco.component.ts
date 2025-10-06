@@ -32,9 +32,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
+type InlineConsistencyIssue = { line: number; text: string };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
     selector: 'jhi-code-editor-monaco',
@@ -112,6 +114,26 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
     );
 
+    readonly consistencyIssuesInternal = signal<ConsistencyIssue[]>([]);
+
+    readonly consistencyIssuesForSelectedFile = computed<InlineConsistencyIssue[]>(() => {
+        if (!this.selectedFile()) {
+            return [];
+        }
+
+        const result = [];
+
+        for (const issue of this.consistencyIssuesInternal()) {
+            for (const loc of issue.relatedLocations) {
+                if (loc.filePath === this.selectedFile()) {
+                    result.push({ line: loc.endLine, text: issue.description });
+                }
+            }
+        }
+
+        return result;
+    });
+
     /**
      * Attaches the line number & reference to a feedback item, or -1 if no line is available. This is used to disambiguate feedback items in the template, avoiding warnings.
      * @param feedback The feedback item to attach the line to.
@@ -135,6 +157,11 @@ export class CodeEditorMonacoComponent implements OnChanges {
         effect(() => {
             const annotations = this.buildAnnotations();
             untracked(() => this.setBuildAnnotations(annotations));
+        });
+
+        effect(() => {
+            this.consistencyIssuesForSelectedFile();
+            this.renderFeedbackWidgets();
         });
     }
 
@@ -350,11 +377,14 @@ export class CodeEditorMonacoComponent implements OnChanges {
                 this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
             }
 
-            this.addCommentBox(4, 'Hier steht dann der Text fuer die Consistency');
-
             // Focus the text area of the widget on the specified line if available.
             if (lineOfWidgetToFocus !== undefined) {
                 this.getInlineFeedbackNode(lineOfWidgetToFocus)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
+            }
+
+            // Readd inconsistency issue comments, because all widgets got removed
+            for (const issue of this.consistencyIssuesForSelectedFile()) {
+                this.addCommentBox(issue.line, issue.text);
             }
         }, 0);
     }
@@ -413,21 +443,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
         // Place box beneath the line
         this.editor().addLineWidget(oneBasedLine, `comment-${oneBasedLine}`, node);
         this.highlightLines(oneBasedLine, oneBasedLine);
-
-        const annotation: Annotation = {
-            fileName: this.selectedFile() ?? '',
-            row: lineNumber, // 1-based line number for markers
-            column: 1, // start of line
-            text, // show the comment text in the tooltip
-            type: 'warning', // pick a severity/type your Monaco wrapper understands: 'error' | 'warning' | 'info' | 'hint'
-            timestamp: Date.now(),
-        };
-
-        // add the new one
-        this.annotationsArray = [...this.annotationsArray, annotation];
-
-        // this persists to localStorage and calls this.editor().setAnnotations(...) for the selected file
-        this.setBuildAnnotations(this.annotationsArray);
     }
 
     /**

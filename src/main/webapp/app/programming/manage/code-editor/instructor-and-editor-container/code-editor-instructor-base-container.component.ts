@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, effect, inject, signal } from '@angular/core';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,6 +25,8 @@ import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-ch
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 
 /**
  * Enumeration specifying the loading state
@@ -55,7 +57,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private problemStatementChanges$ = new Subject<string>();
     private modalService = inject(NgbModal);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
-    resultHtml = signal<string>('');
+    private consistencyIssues = signal<ConsistencyIssue[]>([]);
+    private consistencyCheckService = inject(ConsistencyCheckService);
 
     ButtonSize = ButtonSize;
     LOADING_STATE = LOADING_STATE;
@@ -84,6 +87,17 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
 
     // State variables
     loadingState = LOADING_STATE.CLEAR;
+
+    constructor() {
+        effect(() => {
+            const issues = this.consistencyIssues();
+            for (const issue of issues) {
+                for (const loc of issue.relatedLocations) {
+                    this.codeEditorContainer.monacoEditor.addCommentBox(loc.endLine, issue.description);
+                }
+            }
+        });
+    }
 
     protected isCreateAssignmentRepoDisabled: boolean;
     /** Debounced tick stream consumed by the sidebar preview */
@@ -383,13 +397,24 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * @param exercise the programming exercise to check
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.exercisesToCheck = Array.of(exercise);
+        this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe({
+            next: (inconsistencies) => {
+                if (inconsistencies?.length) {
+                    // only show modal if inconsistencies found
+                    const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
+                    modalRef.componentInstance.exercisesToCheck = [exercise];
+                    return;
+                }
 
-        const action = new ConsistencyCheckAction(this.artemisIntelligenceService, exercise.id!, this.resultHtml);
-        this.codeEditorContainer.monacoEditor.editor().registerAction(action);
-
-        action.executeInCurrentEditor();
+                const action = new ConsistencyCheckAction(this.artemisIntelligenceService, exercise.id!, this.codeEditorContainer.monacoEditor.consistencyIssuesInternal);
+                this.codeEditorContainer.monacoEditor.editor().registerAction(action);
+                action.executeInCurrentEditor();
+            },
+            error: (err) => {
+                const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
+                modalRef.componentInstance.exercisesToCheck = [exercise];
+            },
+        });
     }
 
     /**

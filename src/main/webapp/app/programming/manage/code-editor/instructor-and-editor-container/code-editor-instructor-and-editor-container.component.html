@@ -134,13 +134,6 @@
                         <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                     </button>
                 </div>
-
-                @if (resultHtml()) {
-                    <div class="alert alert-info mt-3">
-                        <h5>Consistency Check Result:</h5>
-                        <div [innerHTML]="resultHtml()"></div>
-                    </div>
-                }
             </div>
             <div editorToolbar class="ms-auto d-flex align-items-center">
                 @if (selectedParticipation && selectedRepository !== RepositoryType.TESTS) {

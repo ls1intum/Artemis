@@ -24,6 +24,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     disableCollapse = input(false);
     // different translation for problem statement editor and preview
     isEditor = input(false);
+
     /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;

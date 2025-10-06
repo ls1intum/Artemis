@@ -45,7 +45,6 @@ import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-int
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ActivatedRoute } from '@angular/router';
-import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
@@ -89,9 +88,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
                 ),
             );
-            if (this.exerciseId) {
-                actions.push(new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId, this.renderedConsistencyCheckResultMarkdown));
-            }
         }
         return actions;
     });

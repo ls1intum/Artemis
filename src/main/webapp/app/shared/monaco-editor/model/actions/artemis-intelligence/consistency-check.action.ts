@@ -2,6 +2,7 @@ import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-ed
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
 /**
  * Artemis Intelligence action for consistency checking exercises
@@ -14,7 +15,7 @@ export class ConsistencyCheckAction extends TextEditorAction {
     constructor(
         private readonly artemisIntelligenceService: ArtemisIntelligenceService,
         private readonly exerciseId: number,
-        private readonly resultSignal: WritableSignal<string>,
+        private readonly resultSignal: WritableSignal<ConsistencyIssue[]>,
     ) {
         super(ConsistencyCheckAction.ID, 'artemisApp.markdownEditor.artemisIntelligence.commands.consistencyCheck');
     }
@@ -28,6 +29,6 @@ export class ConsistencyCheckAction extends TextEditorAction {
      * @param resultSignal The signal to write the result of the consistency check to.
      */
     run(editor: TextEditor): void {
-        this.consistencyCheck(editor, this.artemisIntelligenceService, this.exerciseId, this.resultSignal);
+        this.consistencyCheck(this.artemisIntelligenceService, this.exerciseId, this.resultSignal);
     }
 }
