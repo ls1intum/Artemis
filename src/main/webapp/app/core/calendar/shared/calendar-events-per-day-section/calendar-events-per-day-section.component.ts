@@ -1,34 +1,44 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { NgClass, NgStyle } from '@angular/common';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { Dayjs } from 'dayjs/esm';
 import { CalendarEventAndPosition, PositionInfo } from 'app/core/calendar/shared/entities/calendar-event-and-position.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
 
 type Day = { date: Dayjs; eventsAndPositions: CalendarEventAndPosition[]; id: string };
 
 @Component({
     selector: 'jhi-calendar-events-per-day-section',
-    imports: [NgClass, NgStyle, CalendarEventDetailPopoverComponent, NgbPopover],
+    imports: [NgClass, NgStyle, CalendarEventDetailPopoverComponent],
     templateUrl: './calendar-events-per-day-section.component.html',
     styleUrl: './calendar-events-per-day-section.component.scss',
 })
 export class CalendarEventsPerDaySectionComponent {
+    // amount of pixels in 1rem
     static readonly PIXELS_PER_REM = 16;
-    static readonly HOUR_SEGMENT_HEIGHT_IN_PIXEL = 3.5 * CalendarEventsPerDaySectionComponent.PIXELS_PER_REM;
+    // height of one hour in the grid that is part of the template (measured in rem)
+    static readonly HOUR_HEIGHT_IN_REM = 3.5;
+    // height of one hour in the grid that is part of the template (measured in px)
+    static readonly HOUR_HEIGHT_IN_PIXEL = CalendarEventsPerDaySectionComponent.HOUR_HEIGHT_IN_REM * CalendarEventsPerDaySectionComponent.PIXELS_PER_REM;
+    // amount of pixels that represent 1min in the grid that is part of the template
+    static readonly PIXELS_PER_MINUTE = CalendarEventsPerDaySectionComponent.HOUR_HEIGHT_IN_PIXEL / 60;
+    // amount of minutes represented by 1px in the grid that is part of the template
+    static readonly MINUTES_PER_PIXEL = 1 / CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE;
+    // default height for events that are displayed in the template (equivalent to 1.5rem)
+    static readonly DEFAULT_EVENT_HEIGHT_IN_PIXEL = 24;
+    // rounded amount of minutes that is equivalent to the default height of events
+    static readonly DEFAULT_EVENT_LENGTH_IN_MINUTES = Math.ceil(
+        CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_HEIGHT_IN_PIXEL * CalendarEventsPerDaySectionComponent.MINUTES_PER_PIXEL,
+    );
 
     private eventService = inject(CalendarService);
     private dateToEventAndPositionMap = computed(() => this.computeDateToEventAndPositionMap(this.eventService.eventMap(), this.dates()));
-    private popover?: NgbPopover;
 
     readonly CalendarEventType = CalendarEventType;
 
     dates = input.required<Dayjs[]>();
-    isEventSelected = output<boolean>();
-    selectedEvent = signal<CalendarEvent | undefined>(undefined);
     hoursOfDay = utils.getHoursOfDay();
     zeroToTwentyFour = utils.range(24);
     days = computed<Day[]>(() => {
@@ -38,29 +48,6 @@ export class CalendarEventsPerDaySectionComponent {
             id: utils.identify(date),
         }));
     });
-
-    constructor() {
-        effect(() => {
-            this.isEventSelected.emit(this.selectedEvent() !== undefined);
-        });
-    }
-
-    openPopover(event: CalendarEvent, popover: NgbPopover) {
-        if (this.selectedEvent() === event) {
-            this.closePopover();
-            return;
-        }
-        this.selectedEvent.set(event);
-        this.popover?.close();
-        this.popover = popover;
-        popover.open();
-    }
-
-    closePopover() {
-        this.popover?.close();
-        this.popover = undefined;
-        this.selectedEvent.set(undefined);
-    }
 
     private getEventsAndPositions(date: Dayjs): CalendarEventAndPosition[] {
         return this.dateToEventAndPositionMap().get(date.format('YYYY-MM-DD')) ?? [];
@@ -88,12 +75,9 @@ export class CalendarEventsPerDaySectionComponent {
         if (calendarEvents.length === 0) {
             return [];
         }
-
-        const sorted = [...calendarEvents].sort((firstEvent, secondEvent) => firstEvent.startDate.diff(secondEvent.startDate));
-
         const eventsWithPositions: CalendarEventAndPosition[] = [];
         let currentGroup: CalendarEvent[] = [];
-        for (const event of sorted) {
+        for (const event of calendarEvents) {
             if (currentGroup.length === 0 || currentGroup.some((otherEvent) => this.doEventsOverlap(otherEvent, event))) {
                 currentGroup.push(event);
             } else {
@@ -107,13 +91,10 @@ export class CalendarEventsPerDaySectionComponent {
     }
 
     private addPositionsToEventGroup(group: CalendarEvent[]): CalendarEventAndPosition[] {
-        const pixelsPerMinute = CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL / 60;
-
         const widthAndLeftOffsetFunction = this.getWidthAndLeftOffsetFunction(group.length);
-
         return group.map((event, index) => {
-            const top = this.getTop(event, pixelsPerMinute);
-            const height = this.getHeight(event, pixelsPerMinute);
+            const top = this.getTop(event);
+            const height = this.getHeight(event);
             const left = widthAndLeftOffsetFunction.leftOffset(index);
 
             const position: PositionInfo = { top, height, left, width: widthAndLeftOffsetFunction.eventWidth };
@@ -134,31 +115,27 @@ export class CalendarEventsPerDaySectionComponent {
         };
     }
 
-    private getTop(event: CalendarEvent, pixelsPerMinute: number): number {
+    private getTop(event: CalendarEvent): number {
         const minutes = event.startDate.diff(event.startDate.startOf('day'), 'minute');
-        return minutes * pixelsPerMinute;
+        return minutes * CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE;
     }
 
-    private getHeight(event: CalendarEvent, pixelsPerMinute: number): number {
-        const defaultHeightInPixel = 24;
-        return event.endDate ? event.endDate.diff(event.startDate, 'minute') * pixelsPerMinute : defaultHeightInPixel;
+    private getHeight(event: CalendarEvent): number {
+        if (event.endDate) {
+            return Math.max(
+                event.endDate.diff(event.startDate, 'minute') * CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE,
+                CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_HEIGHT_IN_PIXEL,
+            );
+        } else {
+            return CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_HEIGHT_IN_PIXEL;
+        }
     }
 
     private doEventsOverlap(firstEvent: CalendarEvent, secondEvent: CalendarEvent): boolean {
         const firstStartDate = firstEvent.startDate;
-        const firstEndDate = firstEvent.endDate;
+        const firstEndDate = this.getDisplayedEndOf(firstEvent);
         const secondStartDate = secondEvent.startDate;
-        const secondEndDate = secondEvent.endDate;
-
-        if (!firstEndDate && !secondEndDate) {
-            return this.areDatesSameMinute(firstStartDate, secondStartDate);
-        }
-        if (!firstEndDate) {
-            return this.doesDateFallInRange(firstStartDate, secondStartDate, secondEndDate!);
-        }
-        if (!secondEndDate) {
-            return this.doesDateFallInRange(secondStartDate, firstStartDate, firstEndDate!);
-        }
+        const secondEndDate = this.getDisplayedEndOf(secondEvent);
 
         const firstStartFallsInSecondRange = this.doesDateFallInRange(firstStartDate, secondStartDate, secondEndDate!);
         const firstEndFallsInSecondRange = this.doesDateFallInRange(firstEndDate, secondStartDate, secondEndDate!);
@@ -166,8 +143,9 @@ export class CalendarEventsPerDaySectionComponent {
         return firstStartFallsInSecondRange || firstEndFallsInSecondRange || firstEventEngulfsSecondEvent;
     }
 
-    private areDatesSameMinute(firstDate: Dayjs, secondDate: Dayjs): boolean {
-        return firstDate.isSame(secondDate, 'minute');
+    private getDisplayedEndOf(event: CalendarEvent): Dayjs {
+        const endWithDefaultLength = event.startDate.add(CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_LENGTH_IN_MINUTES, 'minute');
+        return event.endDate && event.endDate.isAfter(endWithDefaultLength) ? event.endDate : endWithDefaultLength;
     }
 
     private doesDateFallInRange(date: Dayjs, rangeStart: Dayjs, rangeEnd: Dayjs): boolean {

@@ -9,11 +9,9 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
@@ -51,11 +49,11 @@ public class CompetencyProgressApi extends AbstractAtlasApi {
         competencyProgressService.updateProgressByLearningObjectSync(learningObject, users);
     }
 
-    public long countByCourse(Course course) {
-        return competencyRepository.countByCourse(course);
+    public long countByCourseId(long courseId) {
+        return competencyRepository.countByCourseId(courseId);
     }
 
-    public void deleteAll(Set<Competency> competencies) {
-        competencyRepository.deleteAll(competencies);
+    public void deleteAllByCourseId(long courseId) {
+        competencyRepository.deleteAllByCourseId(courseId);
     }
 }
