@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
@@ -45,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
+@Import(AtlasTestConfiguration.class)
 public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     // Repositories
