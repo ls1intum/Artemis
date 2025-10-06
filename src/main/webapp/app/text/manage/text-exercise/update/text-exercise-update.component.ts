@@ -136,23 +136,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         effect(() => this.updateExerciseWithPlannedExerciseIfNotExamMode());
     }
 
-    private updateExerciseWithPlannedExerciseIfNotExamMode() {
-        const plannedExercise = this.plannedExercise();
-        if (!this.isExamMode) {
-            this.textExercise.releaseDate = plannedExercise?.releaseDate;
-            this.textExercise.startDate = plannedExercise?.startDate;
-            this.textExercise.dueDate = plannedExercise?.dueDate;
-            this.textExercise.assessmentDueDate = plannedExercise?.assessmentDueDate;
-        }
-    }
-
-    private resetPlannedExerciseFieldsOnExerciseIfExamMode() {
-        if (this.isExamMode) {
-            this.textExercise.releaseDate = undefined;
-            this.textExercise.startDate = undefined;
-            this.textExercise.dueDate = undefined;
-            this.textExercise.assessmentDueDate = undefined;
-        }
+    isEditMode(): boolean {
+        return this.editType === EditType.UPDATE;
     }
 
     get editType(): EditType {
@@ -161,15 +146,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         }
 
         return this.textExercise.id == undefined ? EditType.CREATE : EditType.UPDATE;
-    }
-
-    /**
-     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
-     */
-    private updateFormSectionsOnIsValidChange() {
-        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // trigger the effect
-        this.exerciseUpdatePlagiarismComponent()?.isFormValid();
-        this.calculateFormSectionStatus();
     }
 
     ngAfterViewInit() {
@@ -194,11 +170,10 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
 
         this.activatedRoute.url
             .pipe(
-                tap((segments) => {
-                    this.isImport = segments.some((segment) => segment.path === 'import');
-                    this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups');
-                    this.resetPlannedExerciseFieldsOnExerciseIfExamMode(); // actually only needed if we go from non-exam exercise directly to exam exercise
-                }),
+                tap(
+                    (segments) =>
+                        (this.isImport = segments.some((segment) => segment.path === 'import', (this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups')))),
+                ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
@@ -217,7 +192,9 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                         }
                     }
                     if (this.isImport) {
-                        const courseId = this.courseId();
+                        const courseId = params['courseId'];
+                        this.courseId.set(courseId);
+
                         if (this.isExamMode) {
                             // The target exerciseId where we want to import into
                             const exerciseGroupId = params['exerciseGroupId'];
@@ -352,5 +329,26 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
             onError(this.alertService, errorRes);
         }
         this.isSaving = false;
+    }
+
+    private updateExerciseWithPlannedExerciseIfNotExamMode() {
+        const plannedExercise = this.plannedExercise();
+        const isUpdateMode = this.editType === EditType.UPDATE;
+        if (!this.isExamMode && !isUpdateMode) {
+            this.textExercise.title = plannedExercise?.title;
+            this.textExercise.releaseDate = plannedExercise?.releaseDate;
+            this.textExercise.startDate = plannedExercise?.startDate;
+            this.textExercise.dueDate = plannedExercise?.dueDate;
+            this.textExercise.assessmentDueDate = plannedExercise?.assessmentDueDate;
+        }
+    }
+
+    /**
+     * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
+     */
+    private updateFormSectionsOnIsValidChange() {
+        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // trigger the effect
+        this.exerciseUpdatePlagiarismComponent()?.isFormValid();
+        this.calculateFormSectionStatus();
     }
 }

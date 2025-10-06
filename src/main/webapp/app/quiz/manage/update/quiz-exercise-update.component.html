@@ -38,7 +38,6 @@
                 <form name="editForm" role="form" novalidate>
                     <jhi-exercise-title-channel-name
                         [exercise]="quizExercise"
-                        [plannedExerciseTitle]="plannedExercise()?.title"
                         [course]="quizExercise.course"
                         (onTitleChange)="cacheValidation()"
                         (onChannelNameChange)="cacheValidation()"

@@ -13,7 +13,6 @@ import { HelpIconComponent } from '../../components/help-icon/help-icon.componen
     imports: [TranslateDirective, FormsModule, CustomNotIncludedInValidatorDirective, HelpIconComponent],
 })
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
-    plannedExerciseTitle = input<string>();
     title = model<string | undefined>(undefined);
     channelName = model<string | undefined>(undefined);
     channelNamePrefix = input<string | undefined>('');
@@ -44,8 +43,6 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     });
 
     constructor() {
-        effect(() => this.title.set(this.plannedExerciseTitle() ?? ''));
-
         effect(() => {
             this.isEditFieldDisplayedRecord(); // triggers effect on change
             this.registerChangeListeners();
