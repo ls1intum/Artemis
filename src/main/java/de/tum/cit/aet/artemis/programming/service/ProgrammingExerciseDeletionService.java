@@ -80,7 +80,7 @@ public class ProgrammingExerciseDeletionService {
         }
         programmingExerciseRepositoryService.deleteLocalRepoCopies(programmingExercise);
 
-        irisSettingsApi.ifPresent(api -> api.deleteSettingsFor(programmingExercise));
+        irisSettingsApi.ifPresent(api -> api.deleteSettingsForExercise(programmingExerciseId));
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();

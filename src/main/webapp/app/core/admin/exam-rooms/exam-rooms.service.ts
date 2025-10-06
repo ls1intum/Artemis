@@ -29,14 +29,6 @@ export class ExamRoomsService {
     }
 
     /**
-     * Send a DELETE request to remove everything related to exam rooms.
-     * This also removes exam rooms that are connected to an exam.
-     */
-    deleteAllExamRooms(): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.baseUrl}`, { observe: 'response' });
-    }
-
-    /**
      * Send a DELETE request to remove all outdated and unused exam rooms. Besides keeping the newest version of
      * each room, this also keeps all versions that are (still) being connected to an exam.
      */
