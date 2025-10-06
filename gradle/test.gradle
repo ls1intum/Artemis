@@ -60,49 +60,6 @@ tasks.withType(Test).configureEach {
         }
     }
 
-    doLast {
-        def junitReportDir = reports.junitXml.outputLocation.get().asFile
-        if (!junitReportDir.exists()) {
-            return
-        }
-
-        junitReportDir.eachFileRecurse { File reportFile ->
-            if (reportFile.isFile() && reportFile.name.startsWith("TEST-") && reportFile.name.endsWith(".xml")) {
-                def parser = new XmlParser(false, false)
-                def node = parser.parse(reportFile)
-                boolean fileUpdated = false
-
-                node.'testcase'.each { testCase ->
-                    def children = testCase.children()
-                    boolean hasStandardFailure = children.any { it.name() == 'failure' || it.name() == 'error' }
-                    if (!hasStandardFailure) {
-                        def flakyEntries = children.findAll { it.name() == 'flakyFailure' }
-                        if (!flakyEntries.isEmpty()) {
-                            flakyEntries.each { testCase.remove(it) }
-                            fileUpdated = true
-                        }
-                    }
-                }
-
-                if (fileUpdated) {
-                    int failureCount = node.'testcase'.sum { current ->
-                        current.children().count { it.name() == 'failure' }
-                    }
-                    int errorCount = node.'testcase'.sum { current ->
-                        current.children().count { it.name() == 'error' }
-                    }
-
-                    node.@failures = failureCount.toString()
-                    node.@errors = errorCount.toString()
-                    node.@tests = node.'testcase'.size().toString()
-
-                    reportFile.withWriter("UTF-8") { writer ->
-                        writer << XmlUtil.serialize(node)
-                    }
-                }
-            }
-        }
-    }
 }
 
 // Allow using in jacoco.gradle
