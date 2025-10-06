@@ -130,39 +130,6 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * initialize the GitService, in particular which authentication mechanism should be used
-     * EventListener cannot be used here, as the bean is lazy
-     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
-     * Artemis uses the following order for authentication:
-     * 1. ssh key (if available)
-     * 2. username + personal access token (if available)
-     * 3. username + password
-     */
-    @PostConstruct
-    public void init() {
-        // TODO: this should not be used anymore
-        if (useSsh()) {
-            log.info("GitService will use ssh keys as authentication method to interact with remote git repositories");
-            configureSsh();
-        }
-        else if (gitToken.isPresent()) {
-            log.info("GitService will use username + token as authentication method to interact with remote git repositories");
-            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitToken.get()));
-        }
-        else {
-            log.info("GitService will use username + password as authentication method to interact with remote git repositories");
-            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
-        }
-
-    }
-
-    @PreDestroy
-    @Override
-    public void cleanup() {
-        super.cleanup();
-    }
-
-    /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
      * is
      * used.
