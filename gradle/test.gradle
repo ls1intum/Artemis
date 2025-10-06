@@ -1,7 +1,5 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import groovy.xml.XmlParser
-import groovy.xml.XmlUtil
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
 tasks.withType(Test).configureEach {
@@ -14,12 +12,6 @@ tasks.withType(Test).configureEach {
     retry {
         maxRetries.set(2)
         failOnPassedAfterRetry.set(false)
-    }
-
-    reports {
-        junitXml {
-            mergeReruns = true
-        }
     }
 
     testLogging {
@@ -59,7 +51,6 @@ tasks.withType(Test).configureEach {
             }
         }
     }
-
 }
 
 // Allow using in jacoco.gradle

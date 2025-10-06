@@ -85,46 +85,33 @@ jobs:
       if: ${{ !env.RUN_ALL_TESTS }}
       run: |
         set -o pipefail
-        # DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
 
-        # # Explicitly fetch as the clone action only clones the current branch
-        # git fetch origin "$DEFAULT_BRANCH"
+        DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
 
-        # chmod +x ./supporting_scripts/get_changed_modules.sh
-        # CHANGED_MODULES=$(./supporting_scripts/get_changed_modules.sh "origin/$DEFAULT_BRANCH")
+        # Explicitly fetch as the clone action only clones the current branch
+        git fetch origin "$DEFAULT_BRANCH"
 
-        # # Restrict executed tests to changed modules if there is diff between this and the base branch
-        # if [ -n "${CHANGED_MODULES}" ]; then
-        #   IFS=,
-        #   TEST_MODULE_TAGS=$(echo "-DincludeModules=${CHANGED_MODULES[*]}")
+        chmod +x ./supporting_scripts/get_changed_modules.sh
+        CHANGED_MODULES=$(./supporting_scripts/get_changed_modules.sh "origin/$DEFAULT_BRANCH")
 
-        #   echo "Executing tests for modules: $CHANGED_MODULES"
-        #   if ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" | tee tests.log; then
-        #     echo "All tests passed (including retries)"
-        #     exit 0
-        #   else
-        #     echo "Tests failed even after retries"
-        #     exit 1
-        #   fi
-        else
-          echo "FlakyTest failed even after retries"
-          exit 1
+        # Restrict executed tests to changed modules if there is diff between this and the base branch
+        if [ -n "${CHANGED_MODULES}" ]; then
+          IFS=,
+          TEST_MODULE_TAGS=$(echo "-DincludeModules=${CHANGED_MODULES[*]}")
+
+          echo "Executing tests for modules: $CHANGED_MODULES"
+          ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" | tee tests.log
+          exit $?
         fi
+
+        echo "Executing all tests"
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Java Tests (All)
       # Non-draft pull-request or default branch
       if: ${{ env.RUN_ALL_TESTS }}
       run: |
         set -o pipefail
-
-        # TEMPORARY: Run only FlakyTest for quick debugging
-        echo "Running only FlakyTest for debugging"
-        if ./gradlew --console=plain test --tests de.tum.cit.aet.artemis.flaky.FlakyTest -x webapp | tee tests.log; then
-          echo "FlakyTest passed (including retries)"
-          exit 0
-        else
-          echo "FlakyTest failed even after retries"
-          exit 1
-        fi
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Upload JUnit Test Results
       if: success() || failure()
       uses: actions/upload-artifact@v4

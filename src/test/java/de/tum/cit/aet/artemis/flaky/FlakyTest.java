@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 class FlakyTest {
 
     private void assertRandomly() {
-        assertThat(Math.random()).as("Test failed randomly").isGreaterThanOrEqualTo(0.2);
+        assertThat(Math.random()).as("Test failed randomly").isGreaterThanOrEqualTo(0.3);
     }
 
     @Test
