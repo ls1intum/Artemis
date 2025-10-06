@@ -30,7 +30,7 @@
                 </div>
                 @for (weekDay of weekDays; track weekDay) {
                     <input formControlName="dayOfWeek" type="radio" class="btn-check" name="dayOfWeek" id="{{ weekDay.id }}" autocomplete="off" [value]="weekDay.value" checked />
-                    <label class="btn btn-outline-primary" for="{{ weekDay.id }}">{{ 'artemisApp.generic.weekdays.' + weekDay.translationKey | artemisTranslate }}</label>
+                    <label class="btn btn-outline-primary" for="{{ weekDay.id }}">{{ 'global.weekdays.' + weekDay.translationKey | artemisTranslate }}</label>
                 }
             </div>
             <!-- Time -->
