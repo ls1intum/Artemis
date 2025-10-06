@@ -313,38 +313,6 @@ describe('ExamRoomsComponentTest', () => {
         return examRoom;
     }
 
-    it('should call deletion service on delete all button click', () => {
-        // GIVEN
-        fixture.detectChanges(); // initial render
-        jest.spyOn(service, 'deleteAllExamRooms').mockReturnValue(of(convertBodyToHttpResponse<void>()));
-        const deleteAllButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteAll');
-
-        // WHEN
-        deleteAllButton.click();
-        fixture.detectChanges();
-
-        // THEN
-        expect(service.deleteAllExamRooms).toHaveBeenCalledOnce();
-        // once from the initial load, once from the button click
-        expect(service.getAdminOverview).toHaveBeenCalledTimes(2);
-    });
-
-    it('should not reload overview if deletion fails on delete all button click', () => {
-        // GIVEN
-        fixture.detectChanges(); // initial render
-        jest.spyOn(service, 'deleteAllExamRooms').mockReturnValue(throwError(() => new Error()));
-        const deleteAllButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteAll');
-
-        // WHEN
-        deleteAllButton.click();
-        fixture.detectChanges();
-
-        // THEN
-        expect(service.deleteAllExamRooms).toHaveBeenCalledOnce();
-        // once from the initial load
-        expect(service.getAdminOverview).toHaveBeenCalledOnce();
-    });
-
     it('should call delete outdated and unused service on delete outdated and unused button click', () => {
         // GIVEN
         fixture.detectChanges(); // initial render
