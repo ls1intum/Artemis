@@ -6,8 +6,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -28,12 +26,8 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
         this.tutorialGroupService = tutorialGroupService;
     }
 
-    public Set<Long> findAllForNotifications(User user) {
-        return tutorialGroupService.findAllForNotifications(user);
-    }
-
-    public Long countByCourse(Course course) {
-        return tutorialGroupRepository.countByCourse(course);
+    public Long countByCourseId(long courseId) {
+        return tutorialGroupRepository.countByCourseId(courseId);
     }
 
     public Set<TutorialGroup> findAllByCourseId(Long courseId) {
