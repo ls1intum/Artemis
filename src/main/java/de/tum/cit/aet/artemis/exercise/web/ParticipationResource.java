@@ -70,7 +70,7 @@ import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
- * REST controller for starting, resuming normal and practice participations and requesting feedback.
+ * REST controller for starting or resuming participations, as well as requesting feedback for one.
  */
 @Profile(PROFILE_CORE)
 @Lazy

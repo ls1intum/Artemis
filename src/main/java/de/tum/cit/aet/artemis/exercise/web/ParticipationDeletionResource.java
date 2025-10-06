@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
- * REST controller for managing Participation.
+ * REST controller for deleting a participation and cleaning up a build plan for a participation.
  */
 @Profile(PROFILE_CORE)
 @Lazy
