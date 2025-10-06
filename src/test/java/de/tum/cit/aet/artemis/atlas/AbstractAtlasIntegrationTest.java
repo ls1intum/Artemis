@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
@@ -187,6 +188,6 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     @MockitoBean
     protected AtlasPromptTemplateService atlasPromptTemplateService;
 
-    @MockitoBean
+    @MockitoSpyBean
     protected AtlasAgentService atlasAgentService;
 }
