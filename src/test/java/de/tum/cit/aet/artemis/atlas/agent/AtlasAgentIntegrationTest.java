@@ -1,19 +1,13 @@
 package de.tum.cit.aet.artemis.atlas.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -24,7 +18,6 @@ import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatRequestDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
-@Import(AtlasAgentIntegrationTest.TestConfig.class)
 class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String TEST_PREFIX = "atlasagentintegration";
@@ -199,19 +192,5 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").value("course-content-session")).andExpect(jsonPath("$.message").exists());
-    }
-
-    @TestConfiguration
-    static class TestConfig {
-
-        @Bean
-        @Primary
-        public ChatClient mockChatClient() {
-            ChatClient client = mock(ChatClient.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
-            // Return a stable stubbed response for all tests
-            org.mockito.Mockito.when(client.prompt().system(org.mockito.ArgumentMatchers.anyString()).user(org.mockito.ArgumentMatchers.anyString())
-                    .options(org.mockito.ArgumentMatchers.any()).call().content()).thenReturn("stubbed agent response");
-            return client;
-        }
     }
 }

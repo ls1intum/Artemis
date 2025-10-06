@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.atlas;
 
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
@@ -19,6 +21,8 @@ import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
+import de.tum.cit.aet.artemis.atlas.service.AtlasPromptTemplateService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRepositoryService;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
@@ -175,4 +179,14 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected TeamUtilService teamUtilService;
+
+    // Mock beans for Atlas Agent tests
+    @MockitoBean
+    protected ChatClient chatClient;
+
+    @MockitoBean
+    protected AtlasPromptTemplateService atlasPromptTemplateService;
+
+    @MockitoBean
+    protected AtlasAgentService atlasAgentService;
 }
