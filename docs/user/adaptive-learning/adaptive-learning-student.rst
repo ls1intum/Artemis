@@ -52,7 +52,7 @@ Students can open the course competency graph for a broader view of how competen
 .. _learner_profile_student:
 
 Learner Profile
---------------
+---------------
 **Learner Profiles** allow students to configure their personal learning preferences and motivations, making their experience in Artemis more tailored to their individual needs. 
 Currently, there are two types of learner profiles available: **Feedback Learner Profile** and **Course Learner Profile**.
 
