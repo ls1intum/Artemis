@@ -12,15 +12,45 @@
 
         <!-- Backfill exercise_id using result->submission->participation->exercise relationship -->
         <sql>
-            UPDATE result
+            UPDATE result r
             SET exercise_id = (
                 SELECT p.exercise_id
-                FROM Submission s, Participation p
-                WHERE result.submission_id = s.id
-                  AND s.participation_id = p.id
+                FROM submission s
+                         JOIN participation p ON s.participation_id = p.id
+                WHERE s.id = r.submission_id
             )
-            WHERE exercise_id IS NULL;
+            WHERE r.exercise_id IS NULL;
         </sql>
+
+        <!-- Clear all entries blocking deletion due to foreign key constraints-->
+        <sql>
+        UPDATE participant_score ps
+        SET last_result_id = NULL
+        FROM result r
+        WHERE r.id = ps.last_result_id
+        AND r.exercise_id IS NULL;
+
+        DELETE FROM feedback f
+        USING result r
+        WHERE r.id = f.result_id
+        AND r.exercise_id IS NULL;
+
+        DELETE FROM assessment_note a
+        USING result r
+        WHERE r.id = a.result_id
+        AND r.exercise_id IS NULL;
+
+        DELETE FROM result_rating rr
+        USING result r
+        WHERE r.id = rr.result_id
+        AND r.exercise_id IS NULL;
+
+        DELETE FROM complaint c
+        USING result r
+        WHERE r.id = c.result_id
+        AND r.exercise_id IS NULL;
+        </sql>
+
 
         <!-- Delete results that still have no exercise_id after backfill because the relationship mentioned above is non-existent-->
         <sql>
