@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,6 +19,11 @@ import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { isExamExercise } from 'app/shared/util/utils';
+import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+
 /**
  * Enumeration specifying the loading state
  */
@@ -44,6 +49,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    resultHtml = signal<string>('');
 
     ButtonSize = ButtonSize;
     LOADING_STATE = LOADING_STATE;
@@ -346,6 +354,20 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .subscribe({
                 error: (err: Error) => this.onError(err.message),
             });
+    }
+
+    /**
+     * Opens modal and executes a consistency check for the given programming exercise
+     * @param exercise the programming exercise to check
+     */
+    checkConsistencies(exercise: ProgrammingExercise) {
+        const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.exercisesToCheck = Array.of(exercise);
+
+        const action = new ConsistencyCheckAction(this.artemisIntelligenceService, exercise.id!, this.resultHtml);
+        this.codeEditorContainer.monacoEditor.editor().registerAction(action);
+
+        action.executeInCurrentEditor();
     }
 
     /**

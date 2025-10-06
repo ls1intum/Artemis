@@ -14,6 +14,8 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../stat
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -50,4 +52,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faTimesCircle = faTimesCircle;
     irisSettings?: IrisSettings;
     protected readonly RepositoryType = RepositoryType;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly faCheckDouble = faCheckDouble;
 }

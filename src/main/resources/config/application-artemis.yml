@@ -107,22 +107,4 @@ artemis:
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
 
 
-# Configure Spring AI, if you want to use Hyperion
-spring:
-  ai:
-    model:
-      chat: none #disable any spring ai interaction
-    chat:
-      client:
-        enabled: ${artemis.hyperion.enabled} # Enable the chat client if hyperion is enabled
-    # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
-    azure:
-      openai:
-        api-key: <azure_openai_key>
-        # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets endpoint automatically
-        endpoint: <azure_openai_endpoint>
-        chat:
-          options:
-            deployment-name: <azure_openai_deployment_name or openai_model_name>
-            # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
-            temperature: 1.0
+

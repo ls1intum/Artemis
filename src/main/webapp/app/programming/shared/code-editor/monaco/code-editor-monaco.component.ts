@@ -341,6 +341,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
                 this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
             }
 
+            this.addCommentBox(4, 'Hier steht dann der Text fuer die Consistency');
+
             // Focus the text area of the widget on the specified line if available.
             if (lineOfWidgetToFocus !== undefined) {
                 this.getInlineFeedbackNode(lineOfWidgetToFocus)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
@@ -389,6 +391,34 @@ export class CodeEditorMonacoComponent implements OnChanges {
             return [];
         }
         return feedbacks.filter((feedback) => feedback.reference && Feedback.getReferenceFilePath(feedback) === this.selectedFile());
+    }
+
+    addCommentBox(lineNumber: number, text: string) {
+        // Monaco is 1-based
+        const oneBasedLine = lineNumber + 1;
+
+        const node = document.createElement('div');
+        node.className = 'my-comment-widget';
+        node.innerText = text;
+
+        // Place box beneath the line
+        this.editor().addLineWidget(oneBasedLine, `comment-${oneBasedLine}`, node);
+        this.highlightLines(oneBasedLine, oneBasedLine);
+
+        const annotation: Annotation = {
+            fileName: this.selectedFile() ?? '',
+            row: lineNumber, // 1-based line number for markers
+            column: 1, // start of line
+            text, // show the comment text in the tooltip
+            type: 'warning', // pick a severity/type your Monaco wrapper understands: 'error' | 'warning' | 'info' | 'hint'
+            timestamp: Date.now(),
+        };
+
+        // add the new one
+        this.annotationsArray = [...this.annotationsArray, annotation];
+
+        // this persists to localStorage and calls this.editor().setAnnotations(...) for the selected file
+        this.setBuildAnnotations(this.annotationsArray);
     }
 
     /**
