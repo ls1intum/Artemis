@@ -26,6 +26,6 @@ public class CourseCompetencyApi extends AbstractAtlasApi {
     }
 
     public List<CourseCompetency> findAllByExerciseId(long exerciseId) {
-        return courseCompetencyRepository.findAllByExerciseId(exerciseId);
+        return courseCompetencyRepository.findAllByExerciseIdWithExerciseLinks(exerciseId);
     }
 }
