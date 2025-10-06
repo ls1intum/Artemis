@@ -90,7 +90,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * @return {@link QuizExercise}
      */
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
-    Optional<QuizExercise> findWithEagerForVersioningById(Long exerciseId);
+    Optional<QuizExercise> findForVersioningById(Long exerciseId);
 
     @Query("""
             SELECT q

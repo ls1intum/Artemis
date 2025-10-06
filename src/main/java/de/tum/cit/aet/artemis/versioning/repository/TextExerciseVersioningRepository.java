@@ -31,5 +31,5 @@ public interface TextExerciseVersioningRepository extends ArtemisJpaRepository<T
      * @return {@link TextExercise}
      */
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
-    Optional<TextExercise> findWithEagerForVersioningById(long exerciseId);
+    Optional<TextExercise> findForVersioningById(long exerciseId);
 }

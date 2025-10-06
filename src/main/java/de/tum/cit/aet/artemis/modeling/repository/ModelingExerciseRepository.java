@@ -54,7 +54,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
      * @return {@link ModelingExercise}
      */
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
-    Optional<ModelingExercise> findWithEagerForVersioningById(long exerciseId);
+    Optional<ModelingExercise> findForVersioningById(long exerciseId);
 
     @Query("""
             SELECT modelingExercise

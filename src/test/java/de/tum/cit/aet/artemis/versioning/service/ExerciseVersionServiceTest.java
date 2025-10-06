@@ -427,7 +427,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     private ProgrammingExercise createProgrammingExercise() {
 
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
-        programmingExercise = programmingExerciseRepository.findWithEagerForVersioningById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findForVersioningById(programmingExercise.getId()).orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         var penaltyPolicy = new SubmissionPenaltyPolicy();
@@ -441,7 +441,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         String projectKey = programmingExercise.getProjectKey();
         try {
-            programmingExercise = programmingExerciseRepository.findWithEagerForVersioningById(programmingExercise.getId()).orElseThrow();
+            programmingExercise = programmingExerciseRepository.findForVersioningById(programmingExercise.getId()).orElseThrow();
 
             programmingExercise.setAuxiliaryRepositories(new ArrayList<>());
 
@@ -476,7 +476,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         // base repositories.
         localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);
 
-        programmingExercise = programmingExerciseRepository.findWithEagerForVersioningById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findForVersioningById(programmingExercise.getId()).orElseThrow();
         return programmingExercise;
     }
 
@@ -484,7 +484,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         // Create a modeling exercise
         Exercise exercise = course.getExercises().iterator().next();
-        return modelingExerciseRepository.findWithEagerForVersioningById(exercise.getId()).orElseThrow();
+        return modelingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
     }
 
     private QuizExercise createQuizExercise() {
@@ -501,11 +501,11 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private Exercise fetchExerciseForComparison(Exercise exercise) {
         return switch (exercise) {
-            case ProgrammingExercise pExercise -> programmingExerciseRepository.findWithEagerForVersioningById(exercise.getId()).orElse(pExercise);
-            case QuizExercise qExercise -> quizExerciseRepository.findWithEagerForVersioningById(exercise.getId()).orElse(qExercise);
-            case TextExercise tExercise -> textExerciseRepository.findWithEagerForVersioningById(exercise.getId()).orElse(tExercise);
-            case ModelingExercise mExercise -> modelingExerciseRepository.findWithEagerForVersioningById(exercise.getId()).orElse(mExercise);
-            case FileUploadExercise fExercise -> fileUploadExerciseRepository.findWithEagerForVersioningById(exercise.getId()).orElse(fExercise);
+            case ProgrammingExercise pExercise -> programmingExerciseRepository.findForVersioningById(exercise.getId()).orElse(pExercise);
+            case QuizExercise qExercise -> quizExerciseRepository.findForVersioningById(exercise.getId()).orElse(qExercise);
+            case TextExercise tExercise -> textExerciseRepository.findForVersioningById(exercise.getId()).orElse(tExercise);
+            case ModelingExercise mExercise -> modelingExerciseRepository.findForVersioningById(exercise.getId()).orElse(mExercise);
+            case FileUploadExercise fExercise -> fileUploadExerciseRepository.findForVersioningById(exercise.getId()).orElse(fExercise);
             default -> exercise;
         };
     }

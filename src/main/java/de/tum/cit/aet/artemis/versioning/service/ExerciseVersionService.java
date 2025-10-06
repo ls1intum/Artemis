@@ -137,11 +137,11 @@ public class ExerciseVersionService {
             return null;
         }
         return switch (exerciseType) {
-            case PROGRAMMING -> programmingExerciseRepository.findWithEagerForVersioningById(exerciseId).orElse(null);
-            case QUIZ -> quizExerciseRepository.findWithEagerForVersioningById(exerciseId).orElse(null);
-            case TEXT -> textExerciseRepository.findWithEagerForVersioningById(exerciseId).orElse(null);
-            case MODELING -> modelingExerciseRepository.findWithEagerForVersioningById(exerciseId).orElse(null);
-            case FILE_UPLOAD -> fileUploadExerciseRepository.findWithEagerForVersioningById(exerciseId).orElse(null);
+            case PROGRAMMING -> programmingExerciseRepository.findForVersioningById(exerciseId).orElse(null);
+            case QUIZ -> quizExerciseRepository.findForVersioningById(exerciseId).orElse(null);
+            case TEXT -> textExerciseRepository.findForVersioningById(exerciseId).orElse(null);
+            case MODELING -> modelingExerciseRepository.findForVersioningById(exerciseId).orElse(null);
+            case FILE_UPLOAD -> fileUploadExerciseRepository.findForVersioningById(exerciseId).orElse(null);
         };
     }
 }
