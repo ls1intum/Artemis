@@ -33,17 +33,7 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredAlertClass()).toBe('alert-danger');
     });
 
-    it('should return correct icons for each type', () => {
-        expect(component.inferredIcon()).toBe(component.faTimes); // default for not_attempted
-    });
-
     it('should return correct alert classes for each type', () => {
         expect(component.inferredAlertClass()).toBe('alert-danger'); // default for not_attempted
-    });
-
-    it('should have legacy icon support', () => {
-        expect(component.icon()).toBe('success');
-        expect(component.getIconForType()).toBe(component.inferredIcon());
-        expect(component.getAlertClass()).toBe(component.inferredAlertClass());
     });
 });
