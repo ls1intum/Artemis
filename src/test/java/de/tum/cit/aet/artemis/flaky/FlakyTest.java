@@ -59,4 +59,9 @@ class FlakyTest {
     void flakyTest10() {
         assertRandomly();
     }
+
+    @Test
+    void failyTest() {
+        fail("This test always fails");
+    }
 }
