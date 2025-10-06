@@ -24,7 +24,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('AssessmentLayoutComponent', () => {
     let component: AssessmentLayoutComponent;
@@ -39,15 +39,11 @@ describe('AssessmentLayoutComponent', () => {
         exerciseServiceMock = { getStatsForTutors: getStatsForTutorsMock };
 
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
+            imports: [FontAwesomeTestingModule, MockModule(NgbTooltipModule), AssessmentLayoutComponent, AssessmentHeaderComponent, AssessmentNoteComponent],
             declarations: [
-                AssessmentLayoutComponent,
-                AssessmentHeaderComponent,
-                AssessmentNoteComponent,
                 MockComponent(AssessmentComplaintAlertComponent),
                 MockComponent(AssessmentWarningComponent),
                 MockComponent(ComplaintsForTutorComponent),
-                MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
@@ -64,7 +60,6 @@ describe('AssessmentLayoutComponent', () => {
                 fixture = TestBed.createComponent(AssessmentLayoutComponent);
                 component = fixture.componentInstance;
 
-                // baseline props needed for new tests
                 component.correctionRound = 0 as any;
                 component.exercise = { id: 42 } as any;
 
@@ -86,10 +81,6 @@ describe('AssessmentLayoutComponent', () => {
         complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
         expect(complaintsForTutorComponent).toBeTruthy();
     });
-
-    // ──────────────────────────────────────────────────────────────
-    // hasUnassessedSubmissions logic
-    // ──────────────────────────────────────────────────────────────
 
     it('sets hasUnassessedSubmissions=true when submitted > assessed + locked', () => {
         const body = {
