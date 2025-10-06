@@ -25,10 +25,10 @@ import { By } from '@angular/platform-browser';
         <jhi-competency-management-table
             [courseId]="1"
             [courseCompetencies]="courseCompetencies"
-            [(allCompetencies)]="allCompetencies"
             [competencyType]="competencyType"
             [standardizedCompetenciesEnabled]="true"
             (competencyDeleted)="competencyDeleted($event)"
+            (competenciesAdded)="competenciesAdded($event)"
         />
     `,
     standalone: true,
@@ -41,6 +41,9 @@ class WrappedComponent {
     protected readonly CourseCompetencyType = CourseCompetencyType;
 
     competencyDeleted(competencyId: number) {}
+    competenciesAdded(added: CourseCompetency[]) {
+        this.allCompetencies = this.allCompetencies.concat(added);
+    }
 }
 
 describe('CompetencyManagementTableComponent', () => {
@@ -100,7 +103,7 @@ describe('CompetencyManagementTableComponent', () => {
         ];
 
         competencyManagementTableComponent.updateDataAfterImportAll(responseBody);
-        expect(competencyManagementTableComponent.allCompetencies()).toHaveLength(2);
+        expect(component.allCompetencies).toHaveLength(2);
     });
 
     it('should handle delete competency', () => {

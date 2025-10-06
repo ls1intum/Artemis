@@ -173,6 +173,15 @@ export class CompetencyManagementComponent implements OnInit {
         this.courseCompetencies.update((courseCompetencies) => courseCompetencies.filter((cc) => cc.id !== competencyId));
     }
 
+    onCompetenciesAdded(added: CourseCompetency[]) {
+        // Merge added items into parent-owned list, avoiding duplicates
+        const current = this.courseCompetencies();
+        const newOnes = added.filter((c) => !current.some((e) => e?.id === c?.id));
+        if (newOnes.length) {
+            this.courseCompetencies.update((list) => list.concat(newOnes));
+        }
+    }
+
     openCourseCompetencyExplanation(): void {
         this.modalService.open(CourseCompetencyExplanationModalComponent, {
             size: 'xl',

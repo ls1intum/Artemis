@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, input, model, output } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
@@ -42,9 +42,8 @@ export class CompetencyManagementTableComponent {
     competencyType = input.required<CourseCompetencyType>();
     standardizedCompetenciesEnabled = input<boolean>();
 
-    allCompetencies = model.required<CourseCompetency[]>();
-
     competencyDeleted = output<number>();
+    competenciesAdded = output<CourseCompetency[]>();
 
     service: CompetencyService | PrerequisiteService;
     private dialogErrorSource = new Subject<string>();
@@ -112,10 +111,11 @@ export class CompetencyManagementTableComponent {
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
         const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
-        // Use allCompetencies as the single source of truth and avoid mutating inputs
-        const currentList = this.allCompetencies();
+        const currentList = this.courseCompetencies();
         const newOnes = importedCompetencies.filter((c) => !currentList.some((e) => e?.id === c?.id));
-        this.allCompetencies.set([...currentList, ...newOnes]);
+        if (newOnes.length) {
+            this.competenciesAdded.emit(newOnes);
+        }
     }
 
     /**
