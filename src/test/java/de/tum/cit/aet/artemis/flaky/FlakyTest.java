@@ -1,13 +1,13 @@
 package de.tum.cit.aet.artemis.flaky;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
 class FlakyTest {
 
     private void assertRandomly() {
-        assertTrue(Math.random() >= 0.2, String.format("Test failed randomly"));
+        assertThat(Math.random()).as("Test failed randomly").isGreaterThanOrEqualTo(0.2);
     }
 
     @Test
