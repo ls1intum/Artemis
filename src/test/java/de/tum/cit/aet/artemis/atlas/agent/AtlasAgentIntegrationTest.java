@@ -17,9 +17,9 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
 import de.tum.cit.aet.artemis.atlas.service.AtlasPromptTemplateService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
-@Import(AtlasAgentTestConfiguration.class)
 class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String TEST_PREFIX = "atlasagentintegration";
@@ -43,7 +42,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     @Autowired
     private AtlasPromptTemplateService templateService;
 
-    @Autowired
+    @MockitoBean
     private ChatModel chatModel;
 
     private Course course;
