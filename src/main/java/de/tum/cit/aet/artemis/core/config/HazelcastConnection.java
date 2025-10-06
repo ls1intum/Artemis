@@ -81,7 +81,7 @@ public class HazelcastConnection {
      * and registers them in the Hazelcast configuration for joining the cluster.
      *
      * <p>
-     * Called once after the bean has been instantiated
+     * Called once after this bean (HazelcastConnection) has been instantiated
      */
     @PostConstruct
     private void connectHazelcast() {
