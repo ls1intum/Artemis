@@ -1,13 +1,23 @@
 package de.tum.cit.aet.artemis.atlas.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -16,8 +26,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatRequestDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
+import de.tum.cit.aet.artemis.atlas.service.AtlasPromptTemplateService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
+@Import(AtlasAgentTestConfiguration.class)
 class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String TEST_PREFIX = "atlasagentintegration";
@@ -28,12 +40,23 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     @Autowired
     private AtlasAgentService atlasAgentService;
 
+    @Autowired
+    private AtlasPromptTemplateService templateService;
+
+    @Autowired
+    private ChatModel chatModel;
+
     private Course course;
 
     @BeforeEach
     void setupTestScenario() {
         course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+
+        // Setup mock responses for the chat model
+        when(templateService.render(any(), any())).thenReturn("Test system prompt");
+        when(chatModel.call(any(Prompt.class)))
+                .thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for competency assistance")))));
     }
 
     @Test
