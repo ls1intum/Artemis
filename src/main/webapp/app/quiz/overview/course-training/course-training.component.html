@@ -151,7 +151,23 @@
                         }
                     </div>
                     <div class="due-date-container mt-5">
-                        <span class="emoji">⏰</span> <span>Next questions due in {{ dueIn() }} days</span>
+                        <span class="emoji">⏰</span>
+                        @if (!dueIn().isValid) {
+                            <span jhiTranslate="artemisApp.quizTraining.noData"></span>
+                        } @else if (dueIn().isPast) {
+                            <span jhiTranslate="artemisApp.quizTraining.now"></span>
+                        } @else {
+                            <span>
+                                <span jhiTranslate="artemisApp.quizTraining.nextQuestionsDue"></span>
+                                @if (dueIn().days > 0) {
+                                    <span>{{ dueIn().days }} d, </span>
+                                }
+                                @if (dueIn().hours > 0 || dueIn().days > 0) {
+                                    <span>{{ dueIn().hours }} h, </span>
+                                }
+                                <span>{{ dueIn().minutes }} min</span>
+                            </span>
+                        }
                     </div>
                     <div class="streak-container mt-2">
                         <span class="emoji">🔥</span> <span class="streak-display">{{ streak() }} days streak</span>

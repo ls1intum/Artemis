@@ -63,10 +63,20 @@ public class QuizTrainingLeaderboardService {
         int league;
         league = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).map(QuizTrainingLeaderboard::getLeague).orElse(BRONZE_LEAGUE);
 
+        var userLeaderboardEntryForCurrentCourse = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId);
+        boolean hasUserSetSettings = quizTrainingLeaderboardRepository.existsQuizTrainingLeaderboardByUser_Id(userId);
+
+        if (hasUserSetSettings && userLeaderboardEntryForCurrentCourse.isEmpty()) {
+            QuizTrainingLeaderboard existingEntry = quizTrainingLeaderboardRepository.findFirstByUser_Id(userId)
+                    .orElseThrow(() -> new IllegalStateException("Entry should exist but was not found"));
+
+            setInitialLeaderboardEntry(userId, courseId, existingEntry.isShowInLeaderboard());
+        }
+
         List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdAndShowInLeaderboardTrueOrderByScoreDescUserAscId(league,
                 courseId);
         List<LeaderboardEntryDTO> leaderboardEntryDTOs = getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
-        return new LeaderboardWithCurrentUserIdDTO(leaderboardEntryDTOs, userId);
+        return new LeaderboardWithCurrentUserIdDTO(leaderboardEntryDTOs, userId, hasUserSetSettings);
     }
 
     /**

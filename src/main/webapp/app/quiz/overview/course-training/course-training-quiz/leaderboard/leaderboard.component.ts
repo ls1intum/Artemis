@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { LeaderboardEntry } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
@@ -13,6 +13,10 @@ export class Leaderboard {
     currentUserId = input<number>(undefined!);
     leaderboardName = input<string>('');
     leaderboard = input<LeaderboardEntry[]>([]);
+
+    isUserInLeaderboard = computed(() => {
+        return this.leaderboard().some((entry) => entry.userId === this.currentUserId());
+    });
 
     // Computed properties for the highlight box
     get currentUserRank(): number {

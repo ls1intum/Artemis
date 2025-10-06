@@ -1,0 +1,9 @@
+{
+    "artemisApp": {
+        "quizTraining": {
+            "noData": "keine Daten",
+            "now": "jetzt",
+            "nextQuestionsDue": "Nächste Fragen fällig in "
+        }
+    }
+}

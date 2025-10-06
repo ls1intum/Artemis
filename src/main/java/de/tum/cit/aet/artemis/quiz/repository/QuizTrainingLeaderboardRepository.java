@@ -69,4 +69,8 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
             WHERE qtl.user.id = :userId
             """)
     void updateShownInLeaderboard(@Param("userId") long userId, @Param("showInLeaderboard") boolean showInLeaderboard);
+
+    boolean existsQuizTrainingLeaderboardByUser_Id(long userId);
+
+    Optional<QuizTrainingLeaderboard> findFirstByUser_Id(Long userId);
 }

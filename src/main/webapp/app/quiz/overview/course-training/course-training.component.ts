@@ -14,6 +14,7 @@ import { Leaderboard } from 'app/quiz/overview/course-training/course-training-q
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
+
 @Component({
     selector: 'jhi-course-practice',
     imports: [
@@ -116,21 +117,23 @@ export class CourseTrainingComponent {
 
     dueIn = computed(() => {
         const dueDateValue = this.dueDate();
-
         if (!dueDateValue) {
-            return 0;
+            return { isValid: false, isPast: false, days: 0, hours: 0, minutes: 0 };
         }
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
+        const now = new Date();
         const dueDate = new Date(dueDateValue);
-        dueDate.setHours(0, 0, 0, 0);
 
-        const diffTime = dueDate.getTime() - today.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        if (dueDate <= now) {
+            return { isValid: true, isPast: true, days: 0, hours: 0, minutes: 0 };
+        }
 
-        return Math.max(0, diffDays);
+        const diffMs = dueDate.getTime() - now.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        return { isValid: true, isPast: false, days: diffDays, hours: diffHours, minutes: diffMinutes };
     });
 
     streak = computed(() => {
@@ -168,9 +171,7 @@ export class CourseTrainingComponent {
                 this.isLoading.set(false);
                 this.isDataLoaded.set(true);
 
-                const hasUserEntry = leaderboard.leaderboardEntryDTO?.some((entry) => entry.userId === leaderboard.currentUserId);
-
-                if (hasUserEntry) {
+                if (leaderboard.hasUserSetSettings) {
                     this.showDialog = false;
                     this.isFirstVisit.set(false);
                 }

@@ -1,0 +1,9 @@
+{
+    "artemisApp": {
+        "quizTraining": {
+            "noData": "no data",
+            "now": "now",
+            "nextQuestionsDue": "Next questions due in "
+        }
+    }
+}

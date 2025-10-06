@@ -1,6 +1,7 @@
 export class LeaderboardDTO {
     public currentUserId: number;
     public leaderboardEntryDTO: LeaderboardEntry[];
+    public hasUserSetSettings: boolean;
 }
 
 export class LeaderboardEntry {

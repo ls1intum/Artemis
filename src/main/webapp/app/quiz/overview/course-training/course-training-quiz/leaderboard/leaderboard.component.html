@@ -1,23 +1,25 @@
 <div class="leaderboard-container">
-    <div class="highlight-box">
-        <div class="highlight-content">
-            <div class="highlight-item">
-                <span class="highlight-label">Rank</span>
-                <span class="highlight-value">#{{ currentUserRank }}</span>
-            </div>
-            <div class="highlight-item">
-                <span class="highlight-label">Student</span>
-                <span class="highlight-value">
-                    <jhi-profile-picture class="picture" [authorName]="leaderboardName()" [authorId]="currentUserRank" />
-                    {{ leaderboardName() }}
-                </span>
-            </div>
-            <div class="highlight-item">
-                <span class="highlight-label">Score</span>
-                <span class="highlight-value">{{ currentUserScore }}</span>
+    @if (isUserInLeaderboard()) {
+        <div class="highlight-box">
+            <div class="highlight-content">
+                <div class="highlight-item">
+                    <span class="highlight-label">Rank</span>
+                    <span class="highlight-value">#{{ currentUserRank }}</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-label">Student</span>
+                    <span class="highlight-value">
+                        <jhi-profile-picture class="picture" [authorName]="leaderboardName()" [authorId]="currentUserRank" />
+                        {{ leaderboardName() }}
+                    </span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-label">Score</span>
+                    <span class="highlight-value">{{ currentUserScore }}</span>
+                </div>
             </div>
         </div>
-    </div>
+    }
 
     <div class="table-frame">
         <table class="leaderboard-table">
