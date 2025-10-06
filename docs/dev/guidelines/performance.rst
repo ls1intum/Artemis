@@ -207,7 +207,7 @@ Use **lazy loading by default** and override it selectively in queries when nece
 
 .. warning::
 
-   Never use ``fetch = FetchType.EAGER`` on ``@OneToMany`` relationships!
+   Never use ``fetch = FetchType.EAGER`` on ``@OneToMany`` or ``@ManyToMany`` relationships!
    Doing so forces Hibernate to load all related entities every time the parent is fetched, which can easily lead to major performance issues and out-of-memory errors.
 
 Example:
