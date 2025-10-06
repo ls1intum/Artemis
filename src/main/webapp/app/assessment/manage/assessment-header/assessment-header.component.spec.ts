@@ -200,6 +200,8 @@ describe('AssessmentHeaderComponent', () => {
         component.exercise = {
             id: 1,
         } as Exercise;
+        component.hasUnassessedSubmissions = true;
+
         fixture.detectChanges();
 
         let nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
@@ -246,6 +248,7 @@ describe('AssessmentHeaderComponent', () => {
         nextSubmissionButtonSpan.nativeElement.click();
         expect(component.nextSubmission.emit).toHaveBeenCalledOnce();
     });
+
     it('should not show assess next button if is test run mode', () => {
         component.isTestRun = true;
         component.isLoading = false;
@@ -373,6 +376,7 @@ describe('AssessmentHeaderComponent', () => {
         component.result.completionDate = dayjs();
         component.isTeamMode = false;
         component.isTestRun = false;
+        component.hasUnassessedSubmissions = true;
         fixture.detectChanges();
 
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, shiftKey: true, key: 'ArrowRight' });
