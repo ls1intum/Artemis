@@ -74,29 +74,30 @@ Example:
 .. code-block:: java
 
    @Entity
-   public class QuizExercise {
+   public class QuizQuestionProgress extends DomainObject {
 
-       @Id
-       private Long id;
+       @Column(name = "user_id")
+       private long userId;
 
-        @JdbcTypeCode(SqlTypes.JSON)
-        @Column(name = "progress_json", columnDefinition = "json")
-        private QuizQuestionData questionData;
+       @Column(name = "course_id")
+       private long courseId;
 
-       // Example JSON:
-       // {
-       //   "questions": [
-       //       {"text": "What is 2+2?", "options": ["3","4","5"], "answer": "4"}
-       //   ]
-       // }
-   }
+       @Column(name = "quiz_question_id")
+       private long quizQuestionId;
+
+       @JdbcTypeCode(SqlTypes.JSON)
+       @Column(name = "progress_json", columnDefinition = "json")
+       private QuizQuestionProgressData progress;
+
 
 **Advantages:**
+
 * Reduces unnecessary joins and table complexity.
 * Improves query and insert/update performance dramatically.
 * Simplifies maintenance and evolution of data structures.
 
-Use JSON columns when:
+**Use JSON columns when:**
+
 * The data is self-contained (not referenced elsewhere).
 * You don’t need to filter or sort by inner JSON fields.
 * The structure changes over time and flexibility is required.
