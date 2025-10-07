@@ -396,13 +396,17 @@ public class SubmissionService {
     public Result saveNewEmptyResult(Submission submission) {
         Result result = new Result();
         result.setSubmission(submission);
-        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            result.setExerciseId(submission.getParticipation().getExercise().getId());
-        }
+        setExerciseIdFromSubmission(submission, result);
         submission.addResult(result);
         result = resultRepository.save(result);
         submissionRepository.save(submission);
         return result;
+    }
+
+    private static void setExerciseIdFromSubmission(Submission submission, Result result) {
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+            result.setExerciseId(submission.getParticipation().getExercise().getId());
+        }
     }
 
     /**
@@ -449,9 +453,7 @@ public class SubmissionService {
             return saveNewEmptyResult(submission);
         }
         Result newResult = new Result();
-        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            newResult.setExerciseId(submission.getParticipation().getExercise().getId());
-        }
+        setExerciseIdFromSubmission(submission, newResult);
         copyFeedbackToNewResult(newResult, oldResult);
         return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
     }
@@ -468,9 +470,7 @@ public class SubmissionService {
      */
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
-        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
-            newResult.setExerciseId(submission.getParticipation().getExercise().getId());
-        }
+        setExerciseIdFromSubmission(submission, newResult);
         updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
         copyFeedbackToResult(newResult, feedbacks);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
@@ -541,7 +541,7 @@ public class SubmissionService {
             var latestSubmission = studentParticipation.findLatestSubmission();
             if (latestSubmission.isPresent() && latestSubmission.get().getResultForCorrectionRound(correctionRound) == null) {
                 Result result = new Result();
-                result.setExerciseId(studentParticipation.getExercise().getId());
+                setExerciseIdFromSubmission(latestSubmission.get(), result);
                 result.setAssessor(assessor);
                 result.setCompletionDate(ZonedDateTime.now());
                 result.setScore(score, studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember());

@@ -175,30 +175,42 @@ public class ComplaintService {
     }
 
     public long countComplaintsByExerciseIds(Set<Long> exerciseIds) {
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return 0L;
+        }
         return complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
     }
 
-    public long countMoreFeedbackRequestsByCourseId(Set<Long> exerciseIds) {
+    public long countMoreFeedbackRequestsByExerciseIds(Set<Long> exerciseIds) {
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return 0L;
+        }
         return complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
     }
 
     /**
-     * Counts the number of responses to complaints for the given course id
+     * Counts the number of responses to complaints for the given exercise ids
      *
-     * @param courseId the id of the course
+     * @param exerciseIds the ids of the exercises
      * @return the number of responses
      */
     public long countComplaintResponsesByExerciseIds(Set<Long> exerciseIds) {
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return 0L;
+        }
         return complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
     }
 
     /**
-     * Counts the number of responses to feedback requests for the given course id
+     * Counts the number of responses to feedback requests for the given exercise ids
      *
-     * @param courseId the id of the course
+     * @param exerciseIds the ids of the exercises
      * @return the number of responses
      */
     public long countMoreFeedbackRequestResponsesByExerciseIds(Set<Long> exerciseIds) {
+        if (exerciseIds == null || exerciseIds.isEmpty()) {
+            return 0L;
+        }
         return complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.MORE_FEEDBACK);
     }
 

@@ -272,13 +272,11 @@ public class CourseStatsService {
         if (course.getComplaintsEnabled()) {
             start = System.currentTimeMillis();
             currentAbsoluteComplaints = complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, COMPLAINT);
-            log.debug(
-                    "complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull took {} ms for course with id {}",
-                    System.currentTimeMillis() - start, course.getId());
+            log.debug("complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType took {} ms for course with id {}", System.currentTimeMillis() - start,
+                    course.getId());
             start = System.currentTimeMillis();
             currentMaxComplaints = complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, COMPLAINT);
-            log.debug("complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType took {} ms for course with id {}",
-                    System.currentTimeMillis() - start, course.getId());
+            log.debug("complaintRepository.countByExerciseIdsAndComplaintType took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
             currentPercentageComplaints = calculatePercentage(currentAbsoluteComplaints, currentMaxComplaints);
         }
 
@@ -334,7 +332,7 @@ public class CourseStatsService {
 
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
 
-        final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseExerciseIds);
+        final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseIds(courseExerciseIds);
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
         final long numberOfMoreFeedbackComplaintResponses = complaintService.countMoreFeedbackRequestResponsesByExerciseIds(courseExerciseIds);
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
