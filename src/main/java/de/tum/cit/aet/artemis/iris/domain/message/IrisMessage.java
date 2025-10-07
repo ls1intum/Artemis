@@ -70,6 +70,9 @@ public class IrisMessage extends DomainObject {
     @Column(name = "created_memories", columnDefinition = "json")
     private List<MemirisMemoryDTO> createdMemories = new ArrayList<>();
 
+    @Column(name = "is_cloud_enabled", nullable = false)
+    private Boolean isCloudEnabled;
+
     @Transient
     private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
 
@@ -97,6 +100,15 @@ public class IrisMessage extends DomainObject {
 
     public void setHelpful(@Nullable Boolean helpful) {
         this.helpful = helpful;
+    }
+
+    @Nullable
+    public Boolean getCloudEnabled() {
+        return isCloudEnabled;
+    }
+
+    public void setCloudEnabled(@Nullable Boolean cloudEnabled) {
+        this.isCloudEnabled = cloudEnabled;
     }
 
     public IrisMessageSender getSender() {

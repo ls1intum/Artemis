@@ -44,7 +44,6 @@ import { facSidebar } from 'app/shared/icons/icons';
 import { User } from 'app/core/user/user.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { faCloud, faDownload } from '@fortawesome/free-solid-svg-icons';
-import { HttpHeaders } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -319,8 +318,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.chatService.messagesRead();
         if (this.newMessageTextContent) {
             this.isLoading = true;
-            const headers = new HttpHeaders().set('isCloudEnabled', this.isCloudEnabled.toString());
-            this.chatService.sendMessage(this.newMessageTextContent, headers).subscribe(() => {
+            this.chatService.sendMessage(this.newMessageTextContent, this.isCloudEnabled).subscribe(() => {
                 this.isLoading = false;
             });
             this.newMessageTextContent = '';

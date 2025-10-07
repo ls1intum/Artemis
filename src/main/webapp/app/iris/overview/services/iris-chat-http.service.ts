@@ -6,7 +6,6 @@ import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/da
 import { map, tap } from 'rxjs/operators';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
-import { HttpHeaders } from '@angular/common/http';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -60,17 +59,15 @@ export class IrisChatHttpService {
      * creates a new message in a session
      * @param sessionId of the session
      * @param message  to be created
-     * @param headers to be sent
      */
-    createMessage(sessionId: number, message: IrisUserMessage, headers?: HttpHeaders): Response<IrisUserMessage> {
+    createMessage(sessionId: number, message: IrisUserMessage): Response<IrisUserMessage> {
         message.messageDifferentiator = this.randomInt();
-        const httpHeaders = headers ?? new HttpHeaders();
         return this.httpClient.post<IrisUserMessage>(
             `${this.apiPrefix}/sessions/${sessionId}/messages`,
             Object.assign({}, message, {
                 sentAt: convertDateFromClient(message.sentAt),
             }),
-            { headers: httpHeaders, observe: 'response' },
+            { observe: 'response' },
         );
     }
 
