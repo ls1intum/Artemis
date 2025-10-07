@@ -249,6 +249,10 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     navigateToCompetencyDetailPage(event: Event) {
         event.stopPropagation();
-        this.router.navigate(['/courses', this.course()!.id, 'competencies', this.competency().id]);
+        const course = this.course();
+        if (!course?.id) {
+            return;
+        }
+        this.router.navigate(['/courses', course.id, 'competencies', this.competency().id]);
     }
 }
