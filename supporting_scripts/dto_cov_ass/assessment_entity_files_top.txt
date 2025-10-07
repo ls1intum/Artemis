@@ -1,0 +1,9 @@
+  8 src/main/java/de/tum/cit/aet/artemis/assessment/web/GradingScaleResource.java
+  6 src/main/java/de/tum/cit/aet/artemis/assessment/web/ComplaintResource.java
+  5 src/main/java/de/tum/cit/aet/artemis/assessment/web/ExampleSubmissionResource.java
+  3 src/main/java/de/tum/cit/aet/artemis/assessment/web/ComplaintResponseResource.java
+  3 src/main/java/de/tum/cit/aet/artemis/assessment/web/BonusResource.java
+  3 src/main/java/de/tum/cit/aet/artemis/assessment/web/ResultResource.java
+  2 src/main/java/de/tum/cit/aet/artemis/assessment/web/TutorParticipationResource.java
+  2 src/main/java/de/tum/cit/aet/artemis/assessment/web/GradeStepResource.java
+  1 src/main/java/de/tum/cit/aet/artemis/assessment/web/RatingResource.java

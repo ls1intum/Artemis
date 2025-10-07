@@ -1,0 +1,5 @@
+ 18 src/main/java/de/tum/cit/aet/artemis/exam/web/ExamResource.java
+ 11 src/main/java/de/tum/cit/aet/artemis/exam/web/StudentExamResource.java
+  5 src/main/java/de/tum/cit/aet/artemis/exam/web/ExerciseGroupResource.java
+  2 src/main/java/de/tum/cit/aet/artemis/exam/web/ExamUserResource.java
+  2 src/main/java/de/tum/cit/aet/artemis/exam/web/admin/AdminExamResource.java

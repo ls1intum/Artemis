@@ -9,8 +9,6 @@ src/main/java/de/tum/cit/aet/artemis/communication/web/GlobalNotificationSetting
 src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<FaqDTO>,entity
 src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<FaqDTO>,entity
 src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<FaqDTO>,entity
-src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<Set<FaqDTO>>,entity
-src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<Set<String>>,entity
 src/main/java/de/tum/cit/aet/artemis/communication/web/SystemNotificationResource.java,communication,REQUEST,ResponseEntity<List<SystemNotification>>,entity
 src/main/java/de/tum/cit/aet/artemis/communication/web/SystemNotificationResource.java,communication,REQUEST,ResponseEntity<List<SystemNotification>>,entity
 src/main/java/de/tum/cit/aet/artemis/communication/web/SystemNotificationResource.java,communication,REQUEST,ResponseEntity<SystemNotification>,entity
@@ -20,4 +18,3 @@ src/main/java/de/tum/cit/aet/artemis/communication/web/AnswerMessageResource.jav
 src/main/java/de/tum/cit/aet/artemis/communication/web/admin/AdminSystemNotificationResource.java,communication,REQUEST,ResponseEntity<SystemNotification>,entity
 src/main/java/de/tum/cit/aet/artemis/communication/web/admin/AdminSystemNotificationResource.java,communication,REQUEST,ResponseEntity<SystemNotification>,entity
 src/main/java/de/tum/cit/aet/artemis/communication/web/admin/AdminSystemNotificationResource.java,communication,REQUEST,ResponseEntity<SystemNotification>,entity
-src/main/java/de/tum/cit/aet/artemis/communication/web/conversation/OneToOneChatResource.java,communication,REQUEST,ResponseEntity<OneToOneChatDTO>,entity
