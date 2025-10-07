@@ -287,13 +287,11 @@ public class CourseStatsService {
         if (course.getRequestMoreFeedbackEnabled()) {
             start = System.currentTimeMillis();
             currentAbsoluteMoreFeedbacks = complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, MORE_FEEDBACK);
-            log.debug(
-                    "complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull took {} ms for course with id {}",
-                    System.currentTimeMillis() - start, course.getId());
+            log.debug("complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType took {} ms for course with id {}", System.currentTimeMillis() - start,
+                    course.getId());
             start = System.currentTimeMillis();
             currentMaxMoreFeedbacks = complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, MORE_FEEDBACK);
-            log.debug("complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType took {} ms for course with id {}",
-                    System.currentTimeMillis() - start, course.getId());
+            log.debug("complaintRepository.countByExerciseIdsAndComplaintType took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
             currentPercentageMoreFeedbacks = calculatePercentage(currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks);
         }
         double currentAbsoluteAverageScore = roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * currentMaxAverageScore, course);

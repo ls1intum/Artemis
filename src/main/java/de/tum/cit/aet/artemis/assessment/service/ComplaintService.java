@@ -174,6 +174,12 @@ public class ComplaintService {
         }
     }
 
+    /**
+     * Counts the number of complaints for the given exercise ids
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of complaints
+     */
     public long countComplaintsByExerciseIds(Set<Long> exerciseIds) {
         if (exerciseIds == null || exerciseIds.isEmpty()) {
             return 0L;
@@ -181,6 +187,12 @@ public class ComplaintService {
         return complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
     }
 
+    /**
+     * Counts the number of more feedback requests for the given exercise ids
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of more feedback requests
+     */
     public long countMoreFeedbackRequestsByExerciseIds(Set<Long> exerciseIds) {
         if (exerciseIds == null || exerciseIds.isEmpty()) {
             return 0L;
