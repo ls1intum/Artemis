@@ -105,8 +105,9 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     setNextExercises() {
-        if (!this.metrics) {
+        if (!this.metrics()) {
             this.nextExercises = [];
+            return;
         }
         const courseExercises = this.course()?.exercises ?? [];
         const exerciseIdToExercise = Object.fromEntries(courseExercises.map((exercise) => [exercise.id, exercise] as [number, Exercise]));
@@ -143,8 +144,9 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     setNextLessonUnits() {
-        if (!this.metrics) {
+        if (!this.metrics()) {
             this.nextLectureUnits = [];
+            return;
         }
         const completedLectureUnits = this.metrics().lectureUnitStudentMetricsDTO?.completed ?? [];
         const competencyLectureUnits = this.metrics().competencyMetrics?.lectureUnits?.[this.competency().id] ?? [];
