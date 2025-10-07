@@ -28,7 +28,6 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -83,7 +82,7 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean
     protected ChatModel chatModel;
 
-    @Autowired(required = false)
+    @MockitoBean
     protected ChatClient chatClient;
 
     @BeforeEach
@@ -99,6 +98,9 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
         if (chatModel != null) {
             Mockito.reset(chatModel);
+        }
+        if (chatClient != null) {
+            Mockito.reset(chatClient);
         }
         super.resetSpyBeans();
     }
