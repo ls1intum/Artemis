@@ -29,8 +29,8 @@ describe('ProgrammingExercise Sharing Service', () => {
         validate: () => {},
     };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -39,14 +39,12 @@ describe('ProgrammingExercise Sharing Service', () => {
                 SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(ProgrammingExerciseSharingService);
-                httpMock = TestBed.inject(HttpTestingController);
+        }).compileComponents();
 
-                defaultShoppingBasket = { exerciseInfo: [], userInfo: { email: 'unused', name: 'unused' }, tokenValidUntil: dayjs().add(1, 'hour').toDate() } as ShoppingBasket;
-            });
+        service = TestBed.inject(ProgrammingExerciseSharingService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        defaultShoppingBasket = { exerciseInfo: [], userInfo: { email: 'unused', name: 'unused' }, tokenValidUntil: dayjs().add(1, 'hour').toDate() } as ShoppingBasket;
     });
 
     describe('Service methods', () => {

@@ -197,8 +197,8 @@ public class ExerciseSharingResource {
 
         InputStreamResource resource = new InputStreamResource(new AutoDeletingFileInputStream(zipFilePath.get()));
 
-        return ResponseEntity.ok().contentLength(zipFilePath.get().toFile().length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFilePath.toString())
-                .body(resource);
+        return ResponseEntity.ok().contentLength(zipFilePath.get().toFile().length()).contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header("filename", zipFilePath.get().toString()).body(resource);
     }
 
 }
