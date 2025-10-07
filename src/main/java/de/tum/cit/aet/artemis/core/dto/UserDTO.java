@@ -269,14 +269,6 @@ public class UserDTO extends AuditingEntityDTO {
         return isLoggedInWithPasskey;
     }
 
-    @Override
-    public String toString() {
-        return "UserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='"
-                + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate()
-                + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", isLoggedInWithPasskey=" + isLoggedInWithPasskey
-                + ", authorities=" + authorities + "}";
-    }
-
     public boolean isInternal() {
         return internal;
     }
