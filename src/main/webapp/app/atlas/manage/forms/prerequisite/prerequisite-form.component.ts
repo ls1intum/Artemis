@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, input } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, effect, input } from '@angular/core';
 import { CourseCompetencyFormComponent, CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
@@ -31,7 +31,16 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
 
     constructor() {
         super();
-        this.initializeForm();
+        effect(() => {
+            this.courseId();
+            if (!this.form) {
+                this.initializeForm();
+            }
+            const fd = this.formData();
+            if (this.isEditMode() && fd) {
+                this.setFormValues(fd);
+            }
+        });
     }
 
     ngOnChanges(changes: SimpleChanges): void {
