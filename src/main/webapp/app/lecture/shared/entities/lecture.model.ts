@@ -25,11 +25,9 @@ export class Lecture implements BaseEntity {
     ingested?: IngestionState;
 }
 
-export class LectureCreateDTO {
+export class LectureSeriesCreateLectureDTO {
     constructor(
         public title: string,
-        public channelName?: string,
-        public visibleDate?: Dayjs,
         public startDate?: Dayjs,
         public endDate?: Dayjs,
     ) {}

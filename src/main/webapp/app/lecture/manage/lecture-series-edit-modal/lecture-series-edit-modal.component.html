@@ -3,17 +3,7 @@
         <div class="form-grid">
             <label for="title" jhiTranslate="artemisApp.lecture.title"></label>
             <input pInputText id="title" [pAutoFocus]="true" [ngModel]="title()" (ngModelChange)="onTitleChange($event)" [invalid]="isTitleInvalid()" />
-            <label for="visibleDate" jhiTranslate="artemisApp.lecture.visibleDate"></label>
-            <p-datepicker
-                inputId="visibleDate"
-                [ngModel]="visibleDate() ?? null"
-                (ngModelChange)="onVisibleDateChange($event)"
-                [showTime]="true"
-                [hourFormat]="'24'"
-                [firstDayOfWeek]="1"
-                appendTo="body"
-            />
-            <label for="startDate" jhiTranslate="artemisApp.lecture.startDate"></label>
+            <label for="visibleDate" jhiTranslate="artemisApp.lecture.startDate"></label>
             <p-datepicker
                 inputId="startDate"
                 [ngModel]="startDate() ?? null"
@@ -21,8 +11,6 @@
                 [showTime]="true"
                 [hourFormat]="'24'"
                 [firstDayOfWeek]="1"
-                [minDate]="minimumStartDate() ?? null"
-                [invalid]="isStartDateInvalid()"
                 appendTo="body"
             />
             <label for="endDate" jhiTranslate="artemisApp.lecture.endDate"></label>

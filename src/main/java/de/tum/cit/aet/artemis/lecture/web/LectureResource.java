@@ -58,7 +58,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.dto.LectureCreateDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
@@ -137,22 +137,21 @@ public class LectureResource {
     // TODO: add javaDoc
     @PostMapping("courses/{courseId}/lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<Void> createLectureSeries(@PathVariable long courseId, @RequestBody List<LectureCreateDTO> lectureDTOs) throws URISyntaxException {
+    public ResponseEntity<Void> createLectureSeries(@PathVariable long courseId, @RequestBody List<LectureSeriesCreateLectureDTO> lectureDTOs) throws URISyntaxException {
         log.debug("REST request to save Lecture series for courseId {} with lectures: {}", courseId, lectureDTOs);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         List<Lecture> lectures = lectureDTOs.stream().map(lectureDTO -> createLectureUsing(lectureDTO, course)).toList();
         List<Lecture> savedLectures = lectureRepository.saveAll(lectures);
-        savedLectures.forEach(lecture -> channelService.createLectureChannel(lecture, Optional.ofNullable(lecture.getChannelName())));
+        savedLectures.forEach(lecture -> channelService.createLectureChannel(lecture, Optional.empty()));
         return ResponseEntity.noContent().build();
     }
 
-    private Lecture createLectureUsing(LectureCreateDTO lectureDTO, Course course) {
+    private Lecture createLectureUsing(LectureSeriesCreateLectureDTO lectureDTO, Course course) {
         Lecture lecture = new Lecture();
         lecture.setCourse(course);
         lecture.setTitle(lectureDTO.title());
-        lecture.setChannelName(lectureDTO.channelName());
         lecture.setVisibleDate(lectureDTO.visibleDate());
         lecture.setStartDate(lectureDTO.startDate());
         lecture.setEndDate(lectureDTO.endDate());

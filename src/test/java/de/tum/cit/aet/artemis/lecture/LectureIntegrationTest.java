@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.dto.LectureCreateDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
@@ -498,13 +498,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         ZonedDateTime startLecture1 = ZonedDateTime.of(1989, 11, 9, 18, 53, 0, 0, timezone);
         ZonedDateTime endLecture1 = startLecture1.plusHours(1);
         String titleLecture1 = "Requirements Engineering";
-        String channelNameLecture1 = "lecture-1";
         ZonedDateTime startLecture2 = startLecture1.plusWeeks(1);
         ZonedDateTime endLecture2 = startLecture2.plusHours(1);
         String titleLecture2 = "System Design";
-        String channelNameLecture2 = "lecture-2";
-        LectureCreateDTO dto1 = new LectureCreateDTO(titleLecture1, channelNameLecture1, null, startLecture1, endLecture1);
-        LectureCreateDTO dto2 = new LectureCreateDTO(titleLecture2, channelNameLecture2, null, startLecture2, endLecture2);
+        LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleLecture1, startLecture1, endLecture1);
+        LectureSeriesCreateLectureDTO dto2 = new LectureSeriesCreateLectureDTO(titleLecture2, startLecture2, endLecture2);
 
         List<Lecture> lectures = request.postListWithResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1, dto2), Lecture.class, HttpStatus.CREATED);
 
@@ -512,7 +510,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(lectures).extracting(Lecture::getTitle).containsExactlyInAnyOrder("Requirements Engineering", "System Design");
 
         assertThat(lectures).extracting(Lecture::getTitle, Lecture::getChannelName, Lecture::getVisibleDate, l -> l.getStartDate().toInstant(), l -> l.getEndDate().toInstant())
-                .containsExactlyInAnyOrder(tuple(titleLecture1, channelNameLecture1, null, startLecture1.toInstant(), endLecture1.toInstant()),
-                        tuple(titleLecture2, channelNameLecture2, null, startLecture2.toInstant(), endLecture2.toInstant()));
+                .containsExactlyInAnyOrder(tuple(titleLecture1, startLecture1.toInstant(), endLecture1.toInstant()),
+                        tuple(titleLecture2, startLecture2.toInstant(), endLecture2.toInstant()));
     }
 }

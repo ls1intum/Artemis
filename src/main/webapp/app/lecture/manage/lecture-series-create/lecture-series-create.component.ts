@@ -7,19 +7,20 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputMaskModule } from 'primeng/inputmask';
 import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faPenToSquare, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faSquarePlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { LectureSeriesEditModalComponent } from 'app/lecture/manage/lecture-series-edit-modal/lecture-series-edit-modal.component';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { LectureCreateDTO } from 'app/lecture/shared/entities/lecture.model';
+import { LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { addOneMinuteTo, isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
 import { finalize } from 'rxjs';
+//import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 
 type WeekdayIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -31,12 +32,11 @@ interface WeekdayOption {
 export interface LectureDraft {
     key: string;
     state: LectureDraftState;
-    dto: LectureCreateDTO;
+    dto: LectureSeriesCreateLectureDTO;
 }
 
 export enum LectureDraftState {
     EDITED = 'edited',
-    DELETED = 'deleted',
     REGULAR = 'regular',
 }
 
@@ -64,9 +64,11 @@ export class LectureSeriesCreateComponent {
     private router = inject(Router);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
+    //private courseStorageService = inject(CourseStorageService);
 
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faXmark = faXmark;
+    protected readonly faSquarePlus = faSquarePlus;
     protected readonly LectureDraftState = LectureDraftState;
     protected readonly minimumStartDate = new Date();
 
@@ -86,9 +88,10 @@ export class LectureSeriesCreateComponent {
     isEndDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(this.startDate(), this.endDate()));
     isLoading = signal(false);
     areInputsInvalid = computed(() => this.isStartAndEndTimeCombinationInvalid() || this.isEndDateInvalid());
+    noDraftsGenerated = computed(() => this.lectureDrafts.length === 0);
 
     constructor() {
-        effect(() => this.updateLectureDrafts(this.areInputsInvalid(), this.selectedWeekdayIndex(), this.startTime(), this.endTime(), this.startDate(), this.endDate()));
+        effect(() => this.updateLectureDrafts());
     }
 
     onSelectedWeekdayOptionChange(optionWeekdayIndex: WeekdayIndex) {
@@ -112,14 +115,12 @@ export class LectureSeriesCreateComponent {
     }
 
     deleteLectureDraft(lectureDraft: LectureDraft) {
-        lectureDraft.state = LectureDraftState.DELETED;
+        this.lectureDrafts.update((oldDrafts) => oldDrafts.filter((otherDraft) => otherDraft !== lectureDraft));
     }
 
     save() {
         this.isLoading.set(true);
-        const lecturesToSave = this.lectureDrafts()
-            .filter((d) => d.state !== LectureDraftState.DELETED)
-            .map((d) => d.dto);
+        const lecturesToSave = this.lectureDrafts().map((d) => d.dto);
         const courseId = this.courseId();
         this.lectureService
             .createSeries(lecturesToSave, courseId)
@@ -158,36 +159,28 @@ export class LectureSeriesCreateComponent {
         return false;
     }
 
-    private updateLectureDrafts(areInputsInvalid: boolean, selectedWeekdayIndex?: number, startTime?: string, endTime?: string, startDate?: Date, endDate?: Date) {
-        if (areInputsInvalid || !selectedWeekdayIndex || !startTime || !endTime || !startDate || !endDate) return;
+    private updateLectureDrafts() {
+        const areInputsInvalid = this.areInputsInvalid();
+        const selectedWeekdayIndex = this.selectedWeekdayIndex();
+        const startTime = this.startTime();
+        const endTime = this.endTime();
+        const startDate = this.startDate();
+        const endDate = this.endDate();
+
+        if (areInputsInvalid || !selectedWeekdayIndex || !startTime || !endTime || !startDate || !endDate) {
+            return;
+        }
 
         const lectureDates = this.generateDatePairs(selectedWeekdayIndex, startTime, endTime, startDate, endDate);
-        this.lectureDrafts.update((oldDrafts) => {
-            const keyToOldDraftMap = new Map(oldDrafts.map((draft) => [draft.key, draft]));
-            const newDrafts: LectureDraft[] = [];
-            lectureDates.forEach(([startDate, endDate], index) => {
-                const currentKey = startDate.toISOString();
-                const existing = keyToOldDraftMap.get(currentKey);
-                if (existing) {
-                    if (existing.state !== LectureDraftState.EDITED) {
-                        existing.dto.startDate = startDate;
-                        existing.dto.endDate = endDate;
-                        if (existing.state === LectureDraftState.DELETED) {
-                            existing.state = LectureDraftState.REGULAR;
-                        }
-                    }
-                    newDrafts.push(existing);
-                    keyToOldDraftMap.delete(currentKey);
-                } else {
-                    newDrafts.push({
-                        key: startDate.toISOString(),
-                        state: LectureDraftState.REGULAR,
-                        dto: new LectureCreateDTO(`Lecture ${index + 1}`, undefined, undefined, startDate, endDate),
-                    });
-                }
+        const newDrafts: LectureDraft[] = [];
+        lectureDates.forEach(([startDate, endDate], index) => {
+            newDrafts.push({
+                key: startDate.toISOString(),
+                state: LectureDraftState.REGULAR,
+                dto: new LectureSeriesCreateLectureDTO(`Lecture ${index + 1}`, startDate, endDate),
             });
-            return newDrafts;
         });
+        this.lectureDrafts.set(newDrafts);
     }
 
     private generateDatePairs(weekdayIndex: number, startTime: string, endTime: string, seriesStartDate: Date, seriesEndDate: Date): [Dayjs, Dayjs][] {

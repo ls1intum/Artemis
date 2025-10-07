@@ -25,24 +25,17 @@ export class LectureSeriesEditModalComponent {
     lectureDraft: LectureDraft | undefined;
     title = signal<string>('');
     isTitleInvalid = computed(() => this.title() === '');
-    visibleDate = signal<Date | undefined>(undefined);
     startDate = signal<Date | undefined>(undefined);
-    minimumStartDate = computed(() => addOneMinuteTo(this.visibleDate()));
-    isStartDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(this.visibleDate(), this.startDate()));
     endDate = signal<Date | undefined>(undefined);
-    minimumEndDate = computed(() => addOneMinuteTo(this.startDate()) ?? addOneMinuteTo(this.visibleDate()));
-    isEndDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(this.visibleDate(), this.endDate()) || isFirstDateAfterOrEqualSecond(this.startDate(), this.endDate()));
+    minimumEndDate = computed(() => addOneMinuteTo(this.startDate()));
+    isEndDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(this.startDate(), this.endDate()));
     show = signal<boolean>(false);
-    areInputsInvalid = computed(() => this.isTitleInvalid() || this.isStartDateInvalid() || this.isEndDateInvalid());
-    headerTitle = computed<string>(() => {
-        this.currentLocale();
-        return this.translateService.instant('artemisApp.lecture.createSeries.editLectureModalTitle');
-    });
+    areInputsInvalid = computed(() => this.isTitleInvalid() || this.isEndDateInvalid());
+    headerTitle = computed<string>(() => this.computeHeaderTitle());
 
     open(draft: LectureDraft) {
         this.lectureDraft = draft;
         this.title.set(draft.dto.title);
-        this.visibleDate.set(this.convertDayjsDateToDate(draft.dto.visibleDate));
         this.startDate.set(this.convertDayjsDateToDate(draft.dto.startDate));
         this.endDate.set(this.convertDayjsDateToDate(draft.dto.endDate));
         this.show.set(true);
@@ -59,7 +52,6 @@ export class LectureSeriesEditModalComponent {
         if (draft) {
             const dto = draft.dto;
             dto.title = this.title();
-            dto.visibleDate = this.convertDateToDayjsDate(this.visibleDate());
             dto.startDate = this.convertDateToDayjsDate(this.startDate());
             dto.endDate = this.convertDateToDayjsDate(this.endDate());
             draft.state = LectureDraftState.EDITED;
@@ -69,10 +61,6 @@ export class LectureSeriesEditModalComponent {
 
     onTitleChange(value: string) {
         this.title.set(value);
-    }
-
-    onVisibleDateChange(value: Date | null) {
-        this.visibleDate.set(value ? value : undefined);
     }
 
     onStartDateChange(value: Date | null) {
@@ -86,7 +74,6 @@ export class LectureSeriesEditModalComponent {
     private clearDraftRelatedFields() {
         this.lectureDraft = undefined;
         this.title.set('');
-        this.visibleDate.set(undefined);
         this.startDate.set(undefined);
         this.endDate.set(undefined);
     }
@@ -97,5 +84,10 @@ export class LectureSeriesEditModalComponent {
 
     private convertDateToDayjsDate(date?: Date): Dayjs | undefined {
         return date ? dayjs(date) : undefined;
+    }
+
+    private computeHeaderTitle(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.lecture.createSeries.editLectureModalTitle');
     }
 }

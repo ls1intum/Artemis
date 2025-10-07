@@ -2,6 +2,32 @@
     <p jhiTranslate="artemisApp.lecture.createSeries.explanationText"></p>
     <div class="from-section">
         <p-floatlabel variant="on">
+            <p-datepicker
+                inputId="start-date"
+                [ngModel]="startDate() ?? null"
+                (ngModelChange)="onStartDateChange($event)"
+                style="width: 12rem"
+                [firstDayOfWeek]="1"
+                [minDate]="minimumStartDate"
+            />
+            <label for="start-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesStartDate"></label>
+        </p-floatlabel>
+        <p-floatlabel variant="on">
+            <p-datepicker
+                inputId="end-date"
+                [ngModel]="endDate() ?? null"
+                (ngModelChange)="onEndDateChange($event)"
+                style="width: 12rem"
+                [firstDayOfWeek]="1"
+                [minDate]="minimumEndDate()"
+                [invalid]="isEndDateInvalid()"
+            />
+            <label for="end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
+        </p-floatlabel>
+    </div>
+    <p>Specify at least one weekly lecture by choosing a weekday, as well as a start time and end time:</p>
+    <div class="from-section">
+        <p-floatlabel variant="on">
             <p-select
                 inputId="weekday"
                 [options]="weekdayOptions()"
@@ -9,7 +35,7 @@
                 (ngModelChange)="onSelectedWeekdayOptionChange($event)"
                 optionLabel="label"
                 optionValue="weekdayIndex"
-                style="width: 9rem"
+                style="width: 12rem"
             />
             <label for="weekday" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.weekday"></label>
         </p-floatlabel>
@@ -21,7 +47,7 @@
                 [ngModel]="startTime() ?? ''"
                 (ngModelChange)="onStartTimeChange($event)"
                 [invalid]="isStartAndEndTimeCombinationInvalid()"
-                [style]="{ width: '9rem' }"
+                [style]="{ width: '12rem' }"
             />
             <label for="start-time" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.startTime"></label>
         </p-floatlabel>
@@ -33,65 +59,40 @@
                 [ngModel]="endTime() ?? ''"
                 (ngModelChange)="onEndTimeChange($event)"
                 [invalid]="isStartAndEndTimeCombinationInvalid()"
-                [style]="{ width: '9rem' }"
+                [style]="{ width: '12rem' }"
             />
             <label for="end-time" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.endTime"></label>
         </p-floatlabel>
-        <p-floatlabel variant="on">
-            <p-datepicker
-                inputId="start-date"
-                [ngModel]="startDate() ?? null"
-                (ngModelChange)="onStartDateChange($event)"
-                style="width: 9rem"
-                [firstDayOfWeek]="1"
-                [minDate]="minimumStartDate"
-            />
-            <label for="start-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesStartDate"></label>
-        </p-floatlabel>
-        <p-floatlabel variant="on">
-            <p-datepicker
-                inputId="end-date"
-                [ngModel]="endDate() ?? null"
-                (ngModelChange)="onEndDateChange($event)"
-                style="width: 9rem"
-                [firstDayOfWeek]="1"
-                [minDate]="minimumEndDate()"
-                [invalid]="isEndDateInvalid()"
-            />
-            <label for="end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
-        </p-floatlabel>
     </div>
+    <button pButton severity="secondary" size="small" [style]="{ width: '12rem' }">Add Weekly Lecture</button>
     @let drafts = lectureDrafts();
     @if (drafts.length > 0) {
         <h3 jhiTranslate="artemisApp.lecture.createSeries.generatedLecturesHeading"></h3>
         <div class="container w-100 px-0">
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
                 @for (draft of lectureDrafts(); track draft.key; let index = $index) {
-                    @if (draft.state !== LectureDraftState.DELETED) {
-                        <div class="col">
-                            <div class="draft-card">
-                                <span class="card-number" [ngClass]="{ edited: draft.state === LectureDraftState.EDITED }">
-                                    {{ index + 1 }}
-                                </span>
-                                <span class="draft-title">{{ draft.dto.title }}</span>
-                                <button type="button" class="card-button" (click)="editModal.open(draft)">
-                                    <fa-icon [icon]="faPenToSquare" />
-                                </button>
-                                <button type="button" class="card-button" (click)="deleteLectureDraft(draft)">
-                                    <fa-icon [icon]="faXmark" />
-                                </button>
-                            </div>
+                    <div class="col">
+                        <div class="draft-card">
+                            <span class="card-number" [ngClass]="{ edited: draft.state === LectureDraftState.EDITED }">
+                                {{ index + 1 }}
+                            </span>
+                            <span class="draft-title">{{ draft.dto.title }}</span>
+                            <button type="button" class="card-button" (click)="editModal.open(draft)">
+                                <fa-icon [icon]="faPenToSquare" />
+                            </button>
+                            <button type="button" class="card-button" (click)="deleteLectureDraft(draft)">
+                                <fa-icon [icon]="faXmark" />
+                            </button>
                         </div>
-                    }
+                    </div>
                 }
             </div>
         </div>
-
-        <div class="controls-section">
-            <button pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
-            <button pButton size="small" (click)="save()" jhiTranslate="entity.action.save"></button>
-        </div>
     }
+    <div class="controls-section">
+        <button pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+        <button pButton size="small" [disabled]="noDraftsGenerated()" (click)="save()" jhiTranslate="entity.action.save"></button>
+    </div>
     @if (isLoading()) {
         <div class="loading-overlay">
             <div class="spinner-border" role="status">
