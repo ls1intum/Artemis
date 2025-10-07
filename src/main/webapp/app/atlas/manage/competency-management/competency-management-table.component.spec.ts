@@ -31,14 +31,13 @@ import { By } from '@angular/platform-browser';
             (competenciesAdded)="competenciesAdded($event)"
         />
     `,
-    standalone: true,
     imports: [CompetencyManagementTableComponent],
 })
 class WrappedComponent {
+    protected readonly CourseCompetencyType = CourseCompetencyType;
     courseCompetencies: CourseCompetency[] = [];
     allCompetencies: CourseCompetency[] = [];
     competencyType = CourseCompetencyType.COMPETENCY;
-    protected readonly CourseCompetencyType = CourseCompetencyType;
 
     competencyDeleted(competencyId: number) {}
     competenciesAdded(added: CourseCompetency[]) {

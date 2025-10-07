@@ -11,7 +11,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-competency-form',
     templateUrl: './competency-form.component.html',
     styleUrls: ['./competency-form.component.scss'],
-    standalone: true,
     imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective],
 })
 export class CompetencyFormComponent extends CourseCompetencyFormComponent implements OnChanges {

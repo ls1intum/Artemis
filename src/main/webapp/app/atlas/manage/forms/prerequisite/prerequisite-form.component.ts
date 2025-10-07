@@ -12,7 +12,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-prerequisite-form',
     templateUrl: './prerequisite-form.component.html',
     styleUrls: ['./prerequisite-form.component.scss'],
-    standalone: true,
     imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective],
 })
 export class PrerequisiteFormComponent extends CourseCompetencyFormComponent implements OnChanges {

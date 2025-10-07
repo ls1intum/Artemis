@@ -18,7 +18,6 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
     selector: 'jhi-common-course-competency-form',
     templateUrl: './common-course-competency-form.component.html',
     styleUrls: ['./common-course-competency-form.component.scss'],
-    standalone: true,
     imports: [
         NgbDropdownModule,
         ReactiveFormsModule,

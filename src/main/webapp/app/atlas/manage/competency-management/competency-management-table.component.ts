@@ -20,7 +20,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-competency-management-table',
-    standalone: true,
     templateUrl: './competency-management-table.component.html',
     imports: [
         NgbProgressbar,

@@ -9,7 +9,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-judgement-of-learning-rating',
-    standalone: true,
     imports: [StarRatingComponent, HelpIconComponent, TranslateDirective],
     templateUrl: './judgement-of-learning-rating.component.html',
 })

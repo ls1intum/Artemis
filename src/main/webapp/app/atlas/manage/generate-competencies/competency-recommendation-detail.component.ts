@@ -14,7 +14,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-competency-recommendation',
-    standalone: true,
     templateUrl: './competency-recommendation-detail.component.html',
     styleUrls: ['competency-recommendation-detail.component.scss'],
     imports: [

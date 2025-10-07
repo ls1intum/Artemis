@@ -42,7 +42,6 @@ export type ImportAllFromCourseResult = {
 
 @Component({
     selector: 'jhi-import-all-competencies',
-    standalone: true,
     templateUrl: './import-all-competencies.component.html',
     imports: [
         NgbPagination,
