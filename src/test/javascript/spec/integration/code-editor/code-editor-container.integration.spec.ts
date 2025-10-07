@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Subject, firstValueFrom, of } from 'rxjs';
@@ -38,7 +39,6 @@ import { DomainService } from 'app/programming/shared/code-editor/services/code-
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
@@ -88,9 +88,9 @@ describe('CodeEditorContainerIntegration', () => {
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: ResultService, useClass: MockResultService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
@@ -320,7 +320,7 @@ describe('CodeEditorContainerIntegration', () => {
         await loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
-        container.monacoEditor.onFileTextChanged(newFileContent);
+        container.monacoEditor.onFileTextChanged({ text: newFileContent, fileName: selectedFile });
         containerFixture.detectChanges();
 
         expect(getFileStub).toHaveBeenCalledOnce();

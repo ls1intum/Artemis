@@ -34,8 +34,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
@@ -46,6 +44,7 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -65,8 +64,6 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
         CompetencySelectionComponent,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
-        CustomMinDirective,
-        CustomMaxDirective,
         ExerciseFeedbackSuggestionOptionsComponent,
         ExerciseUpdatePlagiarismComponent,
         PresentationScoreComponent,
@@ -88,6 +85,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     private readonly eventManager = inject(EventManager);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly profileService = inject(ProfileService);
+    private readonly calendarService = inject(CalendarService);
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Text';
@@ -319,6 +317,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.isSaving = false;
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
+        this.calendarService.reloadEvents();
     }
 
     private onSaveError(errorRes: HttpErrorResponse) {

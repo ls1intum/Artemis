@@ -1,4 +1,4 @@
-import { input, runInInjectionContext } from '@angular/core';
+import { input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { MockPipe } from 'ng-mocks';
@@ -25,7 +25,7 @@ describe('ResultHistoryComponent', () => {
     });
 
     it('should initialize with same rated results', () => {
-        runInInjectionContext(TestBed, () => {
+        TestBed.runInInjectionContext(() => {
             component.results = input<Result[]>([
                 { rated: true, id: 1 },
                 { rated: true, id: 2 },
@@ -41,7 +41,7 @@ describe('ResultHistoryComponent', () => {
         expect(component.showPreviousDivider).toBeFalse();
         expect(component.movedLastRatedResult).toBeFalsy();
 
-        runInInjectionContext(TestBed, () => {
+        TestBed.runInInjectionContext(() => {
             component.results = input<Result[]>([
                 { rated: false, id: 1 },
                 { rated: false, id: 2 },
@@ -64,7 +64,7 @@ describe('ResultHistoryComponent', () => {
     });
 
     it('should initialize with mixed rated results', () => {
-        runInInjectionContext(TestBed, () => {
+        TestBed.runInInjectionContext(() => {
             component.results = input<Result[]>([
                 { rated: true, id: 1 },
                 { rated: false, id: 2 },
@@ -80,7 +80,7 @@ describe('ResultHistoryComponent', () => {
         expect(component.showPreviousDivider).toBeFalse();
         expect(component.movedLastRatedResult).toBeFalsy();
 
-        runInInjectionContext(TestBed, () => {
+        TestBed.runInInjectionContext(() => {
             component.results = input<Result[]>([
                 { rated: true, id: 1 },
                 { rated: false, id: 2 },

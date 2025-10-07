@@ -12,8 +12,8 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -38,12 +38,19 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.submission", "result.submission.participation", "result.submission.participation.exercise" })
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
 
+    @Query("""
+            SELECT b.id
+            FROM BuildJob b
+            WHERE b.buildStatus NOT IN (de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.QUEUED, de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.BUILDING)
+            """)
+    Slice<Long> findFinishedIds(Pageable pageable);
+
     // Cast to string is necessary. Otherwise, the query will fail on PostgreSQL.
     @Query("""
             SELECT b.id
             FROM BuildJob b
                 LEFT JOIN Course c ON b.courseId = c.id
-            WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
+                WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
                 AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
                 AND (CAST(:startDate AS string) IS NULL OR b.buildSubmissionDate >= :startDate)
                 AND (CAST(:endDate AS string) IS NULL OR b.buildSubmissionDate <= :endDate)
@@ -57,7 +64,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 AND (:durationUpper IS NULL OR (b.buildCompletionDate - b.buildStartDate) <= :durationUpper)
 
             """)
-    Page<Long> findIdsByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
+    Slice<Long> findFinishedIdsByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
             @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("searchTerm") String searchTerm, @Param("courseId") Long courseId,
             @Param("durationLower") Duration durationLower, @Param("durationUpper") Duration durationUpper, Pageable pageable);
 
@@ -72,14 +79,16 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
     @Query("""
-             SELECT new de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob(
-                 b.result.id,
-                 b.buildJobId
-             )
-             FROM BuildJob b
-             WHERE b.result.id IN :resultIds
+            SELECT new de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob(
+                b.result.id,
+                b.exerciseId,
+                b.buildJobId
+            )
+            FROM BuildJob b
+            WHERE b.participationId = :participationId
+                AND b.result.id IS NOT NULL
             """)
-    Set<ResultBuildJob> findBuildJobIdsForResultIds(@Param("resultIds") List<Long> resultIds);
+    Set<ResultBuildJob> findBuildJobIdsWithResultForParticipationId(@Param("participationId") long participationId);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO(
@@ -174,4 +183,42 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * @return the list of build jobs
      */
     List<BuildJob> findAllByBuildStatusIn(List<BuildStatus> statuses);
+
+    /**
+     * Returns a slice of missing build jobs submitted within the given time range for whose participation no newer job exists, ordered by submission date descending.
+     *
+     * @param startTime earliest build submission time
+     * @param endTime   latest build submission time
+     * @param pageable  pagination information
+     * @return slice of matching build jobs
+     */
+    @Query("""
+            SELECT b
+            FROM BuildJob b
+            WHERE b.buildStatus = de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.MISSING
+              AND b.buildSubmissionDate >= :startTime
+              AND b.buildSubmissionDate <= :endTime
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM BuildJob b2
+                  WHERE b2.participationId = b.participationId
+                    AND b2.buildSubmissionDate > b.buildSubmissionDate
+              )
+            ORDER BY b.buildSubmissionDate DESC
+            """)
+    Slice<BuildJob> findMissingJobsToRetryInTimeRange(@Param("startTime") ZonedDateTime startTime, @Param("endTime") ZonedDateTime endTime, Pageable pageable);
+
+    /**
+     * Increment the retry count of a build job by 1
+     *
+     * @param buildJobId the ID of the build job
+     */
+    @Modifying
+    @Transactional
+    @Query("""
+            UPDATE BuildJob b
+            SET b.retryCount = b.retryCount + 1
+            WHERE b.buildJobId = :buildJobId
+            """)
+    void incrementRetryCount(@Param("buildJobId") String buildJobId);
 }

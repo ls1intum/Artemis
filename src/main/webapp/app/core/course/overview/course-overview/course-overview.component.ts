@@ -37,7 +37,7 @@ import { CourseNotificationSettingInfo } from 'app/communication/shared/entities
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -69,6 +69,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private modalService = inject(NgbModal);
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
+    private calendarService = inject(CalendarService);
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
     protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
 
@@ -77,7 +78,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesChannel: string;
     private examStartedSubscription: Subscription;
     manageViewLink = signal<string[]>(['']);
-    profileService = inject(ProfileService);
 
     protected selectableSettingPresets: CourseNotificationSettingPreset[];
     protected selectedSettingPreset?: CourseNotificationSettingPreset;
@@ -90,7 +90,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     activatedComponentReference = signal<
         CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
     >(undefined);
-    isTestServer = this.profileService.isTestServer();
 
     // Icons
     faTimes = faTimes;
@@ -250,6 +249,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.loadCourseSubscription?.unsubscribe();
         if (refresh) {
             this.loadCourseSubscription = observable.subscribe();
+            this.calendarService.reloadEvents();
         }
         return observable;
     }
@@ -291,12 +291,15 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         const currentCourse = this.course();
 
         // Use the service to get sidebar items
-        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled);
+        const defaultItems = this.sidebarItemService.getStudentDefaultItems(
+            currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled,
+            currentCourse?.trainingEnabled,
+        );
         sidebarItems.push(...defaultItems);
 
         if (currentCourse?.lectures) {
             const lecturesItem = this.sidebarItemService.getLecturesItem();
-            sidebarItems.splice(-1, 0, lecturesItem);
+            sidebarItems.splice(-2, 0, lecturesItem);
         }
 
         if (currentCourse?.exams && this.hasVisibleExams()) {
@@ -327,10 +330,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         if (currentCourse?.faqEnabled) {
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);
-        }
-
-        if (this.isTestServer) {
-            sidebarItems.push(this.sidebarItemService.getPracticeItem());
         }
 
         sidebarItems.push(this.sidebarItemService.getNotificationSettingsItem());

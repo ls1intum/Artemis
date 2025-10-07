@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphEdgeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathAverageProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
@@ -225,6 +226,27 @@ public class LearningPathService {
     }
 
     /**
+     * Calculate the average learning path progress for all enrolled students in a course
+     *
+     * @param courseId the id of the course
+     * @return the average progress as a double (0.0 to 100.0)
+     */
+    public LearningPathAverageProgressDTO getAverageProgressForCourse(long courseId) {
+        List<LearningPath> learningPaths = learningPathRepository.findAllByCourseIdForEnrolledStudents(courseId);
+
+        if (learningPaths.isEmpty()) {
+            return new LearningPathAverageProgressDTO(courseId, 0.0, 0);
+        }
+
+        double totalProgress = learningPaths.stream().mapToInt(LearningPath::getProgress).sum();
+
+        double averageProgress = totalProgress / learningPaths.size();
+        averageProgress = Math.round(averageProgress * 100.0) / 100.0;
+
+        return new LearningPathAverageProgressDTO(courseId, averageProgress, learningPaths.size());
+    }
+
+    /**
      * Get the learning path for the current user in the given course.
      *
      * @param courseId the id of the course
@@ -301,7 +323,7 @@ public class LearningPathService {
     }
 
     private void checkNoCompetencies(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
-        if (competencyRepository.countByCourse(course) == 0) {
+        if (competencyRepository.countByCourseId(course.getId()) == 0) {
             status.add(LearningPathHealthDTO.HealthStatus.NO_COMPETENCIES);
         }
     }

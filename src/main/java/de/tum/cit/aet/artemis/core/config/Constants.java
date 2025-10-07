@@ -18,8 +18,6 @@ public final class Constants {
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 
-    public static final int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
-
     // Regex for acceptable logins
     public static final String LOGIN_REGEX = "^[_'.@A-Za-z0-9-]*$";
 
@@ -41,6 +39,18 @@ public final class Constants {
      * There might be exceptions if the path can be considered part of the business logic, and not presentation.
      */
     public static final String ARTEMIS_FILE_PATH_PREFIX = "/api/core/files/";
+
+    /**
+     * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
+     * Submissions after the grace period exceeded will be unrated.
+     * <p>
+     * If the student was able to successfully push their solution, this solution should still be graded, even if
+     * the processing of the push was up to 1s late.
+     * <p>
+     * Have a look at setRatedIfNotAfterDueDate(Participation participation, ZonedDateTime submissionDate) in
+     * de.tum.cit.aet.artemis.assessment.domain.Result.
+     */
+    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
 
     public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
@@ -112,8 +122,6 @@ public final class Constants {
     public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
-
-    public static final String TEST_CASES_DUPLICATE_NOTIFICATION = "There are duplicated test cases in this programming exercise. All test cases have to be unique and cannot have the same name. The following test cases are duplicated: ";
 
     /**
      * Maximum length in the database for the feedback detail text.
@@ -348,6 +356,11 @@ public final class Constants {
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
+     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling, core AND iris is active
+     */
+    public static final String PROFILE_CORE_AND_SCHEDULING_AND_IRIS = PROFILE_CORE + " & " + PROFILE_SCHEDULING + " & " + PROFILE_IRIS;
+
+    /**
      * Profile combination for one primary node, where LTI AND scheduling is active
      */
     public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
@@ -383,6 +396,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_ATLAS = "atlas";
 
     /**
+     * The name of the module feature used for Hyperion functionality.
+     */
+    public static final String MODULE_FEATURE_HYPERION = "hyperion";
+
+    /**
      * The name of the module feature used for Exam functionality.
      */
     public static final String MODULE_FEATURE_EXAM = "exam";
@@ -403,9 +421,19 @@ public final class Constants {
     public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
 
     /**
+     * The name of the module feature used for nebula functionality.
+     */
+    public static final String MODULE_FEATURE_NEBULA = "nebula";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
+
+    /**
+     * The name of the property used to enable or disable Hyperion functionality.
+     */
+    public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
 
     /**
      * The name of the property used to enable or disable exam functionality.
@@ -431,6 +459,11 @@ public final class Constants {
      * The name of the property used to enable or disable the passkey authentication functionality.
      */
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
+
+    /**
+     * The name of the property used to enable or disable nebula functionalities.
+     */
+    public static final String NEBULA_ENABLED_PROPERTY_NAME = "artemis.nebula.enabled";
 
     /**
      * The name of the property used to define the directories for file uploads.
@@ -483,6 +516,10 @@ public final class Constants {
     public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
+
+    public static final String JWT_COOKIE_NAME = "jwt";
+
+    public static final String BEARER_PREFIX = "Bearer ";
 
     private Constants() {
     }

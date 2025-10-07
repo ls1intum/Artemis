@@ -39,7 +39,6 @@ import org.springframework.util.FileSystemUtils;
 import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.File;
@@ -49,8 +48,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
 
 /**
@@ -63,15 +62,12 @@ public class RepositoryService {
 
     private final GitService gitService;
 
-    private final ProfileService profileService;
-
     private final Optional<VcsAccessLogService> vcsAccessLogService;
 
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, ProfileService profileService, Optional<VcsAccessLogService> vcsAccessLogService) {
+    public RepositoryService(GitService gitService, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.gitService = gitService;
-        this.profileService = profileService;
         this.vcsAccessLogService = vcsAccessLogService;
     }
 
@@ -121,35 +117,14 @@ public class RepositoryService {
      * @param repositoryType      The type of the repository (e.g., TESTS, TEMPLATE, etc.). Relevant for participations of type TESTS.
      * @param participation       The participation related to the repository.
      * @return A map where each key is a file path and each value is the content of the file as a String. This represents the state of the repository at the given commit.
-     * @throws IOException     If an I/O error occurs during the file content retrieval process. This could be due to issues with file access, network problems, etc.
-     * @throws GitAPIException If an error occurs while interacting with the Git repository. This could be due to issues with repository access, invalid commit ids, etc.
+     * @throws IOException If an I/O error occurs during the file content retrieval process. This could be due to issues with file access, network problems, etc.
      */
     public Map<String, String> getFilesContentAtCommit(ProgrammingExercise programmingExercise, String commitId, RepositoryType repositoryType,
-            ProgrammingExerciseParticipation participation) throws IOException, GitAPIException {
-        // Check if local VCS is active
-        if (profileService.isLocalVCActive()) {
-            log.debug("Using local VCS for getting files at commit {} for participation {}", commitId, participation.getId());
-            // If local VCS is active, operate directly on the bare repository
-            var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
-            try (Repository repository = gitService.getBareRepository(repoUri)) {
-                return getFilesContentFromBareRepository(repository, commitId);
-            }
-        }
-        else {
-            log.debug("Checking out repo to get files at commit {} for participation {}", commitId, participation.getId());
-            Repository repository;
-            if (repositoryType == RepositoryType.TESTS) {
-                repository = gitService.checkoutRepositoryAtCommit(programmingExercise.getVcsTestRepositoryUri(), commitId, true);
-            }
-            else {
-                // For other repository types, check out the repository at the commit
-                repository = gitService.checkoutRepositoryAtCommit(participation.getVcsRepositoryUri(), commitId, true);
-            }
-            // Get the files content from the working copy of the repository
-            Map<String, String> filesWithContent = getFilesContentFromWorkingCopy(repository);
-            // Switch back to the default branch head
-            gitService.switchBackToDefaultBranchHead(repository);
-            return filesWithContent;
+            ProgrammingExerciseParticipation participation) throws IOException {
+        log.debug("Getting files at commit {} for participation {}", commitId, participation.getId());
+        var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
+        try (Repository repository = gitService.getBareRepository(repoUri, false)) {
+            return getFilesContentFromBareRepository(repository, commitId);
         }
     }
 
@@ -176,10 +151,6 @@ public class RepositoryService {
             }
         });
         return fileListWithContent;
-    }
-
-    public Map<String, String> getFilesContentFromWorkingCopy(Repository repository) {
-        return getFilesContentFromWorkingCopy(repository, false);
     }
 
     /**
@@ -223,8 +194,8 @@ public class RepositoryService {
         return getFileContentFromBareRepositoryForCommitId(repository, headCommitId);
     }
 
-    public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(VcsRepositoryUri repositoryUri) throws IOException {
-        try (var bareRepository = gitService.getBareRepository(repositoryUri)) {
+    public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri) throws IOException {
+        try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
             return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
         }
     }
@@ -545,24 +516,12 @@ public class RepositoryService {
      * Retrieve the status of the repository. Also pulls the repository.
      *
      * @param repositoryUri of the repository to check the status for.
-     * @return a dto to determine the status of the repository.
-     * @throws GitAPIException if the repository status can't be retrieved.
-     */
-    public boolean isWorkingCopyClean(VcsRepositoryUri repositoryUri) throws GitAPIException {
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
-        return gitService.isWorkingCopyClean(repository);
-    }
-
-    /**
-     * Retrieve the status of the repository. Also pulls the repository.
-     *
-     * @param repositoryUri of the repository to check the status for.
      * @param defaultBranch the already used default branch in the remote repository
      * @return a dto to determine the status of the repository.
      * @throws GitAPIException if the repository status can't be retrieved.
      */
-    public boolean isWorkingCopyClean(VcsRepositoryUri repositoryUri, String defaultBranch) throws GitAPIException {
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch);
+    public boolean isWorkingCopyClean(LocalVCRepositoryUri repositoryUri, String defaultBranch) throws GitAPIException {
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch, false);
         return gitService.isWorkingCopyClean(repository);
     }
 

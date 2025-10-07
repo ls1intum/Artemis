@@ -16,16 +16,15 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
@@ -50,6 +49,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettin
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTutorSuggestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisExerciseSettingsRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -82,9 +82,11 @@ public class IrisSettingsService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final IrisExerciseSettingsRepository irisExerciseSettingsRepository;
+
     public IrisSettingsService(IrisSettingsRepository irisSettingsRepository, IrisSubSettingsService irisSubSettingsService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, Optional<TextRepositoryApi> textRepositoryApi,
-            ExerciseRepository exerciseRepository) {
+            ExerciseRepository exerciseRepository, IrisExerciseSettingsRepository irisExerciseSettingsRepository) {
         this.irisSettingsRepository = irisSettingsRepository;
         this.irisSubSettingsService = irisSubSettingsService;
         this.authCheckService = authCheckService;
@@ -92,16 +94,17 @@ public class IrisSettingsService {
         this.objectMapper = objectMapper;
         this.textRepositoryApi = textRepositoryApi;
         this.exerciseRepository = exerciseRepository;
+        this.irisExerciseSettingsRepository = irisExerciseSettingsRepository;
     }
 
     /**
-     * Hooks into the {@link ApplicationReadyEvent} and creates or updates the global IrisSettings object on startup.
-     *
-     * @param ignoredEvent Unused event param used to specify when the method should be executed
+     * Creates or updates the global IrisSettings object on bean creation.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @Profile(PROFILE_CORE_AND_SCHEDULING)
-    @EventListener
-    public void execute(FullStartupEvent ignoredEvent) throws Exception {
+    @PostConstruct
+    public void execute() throws Exception {
         var allGlobalSettings = irisSettingsRepository.findAllGlobalSettings();
         if (allGlobalSettings.isEmpty()) {
             createInitialGlobalSettings();
@@ -575,6 +578,18 @@ public class IrisSettingsService {
     }
 
     /**
+     * Checks whether an Iris feature is enabled for a course.
+     *
+     * @param type     The Iris feature to check
+     * @param courseId The course to check
+     * @return Whether the Iris feature is enabled for the course
+     */
+    public boolean isEnabledForCourse(IrisSubSettingsType type, Long courseId) {
+        var settings = getCombinedIrisSettingsForCourse(courseId, true);
+        return isFeatureEnabledInSettings(settings, type);
+    }
+
+    /**
      * Checks whether an Iris feature is enabled for an exercise.
      *
      * @param type     The Iris feature to check
@@ -819,11 +834,10 @@ public class IrisSettingsService {
      * Delete the Iris settings for an exercise.
      * If no Iris settings for the exercise exist, nothing happens.
      *
-     * @param exercise The course to delete the Iris settings for
+     * @param exerciseId The exercise to delete the Iris settings for
      */
-    public void deleteSettingsFor(Exercise exercise) {
-        var irisExerciseSettingsOptional = irisSettingsRepository.findExerciseSettings(exercise.getId());
-        irisExerciseSettingsOptional.ifPresent(irisSettingsRepository::delete);
+    public void deleteSettingsForExercise(long exerciseId) {
+        irisExerciseSettingsRepository.deleteByExerciseId(exerciseId);
     }
 
     /**

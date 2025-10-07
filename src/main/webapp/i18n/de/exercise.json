@@ -58,6 +58,7 @@
             "actions": "Aktionen",
             "notStarted": "Du hast diese Aufgabe noch nicht gestartet.",
             "problemStatement": "Aufgabenstellung",
+            "problemStatementEditor": "Aufgabenstellung (Editor)",
             "emptyProblemStatement": "(Keine Aufgabenstellung)",
             "instructions": "Anweisungen",
             "exampleSolution": "Beispiellösung",
@@ -158,8 +159,9 @@
                     "emptyError": "{{ exercise }}: Keine Ergebnisse gefunden"
                 }
             },
-            "startPractice": "Übung starten",
+            "startTraining": "Training starten",
             "nextQuestion": "Nächste Frage",
+            "endTraining": "Training beenden",
             "submit": "Einreichen",
             "refresh": "Aktualisieren",
             "course": "Kurs",

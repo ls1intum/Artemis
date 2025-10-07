@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 
@@ -19,6 +19,7 @@ import {
     faSync,
     faTable,
     faTimes,
+    faTrash,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -31,7 +32,6 @@ import { CourseSidebarItemService } from 'app/core/course/shared/services/sideba
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
@@ -39,7 +39,7 @@ import { LearningPathInstructorPageComponent } from 'app/atlas/manage/learning-p
 import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard.component';
 import { CourseScoresComponent } from 'app/core/course/manage/course-scores/course-scores.component';
 import { FaqComponent } from 'app/communication/faq/faq.component';
-import { BuildQueueComponent } from 'app/buildagent/build-queue/build-queue.component';
+import { BuildOverviewComponent } from 'app/buildagent/build-queue/build-overview.component';
 import { CourseDetailComponent } from 'app/core/course/manage/detail/course-detail.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
@@ -52,6 +52,8 @@ import { CourseConversationsComponent } from 'app/communication/shared/course-co
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -72,22 +74,54 @@ import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course
         CourseTitleBarComponent,
         DeleteButtonDirective,
         HasAnyAuthorityDirective,
+        FaIconComponent,
     ],
 })
 export class CourseManagementContainerComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
-    private eventManager = inject(EventManager);
-    private featureToggleService = inject(FeatureToggleService);
-    private sidebarItemService = inject(CourseSidebarItemService);
-    private courseAdminService = inject(CourseAdminService);
+    private readonly eventManager = inject(EventManager);
+    private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly sidebarItemService = inject(CourseSidebarItemService);
+    private readonly courseAdminService = inject(CourseAdminService);
+
+    protected readonly faTimes = faTimes;
+    protected readonly faEye = faEye;
+    protected readonly faWrench = faWrench;
+    protected readonly faTable = faTable;
+    protected readonly faFlag = faFlag;
+    protected readonly faListAlt = faListAlt;
+    protected readonly faChartBar = faChartBar;
+    protected readonly faClipboard = faClipboard;
+    protected readonly faSync = faSync;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faChevronLeft = faChevronLeft;
+    protected readonly faQuestion = faQuestion;
+    protected readonly faTrash = faTrash;
+
+    protected readonly ButtonSize = ButtonSize;
 
     private eventSubscriber: Subscription;
     private featureToggleSub: Subscription;
     private courseSub?: Subscription;
     private urlSubscription?: Subscription;
+    private routeSubscription?: Subscription;
+
     private learningPathsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
     studentViewLink = signal<string[]>([]);
+
+    // Stream of finalized URLs (after redirects), seeded with the current URL for reloads
+    private readonly finalizedUrl$ = this.router.events.pipe(
+        filter((routerEvent): routerEvent is NavigationEnd => routerEvent instanceof NavigationEnd),
+        map((navigationEndEvent) => navigationEndEvent.urlAfterRedirects ?? navigationEndEvent.url),
+        startWith(this.router.url),
+        distinctUntilChanged(),
+    );
+
+    readonly removePadding = toSignal(this.finalizedUrl$.pipe(map((currentUrl) => currentUrl.includes('test-runs') && currentUrl.includes('conduction'))), {
+        initialValue: this.router.url.includes('test-runs') && this.router.url.includes('conduction'),
+    });
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
@@ -107,26 +141,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | AssessmentDashboardComponent
         | CourseScoresComponent
         | FaqComponent
-        | BuildQueueComponent
+        | BuildOverviewComponent
         | undefined
     >(undefined);
-
-    // Icons
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
-    faTable = faTable;
-    faFlag = faFlag;
-    faListAlt = faListAlt;
-    faChartBar = faChartBar;
-    faClipboard = faClipboard;
-    faSync = faSync;
-    faCircleNotch = faCircleNotch;
-    faChevronRight = faChevronRight;
-    faChevronLeft = faChevronLeft;
-    faQuestion = faQuestion;
-
-    protected readonly ButtonSize = ButtonSize;
 
     async ngOnInit() {
         this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
@@ -244,7 +261,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             componentRef instanceof AssessmentDashboardComponent ||
             componentRef instanceof CourseScoresComponent ||
             componentRef instanceof FaqComponent ||
-            componentRef instanceof BuildQueueComponent
+            componentRef instanceof BuildOverviewComponent
         ) {
             this.activatedComponentReference.set(componentRef);
         }
@@ -374,31 +391,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.featureToggleSub?.unsubscribe();
         this.urlSubscription?.unsubscribe();
         this.courseSub?.unsubscribe();
-    }
-
-    private getExistingSummaryEntries(): EntitySummary {
-        const numberOfExercisesPerType = new Map<ExerciseType, number>();
-        this.course()?.exercises?.forEach((exercise) => {
-            if (exercise.type === undefined) {
-                return;
-            }
-            const oldValue = numberOfExercisesPerType.get(exercise.type) ?? 0;
-            numberOfExercisesPerType.set(exercise.type, oldValue + 1);
-        });
-
-        const numberStudents = this.course()?.numberOfStudents ?? 0;
-        const numberTutors = this.course()?.numberOfTeachingAssistants ?? 0;
-        const numberEditors = this.course()?.numberOfEditors ?? 0;
-        const numberInstructors = this.course()?.numberOfInstructors ?? 0;
-        const isTestCourse = this.course()?.testCourse;
-
-        return {
-            'artemisApp.course.delete.summary.numberStudents': numberStudents,
-            'artemisApp.course.delete.summary.numberTutors': numberTutors,
-            'artemisApp.course.delete.summary.numberEditors': numberEditors,
-            'artemisApp.course.delete.summary.numberInstructors': numberInstructors,
-            'artemisApp.course.delete.summary.isTestCourse': isTestCourse,
-        };
+        this.routeSubscription?.unsubscribe();
     }
 
     fetchCourseDeletionSummary(): Observable<EntitySummary> {
@@ -407,19 +400,23 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             return of({});
         }
 
-        return this.courseAdminService.getDeletionSummary(courseId).pipe(map((response) => (response.body ? this.combineSummary(response.body) : {})));
+        return this.courseAdminService.getDeletionSummary(courseId).pipe(map((response) => (response.body ? this.combineFetchedSummaryWithPresentValues(response.body) : {})));
     }
 
-    private combineSummary(summary: CourseDeletionSummaryDTO) {
+    private combineFetchedSummaryWithPresentValues(summary: CourseDeletionSummaryDTO) {
         return {
-            ...this.getExistingSummaryEntries(),
+            'artemisApp.course.delete.summary.isTestCourse': this.course()?.testCourse,
+            'artemisApp.course.delete.summary.numberStudents': summary.numberOfStudents,
+            'artemisApp.course.delete.summary.numberTutors': summary.numberOfTutors,
+            'artemisApp.course.delete.summary.numberEditors': summary.numberOfEditors,
+            'artemisApp.course.delete.summary.numberInstructors': summary.numberOfInstructors,
             'artemisApp.course.delete.summary.numberExams': summary.numberExams,
             'artemisApp.course.delete.summary.numberLectures': summary.numberLectures,
             'artemisApp.course.delete.summary.numberProgrammingExercises': summary.numberProgrammingExercises,
+            'artemisApp.course.delete.summary.numberModelingExercises': summary.numberModelingExercises,
+            'artemisApp.course.delete.summary.numberQuizExercises': summary.numberQuizExercises,
             'artemisApp.course.delete.summary.numberTextExercises': summary.numberTextExercises,
             'artemisApp.course.delete.summary.numberFileUploadExercises': summary.numberFileUploadExercises,
-            'artemisApp.course.delete.summary.numberQuizExercises': summary.numberQuizExercises,
-            'artemisApp.course.delete.summary.numberModelingExercises': summary.numberModelingExercises,
             'artemisApp.course.delete.summary.numberBuilds': summary.numberOfBuilds,
             'artemisApp.course.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
             'artemisApp.course.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,

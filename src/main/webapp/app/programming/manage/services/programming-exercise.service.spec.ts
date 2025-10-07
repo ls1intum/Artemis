@@ -1,12 +1,12 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import dayjs from 'dayjs/esm';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -16,8 +16,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
@@ -35,8 +33,8 @@ describe('ProgrammingExercise Service', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })
@@ -297,43 +295,6 @@ describe('ProgrammingExercise Service', () => {
         tick();
     }));
 
-    it('should make GET request to retrieve diff between submission and template', fakeAsync(() => {
-        const exerciseId = 1;
-        const submissionId = 2;
-        const expected = { id: 1, entries: [] } as unknown as ProgrammingExerciseGitDiffReport;
-        service.getDiffReportForSubmissionWithTemplate(exerciseId, submissionId).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report-with-template`;
-        const req = httpMock.expectOne({ method: 'GET', url });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should make GET request to retrieve diff between submissions', fakeAsync(() => {
-        const exerciseId = 1;
-        const submissionId = 2;
-        const submissionId2 = 3;
-        const expected = { id: 1, entries: [new ProgrammingExerciseGitDiffEntry()] } as unknown as ProgrammingExerciseGitDiffReport;
-        service.getDiffReportForSubmissions(exerciseId, submissionId, submissionId2).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/submissions/${submissionId}/diff-report/${submissionId2}`;
-        const req = httpMock.expectOne({ method: 'GET', url });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should make GET request to retrieve diff between commits for CommitDetailsView', fakeAsync(() => {
-        const exerciseId = 1;
-        const participationId = 2;
-        const commitId = '2';
-        const commitId2 = '3';
-        const repositoryType = 'TEMPLATE';
-        const expected = { id: 1, entries: [new ProgrammingExerciseGitDiffEntry()] } as unknown as ProgrammingExerciseGitDiffReport;
-        service.getDiffReportForCommits(exerciseId, participationId, commitId, commitId2, repositoryType).subscribe((resp) => expect(resp).toEqual(expected));
-        const url = `${resourceUrl}/${exerciseId}/commits/${commitId}/diff-report/${commitId2}?repositoryType=${repositoryType}&participationId=${participationId}`;
-        const req = httpMock.expectOne({ method: 'GET', url });
-        req.flush(expected);
-        tick();
-    }));
-
     it('should generate Structure Oracle', fakeAsync(() => {
         const exerciseId = 1;
         const expectedResult = 'oracle-structure';
@@ -347,8 +308,6 @@ describe('ProgrammingExercise Service', () => {
     it('should reset Exercise', fakeAsync(() => {
         const exerciseId = 1;
         const options = {
-            deleteBuildPlans: true,
-            deleteRepositories: true,
             deleteParticipationsSubmissionsAndResults: true,
             recreateBuildPlans: true,
         };
@@ -359,14 +318,6 @@ describe('ProgrammingExercise Service', () => {
         req.flush(expectedResult);
         tick();
     }));
-
-    it('should combine Template Repository Commits', () => {
-        const exerciseId = 1;
-        service.combineTemplateRepositoryCommits(exerciseId).subscribe();
-        const url = `${resourceUrl}/${exerciseId}/combine-template-commits`;
-        const req = httpMock.expectOne({ method: 'PUT', url });
-        req.flush({ body: 'something' });
-    });
 
     it('export instructor repository', fakeAsync(() => {
         const exerciseId = 1;
@@ -412,7 +363,6 @@ describe('ProgrammingExercise Service', () => {
         { uri: 'check-plagiarism', method: 'checkPlagiarism' },
         { uri: 'plagiarism-result', method: 'getLatestPlagiarismResult' },
         { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
-        { uri: 'diff-report', method: 'getDiffReport' },
     ])('should call correct exercise endpoint', (test) =>
         fakeAsync(() => {
             const exerciseId = 1;
@@ -434,6 +384,101 @@ describe('ProgrammingExercise Service', () => {
             tick();
         })(),
     );
+
+    it('should handle error when importing from file', fakeAsync(() => {
+        const course = new Course();
+        course.id = 1;
+        const request = new ProgrammingExercise(course, undefined);
+        const dummyFile = new File([''], 'dummyFile');
+        request.zipFileForImport = dummyFile;
+
+        const errorResponse = { status: 422, statusText: 'Unprocessable Entity' };
+        service.importFromFile(request, course.id).subscribe({
+            next: () => {
+                throw new Error('expected an error');
+            },
+            error: (error) => expect(error.status).toBe(422),
+        });
+
+        const url = `api/programming/courses/1/programming-exercises/import-from-file`;
+        const req = httpMock.expectOne({ method: 'POST', url: url });
+        req.flush('Import failed', errorResponse);
+        tick();
+    }));
+
+    it('should update problem statement', fakeAsync(() => {
+        const exerciseId = 123;
+        const problemStatement = 'Updated problem statement';
+        const expected = new ProgrammingExercise(undefined, undefined);
+        expected.id = exerciseId;
+        expected.studentParticipations = [];
+
+        service.updateProblemStatement(exerciseId, problemStatement).subscribe((response) => {
+            expect(response.body).toEqual(expected);
+        });
+
+        const url = `${resourceUrl}/${exerciseId}/problem-statement`;
+        const req = httpMock.expectOne({ method: 'PATCH', url });
+        req.flush(expected);
+        tick();
+    }));
+
+    it('should reevaluate and update exercise', fakeAsync(() => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 123;
+        const expected = { ...exercise, studentParticipations: [] };
+
+        service.reevaluateAndUpdate(exercise).subscribe((response) => {
+            expect(response.body).toEqual(expected);
+        });
+
+        const url = `${resourceUrl}/${exercise.id}/re-evaluate`;
+        const req = httpMock.expectOne({ method: 'PUT', url });
+        req.flush(expected);
+        tick();
+    }));
+
+    it('should get theia config', fakeAsync(() => {
+        const exerciseId = 123;
+        const expectedConfig = { dockerImage: 'theia:latest' };
+
+        service.getTheiaConfig(exerciseId).subscribe((config) => {
+            expect(config).toEqual(expectedConfig);
+        });
+
+        const url = `${resourceUrl}/${exerciseId}/theia-config`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(expectedConfig);
+        tick();
+    }));
+
+    it('should get checkout directories for programming language', fakeAsync(() => {
+        const programmingLanguage = 'JAVA';
+        const checkoutSolution = true;
+        const expectedDirectories = { directories: ['src', 'test'] };
+
+        service.getCheckoutDirectoriesForProgrammingLanguage(programmingLanguage as any, checkoutSolution).subscribe((directories) => {
+            expect(directories).toEqual(expectedDirectories);
+        });
+
+        const url = `${resourceUrl}/repository-checkout-directories?programmingLanguage=JAVA&checkoutSolution=true`;
+        const req = httpMock.expectOne({ method: 'GET', url });
+        req.flush(expectedDirectories);
+        tick();
+    }));
+
+    it('should test convertDataFromClient method', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs();
+        exercise.templateParticipation = new TemplateProgrammingExerciseParticipation();
+        exercise.solutionParticipation = new SolutionProgrammingExerciseParticipation();
+
+        const convertedExercise = service.convertDataFromClient(exercise);
+
+        expect(convertedExercise).toBeDefined();
+        expect(convertedExercise.templateParticipation).toBeDefined();
+        expect(convertedExercise.solutionParticipation).toBeDefined();
+    });
 
     afterEach(() => {
         httpMock.verify();

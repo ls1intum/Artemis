@@ -9,7 +9,7 @@ import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { combineLatest, forkJoin, from } from 'rxjs';
-import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exerciseUnit.service';
+import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exercise-unit.service';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,12 +23,12 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
     imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective],
 })
 export class CreateExerciseUnitComponent implements OnInit {
-    private activatedRoute = inject(ActivatedRoute);
-    private router = inject(Router);
-    private courseManagementService = inject(CourseManagementService);
-    private alertService = inject(AlertService);
-    private sortService = inject(SortService);
-    private exerciseUnitService = inject(ExerciseUnitService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly alertService = inject(AlertService);
+    private readonly sortService = inject(SortService);
+    private readonly exerciseUnitService = inject(ExerciseUnitService);
 
     protected readonly faTimes = faTimes;
     protected readonly faSort = faSort;

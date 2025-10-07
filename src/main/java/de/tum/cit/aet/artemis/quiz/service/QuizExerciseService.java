@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static java.time.ZonedDateTime.now;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -25,6 +27,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -34,19 +37,30 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
+import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
@@ -56,7 +70,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
@@ -86,10 +102,24 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final ExerciseService exerciseService;
 
+    private final UserRepository userRepository;
+
+    private final QuizBatchRepository quizBatchRepository;
+
+    private final ChannelService channelService;
+
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final Optional<SlideApi> slideApi;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService) {
+            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
+            ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<SlideApi> slideApi) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -99,6 +129,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.exerciseService = exerciseService;
+        this.userRepository = userRepository;
+        this.quizBatchRepository = quizBatchRepository;
+        this.channelService = channelService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
+        this.competencyProgressApi = competencyProgressApi;
+        this.slideApi = slideApi;
     }
 
     /**
@@ -528,5 +564,232 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         return newQuizExercise;
+    }
+
+    /**
+     * Performs the update of a quiz exercise, including validations, file handling, saving, logging,
+     * notifications, and asynchronous updates. This method uses the original quiz for comparisons
+     * (e.g., to detect changes or prevent invalid modifications) and applies updates from the provided
+     * updated quiz exercise.
+     *
+     * @param originalQuiz     the original quiz exercise loaded from the database, used for comparisons
+     *                             and checks (e.g., to verify if the quiz has started or for file change detection).
+     * @param updatedQuiz      the quiz exercise object containing the updated values to be applied and saved.
+     * @param files            the list of multipart files for drag-and-drop question updates (may be null or empty).
+     * @param notificationText optional text to include in notifications sent about the exercise update.
+     * @return the updated and saved quiz exercise.
+     * @throws IOException              if an error occurs during file handling or updates.
+     * @throws BadRequestAlertException if the updated quiz is invalid (e.g., fails validation checks,
+     *                                      quiz has already started, or conversion between exam/course types).
+     */
+    public QuizExercise performUpdate(QuizExercise originalQuiz, QuizExercise updatedQuiz, List<MultipartFile> files, String notificationText) throws IOException {
+
+        if (!updatedQuiz.isValid()) {
+            throw new BadRequestAlertException("The quiz exercise is not valid", ENTITY_NAME, "invalidQuiz");
+        }
+
+        updatedQuiz.validateGeneralSettings();
+
+        updatedQuiz.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // Check if quiz has already started
+        Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
+        if (batches.stream().anyMatch(QuizBatch::isStarted)) {
+            throw new BadRequestAlertException("The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.", ENTITY_NAME, "quizHasStarted");
+        }
+
+        updatedQuiz.reconnectJSONIgnoreAttributes();
+
+        // don't allow changing batches except in synchronized mode as the client doesn't have the full list and saving the exercise could otherwise end up deleting a bunch
+        if (updatedQuiz.getQuizMode() != QuizMode.SYNCHRONIZED || updatedQuiz.getQuizBatches() == null || updatedQuiz.getQuizBatches().size() > 1) {
+            updatedQuiz.setQuizBatches(batches);
+        }
+
+        handleDndQuizFileUpdates(updatedQuiz, originalQuiz, files);
+
+        Channel updatedChannel = channelService.updateExerciseChannel(originalQuiz, updatedQuiz);
+
+        updatedQuiz = save(updatedQuiz);
+        exerciseService.logUpdate(updatedQuiz, updatedQuiz.getCourseViaExerciseGroupOrCourseMember(), user);
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, updatedQuiz, notificationText);
+        if (updatedChannel != null) {
+            updatedQuiz.setChannelName(updatedChannel.getName());
+        }
+        QuizExercise finalQuizExercise = updatedQuiz;
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(finalQuizExercise)));
+        slideApi.ifPresent(api -> api.handleDueDateChange(originalQuiz, finalQuizExercise));
+        return updatedQuiz;
+    }
+
+    /**
+     * Merges the properties of the QuizExerciseFromEditorDTO into the QuizExercise domain object.
+     *
+     * @param quizExercise              The QuizExercise domain object to be updated
+     * @param quizExerciseFromEditorDTO The DTO containing the properties to be merged into the domain object.
+     */
+    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO) {
+        if (quizExerciseFromEditorDTO.title() != null) {
+            quizExercise.setTitle(quizExerciseFromEditorDTO.title());
+        }
+        if (quizExerciseFromEditorDTO.channelName() != null) {
+            quizExercise.setChannelName(quizExerciseFromEditorDTO.channelName());
+        }
+        if (quizExerciseFromEditorDTO.categories() != null) {
+            quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
+        }
+        if (quizExerciseFromEditorDTO.competencyLinks() != null) {
+            quizExercise.getCompetencyLinks().clear();
+            quizExercise.getCompetencyLinks().addAll(quizExerciseFromEditorDTO.competencyLinks());
+        }
+        if (quizExerciseFromEditorDTO.difficulty() != null) {
+            quizExercise.setDifficulty(quizExerciseFromEditorDTO.difficulty());
+        }
+        if (quizExerciseFromEditorDTO.duration() != null) {
+            quizExercise.setDuration(quizExerciseFromEditorDTO.duration());
+        }
+        if (quizExerciseFromEditorDTO.randomizeQuestionOrder() != null) {
+            quizExercise.setRandomizeQuestionOrder(quizExerciseFromEditorDTO.randomizeQuestionOrder());
+        }
+        if (quizExerciseFromEditorDTO.quizMode() != null) {
+            quizExercise.setQuizMode(quizExerciseFromEditorDTO.quizMode());
+        }
+        if (quizExerciseFromEditorDTO.quizBatches() != null) {
+            quizExercise.getQuizBatches().clear();
+            quizExercise.getQuizBatches().addAll(quizExerciseFromEditorDTO.quizBatches());
+        }
+        if (quizExerciseFromEditorDTO.releaseDate() != null) {
+            quizExercise.setReleaseDate(quizExerciseFromEditorDTO.releaseDate());
+        }
+        if (quizExerciseFromEditorDTO.startDate() != null) {
+            quizExercise.setStartDate(quizExerciseFromEditorDTO.startDate());
+        }
+        if (quizExerciseFromEditorDTO.dueDate() != null) {
+            quizExercise.setDueDate(quizExerciseFromEditorDTO.dueDate());
+        }
+        if (quizExerciseFromEditorDTO.includedInOverallScore() != null) {
+            quizExercise.setIncludedInOverallScore(quizExerciseFromEditorDTO.includedInOverallScore());
+        }
+        if (quizExerciseFromEditorDTO.quizQuestions() != null) {
+            quizExercise.setQuizQuestions(quizExerciseFromEditorDTO.quizQuestions());
+        }
+    }
+
+    /**
+     * Creates a copy of the quiz exercise with all fields that are necessary to compare the updated
+     * quiz exercise with the original one.
+     *
+     * @param quizExercise the quiz exercise to copy
+     * @return a copy of the quiz exercise with all fields required for an update.
+     */
+    public QuizExercise copyFieldsForUpdate(QuizExercise quizExercise) {
+        QuizExercise copy = new QuizExercise();
+        BeanUtils.copyProperties(quizExercise, copy);
+        if (!quizExercise.isExamExercise()) {
+            copy.setCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
+        }
+        copy.setExerciseGroup(quizExercise.getExerciseGroup());
+        copy.setQuizQuestions(quizExercise.getQuizQuestions());
+        copy.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
+        copy.setCompetencyLinks(quizExercise.getCompetencyLinks());
+        copy.setQuizBatches(quizExercise.getQuizBatches());
+        copy.setGradingCriteria(quizExercise.getGradingCriteria());
+        return copy;
+    }
+
+    /**
+     * Retrieves a {@link QuizExerciseCalendarEventDTO} for each {@link QuizExercise} associated to the given courseId.
+     * Each DTO encapsulates the quizMode, title, releaseDate, dueDate, quizBatches and duration of the respective QuizExercise.
+     * <p>
+     * The method then derives a set of {@link CalendarEventDTO}s from the DTOs. Whether events are included in the result
+     * depends on the quizMode of the given exercise and whether the logged-in user is a student of the {@link Course}.
+     *
+     * @param courseId      the ID of the course
+     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @param language      the language that will be used add context information to titles (e.g. the title of a release event will be prefixed with "Release: ")
+     * @return the set of results
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromQuizExercises(long courseId, boolean userIsStudent, Language language) {
+        Set<QuizExerciseCalendarEventDTO> dtos = quizExerciseRepository.getQuizExerciseCalendarEventDTOsForCourseId(courseId);
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
+    }
+
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(QuizExerciseCalendarEventDTO dto, boolean userIsStudent, Language language) {
+        if (dto.quizMode() == QuizMode.SYNCHRONIZED) {
+            return deriveCalendarEventDTOForSynchronizedQuizExercise(dto, userIsStudent).map(Set::of).orElseGet(Collections::emptySet);
+        }
+        else {
+            return deriveCalendarEventDTOsForIndividualAndBatchedQuizExercises(dto, userIsStudent, language);
+        }
+    }
+
+    /**
+     * Derives one event represents the working time period of the {@link QuizExercise} represented by the given DTO.
+     * <p>
+     * The events are only derived given that either the exercise is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     * <p>
+     * Context: <br>
+     * The startDate and dueDate properties of {@link QuizExercise}s in {@code QuizMode.SYNCHRONIZED} are always null. Instead, such quizzes have exactly one {@link QuizBatch}
+     * for which the startTime property is set. The end of the quiz can be calculated by adding the duration property of the exercise to the startTime of the batch.
+     *
+     * @param dto           the DTO from which to derive the event
+     * @param userIsStudent indicates whether the logged-in user is a student of the course related to the exercise
+     * @return one event representing the working time period of the exercise
+     */
+    private Optional<CalendarEventDTO> deriveCalendarEventDTOForSynchronizedQuizExercise(QuizExerciseCalendarEventDTO dto, boolean userIsStudent) {
+        if (userIsStudent && dto.releaseDate() != null && ZonedDateTime.now().isBefore(dto.releaseDate())) {
+            return Optional.empty();
+        }
+
+        QuizBatch synchronizedBatch = dto.quizBatch();
+        if (synchronizedBatch == null || synchronizedBatch.getStartTime() == null || dto.duration() == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new CalendarEventDTO("exerciseStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dto.title(), synchronizedBatch.getStartTime(),
+                synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
+    }
+
+    /**
+     * Derives one event for start/end of the duration during which the user can choose to participate in the {@link QuizExercise} represented by the given DAO.
+     * <p>
+     * The events are only derived given that either the exercise is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     * <p>
+     * Context: <br>
+     * For {@link QuizExercise}s in {@code QuizMode.INDIVIDUAL} the user can decide when to start the quiz himself.
+     * For {@link QuizExercise}s in {@code QuizMode.BATCHED} the user can join a quiz by using a password. The instructor can then start the quiz manually.
+     * For both modes, the period in which the quiz can be held may be constrained by releaseDate (defining a start of the period) or dueDate (defining an end of the period).
+     * The dueDate and startDate can be set independent of each other.
+     *
+     * @param dto           the DTO from which to derive the events
+     * @param userIsStudent indicates whether the logged-in user is a student of the course associated to the quizExercise
+     * @param language      the language that will be used add context information to titles (e.g. the title of a release event will be prefixed with "Release: ")
+     * @return the derived events
+     */
+    private Set<CalendarEventDTO> deriveCalendarEventDTOsForIndividualAndBatchedQuizExercises(QuizExerciseCalendarEventDTO dto, boolean userIsStudent, Language language) {
+        Set<CalendarEventDTO> events = new HashSet<>();
+        boolean userIsCourseStaff = !userIsStudent;
+        if (userIsCourseStaff || dto.releaseDate() == null || dto.releaseDate().isBefore(now())) {
+            if (dto.releaseDate() != null) {
+                String releaseDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Release: ";
+                    case GERMAN -> "Veröffentlichung: ";
+                };
+                events.add(new CalendarEventDTO("exerciseReleaseEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, releaseDateTitlePrefix + dto.title(),
+                        dto.releaseDate(), null, null, null));
+            }
+            if (dto.dueDate() != null) {
+                String dueDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Due: ";
+                    case GERMAN -> "Abgabefrist: ";
+                };
+                events.add(new CalendarEventDTO("exerciseDueEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dueDateTitlePrefix + dto.title(), dto.dueDate(), null,
+                        null, null));
+            }
+        }
+        return events;
     }
 }

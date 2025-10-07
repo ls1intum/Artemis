@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +27,7 @@ import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -39,10 +42,15 @@ import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionReposito
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 @ActiveProfiles(PROFILE_IRIS)
 class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
@@ -79,7 +87,9 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Autowired
     private PublicPyrisStatusUpdateResource publicPyrisStatusUpdateResource;
 
-    private ProgrammingExercise exercise;
+    private ProgrammingExercise programmingExercise;
+
+    private TextExercise textExercise;
 
     private Course course;
 
@@ -88,16 +98,21 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Autowired
     private PyrisJobService pyrisJobService;
 
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        course.addExercises(textExerciseUtilService.createSampleTextExercise(course));
         course = courseRepository.save(course);
-        exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         activateIrisGlobally();
         activateIrisFor(course);
-        activateIrisFor(exercise);
+        activateIrisFor(programmingExercise);
 
         pipelineDone = new AtomicBoolean(false);
     }
@@ -105,7 +120,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createSession() throws Exception {
-        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
         var actualIrisSession = irisTutorSuggestionSessionRepository.findByIdElseThrow(irisSession.getId());
         assertThat(actualIrisSession.getUserId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId());
@@ -115,7 +130,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateTutorSuggestionSessionShouldReturnDifferentResponsesForSamePost() throws Exception {
-        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var firstResponse = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
         var secondResponse = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
         assertThat(firstResponse).isNotEqualTo(secondResponse);
@@ -124,7 +139,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCurrentSession() throws Exception {
-        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
         var currentIrisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()) + "/current", null, IrisSession.class, HttpStatus.OK);
         assertThat(irisSession).isEqualTo(currentIrisSession);
@@ -133,7 +148,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCurrentMessagesForSession() throws Exception {
-        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
         var message = new IrisMessage();
         message.addContent(new IrisTextMessageContent("Test tutor suggestion request"));
@@ -149,7 +164,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateTutorSuggestionShouldProcessRequestAndReturnResponse() throws Exception {
-        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
         irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -164,14 +179,62 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetTutorSuggestionSessionAsStudent() throws Exception {
-        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testTutorSuggestionPipelineWithTextExercise() throws Exception {
+        var post = createPostInTextExerciseChat(textExercise, TEST_PREFIX);
+        var conversation = post.getConversation();
+        conversation.setCourse(course);
+        post = postRepository.save(post);
+
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
+        irisSession.setPostId(post.getId());
+
+        var dummyTextExerciseDTO = new PyrisTextExerciseDTO(textExercise.getId(), textExercise.getTitle(), new PyrisCourseDTO(course), textExercise.getProblemStatement(),
+                Optional.empty(), null, null);
+
+        pipelineDone.set(false);
+        irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
+            assertThat(dto.textExerciseDTO()).contains(dummyTextExerciseDTO);
+            pipelineDone.set(true);
+        });
+
+        request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
+        await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testTutorSuggestionPipelineWithExerciseDTO() throws Exception {
+        var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
+        var conversation = post.getConversation();
+        conversation.setCourse(course);
+        post = postRepository.save(post);
+
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
+        irisSession.setPostId(post.getId());
+
+        var dummyExerciseDTO = new PyrisProgrammingExerciseDTO(programmingExercise.getId(), programmingExercise.getTitle(), programmingExercise.getProgrammingLanguage(), null,
+                null, null, programmingExercise.getProblemStatement(), toInstant(programmingExercise.getReleaseDate()), toInstant(programmingExercise.getDueDate()));
+
+        pipelineDone.set(false);
+        irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
+            assertThat(dto.programmingExerciseDTO()).contains(dummyExerciseDTO);
+            pipelineDone.set(true);
+        });
+
+        request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
+        await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testExecuteTutorSuggestionPipelineShouldSendStatusUpdates() throws Exception {
-        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var conversation = post.getConversation();
         conversation.setCourse(course);
         post = postRepository.saveAndFlush(post);
@@ -196,7 +259,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorSuggestionPipelineShouldIncludeAnswerPosts() throws Exception {
-        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var conversation = post.getConversation();
         conversation.setCourse(course);
         post = postRepository.save(post);
@@ -227,7 +290,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorSuggestionStatusUpdateShouldBeHandled() throws Exception {
-        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var conversation = post.getConversation();
         conversation.setCourse(course);
         post = postRepository.save(post);
@@ -237,23 +300,21 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         String token = pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), irisSession.getId());
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + token);
         // Manually authenticate the job to verify token registration
         var mockRequest = new org.springframework.mock.web.MockHttpServletRequest();
-        mockRequest.addHeader("Authorization", "Bearer " + token);
+        mockRequest.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(mockRequest, de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob.class);
         assertThat(job).isNotNull();
         assertThat(job.jobId()).isEqualTo(token);
         List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Test stage", 0, PyrisStageState.DONE, "Done"));
         var statusUpdate = new TutorSuggestionStatusUpdateDTO("Test suggestion", "Test result", stages, null);
         var mockRequestForStatusUpdate = new org.springframework.mock.web.MockHttpServletRequest();
-        mockRequestForStatusUpdate.addHeader("Authorization", "Bearer " + token);
+        mockRequestForStatusUpdate.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
         publicPyrisStatusUpdateResource.setTutorSuggestionJobStatus(token, statusUpdate, mockRequestForStatusUpdate);
 
         // Remove the job and assert that accessing it throws an exception
         var requestAfterRemoval = new org.springframework.mock.web.MockHttpServletRequest();
-        requestAfterRemoval.addHeader("Authorization", "Bearer " + token);
+        requestAfterRemoval.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
         assertThatThrownBy(
                 () -> pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(requestAfterRemoval, de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob.class))
                 .isInstanceOf(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class).hasMessageContaining("No valid token provided");
@@ -275,7 +336,33 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         return "/api/iris/sessions/" + sessionId;
     }
 
-    private Post createPostInExerciseChat(ProgrammingExercise exercise, String userPrefix) {
+    private Post createPostInProgrammingExerciseChat(ProgrammingExercise exercise, String userPrefix) {
+        var student = userTestRepository.findOneByLogin(userPrefix + "student1").orElseThrow();
+        var tutor = userTestRepository.findOneByLogin(userPrefix + "tutor1").orElseThrow();
+        var chat = new Channel();
+        chat.setExercise(exercise);
+        chat.setName("Test channel");
+        chat.setCourse(course);
+        chat = channelRepository.save(chat);
+        var participant1 = new ConversationParticipant();
+        participant1.setConversation(chat);
+        participant1.setUser(student);
+        conversationParticipantRepository.save(participant1);
+        var participant2 = new ConversationParticipant();
+        participant2.setConversation(chat);
+        participant2.setUser(tutor);
+        conversationParticipantRepository.save(participant2);
+        chat = channelRepository.findById(chat.getId()).orElseThrow();
+        Post post = new Post();
+        post.setAuthor(student);
+        post.setDisplayPriority(DisplayPriority.NONE);
+        post.setConversation(chat);
+        post.setContent("Test content");
+        post = postRepository.save(post);
+        return post;
+    }
+
+    private Post createPostInTextExerciseChat(TextExercise exercise, String userPrefix) {
         var student = userTestRepository.findOneByLogin(userPrefix + "student1").orElseThrow();
         var tutor = userTestRepository.findOneByLogin(userPrefix + "tutor1").orElseThrow();
         var chat = new Channel();

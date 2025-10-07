@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core;
 
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoMonths;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoWeeks;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -15,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.domain.GraphType;
 import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
@@ -122,7 +125,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
         ZonedDateTime date = ZonedDateTime.of(2021, 12, 1, 0, 0, 0, 0, startDate.getZone());
         List<Integer> resultYear = Arrays.asList(0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 0);
         List<Integer> expectedResultYear = Arrays.asList(0, 0, 0, 123, 42, 0, 0, 0, 0, 0, 0, 0);
-        statisticsRepository.sortDataIntoMonths(outcome, resultYear, date);
+        sortDataIntoMonths(outcome, resultYear, date);
 
         assertThat(resultYear).as("Bucket 4 now has value for the entry date (123)").isEqualTo(expectedResultYear);
     }
@@ -141,7 +144,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
             expectedResultYear.add(i != 15 ? 0 : 123);
         }
 
-        statisticsRepository.sortDataIntoWeeks(outcome, resultYear, startDate);
+        sortDataIntoWeeks(outcome, resultYear, startDate);
 
         assertThat(resultYear).as("Bucket 15 now has value for the entry date (123)").isEqualTo(expectedResultYear);
     }
@@ -183,7 +186,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
     private PersistentAuditEvent setupPersistentEvent(String principal, ZonedDateTime date) {
         PersistentAuditEvent persistentEvent = new PersistentAuditEvent();
         persistentEvent.setPrincipal(principal);
-        persistentEvent.setAuditEventType("AUTHENTICATION_SUCCESS");
+        persistentEvent.setAuditEventType(AuditEventConstants.AUTHENTICATION_SUCCESS);
         persistentEvent.setAuditEventDate(Instant.from(date));
 
         return persistentEvent;

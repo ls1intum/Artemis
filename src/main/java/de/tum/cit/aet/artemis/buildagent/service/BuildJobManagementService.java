@@ -19,12 +19,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.topic.ITopic;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
  * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.
  * It handles timeouts as well as exceptions that occur during the execution of the build job.
  */
-@Lazy
+@Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildJobManagementService {
@@ -96,8 +96,10 @@ public class BuildJobManagementService {
     /**
      * Add a listener to the canceledBuildJobsTopic that cancels the build job for the given buildJobId.
      * It gets broadcast to all nodes in the cluster. Only the node that is running the build job will cancel it.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void init() {
         ITopic<String> canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
         canceledBuildJobsTopic.addMessageListener(message -> {

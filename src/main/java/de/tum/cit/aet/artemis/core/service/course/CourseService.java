@@ -27,14 +27,12 @@ import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -44,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
-import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
@@ -65,13 +62,9 @@ public class CourseService {
 
     private final Optional<LectureApi> lectureApi;
 
-    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
-
     private final Optional<ExerciseGroupApi> exerciseGroupApi;
 
     private final Optional<ExamRepositoryApi> examRepositoryApi;
-
-    private final Optional<ExamMetricsApi> examMetricsApi;
 
     private final CourseRepository courseRepository;
 
@@ -91,14 +84,11 @@ public class CourseService {
 
     private final CourseVisibleService courseVisibleService;
 
-    public CourseService(Optional<ExamMetricsApi> examMetricsApi, Optional<LectureApi> lectureApi, Optional<LectureRepositoryApi> lectureRepositoryApi,
-            CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi, StudentParticipationRepository studentParticipationRepository,
-            ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi,
-            Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository, CourseVisibleService courseVisibleService) {
-        this.examMetricsApi = examMetricsApi;
+    public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi,
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository, CourseVisibleService courseVisibleService) {
         this.lectureApi = lectureApi;
-        this.lectureRepositoryApi = lectureRepositoryApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -193,19 +183,19 @@ public class CourseService {
     public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
-        course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
-        course.setExercises(exerciseService.filterExercisesForCourse(course, user));
-        exerciseService.loadExerciseDetailsIfNecessary(course, user);
-        examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(course.getId(), user.getId(), user.getGroups(), ZonedDateTime.now())));
+        course.setExercises(exerciseRepository.findByCourseIdWithCategories(courseId));
+        course.setExercises(exerciseService.filterExercisesForCourse(course, user, true));
+        exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
+        examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(courseId, user.getId(), user.getGroups(), ZonedDateTime.now())));
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
         lectureApi.ifPresent(api -> course.setLectures(api.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user)));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
-        competencyProgressApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourse(course)));
+        competencyProgressApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourseId(courseId)));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
-        prerequisitesApi.ifPresent(api -> course.setNumberOfPrerequisites(api.countByCourse(course)));
+        prerequisitesApi.ifPresent(api -> course.setNumberOfPrerequisites(api.countByCourseId(courseId)));
         // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
         if (tutorialGroupApi.isPresent()) {
-            course.setNumberOfTutorialGroups(tutorialGroupApi.get().countByCourse(course));
+            course.setNumberOfTutorialGroups(tutorialGroupApi.get().countByCourseId(courseId));
         }
         else {
             course.setNumberOfTutorialGroups(0L);
@@ -249,25 +239,18 @@ public class CourseService {
         var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
         // TODO Performance: we only need the total score, the number of exercises and exams and - in case there is one - the currently active exercise(s)/exam(s)
         // we do NOT need to retrieve this information and send it to the client
-        Set<Exercise> allExercises = exerciseRepository.findByCourseIdsWithCategories(courseIds);
+        Set<Exercise> allExercises = exerciseRepository.findByCourseIds(courseIds);
 
         if (log.isDebugEnabled()) {
-            log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
+            log.debug("findAllExercisesByCourseIds finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
         }
-        var examCounts = examMetricsApi.map(api -> api.countVisibleExams(courseIds, ZonedDateTime.now())).orElse(Set.of());
-
-        var lectureCounts = lectureRepositoryApi.map(api -> api.countVisibleLectures(courseIds, ZonedDateTime.now())).orElse(Set.of());
 
         long startFilterAll = System.nanoTime();
         var courses = userVisibleCourses.stream().peek(course -> {
             // connect the exercises with the course
             course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
-            course.setExercises(exerciseService.filterExercisesForCourse(course, user));
-            exerciseService.loadExerciseDetailsIfNecessary(course, user);
-            long numberOfLectures = lectureCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCountDTO::count).findFirst().orElse(0L);
-            course.setNumberOfLectures(numberOfLectures);
-            long numberOfExams = examCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCountDTO::count).findFirst().orElse(0L);
-            course.setNumberOfExams(numberOfExams);
+            course.setExercises(exerciseService.filterExercisesForCourse(course, user, false));
+            exerciseService.loadExerciseDetailsIfNecessary(course, user, false);
             // we do not send actual lectures or exams to the client, not needed
             course.setLectures(Set.of());
             course.setExams(Set.of());

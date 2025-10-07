@@ -13,7 +13,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faChalkboardTeacher, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
@@ -22,7 +22,7 @@ import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgClass, UpperCasePipe } from '@angular/common';
+import { UpperCasePipe } from '@angular/common';
 import { ExerciseUnitComponent } from '../exercise-unit/exercise-unit.component';
 import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from '../text-unit/text-unit.component';
@@ -49,7 +49,6 @@ export interface LectureUnitCompletionEvent {
     styleUrls: ['../../../../core/course/overview/course-overview/course-overview.scss', '../../../shared/course-lectures/course-lectures.scss'],
     imports: [
         TranslateDirective,
-        NgClass,
         ExerciseUnitComponent,
         AttachmentVideoUnitComponent,
         TextUnitComponent,
@@ -66,15 +65,23 @@ export interface LectureUnitCompletionEvent {
     ],
 })
 export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
-    private alertService = inject(AlertService);
-    private lectureService = inject(LectureService);
-    private lectureUnitService = inject(LectureUnitService);
-    private activatedRoute = inject(ActivatedRoute);
-    private fileService = inject(FileService);
-    private router = inject(Router);
-    private profileService = inject(ProfileService);
-    private irisSettingsService = inject(IrisSettingsService);
+    private readonly alertService = inject(AlertService);
+    private readonly lectureService = inject(LectureService);
+    private readonly lectureUnitService = inject(LectureUnitService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly fileService = inject(FileService);
+    private readonly router = inject(Router);
+    private readonly profileService = inject(ProfileService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly scienceService = inject(ScienceService);
+
+    protected readonly LectureUnitType = LectureUnitType;
+    protected readonly isCommunicationEnabled = isCommunicationEnabled;
+    protected readonly isMessagingEnabled = isMessagingEnabled;
+    protected readonly ChatServiceMode = ChatServiceMode;
+
+    protected readonly faSpinner = faSpinner;
+    protected readonly faChalkboardTeacher = faChalkboardTeacher;
 
     lectureId?: number;
     courseId?: number;
@@ -86,22 +93,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
     courseParamsSubscription: Subscription;
-    isProduction = true;
-    isTestServer = false;
     irisEnabled = false;
     informationBoxData: InformationBox[] = [];
 
-    readonly LectureUnitType = LectureUnitType;
-    readonly isCommunicationEnabled = isCommunicationEnabled;
-    readonly isMessagingEnabled = isMessagingEnabled;
-    readonly ChatServiceMode = ChatServiceMode;
-
-    readonly faSpinner = faSpinner;
-    readonly faChalkboardTeacher = faChalkboardTeacher;
-
     ngOnInit(): void {
-        this.isProduction = this.profileService.isProduction();
-        this.isTestServer = this.profileService.isTestServer();
         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
 
         // As defined in courses.route.ts, the courseId is in the grand parent route of the lectureId route.

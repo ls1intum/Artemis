@@ -13,10 +13,10 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.ResultActions;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.SecurityConfiguration;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -58,7 +58,7 @@ class ClientForwardTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void getWebsocketEndpointWithInvalidCookie() throws Exception {
-        Cookie cookie = new Cookie(JWTFilter.JWT_COOKIE_NAME, "invalidCookie");
+        Cookie cookie = new Cookie(Constants.JWT_COOKIE_NAME, "invalidCookie");
         request.performMvcRequest(get("/websocket/308/sessionId/websocket").cookie(cookie)).andExpect(status().isOk()); // Failed handshake with invalid cookie returns 200
     }
 

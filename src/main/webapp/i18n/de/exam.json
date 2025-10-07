@@ -298,6 +298,10 @@
             "examExercises": "Klausuraufgaben:",
             "exercisePoints": "Punkte",
             "exerciseName": "Name",
+            "navigation": {
+                "nextButton": "Weiter",
+                "previousButton": "Zurück"
+            },
             "noStudentExam": "Du bist nicht für die Klausur angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
             "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur möglich. Um deine Abgaben zu betrachten, navigiere zur Klausurseite ",
             "atLeastTutorStudentExam": "Da du nicht Studierende:r bist, kannst du nicht an der Klausur teilnehmen:",
@@ -327,6 +331,7 @@
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
             "handInEarly": "Vorzeitig Abgeben",
             "continueAfterHandInEarly": "Zurück",
+            "continue": "Fortsetzen",
             "attendanceCheck": "Anwesenheitskontrolle",
             "continueAfterHandInEarlyDescription": "Um mit der Klausur fortzufahren, klicke auf den Button 'Zurück'.",
             "handInEarlyNotice": "Du bist dabei die Klausur vorzeitig abzugeben. Du kannst danach nicht mehr an der Klausur teilnehmen.",

@@ -15,6 +15,22 @@
             "copied": "Kopiert",
             "new": "Neu"
         },
+        "weekdays": {
+            "monday": "Montag",
+            "tuesday": "Dienstag",
+            "wednesday": "Mittwoch",
+            "thursday": "Donnerstag",
+            "friday": "Freitag",
+            "saturday": "Samstag",
+            "sunday": "Sonntag",
+            "mondayShort": "Mo",
+            "tuesdayShort": "Di",
+            "wednesdayShort": "Mi",
+            "thursdayShort": "Do",
+            "fridayShort": "Fr",
+            "saturdayShort": "Sa",
+            "sundayShort": "So"
+        },
         "importTable": {
             "searchPlaceholder": "Suchen"
         },
@@ -51,7 +67,6 @@
                 "quizSubmission": "Quiz Submission",
                 "dragAndDropSubmittedAnswer": "Drag-and-Drop eingereichte Antwort",
                 "dragAndDropAssignment": "Drag-and-Drop Assignment",
-                "quizStatistic": "Statistiken",
                 "quizPointStatistic": "Quiz Punktestatistiken",
                 "quizQuestionStatistic": "Fragestatistiken",
                 "multipleChoiceQuestionStatistic": "Multiple-Choice Fragestatistiken",
@@ -123,7 +138,8 @@
                 "lti": "LTI Konfiguration",
                 "standardizedCompetencies": "Standardisierte Kompetenzen",
                 "cleanupService": "Aufräumdienst",
-                "lectureTranscription": "Vorlesungstranskription"
+                "lectureTranscription": "Vorlesungstranskription",
+                "examRooms": "Prüfungsräume"
             },
             "language": "Sprache",
             "settings": "Einstellungen"
@@ -357,7 +373,7 @@
     "justNow": "gerade eben",
     "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurückzugehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
     "overview": {
-        "practice": "Übung",
+        "training": "Quiz Training",
         "title": "Kursübersicht",
         "aboutUs": "Über",
         "course": "Kursdetails",
@@ -374,7 +390,8 @@
         "archive": "Kursarchiv",
         "faq": "FAQ",
         "plagiarismCases": "Plagiatsfälle",
-        "settings": "Einstellungen"
+        "settings": "Einstellungen",
+        "calendar": "Kalender"
     },
     "connectionStatus": {
         "connected": "Verbunden",

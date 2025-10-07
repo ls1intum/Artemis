@@ -1,20 +1,19 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, model } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { CourseLearnerProfileLevel } from 'app/core/learner-profile/shared/entities/learner-profile-options.model';
 
 @Component({
     selector: 'jhi-segmented-toggle',
     standalone: true,
     imports: [NgClass],
     templateUrl: './segmented-toggle.component.html',
+    styleUrls: ['./segmented-toggle.component.scss'],
 })
-export class SegmentedToggleComponent {
-    @Input() options: { label: string; value: CourseLearnerProfileLevel }[] = [];
-    @Input() selected: CourseLearnerProfileLevel;
-    @Output() selectedChange = new EventEmitter<CourseLearnerProfileLevel>();
+export class SegmentedToggleComponent<T> {
+    options = input<{ label: string; value: T }[]>([]);
+    selected = model<T>();
+    maxLines = input(2);
 
-    select(value: CourseLearnerProfileLevel) {
-        this.selected = value;
-        this.selectedChange.emit(value);
+    select(value: T) {
+        this.selected.set(value);
     }
 }

@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static com.hazelcast.jet.core.test.JetAssert.fail;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 
 import java.awt.image.BufferedImage;
@@ -645,7 +645,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Create a mock PDF file with 3 pages
-        Path tempDir = Files.createTempDirectory("test-slides");
+        Path tempDir = Files.createTempDirectory(tempPath, "test-slides");
         Path tempPdfPath = tempDir.resolve("test-slides.pdf");
         try (PDDocument doc = new PDDocument()) {
             // Add 3 pages to the document
@@ -772,7 +772,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Create a mock PDF file
-        Path tempDir = Files.createTempDirectory("test-slides");
+        Path tempDir = Files.createTempDirectory(tempPath, "test-slides");
         Path tempPdfPath = tempDir.resolve("test-slides.pdf");
         try (PDDocument doc = new PDDocument()) {
             doc.addPage(new PDPage());
@@ -821,7 +821,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Create a mock PDF file with 3 pages
-        Path tempDir = Files.createTempDirectory("test-slides");
+        Path tempDir = Files.createTempDirectory(tempPath, "test-slides");
         Path tempPdfPath = tempDir.resolve("test-slides.pdf");
         try (PDDocument doc = new PDDocument()) {
             // Add 3 pages to the document

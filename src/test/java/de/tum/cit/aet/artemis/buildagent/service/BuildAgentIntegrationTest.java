@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -18,7 +19,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAiChatAutoConfiguration;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
@@ -68,6 +73,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
     private ITopic<String> resumeBuildAgentTopic;
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     @BeforeAll
     void init() {
         processingJobs = this.hazelcastInstance.getMap("processingJobs");
@@ -77,6 +85,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
         pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
+        // this triggers the initialization of all required beans in the application context
+        // in production the DeferredEagerBeanInitializer would do this automatically
+        applicationContext.getBean(SharedQueueProcessingService.class);
     }
 
     @BeforeEach
@@ -405,5 +416,10 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
             return buildAgent.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
         });
+    }
+
+    @Test
+    void testSpringAIAutoConfigurationsExcluded() {
+        assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> applicationContext.getBean(AzureOpenAiChatAutoConfiguration.class));
     }
 }

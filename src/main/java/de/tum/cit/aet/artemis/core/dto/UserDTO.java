@@ -87,6 +87,8 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime externalLLMUsageAccepted;
 
+    private boolean memirisEnabled = false;
+
     public UserDTO() {
         // Empty constructor needed for Jackson.
     }
@@ -94,12 +96,12 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), DEFAULT_IS_LOGGED_IN_WITH_PASSKEY, user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(),
-                user.getLastModifiedDate(), user.getAuthorities(), user.getGroups(), user.getOrganizations(), user.getExternalLLMUsageAcceptedTimestamp());
+                user.getLastModifiedDate(), user.getAuthorities(), user.getGroups(), user.getOrganizations(), user.getExternalLLMUsageAcceptedTimestamp(), user.isMemirisEnabled());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, boolean internal, boolean isLoggedInWithPasskey, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate,
-            Set<Authority> authorities, Set<String> groups, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted) {
+            Set<Authority> authorities, Set<String> groups, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted, boolean memirisEnabled) {
 
         this.id = id;
         this.login = login;
@@ -122,6 +124,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.groups = groups;
         this.organizations = organizations;
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+        this.memirisEnabled = memirisEnabled;
         this.isLoggedInWithPasskey = isLoggedInWithPasskey;
     }
 
@@ -288,5 +291,21 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setExternalLLMUsageAccepted(ZonedDateTime externalLLMUsageAccepted) {
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+    }
+
+    public boolean isMemirisEnabled() {
+        return memirisEnabled;
+    }
+
+    public void setMemirisEnabled(boolean memirisEnabled) {
+        this.memirisEnabled = memirisEnabled;
+    }
+
+    @Override
+    public String toString() {
+        return "UserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='"
+                + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate()
+                + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", isLoggedInWithPasskey=" + isLoggedInWithPasskey
+                + ", authorities=" + authorities + "}";
     }
 }

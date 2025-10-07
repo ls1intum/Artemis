@@ -1,15 +1,16 @@
 <div
     class="sa-question"
     [ngClass]="{
-        disabled: clickDisabled && !showResult,
-        result: showResult && !forceSampleSolution,
-        incorrect: (score || 0) < shortAnswerQuestion.points! && !forceSampleSolution,
+        disabled: clickDisabled() && !showResult(),
+        result: showResult() && !forceSampleSolution(),
+        incorrect: (score() || 0) < shortAnswerQuestion().points! && !forceSampleSolution(),
+        'question-highlight': shortAnswerQuestion().isHighlighted,
     }"
 >
     <h4 class="question-title-display">
-        <span>{{ questionIndex }})</span> {{ shortAnswerQuestion.title }}
+        <span>{{ questionIndex() }})</span> {{ shortAnswerQuestion().title }}
     </h4>
-    @if (!showResult) {
+    @if (!showResult()) {
         <div>
             @for (textPart of textParts; track textPart; let i = $index) {
                 <div class="short-answer-question-display">
@@ -24,10 +25,11 @@
                                         class="short-answer-question-container__input"
                                         type="text"
                                         [maxLength]="MAX_CHARACTER_COUNT"
-                                        [disabled]="clickDisabled"
+                                        [disabled]="clickDisabled()"
                                         value="{{ getSubmittedTextForSpotAsString(element) }}"
-                                        id="solution-{{ i }}-{{ j }}-{{ shortAnswerQuestion.id }}"
+                                        id="solution-{{ i }}-{{ j }}-{{ shortAnswerQuestion().id }}"
                                         (change)="setSubmittedText()"
+                                        autocomplete="off"
                                     />
                                 </div>
                             }
@@ -39,7 +41,7 @@
             }
         </div>
     }
-    @if (showResult) {
+    @if (showResult()) {
         <div>
             @for (textPart of textParts; track textPart) {
                 <div class="short-answer-question-display">
@@ -60,6 +62,7 @@
                                         [maxLength]="MAX_CHARACTER_COUNT"
                                         value="{{ getTextForSpotAsString(element) }}"
                                         size="{{ getSizeForSpot(element) }}"
+                                        autocomplete="off"
                                     />
                                 </div>
                             }
@@ -70,15 +73,15 @@
             }
         </div>
     }
-    @if (shortAnswerQuestion.invalid) {
+    @if (shortAnswerQuestion().invalid) {
         <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalidText"></span>
     }
-    @if (shortAnswerQuestion.hint || (shortAnswerQuestion.explanation && showResult)) {
+    @if (shortAnswerQuestion().hint || (shortAnswerQuestion().explanation && showResult())) {
         <div class="hint">
             <ng-template #renderedHint>
                 <div [innerHTML]="renderedQuestion.hint"></div>
             </ng-template>
-            @if (shortAnswerQuestion.hint) {
+            @if (shortAnswerQuestion().hint) {
                 <span class="label label-info" [ngbPopover]="renderedHint" placement="right auto" triggers="mouseenter:mouseleave">
                     <fa-icon [icon]="farQuestionCircle" />
                     <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
@@ -88,7 +91,7 @@
             <ng-template #renderedExplanation>
                 <div [innerHTML]="renderedQuestion.explanation"></div>
             </ng-template>
-            @if (shortAnswerQuestion.explanation && showResult) {
+            @if (shortAnswerQuestion().explanation && showResult()) {
                 <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave">
                     <fa-icon [icon]="faExclamationCircle" />
                     <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
@@ -96,29 +99,29 @@
             }
         </div>
     }
-    @if (!showResult || forceSampleSolution) {
+    @if (!showResult() || forceSampleSolution()) {
         <div class="question-score">
             <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-            <span>{{ shortAnswerQuestion.points }}</span>
+            <span>{{ shortAnswerQuestion().points }}</span>
         </div>
     }
-    @if (showResult && !forceSampleSolution) {
-        <div class="question-score result" [ngClass]="{ incorrect: (score || 0) < shortAnswerQuestion.points! }">
+    @if (showResult() && !forceSampleSolution()) {
+        <div class="question-score result" [ngClass]="{ incorrect: (score() || 0) < shortAnswerQuestion().points! }">
             <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
-            <span class="show-explanation">{{ score || 0 }}/{{ shortAnswerQuestion.points }}</span>
+            <span class="show-explanation">{{ score() || 0 }}/{{ shortAnswerQuestion().points }}</span>
             <span class="show-explanation">
-                <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="shortAnswerQuestion" [shortAnswerText]="submittedTexts" [questionIndex]="questionIndex" />
+                <jhi-quiz-scoring-infostudent-modal [score]="score()" [question]="shortAnswerQuestion()" [shortAnswerText]="submittedTexts()" [questionIndex]="questionIndex()" />
             </span>
         </div>
     }
     <br />
     <br />
-    @if (showResult && !forceSampleSolution) {
+    @if (showResult() && !forceSampleSolution()) {
         <div>
-            @if (!showingSampleSolution) {
+            @if (!showingSampleSolution()) {
                 <div class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></div>
             }
-            @if (showingSampleSolution) {
+            @if (showingSampleSolution()) {
                 <div class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></div>
             }
         </div>

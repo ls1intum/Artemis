@@ -68,6 +68,7 @@ import { QuizExerciseParticipationPage } from './pageobjects/exercises/quiz/Quiz
 import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
+import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/programming/ProgrammingExercisesSubmissionsPage';
 
 /*
  * Define custom types for fixtures
@@ -127,6 +128,7 @@ export type ArtemisPageObjects = {
     programmingExerciseRepository: RepositoryPage;
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
+    programmingExerciseSubmissions: ProgrammingExerciseSubmissionsPage;
     quizExerciseCreation: QuizExerciseCreationPage;
     quizExerciseDragAndDropQuiz: DragAndDropQuiz;
     quizExerciseMultipleChoice: MultipleChoiceQuiz;
@@ -329,6 +331,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     programmingExerciseScaFeedback: async ({ page }, use) => {
         await use(new ScaFeedbackModal(page));
+    },
+    programmingExerciseSubmissions: async ({ page }, use) => {
+        await use(new ProgrammingExerciseSubmissionsPage(page));
     },
     quizExerciseCreation: async ({ page }, use) => {
         await use(new QuizExerciseCreationPage(page));

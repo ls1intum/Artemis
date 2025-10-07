@@ -182,11 +182,11 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Forward Messages                                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Choose to also send replies into main thread         |                                      | |WIP|              | |UNAVAILABLE|       | |PLANNED|           |
-+------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Resolve Messages                                     | At least tutor and authors           | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Post action bar (thread view)                        |                                      | |NOT PLANNED|      | |AVAILABLE|         | |AVAILABLE|         |
++------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
+| Get tutor suggestion (thread view)                   | At least tutor                       | |AVAILABLE|        | |UNAVAILABLE|       | |UNAVAILABLE|       |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 |                                                                                                                                                              |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -245,6 +245,8 @@ Available features on each platform
 | Open Profile info by clicking profile picture        |                                      | |PLANNED|          | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Start a conversation from Profile                    |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
++------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
+| Draft messages                                       |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 |                                                                                                                                                              |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -329,7 +331,7 @@ Available features on each platform
 | | Notification overview for past                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |UNAVAILABLE|       |
 | | course specific notifications                      |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| | Notification settings (unsubscribe/subscribe       |                                      | |AVAILABLE|        | |AVAILABLE|         | |UNAVAILABLE|       |
+| | Notification settings (unsubscribe/subscribe       |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 | | to various course specific notification types)     |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 
@@ -530,6 +532,86 @@ corner of the answer thread. Clicking the same button again returns the thread t
 
 |expanded-thread|
 
+Profile Pictures
+^^^^^^^^^^^^^^^^
+
+Users can upload a profile picture in their account settings to enhance personal recognition. Once set, the profile picture will appear alongside any messages they post. The following video provides a step-by-step guide on how to upload a profile picture:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61336?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+Draft Messages
+^^^^^^^^^^^^^^^
+
+When composing a message or replying in a thread on the WebApp, Artemis automatically saves your input as a **draft**. This ensures that unfinished messages are not lost when navigating between conversations or accidentally closing the tab.
+
+Draft messages are:
+
+* Stored locally (not synced across devices)
+* Associated with the user and the corresponding conversation or thread
+* Automatically restored when reopening the same context
+* Removed once the message is sent
+* Automatically deleted after 7 days if not submitted
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61870?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+            Watch this video on TUM-Live.
+        </iframe>
+
+Features for Tutors
+-----------------------
+
+The following features are only available for tutors, not for students.
+
+Tutor Suggestions
+^^^^^^^^^^^^^^^^^
+
+*Suggestions provided by Iris to support tutors in formulating context-aware replies.*
+
+Tutor Suggestions appear in the thread view whenever a tutor opens a discussion post. These suggestions are short, bullet-point messages generated by Iris based on the context of the current discussion, the course content, and linked lecture or exercise materials. Their purpose is to guide tutors toward pedagogically meaningful answers without providing direct solutions. Once Iris completes the analysis, the suggestions appear beneath the message input field. A status bar shows the loading state while the Tutor Suggestions are generated.
+
+Exemplary thread view with tutor suggestions:
+
+|tutor-suggestions-view|
+
+If tutors require more detailed clarification or want to refine the Tutor Suggestions, they can initiate a direct conversation with Iris in the integrated chat window. This chat appears directly below the suggestions in the thread view.
+Tutors can ask questions such as:
+
+* What part of the example solution relates to this question?
+* What misconception might the student have based on their message?
+
+Iris will respond based on available context, such as exercise content, example solutions, and previous messages. The tutor can use these answers to formulate more informed replies.
+
+Example tutor–Iris conversation:
+
+|iris-chat-view|
+
+If the tutor's question leads to a refined understanding of the discussion, Iris may automatically regenerate and update the Tutor Suggestions. Additionally, tutors can trigger an automated regeneration.
+A “View history” button lets them inspect previously generated suggestions.
+Viewing previous suggestions:
+
+|tutor-suggestions-history|
+
+Tutor Suggestions are only available to users with the tutor role. The feature is disabled by default and must be explicitly enabled by the administrators. Students' messages are processed and stored locally within Artemis to generate suggestions. No external services are contacted, and no content is sent to GPT models.
+
+.. important::
+   **Privacy and activation at a glance**
+
+   - **Local processing**: Students' messages are processed locally inside Artemis to create Tutor Suggestions. There is no transfer of personal data to third parties.
+   - **Opt‑in**: The feature is not active by default and must be explicitly enabled by the administrators.
+   - **No external AI**: No content is sent to GPT models or other external AI services.
+   - **GDPR**: Processing is purpose‑limited to assisting tutors (purpose limitation, data minimisation). If your institution requires consent as the legal basis, activation must be preceded by explicit **consent** (Art. 6(1)(a) GDPR).
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61869?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Features for Moderators
 -----------------------
 
@@ -629,4 +711,10 @@ As soon as the announcement is created, all participants who did not actively re
 .. |save-messages| image:: communication/save-message.png
     :width: 1000
 .. |global-search| image:: communication/global-search.png
+    :width: 1000
+.. |tutor-suggestions-view| image:: communication/tutor-suggestions-view.png
+    :width: 500
+.. |iris-chat-view| image:: communication/iris-chat-view.png
+    :width: 500
+.. |tutor-suggestions-history| image:: communication/tutor-suggestions-history.png
     :width: 1000

@@ -21,6 +21,7 @@ import { TutorialGroupSessionsTableComponent } from 'app/tutorialgroup/shared/tu
 import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { getDayTranslationKey } from 'app/tutorialgroup/shared/util/weekdays';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-session-management',
@@ -41,6 +42,7 @@ import { getDayTranslationKey } from 'app/tutorialgroup/shared/util/weekdays';
 export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
+    private calendarService = inject(CalendarService);
     private modalService = inject(NgbModal);
     private activeModal = inject(NgbActiveModal);
     private cdr = inject(ChangeDetectorRef);
@@ -50,7 +52,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     isLoading = false;
 
     faPlus = faPlus;
-
+    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
     @Input() tutorialGroupId: number;
     @Input() course: Course;
     tutorialGroup: TutorialGroup;
@@ -90,6 +92,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
                             this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
                         }
                     }
+                    this.calendarService.reloadEvents();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             })

@@ -25,12 +25,12 @@ import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
@@ -85,9 +85,9 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         LocalRepository someRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
 
         // Delete the remote repository.
-        someRepository.originGit.close();
+        someRepository.remoteBareGitRepo.close();
         try {
-            FileUtils.deleteDirectory(someRepository.originRepoFile);
+            FileUtils.deleteDirectory(someRepository.remoteBareGitRepoFile);
         }
         catch (IOException exception) {
             // JGit creates a lock file in each repository that could cause deletion problems.
@@ -98,16 +98,16 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         }
 
         // Try to fetch from the remote repository.
-        localVCLocalCITestService.testFetchThrowsException(someRepository.localGit, student1Login, USER_PASSWORD, projectKey, repositorySlug, InvalidRemoteException.class, "");
+        localVCLocalCITestService.testFetchThrowsException(someRepository.workingCopyGitRepo, student1Login, USER_PASSWORD, projectKey, repositorySlug,
+                InvalidRemoteException.class, "");
 
         // Try to push to the remote repository.
-        localVCLocalCITestService.testPushReturnsError(someRepository.localGit, student1Login, projectKey, repositorySlug, NOT_FOUND);
+        localVCLocalCITestService.testPushReturnsError(someRepository.workingCopyGitRepo, student1Login, projectKey, repositorySlug, NOT_FOUND);
 
         // Cleanup
         someRepository.resetLocalRepo();
     }
 
-    @Disabled
     @Test
     void testFetchPush_usingVcsAccessToken() {
         var programmingParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -117,26 +117,26 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         programmingExerciseRepository.save(programmingExercise);
 
         // Fetch from and push to the remote repository with participation VCS access token
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug);
 
         // Fetch from and push to the remote repository with user VCS access token
         var studentWithToken = userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, token, ZonedDateTime.now().plusDays(1));
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug);
 
         // Try to fetch and push, when token is removed and re-added, which makes the previous token invalid
         userUtilService.deleteUserVcsAccessToken(studentWithToken);
         localVCLocalCITestService.deleteParticipationVcsAccessToken(programmingParticipation.getId());
         localVCLocalCITestService.createParticipationVcsAccessToken(student, programmingParticipation.getId());
-        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
 
         // Try to fetch and push with removed participation
         localVCLocalCITestService.deleteParticipationVcsAccessToken(programmingParticipation.getId());
         localVCLocalCITestService.deleteParticipation(programmingParticipation);
-        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
     }
 
     @Test
@@ -153,12 +153,14 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
 
         // Try to access with the wrong password.
-        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug,
+                NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug,
+                NOT_AUTHORIZED);
 
         // Try to access without a password.
-        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
     }
 
     @Test
@@ -168,14 +170,13 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String repositorySlug = "someprojectkey-some-repository-slug";
         LocalRepository someRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
 
-        localVCLocalCITestService.testFetchReturnsError(someRepository.localGit, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushReturnsError(someRepository.localGit, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(someRepository.workingCopyGitRepo, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(someRepository.workingCopyGitRepo, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
 
         // Cleanup
         someRepository.resetLocalRepo();
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_offlineIDENotAllowed() {
@@ -184,12 +185,12 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         programmingExercise.setAllowOfflineIde(false);
         programmingExerciseRepository.save(programmingExercise);
 
-        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
-        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
 
         // Teaching assistants and higher should still be able to fetch and push.
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, tutor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopyGitRepo, instructor1Login, projectKey1, assignmentRepositorySlug);
     }
 
     @Test
@@ -198,8 +199,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String repositorySlug = projectKey1.toLowerCase() + "-" + student2Login;
         LocalRepository student2Repository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
 
-        localVCLocalCITestService.testFetchReturnsError(student2Repository.localGit, student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushReturnsError(student2Repository.localGit, student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(student2Repository.workingCopyGitRepo, student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(student2Repository.workingCopyGitRepo, student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
 
         // Cleanup
         student2Repository.resetLocalRepo();
@@ -212,8 +213,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         programmingExerciseRepository.save(programmingExercise);
         templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
 
-        localVCLocalCITestService.testFetchReturnsError(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushReturnsError(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(templateRepository.workingCopyGitRepo, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(templateRepository.workingCopyGitRepo, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -223,31 +224,29 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         programmingExerciseRepository.save(programmingExercise);
         solutionProgrammingExerciseParticipationRepository.delete(solutionParticipation);
 
-        localVCLocalCITestService.testFetchReturnsError(solutionRepository.localGit, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushReturnsError(solutionRepository.localGit, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(solutionRepository.workingCopyGitRepo, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(solutionRepository.workingCopyGitRepo, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUserTriesToDeleteBranch() throws GitAPIException {
+    void testUserTriesToDeleteBranch() throws GitAPIException, URISyntaxException {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // ":" prefix in the refspec means delete the branch in the remote repository.
         RefSpec refSpec = new RefSpec(":refs/heads/" + defaultBranch);
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
-        PushResult pushResult = assignmentRepository.localGit.push().setRefSpecs(refSpec).setRemote(repositoryUri).call().iterator().next();
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+        PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRefSpecs(refSpec).setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot delete a branch.");
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStudentTriesToForcePush() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
 
         RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, repositoryUri, student1Login, projectKey1, assignmentRepositorySlug);
 
@@ -256,54 +255,53 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     // TODO add test for force push over ssh, which should work
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorTriesToForcePushOverHttp() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        String assignmentRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, assignmentRepositorySlug);
-        String templateRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, templateRepositorySlug);
-        String solutionRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, solutionRepositorySlug);
-        String testsRepoUri = localVCLocalCITestService.constructLocalVCUrl(instructor1Login, projectKey1, testsRepositorySlug);
+        String assignmentRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, assignmentRepositorySlug);
+        String templateRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, templateRepositorySlug);
+        String solutionRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, solutionRepositorySlug);
+        String testsRepoUri = localVCLocalCITestService.buildLocalVCUri(instructor1Login, projectKey1, testsRepositorySlug);
 
-        // Force push to assignment repository (should not be possible)
+        // Force push to assignment repository is allowed for instructors
         RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, assignmentRepoUri, instructor1Login, projectKey1, assignmentRepositorySlug);
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
 
-        // Force push to template repository (should not be possible)
+        // Force push to template repository is allowed for instructors
         remoteRefUpdate = setupAndTryForcePush(templateRepository, templateRepoUri, instructor1Login, projectKey1, templateRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
 
-        // Force push to solution repository (should not be possible)
+        // Force push to solution repository is allowed for instructors
         remoteRefUpdate = setupAndTryForcePush(solutionRepository, solutionRepoUri, instructor1Login, projectKey1, solutionRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
 
-        // Force push to rests repository (should not be possible)
+        // Force push to rests repository is allowed for instructors
         remoteRefUpdate = setupAndTryForcePush(testsRepository, testsRepoUri, instructor1Login, projectKey1, testsRepositorySlug);
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
     }
 
     private RemoteRefUpdate setupAndTryForcePush(LocalRepository originalRepository, String repositoryUri, String login, String projectKey, String repositorySlug)
             throws Exception {
 
         // Create a second local repository and push a file from there
-        Path tempDirectory = Files.createTempDirectory("tempDirectory");
+        Path tempDirectory = Files.createTempDirectory(tempPath, "tempDirectory");
         Git secondLocalGit = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDirectory.toFile()).call();
         localVCLocalCITestService.commitFile(tempDirectory, secondLocalGit);
         localVCLocalCITestService.testPushSuccessful(secondLocalGit, login, projectKey, repositorySlug);
 
         // Commit a file to the original local repository
-        localVCLocalCITestService.commitFile(originalRepository.localRepoFile.toPath(), originalRepository.localGit, "second-test.txt");
+        localVCLocalCITestService.commitFile(originalRepository.workingCopyGitRepoFile.toPath(), originalRepository.workingCopyGitRepo, "second-test.txt");
 
         // Try to push normally, should fail because the remote already contains work that does not exist locally
-        PushResult pushResultNormal = originalRepository.localGit.push().setRemote(repositoryUri).call().iterator().next();
+        PushResult pushResultNormal = originalRepository.workingCopyGitRepo.push().setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdateNormal = pushResultNormal.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdateNormal.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD);
 
         // Force push from the original local repository
-        PushResult pushResultForce = originalRepository.localGit.push().setForce(true).setRemote(repositoryUri).call().iterator().next();
+        PushResult pushResultForce = originalRepository.workingCopyGitRepo.push().setForce(true).setRemote(repositoryUri).call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResultForce.getRemoteUpdates().iterator().next();
 
         // Cleanup
@@ -313,19 +311,18 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         return remoteRefUpdate;
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesNewBranch() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Users cannot create new branches.
-        assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+        assignmentRepository.workingCopyGitRepo.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Push the new branch.
-        PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
-                .iterator().next();
+        PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch"))
+                .call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
@@ -338,15 +335,33 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String login1 = "ab123git";
         String login2 = "git123ab";
 
-        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login1, localVCBaseUrl);
-        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(projectKey1, projectKey1.toLowerCase() + "-" + login2, localVCBaseUrl);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri1 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase() + "-" + login1);
+        LocalVCRepositoryUri studentAssignmentRepositoryUri2 = new LocalVCRepositoryUri(localVCBaseUri, projectKey1, projectKey1.toLowerCase() + "-" + login2);
 
         // assert that the URIs are correct
-        assertThat(studentAssignmentRepositoryUri1.getURI().toString()).isEqualTo(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1 + ".git");
-        assertThat(studentAssignmentRepositoryUri2.getURI().toString()).isEqualTo(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2 + ".git");
+        assertThat(studentAssignmentRepositoryUri1.getURI().toString()).isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1 + ".git");
+        assertThat(studentAssignmentRepositoryUri2.getURI().toString()).isEqualTo(localVCBaseUri + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2 + ".git");
 
         // assert that the folder names are correct
-        assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
-        assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
+        assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
+        assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
+    }
+
+    @Test
+    void testFilesLargerThan10MbAreRejected() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        Path largeFile = assignmentRepository.workingCopyGitRepoFile.toPath().resolve("large-file.txt");
+        FileUtils.writeByteArrayToFile(largeFile.toFile(), new byte[11 * 1024 * 1024]); // 11 MB
+
+        assignmentRepository.workingCopyGitRepo.add().addFilepattern("large-file.txt").call();
+        GitService.commit(assignmentRepository.workingCopyGitRepo).setMessage("Add large file").call();
+
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+        PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRemote(repositoryUri)
+                .setRefSpecs(new RefSpec("refs/heads/" + defaultBranch + ":refs/heads/" + defaultBranch)).call().iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("File 'large-file.txt' exceeds 10MB size limit (11.00 MB)");
     }
 }

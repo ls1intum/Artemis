@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -30,42 +31,37 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
-    @Query("""
-            SELECT p
-            FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results pr
-                LEFT JOIN FETCH pr.feedbacks f
-                LEFT JOIN FETCH f.testCase
-                LEFT JOIN FETCH pr.submission
-            WHERE p.id = :participationId
-                AND (
-                    pr.id = (
-                        SELECT MAX(r2.id)
-                        FROM Submission s2 JOIN s2.results r2
-                        WHERE s2.participation = p
-                          AND (
-                              r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                              OR (r2.completionDate IS NOT NULL
-                                  AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime)
-                              )
-                          )
-                    )
-                    OR pr.id IS NULL
-                )
-            """)
-    Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") long participationId,
-            @Param("dateTime") ZonedDateTime dateTime);
-
+    /**
+     * Loads a {@link ProgrammingExerciseStudentParticipation} by id with all related submissions and results in one query (avoiding N+1 issues via {@code LEFT JOIN FETCH}).
+     *
+     * <p>
+     * Includes results if:
+     * <ul>
+     * <li>they are automatic,</li>
+     * <li>they are completed and the assessment due date is before {@code dateTime} (or not set), or</li>
+     * <li>no result exists yet.</li>
+     * </ul>
+     *
+     * <p>
+     * This ensures automatic feedback is always visible, manual assessments are only shown
+     * after due dates, and participations without results remain accessible.
+     * </p>
+     *
+     * @param participationId the participation id
+     * @param dateTime        reference time for assessment due date checks
+     * @return the participation with submissions and relevant results, if found
+     */
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results pr
-            WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
-                        OR (pr.completionDate IS NOT NULL
-                            AND (p.exercise.assessmentDueDate IS NULL
-                                OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
+                LEFT JOIN FETCH s.results r
+            WHERE p.id = :participationId
+                AND (
+                    r.assessmentType = 'AUTOMATIC'
+                    OR (r.completionDate IS NOT NULL AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime))
+                    OR r.id IS NULL
+                    )
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
@@ -86,8 +82,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
-    Optional<ProgrammingExerciseStudentParticipation> findFirstByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
-
     List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
@@ -102,36 +96,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
-
-    default ProgrammingExerciseStudentParticipation findFirstByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
-        return getValueElseThrow(findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username));
-    }
-
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(long exerciseId, String username);
-
-    @Query("""
-            SELECT participation
-            FROM ProgrammingExerciseStudentParticipation participation
-                LEFT JOIN FETCH participation.submissions s
-            WHERE participation.exercise.id = :exerciseId
-                AND participation.student.login = :username
-            ORDER BY participation.id DESC
-            """)
-    List<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(@Param("exerciseId") long exerciseId,
-            @Param("username") String username);
-
-    default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
-        return getValueElseThrow(findWithSubmissionsByExerciseIdAndStudentLogin(exerciseId, username));
-    }
-
-    default ProgrammingExerciseStudentParticipation findFirstWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
-        return getValueElseThrow(findFirstWithSubmissionsByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username).stream().findFirst());
-    }
-
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
-
-    Optional<ProgrammingExerciseStudentParticipation> findFirstByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(long exerciseId, String username, boolean testRun);
 
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
@@ -154,6 +118,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN FETCH participation.submissions s
+            WHERE participation.exercise.id = :exerciseId
+                AND s.id = (SELECT MAX(s2.id)
+                            FROM participation.submissions s2)
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findWithLatestSubmissionByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
@@ -190,22 +164,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT participation
             FROM ProgrammingExerciseStudentParticipation participation
-                LEFT JOIN FETCH participation.submissions s
-            WHERE participation.exercise.id = :exerciseId
-                AND participation.student.login = :username
-                AND participation.testRun = :testRun
-            ORDER BY participation.id DESC
-            """)
-    List<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(@Param("exerciseId") long exerciseId,
-            @Param("username") String username, @Param("testRun") boolean testRun);
-
-    default Optional<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun) {
-        return findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(exerciseId, username, testRun).stream().findFirst();
-    }
-
-    @Query("""
-            SELECT participation
-            FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.submissions
             WHERE participation.exercise.id = :exerciseId
                 AND participation.student.login = :username
@@ -227,10 +185,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     @EntityGraph(type = LOAD, attributePaths = "team.students")
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
-
-    default Optional<ProgrammingExerciseStudentParticipation> findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(long participationId) {
-        return findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId, ZonedDateTime.now());
-    }
 
     default Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(long participationId) {
         return findByIdWithAllResultsAndRelatedSubmissions(participationId, ZonedDateTime.now());
@@ -257,4 +211,5 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 AND p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.INITIALIZED
             """)
     void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
+
 }

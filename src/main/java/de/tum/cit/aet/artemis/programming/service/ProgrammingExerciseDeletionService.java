@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
@@ -43,21 +42,17 @@ public class ProgrammingExerciseDeletionService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
-
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<IrisSettingsApi> irisSettingsApi,
-            ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, InstanceMessageSendService instanceMessageSendService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<IrisSettingsApi> irisSettingsApi, InstanceMessageSendService instanceMessageSendService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.irisSettingsApi = irisSettingsApi;
-        this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
     }
@@ -85,9 +80,7 @@ public class ProgrammingExerciseDeletionService {
         }
         programmingExerciseRepositoryService.deleteLocalRepoCopies(programmingExercise);
 
-        programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
-
-        irisSettingsApi.ifPresent(api -> api.deleteSettingsFor(programmingExercise));
+        irisSettingsApi.ifPresent(api -> api.deleteSettingsForExercise(programmingExerciseId));
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();

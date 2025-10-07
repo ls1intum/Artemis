@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -47,10 +46,10 @@ public class LocalVCService extends AbstractVersionControlService {
     protected String defaultBranch;
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    private URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
+    private Path localVCBasePath;
 
     public LocalVCService(UriService uriService, GitService gitService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -68,7 +67,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void deleteProject(String projectKey) {
         try {
-            Path projectPath = Path.of(localVCBasePath, projectKey);
+            Path projectPath = localVCBasePath.resolve(projectKey);
             FileUtils.deleteDirectory(projectPath.toFile());
         }
         catch (IOException e) {
@@ -79,13 +78,12 @@ public class LocalVCService extends AbstractVersionControlService {
     /**
      * Delete the repository at the given repository URI
      *
-     * @param repositoryUri of the repository that should be deleted
+     * @param localVCRepositoryUri of the repository that should be deleted
      * @throws LocalVCInternalException if the repository cannot be deleted
      */
     @Override
-    public void deleteRepository(VcsRepositoryUri repositoryUri) {
+    public void deleteRepository(LocalVCRepositoryUri localVCRepositoryUri) {
 
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString());
         Path localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
 
         try {
@@ -97,16 +95,16 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     /**
-     * Get the VcsRepositoryUri for the given project key and repository slug
+     * Get the LocalVCRepositoryUri for the given project key and repository slug
      *
      * @param projectKey     The project key
      * @param repositorySlug The repository slug
-     * @return The VcsRepositoryUri
+     * @return The LocalVCRepositoryUri
      * @throws LocalVCInternalException if the repository URI cannot be constructed
      */
     @Override
-    public VcsRepositoryUri getCloneRepositoryUri(String projectKey, String repositorySlug) {
-        return new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
+    public LocalVCRepositoryUri getCloneRepositoryUri(String projectKey, String repositorySlug) {
+        return new LocalVCRepositoryUri(localVCBaseUri, projectKey, repositorySlug);
     }
 
     /**
@@ -119,7 +117,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         // Try to find the folder in the file system. If it is not found, return false.
-        Path projectPath = Path.of(localVCBasePath, projectKey);
+        Path projectPath = localVCBasePath.resolve(projectKey);
         return Files.exists(projectPath);
     }
 
@@ -135,7 +133,7 @@ public class LocalVCService extends AbstractVersionControlService {
         String projectKey = programmingExercise.getProjectKey();
         try {
             // Create a directory that will contain all repositories.
-            Path projectPath = Path.of(localVCBasePath, projectKey);
+            Path projectPath = localVCBasePath.resolve(projectKey);
             Files.createDirectories(projectPath);
             log.debug("Created folder for local git project at {}", projectPath);
         }
@@ -153,7 +151,7 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public void createRepository(String projectKey, String repositorySlug) {
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, projectKey, repositorySlug);
 
         Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
 
@@ -161,15 +159,13 @@ public class LocalVCService extends AbstractVersionControlService {
             Files.createDirectories(remoteDirPath);
 
             // Create a bare local repository with JGit.
-            Git git = Git.init().setDirectory(remoteDirPath.toFile()).setBare(true).call();
-
-            // Change the default branch to the Artemis default branch.
-            Repository repository = git.getRepository();
-            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
-            refUpdate.setForceUpdate(true);
-            refUpdate.link("refs/heads/" + defaultBranch);
-
-            git.close();
+            try (Git git = Git.init().setDirectory(remoteDirPath.toFile()).setBare(true).call()) {
+                // Change the default branch to the Artemis default branch.
+                Repository repository = git.getRepository();
+                RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
+                refUpdate.setForceUpdate(true);
+                refUpdate.link("refs/heads/" + defaultBranch);
+            }
             log.debug("Created local git repository {} in folder {}", repositorySlug, remoteDirPath);
         }
         catch (GitAPIException | IOException e) {
@@ -179,7 +175,7 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     @Override
-    public Boolean repositoryUriIsValid(@Nullable VcsRepositoryUri repositoryUri) {
+    public boolean repositoryUriIsValid(@Nullable LocalVCRepositoryUri repositoryUri) {
         if (repositoryUri == null || repositoryUri.getURI() == null) {
             return false;
         }

@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
@@ -41,6 +41,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { FileService } from 'app/shared/service/file.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;
@@ -53,7 +54,7 @@ describe('FileUploadSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxDatatableModule],
+            imports: [NgxDatatableModule, FaIconComponent],
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),
@@ -70,8 +71,8 @@ describe('FileUploadSubmissionComponent', () => {
             ],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
                 { provide: ComplaintService, useClass: MockComplaintService },
                 { provide: FileUploadSubmissionService, useClass: MockFileUploadSubmissionService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
@@ -209,8 +210,7 @@ describe('FileUploadSubmissionComponent', () => {
         tick();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
+        expect(submitButton.componentInstance.disabled).toBeTrue();
 
         tick();
         fixture.destroy();
@@ -229,8 +229,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
+        expect(submitButton.componentInstance.disabled).toBeFalse();
 
         tick();
         fixture.destroy();
@@ -247,9 +246,9 @@ describe('FileUploadSubmissionComponent', () => {
         comp.result = result;
         fixture.detectChanges();
 
+        expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
+        expect(submitButton.componentInstance.disabled).toBeTrue();
 
         tick();
         fixture.destroy();

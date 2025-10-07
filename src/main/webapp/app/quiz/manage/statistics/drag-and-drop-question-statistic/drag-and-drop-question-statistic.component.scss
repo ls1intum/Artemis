@@ -6,10 +6,11 @@
     box-sizing: border-box;
     margin-bottom: 18px;
     background: #fefefe;
+
     @include user-select(none);
 
     /* display drag and drop background image in full size */
-    > jhi-secured-image img {
+    > jhi-image img {
         max-width: 100%;
     }
 

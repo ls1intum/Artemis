@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
+import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -85,6 +86,9 @@ public class ProgrammingExerciseUtilService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCRepoPath;
 
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationTestRepo;
@@ -150,10 +154,29 @@ public class ProgrammingExerciseUtilService {
     private GitService gitService;
 
     @Autowired
+    private GitRepositoryExportService gitRepositoryExportService;
+
+    @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     public ProgrammingExercise createSampleProgrammingExercise() {
         return createSampleProgrammingExercise("Title", "Shortname");
+    }
+
+    /**
+     * Generates a programming exercise for the given course. Configures only the exercise's schedule, no other properties.
+     *
+     * @param course            The course of the exercise.
+     * @param releaseDate       The release date of the exercise.
+     * @param startDate         The start date of the exercise.
+     * @param dueDate           The due date of the exercise.
+     * @param assessmentDueDate The assessment due date of the exercise.
+     * @return The newly generated programming exercise.
+     */
+    public ProgrammingExercise createProgrammingExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
+            ZonedDateTime assessmentDueDate) {
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(releaseDate, startDate, dueDate, assessmentDueDate, course);
+        return programmingExerciseRepository.save(programmingExercise);
     }
 
     /**
@@ -841,19 +864,19 @@ public class ProgrammingExerciseUtilService {
     public void createGitRepository() throws Exception {
         // Create repository
         var testRepo = new LocalRepository(defaultBranch);
-        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
+        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
         // Add test file to the repository folder
-        Path filePath = Path.of(testRepo.localRepoFile + "/Test.java");
+        Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/Test.java");
         var file = Files.createFile(filePath).toFile();
         FileUtils.write(file, "Test", Charset.defaultCharset());
         // Create mock repo that has the file
         var mockRepository = mock(Repository.class);
         doReturn(true).when(mockRepository).isValidFile(any());
-        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
+        doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
         // Mock Git service operations
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString());
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString(), anyBoolean());
         doNothing().when(gitService).resetToOriginHead(any());
-        doReturn(Path.of("repo.zip")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
-        doReturn(Path.of("repo")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));
+        doReturn(Path.of("repo.zip")).when(gitRepositoryExportService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
+        doReturn(Path.of("repo")).when(gitRepositoryExportService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));
     }
 }

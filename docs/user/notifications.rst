@@ -23,12 +23,43 @@ All notifications you receive (whether through web, push, or email) are accessib
 
 |notification-general|
 
+This video provides an overview of how to interact with notifications in the web client.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61337?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Email Notifications
 ^^^^^^^^^^^^^^^^^^^
 
 Artemis can send email notifications for certain notification types. See the "Notification Types" section below for details on which notifications support email delivery.
 
 |notification-email|
+
+Security-related Email Notifications
+""""""""""""""""""""""""""""""""""""
+
+In addition to course-specific notifications, Artemis can send email alerts for important **account security events**:
+
+* **New Login** – Notifies you when a new login to your account occurs.
+* **New Passkey Added** – Alerts you when a new passkey is registered.
+* **VCS Token Expired** – Informs you when your VCS (Version Control System) token expires.
+* **SSH Key Expired** – Warns you when your SSH key is no longer valid.
+
+These notifications are enabled by default to protect your account. You can manage your preferences under:
+
+User Settings → Notifications
+
+|user-settings|
+
+Here you can:
+
+#. Enable or disable each type of security-related email.
+#. Access related configuration pages via quick links (e.g., “View SSH Key Settings”).
+
+|security-notifications|
 
 Push Notifications
 ^^^^^^^^^^^^^^^^^^
@@ -53,6 +84,14 @@ These settings can be configured at the course level:
 For convenience, Artemis provides preset configurations that you can apply with a single click.
 
 |notification-settings|
+
+This video demonstrates how to update notification settings within the web client.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61335?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
 
 Notification Types
 ^^^^^^^^^^^^^^^^^^
@@ -215,3 +254,7 @@ For detailed information about the content sent with each notification, you can 
     :width: 400
 .. |notification-web| image:: notifications/notification-web.png
     :width: 1200
+.. |security-notifications| image:: notifications/notification-security.png
+    :width: 800
+.. |user-settings| image:: notifications/user-settings.png
+    :width: 200

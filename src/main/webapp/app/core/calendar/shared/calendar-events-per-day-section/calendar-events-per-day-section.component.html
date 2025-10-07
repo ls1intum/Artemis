@@ -1,0 +1,39 @@
+<div class="frame">
+    <div class="info-column">
+        <div class="info-column-spacer"></div>
+        @for (hour of hoursOfDay; track hour) {
+            <div class="time-label">{{ hour }}</div>
+        }
+    </div>
+    @for (day of days(); track day.id) {
+        <div class="event-column">
+            @for (index of zeroToTwentyFour; track index) {
+                <div class="hour-segment"></div>
+            }
+            @for (eventAndPosition of day.eventsAndPositions; track eventAndPosition.event.id) {
+                @let event = eventAndPosition.event;
+                @let position = eventAndPosition.position;
+                <div
+                    class="event"
+                    [ngClass]="{
+                        'exam-event-cell': event.isOfType(CalendarEventType.Exam),
+                        'lecture-event-cell': event.isOfType(CalendarEventType.Lecture),
+                        'tutorial-event-cell': event.isOfType(CalendarEventType.Tutorial),
+                        'exercise-event-cell': event.isOfExerciseType(),
+                    }"
+                    [ngStyle]="{
+                        top: position.top + 'px',
+                        height: position.height + 'px',
+                        left: position.left + '%',
+                        width: position.width + '%',
+                    }"
+                    (click)="eventDetailPopover.open($event, event)"
+                    [attr.data-testid]="event.title"
+                >
+                    {{ event.title }}
+                </div>
+            }
+        </div>
+    }
+</div>
+<jhi-calendar-event-detail-popover-component #eventDetailPopover />

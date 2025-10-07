@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
@@ -35,7 +35,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
     private static final Logger log = LoggerFactory.getLogger(SshGitLocationResolverService.class);
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    private URI localVCBaseUri;
 
     private final LocalVCServletService localVCServletService;
 
@@ -57,7 +57,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         }
 
         final var gitCommand = args[0];
-        final var localVCRepositoryUri = new LocalVCRepositoryUri(Path.of(repositoryPath), localVCBaseUrl);
+        final var localVCRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, Path.of(repositoryPath));
         final var projectKey = localVCRepositoryUri.getProjectKey();
         final var repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         ProgrammingExercise exercise;

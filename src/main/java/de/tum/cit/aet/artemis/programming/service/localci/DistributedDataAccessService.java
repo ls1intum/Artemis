@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.annotation.Nullable;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -289,6 +291,22 @@ public class DistributedDataAccessService {
     }
 
     /**
+     * @param memberAddress the build agent to retrieve job IDs for
+     * @return a list of the processing job IDs on a specific build agent
+     */
+    public List<BuildJobQueueItem> getProcessingJobsForAgent(String memberAddress) {
+        return getProcessingJobs().stream().filter(job -> job.buildAgent().memberAddress().equals(memberAddress)).toList();
+    }
+
+    /**
+     * @param memberAddress the build agent to retrieve job IDs for
+     * @return a list of the processing job IDs on a specific build agent
+     */
+    public List<String> getProcessingJobIdsForAgent(String memberAddress) {
+        return getProcessingJobsForAgent(memberAddress).stream().map(BuildJobQueueItem::id).toList();
+    }
+
+    /**
      * @param participationId the participation id
      * @return a list of the queued jobs for a specific participation
      */
@@ -352,5 +370,24 @@ public class DistributedDataAccessService {
      */
     public boolean noDataMemberInClusterAvailable() {
         return getClusterMembers().allMatch(Member::isLiteMember);
+    }
+
+    /**
+     * Retrieves the build agent status for the local member.
+     *
+     * @return the status of the local build agent, or {@code null} if the local member is not registered as a build agent
+     */
+    @Nullable
+    public BuildAgentInformation.BuildAgentStatus getLocalBuildAgentStatus() {
+        try {
+            BuildAgentInformation localAgentInfo = getDistributedBuildAgentInformation().get(getLocalMemberAddress());
+            if (localAgentInfo == null) {
+                return null;
+            }
+            return localAgentInfo.status();
+        }
+        catch (HazelcastInstanceNotActiveException e) {
+            return null;
+        }
     }
 }

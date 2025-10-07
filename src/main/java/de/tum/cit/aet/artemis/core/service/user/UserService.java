@@ -23,9 +23,9 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -45,7 +44,6 @@ import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingSer
 import de.tum.cit.aet.artemis.communication.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -60,14 +58,12 @@ import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.service.connectors.ldap.LdapAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
 import tech.jhipster.security.RandomUtil;
 
@@ -100,8 +96,6 @@ public class UserService {
 
     private final Optional<LdapUserService> ldapUserService;
 
-    private final Optional<CIUserManagementService> optionalCIUserManagementService;
-
     private final CacheManager cacheManager;
 
     private final AuthorityRepository authorityRepository;
@@ -127,11 +121,11 @@ public class UserService {
     private final GlobalNotificationSettingService globalNotificationSettingService;
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
-            CacheManager cacheManager, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
-            Optional<CIUserManagementService> optionalCIUserManagementService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
-            Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
-            SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
-            UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
+            CacheManager cacheManager, Optional<LdapUserService> ldapUserService, PasswordService passwordService, InstanceMessageSendService instanceMessageSendService,
+            FileService fileService, Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
+            Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService,
+            CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
+            GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -139,7 +133,6 @@ public class UserService {
         this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
         this.passwordService = passwordService;
-        this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.fileService = fileService;
         this.scienceEventApi = scienceEventApi;
@@ -154,8 +147,10 @@ public class UserService {
 
     /**
      * Make sure that the internal artemis admin (in case it is defined in the yml configuration) is available in the database
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void applicationReady() {
 
         try {
@@ -169,8 +164,6 @@ public class UserService {
                     // needs to be mutable --> new HashSet<>(Set.of(...))
                     existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
                     saveUser(existingInternalAdmin.get());
-                    updateUserInConnectorsAndAuthProvider(existingInternalAdmin.get(), existingInternalAdmin.get().getLogin(), existingInternalAdmin.get().getGroups(),
-                            artemisInternalAdminPassword.get());
                 }
                 else {
                     log.info("Create internal admin user {}", artemisInternalAdminUsername.get());
@@ -241,7 +234,6 @@ public class UserService {
             user.setResetKey(null);
             user.setResetDate(null);
             saveUser(user);
-            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, newPassword));
             return user;
         });
     }
@@ -441,25 +433,6 @@ public class UserService {
     }
 
     /**
-     * Updates the user (and synchronizes its password) and its groups in the connected continuous integration system (e.g. Jenkins if available).
-     * Also updates the user groups in the used authentication provider (like {@link LdapAuthenticationProvider}).
-     *
-     * @param oldUserLogin The username of the user. If the username is updated in the user object, it must be the one before the update in order to find the user in the VCS
-     * @param user         The updated user in Artemis (this method assumes that the user including its groups was already saved to the Artemis database)
-     * @param oldGroups    The old groups of the user before the update
-     * @param newPassword  If provided, the password gets updated
-     */
-    // TODO: The password can be null but Jenkins requires it to be non null => How do we get the password on update?
-    // Or how do we get Jenkins to update the user without recreating it
-    public void updateUserInConnectorsAndAuthProvider(User user, String oldUserLogin, Set<String> oldGroups, String newPassword) {
-        final var updatedGroups = user.getGroups();
-        final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
-        final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
-        optionalCIUserManagementService
-                .ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(oldUserLogin, user, newPassword, addedGroups, removedGroups));
-    }
-
-    /**
      * Performs soft-delete on the user based on login string
      *
      * @param login user login string
@@ -485,7 +458,6 @@ public class UserService {
      */
     protected void anonymizeUser(User user) {
         final String originalLogin = user.getLogin();
-        final Set<String> originalGroups = user.getGroups();
         final String randomPassword = RandomUtil.generatePassword();
         final String userImageString = user.getImageUrl();
         final String anonymizedLogin = lowerCase(RandomUtil.generateRandomAlphanumericString(), Locale.ENGLISH);
@@ -518,8 +490,6 @@ public class UserService {
         if (userImageString != null) {
             fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(userImageString), FilePathType.PROFILE_PICTURE), 0);
         }
-
-        updateUserInConnectorsAndAuthProvider(user, originalLogin, originalGroups, randomPassword);
     }
 
     /**
@@ -550,7 +520,6 @@ public class UserService {
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
             saveUser(user);
-            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, newPassword));
 
             log.debug("Changed password for User: {}", user);
         });
@@ -634,18 +603,7 @@ public class UserService {
      * @param group the group
      */
     public void addUserToGroup(User user, String group) {
-        addUserToGroupInternal(user, group); // internal Artemis database
-        // e.g. Jenkins
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user.getLogin(), Set.of(group)));
-    }
-
-    /**
-     * adds the user to the group only in the Artemis database
-     *
-     * @param user  the user
-     * @param group the group
-     */
-    private void addUserToGroupInternal(User user, String group) {
+        // internal Artemis database
         log.debug("Add user {} to group {}", user.getLogin(), group);
         if (!user.getGroups().contains(group)) {
             user.getGroups().add(group);
@@ -661,18 +619,7 @@ public class UserService {
      * @param group the group
      */
     public void removeUserFromGroup(User user, String group) {
-        removeUserFromGroupInternal(user, group); // internal Artemis database
-        // e.g. Jenkins
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group)));
-    }
-
-    /**
-     * remove the user from the specified group
-     *
-     * @param user  the user
-     * @param group the group
-     */
-    private void removeUserFromGroupInternal(User user, String group) {
+        // internal Artemis database
         log.info("Remove user {} from group {}", user.getLogin(), group);
         if (user.getGroups().contains(group)) {
             user.getGroups().remove(group);

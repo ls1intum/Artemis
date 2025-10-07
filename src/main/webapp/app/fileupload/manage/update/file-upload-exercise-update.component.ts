@@ -32,14 +32,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -59,8 +58,6 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
         CompetencySelectionComponent,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
-        CustomMinDirective,
-        CustomMaxDirective,
         FaIconComponent,
         NgbTooltip,
         PresentationScoreComponent,
@@ -79,6 +76,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     private readonly alertService = inject(AlertService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly exerciseGroupService = inject(ExerciseGroupService);
+    private readonly calendarService = inject(CalendarService);
 
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -298,6 +296,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     private onSaveSuccess(exercise: Exercise) {
         this.isSaving = false;
 
+        this.calendarService.reloadEvents();
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 

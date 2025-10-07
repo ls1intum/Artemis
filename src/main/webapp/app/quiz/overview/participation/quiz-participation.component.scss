@@ -40,6 +40,7 @@
     text-align: center;
     font-weight: bold;
     border-color: var(--quiz-participation-quiz-is-over-border-color);
+
     // Needs to be higher than the z-index of the sticky-top class
     z-index: 1030;
 }
@@ -61,6 +62,9 @@
 }
 
 .stepwizardquiz {
+    max-height: calc(100vh - var(--header-height) - var(--exam-height-offset) - var(--exam-update-footer-offset));
+    overflow-y: auto;
+
     &__step {
         .btn {
             cursor: help;
@@ -114,6 +118,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+
         .fa {
             font-size: 10px;
         }
@@ -125,6 +130,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+
         .fa {
             font-size: 6px;
         }
@@ -153,7 +159,7 @@
 
 .sticky-top-stepwizard {
     position: sticky;
-    top: 46px;
+    top: 0; // Stick overview to the top, if not set explicitly sticky does not work
     z-index: 18;
 }
 

@@ -5,6 +5,8 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { of, throwError } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -23,8 +25,6 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -54,8 +54,8 @@ describe('ParticipationComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: AlertService, useClass: MockAlertService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 MockProvider(ExerciseService),
                 MockProvider(ParticipationService),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -288,7 +288,7 @@ describe('ParticipationComponent', () => {
 
         const deleteStub = jest.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse()));
 
-        component.deleteParticipation(1, {});
+        component.deleteParticipation(1);
         tick();
 
         expect(deleteStub).toHaveBeenCalledOnce();
@@ -475,7 +475,7 @@ describe('ParticipationComponent', () => {
                 error: { errorKey: 'invalid.presentations.maxNumberOfPresentationsExceeded' },
                 status: 400,
             });
-            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(throwError(errorResponse));
+            updateStub = jest.spyOn(participationService, 'update').mockReturnValue(throwError(() => errorResponse));
 
             component.exercise = exercise3;
             component.gradeStepsDTO = gradingScaleWithGradedPresentation;

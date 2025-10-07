@@ -5,8 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -20,15 +22,17 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -36,12 +40,12 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
@@ -65,9 +69,14 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
+    private final ResultRepository resultRepository;
+
+    private final SubmissionRepository submissionRepository;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -75,6 +84,8 @@ public class ProgrammingExerciseParticipationService {
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
+        this.resultRepository = resultRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -209,37 +220,14 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Stashes all changes, which were not submitted/committed before the due date, of a programming participation
-     *
-     * @param programmingExercise exercise with information about the due date
-     * @param participation       student participation whose not submitted changes will be stashed
-     */
-    public void stashChangesInStudentRepositoryAfterDueDateHasPassed(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            try {
-                // Note: exam exercise do not have a due date, this method should only be invoked directly after the due date so now check is needed here
-                Repository repo = gitService.getOrCheckoutRepository(participation);
-                gitService.stashChanges(repo);
-            }
-            catch (GitAPIException e) {
-                log.error("Stashing student repository for participation {} in exercise '{}' did not work as expected: {}", participation.getId(), programmingExercise.getTitle(),
-                        e.getMessage());
-            }
-        }
-        else {
-            log.warn("Cannot stash student repository for participation {} because the repository was not copied yet!", participation.getId());
-        }
-    }
-
-    /**
      * Replaces all files except the .git folder of the target repository with the files from the source repository
      *
-     * @param targetURL the repository where all files should be replaced
-     * @param sourceURL the repository that should be used as source for all files
+     * @param targetUri the repository where all files should be replaced
+     * @param sourceUri the repository that should be used as source for all files
      */
-    public void resetRepository(VcsRepositoryUri targetURL, VcsRepositoryUri sourceURL) throws GitAPIException, IOException {
-        Repository targetRepo = gitService.getOrCheckoutRepository(targetURL, true);
-        Repository sourceRepo = gitService.getOrCheckoutRepository(sourceURL, true);
+    public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri) throws GitAPIException, IOException {
+        Repository targetRepo = gitService.getOrCheckoutRepository(targetUri, true, true);
+        Repository sourceRepo = gitService.getOrCheckoutRepository(sourceUri, true, true);
 
         // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
         FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
@@ -307,50 +295,18 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Get the commits information for the given participation.
+     * Get the commits information for the given repository URI: can be a template, solution, tests, auxiliary or student repository.
      *
-     * @param participation the participation for which to get the commits.
+     * @param localVCRepositoryUri the repository URI for which to get the commits.
      * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
      */
-    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseParticipation participation) {
+    // TODO: use some kind of paging mechanism
+    public List<CommitInfoDTO> getCommitInfos(LocalVCRepositoryUri localVCRepositoryUri) {
         try {
-            return gitService.getCommitInfos(participation.getVcsRepositoryUri());
+            return gitService.getCommitInfos(localVCRepositoryUri);
         }
         catch (GitAPIException e) {
-            log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
-            return List.of();
-        }
-    }
-
-    /**
-     * Get the commits information for the given auxiliary repository.
-     *
-     * @param auxiliaryRepository the auxiliary repository for which to get the commits.
-     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
-     */
-    public List<CommitInfoDTO> getAuxiliaryRepositoryCommitInfos(AuxiliaryRepository auxiliaryRepository) {
-        try {
-            return gitService.getCommitInfos(auxiliaryRepository.getVcsRepositoryUri());
-        }
-        catch (GitAPIException e) {
-            log.error("Could not get commit infos for auxiliaryRepository {} with repository uri {}", auxiliaryRepository.getId(), auxiliaryRepository.getVcsRepositoryUri());
-            return List.of();
-        }
-    }
-
-    /**
-     * Get the commits information for the test repository of the given participation's exercise.
-     *
-     * @param participation the participation for which to get the commits.
-     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
-     */
-    public List<CommitInfoDTO> getCommitInfosTestRepo(ProgrammingExerciseParticipation participation) {
-        ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
-        try {
-            return gitService.getCommitInfos(exercise.getVcsTestRepositoryUri());
-        }
-        catch (GitAPIException e) {
-            log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
+            log.error("Could not get commit infos for repository with uri {}", localVCRepositoryUri);
             return List.of();
         }
     }
@@ -383,6 +339,34 @@ public class ProgrammingExerciseParticipationService {
                 }
             }
         }
+        return participation;
+    }
+
+    /**
+     * Retrieves the {@link ProgrammingExerciseStudentParticipation} for the given ID, including
+     * its latest {@link Submission} and the most recent {@link Result} with feedback (if available).
+     *
+     * <p>
+     * If no submission exists for the participation, the returned participation will contain
+     * an empty set of submissions. If a submission exists but no result with feedback is found,
+     * the submission will contain an empty list of results.
+     * </p>
+     *
+     * @param participationId the ID of the student participation to retrieve
+     * @return the participation enriched with its latest submission and corresponding result (if available)
+     * @throws EntityNotFoundException if no participation exists with the given ID
+     */
+    public ProgrammingExerciseStudentParticipation findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId) throws EntityNotFoundException {
+        ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        Optional<Submission> latestSubmissionOptional = submissionRepository.findLatestSubmissionByParticipationId(participationId);
+        if (latestSubmissionOptional.isEmpty()) {
+            participation.setSubmissions(Set.of());
+            return participation;
+        }
+        Submission latestSubmission = latestSubmissionOptional.get();
+        Optional<Result> latestResultOptional = resultRepository.findLatestResultWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now());
+        latestResultOptional.ifPresentOrElse(latestResult -> latestSubmission.setResults(List.of(latestResult)), () -> latestSubmission.setResults(List.of()));
+        participation.setSubmissions(Set.of(latestSubmission));
         return participation;
     }
 }

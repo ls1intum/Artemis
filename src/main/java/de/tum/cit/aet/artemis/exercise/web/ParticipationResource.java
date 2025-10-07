@@ -10,7 +10,6 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,6 +17,7 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.eclipse.jgit.errors.LargeObjectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,6 +51,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
@@ -224,7 +226,12 @@ public class ParticipationResource {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
+        boolean triesToCreateAssignmentRepoForExamExercise = exercise.isExamExercise() && exercise instanceof ProgrammingExercise
+                && authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        if (triesToCreateAssignmentRepoForExamExercise) {
+            throw new AccessForbiddenAlertException("Assignment repositories are not allowed for exam exercises. Please use the Test Run feature instead.", ENTITY_NAME,
+                    "assignmentRepositoryNotAllowed");
+        }
         checkIfParticipationCanBeStartedElseThrow(exercise, user);
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
@@ -233,8 +240,19 @@ public class ParticipationResource {
             participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart"));
         }
-
-        StudentParticipation participation = participationService.startExercise(exercise, participant, true);
+        StudentParticipation participation = null;
+        try {
+            participation = participationService.startExercise(exercise, participant, true);
+        }
+        catch (Exception e) {
+            if (e instanceof VersionControlException && e.getCause() instanceof LargeObjectException) {
+                throw new InternalServerErrorException("Failed to start exercise because repository contains files that are too large. Please contact your instructor.");
+            }
+            else {
+                log.error("Failed to start exercise participation for exercise {} and user {}", exerciseId, user.getLogin(), e);
+                throw new InternalServerErrorException("Failed to start exercise participation.");
+            }
+        }
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
@@ -527,10 +545,8 @@ public class ParticipationResource {
                     throw new BadRequestAlertException("The presentation grade must be between 0 and 100", ENTITY_NAME, "presentationGradeInvalid");
                 }
 
-                long presentationCountForParticipant = studentParticipationRepository
-                        .findByCourseIdAndStudentIdWithRelevantResult(course.getId(), participation.getParticipant().getId()).stream()
-                        .filter(studentParticipation -> studentParticipation.getPresentationScore() != null && !Objects.equals(studentParticipation.getId(), participation.getId()))
-                        .count();
+                long presentationCountForParticipant = studentParticipationRepository.countPresentationScoresForParticipant(course.getId(), participation.getParticipant().getId(),
+                        participation.getId());
                 if (presentationCountForParticipant >= gradingScale.get().getPresentationsNumber()) {
                     throw new BadRequestAlertException("Participant already gave the maximum number of presentations", ENTITY_NAME,
                             "invalid.presentations.maxNumberOfPresentationsExceeded",

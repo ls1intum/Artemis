@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Observable, Subject, of } from 'rxjs';
@@ -21,9 +23,6 @@ import dayjs from 'dayjs/esm';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { signal } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
@@ -125,8 +124,8 @@ describe('Student Exam Timeline Component', () => {
                     provide: ActivatedRoute,
                     useValue: { data: of({ studentExam: { studentExam: studentExamValue } }) },
                 },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, MockLocalStorageService },
+                SessionStorageService,
+                LocalStorageService,
                 ArtemisDatePipe,
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
@@ -217,7 +216,6 @@ describe('Student Exam Timeline Component', () => {
             onActivate() {},
             updateViewFromSubmission() {},
             setSubmissionVersion() {},
-            loadGitDiffReport() {},
         } as unknown as ExamSubmissionComponent);
 
         let expectedSubmission = submission;

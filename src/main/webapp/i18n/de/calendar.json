@@ -1,0 +1,45 @@
+{
+    "artemisApp": {
+        "calendar": {
+            "mondayShort": "Mo",
+            "tuesdayShort": "Di",
+            "wednesdayShort": "Mi",
+            "thursdayShort": "Do",
+            "fridayShort": "Fr",
+            "saturdayShort": "Sa",
+            "sundayShort": "So",
+            "eventTypeName": {
+                "programming": "Programmieraufgabe",
+                "text": "Textaufgabe",
+                "fileUpload": "Datei-Upload-Aufgabe",
+                "modeling": "Modellierungsaufgabe",
+                "quiz": "Quizaufgabe",
+                "lecture": "Vorlesung",
+                "tutorial": "Tutorium",
+                "exam": "Klausur"
+            },
+            "filterOption": {
+                "exercises": "Übungen",
+                "lectures": "Vorlesungen",
+                "tutorials": "Tutorien",
+                "exams": "Klausuren"
+            },
+            "filterComponentPlaceholder": "Wähle Event-Typen",
+            "subscribeButtonLabel": "Abonnieren",
+            "todayButtonLabel": "Heute",
+            "weekButtonLabel": "Woche",
+            "monthButtonLabel": "Monat",
+            "eventsLoadingError": "Die Kalenderevents konnten nicht geladen werden. Bitte versuche es erneut indem du die Seite aktualisierst.",
+            "tokenLoadingError": "Daten, die für das Konfigurieren von Kalender Abonnements gebraucht werden, konnten nicht geladen werden. Bitte aktualisiere die Seite, um es erneut zu versuchen und die Option ein Abonnement zu konfigurieren anzuzeigen.",
+            "subscriptionPopover": {
+                "title": "iCalendar Abonnement",
+                "configurationExplanation": "Um dein Abonnement zu konfigurieren, wähle bitte eine Sprache und entscheide für welche Kursinhalte du Events abonnieren möchtest:",
+                "copyExplanation": "Du kannst den folgenden Link verwenden, um den Artemis Kalender in externen Kalender Anwendungen zu abonnieren.",
+                "languageOption": {
+                    "german": "Deutsch",
+                    "english": "Englisch"
+                }
+            }
+        }
+    }
+}

@@ -1,11 +1,11 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faPause, faPauseCircle, faPlay, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
+import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
@@ -18,12 +18,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
-import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
@@ -31,6 +30,7 @@ import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
 
 @Component({
     selector: 'jhi-build-agent-details',
@@ -48,20 +48,19 @@ import { BuildAgentsService } from 'app/buildagent/build-agents.service';
         TranslateDirective,
         BuildJobStatisticsComponent,
         HelpIconComponent,
-        ItemCountComponent,
         SortByDirective,
         SortDirective,
         DataTableComponent,
         NgxDatatableModule,
-        NgbPagination,
         FormsModule,
+        SliceNavigatorComponent,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly route = inject(ActivatedRoute);
-    private readonly buildQueueService = inject(BuildQueueService);
+    private readonly buildQueueService = inject(BuildOverviewService);
     private readonly alertService = inject(AlertService);
     private readonly modalService = inject(NgbModal);
 
@@ -82,6 +81,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     finishedBuildJobs: FinishedBuildJob[] = [];
 
+    hasMore = signal(true);
+
     //icons
     readonly faCircleCheck = faCircleCheck;
     readonly faExclamationCircle = faExclamationCircle;
@@ -92,6 +93,11 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     readonly faPlay = faPlay;
     readonly faSort = faSort;
     readonly faSync = faSync;
+
+    readonly paginationConfig: PaginationConfig = {
+        pageSize: ITEMS_PER_PAGE,
+        initialPage: 1,
+    };
 
     //Filter
     searchSubscription: Subscription;
@@ -293,7 +299,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * @private
      */
     private onSuccess(finishedBuildJobs: FinishedBuildJob[], headers: HttpHeaders) {
-        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.hasMore.set(headers.get('x-has-next') === 'true');
         this.finishedBuildJobs = finishedBuildJobs;
         this.setFinishedBuildJobsDuration();
     }
@@ -341,11 +347,12 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     /**
      * Callback function when the user navigates through the page results
      *
-     * @param pageNumber The current page number
+     * @param event The event containing the new page number
      */
-    onPageChange(pageNumber: number) {
-        if (pageNumber) {
-            this.page = pageNumber;
+    onPageChange(event: PageChangeEvent) {
+        const newPage = event?.page;
+        if (newPage) {
+            this.page = newPage;
             this.loadFinishedBuildJobs();
         }
     }

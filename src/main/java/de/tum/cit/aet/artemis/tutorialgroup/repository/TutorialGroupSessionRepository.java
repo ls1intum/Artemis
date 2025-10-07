@@ -13,12 +13,14 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -42,6 +44,44 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
             WHERE session.tutorialGroup.id = :tutorialGroupId
             """)
     Set<TutorialGroupSession> findAllByTutorialGroupId(@Param("tutorialGroupId") Long tutorialGroupId);
+
+    @Query("""
+                SELECT new de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO(
+                    CONCAT('tutorialStartAndEndEvent-', CAST(session.id AS string)),
+                    de.tum.cit.aet.artemis.core.util.CalendarEventType.TUTORIAL,
+                    tutorialGroup.title,
+                    session.start,
+                    session.end,
+                    CONCAT(
+                        CAST(session.location AS string),
+                        CASE WHEN tutorialGroup.campus IS NOT NULL AND NOT tutorialGroup.isOnline
+                             THEN CONCAT(' - ', CAST(tutorialGroup.campus AS string))
+                             ELSE ''
+                        END
+                    ),
+                    CONCAT(teachingAssistant.firstName, ' ', teachingAssistant.lastName)
+                )
+                FROM TutorialGroupSession session
+                    JOIN session.tutorialGroup tutorialGroup
+                    JOIN tutorialGroup.teachingAssistant teachingAssistant
+                WHERE tutorialGroup.id IN :tutorialGroupIds AND session.status = 'ACTIVE'
+            """)
+    Set<CalendarEventDTO> getCalendarEventDTOsFromActiveSessionsForTutorialGroupIds(@Param("tutorialGroupIds") Set<Long> tutorialGroupIds);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO(
+                session.start,
+                session.end,
+                session.location,
+                session.status,
+                session.attendanceCount
+            )
+            FROM TutorialGroupSession session
+                JOIN session.tutorialGroup tutorialGroup
+            WHERE tutorialGroup.id = :tutorialGroupId
+            ORDER BY session.start ASC
+            """)
+    List<RawTutorialGroupDetailSessionDTO> getTutorialGroupDetailSessionData(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
             SELECT session

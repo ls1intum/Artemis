@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.
@@ -154,7 +155,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
      * <ul>
-     * <li>The release date is in the future → Schedule combine template commits</li>
      * <li>The build and test student submissions after due date is in the future</li>
      * <li>The due date is in the future</li>
      * <li>There are participations in the exercise with individual due dates in the future</li>
@@ -193,9 +193,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 AND pe.exerciseGroup.exam.endDate <= :endDate2
             """)
     List<ProgrammingExercise> findAllByRecentExamEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
-
-    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.team", "studentParticipations.team.students" })
-    Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(long exerciseId);
 
     @Query("""
             SELECT pe
@@ -291,9 +288,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.buildConfig
+                LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndAndBuildConfig(
+    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(
             @Param("exerciseId") long exerciseId);
 
     @Query("""
@@ -306,6 +304,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.buildConfig
                 LEFT JOIN FETCH p.plagiarismDetectionConfig
+                LEFT JOIN FETCH p.gradingCriteria
             WHERE p.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findByIdForImport(@Param("exerciseId") long exerciseId);
@@ -439,27 +438,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 JOIN p.submissions s
             WHERE p.exercise.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND p.exercise.id IN :exerciseIds
+                AND p.testRun = FALSE
                 AND s.submitted = TRUE
             """)
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
-
-    // Note: we have to use left join here to avoid issues in the where clause, there can be at most one indirection (e.g. c1.editorGroupName) in the WHERE clause when using "OR"
-    // Multiple different indirection in the WHERE clause (e.g. pe.course.instructorGroupName and ex.course.instructorGroupName) would not work
-    @Query("""
-            SELECT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN pe.course c1
-                LEFT JOIN pe.exerciseGroup eg
-                LEFT JOIN eg.exam ex
-                LEFT JOIN ex.course c2
-            WHERE c1.instructorGroupName IN :groupNames
-                OR c1.editorGroupName IN :groupNames
-                OR c1.teachingAssistantGroupName IN :groupNames
-                OR c2.instructorGroupName IN :groupNames
-                OR c2.editorGroupName IN :groupNames
-                OR c2.teachingAssistantGroupName IN :groupNames
-            """)
-    List<ProgrammingExercise> findAllByInstructorOrEditorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
 
     @Query("""
             SELECT DISTINCT p.id
@@ -468,19 +450,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Set<Long> findProgrammingExerciseIdsByExamId(@Param("examId") long examId);
 
-    // Note: we have to use left join here to avoid issues in the where clause, see the explanation above
-    @Query("""
-            SELECT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN pe.exerciseGroup eg
-                LEFT JOIN eg.exam ex
-            WHERE pe.course = :course
-                OR ex.course = :course
-            """)
-    List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
-
-    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig" })
-    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig", "gradingCriteria" })
+    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(long exerciseId);
 
     long countByShortNameAndCourse(String shortName, Course course);
 
@@ -541,15 +512,15 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id and fetch related plagiarism detection config and team config.
+     * Find a programming exercise by its id and fetch related plagiarism detection config, team config and grading criteria.
      * Throws an EntityNotFoundException if the exercise cannot be found.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      */
     @NotNull
-    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(programmingExerciseId), programmingExerciseId);
+    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -743,11 +714,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         return this.findForCreationByIdElseThrow(exercise.getId());
     }
 
-    @NotNull
-    default ProgrammingExercise findWithEagerStudentParticipationsByIdElseThrow(long programmingExerciseId) {
-        return getValueElseThrow(findWithEagerStudentParticipationsById(programmingExerciseId), programmingExerciseId);
-    }
-
     /**
      * Retrieves the associated ProgrammingExercise for a given ProgrammingExerciseParticipation.
      * If the ProgrammingExercise is not already loaded, it is fetched from the database and linked
@@ -899,6 +865,28 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         validateTitle(programmingExercise, course);
         validateCourseAndExerciseShortName(programmingExercise, course);
     }
+
+    /**
+     * Find the names of a programming exercise by its id.
+     * This method returns a DTO containing the short name of the programming exercise and the short name of the course.
+     * We need the left join as otherwise an implicit inner join is performed due to the COALESCE function filtering out
+     * programming exercises where not both a course and an exercise group are set, which implies all are filtered out.
+     *
+     * @param programmingExerciseId the id of the programming exercise
+     * @return a DTO containing the short name of the programming exercise and the short name of the course
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO(
+                p.shortName,
+                COALESCE(c.shortName, ec.shortName))
+            FROM ProgrammingExercise p
+              LEFT JOIN p.course c
+              LEFT JOIN p.exerciseGroup eg
+              LEFT JOIN eg.exam  e
+              LEFT JOIN e.course ec
+            WHERE p.id = :programmingExerciseId
+            """)
+    ProgrammingExerciseNamesDTO findNames(@Param("programmingExerciseId") long programmingExerciseId);
 
     /**
      * Fetch options for the {@link ProgrammingExercise} entity.

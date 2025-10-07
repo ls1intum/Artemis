@@ -16,8 +16,8 @@ import {
     viewChildren,
 } from '@angular/core';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { firstValueFrom, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -82,7 +82,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     readonly buildAnnotations = input<Annotation[]>([]);
 
     readonly onError = output<string>();
-    readonly onFileContentChange = output<{ file: string; fileContent: string }>();
+    readonly onFileContentChange = output<{ fileName: string; text: string }>();
     readonly onUpdateFeedback = output<Feedback[]>();
     readonly onFileLoad = output<string>();
     readonly onAcceptSuggestion = output<Feedback>();
@@ -213,16 +213,25 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.editor().setScrollTop(this.fileSession()[this.selectedFile()!].scrollTop ?? 0);
     }
 
-    onFileTextChanged(text: string): void {
-        if (this.selectedFile() && this.fileSession()[this.selectedFile()!]) {
-            const previousText = this.fileSession()[this.selectedFile()!].code;
-            const previousScrollTop = this.fileSession()[this.selectedFile()!].scrollTop;
+    onFileTextChanged(event: { text: string; fileName: string }): void {
+        const { text, fileName } = event;
+        // Apply text change to the specific file it belongs to, not the currently selected file
+        if (fileName && this.fileSession()[fileName]) {
+            const previousText = this.fileSession()[fileName].code;
+            const previousScrollTop = this.fileSession()[fileName].scrollTop;
+
             if (previousText !== text) {
                 this.fileSession.set({
                     ...this.fileSession(),
-                    [this.selectedFile()!]: { code: text, loadingError: false, scrollTop: previousScrollTop, cursor: this.editor().getPosition() },
+                    [fileName]: {
+                        code: text,
+                        loadingError: false,
+                        scrollTop: previousScrollTop,
+                        cursor: fileName === this.selectedFile() ? this.editor().getPosition() : this.fileSession()[fileName].cursor,
+                    },
                 });
-                this.onFileContentChange.emit({ file: this.selectedFile()!, fileContent: text });
+
+                this.onFileContentChange.emit({ fileName, text });
             }
         }
     }
@@ -409,6 +418,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
             }
             this.storeAnnotations([fileChange.newFileName]);
         } else if (fileChange instanceof DeleteFileChange) {
+            // Skip DeleteFileChange for PROBLEM_STATEMENT files
+            if (fileChange.fileType === FileType.PROBLEM_STATEMENT) {
+                return;
+            }
             this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
@@ -426,7 +439,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         const toKeep = pickBy(this.loadAnnotations(), (a) => !savedFiles.includes(a.fileName));
 
         this.localStorageService.store(
-            'annotations-' + this.sessionId,
+            'annotations-' + this.sessionId(),
             JSON.stringify({
                 ...toKeep,
                 ...toUpdate,
@@ -438,7 +451,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * Loads annotations from local storage
      */
     loadAnnotations() {
-        return JSON.parse(this.localStorageService.retrieve('annotations-' + this.sessionId) || '{}');
+        return JSON.parse(this.localStorageService.retrieve<string>('annotations-' + this.sessionId()) || '{}');
     }
 
     setBuildAnnotations(buildAnnotations: Annotation[]): void {

@@ -23,6 +23,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
+import { expectComponentRendered } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('EditTutorialGroupComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupComponent>;
@@ -41,6 +43,7 @@ describe('EditTutorialGroupComponent', () => {
             providers: [
                 MockProvider(ArtemisDatePipe),
                 MockProvider(AlertService),
+                MockProvider(CalendarService),
                 { provide: Router, useValue: router },
                 mockedActivatedRoute(
                     {
@@ -88,14 +91,14 @@ describe('EditTutorialGroupComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        const tutorialGroupFormComponent: TutorialGroupFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFormComponent)).componentInstance;
+        const tutorialGroupFormComponent = expectComponentRendered<TutorialGroupFormComponent>(fixture, 'jhi-tutorial-group-form');
 
         expect(component.tutorialGroup).toEqual(exampleTutorialGroup);
         expect(findTutorialGroupSpy).toHaveBeenCalledWith(2, 1);
         expect(findTutorialGroupSpy).toHaveBeenCalledOnce();
 
         expect(component.formData).toEqual(tutorialGroupToTutorialGroupFormData(exampleTutorialGroup));
-        expect(tutorialGroupFormComponent.formData).toEqual(component.formData);
+        expect(tutorialGroupFormComponent.formData()).toEqual(component.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {
@@ -120,6 +123,8 @@ describe('EditTutorialGroupComponent', () => {
 
         const updatedStub = jest.spyOn(tutorialGroupService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
+        const calendarService = TestBed.inject(CalendarService);
+        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
         const tutorialGroupForm: TutorialGroupFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFormComponent)).componentInstance;
 
@@ -131,5 +136,6 @@ describe('EditTutorialGroupComponent', () => {
         expect(updatedStub).toHaveBeenCalledWith(2, 1, changedTutorialGroup, undefined, undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups']);
+        expect(refreshSpy).toHaveBeenCalledOnce();
     });
 });

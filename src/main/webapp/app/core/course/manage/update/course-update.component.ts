@@ -10,7 +10,7 @@ import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, 
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, PROFILE_ATHENA, PROFILE_LTI } from 'app/app.constants';
-import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
@@ -33,7 +33,7 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { KeyValuePipe, NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { KeyValuePipe, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -52,12 +52,11 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
     imports: [
         FormsModule,
         ReactiveFormsModule,
-        SecuredImageComponent,
+        ImageComponent,
         FaIconComponent,
         TranslateDirective,
         NgStyle,
         ColorSelectorComponent,
-        NgClass,
         NgbTooltip,
         FormDateTimePickerComponent,
         HelpIconComponent,
@@ -87,7 +86,6 @@ export class CourseUpdateComponent implements OnInit {
     private router = inject(Router);
     private accountService = inject(AccountService);
 
-    CachingStrategy = CachingStrategy;
     ProgrammingLanguage = ProgrammingLanguage;
 
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;

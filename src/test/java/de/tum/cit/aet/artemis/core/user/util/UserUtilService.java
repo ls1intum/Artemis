@@ -23,8 +23,10 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Authority;
+import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
+import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -68,6 +70,9 @@ public class UserUtilService {
     @Autowired
     private UserTestRepository userTestRepository;
 
+    @Autowired
+    private CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
+
     /**
      * Changes the currently authorized User to the User with the given username.
      *
@@ -108,7 +113,7 @@ public class UserUtilService {
     /**
      * Creates and saves the given amount of Users with the given arguments.
      *
-     * @param loginPrefix The prefix that will be added in front of every User's username
+     * @param loginPrefix A number will be appended to this prefix to create the login
      * @param groups      The groups that the Users will be added to
      * @param authorities The authorities that the Users will have
      * @param amount      The amount of Users to generate
@@ -121,7 +126,7 @@ public class UserUtilService {
     /**
      * Creates and saves the given amount of Users with the given arguments.
      *
-     * @param loginPrefix        The prefix that will be added in front of every User's username
+     * @param loginPrefix        A number will be appended to this prefix to create the login
      * @param commonPasswordHash The password hash that will be set for every User
      * @param groups             The groups that the Users will be added to
      * @param authorities        The authorities that the Users will have
@@ -197,6 +202,21 @@ public class UserUtilService {
         user.setVcsAccessToken(vcsAccessToken);
         user.setVcsAccessTokenExpiryDate(expiryDate);
         return userTestRepository.save(user);
+    }
+
+    /**
+     * Deletes all tokens and saves the calendarSubscriptionToken in his calendarSubscriptionTokenStore of the user.
+     *
+     * @param user                      The User to update
+     * @param calendarSubscriptionToken The calendarSubscriptionToken to set
+     * @return The updated User
+     */
+    public void clearAllTokensAndSetTokenForUser(User user, String calendarSubscriptionToken) {
+        calendarSubscriptionTokenStoreRepository.deleteAll();
+        CalendarSubscriptionTokenStore store = new CalendarSubscriptionTokenStore();
+        store.setToken(calendarSubscriptionToken);
+        store.setUser(user);
+        calendarSubscriptionTokenStoreRepository.save(store);
     }
 
     /**
@@ -409,13 +429,12 @@ public class UserUtilService {
      * @param instructorName  The login of the instructor
      */
     public void addInstructor(final String instructorGroup, final String instructorName) {
-        if (!userExistsWithLogin(instructorName)) {
-            var newUsers = generateAndSaveActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1);
-            if (!newUsers.isEmpty()) {
-                var instructor = userTestRepository.save(newUsers.getFirst());
-                assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
-            }
-        }
+        User instructor = createOrReuseExistingUser(instructorName, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { instructorGroup, "testgroup" };
+        instructor.setGroups(Set.of(groups));
+        instructor.setAuthorities(instructorAuthorities);
+        instructor = userTestRepository.save(instructor);
+        assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
     /**
@@ -425,13 +444,12 @@ public class UserUtilService {
      * @param editorName  The login of the editor
      */
     public void addEditor(final String editorGroup, final String editorName) {
-        if (!userExistsWithLogin(editorName)) {
-            var newUsers = generateAndSaveActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1);
-            if (!newUsers.isEmpty()) {
-                var editor = userTestRepository.save(newUsers.getFirst());
-                assertThat(editor.getId()).as("Editor has been created").isNotNull();
-            }
-        }
+        User editor = createOrReuseExistingUser(editorName, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { editorGroup, "testgroup" };
+        editor.setGroups(Set.of(groups));
+        editor.setAuthorities(editorAuthorities);
+        editor = userTestRepository.save(editor);
+        assertThat(editor.getId()).as("Editor has been created").isNotNull();
     }
 
     /**
@@ -441,13 +459,12 @@ public class UserUtilService {
      * @param taName  The login of the tutor
      */
     public void addTeachingAssistant(final String taGroup, final String taName) {
-        if (!userExistsWithLogin(taName)) {
-            var newUsers = generateAndSaveActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1);
-            if (!newUsers.isEmpty()) {
-                var ta = userTestRepository.save(newUsers.getFirst());
-                assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
-            }
-        }
+        User ta = createOrReuseExistingUser(taName, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { taGroup, "testgroup" };
+        ta.setGroups(Set.of(groups));
+        ta.setAuthorities(tutorAuthorities);
+        ta = userTestRepository.save(ta);
+        assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }
 
     /**
@@ -457,13 +474,12 @@ public class UserUtilService {
      * @param studentName  The login of the student
      */
     public void addStudent(final String studentGroup, final String studentName) {
-        if (!userExistsWithLogin(studentName)) {
-            var newUsers = generateAndSaveActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1);
-            if (!newUsers.isEmpty()) {
-                var student = userTestRepository.save(newUsers.getFirst());
-                assertThat(student.getId()).as("Student has been created").isNotNull();
-            }
-        }
+        User student = createOrReuseExistingUser(studentName, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { studentGroup, "testgroup" };
+        student.setGroups(Set.of(groups));
+        student.setAuthorities(studentAuthorities);
+        student = userTestRepository.save(student);
+        assertThat(student.getId()).as("Student has been created").isNotNull();
     }
 
     /**

@@ -10,12 +10,13 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { UsersImportDialogComponent } from 'app/shared/user-import/dialog/users-import-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -34,14 +35,8 @@ describe('UsersImportDialogComponent', () => {
     const testDir = path.join(process.cwd(), 'src', 'test', 'javascript', 'spec', 'helpers', 'sample', 'user-import');
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FormsModule],
-            declarations: [
-                UsersImportDialogComponent,
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockComponent(HelpIconComponent),
-            ],
+            imports: [FormsModule, FaIconComponent],
+            declarations: [UsersImportDialogComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [
                 MockProvider(NgbActiveModal),
                 MockProvider(AlertService),

@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,11 +52,14 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -71,12 +74,15 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service Implementation for managing Exercise.
@@ -230,19 +236,19 @@ public class ExerciseService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         DueDateStat numberOfSubmissions;
-        DueDateStat totalNumberOfAssessments;
+        long numberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
             numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
-            totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId), 0L);
+            numberOfAssessments = programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId);
         }
         else {
             numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exerciseId);
-            totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
+            numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
-        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
+        stats.setTotalNumberOfAssessments(numberOfAssessments);
 
         final DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
         int numberOfCorrectionRounds = 1;
@@ -253,9 +259,11 @@ public class ExerciseService {
         }
         else {
             // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
-            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { new DueDateStat(numberOfAssessments, 0L) };
         }
 
+        // TODO: Refactor the usage of DueDateStats. For exam exercises, it has the meaning of first and second correction round instead of before and after due dat
+        // For course exercises, we do not seem to care about the number assessments of late submissions
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
         final DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
@@ -340,18 +348,19 @@ public class ExerciseService {
      * Filter all exercises for a given course based on the user role and course settings
      * Assumes that the exercises are already been loaded (i.e. no proxy)
      *
-     * @param course corresponding course: exercises
-     * @param user   the user entity
+     * @param course                      corresponding course: exercises
+     * @param user                        the user entity
+     * @param reloadOnlineCourseExercises this is only necessary when fetching a single course
      * @return a set of all Exercises for the given course
      */
-    public Set<Exercise> filterExercisesForCourse(Course course, User user) {
+    public Set<Exercise> filterExercisesForCourse(Course course, User user, boolean reloadOnlineCourseExercises) {
         Set<Exercise> exercises = course.getExercises();
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             // no need to filter for tutors/editors/instructors/admins because they can see all exercises of the course
             return exercises;
         }
 
-        if (course.isOnlineCourse()) {
+        if (reloadOnlineCourseExercises && course.isOnlineCourse()) {
             // this case happens rarely, so we can reload the relevant exercises from the database
             // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
             exercises = exerciseRepository.findByCourseIdWhereLtiResourceLaunchExists(course.getId(), user.getLogin());
@@ -366,10 +375,11 @@ public class ExerciseService {
      * Loads additional details for team exercises and for active quiz exercises
      * Assumes that the exercises are already been loaded (i.e. no proxy)
      *
-     * @param course corresponding course: exercises
-     * @param user   the user entity
+     * @param course          corresponding course: exercises
+     * @param user            the user entity
+     * @param loadQuizBatches only necessary when loading one course
      */
-    public void loadExerciseDetailsIfNecessary(Course course, User user) {
+    public void loadExerciseDetailsIfNecessary(Course course, User user, boolean loadQuizBatches) {
         for (Exercise exercise : course.getExercises()) {
             // only necessary for team exercises
             setAssignedTeamIdForExerciseAndUser(exercise, user);
@@ -379,7 +389,7 @@ public class ExerciseService {
                 quizExercise.filterSensitiveInformation();
 
                 // if the quiz is not active the batches do not matter and there is no point in loading them
-                if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
+                if (loadQuizBatches && quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
                     // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
                     quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
                 }
@@ -759,7 +769,7 @@ public class ExerciseService {
         }
         // start sending problem statement updates within the last 5 minutes before the exam starts
         else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
-                && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
+                && !Strings.CS.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
             ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
             api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
         }
@@ -798,4 +808,73 @@ public class ExerciseService {
         exercise.getCompetencyLinks().forEach(link -> link.setExercise(exercise));
     }
 
+    /**
+     * Retrieves a {@link NonQuizExerciseCalendarEventDTO} for each {@link FileUploadExercise}, {@link TextExercise}, {@link ModelingExercise}
+     * and {@link ProgrammingExercise} associated to the given courseId. Each DTO encapsulates the releaseDate, startDate, dueDate and assessmentDueDate
+     * of the respective exercise.
+     * <p>
+     * The method then derives a set of {@link CalendarEventDTO}s from the DTOs. Whether events are included in the result depends on the
+     * releaseDate of a given exercise and whether the logged-in user is course staff member (either tutor, editor ot student of the {@link Course})
+     *
+     * @param courseId      the ID of the course
+     * @param userIsStudent indicates whether the logged-in user is a student
+     * @param language      the language that will be used add context information to titles (e.g. the title of a release event will be prefixed with "Release: ")
+     * @return the set of results
+     */
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromNonQuizExercises(long courseId, boolean userIsStudent, Language language) {
+        Set<NonQuizExerciseCalendarEventDTO> dtos = exerciseRepository.getNonQuizExerciseCalendarEventsDTOsForCourseId(courseId);
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
+    }
+
+    /**
+     * Derives the following events for a given {@link NonQuizExerciseCalendarEventDTO}:
+     * <ul>
+     * <li>One event representing the release date if not null</li>
+     * <li>One event representing the start date if not null</li>
+     * <li>One event representing the due date if not null</li>
+     * <li>One event representing the assessment due date if not null</li>
+     * </ul>
+     *
+     * The events are only derived given that either the exercise represented by a dto is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     *
+     * @param dto           the exam for which to derive the events
+     * @param userIsStudent indicates whether the logged-in user is a student of the course associated to the exercise represented by the dto
+     * @param language      the language that will be used add context information to titles (e.g. the title of a release event will be prefixed with "Release: ")
+     * @return the derived events
+     */
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(NonQuizExerciseCalendarEventDTO dto, boolean userIsStudent, Language language) {
+        Set<CalendarEventDTO> events = new HashSet<>();
+        boolean userIsCourseStaff = !userIsStudent;
+        if (userIsCourseStaff || dto.releaseDate() == null || dto.releaseDate().isBefore(now())) {
+            if (dto.releaseDate() != null) {
+                String releaseDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Release: ";
+                    case GERMAN -> "Veröffentlichung: ";
+                };
+                events.add(new CalendarEventDTO("exerciseReleaseEvent-" + dto.originEntityId(), dto.type(), releaseDateTitlePrefix + dto.title(), dto.releaseDate(), null, null,
+                        null));
+            }
+            if (dto.startDate() != null) {
+                String startDateTitlePrefix = "Start: ";
+                events.add(new CalendarEventDTO("exerciseStartEvent-" + dto.originEntityId(), dto.type(), startDateTitlePrefix + dto.title(), dto.startDate(), null, null, null));
+            }
+            if (dto.dueDate() != null) {
+                String dueDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Due: ";
+                    case GERMAN -> "Abgabefrist: ";
+                };
+                events.add(new CalendarEventDTO("exerciseDueEvent-" + dto.originEntityId(), dto.type(), dueDateTitlePrefix + dto.title(), dto.dueDate(), null, null, null));
+            }
+            if (dto.assessmentDueDate() != null) {
+                String assessmentDueDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Assessment due: ";
+                    case GERMAN -> "Korrekturfrist: ";
+                };
+                events.add(new CalendarEventDTO("exerciseAssessmentDueEvent-" + dto.originEntityId(), dto.type(), assessmentDueDateTitlePrefix + dto.title(),
+                        dto.assessmentDueDate(), null, null, null));
+            }
+        }
+        return events;
+    }
 }

@@ -18,6 +18,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -29,6 +30,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 @Lazy
 @Repository
 public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
+    Set<QuizExercise> findWithBatchesByCourseId(long courseId);
 
     @Query("""
             SELECT DISTINCT e
@@ -86,6 +90,22 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 AND q.course.id = :courseId
             """)
     Set<QuizExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO(
+                exercise.id,
+                exercise.quizMode,
+                exercise.title,
+                exercise.releaseDate,
+                exercise.dueDate,
+                batch,
+                exercise.duration
+            )
+            FROM QuizExercise exercise
+                LEFT JOIN exercise.quizBatches batch ON exercise.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED
+            WHERE exercise.course.id = :courseId
+            """)
+    Set<QuizExerciseCalendarEventDTO> getQuizExerciseCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
 
     /**
      * Finds a quiz exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.

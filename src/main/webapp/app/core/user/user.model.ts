@@ -15,6 +15,7 @@ export class User extends Account {
     public vcsAccessToken?: string;
     public vcsAccessTokenExpiryDate?: string;
     public externalLLMUsageAccepted?: dayjs.Dayjs;
+    public memirisEnabled?: boolean;
     /**
      * True if
      * <ul>
@@ -46,6 +47,7 @@ export class User extends Account {
         vcsAccessToken?: string,
         vcsAccessTokenExpiryDate?: string,
         externalLLMUsageAccepted?: dayjs.Dayjs,
+        memirisEnabled?: boolean,
         askToSetupPasskey?: boolean,
         loggedInWithPasskey?: boolean,
     ) {
@@ -60,6 +62,7 @@ export class User extends Account {
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+        this.memirisEnabled = memirisEnabled;
         this.askToSetupPasskey = askToSetupPasskey;
         this.loggedInWithPasskey = loggedInWithPasskey;
     }

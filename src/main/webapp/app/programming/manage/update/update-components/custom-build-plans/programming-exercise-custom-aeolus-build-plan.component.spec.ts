@@ -17,8 +17,6 @@ import { Observable } from 'rxjs';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -72,7 +70,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -137,7 +134,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     it('should change code of active action', () => {
         comp.changeActiveAction('gradle');
         expect(comp.code).toBe(gradleBuildAction.script);
-        comp.codeChanged('test');
+        comp.codeChanged({ text: 'test', fileName: 'build-script.sh' });
         expect(gradleBuildAction.script).toBe('test');
     });
 
@@ -169,7 +166,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should change code', () => {
         comp.changeActiveAction('gradle');
-        comp.codeChanged('this is some code');
+        comp.codeChanged({ text: 'this is some code', fileName: 'build-script.sh' });
         const action: BuildAction | undefined = comp.active;
         expect(action).toBeDefined();
         expect(action).toBeInstanceOf(ScriptAction);

@@ -27,9 +27,8 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -45,8 +44,6 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
         FaIconComponent,
         WorkingTimeChangeComponent,
         FormDateTimePickerComponent,
-        CustomMinDirective,
-        CustomMaxDirective,
         ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
@@ -57,6 +54,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private calendarService = inject(CalendarService);
     private modalService = inject(NgbModal);
     private router = inject(Router);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -289,6 +287,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     private async onSaveSuccess(exam: Exam) {
         this.isSaving = false;
+        this.calendarService.reloadEvents();
         await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
     }

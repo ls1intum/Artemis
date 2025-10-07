@@ -24,7 +24,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TestRunRibbonComponent } from '../../manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from '../exam-cover/exam-participation-cover.component';
 import { AsyncPipe, NgClass } from '@angular/common';
@@ -106,7 +105,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
-    private profileService = inject(ProfileService);
+
+    protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faGraduationCap = faGraduationCap;
 
     @ViewChildren(ExamSubmissionComponent)
     currentPageComponents: QueryList<ExamSubmissionComponent>;
@@ -157,15 +158,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     websocketSubscription?: Subscription;
     workingTimeUpdateEventsSubscription?: Subscription;
     problemStatementUpdateEventsSubscription?: Subscription;
-
-    isProduction = true;
-    isTestServer = false;
+    studentExamSubscription?: Subscription;
 
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
-
-    // Icons
-    faCheckCircle = faCheckCircle;
 
     isProgrammingExercise() {
         return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
@@ -194,9 +190,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     isAtLeastInstructor?: boolean;
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
-
-    // Icons
-    faGraduationCap = faGraduationCap;
 
     constructor() {
         // show only one synchronization error every 5s
@@ -248,7 +241,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     },
                 });
             } else {
-                this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
+                this.studentExamSubscription = this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
                     next: (studentExam) => {
                         this.handleStudentExam(studentExam);
                     },
@@ -263,9 +256,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;
         });
-
-        this.isProduction = this.profileService.isProduction();
-        this.isTestServer = this.profileService.isTestServer();
     }
 
     /**
@@ -449,6 +439,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (this.testExam) {
                         this.examParticipationService.resetExamLayout();
                         this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'test-exam', this.studentExam.id]);
+                        this.examParticipationService.setShouldUpdateTestExams(true);
                     }
 
                     this.examSummaryButtonTimer = setInterval(() => {
@@ -632,11 +623,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription?.unsubscribe();
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
+        this.studentExamSubscription?.unsubscribe();
         this.examParticipationService.resetExamLayout();
         window.clearInterval(this.autoSaveInterval);
     }
 
-    handleStudentExam(studentExam: StudentExam) {
+    handleStudentExam(studentExam: StudentExam | undefined) {
+        if (!studentExam) {
+            return;
+        }
         this.studentExam = studentExam;
         this.exam = studentExam.exam!;
         this.testExam = this.exam.testExam!;
@@ -651,12 +646,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Directly start the exam when we continue from a failed save
             if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
                 this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId).subscribe((localExam: StudentExam) => {
-                    // Keep the working time from the server
-                    localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
-
-                    this.studentExam = localExam;
-                    this.loadingExam = false;
-                    this.examStarted(this.studentExam);
+                    if (localExam) {
+                        // Keep the working time from the server
+                        localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
+                        this.studentExam = localExam;
+                        this.loadingExam = false;
+                        this.examStarted(this.studentExam);
+                    }
                 });
             } else {
                 this.loadingExam = false;
