@@ -33,7 +33,7 @@ export class ProgrammingExerciseSharingService {
     getSharedExercises(sharingInfo: SharingInfo): Observable<ShoppingBasket> {
         // Validate required parameters
         if (!sharingInfo.basketToken || !sharingInfo.apiBaseURL || !sharingInfo.checksum || !sharingInfo.returnURL) {
-            throw new Error('Missing required sharing information: basketToken and apiBaseURL are required');
+            throw new Error('Missing required sharing information: basketToken, apiBaseURL, sharingInfo.checksum and sharingInfo.returnURL are required');
         }
         return this.http
             .get<ShoppingBasket>(this.resourceUrl + '/basket', {
@@ -93,7 +93,7 @@ export class ProgrammingExerciseSharingService {
     }
 
     /**
-     * Convert all date fields of the programming exercise to momentJs date objects.
+     * Convert all date fields of the programming exercise to dayjs date objects.
      * Note: This conversion could produce an invalid date if the date is malformatted.
      *
      * @param entity ProgrammingExercise

@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +20,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 
 /**
  * REST controller for the exchange of configuration data between artemis and the sharing platform.
  */
 @RestController
 @RequestMapping("api/core/sharing/")
-@ConditionalOnProperty(name = "artemis.sharing.enabled", havingValue = "true", matchIfMissing = false)
+@Conditional(SharingEnabled.class)
 @Lazy
 public class SharingSupportResource {
 
@@ -94,13 +95,12 @@ public class SharingSupportResource {
      * <ul>
      * <li>true, if the sharing profile is enabled, and the connection to the sharing platform is established.</li>
      * <li>false. if the sharing profile is enabled, however the connection to the sharing platform is not (yet) established.</li>
-     * <li>Return a status 503, if the sharing profile is not enabled.</li>
+     * <li>If the sharing profile is not enabled, this endpoint is not available (HTTP 404).</li>
      * </ul>
      * The last two cases must be interpreted as sharing is not enabled.
      *
-     * @return Status 200 and true if a Sharing ApiBaseUrl is present, false, if the Sharing Profile is enabled, however the connection not yet established. In case that sharing is
-     *         not enabled Http-Status 503 is signalled, because
-     *         this resource is not available!
+     * @return Status 200 with true if a Sharing ApiBaseUrl is present, or false if the Sharing profile is enabled but not yet connected.
+     *         If the Sharing profile is disabled, the endpoint is not available (HTTP 404).
      */
     @GetMapping(SHARINGCONFIG_RESOURCE_IS_ENABLED)
     public ResponseEntity<Boolean> isSharingEnabled() {
