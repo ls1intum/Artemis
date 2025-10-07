@@ -66,17 +66,24 @@ public class QuizTrainingLeaderboardService {
         var userLeaderboardEntryForCurrentCourse = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId);
         boolean hasUserSetSettings = quizTrainingLeaderboardRepository.existsQuizTrainingLeaderboardByUser_Id(userId);
 
-        if (hasUserSetSettings && userLeaderboardEntryForCurrentCourse.isEmpty()) {
-            QuizTrainingLeaderboard existingEntry = quizTrainingLeaderboardRepository.findFirstByUser_Id(userId)
-                    .orElseThrow(() -> new IllegalStateException("Entry should exist but was not found"));
-
-            setInitialLeaderboardEntry(userId, courseId, existingEntry.isShowInLeaderboard());
+        if (userLeaderboardEntryForCurrentCourse.isEmpty()) {
+            if (hasUserSetSettings) {
+                boolean showInLeaderboard = quizTrainingLeaderboardRepository.findFirstByUser_Id(userId)
+                        .orElseThrow(() -> new IllegalStateException("Entry should exist but was not found")).isShowInLeaderboard();
+                setInitialLeaderboardEntry(userId, courseId, showInLeaderboard);
+            }
+            else {
+                setInitialLeaderboardEntry(userId, courseId, false);
+            }
+            userLeaderboardEntryForCurrentCourse = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId);
         }
+
+        QuizTrainingLeaderboard currentUserEntry = userLeaderboardEntryForCurrentCourse.orElseThrow();
 
         List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdAndShowInLeaderboardTrueOrderByScoreDescUserAscId(league,
                 courseId);
         List<LeaderboardEntryDTO> leaderboardEntryDTOs = getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
-        return new LeaderboardWithCurrentUserIdDTO(leaderboardEntryDTOs, userId, hasUserSetSettings);
+        return new LeaderboardWithCurrentUserIdDTO(leaderboardEntryDTOs, hasUserSetSettings, LeaderboardEntryDTO.of(currentUserEntry, 0, league, totalQuestions));
     }
 
     /**

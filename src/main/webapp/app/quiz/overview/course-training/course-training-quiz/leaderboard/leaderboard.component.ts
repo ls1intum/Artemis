@@ -16,6 +16,10 @@ export class Leaderboard {
     leaderboard = input<LeaderboardEntry[]>([]);
 
     isUserInLeaderboard = computed(() => {
+        const entries = this.leaderboard();
+        if (!entries || entries.length === 0) {
+            return false;
+        }
         return this.leaderboard().some((entry) => entry.userId === this.currentUserId());
     });
 

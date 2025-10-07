@@ -183,7 +183,7 @@ public class QuizTrainingResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         boolean shownInLeaderboard = leaderboardEntryDTO.showInLeaderboard() != null ? leaderboardEntryDTO.showInLeaderboard() : false;
-        quizTrainingLeaderboardService.setInitialLeaderboardEntry(user.getId(), courseId, shownInLeaderboard);
+        quizTrainingLeaderboardService.updateShownInLeaderboard(user.getId(), shownInLeaderboard);
         return ResponseEntity.ok().build();
     }
 }

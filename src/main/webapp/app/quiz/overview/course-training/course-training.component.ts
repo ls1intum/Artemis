@@ -60,15 +60,8 @@ export class CourseTrainingComponent {
     showInLeaderboard = true;
 
     league = computed(() => {
-        const userId = this.currentUserId();
-        const entries = this.leaderboardEntries();
-
-        if (!entries) {
-            return 'No League';
-        }
-
-        const userEntry = entries.find((entry) => entry.userId === userId);
-        const league = userEntry?.selectedLeague ?? 0;
+        const entry = this.currentUserEntry();
+        const league = entry?.selectedLeague ?? 0;
         if (league === 1) {
             return 'Master';
         }
@@ -89,39 +82,18 @@ export class CourseTrainingComponent {
     });
 
     leaderboardName = computed(() => {
-        const userId = this.currentUserId();
-        const entries = this.leaderboardEntries();
-
-        if (!entries) {
-            return '';
-        }
-
-        const userEntry = entries.find((entry) => entry.userId === userId);
-        return userEntry?.userName ?? '';
+        const entry = this.currentUserEntry();
+        return entry?.userName ?? '';
     });
 
     points = computed(() => {
-        const userId = this.currentUserId();
-        const entries = this.leaderboardEntries();
-
-        if (!entries) {
-            return 0;
-        }
-
-        const userEntry = entries.find((entry) => entry.userId === userId);
-        return userEntry?.score ?? 0;
+        const entry = this.currentUserEntry();
+        return entry?.score ?? 0;
     });
 
     dueDate = computed(() => {
-        const userId = this.currentUserId();
-        const entries = this.leaderboardEntries();
-
-        if (!entries) {
-            return 0;
-        }
-
-        const userEntry = entries.find((entry) => entry.userId === userId);
-        return userEntry?.dueDate ?? 0;
+        const entry = this.currentUserEntry();
+        return entry?.dueDate ?? 0;
     });
 
     dueIn = computed(() => {
@@ -146,36 +118,27 @@ export class CourseTrainingComponent {
     });
 
     totalQuestions = computed(() => {
-        const entries = this.leaderboardEntries();
-
-        const userEntry = entries.find((entry) => entry.userId === this.currentUserId());
-        return userEntry?.totalQuestions ?? 0;
+        const entry = this.currentUserEntry();
+        return entry?.totalQuestions ?? 0;
     });
 
     correctQuestions = computed(() => {
-        const entries = this.leaderboardEntries();
-
-        const userEntry = entries.find((entry) => entry.userId === this.currentUserId());
-        return userEntry?.answeredCorrectly ?? 0;
+        const entry = this.currentUserEntry();
+        return entry?.answeredCorrectly ?? 0;
     });
 
     wrongQuestions = computed(() => {
-        const entries = this.leaderboardEntries();
-
-        const userEntry = entries.find((entry) => entry.userId === this.currentUserId());
-        return userEntry?.answeredWrong ?? 0;
+        const entry = this.currentUserEntry();
+        return entry?.answeredWrong ?? 0;
     });
 
     streak = computed(() => {
-        const entries = this.leaderboardEntries();
-
-        const userEntry = entries.find((entry) => entry.userId === this.currentUserId());
-        return userEntry?.streak ?? 0;
+        const entry = this.currentUserEntry();
+        return entry?.streak ?? 0;
     });
 
-    currentUserId = signal<number>(undefined!);
-
     leaderboardEntries = signal<LeaderboardEntry[]>([]);
+    currentUserEntry = signal<LeaderboardEntry>(undefined!);
     isLoading = signal<boolean>(false);
     isDataLoaded = signal<boolean>(false);
 
@@ -193,7 +156,7 @@ export class CourseTrainingComponent {
         this.leaderboardService.getQuizTrainingLeaderboard(courseId).subscribe({
             next: (leaderboard) => {
                 this.leaderboardEntries.set(leaderboard.leaderboardEntryDTO);
-                this.currentUserId.set(leaderboard.currentUserId);
+                this.currentUserEntry.set(leaderboard.currentUserEntry);
                 this.isLoading.set(false);
                 this.isDataLoaded.set(true);
 
