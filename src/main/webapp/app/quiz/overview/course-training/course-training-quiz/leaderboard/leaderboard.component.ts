@@ -3,6 +3,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { LeaderboardEntry } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-leaderboard',
@@ -33,4 +34,11 @@ export class Leaderboard {
         const user = this.leaderboard().find((entry) => entry.userId === this.currentUserId());
         return user?.score || 0;
     }
+
+    get currentUserPictureUrl(): string {
+        const user = this.leaderboard().find((entry) => entry.userId === this.currentUserId());
+        return user?.imageURL || '';
+    }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

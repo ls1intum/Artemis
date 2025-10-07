@@ -8,6 +8,7 @@ export class LeaderboardEntry {
     public rank: number;
     public selectedLeague: number;
     public userName: string;
+    public imageURL?: string;
     public userId: number;
     public score: number;
     public answeredCorrectly: number;
