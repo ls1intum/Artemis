@@ -5,7 +5,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
-import { faAngleDown, faAngleRight, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faChevronDown, faChevronUp, faQuestionCircle, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
@@ -25,7 +25,7 @@ import { cloneDeep } from 'lodash-es';
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
     templateUrl: './multiple-choice-question-edit.component.html',
-    styleUrls: ['../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
+    styleUrls: ['../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss', './multiple-choice-question-edit.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
@@ -45,7 +45,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
 
-    readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+    readonly markdownEditor = viewChild<MarkdownEditorMonacoComponent>('markdownEditor');
 
     readonly visualChild = viewChild.required<MultipleChoiceVisualQuestionComponent>('visual');
 
@@ -64,7 +64,11 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
 
     /** Set default preview of the markdown editor as preview for the multiple choice question **/
     get showPreview(): boolean {
-        return this.markdownEditor()?.inPreviewMode;
+        const markdownEditor = this.markdownEditor();
+        if (!markdownEditor || this.reEvaluationInProgress()) {
+            return false;
+        }
+        return markdownEditor.inPreviewMode;
     }
     showMultipleChoiceQuestionPreview = true;
     showMultipleChoiceQuestionVisual = true;
@@ -81,6 +85,9 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
     faQuestionCircle = faQuestionCircle;
+    faChevronUp = faChevronUp;
+    faChevronDown = faChevronDown;
+    faUndo = faUndo;
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
@@ -154,7 +161,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      */
     prepareForSave(): void {
         const markdownEditor = this.markdownEditor();
-        if (markdownEditor.inVisualMode) {
+        if (markdownEditor?.inVisualMode) {
             /*
              * In the visual mode, the latest question values come from the visual tab, not the markdown editor.
              * We update the markdown editor, which triggers the parsing of the visual tab content.
@@ -162,12 +169,17 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
             markdownEditor.markdown = this.visualChild().parseQuestion();
         } else {
             this.cleanupQuestion();
-            markdownEditor.parseMarkdown();
+            if (markdownEditor) {
+                markdownEditor.parseMarkdown();
+            }
         }
     }
 
     onLeaveVisualTab(): void {
-        this.markdownEditor().markdown = this.visualChild().parseQuestion();
+        const markdownEditor = this.markdownEditor();
+        if (markdownEditor) {
+            markdownEditor.markdown = this.visualChild().parseQuestion();
+        }
         this.prepareForSave();
     }
 
@@ -250,4 +262,30 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     deleteQuestion(): void {
         this.questionDeleted.emit();
     }
+
+    /**
+     * @function moveUp
+     * @desc Move this question one position up so that it is visible further up in the UI
+     */
+    moveUp() {
+        this.questionMoveUp.emit();
+    }
+
+    /**
+     * @function moveDown
+     * @desc Move this question one position down so that it is visible further down in the UI
+     */
+    moveDown() {
+        this.questionMoveDown.emit();
+    }
+
+    /**
+     * @function
+     * @desc Resets the question title by using the title of the backupQuestion (which has the original title of the question)
+     */
+    resetQuestionTitle() {
+        this.question().title = this.backupQuestion.title;
+    }
+
+    resetQuestion() {}
 }

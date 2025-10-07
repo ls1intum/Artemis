@@ -1,41 +1,118 @@
 <div class="edit-mc-question">
-    <div class="question-options card-header question-card-header" [hidden]="showPreview">
-        <button
-            class="btn question-collapse"
-            (click)="isQuestionCollapsed = !isQuestionCollapsed"
-            [attr.aria-expanded]="!isQuestionCollapsed"
-            [attr.aria-controls]="'collapseQuestion' + questionIndex()"
-        >
-            <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
-        </button>
-        <div class="form-group question-title">
-            <input
-                id="mc-question-title"
-                class="form-control"
-                [(ngModel)]="question().title"
-                (ngModelChange)="questionUpdated.emit()"
-                placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
-            />
-        </div>
-        <div class="question-card-header-inputs">
-            <div class="form-group question-score">
-                <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+    @if (!reEvaluationInProgress()) {
+        <div class="question-options card-header question-card-header" [hidden]="showPreview">
+            <button
+                class="btn question-collapse"
+                (click)="isQuestionCollapsed = !isQuestionCollapsed"
+                [attr.aria-expanded]="!isQuestionCollapsed"
+                [attr.aria-controls]="'collapseQuestion' + questionIndex()"
+            >
+                <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
+            </button>
+            <div class="form-group question-title">
                 <input
-                    id="score"
+                    id="mc-question-title"
                     class="form-control"
-                    title="score"
-                    type="number"
-                    min="0"
-                    [max]="MAX_POINTS"
-                    [(ngModel)]="question().points!"
+                    [(ngModel)]="question().title"
                     (ngModelChange)="questionUpdated.emit()"
+                    placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                 />
             </div>
-            <div class="question-type">
-                <h3 class="mb-0"><span class="badge bg-info align-text-top">MC</span></h3>
+            <div class="question-card-header-inputs">
+                <div class="form-group question-score">
+                    <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+                    <input
+                        id="score"
+                        class="form-control"
+                        title="score"
+                        type="number"
+                        min="0"
+                        [max]="MAX_POINTS"
+                        [(ngModel)]="question().points!"
+                        (ngModelChange)="questionUpdated.emit()"
+                    />
+                </div>
+                <div class="question-type">
+                    <h3 class="mb-0"><span class="badge bg-info align-text-top">MC</span></h3>
+                </div>
             </div>
         </div>
-    </div>
+    } @else {
+        <div class="question-options card-header question-card-header-reevaluation">
+            <div class="row">
+                <div class="col-3 col-lg-1 mt-1">
+                    <button
+                        class="btn question-collapse"
+                        (click)="isQuestionCollapsed = !isQuestionCollapsed"
+                        [attr.aria-expanded]="!isQuestionCollapsed"
+                        [attr.aria-controls]="'collapseQuestion' + questionIndex"
+                    >
+                        <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
+                    </button>
+                </div>
+                <div class="col-9 col-lg-8 text-start mt-3">
+                    <div class="input-group row">
+                        <div class="col-10 col-lg-11">
+                            <input
+                                class="form-control"
+                                [(ngModel)]="question().title"
+                                placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                                attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                                style="width: 100%"
+                            />
+                        </div>
+                        <div class="col-2 col-lg-1">
+                            <span class="input-group-btn">
+                                <button
+                                    class="btn btn-outline-secondary"
+                                    type="button"
+                                    (click)="resetQuestionTitle()"
+                                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
+                                >
+                                    <fa-icon [icon]="faUndo" />
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3 col-lg-1 mt-lg-3">
+                    <div class="question-type">
+                        <h3 class="mb-0"><span class="badge bg-success align-text-top" style="width: 60px">MC</span></h3>
+                    </div>
+                </div>
+                <div class="col-9 col-lg-2 text-end mt-lg-3">
+                    <button
+                        id="move-up-button"
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        (click)="moveUp()"
+                        [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveUp' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faChevronUp" />
+                    </button>
+                    <button
+                        id="move-down-button"
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        (click)="moveDown()"
+                        [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveDown' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faChevronDown" />
+                    </button>
+                    <button
+                        id="reset-button"
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        (click)="resetQuestion()"
+                        [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestion' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faUndo" />
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
         <div class="question-options" [hidden]="showPreview">
             <div class="form-group">
@@ -94,34 +171,38 @@
         </div>
         <div class="markupEditorArea">
             <div class="question-content">
-                <jhi-markdown-editor-monaco
-                    #markdownEditor
-                    [markdown]="questionEditorText"
-                    [showPreviewButton]="true"
-                    [showVisualButton]="true"
-                    [domainActions]="multipleChoiceActions"
-                    (markdownChange)="changesInMarkdown()"
-                    (textWithDomainActionsFound)="domainActionsFound($event)"
-                    (onLeaveVisualTab)="onLeaveVisualTab()"
-                    [showDefaultPreview]="false"
-                    class="h-auto"
-                >
-                    <!-- Preview -->
-                    <ng-container id="previewMonaco">
-                        @if (showMultipleChoiceQuestionPreview) {
-                            <jhi-multiple-choice-question [question]="question()" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex()" />
-                        }
-                        <hr />
-                    </ng-container>
-                    <!-- End of Preview-->
-                    <!-- Visual -->
-                    <ng-container id="visual">
-                        @if (showMultipleChoiceQuestionVisual) {
-                            <jhi-multiple-choice-visual-question #visual [question]="question()" (questionChanged)="changesInVisualMode()" />
-                        }
-                    </ng-container>
-                    <!-- End of Visual -->
-                </jhi-markdown-editor-monaco>
+                @if (!reEvaluationInProgress()) {
+                    <jhi-markdown-editor-monaco
+                        #markdownEditor
+                        [markdown]="questionEditorText"
+                        [showPreviewButton]="true"
+                        [showVisualButton]="true"
+                        [domainActions]="multipleChoiceActions"
+                        (markdownChange)="changesInMarkdown()"
+                        (textWithDomainActionsFound)="domainActionsFound($event)"
+                        (onLeaveVisualTab)="onLeaveVisualTab()"
+                        [showDefaultPreview]="false"
+                        class="h-auto"
+                    >
+                        <!-- Preview -->
+                        <ng-container id="previewMonaco">
+                            @if (showMultipleChoiceQuestionPreview) {
+                                <jhi-multiple-choice-question [question]="question()" [selectedAnswerOptions]="[]" [questionIndex]="questionIndex()" />
+                            }
+                            <hr />
+                        </ng-container>
+                        <!-- End of Preview-->
+                        <!-- Visual -->
+                        <ng-container id="visual">
+                            @if (showMultipleChoiceQuestionVisual) {
+                                <jhi-multiple-choice-visual-question #visual [question]="question()" (questionChanged)="changesInVisualMode()" />
+                            }
+                        </ng-container>
+                        <!-- End of Visual -->
+                    </jhi-markdown-editor-monaco>
+                } @else {
+                    <jhi-multiple-choice-visual-question #visual [question]="question()" (questionChanged)="changesInVisualMode()" />
+                }
             </div>
         </div>
     </div>
