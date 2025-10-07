@@ -88,9 +88,10 @@ public class AthenaFeedbackSuggestionsService {
      *
      * @param athenaRestTemplate        REST template used for the communication with Athena
      * @param athenaModuleService       Athena module serviced used to determine the urls for different modules
-     * @param athenaDTOConverterService Service to convert exrcises and submissions to DTOs
+     * @param athenaDTOConverterService Service to convert exercises and submissions to DTOs
      * @param llmTokenUsageService      Service to store the usage of LLM tokens
      * @param learnerProfileApi         API for learner profile operations
+     * @param courseCompetencyApi       API for course competency operations
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
             AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository,
