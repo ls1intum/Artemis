@@ -1,5 +1,5 @@
 @if (!isLoading()) {
-    <div class="course-training-container">
+    <div>
         <p-dialog [(visible)]="showDialog" [modal]="true" [draggable]="false" [closable]="false" [style]="{ width: '450px' }">
             <ng-template pTemplate="header">
                 <h5 jhiTranslate="artemisApp.quizQuestion.unratedConfirmationTitle"></h5>
@@ -50,20 +50,11 @@
                             <div class="league-badge silver">
                                 <app-league-silver-icon [league]="league()" />
                                 <div class="league-info">
-                                    <div class="league-header">
-                                        <div class="league-name-points-container">
-                                            <div class="league-name" jhiTranslate="artemisApp.quizTraining.silverLeague"></div>
-                                            <div class="league-points">{{ points() }} / {{ pointsSilverLeague }}</div>
-                                        </div>
-                                        <div class="info-button">i</div>
-                                    </div>
-                                    <div class="progress-container">
-                                        <div class="progress-bar">
-                                            <div class="progress" [style.width]="((points() - pointsBronzeLeague) / (pointsSilverLeague - pointsBronzeLeague)) * 100 + '%'"></div>
-                                        </div>
-                                        <div class="next-league-icon">
-                                            <app-league-gold-icon [league]="'Gold'" class="small-icon" />
-                                        </div>
+                                    <div class="league-name" jhiTranslate="artemisApp.quizTraining.silverLeague"></div>
+                                    <div class="league-points">{{ points() }} / {{ pointsSilverLeague }}</div>
+                                    <div class="progress-bar">
+                                        <div class="progress" [style.width]="((points() - pointsBronzeLeague) / (pointsSilverLeague - pointsBronzeLeague)) * 100 + '%'"></div>
+                                        <app-league-gold-icon [league]="'Gold'" class="small-icon" />
                                     </div>
                                 </div>
                             </div>
@@ -72,20 +63,11 @@
                             <div class="league-badge gold">
                                 <app-league-gold-icon [league]="league()" />
                                 <div class="league-info">
-                                    <div class="league-header">
-                                        <div class="league-name-points-container">
-                                            <div class="league-name" jhiTranslate="artemisApp.quizTraining.goldLeague"></div>
-                                            <div class="league-points">{{ points() }} / {{ pointsGoldLeague }}</div>
-                                        </div>
-                                        <div class="info-button">i</div>
-                                    </div>
-                                    <div class="progress-container">
-                                        <div class="progress-bar">
-                                            <div class="progress" [style.width]="((points() - pointsSilverLeague) / (pointsGoldLeague - pointsSilverLeague)) * 100 + '%'"></div>
-                                        </div>
-                                        <div class="next-league-icon">
-                                            <app-league-diamond-icon [league]="'Diamond'" class="small-icon" />
-                                        </div>
+                                    <div class="league-name" jhiTranslate="artemisApp.quizTraining.goldLeague"></div>
+                                    <div class="league-points">{{ points() }} / {{ pointsGoldLeague }}</div>
+                                    <div class="progress-bar">
+                                        <div class="progress" [style.width]="((points() - pointsSilverLeague) / (pointsGoldLeague - pointsSilverLeague)) * 100 + '%'"></div>
+                                        <app-league-diamond-icon [league]="'Diamond'" class="small-icon" />
                                     </div>
                                 </div>
                             </div>
@@ -94,20 +76,11 @@
                             <div class="league-badge diamond">
                                 <app-league-diamond-icon [league]="league()" />
                                 <div class="league-info">
-                                    <div class="league-header">
-                                        <div class="league-name-points-container">
-                                            <div class="league-name" jhiTranslate="artemisApp.quizTraining.diamondLeague"></div>
-                                            <div class="league-points">{{ points() }} / {{ pointsDiamondLeague }}</div>
-                                        </div>
-                                        <div class="info-button">i</div>
-                                    </div>
-                                    <div class="progress-container">
-                                        <div class="progress-bar">
-                                            <div class="progress" [style.width]="((points() - pointsGoldLeague) / (pointsDiamondLeague - pointsGoldLeague)) * 100 + '%'"></div>
-                                        </div>
-                                        <div class="next-league-icon">
-                                            <app-league-master-icon [league]="'Master'" class="small-icon" />
-                                        </div>
+                                    <div class="league-name" jhiTranslate="artemisApp.quizTraining.diamondLeague"></div>
+                                    <div class="league-points">{{ points() }} / {{ pointsDiamondLeague }}</div>
+                                    <div class="progress-bar">
+                                        <div class="progress" [style.width]="((points() - pointsGoldLeague) / (pointsDiamondLeague - pointsGoldLeague)) * 100 + '%'"></div>
+                                        <app-league-master-icon [league]="'Master'" class="small-icon" />
                                     </div>
                                 </div>
                             </div>
@@ -116,20 +89,11 @@
                             <div class="league-badge master">
                                 <app-league-master-icon [league]="league()" />
                                 <div class="league-info">
-                                    <div class="league-header">
-                                        <div class="league-name-points-container">
-                                            <div class="league-name" jhiTranslate="artemisApp.quizTraining.masterLeague"></div>
-                                            <div class="league-points">{{ points() }}</div>
-                                        </div>
-                                        <div class="info-button">i</div>
-                                    </div>
-                                    <div class="progress-container">
-                                        <div class="progress-bar">
-                                            <div class="progress" [style.width]="100 + '%'"></div>
-                                        </div>
-                                        <div class="next-league-icon">
-                                            <fa-icon [icon]="faStar" />
-                                        </div>
+                                    <div class="league-name" jhiTranslate="artemisApp.quizTraining.masterLeague"></div>
+                                    <div class="league-points">{{ points() }}</div>
+                                    <div class="progress-bar">
+                                        <div class="progress" [style.width]="100 + '%'"></div>
+                                        <fa-icon class="max-level small-icon" [icon]="faStar" />
                                     </div>
                                 </div>
                             </div>

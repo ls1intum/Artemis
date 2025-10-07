@@ -1,42 +1,7 @@
-.course-training-container {
-}
-
 .header-section {
     margin-top: -10px;
     margin-bottom: -10px;
     align-items: center;
-}
-
-.name-input-container {
-    display: flex;
-    align-items: center;
-    max-width: 300px;
-
-    input.form-control {
-        height: 38px;
-        min-width: 120px;
-    }
-}
-
-.btn-toggle-container {
-    border: 1px solid #ced4da;
-    border-radius: 0.2rem;
-    padding: 0.375rem 0.75rem;
-    height: 38px;
-    display: flex;
-    align-items: center;
-}
-
-.form-check-input {
-    cursor: pointer;
-    outline: none;
-    box-shadow: none;
-}
-
-.form-check-label {
-    cursor: pointer;
-    user-select: none;
-    font-size: 0.9rem;
 }
 
 .button-class {
@@ -63,20 +28,11 @@
     align-self: flex-start;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 900px) {
     .legend-section {
-        display: none;
+        position: static;
+        top: 1px;
     }
-
-    .leaderboard-section {
-        width: 100%;
-    }
-}
-
-.icon-container {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
 }
 
 .league-badge {
@@ -87,7 +43,9 @@
 
     app-league-bronze-icon,
     app-league-silver-icon,
-    app-league-gold-icon {
+    app-league-gold-icon,
+    app-league-diamond-icon,
+    app-league-master-icon {
         width: 40px;
         height: 40px;
     }
@@ -106,21 +64,6 @@
     align-items: center;
 }
 
-.info-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    border: 1px solid #666;
-    color: #666;
-    font-size: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-right: 10px;
-}
-
 .league-name {
     font-weight: 500;
     color: #333;
@@ -130,14 +73,6 @@
     display: flex;
     justify-content: flex-start;
     font-size: 0.9rem;
-}
-
-.progress-container {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    gap: 5px;
-    margin-top: -5px;
 }
 
 .progress-bar {
@@ -183,25 +118,7 @@
     background-color: hsl(270, 60%, 50%);
 }
 
-.next-league-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: -5px;
-
-    .small-icon {
-        width: 30px;
-        height: 30px;
-    }
-
-    .max-level {
-        color: #ffd700;
-        font-size: 16px;
-    }
-}
-
-.emoji {
-    font-size: 1.5rem;
-    margin-right: 5px;
-    vertical-align: middle;
+.max-level {
+    color: #ffd700;
+    font-size: 16px;
 }
