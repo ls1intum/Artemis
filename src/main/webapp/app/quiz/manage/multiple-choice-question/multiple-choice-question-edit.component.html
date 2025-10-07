@@ -77,7 +77,7 @@
                 </div>
                 <div class="col-3 col-lg-1 mt-lg-3">
                     <div class="question-type">
-                        <h3 class="mb-0"><span class="badge bg-success align-text-top" style="width: 60px">MC</span></h3>
+                        <h3 class="mb-0"><span class="badge bg-info align-text-top" style="width: 60px">MC</span></h3>
                     </div>
                 </div>
                 <div class="col-9 col-lg-2 text-end mt-lg-3">
@@ -130,6 +130,14 @@
                 </select>
                 <jhi-quiz-scoring-info-modal />
             </div>
+            @if (reEvaluationInProgress()) {
+                <div class="col-12 col-lg-2">
+                    <div class="form-group">
+                        <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
+                        <input class="form-control point-input" title="score" type="number" [value]="question().points" disabled style="width: 100%" />
+                    </div>
+                </div>
+            }
             <div class="form-group">
                 <div class="form-check custom-control custom-checkbox">
                     <input
@@ -146,28 +154,54 @@
                     ></label>
                 </div>
             </div>
-            <div class="form-group">
-                <div class="form-check custom-control custom-checkbox">
-                    <input
-                        type="checkbox"
-                        id="{{ 'cbSingleChoiceMC' + questionIndex() }}"
-                        [(ngModel)]="question().singleChoice"
-                        (ngModelChange)="onSingleChoiceChanged(); questionUpdated.emit()"
-                        class="form-check-input custom-control-input"
-                    />
-                    <label
-                        class="form-check-label custom-control-label"
-                        for="{{ 'cbSingleChoiceMC' + questionIndex() }}"
-                        jhiTranslate="artemisApp.multipleChoiceQuestion.singleChoice"
-                    ></label>
-                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.multipleChoiceQuestion.singleChoiceInfo' | artemisTranslate" />
+            @if (!reEvaluationInProgress()) {
+                <div class="form-group">
+                    <div class="form-check custom-control custom-checkbox">
+                        <input
+                            type="checkbox"
+                            id="{{ 'cbSingleChoiceMC' + questionIndex() }}"
+                            [(ngModel)]="question().singleChoice"
+                            (ngModelChange)="onSingleChoiceChanged(); questionUpdated.emit()"
+                            class="form-check-input custom-control-input"
+                        />
+                        <label
+                            class="form-check-label custom-control-label"
+                            for="{{ 'cbSingleChoiceMC' + questionIndex() }}"
+                            jhiTranslate="artemisApp.multipleChoiceQuestion.singleChoice"
+                        ></label>
+                        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.multipleChoiceQuestion.singleChoiceInfo' | artemisTranslate" />
+                    </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <div class="delete-button" (click)="deleteQuestion()">
-                    <fa-icon [icon]="faTrash" size="2x" />
+            }
+            @if (reEvaluationInProgress()) {
+                <div class="col-12 col-lg-6 row justify-content-lg-end align-items-start">
+                    <div class="col-8 col-lg-4 form-group">
+                        <button
+                            class="btn btn-outline-secondary invalid-button"
+                            [hidden]="question().invalid"
+                            (click)="question().invalid = true"
+                            jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
+                        ></button>
+                        <button
+                            class="btn btn-outline-secondary invalid-button"
+                            [hidden]="!question().invalid"
+                            [disabled]="question().invalid"
+                            jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
+                        ></button>
+                    </div>
+                    <div class="col-2 col-lg-1">
+                        <div class="re-evaluate-button" id="delete-button" class="delete-button" (click)="deleteQuestion()">
+                            <fa-icon [icon]="faTrash" size="2x" />
+                        </div>
+                    </div>
                 </div>
-            </div>
+            } @else {
+                <div class="form-group">
+                    <div class="delete-button" (click)="deleteQuestion()">
+                        <fa-icon [icon]="faTrash" size="2x" />
+                    </div>
+                </div>
+            }
         </div>
         <div class="markupEditorArea">
             <div class="question-content">
@@ -201,7 +235,7 @@
                         <!-- End of Visual -->
                     </jhi-markdown-editor-monaco>
                 } @else {
-                    <jhi-multiple-choice-visual-question #visual [question]="question()" (questionChanged)="changesInVisualMode()" />
+                    <jhi-multiple-choice-visual-question #visual [question]="question()" [reEvaluationInProgress]="true" (questionChanged)="changesInVisualMode()" />
                 }
             </div>
         </div>

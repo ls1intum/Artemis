@@ -1,6 +1,6 @@
 import { Component, ViewEncapsulation, input, output } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash, faUndo, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -19,6 +19,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class MultipleChoiceVisualQuestionComponent {
     question = input.required<MultipleChoiceQuestion>();
+    reEvaluationInProgress = input<boolean>(false);
 
     questionChanged = output();
 
@@ -31,6 +32,7 @@ export class MultipleChoiceVisualQuestionComponent {
     faPlus = faPlus;
     faTrash = faTrash;
     faXmark = faXmark;
+    faUndo = faUndo;
 
     parseQuestion() {
         let markdown = this.question().text ?? '';
