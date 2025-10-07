@@ -682,6 +682,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         // Remove current spot at given index and insert the backup at the same position
         this.shortAnswerQuestion.spots!.splice(spotIndex, 1);
         this.shortAnswerQuestion.spots!.splice(spotIndex, 0, backupSpot);
+        this.changeDetector.detectChanges();
     }
 
     /**
