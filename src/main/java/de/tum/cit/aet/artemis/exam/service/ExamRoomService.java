@@ -325,14 +325,6 @@ public class ExamRoomService {
     }
 
     /**
-     * Purges the DB of all exam room related data.
-     */
-    public void deleteAllExamRooms() {
-        examUserRepository.resetAllPlannedRoomsAndSeats();
-        examRoomRepository.deleteAll();
-    }
-
-    /**
      * Deletes all outdated and unused exam rooms.
      * <p/>
      * An exam room is outdated if another exam room with the same room-number and room-name exists, and that exam
