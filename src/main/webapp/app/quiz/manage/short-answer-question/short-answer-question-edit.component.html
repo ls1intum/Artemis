@@ -317,9 +317,9 @@
                 }
                 <div style="display: flex">
                     <div #question class="sa-question">
-                        @for (textPart of textParts; track textPart; let i = $index) {
+                        @for (textPart of textParts; track $index; let i = $index) {
                             <div class="short-answer-question-display">
-                                @for (element of textPart; track element; let j = $index) {
+                                @for (element of textPart; track $index; let j = $index) {
                                     <div class="short-answer-question-display__element">
                                         @if (!shortAnswerQuestionUtil.isInputField(element || '') && !reEvaluationInProgress()) {
                                             <div id="element-{{ i }}-{{ j }}" class="short-answer-question-container" [innerHTML]="element"></div>

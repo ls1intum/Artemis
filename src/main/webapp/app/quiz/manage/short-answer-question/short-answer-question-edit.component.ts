@@ -122,6 +122,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
                 return;
             }
             this.shortAnswerQuestion = this.question() as ShortAnswerQuestion;
+
+            this.backupQuestion = cloneDeep(this.shortAnswerQuestion);
+            this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
+
             if (!this.firstChange) {
                 this.questionUpdated.emit();
             }
@@ -130,8 +134,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     }
 
     ngOnInit(): void {
-        this.shortAnswerQuestion = this.question() as ShortAnswerQuestion;
-
         this.markdownActions = [
             new BoldAction(),
             new ItalicAction(),
@@ -144,15 +146,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             this.insertShortAnswerSpotAction,
             this.insertShortAnswerOptionAction,
         ];
-
-        // create deepcopy
-        this.backupQuestion = cloneDeep(this.shortAnswerQuestion);
-
-        /** We create now the structure on how to display the text of the question
-         * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
-         * 2. Now each line of the question text will be divided into each word (we use whitespace and the borders of spots as separator, see regex).
-         */
-        this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
 
         /** Assign status booleans and strings **/
         this.showVisualMode = false;
