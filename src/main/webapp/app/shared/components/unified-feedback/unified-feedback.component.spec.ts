@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('UnifiedFeedbackComponent', () => {
     let component: UnifiedFeedbackComponent;
@@ -7,7 +8,7 @@ describe('UnifiedFeedbackComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [UnifiedFeedbackComponent],
+            imports: [UnifiedFeedbackComponent, TranslateModule.forRoot()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(UnifiedFeedbackComponent);
