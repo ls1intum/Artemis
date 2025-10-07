@@ -120,5 +120,20 @@
                 referencedTableName="exercise"
                 referencedColumnNames="id"
                 constraintName="fk_result_exercise_id"/>
+
+            <rollback>
+                <dropForeignKeyConstraint baseTableName="result"
+                                          constraintName="fk_result_exercise_id"/>
+
+                <dropIndex tableName="result"
+                           indexName="idx_result_exercise_id"/>
+
+                <dropNotNullConstraint tableName="result"
+                                       columnName="exercise_id"
+                                       columnDataType="BIGINT"/>
+
+                <dropColumn tableName="result"
+                            columnName="exercise_id"/>
+        </rollback>
     </changeSet>
 </databaseChangeLog>
