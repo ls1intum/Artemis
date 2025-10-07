@@ -45,8 +45,8 @@
                     inputId="start-time"
                     mask="99 : 99"
                     slotChar="-"
-                    [ngModel]="weeklyLecture.startTime() ?? ''"
-                    (ngModelChange)="weeklyLecture.startTime.set($event)"
+                    [ngModel]="weeklyLecture.startTimeString() ?? ''"
+                    (ngModelChange)="weeklyLecture.startTimeString.set($event)"
                     [invalid]="weeklyLecture.isStartAndEndTimeCombinationInvalid()"
                     [style]="{ width: '12rem' }"
                 />
@@ -57,8 +57,8 @@
                     inputId="end-time"
                     mask="99 : 99"
                     slotChar="-"
-                    [ngModel]="weeklyLecture.endTime() ?? ''"
-                    (ngModelChange)="weeklyLecture.endTime.set($event)"
+                    [ngModel]="weeklyLecture.endTimeString() ?? ''"
+                    (ngModelChange)="weeklyLecture.endTimeString.set($event)"
                     [invalid]="weeklyLecture.isStartAndEndTimeCombinationInvalid()"
                     [style]="{ width: '12rem' }"
                 />
