@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -54,6 +53,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationHelper;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -96,6 +96,8 @@ public class ParticipationResource {
 
     private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
 
+    private final ParticipationAuthorizationHelper participationAuthorizationHelper;
+
     private final Optional<TextFeedbackApi> textFeedbackApi;
 
     private final Optional<StudentExamApi> studentExamApi;
@@ -119,7 +121,8 @@ public class ParticipationResource {
             UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ExerciseDateService exerciseDateService, ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService,
-            Optional<TextFeedbackApi> textFeedbackApi, ModelingExerciseFeedbackService modelingExerciseFeedbackService, Optional<StudentExamApi> studentExamApi) {
+            Optional<TextFeedbackApi> textFeedbackApi, ModelingExerciseFeedbackService modelingExerciseFeedbackService,
+            ParticipationAuthorizationHelper participationAuthorizationHelper, Optional<StudentExamApi> studentExamApi) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.exerciseRepository = exerciseRepository;
@@ -135,6 +138,7 @@ public class ParticipationResource {
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
         this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
+        this.participationAuthorizationHelper = participationAuthorizationHelper;
         this.studentExamApi = studentExamApi;
     }
 
@@ -248,7 +252,7 @@ public class ParticipationResource {
         participation.setProgrammingExercise(programmingExercise);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionOwner(participation, user);
+        participationAuthorizationHelper.checkAccessPermissionOwner(participation, user);
         if (!isAllowedToParticipateInProgrammingExercise(programmingExercise, participation)) {
             throw new AccessForbiddenException("You are not allowed to resume that participation.");
         }
@@ -313,7 +317,7 @@ public class ParticipationResource {
                 : studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), principal.getName())
                         .orElseThrow(() -> new BadRequestAlertException("Submission not found", "participation", "noSubmissionExists", true));
 
-        checkAccessPermissionOwner(participation, user);
+        participationAuthorizationHelper.checkAccessPermissionOwner(participation, user);
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
 
         // Check submission requirements
@@ -419,21 +423,6 @@ public class ParticipationResource {
         else {
             return programmingExercise.getDueDate() == null || now().isBefore(programmingExercise.getDueDate());
         }
-    }
-
-    private void checkAccessPermissionOwner(StudentParticipation participation, User user) {
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            Course course = findCourseFromParticipation(participation);
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
-        }
-    }
-
-    private Course findCourseFromParticipation(StudentParticipation participation) {
-        if (participation.getExercise() != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
-            return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        }
-
-        return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 
 }

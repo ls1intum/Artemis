@@ -21,13 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -35,6 +32,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationHelper;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -55,9 +53,9 @@ public class ParticipationDeletionResource {
 
     private final ParticipationDeletionService participationDeletionService;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final FeatureToggleService featureToggleService;
+
+    private final ParticipationAuthorizationHelper participationAuthorizationHelper;
 
     private final UserRepository userRepository;
 
@@ -65,14 +63,15 @@ public class ParticipationDeletionResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public ParticipationDeletionResource(ParticipationDeletionService participationDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            StudentParticipationRepository studentParticipationRepository, AuditEventRepository auditEventRepository, FeatureToggleService featureToggleService) {
+    public ParticipationDeletionResource(ParticipationDeletionService participationDeletionService, UserRepository userRepository,
+            StudentParticipationRepository studentParticipationRepository, AuditEventRepository auditEventRepository, FeatureToggleService featureToggleService,
+            ParticipationAuthorizationHelper participationAuthorizationHelper) {
         this.participationDeletionService = participationDeletionService;
-        this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
         this.featureToggleService = featureToggleService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.participationAuthorizationHelper = participationAuthorizationHelper;
     }
 
     /**
@@ -90,7 +89,7 @@ public class ParticipationDeletionResource {
             throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionAtLeastInstructor(participation, user);
+        participationAuthorizationHelper.checkAccessPermissionAtLeastInstructor(participation, user);
         return deleteParticipation(participation, user);
     }
 
@@ -126,23 +125,10 @@ public class ParticipationDeletionResource {
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionAtLeastInstructor(participation, user);
+        participationAuthorizationHelper.checkAccessPermissionAtLeastInstructor(participation, user);
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationDeletionService.cleanupBuildPlan(participation);
         return ResponseEntity.ok().body(participation);
-    }
-
-    private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {
-        Course course = findCourseFromParticipation(participation);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-    }
-
-    private Course findCourseFromParticipation(StudentParticipation participation) {
-        if (participation.getExercise() != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
-            return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        }
-
-        return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 
 }
