@@ -129,7 +129,7 @@
                         <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
                         <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
                     </select>
-                    @if (!reEvaluationInProgress) {
+                    @if (!reEvaluationInProgress()) {
                         <jhi-quiz-scoring-info-modal />
                     }
                 </div>
