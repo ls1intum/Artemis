@@ -29,7 +29,7 @@ export class IrisUserMessage implements BaseEntity {
     sender: IrisSender.USER;
     messageDifferentiator?: number;
     createdMemories?: MemirisMemory[];
-    is_cloud_enabled: boolean;
+    isCloudEnabled: boolean;
 }
 
 export class IrisArtifactMessage implements BaseEntity {

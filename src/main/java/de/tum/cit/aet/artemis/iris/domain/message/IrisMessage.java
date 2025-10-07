@@ -70,6 +70,7 @@ public class IrisMessage extends DomainObject {
     @Column(name = "created_memories", columnDefinition = "json")
     private List<MemirisMemoryDTO> createdMemories = new ArrayList<>();
 
+    @JsonProperty("isCloudEnabled")
     @Column(name = "is_cloud_enabled", nullable = false)
     private Boolean isCloudEnabled;
 
@@ -102,13 +103,12 @@ public class IrisMessage extends DomainObject {
         this.helpful = helpful;
     }
 
-    @Nullable
-    public Boolean getCloudEnabled() {
+    public Boolean getIsCloudEnabled() {
         return isCloudEnabled;
     }
 
-    public void setCloudEnabled(@Nullable Boolean cloudEnabled) {
-        this.isCloudEnabled = cloudEnabled;
+    public void setIsCloudEnabled(@Nullable Boolean isCloudEnabled) {
+        this.isCloudEnabled = isCloudEnabled != null ? isCloudEnabled : false;
     }
 
     public IrisMessageSender getSender() {

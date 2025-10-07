@@ -190,7 +190,7 @@ export class IrisChatService implements OnDestroy {
 
         const newMessage = new IrisUserMessage();
         newMessage.content = [new IrisTextMessageContent(message)];
-        newMessage.is_cloud_enabled = isCloudEnabled ? isCloudEnabled : false;
+        newMessage.isCloudEnabled = isCloudEnabled ? isCloudEnabled : false;
         return this.http.createMessage(this.sessionId, newMessage).pipe(
             tap((m) => {
                 this.replaceOrAddMessage(m.body!);

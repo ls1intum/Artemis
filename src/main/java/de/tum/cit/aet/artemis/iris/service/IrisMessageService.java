@@ -7,13 +7,10 @@ import java.time.ZonedDateTime;
 import jakarta.ws.rs.BadRequestException;
 
 import org.hibernate.Hibernate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.HazelcastConnection;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
@@ -28,8 +25,6 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 public class IrisMessageService {
 
     private final IrisSessionRepository irisSessionRepository;
-
-    private static final Logger log = LoggerFactory.getLogger(HazelcastConnection.class);
 
     public IrisMessageService(IrisSessionRepository irisSessionRepository) {
         this.irisSessionRepository = irisSessionRepository;
@@ -57,11 +52,9 @@ public class IrisMessageService {
         message.setSentAt(ZonedDateTime.now());
         message.setSession(session);
         message.getContent().forEach(content -> content.setMessage(message));
-        log.debug("isCloudEnabled {}", message.getCloudEnabled());
-        if (message.getCloudEnabled() == null) {
-            message.setCloudEnabled(false);
+        if (message.getIsCloudEnabled() == null) {
+            message.setIsCloudEnabled(false);
         }
-        log.debug("isCloudEnabled {}", message.getCloudEnabled());
         session.getMessages().add(message);
         irisSessionRepository.save(session);
 
