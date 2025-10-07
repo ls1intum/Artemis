@@ -19,13 +19,13 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 @Service
 @Lazy
 @Profile(PROFILE_CORE)
-public class ParticipationAuthorizationHelper {
+public class ParticipationAuthorizationService {
 
     private final AuthorizationCheckService authCheckService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public ParticipationAuthorizationHelper(AuthorizationCheckService authCheckService, StudentParticipationRepository studentParticipationRepository) {
+    public ParticipationAuthorizationService(AuthorizationCheckService authCheckService, StudentParticipationRepository studentParticipationRepository) {
         this.authCheckService = authCheckService;
         this.studentParticipationRepository = studentParticipationRepository;
     }

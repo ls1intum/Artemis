@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationHelper;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -96,7 +96,7 @@ public class ParticipationResource {
 
     private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
 
-    private final ParticipationAuthorizationHelper participationAuthorizationHelper;
+    private final ParticipationAuthorizationService participationAuthorizationService;
 
     private final Optional<TextFeedbackApi> textFeedbackApi;
 
@@ -122,7 +122,7 @@ public class ParticipationResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ExerciseDateService exerciseDateService, ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService,
             Optional<TextFeedbackApi> textFeedbackApi, ModelingExerciseFeedbackService modelingExerciseFeedbackService,
-            ParticipationAuthorizationHelper participationAuthorizationHelper, Optional<StudentExamApi> studentExamApi) {
+            ParticipationAuthorizationService participationAuthorizationService, Optional<StudentExamApi> studentExamApi) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.exerciseRepository = exerciseRepository;
@@ -138,7 +138,7 @@ public class ParticipationResource {
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
         this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
-        this.participationAuthorizationHelper = participationAuthorizationHelper;
+        this.participationAuthorizationService = participationAuthorizationService;
         this.studentExamApi = studentExamApi;
     }
 
@@ -252,7 +252,7 @@ public class ParticipationResource {
         participation.setProgrammingExercise(programmingExercise);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        participationAuthorizationHelper.checkAccessPermissionOwner(participation, user);
+        participationAuthorizationService.checkAccessPermissionOwner(participation, user);
         if (!isAllowedToParticipateInProgrammingExercise(programmingExercise, participation)) {
             throw new AccessForbiddenException("You are not allowed to resume that participation.");
         }
@@ -317,7 +317,7 @@ public class ParticipationResource {
                 : studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), principal.getName())
                         .orElseThrow(() -> new BadRequestAlertException("Submission not found", "participation", "noSubmissionExists", true));
 
-        participationAuthorizationHelper.checkAccessPermissionOwner(participation, user);
+        participationAuthorizationService.checkAccessPermissionOwner(participation, user);
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
 
         // Check submission requirements
