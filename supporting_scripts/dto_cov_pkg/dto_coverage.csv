@@ -95,7 +95,7 @@ src/main/java/de/tum/cit/aet/artemis/core/web/FileResource.java,core,POST,Respon
 src/main/java/de/tum/cit/aet/artemis/core/web/FileResource.java,core,REQUEST,ResponseEntity<String>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/FileResource.java,core,REQUEST,ResponseEntity<byte[]>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/FileResource.java,core,REQUEST,ResponseEntity<byte[]>,neutral
-src/main/java/de/tum/cit/aet/artemis/core/web/FileResource.java,core,REQUEST,ResponseEntity<byte[]>,entity
+src/main/java/de/tum/cit/aet/artemis/core/web/FileResource.java,core,REQUEST,ResponseEntity<byte[]>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/FileResource.java,core,REQUEST,ResponseEntity<byte[]>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/FileResource.java,core,REQUEST,ResponseEntity<byte[]>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/FileResource.java,core,REQUEST,ResponseEntity<byte[]>,neutral
@@ -120,10 +120,10 @@ src/main/java/de/tum/cit/aet/artemis/core/web/AccountResource.java,core,REQUEST,
 src/main/java/de/tum/cit/aet/artemis/core/web/AccountResource.java,core,REQUEST,ResponseEntity<String>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/AccountResource.java,core,REQUEST,ResponseEntity<String>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/AccountResource.java,core,REQUEST,ResponseEntity<UserDTO>,dto
-src/main/java/de/tum/cit/aet/artemis/core/web/AccountResource.java,core,REQUEST,ResponseEntity<Void>,entity
 src/main/java/de/tum/cit/aet/artemis/core/web/AccountResource.java,core,REQUEST,ResponseEntity<Void>,neutral
-src/main/java/de/tum/cit/aet/artemis/core/web/StatisticsResource.java,core,REQUEST,ResponseEntity<List<Integer>>,entity
-src/main/java/de/tum/cit/aet/artemis/core/web/StatisticsResource.java,core,REQUEST,ResponseEntity<List<Integer>>,entity
+src/main/java/de/tum/cit/aet/artemis/core/web/AccountResource.java,core,REQUEST,ResponseEntity<Void>,neutral
+src/main/java/de/tum/cit/aet/artemis/core/web/StatisticsResource.java,core,REQUEST,ResponseEntity<List<Integer>>,neutral
+src/main/java/de/tum/cit/aet/artemis/core/web/StatisticsResource.java,core,REQUEST,ResponseEntity<List<Integer>>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/StatisticsResource.java,core,REQUEST,ResponseEntity<CourseManagementStatisticsDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/core/web/StatisticsResource.java,core,REQUEST,ResponseEntity<ExerciseManagementStatisticsDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/core/web/UserResource.java,core,REQUEST,ResponseEntity<List<UserDTO>>,dto
@@ -131,12 +131,12 @@ src/main/java/de/tum/cit/aet/artemis/core/web/UserResource.java,core,REQUEST,Res
 src/main/java/de/tum/cit/aet/artemis/core/web/UserResource.java,core,REQUEST,ResponseEntity<UserInitializationDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/core/web/UserResource.java,core,REQUEST,ResponseEntity<Void>,dto
 src/main/java/de/tum/cit/aet/artemis/core/web/CalendarResource.java,core,REQUEST,ResponseEntity<String>,neutral
-src/main/java/de/tum/cit/aet/artemis/core/web/CalendarResource.java,core,REQUEST,ResponseEntity<String>,entity
-src/main/java/de/tum/cit/aet/artemis/core/web/CalendarResource.java,core,REQUEST,"ResponseEntity<Map<String, List<CalendarEventDTO>>>",entity
+src/main/java/de/tum/cit/aet/artemis/core/web/CalendarResource.java,core,REQUEST,ResponseEntity<String>,neutral
+src/main/java/de/tum/cit/aet/artemis/core/web/CalendarResource.java,core,REQUEST,"ResponseEntity<Map<String, List<CalendarEventDTO>>>",dto
 src/main/java/de/tum/cit/aet/artemis/core/web/OrganizationResource.java,core,REQUEST,ResponseEntity<Set<Organization>>,entity
 src/main/java/de/tum/cit/aet/artemis/core/web/OrganizationResource.java,core,REQUEST,ResponseEntity<Set<Organization>>,entity
-src/main/java/de/tum/cit/aet/artemis/core/web/TokenResource.java,core,REQUEST,ResponseEntity<String>,dto
-src/main/java/de/tum/cit/aet/artemis/core/web/TokenResource.java,core,REQUEST,ResponseEntity<String>,dto
+src/main/java/de/tum/cit/aet/artemis/core/web/TokenResource.java,core,REQUEST,ResponseEntity<String>,neutral
+src/main/java/de/tum/cit/aet/artemis/core/web/TokenResource.java,core,REQUEST,ResponseEntity<String>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/DataExportResource.java,core,REQUEST,ResponseEntity<RequestDataExportDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/core/web/DataExportResource.java,core,REQUEST,ResponseEntity<RequestDataExportDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/core/web/DataExportResource.java,core,REQUEST,ResponseEntity<Resource>,neutral
@@ -191,7 +191,7 @@ src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseArchiveResource.java,
 src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseArchiveResource.java,core,REQUEST,ResponseEntity<Resource>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseArchiveResource.java,core,REQUEST,ResponseEntity<Resource>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseArchiveResource.java,core,REQUEST,ResponseEntity<Set<CourseForArchiveDTO>>,dto
-src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseUpdateResource.java,core,REQUEST,static Set<String>,entity
+src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseUpdateResource.java,core,REQUEST,static Set<String>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseUpdateResource.java,core,REQUEST,ResponseEntity<Course>,entity
 src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseStatsResource.java,core,REQUEST,ResponseEntity<List<Course>>,entity
 src/main/java/de/tum/cit/aet/artemis/core/web/course/CourseStatsResource.java,core,REQUEST,ResponseEntity<StatsForDashboardDTO>,dto
@@ -225,8 +225,8 @@ src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminCourseResource.java,cor
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminCourseResource.java,core,REQUEST,ResponseEntity<Course>,entity
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminCourseResource.java,core,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminCourseResource.java,core,REQUEST,ResponseEntity<CourseDeletionSummaryDTO>,dto
-src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminStatisticsResource.java,core,REQUEST,ResponseEntity<List<Integer>>,entity
-src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminStatisticsResource.java,core,REQUEST,ResponseEntity<List<Integer>>,entity
+src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminStatisticsResource.java,core,REQUEST,ResponseEntity<List<Integer>>,neutral
+src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminStatisticsResource.java,core,REQUEST,ResponseEntity<List<Integer>>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminUserResource.java,core,REQUEST,ResponseEntity<User>,entity
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminUserResource.java,core,REQUEST,ResponseEntity<UserDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminUserResource.java,core,REQUEST,ResponseEntity<UserDTO>,dto
@@ -259,9 +259,9 @@ src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminCleanupResource.java,co
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminImprintResource.java,core,REQUEST,ResponseEntity<ImprintDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminImprintResource.java,core,REQUEST,ResponseEntity<ImprintDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminImprintResource.java,core,REQUEST,ResponseEntity<ImprintDTO>,dto
-src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminScheduleResource.java,core,REQUEST,ResponseEntity<List<ScheduleService.ScheduledExerciseEvent>>,entity
-src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminScheduleResource.java,core,REQUEST,ResponseEntity<List<ScheduleService.ScheduledExerciseEvent>>,entity
-src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminScheduleResource.java,core,REQUEST,ResponseEntity<List<ScheduleService.ScheduledSlideEvent>>,entity
+src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminScheduleResource.java,core,REQUEST,ResponseEntity<List<ScheduleService.ScheduledExerciseEvent>>,neutral
+src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminScheduleResource.java,core,REQUEST,ResponseEntity<List<ScheduleService.ScheduledExerciseEvent>>,neutral
+src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminScheduleResource.java,core,REQUEST,ResponseEntity<List<ScheduleService.ScheduledSlideEvent>>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminOrganizationResource.java,core,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminOrganizationResource.java,core,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminOrganizationResource.java,core,REQUEST,ResponseEntity<Void>,neutral
@@ -277,8 +277,8 @@ src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminOrganizationResource.ja
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminOrganizationResource.java,core,REQUEST,ResponseEntity<Organization>,entity
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminOrganizationResource.java,core,REQUEST,ResponseEntity<Set<Organization>>,entity
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminOrganizationResource.java,core,REQUEST,ResponseEntity<String>,neutral
-src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminAuditResource.java,core,REQUEST,ResponseEntity<List<AuditEvent>>,entity
-src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminAuditResource.java,core,REQUEST,ResponseEntity<List<AuditEvent>>,entity
+src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminAuditResource.java,core,REQUEST,ResponseEntity<List<AuditEvent>>,neutral
+src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminAuditResource.java,core,REQUEST,ResponseEntity<List<AuditEvent>>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminAuditResource.java,core,REQUEST,ResponseEntity<List<AuditEvent>>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/admin/AdminAuditResource.java,core,REQUEST,ResponseEntity<AuditEvent>,neutral
 src/main/java/de/tum/cit/aet/artemis/core/web/open/PublicSystemNotificationResource.java,core,REQUEST,ResponseEntity<List<SystemNotification>>,entity
@@ -329,7 +329,7 @@ src/main/java/de/tum/cit/aet/artemis/iris/web/IrisSettingsResource.java,iris,REQ
 src/main/java/de/tum/cit/aet/artemis/iris/web/IrisSettingsResource.java,iris,REQUEST,ResponseEntity<IrisExerciseSettings>,entity
 src/main/java/de/tum/cit/aet/artemis/iris/web/IrisMessageResource.java,iris,REQUEST,ResponseEntity<List<IrisMessage>>,entity
 src/main/java/de/tum/cit/aet/artemis/iris/web/IrisMessageResource.java,iris,REQUEST,ResponseEntity<List<IrisMessage>>,entity
-src/main/java/de/tum/cit/aet/artemis/iris/web/IrisMessageResource.java,iris,POST,ResponseEntity<Void>,entity
+src/main/java/de/tum/cit/aet/artemis/iris/web/IrisMessageResource.java,iris,POST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/iris/web/IrisMessageResource.java,iris,REQUEST,ResponseEntity<IrisMessage>,entity
 src/main/java/de/tum/cit/aet/artemis/iris/web/IrisMessageResource.java,iris,REQUEST,ResponseEntity<IrisMessage>,entity
 src/main/java/de/tum/cit/aet/artemis/iris/web/IrisTutorSuggestionSessionResource.java,iris,REQUEST,ResponseEntity<IrisTutorSuggestionSession>,entity
@@ -359,7 +359,7 @@ src/main/java/de/tum/cit/aet/artemis/tutorialgroup/web/TutorialGroupSessionResou
 src/main/java/de/tum/cit/aet/artemis/tutorialgroup/web/TutorialGroupFreePeriodResource.java,tutorialgroup,REQUEST,ResponseEntity<TutorialGroupFreePeriod>,entity
 src/main/java/de/tum/cit/aet/artemis/tutorialgroup/web/TutorialGroupFreePeriodResource.java,tutorialgroup,REQUEST,ResponseEntity<TutorialGroupFreePeriod>,entity
 src/main/java/de/tum/cit/aet/artemis/tutorialgroup/web/TutorialGroupFreePeriodResource.java,tutorialgroup,REQUEST,ResponseEntity<TutorialGroupFreePeriod>,entity
-src/main/java/de/tum/cit/aet/artemis/tutorialgroup/web/TutorialGroupFreePeriodResource.java,tutorialgroup,REQUEST,ResponseEntity<Void>,entity
+src/main/java/de/tum/cit/aet/artemis/tutorialgroup/web/TutorialGroupFreePeriodResource.java,tutorialgroup,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/tutorialgroup/web/TutorialGroupResource.java,tutorialgroup,REQUEST,ResponseEntity<String>,neutral
 src/main/java/de/tum/cit/aet/artemis/tutorialgroup/web/TutorialGroupResource.java,tutorialgroup,REQUEST,ResponseEntity<Set<String>>,neutral
 src/main/java/de/tum/cit/aet/artemis/tutorialgroup/web/TutorialGroupResource.java,tutorialgroup,REQUEST,ResponseEntity<Set<String>>,neutral
@@ -412,7 +412,7 @@ src/main/java/de/tum/cit/aet/artemis/assessment/web/ComplaintResponseResource.ja
 src/main/java/de/tum/cit/aet/artemis/assessment/web/ComplaintResponseResource.java,assessment,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/assessment/web/ComplaintResponseResource.java,assessment,REQUEST,ResponseEntity<ComplaintResponse>,entity
 src/main/java/de/tum/cit/aet/artemis/assessment/web/BonusResource.java,assessment,REQUEST,ResponseEntity<Bonus>,entity
-src/main/java/de/tum/cit/aet/artemis/assessment/web/BonusResource.java,assessment,REQUEST,ResponseEntity<BonusExampleDTO>,entity
+src/main/java/de/tum/cit/aet/artemis/assessment/web/BonusResource.java,assessment,REQUEST,ResponseEntity<BonusExampleDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/assessment/web/BonusResource.java,assessment,REQUEST,ResponseEntity<Bonus>,entity
 src/main/java/de/tum/cit/aet/artemis/assessment/web/BonusResource.java,assessment,REQUEST,ResponseEntity<Bonus>,entity
 src/main/java/de/tum/cit/aet/artemis/assessment/web/BonusResource.java,assessment,REQUEST,ResponseEntity<Void>,neutral
@@ -431,7 +431,7 @@ src/main/java/de/tum/cit/aet/artemis/assessment/web/ParticipantScoreResource.jav
 src/main/java/de/tum/cit/aet/artemis/assessment/web/ParticipantScoreResource.java,assessment,REQUEST,ResponseEntity<CourseGradeInformationDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/assessment/web/RatingResource.java,assessment,REQUEST,ResponseEntity<Optional<Integer>>,neutral
 src/main/java/de/tum/cit/aet/artemis/assessment/web/RatingResource.java,assessment,REQUEST,ResponseEntity<Optional<Integer>>,neutral
-src/main/java/de/tum/cit/aet/artemis/assessment/web/RatingResource.java,assessment,REQUEST,ResponseEntity<Integer>,entity
+src/main/java/de/tum/cit/aet/artemis/assessment/web/RatingResource.java,assessment,REQUEST,ResponseEntity<Integer>,neutral
 src/main/java/de/tum/cit/aet/artemis/assessment/web/RatingResource.java,assessment,REQUEST,ResponseEntity<Integer>,neutral
 src/main/java/de/tum/cit/aet/artemis/assessment/web/RatingResource.java,assessment,REQUEST,ResponseEntity<List<Rating>>,entity
 src/main/java/de/tum/cit/aet/artemis/assessment/web/TutorParticipationResource.java,assessment,REQUEST,ResponseEntity<TutorParticipation>,entity
@@ -545,7 +545,7 @@ src/main/java/de/tum/cit/aet/artemis/exercise/web/ExerciseScoresChartResource.ja
 src/main/java/de/tum/cit/aet/artemis/exercise/web/admin/AdminExerciseResource.java,exercise,REQUEST,ResponseEntity<Set<Exercise>>,entity
 src/main/java/de/tum/cit/aet/artemis/exercise/web/admin/AdminExerciseResource.java,exercise,REQUEST,ResponseEntity<Set<Exercise>>,entity
 src/main/java/de/tum/cit/aet/artemis/lti/web/LtiResource.java,lti,REQUEST,ResponseEntity<OnlineCourseConfiguration>,entity
-src/main/java/de/tum/cit/aet/artemis/lti/web/LtiResource.java,lti,REQUEST,ResponseEntity<String>,entity
+src/main/java/de/tum/cit/aet/artemis/lti/web/LtiResource.java,lti,REQUEST,ResponseEntity<String>,neutral
 src/main/java/de/tum/cit/aet/artemis/lti/web/LtiResource.java,lti,REQUEST,ResponseEntity<List<LtiPlatformConfiguration>>,entity
 src/main/java/de/tum/cit/aet/artemis/lti/web/admin/AdminLtiConfigurationResource.java,lti,REQUEST,ResponseEntity<LtiPlatformConfiguration>,entity
 src/main/java/de/tum/cit/aet/artemis/lti/web/admin/AdminLtiConfigurationResource.java,lti,REQUEST,ResponseEntity<Void>,neutral
@@ -554,7 +554,7 @@ src/main/java/de/tum/cit/aet/artemis/lti/web/admin/AdminLtiConfigurationResource
 src/main/java/de/tum/cit/aet/artemis/lti/web/admin/AdminLtiConfigurationResource.java,lti,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/lti/web/open/PublicLtiResource.java,lti,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/lti/web/open/PublicOAuth2JWKSResource.java,lti,REQUEST,ResponseEntity<String>,neutral
-src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRepositoryExportResource.java,programming,REQUEST,ResponseEntity<Resource>,entity
+src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRepositoryExportResource.java,programming,REQUEST,ResponseEntity<Resource>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRepositoryExportResource.java,programming,REQUEST,ResponseEntity<Resource>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRepositoryExportResource.java,programming,REQUEST,ResponseEntity<Resource>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseExportImportResource.java,programming,REQUEST,ResponseEntity<ProgrammingExercise>,entity
@@ -580,12 +580,12 @@ src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticip
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<Boolean>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<SubmissionDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,"ResponseEntity<Map<Long, Optional<Submission>>>",entity
-src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<Void>,entity
+src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<List<CommitInfoDTO>>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<List<VcsAccessLogDTO>>,dto
-src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<List<CommitInfoDTO>>,entity
-src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,"ResponseEntity<Map<String, String>>",entity
-src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<List<VcsAccessLogDTO>>,entity
+src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<List<CommitInfoDTO>>,dto
+src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,"ResponseEntity<Map<String, String>>",neutral
+src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<List<VcsAccessLogDTO>>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseDeletionResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseDeletionResource.java,programming,REQUEST,ResponseEntity<Void>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseDeletionResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
@@ -599,7 +599,7 @@ src/main/java/de/tum/cit/aet/artemis/programming/web/IdeSettingsResource.java,pr
 src/main/java/de/tum/cit/aet/artemis/programming/web/IdeSettingsResource.java,programming,REQUEST,ResponseEntity<List<IdeDTO>>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/IdeSettingsResource.java,programming,REQUEST,ResponseEntity<List<IdeMappingDTO>>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/IdeSettingsResource.java,programming,REQUEST,ResponseEntity<IdeMappingDTO>,dto
-src/main/java/de/tum/cit/aet/artemis/programming/web/IdeSettingsResource.java,programming,REQUEST,ResponseEntity<Void>,entity
+src/main/java/de/tum/cit/aet/artemis/programming/web/IdeSettingsResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseTestCaseResource.java,programming,REQUEST,ResponseEntity<Set<ProgrammingExerciseTestCase>>,entity
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseTestCaseResource.java,programming,REQUEST,ResponseEntity<Set<ProgrammingExerciseTestCase>>,entity
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseTestCaseResource.java,programming,REQUEST,ResponseEntity<Set<ProgrammingExerciseTestCase>>,entity
@@ -624,14 +624,14 @@ src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRetrieva
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRetrievalResource.java,programming,REQUEST,ResponseEntity<List<AuxiliaryRepository>>,entity
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRetrievalResource.java,programming,REQUEST,ModelAndView,entity
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRetrievalResource.java,programming,REQUEST,ModelAndView,entity
-src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRetrievalResource.java,programming,REQUEST,ResponseEntity<CheckoutDirectoriesDTO>,entity
+src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExerciseRetrievalResource.java,programming,REQUEST,ResponseEntity<CheckoutDirectoriesDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExercisePlagiarismResource.java,programming,REQUEST,ResponseEntity<PlagiarismResultDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExercisePlagiarismResource.java,programming,REQUEST,ResponseEntity<PlagiarismResultDTO>,dto
-src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExercisePlagiarismResource.java,programming,REQUEST,ResponseEntity<PlagiarismResultDTO>,entity
-src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExercisePlagiarismResource.java,programming,REQUEST,ResponseEntity<Resource>,entity
+src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExercisePlagiarismResource.java,programming,REQUEST,ResponseEntity<PlagiarismResultDTO>,dto
+src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExercisePlagiarismResource.java,programming,REQUEST,ResponseEntity<Resource>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExercisePartialUpdateResource.java,programming,REQUEST,ResponseEntity<ProgrammingExercise>,entity
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingExercisePartialUpdateResource.java,programming,REQUEST,ResponseEntity<ProgrammingExercise>,entity
-src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingSubmissionResource.java,programming,REQUEST,ResponseEntity<Void>,entity
+src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingSubmissionResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingSubmissionResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingSubmissionResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingSubmissionResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
@@ -640,7 +640,7 @@ src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingSubmissionResour
 src/main/java/de/tum/cit/aet/artemis/programming/web/ProgrammingSubmissionResource.java,programming,REQUEST,ResponseEntity<ProgrammingSubmission>,entity
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,REQUEST,"ResponseEntity<Map<String, FileType>>",entity
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,REQUEST,"ResponseEntity<Map<String, FileType>>",entity
-src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,REQUEST,"ResponseEntity<Map<String, String>>",entity
+src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,REQUEST,"ResponseEntity<Map<String, String>>",neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,REQUEST,"ResponseEntity<Map<String, Boolean>>",neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<byte[]>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<byte[]>,neutral
@@ -653,7 +653,7 @@ src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgra
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,REQUEST,"ResponseEntity<Map<String, String>>",neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
-src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,GET,ResponseEntity<RepositoryStatusDTO>,entity
+src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,GET,ResponseEntity<RepositoryStatusDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/RepositoryProgrammingExerciseParticipationResource.java,programming,REQUEST,ResponseEntity<List<BuildLogEntry>>,entity
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/TestRepositoryResource.java,programming,REQUEST,"ResponseEntity<Map<String, FileType>>",entity
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/TestRepositoryResource.java,programming,REQUEST,ResponseEntity<byte[]>,neutral
@@ -677,19 +677,19 @@ src/main/java/de/tum/cit/aet/artemis/programming/web/repository/AuxiliaryReposit
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/AuxiliaryRepositoryResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/AuxiliaryRepositoryResource.java,programming,PUT,ResponseEntity<RepositoryStatusDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/repository/AuxiliaryRepositoryResource.java,programming,REQUEST,"ResponseEntity<Map<String, String>>",neutral
-src/main/java/de/tum/cit/aet/artemis/programming/web/sshuserkeys/SshPublicKeysResource.java,programming,GET,SSH keys of a user with status,dto
+src/main/java/de/tum/cit/aet/artemis/programming/web/sshuserkeys/SshPublicKeysResource.java,programming,GET,SSH keys of a user with status,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/sshuserkeys/SshPublicKeysResource.java,programming,REQUEST,ResponseEntity<List<UserSshPublicKeyDTO>>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/sshuserkeys/SshPublicKeysResource.java,programming,REQUEST,ResponseEntity<UserSshPublicKeyDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/sshuserkeys/SshPublicKeysResource.java,programming,REQUEST,ResponseEntity<Void>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/sshuserkeys/SshPublicKeysResource.java,programming,REQUEST,ResponseEntity<Void>,neutral
-src/main/java/de/tum/cit/aet/artemis/programming/web/theia/TheiaConfigurationResource.java,programming,REQUEST,"ResponseEntity<Map<String, String>>",entity
-src/main/java/de/tum/cit/aet/artemis/programming/web/theia/TheiaConfigurationResource.java,programming,REQUEST,"ResponseEntity<Map<String, String>>",entity
+src/main/java/de/tum/cit/aet/artemis/programming/web/theia/TheiaConfigurationResource.java,programming,REQUEST,"ResponseEntity<Map<String, String>>",neutral
+src/main/java/de/tum/cit/aet/artemis/programming/web/theia/TheiaConfigurationResource.java,programming,REQUEST,"ResponseEntity<Map<String, String>>",neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/localci/BuildPlanResource.java,programming,REQUEST,ResponseEntity<BuildPlan>,entity
 src/main/java/de/tum/cit/aet/artemis/programming/web/localci/BuildPlanResource.java,programming,REQUEST,ResponseEntity<BuildPlan>,entity
 src/main/java/de/tum/cit/aet/artemis/programming/web/localci/BuildPlanResource.java,programming,REQUEST,ResponseEntity<BuildPlan>,entity
-src/main/java/de/tum/cit/aet/artemis/programming/web/localci/AeolusTemplateResource.java,programming,REQUEST,ResponseEntity<String>,entity
-src/main/java/de/tum/cit/aet/artemis/programming/web/localci/AeolusTemplateResource.java,programming,REQUEST,ResponseEntity<String>,entity
-src/main/java/de/tum/cit/aet/artemis/programming/web/localci/AeolusTemplateResource.java,programming,REQUEST,ResponseEntity<String>,entity
+src/main/java/de/tum/cit/aet/artemis/programming/web/localci/AeolusTemplateResource.java,programming,REQUEST,ResponseEntity<String>,neutral
+src/main/java/de/tum/cit/aet/artemis/programming/web/localci/AeolusTemplateResource.java,programming,REQUEST,ResponseEntity<String>,neutral
+src/main/java/de/tum/cit/aet/artemis/programming/web/localci/AeolusTemplateResource.java,programming,REQUEST,ResponseEntity<String>,neutral
 src/main/java/de/tum/cit/aet/artemis/programming/web/localci/BuildJobQueueResource.java,programming,REQUEST,ResponseEntity<List<BuildJobQueueItem>>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/localci/BuildJobQueueResource.java,programming,REQUEST,ResponseEntity<List<BuildJobQueueItem>>,dto
 src/main/java/de/tum/cit/aet/artemis/programming/web/localci/BuildJobQueueResource.java,programming,REQUEST,ResponseEntity<List<BuildJobQueueItem>>,dto
@@ -837,9 +837,9 @@ src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communic
 src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<FaqDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<Set<FaqDTO>>,dto
-src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<Set<FaqDTO>>,entity
+src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<Set<FaqDTO>>,dto
 src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<Set<String>>,neutral
-src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<Set<String>>,entity
+src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<Set<String>>,neutral
 src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java,communication,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/communication/web/UserCourseNotificationSettingResource.java,communication,REQUEST,ResponseEntity<CourseNotificationSettingInfoDTO>,dto
@@ -864,7 +864,7 @@ src/main/java/de/tum/cit/aet/artemis/communication/web/ReactionResource.java,com
 src/main/java/de/tum/cit/aet/artemis/communication/web/CourseNotificationResource.java,communication,REQUEST,ResponseEntity<CourseNotificationPageableDTO<CourseNotificationDTO>>,dto
 src/main/java/de/tum/cit/aet/artemis/communication/web/CourseNotificationResource.java,communication,REQUEST,ResponseEntity<CourseNotificationPageableDTO<CourseNotificationDTO>>,dto
 src/main/java/de/tum/cit/aet/artemis/communication/web/CourseNotificationResource.java,communication,REQUEST,ResponseEntity<CourseNotificationInfoDTO>,dto
-src/main/java/de/tum/cit/aet/artemis/communication/web/LinkPreviewResource.java,communication,GET,network,dto
+src/main/java/de/tum/cit/aet/artemis/communication/web/LinkPreviewResource.java,communication,GET,network,neutral
 src/main/java/de/tum/cit/aet/artemis/communication/web/LinkPreviewResource.java,communication,REQUEST,ResponseEntity<LinkPreviewDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/communication/web/admin/AdminSystemNotificationResource.java,communication,REQUEST,ResponseEntity<SystemNotification>,entity
 src/main/java/de/tum/cit/aet/artemis/communication/web/admin/AdminSystemNotificationResource.java,communication,REQUEST,ResponseEntity<SystemNotification>,entity
@@ -883,7 +883,7 @@ src/main/java/de/tum/cit/aet/artemis/communication/web/conversation/Conversation
 src/main/java/de/tum/cit/aet/artemis/communication/web/conversation/ConversationResource.java,communication,REQUEST,ResponseEntity<List<ConversationUserDTO>>,dto
 src/main/java/de/tum/cit/aet/artemis/communication/web/conversation/ConversationResource.java,communication,REQUEST,ResponseEntity<Void>,neutral
 src/main/java/de/tum/cit/aet/artemis/communication/web/conversation/OneToOneChatResource.java,communication,REQUEST,ResponseEntity<OneToOneChatDTO>,dto
-src/main/java/de/tum/cit/aet/artemis/communication/web/conversation/OneToOneChatResource.java,communication,REQUEST,ResponseEntity<OneToOneChatDTO>,entity
+src/main/java/de/tum/cit/aet/artemis/communication/web/conversation/OneToOneChatResource.java,communication,REQUEST,ResponseEntity<OneToOneChatDTO>,dto
 src/main/java/de/tum/cit/aet/artemis/communication/web/conversation/ChannelResource.java,communication,REQUEST,ResponseEntity<List<ChannelDTO>>,dto
 src/main/java/de/tum/cit/aet/artemis/communication/web/conversation/ChannelResource.java,communication,REQUEST,ResponseEntity<List<ChannelIdAndNameDTO>>,dto
 src/main/java/de/tum/cit/aet/artemis/communication/web/conversation/ChannelResource.java,communication,REQUEST,ResponseEntity<ChannelDTO>,dto

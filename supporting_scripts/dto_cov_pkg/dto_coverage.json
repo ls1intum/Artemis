@@ -2,14 +2,14 @@
   "root": "/Users/pac/IdeaProjects/Artemis",
   "total_endpoints": 995,
   "totals": {
-    "dto": 292,
-    "entity": 431,
-    "neutral": 272,
+    "dto": 297,
+    "entity": 392,
+    "neutral": 306,
     "unknown": 0
   },
-  "dto_coverage_percent": 56.68,
-  "dto_only_percent": 29.35,
-  "entity_share_percent": 43.32,
+  "dto_coverage_percent": 60.6,
+  "dto_only_percent": 29.85,
+  "entity_share_percent": 39.4,
   "unknown_share_percent": 0.0,
   "per_module": {
     "lecture": {
@@ -37,21 +37,21 @@
       "unknown": 0
     },
     "core": {
-      "dto": 82,
-      "entity": 47,
-      "neutral": 83,
+      "dto": 81,
+      "entity": 33,
+      "neutral": 98,
       "unknown": 0
     },
     "iris": {
       "dto": 22,
-      "entity": 29,
-      "neutral": 0,
+      "entity": 28,
+      "neutral": 1,
       "unknown": 0
     },
     "tutorialgroup": {
       "dto": 4,
-      "entity": 17,
-      "neutral": 8,
+      "entity": 16,
+      "neutral": 9,
       "unknown": 0
     },
     "quiz": {
@@ -61,9 +61,9 @@
       "unknown": 0
     },
     "assessment": {
-      "dto": 12,
-      "entity": 35,
-      "neutral": 14,
+      "dto": 13,
+      "entity": 33,
+      "neutral": 15,
       "unknown": 0
     },
     "modeling": {
@@ -80,14 +80,14 @@
     },
     "lti": {
       "dto": 0,
-      "entity": 6,
-      "neutral": 4,
+      "entity": 5,
+      "neutral": 5,
       "unknown": 0
     },
     "programming": {
-      "dto": 30,
-      "entity": 66,
-      "neutral": 56,
+      "dto": 34,
+      "entity": 49,
+      "neutral": 69,
       "unknown": 0
     },
     "exam": {
@@ -103,9 +103,9 @@
       "unknown": 0
     },
     "communication": {
-      "dto": 37,
-      "entity": 22,
-      "neutral": 35,
+      "dto": 38,
+      "entity": 19,
+      "neutral": 37,
       "unknown": 0
     },
     "atlas": {
