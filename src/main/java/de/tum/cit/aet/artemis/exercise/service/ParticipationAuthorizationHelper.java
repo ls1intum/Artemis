@@ -13,6 +13,9 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 
+/**
+ * Service responsible for checking the authorization of users on participations.
+ */
 @Service
 @Lazy
 @Profile(PROFILE_CORE)
@@ -27,11 +30,23 @@ public class ParticipationAuthorizationHelper {
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
+    /**
+     * Check if the user has at least instructor permissions in the course of the given participation.
+     *
+     * @param participation the participation for which the course is checked
+     * @param user          the user for which the permissions are checked
+     */
     public void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {
         Course course = findCourseFromParticipation(participation);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
     }
 
+    /**
+     * Find the course from the given participation.
+     *
+     * @param participation the participation for which the course is searched
+     * @return the course of the participation
+     */
     public Course findCourseFromParticipation(StudentParticipation participation) {
         if (participation.getExercise() != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
             return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
@@ -39,6 +54,12 @@ public class ParticipationAuthorizationHelper {
         return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
     }
 
+    /**
+     * Check if the user is the owner of the participation or has at least teaching assistant permissions in the course of the given participation.
+     *
+     * @param participation the participation for which the access is checked
+     * @param user          the user for which the permissions are checked
+     */
     public void checkAccessPermissionOwner(StudentParticipation participation, User user) {
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             Course course = findCourseFromParticipation(participation);
