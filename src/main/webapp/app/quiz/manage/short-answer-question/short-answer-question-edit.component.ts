@@ -125,6 +125,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
 
             this.backupQuestion = cloneDeep(this.shortAnswerQuestion);
             this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
+            this.changeDetector.detectChanges();
 
             if (!this.firstChange) {
                 this.questionUpdated.emit();
@@ -642,9 +643,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     resetQuestionText() {
         this.shortAnswerQuestion.text = this.backupQuestion.text;
         this.shortAnswerQuestion.spots = cloneDeep(this.backupQuestion.spots);
-        this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
         this.shortAnswerQuestion.explanation = this.backupQuestion.explanation;
         this.shortAnswerQuestion.hint = this.backupQuestion.hint;
+
+        this.textParts = [];
+        this.changeDetector.detectChanges();
+
+        this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -660,6 +666,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.shortAnswerQuestion.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
         this.shortAnswerQuestion.spots = cloneDeep(this.backupQuestion.spots);
         this.resetQuestionText();
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -714,7 +721,13 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         const rowColumn: string[] = textPartId.split('-').slice(1);
         this.textParts[Number(rowColumn[0])][Number(rowColumn[1])] = (<HTMLInputElement>document.getElementById(textPartId)).value;
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
+
+        // Force re-render by clearing textParts temporarily
+        this.textParts = [];
+        this.changeDetector.detectChanges();
+
         this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text);
+        this.changeDetector.detectChanges();
     }
 
     /**

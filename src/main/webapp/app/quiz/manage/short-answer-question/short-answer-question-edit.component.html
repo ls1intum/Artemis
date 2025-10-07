@@ -328,8 +328,8 @@
                                             <input
                                                 class="short-answer-question-container__input"
                                                 id="element-{{ i }}-{{ j }}-textInput"
-                                                value="{{ element }}"
-                                                size="{{ (element?.length || 0) + 1 }}"
+                                                [value]="element"
+                                                [size]="(element?.length || 0) + 1"
                                                 type="text"
                                                 [maxLength]="MAX_CHARACTER_COUNT"
                                                 (change)="setQuestionText('element-' + i + '-' + j + '-textInput')"
