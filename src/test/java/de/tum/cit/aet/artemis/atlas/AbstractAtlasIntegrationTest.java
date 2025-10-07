@@ -175,5 +175,4 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected TeamUtilService teamUtilService;
-
 }
