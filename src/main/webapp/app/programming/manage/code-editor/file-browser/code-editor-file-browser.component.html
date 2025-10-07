@@ -80,8 +80,12 @@
 </div>
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand">
+    <!--Problem Statement-->
+    @if (repositoryFiles?.[item.value] === FileType.PROBLEM_STATEMENT) {
+        <jhi-code-editor-file-browser-problem-statement [item]="item" (onNodeSelect)="handleNodeSelected(item)" />
+    }
     <!--folder-->
-    @if (repositoryFiles[item.value] === FileType.FOLDER) {
+    @if (repositoryFiles?.[item.value] === FileType.FOLDER) {
         <jhi-code-editor-file-browser-folder
             [item]="item"
             [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
@@ -100,11 +104,11 @@
         />
     }
     <!--file-->
-    @if (repositoryFiles[item.value] === FileType.FILE) {
+    @if (repositoryFiles?.[item.value] === FileType.FILE) {
         <jhi-code-editor-file-browser-file
             [item]="item"
-            [hasChanges]="repositoryFilesWithInformationAboutChange ? repositoryFilesWithInformationAboutChange[item.value] : false"
-            [badges]="fileBadges[item.value] || []"
+            [hasChanges]="repositoryFilesWithInformationAboutChange?.[item.value] ?? false"
+            [badges]="fileBadges?.[item.value] ?? []"
             [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
             [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
             [hasError]="errorFiles && errorFiles.includes(item.value)"

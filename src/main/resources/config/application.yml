@@ -130,6 +130,12 @@ artemis:
         min: "2.0.0"
         recommended: "2.2.0"
 
+    # Nebula configuration for AI-powered features
+    nebula:
+        enabled: false
+        url: # Set this in production environment (e.g., https://nebula.example.com)
+        secret: # Set this in production environment
+
 
 
 management:
