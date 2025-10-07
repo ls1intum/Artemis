@@ -14,7 +14,7 @@ from randomize_results_after import run_cleanup
 
 # Load configuration and constants
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(['../config.ini', 'config.ini'])
 
 # Constants
 STUDENTS_TO_CREATE: int = int(config.get("Settings", "students")) + 1
