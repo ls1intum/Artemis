@@ -94,7 +94,8 @@ public class ParticipantScoreService {
 
         Set<User> registeredUsers = exam.getRegisteredUsers();
 
-        return calculateScores(includedExercises, registeredUsers, (double) exam.getExamMaxPoints(), 0.0, null);
+        double denominator = includedExercises.stream().mapToDouble(Exercise::getMaxPoints).sum();
+        return calculateScores(includedExercises, registeredUsers, denominator, 0.0, null);
     }
 
     /**
