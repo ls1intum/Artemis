@@ -130,6 +130,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     }
 
     ngOnInit(): void {
+        this.shortAnswerQuestion = this.question() as ShortAnswerQuestion;
+
         this.markdownActions = [
             new BoldAction(),
             new ItalicAction(),
