@@ -10,6 +10,8 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotEmpty;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,8 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 public class ExamRoomDistributionService {
 
     private static final String ENTITY_NAME = "examRoomDistributionService";
+
+    private static final Logger log = LoggerFactory.getLogger(ExamRoomDistributionService.class);
 
     private final ExamRepository examRepository;
 
@@ -100,6 +104,13 @@ public class ExamRoomDistributionService {
         }
     }
 
+    /**
+     * Sets up the DB connections between the given exam and the given exam rooms.
+     * Existing connections are removed first.
+     *
+     * @param exam             the exam
+     * @param examRoomsForExam all exam rooms that students of this exam can be distributed to
+     */
     private void assignExamRoomsToExam(Exam exam, Set<ExamRoom> examRoomsForExam) {
         examRoomExamAssignmentRepository.deleteAllByExamId(exam.getId());
         List<ExamRoomExamAssignment> examRoomExamAssignments = new ArrayList<>();
@@ -112,6 +123,12 @@ public class ExamRoomDistributionService {
         examRoomExamAssignmentRepository.saveAll(examRoomExamAssignments);
     }
 
+    /**
+     * This function assumes that the default layout capacity of each room does suffice.
+     *
+     * @param exam             the exam
+     * @param examRoomsForExam all exam rooms that students of this exam can be distributed to
+     */
     private void distributeExamUsersToDefaultUsableSeatsInRooms(Exam exam, Set<ExamRoom> examRoomsForExam) {
         Map<String, List<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();
         for (ExamRoom examRoom : examRoomsForExam) {
@@ -133,9 +150,7 @@ public class ExamRoomDistributionService {
     private void distributeExamUsersToAnyUsableSeatsInRooms(Exam exam, Set<ExamRoom> examRoomsForExam) {
         final int numberOfExamUsers = exam.getExamUsers().size();
 
-        Map<Long, List<LayoutStrategy>> layoutStrategiesByRoomId = getLayoutStrategiesAtLeastDefaultSizeByExamRoomId(examRoomsForExam);
-        List<Map<Long, LayoutStrategy>> layoutPermutations = getAllLayoutPermutations(layoutStrategiesByRoomId);
-        Map<Long, LayoutStrategy> layoutStrategyToBeUsedByRoomId = findBestPermutation(layoutPermutations, numberOfExamUsers);
+        Map<Long, LayoutStrategy> layoutStrategyToBeUsedByRoomId = getBestLayoutPerRoomCombination(examRoomsForExam, numberOfExamUsers);
 
         Map<String, List<ExamSeatDTO>> roomNumberToUsableSeats = new HashMap<>();
         for (ExamRoom examRoom : examRoomsForExam) {
@@ -146,6 +161,11 @@ public class ExamRoomDistributionService {
         }
 
         setPlannedRoomAndPlannedSeatForExamUsersRandomly(exam, roomNumberToUsableSeats);
+    }
+
+    private Map<Long, LayoutStrategy> getBestLayoutPerRoomCombination(Set<ExamRoom> examRoomsForExam, int numberOfExamUsers) {
+        Map<Long, List<LayoutStrategy>> layoutStrategiesByRoomId = getLayoutStrategiesAtLeastDefaultSizeByExamRoomId(examRoomsForExam);
+        return getBestLayoutByRoomIdPermutation(layoutStrategiesByRoomId, numberOfExamUsers);
     }
 
     private Map<Long, List<LayoutStrategy>> getLayoutStrategiesAtLeastDefaultSizeByExamRoomId(Set<ExamRoom> examRoomsForExam) {
@@ -166,48 +186,55 @@ public class ExamRoomDistributionService {
         return layoutStrategiesAtLeastDefaultSizeByExamRoom;
     }
 
-    private List<Map<Long, LayoutStrategy>> getAllLayoutPermutations(Map<Long, List<LayoutStrategy>> layoutsByRoom) {
-        List<Map<Long, LayoutStrategy>> permutations = new ArrayList<>();
-        permutations.add(new HashMap<>()); // start with an empty selection
+    private Map<Long, LayoutStrategy> getBestLayoutByRoomIdPermutation(Map<Long, List<LayoutStrategy>> layoutsByRoom, int requiredCapacity) {
+        List<Long> roomIds = new ArrayList<>(layoutsByRoom.keySet());
 
-        for (var entry : layoutsByRoom.entrySet()) {
-            final long roomId = entry.getKey();
-            final List<LayoutStrategy> strategies = entry.getValue();
+        return getBestLayoutPermutationRecursive(layoutsByRoom, roomIds, 0, new HashMap<>(), 0, requiredCapacity, null, Integer.MAX_VALUE);
+    }
 
-            List<Map<Long, LayoutStrategy>> newPermutations = new ArrayList<>();
+    private Map<Long, LayoutStrategy> getBestLayoutPermutationRecursive(Map<Long, List<LayoutStrategy>> layoutsByRoom, List<Long> roomIds, int roomIndex,
+            Map<Long, LayoutStrategy> current, int currentCapacity, int requiredCapacity, Map<Long, LayoutStrategy> best, int bestCapacity) {
 
-            for (Map<Long, LayoutStrategy> permutation : permutations) {
-                for (LayoutStrategy strategy : strategies) {
-                    Map<Long, LayoutStrategy> extendedPermutation = new HashMap<>(permutation);
-                    extendedPermutation.put(roomId, strategy);
-                    newPermutations.add(extendedPermutation);
+        // If we've assigned all rooms, check if it's valid/better
+        if (roomIndex == roomIds.size()) {
+            if (currentCapacity >= requiredCapacity && currentCapacity < bestCapacity) {
+                best = new HashMap<>(current); // copy since 'current' is mutable
+            }
+
+            return best;
+        }
+
+        long roomId = roomIds.get(roomIndex);
+        for (LayoutStrategy strategy : layoutsByRoom.get(roomId)) {
+            current.put(roomId, strategy);
+            int newCapacity = currentCapacity + strategy.getCapacity();
+
+            // pruning: if capacity already >= bestCapacity, no need to continue
+            if (newCapacity < bestCapacity) {
+                best = getBestLayoutPermutationRecursive(layoutsByRoom, roomIds, roomIndex + 1, current, newCapacity, requiredCapacity, best, bestCapacity);
+
+                // update bestCapacity if best changed
+                if (best != null) {
+                    bestCapacity = best.values().stream().mapToInt(LayoutStrategy::getCapacity).sum();
                 }
             }
 
-            permutations = newPermutations; // replace with the up to this room extended list
+            current.remove(roomId); // backtrack
         }
 
-        return permutations;
-    }
-
-    private Map<Long, LayoutStrategy> findBestPermutation(List<Map<Long, LayoutStrategy>> layoutPermutations, int requiredCapacity) {
-        return layoutPermutations.stream().min(Comparator.comparingInt(permutation -> {
-            int total = permutation.values().stream().mapToInt(LayoutStrategy::getCapacity).sum();
-
-            return total < requiredCapacity ? Integer.MAX_VALUE : total;
-        })).orElseThrow(() -> new IllegalStateException("Couldn't find a best permutation. This should never be possible"));
+        return best;
     }
 
     private void setPlannedRoomAndPlannedSeatForExamUsersRandomly(Exam exam, Map<String, List<ExamSeatDTO>> roomNumberToUsableSeats) {
         Iterator<ExamUser> examUsersIterator = exam.getExamUsers().iterator();
 
-        for (var roomNumberToUsableSeatsEntry : roomNumberToUsableSeats.entrySet()) {
+        do_while_students: for (var roomNumberToUsableSeatsEntry : roomNumberToUsableSeats.entrySet()) {
             final String roomNumber = roomNumberToUsableSeatsEntry.getKey();
             final List<ExamSeatDTO> usableSeatsForThisRoom = roomNumberToUsableSeatsEntry.getValue();
 
             for (ExamSeatDTO seat : usableSeatsForThisRoom) {
                 if (!examUsersIterator.hasNext()) {
-                    return;
+                    break do_while_students;
                 }
 
                 ExamUser nextExamUser = examUsersIterator.next();
