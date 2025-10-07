@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority, IS_AT_LEAST_ADMINISTRATOR } from 'app/shared/constants/authority.constants';
+import { Authority, IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 import { IsLoggedInWithPasskeyGuard } from 'app/core/auth/is-logged-in-with-passkey/is-logged-in-with-passkey.guard';
@@ -23,7 +23,7 @@ const routes: Routes = [
     {
         path: 'admin',
         data: {
-            authorities: IS_AT_LEAST_ADMINISTRATOR,
+            authorities: IS_AT_LEAST_ADMIN,
         },
         canActivate: [UserRouteAccessService, IsLoggedInWithPasskeyGuard],
         loadChildren: () => import('app/core/admin/admin.routes'),
