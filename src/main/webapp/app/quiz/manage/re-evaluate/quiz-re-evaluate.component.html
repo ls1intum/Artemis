@@ -166,7 +166,7 @@
                             }
                         </ng-template>
                         <ng-template #warningTranslate>
-                            @for (warning of computeInvalidWarnings(); track warning) {
+                            @for (warning of invalidWarnings; track warning) {
                                 <div>
                                     @if ((warning.translateValues | json) !== '{}') {
                                         <p jhiTranslate="{{ warning.translateKey }}" [translateValues]="{ index: warning.translateValues.index }"></p>
