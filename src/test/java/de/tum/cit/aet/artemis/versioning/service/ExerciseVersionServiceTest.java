@@ -171,7 +171,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
         final var updatedExercise = updateExerciseByType(exercise);
 
-        saveExerciseByType(exercise);
+        saveExerciseByType(updatedExercise);
 
         await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).untilAsserted(() -> {
             var versions = exerciseVersionRepository.findAllByExerciseId(updatedExercise.getId());
