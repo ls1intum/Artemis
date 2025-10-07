@@ -49,7 +49,6 @@ interface WeeklyLecture {
     isStartAndEndTimeCombinationInvalid: Signal<boolean>;
 }
 
-// TODO: check whether validation logic is in place (at least one date given for each lecture and endDate is after startDate)
 @Component({
     selector: 'jhi-lecture-series-create',
     imports: [
