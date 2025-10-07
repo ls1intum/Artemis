@@ -46,10 +46,12 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         });
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
-        component.question = question;
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('questionIndex', 1);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -57,7 +59,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should initialize with question markdown text', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(component.questionEditorText).toEqual(
             'some-text\n' +
@@ -72,18 +73,21 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should store scoring type when changed', () => {
-        component.question = { ...question };
-        component.question.scoringType = undefined;
-        component.question.singleChoice = true;
-
+        const newQuestion = { ...question };
+        newQuestion.scoringType = undefined;
+        newQuestion.singleChoice = true;
+        fixture.componentRef.setInput('question', newQuestion);
         fixture.detectChanges();
 
-        expect(component.question.scoringType).toBeUndefined();
+        expect(component.question().scoringType).toBeUndefined();
         component.onSingleChoiceChanged();
-        expect(component.question.scoringType).toBe(ScoringType.ALL_OR_NOTHING);
+        expect(component.question().scoringType).toBe(ScoringType.ALL_OR_NOTHING);
     });
 
     it('should parse answer options but not question titles', () => {
+        const originalConsoleWarn = console.warn;
+        console.warn = () => {};
+
         component.domainActionsFound([
             { text: 'text1', action: new TestCaseAction() },
             { text: 'text2', action: new CorrectMultipleChoiceAnswerAction() },
@@ -91,6 +95,8 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             { text: 'text4', action: new QuizExplanationAction() },
             { text: 'text5', action: new QuizHintAction() },
         ]);
+
+        console.warn = originalConsoleWarn;
 
         const expected: MultipleChoiceQuestion = {
             id: question.id,
@@ -117,11 +123,14 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             ],
         };
 
-        expect(component.question).toEqual(expected);
+        expect(component.question()).toEqual(expected);
         expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
     it('should parse answer options with question titles', () => {
+        const originalConsoleWarn = console.warn;
+        console.warn = () => {};
+
         component.domainActionsFound([
             { text: 'text1', action: new QuizExplanationAction() },
             { text: 'text2', action: new QuizHintAction() },
@@ -129,6 +138,8 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             { text: 'text4', action: new CorrectMultipleChoiceAnswerAction() },
             { text: 'text5', action: new WrongMultipleChoiceAnswerAction() },
         ]);
+
+        console.warn = originalConsoleWarn;
 
         const expected: MultipleChoiceQuestion = {
             id: question.id,
@@ -153,7 +164,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             ],
         };
 
-        expect(component.question).toEqual(expected);
+        expect(component.question()).toEqual(expected);
         expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
@@ -172,7 +183,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             answerOptions: [],
         };
 
-        expect(component.question).toEqual(expected);
+        expect(component.question()).toEqual(expected);
         expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
@@ -186,7 +197,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     it('should detect changes in markdown', () => {
         const spy = jest.spyOn(component.questionUpdated, 'emit');
 
-        fixture.detectChanges();
         component.changesInMarkdown();
 
         expectCleanupQuestion();
@@ -194,11 +204,11 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     function expectCleanupQuestion() {
-        expect(component.question.answerOptions).toHaveLength(0);
-        expect(component.question.text).toBeUndefined();
-        expect(component.question.explanation).toBeUndefined();
-        expect(component.question.hint).toBeUndefined();
-        expect(component.question.hasCorrectOption).toBeUndefined();
+        expect(component.question().answerOptions).toHaveLength(0);
+        expect(component.question().text).toBeUndefined();
+        expect(component.question().explanation).toBeUndefined();
+        expect(component.question().hint).toBeUndefined();
+        expect(component.question().hasCorrectOption).toBeUndefined();
     }
 
     it('should trigger delete button', () => {
@@ -209,24 +219,22 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should parse markdown when preparing for save in edit mode', () => {
-        fixture.detectChanges();
-        component['markdownEditor']().inVisualMode = false;
-        const parseMarkdownSpy = jest.spyOn(component['markdownEditor'](), 'parseMarkdown');
+        component.markdownEditor().inVisualMode = false;
+        const parseMarkdownSpy = jest.spyOn(component.markdownEditor(), 'parseMarkdown');
         component.prepareForSave();
         expect(parseMarkdownSpy).toHaveBeenCalledOnce();
     });
 
     it('should update markdown from the visual component when preparing for save in visual mode', () => {
-        fixture.detectChanges();
-        component['markdownEditor']().inVisualMode = true;
+        component.markdownEditor().inVisualMode = true;
         // if we don't mock this, we get heap out of memory, probably due to some infinite recursion
-        component['markdownEditor']()['monacoEditor'] = {
+        component.markdownEditor()['monacoEditor'] = {
             setText: jest.fn(),
         } as Partial<MonacoEditorComponent> as MonacoEditorComponent;
 
-        const parseQuestionStub = jest.spyOn(component['visualChild'](), 'parseQuestion').mockReturnValue('parsed-question');
+        const parseQuestionStub = jest.spyOn(component.visualChild(), 'parseQuestion').mockReturnValue('parsed-question');
         component.prepareForSave();
         expect(parseQuestionStub).toHaveBeenCalledOnce();
-        expect(component['markdownEditor']()['_markdown']).toBe('parsed-question');
+        expect(component.markdownEditor()['_markdown']).toBe('parsed-question');
     });
 });
