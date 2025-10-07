@@ -20,6 +20,10 @@
         margin: 0;
     }
 
+    .weekly-lecture-delete-button:hover {
+        color: red;
+    }
+
     .draft-card {
         display: flex;
         align-items: center;
