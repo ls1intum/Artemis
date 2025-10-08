@@ -8,9 +8,10 @@
             <div class="flex-grow-1"></div>
             @if (!isEditMode()) {
                 <p-selectbutton
-                    [options]="createLectureOptions"
+                    [options]="createLectureOptions()"
                     [ngModel]="selectedCreateLectureOption()"
-                    (ngModelChange)="onCreateLectureOptionChange($event)"
+                    (ngModelChange)="selectedCreateLectureOption.set($event)"
+                    [unselectable]="true"
                     optionLabel="label"
                     optionValue="mode"
                     size="small"

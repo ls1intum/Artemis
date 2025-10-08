@@ -5,7 +5,7 @@ import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LectureService } from '../services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { onError } from 'app/shared/util/global.utils';
+import { getCurrentLocaleSignal, onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -29,6 +29,7 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
+import { TranslateService } from '@ngx-translate/core';
 
 export enum LectureCreationMode {
     SINGLE = 'single',
@@ -74,9 +75,11 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
+    private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
 
     private subscriptions = new Subscription();
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
     lecturePeriodSection = viewChild.required(LectureUpdatePeriodComponent);
@@ -98,23 +101,9 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     isNewlyCreatedExercise = false;
     isChangeMadeToTitleOrPeriodSection = false;
     shouldDisplayDismissWarning = true;
-    areSectionsValid = computed(() => {
-        return (
-            this.titleSection().titleChannelNameComponent().isValid() &&
-            this.lecturePeriodSection().isPeriodSectionValid() &&
-            (this.unitSection()?.isUnitConfigurationValid() ?? true)
-        );
-    });
-
-    // TODO: clean up
-    createLectureOptions: CreateLectureOption[] = [
-        { label: 'Single Lecture', mode: LectureCreationMode.SINGLE },
-        { label: 'Lecture Series', mode: LectureCreationMode.SERIES },
-    ];
+    areSectionsValid = computed(() => this.computeAreSectionsValid());
+    createLectureOptions = computed(() => this.computeCreateLectureOptions());
     selectedCreateLectureOption = signal<LectureCreationMode>(LectureCreationMode.SINGLE);
-    onCreateLectureOptionChange(optionMode: LectureCreationMode) {
-        this.selectedCreateLectureOption.set(optionMode);
-    }
     isLectureSeriesCreationMode = computed(() => !this.isEditMode() && this.selectedCreateLectureOption() === LectureCreationMode.SERIES);
 
     constructor() {
@@ -360,5 +349,21 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         if (visibleDate && startDate?.isBefore(visibleDate)) {
             this.lecture().visibleDate = startDate.clone();
         }
+    }
+
+    private computeAreSectionsValid(): boolean {
+        return (
+            this.titleSection().titleChannelNameComponent().isValid() &&
+            this.lecturePeriodSection().isPeriodSectionValid() &&
+            (this.unitSection()?.isUnitConfigurationValid() ?? true)
+        );
+    }
+
+    private computeCreateLectureOptions(): CreateLectureOption[] {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.lecture.creationMode.singleLectureLabel'), mode: LectureCreationMode.SINGLE },
+            { label: this.translateService.instant('artemisApp.lecture.creationMode.lectureSeriesLabel'), mode: LectureCreationMode.SERIES },
+        ];
     }
 }

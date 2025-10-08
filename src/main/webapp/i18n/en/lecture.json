@@ -87,6 +87,10 @@
                 "sectionsThatContainUnsavedChangesSingular": "The following section contains unsaved changes:",
                 "sectionsThatContainUnsavedChangesPlural": "The following sections contain unsaved changes:"
             },
+            "creationMode": {
+                "singleLectureLabel": "Single Lecture",
+                "lectureSeriesLabel": "Lecture Series"
+            },
             "createSeries": {
                 "explanationText": "Scaffold one or multiple lecture series by defining the timing of one or several initial lectures. The initial lectures will be repeated weekly until the specified series end date. Create lecture contents later. With this you can inform user early about lectures taking place during the semester.",
                 "startAndEndDateExplanation": "The start and end date should inform user when they have to attend. Avoid lectures lasting more than a few hours, as Artemis displays them as a single calendar event. For multi-day lectures, please create one lecture per day.",

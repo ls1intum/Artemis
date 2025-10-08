@@ -87,6 +87,10 @@
                 "sectionsThatContainUnsavedChangesSingular": "Der folgende Abschnitt enthält ungespeicherte Änderungen:",
                 "sectionsThatContainUnsavedChangesPlural": "Die folgenden Abschnitte enthalten ungespeicherte Änderungen:"
             },
+            "creationMode": {
+                "singleLectureLabel": "Einzelne Vorlesung",
+                "lectureSeriesLabel": "Vorlesungsserie"
+            },
             "createSeries": {
                 "explanationText": "Lege eine oder mehrere Vorlesungsserien an, indem du die Zeit für eine oder mehrere initiale Vorlesungen angibts. Die initialen Vorlesungen werden wöchentlich wiederholt bis zum spezifizierten Serienenddatum. Ergänze Vorlesungsinhalte später. So kannst du User schon frühzeitig über die Vorlesungstermine des Semesters informieren.",
                 "startAndEndDateExplanation": "Start- und Enddatum sollten Benutzer informieren, wann sie teilnehmen müssen. Vermeide Vorlesungen, die länger als ein paar Stunden dauern, da Artemis sie als ein einzelnes Kalenderelement darstellt. Erstelle bei mehrtägigen Terminen bitte separate Vorlesungen pro Tag.",
