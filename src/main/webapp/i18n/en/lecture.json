@@ -88,16 +88,22 @@
                 "sectionsThatContainUnsavedChangesPlural": "The following sections contain unsaved changes:"
             },
             "createSeries": {
-                "explanationText": "Scaffold multiple lectures by defining a weekday, time and time period for the lecture series. Create lecture contents later. With this you can inform user early about lectures taking place during the semester.",
+                "explanationText": "Scaffold one or multiple lecture series by defining the timing of one or several initial lectures. The initial lectures will be repeated weekly until the specified series end date. Create lecture contents later. With this you can inform user early about lectures taking place during the semester.",
+                "startAndEndDateExplanation": "The start and end date should inform user when they have to attend. Avoid lectures lasting more than a few hours, as Artemis displays them as a single calendar event. For multi-day lectures, please create one lecture per day.",
                 "inputLabel": {
                     "startDate": "Start",
                     "endDate": "End",
                     "seriesEndDate": "Series End Date"
                 },
+                "addInitialLectureButtonLabel": "Add Initial Lecture",
                 "generatedLecturesHeading": "Generated Lectures",
                 "editLectureModalTitle": "Edit Lecture Details",
                 "seriesCreationError": "Something went wrong while creating the lecture series. Please try again.",
-                "updateNameError": "Something went wrong while adapting the names of the existing lectures. Please try again."
+                "updateNameError": "Something went wrong while adapting the names of the existing lectures. Please try again.",
+                "updateNameConfirmation": {
+                    "header": "Update existing lecture names?",
+                    "message": "Some existing lectures match the default name format (e.g. \"Lecture 1\"). Would you like to update the numbering of these lectures according to the new order?"
+                }
             }
         },
         "attachment": {

@@ -21,6 +21,7 @@ import { finalize } from 'rxjs';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface LectureDraft {
     id: string;
@@ -76,6 +77,7 @@ enum ExistingLectureState {
 export class LectureSeriesCreateComponent {
     private lectureService = inject(LectureService);
     private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
     private router = inject(Router);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private confirmationService = inject(ConfirmationService);
@@ -121,10 +123,10 @@ export class LectureSeriesCreateComponent {
         this.isLoading.set(true);
         const courseId = this.courseId();
         this.confirmationService.confirm({
-            header: 'Update existing lecture names?',
-            message: 'You changed the titles of existing lectures. Do you want to apply these name updates before creating the new lectures?',
-            acceptLabel: 'Yes',
-            rejectLabel: 'No',
+            header: this.translateService.instant('artemisApp.lecture.createSeries.updateNameConfirmation.header'),
+            message: this.translateService.instant('artemisApp.lecture.createSeries.updateNameConfirmation.message'),
+            acceptLabel: this.translateService.instant('global.generic.yes'),
+            rejectLabel: this.translateService.instant('global.generic.no'),
             accept: () => this.updateNamesOfExistingLecturesAndSaveNewLectures(courseId),
             reject: () => this.saveNewLectures(courseId),
         });
@@ -136,7 +138,10 @@ export class LectureSeriesCreateComponent {
             .map((lecture) => new LectureNameUpdateDTO(lecture.id!, lecture.title!));
         this.lectureService.updateNames(updateNameDTOs, courseId).subscribe({
             next: () => this.saveNewLectures(courseId),
-            error: () => this.alertService.addErrorAlert('artemisApp.lecture.createSeries.updateNameError'),
+            error: () => {
+                this.alertService.addErrorAlert('artemisApp.lecture.createSeries.updateNameError');
+                this.isLoading.set(false);
+            },
         });
     }
 
@@ -147,7 +152,10 @@ export class LectureSeriesCreateComponent {
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: () => this.router.navigate(['course-management', courseId, 'lectures']),
-                error: () => this.alertService.addErrorAlert('artemisApp.lecture.createSeries.seriesCreationError'),
+                error: () => {
+                    this.alertService.addErrorAlert('artemisApp.lecture.createSeries.seriesCreationError');
+                    this.isLoading.set(false);
+                },
             });
     }
 

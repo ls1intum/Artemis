@@ -11,7 +11,7 @@
         />
         <label for="series-end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
     </p-floatlabel>
-    <p>Specify at least one weekly lecture by choosing a weekday, as well as a start time and end time:</p>
+    <p jhiTranslate="artemisApp.lecture.createSeries.startAndEndDateExplanation"></p>
     @for (weeklyLecture of firstLectures(); track weeklyLecture.id; let index = $index) {
         <div class="input-row">
             <div class="first-lecture-enumerator">
@@ -52,7 +52,9 @@
             }
         </div>
     }
-    <button pButton severity="secondary" size="small" [style]="{ width: '12rem' }" (click)="addFirstLecture()">Add Weekly Lecture</button>
+    <div>
+        <button pButton severity="secondary" size="small" (click)="addFirstLecture()" jhiTranslate="artemisApp.lecture.createSeries.addInitialLectureButtonLabel"></button>
+    </div>
     @let drafts = lectureDrafts();
     @if (drafts.length > 0) {
         <h3 jhiTranslate="artemisApp.lecture.createSeries.generatedLecturesHeading"></h3>
@@ -91,4 +93,4 @@
 </div>
 
 <jhi-lecture-series-edit-modal #editModal />
-<p-confirmDialog />
+<p-confirmDialog [style]="{ maxWidth: '40rem' }" />
