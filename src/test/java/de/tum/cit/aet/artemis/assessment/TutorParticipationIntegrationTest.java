@@ -215,7 +215,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
 
         if (usedForTutorial) {
-            var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission());
+            var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission(), textExercise.getId());
             result.setExampleResult(true);
             result.setExerciseId(textExercise.getId());
 
@@ -239,9 +239,8 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         ExampleSubmission exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
         exampleSubmissionService.save(exampleSubmission);
         if (usedForTutorial) {
-            var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission());
+            var result = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission(), modelingExercise.getId());
             result.setExampleResult(true);
-            result.setExerciseId(modelingExercise.getId());
             resultRepository.save(result);
         }
         request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipation.class, HttpStatus.CREATED);

@@ -394,9 +394,20 @@ public class SubmissionService {
      * @return the newly created result
      */
     public Result saveNewEmptyResult(Submission submission) {
+        return saveNewEmptyResult(submission, submission.getParticipation().getExercise().getId());
+    }
+
+    /**
+     * Creates a new Result object, assigns it to the given submission and stores the changes to the database.
+     *
+     * @param submission the submission for which a new result should be created
+     * @param exerciseId the id of the exercise to which the submission belongs
+     * @return the newly created result
+     */
+    public Result saveNewEmptyResult(Submission submission, long exerciseId) {
         Result result = new Result();
         result.setSubmission(submission);
-        setExerciseIdFromSubmission(submission, result);
+        result.setExerciseId(exerciseId);
         submission.addResult(result);
         result = resultRepository.save(result);
         submissionRepository.save(submission);

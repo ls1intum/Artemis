@@ -39,7 +39,6 @@ public class TextSubmissionImportApi extends AbstractTextApi {
     public TextSubmission importStudentSubmission(long submissionId, long exerciseId, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         TextSubmission textSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(submissionId);
         checkGivenExerciseIdSameForSubmissionParticipation(exerciseId, textSubmission.getParticipation().getExercise().getId());
-
         // example submission does not need participation
         textSubmission.setParticipation(null);
         return textExerciseImportService.copySubmission(textSubmission, gradingInstructionCopyTracker);

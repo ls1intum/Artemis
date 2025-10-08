@@ -1786,6 +1786,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var athenaResult = ParticipationFactory.generateResult(false, 100).submission(submission);
             athenaResult.setCompletionDate(ZonedDateTime.now());
             athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            athenaResult.setExerciseId(programmingExercise.getId());
             submission.addResult(athenaResult);
             resultRepository.save(athenaResult);
         }

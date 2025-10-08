@@ -689,9 +689,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
                 new Feedback().credits(-2.5) // should get positive = false
         );
         Result oldResult = new Result();
+        oldResult.setExerciseId(examTextExercise.getId());
         oldResult.setFeedbacks(oldFeedbacks);
 
         Result newResult = new Result();
+        newResult.setExerciseId(examTextExercise.getId());
 
         List<Feedback> newFeedbacks = submissionService.copyFeedbackToNewResult(newResult, oldResult);
 

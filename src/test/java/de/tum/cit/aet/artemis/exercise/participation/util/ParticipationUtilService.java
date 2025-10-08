@@ -557,10 +557,15 @@ public class ParticipationUtilService {
      * @return The updated Submission with eagerly loaded results and assessor
      */
     public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, ZonedDateTime completionDate) {
+        return addResultToSubmission(submission, assessmentType, user, score, rated, completionDate, submission.getParticipation().getExercise().getId());
+    }
+
+    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, ZonedDateTime completionDate,
+            long exerciseId) {
         Result result = new Result().submission(submission).assessmentType(assessmentType).score(score).rated(rated).completionDate(completionDate);
         result.setAssessor(user);
         result.setSubmission(submission);
-        result.setExerciseId(submission.getParticipation().getExercise().getId());
+        result.setExerciseId(exerciseId);
         result = resultRepo.save(result);
         submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
@@ -576,6 +581,10 @@ public class ParticipationUtilService {
      */
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
         return addResultToSubmission(submission, assessmentType, null, 100D, true, null);
+    }
+
+    public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, long exerciseId) {
+        return addResultToSubmission(submission, assessmentType, null, 100D, true, null, exerciseId);
     }
 
     /**
@@ -914,6 +923,7 @@ public class ParticipationUtilService {
         }
         Submission submissionWithParticipation = addSubmission(studentParticipation, submission);
         Result result = addResultToSubmission(studentParticipation, submissionWithParticipation);
+        result.setExerciseId(exercise.getId());
         resultRepo.save(result);
 
         assertThat(exercise.getGradingCriteria()).isNotNull();
