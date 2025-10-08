@@ -265,7 +265,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (this.hasPendingChanges && this.submission !== undefined) {
             // Required to trigger the native prompt in modern browsers
             event.preventDefault();
-            event.returnValue = '';
         }
     }
 
