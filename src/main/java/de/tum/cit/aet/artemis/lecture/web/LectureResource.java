@@ -16,6 +16,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +53,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
@@ -58,6 +62,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.LectureNameUpdateDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -183,6 +188,28 @@ public class LectureResource {
 
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.ok().body(result);
+    }
+
+    @PutMapping("courses/{courseId}/lectures/lecture-names")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Void> updateLectureNames(@PathVariable long courseId, @RequestBody @NotEmpty List<@Valid LectureNameUpdateDTO> lectureNameUpdateDTOs) {
+        log.debug("REST request to update lecture names with: {}", lectureNameUpdateDTOs);
+
+        List<Long> ids = lectureNameUpdateDTOs.stream().map(LectureNameUpdateDTO::id).toList();
+        Set<Long> uniqueIds = new HashSet<>(ids);
+        if (uniqueIds.size() != ids.size()) {
+            throw new BadRequestException("Request payload contains duplicate lecture IDs.");
+        }
+        Set<Lecture> lectures = lectureRepository.findAllByCourseIdAndIdIn(courseId, uniqueIds);
+        if (lectures.size() != uniqueIds.size()) {
+            throw new BadRequestException("Some lectures do not belong to the course.");
+        }
+
+        Map<Long, String> idToTitle = lectureNameUpdateDTOs.stream().collect(Collectors.toMap(LectureNameUpdateDTO::id, LectureNameUpdateDTO::title));
+        lectures.forEach(lecture -> lecture.setTitle(idToTitle.get(lecture.getId())));
+        lectureRepository.saveAll(lectures);
+
+        return ResponseEntity.noContent().build();
     }
 
     /**

@@ -4,7 +4,7 @@
         <p-datepicker
             inputId="series-end-date"
             [ngModel]="seriesEndDate() ?? null"
-            (ngModelChange)="seriesEndDate.set($event)"
+            (ngModelChange)="seriesEndDate.set($event ?? undefined)"
             [firstDayOfWeek]="1"
             [invalid]="seriesEndDateInvalid()"
             [appendTo]="'body'"
@@ -21,7 +21,7 @@
                 <p-datepicker
                     inputId="start-date"
                     [ngModel]="weeklyLecture.startDate() ?? null"
-                    (ngModelChange)="weeklyLecture.startDate.set($event)"
+                    (ngModelChange)="weeklyLecture.startDate.set($event ?? undefined)"
                     [firstDayOfWeek]="1"
                     [invalid]="weeklyLecture.isStartDateInvalid()"
                     [showTime]="true"
@@ -35,7 +35,7 @@
                 <p-datepicker
                     inputId="end-date"
                     [ngModel]="weeklyLecture.endDate() ?? null"
-                    (ngModelChange)="weeklyLecture.endDate.set($event)"
+                    (ngModelChange)="weeklyLecture.endDate.set($event ?? undefined)"
                     [firstDayOfWeek]="1"
                     [invalid]="weeklyLecture.isEndDateInvalid()"
                     [showTime]="true"
@@ -91,3 +91,4 @@
 </div>
 
 <jhi-lecture-series-edit-modal #editModal />
+<p-confirmDialog />

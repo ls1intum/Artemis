@@ -14,10 +14,13 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+import { LectureNameUpdateDTO, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
 import { finalize } from 'rxjs';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 export interface LectureDraft {
     id: string;
@@ -38,6 +41,19 @@ interface FirstLecture {
     isEndDateInvalid: Signal<boolean>;
 }
 
+interface ExistingLecture {
+    id: number;
+    title?: string;
+    startDate?: Dayjs;
+    endDate?: Dayjs;
+    state: ExistingLectureState;
+}
+
+enum ExistingLectureState {
+    ORIGINAL = 'ORIGINAL',
+    ADAPTED = 'ADAPTED',
+}
+
 @Component({
     selector: 'jhi-lecture-series-create',
     imports: [
@@ -51,7 +67,9 @@ interface FirstLecture {
         LectureSeriesEditModalComponent,
         NgClass,
         TranslateDirective,
+        ConfirmDialogModule,
     ],
+    providers: [ConfirmationService],
     templateUrl: './lecture-series-create.component.html',
     styleUrl: './lecture-series-create.component.scss',
 })
@@ -60,6 +78,9 @@ export class LectureSeriesCreateComponent {
     private alertService = inject(AlertService);
     private router = inject(Router);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private confirmationService = inject(ConfirmationService);
+    private courseStorageService = inject(CourseStorageService);
+    private existingLectures: ExistingLecture[] = [];
 
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faXmark = faXmark;
@@ -75,7 +96,13 @@ export class LectureSeriesCreateComponent {
     firstLectures = signal<FirstLecture[]>([this.createFirstLecture()]);
 
     constructor() {
-        effect(() => this.updateLectureDrafts());
+        effect(() => this.updateLectureDraftsAndExistingLectures());
+        effect(() => {
+            const existingLectures = this.courseStorageService.getCourse(this.courseId())?.lectures ?? [];
+            this.existingLectures = existingLectures.map((lecture) => {
+                return { id: lecture.id, title: lecture.title, startDate: lecture.startDate, endDate: lecture.endDate, state: ExistingLectureState.ORIGINAL } as ExistingLecture;
+            });
+        });
     }
 
     addFirstLecture() {
@@ -92,8 +119,29 @@ export class LectureSeriesCreateComponent {
 
     save() {
         this.isLoading.set(true);
-        const lecturesToSave = this.lectureDrafts().map((d) => d.dto);
         const courseId = this.courseId();
+        this.confirmationService.confirm({
+            header: 'Update existing lecture names?',
+            message: 'You changed the titles of existing lectures. Do you want to apply these name updates before creating the new lectures?',
+            acceptLabel: 'Yes',
+            rejectLabel: 'No',
+            accept: () => this.updateNamesOfExistingLecturesAndSaveNewLectures(courseId),
+            reject: () => this.saveNewLectures(courseId),
+        });
+    }
+
+    private updateNamesOfExistingLecturesAndSaveNewLectures(courseId: number) {
+        const updateNameDTOs = this.existingLectures
+            .filter((lecture) => lecture.state === ExistingLectureState.ADAPTED)
+            .map((lecture) => new LectureNameUpdateDTO(lecture.id!, lecture.title!));
+        this.lectureService.updateNames(updateNameDTOs, courseId).subscribe({
+            next: () => this.saveNewLectures(courseId),
+            error: () => this.alertService.addErrorAlert('artemisApp.lecture.createSeries.updateNameError'),
+        });
+    }
+
+    private saveNewLectures(courseId: number) {
+        const lecturesToSave = this.lectureDrafts().map((d) => d.dto);
         this.lectureService
             .createSeries(lecturesToSave, courseId)
             .pipe(finalize(() => this.isLoading.set(false)))
@@ -117,7 +165,7 @@ export class LectureSeriesCreateComponent {
         return { id, startDate, endDate, isStartDateInvalid, isEndDateInvalid };
     }
 
-    private updateLectureDrafts() {
+    private updateLectureDraftsAndExistingLectures() {
         const rawSeriesEndDate = this.seriesEndDate();
         if (!rawSeriesEndDate) {
             return;
@@ -132,13 +180,44 @@ export class LectureSeriesCreateComponent {
             }
             lectureDrafts = [...lectureDrafts, ...lectureDraftsFromFirstLecture];
         }
-        lectureDrafts.sort((first, second) => this.getSortingKeyFor(first) - this.getSortingKeyFor(second)).forEach((draft, index) => (draft.dto.title = `Lecture ${index + 1}`));
+
+        const existingLectures = this.existingLectures;
+        const newDtos = lectureDrafts.map((draft) => draft.dto);
+        const lectureRepresentations: (ExistingLecture | LectureSeriesCreateLectureDTO)[] = [...existingLectures, ...newDtos];
+        lectureRepresentations
+            .sort((first, second) => {
+                const firstSortingKey = this.getSortingKeyFor(first);
+                const secondSortingKey = this.getSortingKeyFor(second);
+                if (firstSortingKey && secondSortingKey) {
+                    return firstSortingKey - secondSortingKey;
+                }
+                if (!firstSortingKey && secondSortingKey) {
+                    return 1;
+                }
+                if (firstSortingKey && !secondSortingKey) {
+                    return -1;
+                }
+                return 0;
+            })
+            .forEach((lectureRepresentation, index) => {
+                const standardNamePattern = /^Lecture \d+$/;
+                if ((lectureRepresentation.title && lectureRepresentation.title.match(standardNamePattern)) || !lectureRepresentation.title) {
+                    lectureRepresentation.title = `Lecture ${index + 1}`;
+                    if ('state' in lectureRepresentation) {
+                        lectureRepresentation.state = ExistingLectureState.ADAPTED;
+                    }
+                }
+            });
         this.lectureDrafts.set(lectureDrafts);
     }
 
-    private getSortingKeyFor(lectureDraft: LectureDraft): number {
-        const keyDate = lectureDraft.dto.startDate ?? lectureDraft.dto.endDate!;
-        return keyDate.valueOf();
+    private getSortingKeyFor(lectureRepresentation: LectureSeriesCreateLectureDTO | ExistingLecture): number | undefined {
+        const keyDate = lectureRepresentation.startDate ?? lectureRepresentation.endDate;
+        if (keyDate) {
+            return keyDate.valueOf();
+        } else {
+            return undefined;
+        }
     }
 
     private computeLectureDraftsForFirstLecture(firstLecture: FirstLecture, seriesEndDate: Dayjs): LectureDraft[] | undefined {

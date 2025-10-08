@@ -96,7 +96,8 @@
                 },
                 "generatedLecturesHeading": "Generated Lectures",
                 "editLectureModalTitle": "Edit Lecture Details",
-                "seriesCreationError": "Something went wrong while creating the lecture series. Please try again."
+                "seriesCreationError": "Something went wrong while creating the lecture series. Please try again.",
+                "updateNameError": "Something went wrong while adapting the names of the existing lectures. Please try again."
             }
         },
         "attachment": {

@@ -38,6 +38,13 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+            WHERE lecture.course.id = :courseId AND lecture.id IN :ids
+            """)
+    Set<Lecture> findAllByCourseIdAndIdIn(@Param("courseId") long courseId, @Param("ids") Set<Long> ids);
+
+    @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO(
                 lecture.id,
                 lecture.title,

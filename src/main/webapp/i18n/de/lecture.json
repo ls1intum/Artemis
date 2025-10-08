@@ -96,7 +96,8 @@
                 },
                 "generatedLecturesHeading": "Generierte Vorlesungen",
                 "editLectureModalTitle": "Vorlesungsdetails bearbeiten",
-                "seriesCreationError": "Beim Erstellen der Vorlesungsserie ist etwas schief gegangen. Bitte versuche es erneut."
+                "seriesCreationError": "Beim Erstellen der Vorlesungsserie ist etwas schief gegangen. Bitte versuche es erneut.",
+                "updateNameError": "Beim Anpassen der Namen der existierenden Vorlesungen ist etwas schief gegangen. Bitte versuche es erneut."
             }
         },
         "attachment": {
