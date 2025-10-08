@@ -10,9 +10,8 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
-import { addOneMinuteTo, isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
+import { isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
 
-// TODO: clean
 @Component({
     selector: 'jhi-lecture-series-draft-edit-modal',
     imports: [FormsModule, DialogModule, InputTextModule, DatePickerModule, ButtonModule, AutoFocusModule, TranslateDirective],
@@ -28,7 +27,6 @@ export class LectureSeriesDraftEditModalComponent {
     isTitleInvalid = computed(() => this.title() === '');
     startDate = signal<Date | undefined>(undefined);
     endDate = signal<Date | undefined>(undefined);
-    minimumEndDate = computed(() => addOneMinuteTo(this.startDate()));
     isEndDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(this.startDate(), this.endDate()));
     show = signal<boolean>(false);
     areInputsInvalid = computed(() => this.isTitleInvalid() || this.isEndDateInvalid());
@@ -44,7 +42,7 @@ export class LectureSeriesDraftEditModalComponent {
 
     cancel() {
         this.show.set(false);
-        this.clearDraftRelatedFields();
+        this.clearInputFields();
     }
 
     save() {
@@ -57,22 +55,10 @@ export class LectureSeriesDraftEditModalComponent {
             dto.endDate = this.convertDateToDayjsDate(this.endDate());
             draft.state = LectureDraftState.EDITED;
         }
-        this.clearDraftRelatedFields();
+        this.clearInputFields();
     }
 
-    onTitleChange(value: string) {
-        this.title.set(value);
-    }
-
-    onStartDateChange(value: Date | null) {
-        this.startDate.set(value ? value : undefined);
-    }
-
-    onEndDateChange(value: Date | null) {
-        this.endDate.set(value ? value : undefined);
-    }
-
-    private clearDraftRelatedFields() {
+    private clearInputFields() {
         this.lectureDraft = undefined;
         this.title.set('');
         this.startDate.set(undefined);
