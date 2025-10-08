@@ -19,9 +19,6 @@
                             <span class="message-sender">
                                 {{ message.isUser ? ('artemisApp.agent.chat.you' | artemisTranslate) : ('artemisApp.agent.chat.aiAssistant' | artemisTranslate) }}
                             </span>
-                            <span class="message-time text-muted">
-                                {{ message.timestamp | date: 'HH:mm' }}
-                            </span>
                         </div>
                         <div class="message-text">{{ message.content }}</div>
                     </div>
