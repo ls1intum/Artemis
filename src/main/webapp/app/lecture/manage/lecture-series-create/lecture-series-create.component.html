@@ -12,7 +12,7 @@
         <label for="series-end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
     </p-floatlabel>
     <p jhiTranslate="artemisApp.lecture.createSeries.startAndEndDateExplanation"></p>
-    @for (weeklyLecture of firstLectures(); track weeklyLecture.id; let index = $index) {
+    @for (weeklyLecture of initialLectures(); track weeklyLecture.id; let index = $index) {
         <div class="input-row">
             <div class="first-lecture-enumerator">
                 {{ index + 1 }}
@@ -45,15 +45,15 @@
                 />
                 <label for="end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.endDate"></label>
             </p-floatlabel>
-            @if (firstLectures().length !== 1) {
-                <button pButton outlined severity="secondary" size="small" class="first-lecture-delete-button" (click)="removeFirstLecture(weeklyLecture)">
+            @if (initialLectures().length !== 1) {
+                <button pButton outlined severity="secondary" size="small" class="first-lecture-delete-button" (click)="removeInitialLecture(weeklyLecture)">
                     <fa-icon [icon]="faTrash" />
                 </button>
             }
         </div>
     }
     <div>
-        <button pButton severity="secondary" size="small" (click)="addFirstLecture()" jhiTranslate="artemisApp.lecture.createSeries.addInitialLectureButtonLabel"></button>
+        <button pButton severity="secondary" size="small" (click)="addInitialLecture()" jhiTranslate="artemisApp.lecture.createSeries.addInitialLectureButtonLabel"></button>
     </div>
     @let drafts = lectureDrafts();
     @if (drafts.length > 0) {

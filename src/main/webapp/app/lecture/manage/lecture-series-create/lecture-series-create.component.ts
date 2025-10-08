@@ -34,7 +34,7 @@ export enum LectureDraftState {
     REGULAR = 'regular',
 }
 
-interface FirstLecture {
+interface InitialLecture {
     id: string;
     startDate: WritableSignal<Date | undefined>;
     endDate: WritableSignal<Date | undefined>;
@@ -95,7 +95,7 @@ export class LectureSeriesCreateComponent {
     noDraftsGenerated = computed(() => this.lectureDrafts().length === 0);
     seriesEndDate = signal<Date | undefined>(undefined);
     seriesEndDateInvalid = computed<boolean>(() => this.computeSeriesEndDateInvalid());
-    firstLectures = signal<FirstLecture[]>([this.createFirstLecture()]);
+    initialLectures = signal<InitialLecture[]>([this.createInitialLecture()]);
 
     constructor() {
         effect(() => this.updateLectureDraftsAndExistingLectures());
@@ -107,12 +107,12 @@ export class LectureSeriesCreateComponent {
         });
     }
 
-    addFirstLecture() {
-        this.firstLectures.update((firstLectures) => [...firstLectures, this.createFirstLecture()]);
+    addInitialLecture() {
+        this.initialLectures.update((initialLectures) => [...initialLectures, this.createInitialLecture()]);
     }
 
-    removeFirstLecture(firstLecture: FirstLecture) {
-        this.firstLectures.update((firstLectures) => firstLectures.filter((otherFirstLecture) => otherFirstLecture.id !== firstLecture.id));
+    removeInitialLecture(initialLecture: InitialLecture) {
+        this.initialLectures.update((initialLectures) => initialLectures.filter((otherInitialLecture) => otherInitialLecture.id !== initialLecture.id));
     }
 
     deleteLectureDraft(lectureDraft: LectureDraft) {
@@ -164,7 +164,7 @@ export class LectureSeriesCreateComponent {
         this.navigationUtilService.navigateBack(['course-management', courseId, 'lectures']);
     }
 
-    private createFirstLecture(): FirstLecture {
+    private createInitialLecture(): InitialLecture {
         const id = window.crypto.randomUUID();
         const startDate = signal<Date | undefined>(undefined);
         const endDate = signal<Date | undefined>(undefined);
@@ -181,12 +181,12 @@ export class LectureSeriesCreateComponent {
         const endDate = dayjs(rawSeriesEndDate).endOf('day');
 
         let lectureDrafts: LectureDraft[] = [];
-        for (const firstLecture of this.firstLectures()) {
-            const lectureDraftsFromFirstLecture = this.computeLectureDraftsForFirstLecture(firstLecture, endDate);
-            if (lectureDraftsFromFirstLecture === undefined) {
+        for (const initialLecture of this.initialLectures()) {
+            const lectureDraftsFromInitialLecture = this.computeLectureDraftsForInitialLecture(initialLecture, endDate);
+            if (lectureDraftsFromInitialLecture === undefined) {
                 return;
             }
-            lectureDrafts = [...lectureDrafts, ...lectureDraftsFromFirstLecture];
+            lectureDrafts = [...lectureDrafts, ...lectureDraftsFromInitialLecture];
         }
         const sortedLectureDrafts = this.sortByOptionalKey(lectureDrafts, (draft) => this.getSortingKeyFor(draft.dto));
 
@@ -273,11 +273,11 @@ export class LectureSeriesCreateComponent {
         }
     }
 
-    private computeLectureDraftsForFirstLecture(firstLecture: FirstLecture, seriesEndDate: Dayjs): LectureDraft[] | undefined {
-        const startDate = firstLecture.startDate();
-        const endDate = firstLecture.endDate();
-        const isStartDateInvalid = firstLecture.isStartDateInvalid();
-        const isEndDateInvalid = firstLecture.isEndDateInvalid();
+    private computeLectureDraftsForInitialLecture(initialLecture: InitialLecture, seriesEndDate: Dayjs): LectureDraft[] | undefined {
+        const startDate = initialLecture.startDate();
+        const endDate = initialLecture.endDate();
+        const isStartDateInvalid = initialLecture.isStartDateInvalid();
+        const isEndDateInvalid = initialLecture.isEndDateInvalid();
         if ((!startDate && !endDate) || isStartDateInvalid || isEndDateInvalid) {
             return undefined;
         }
@@ -331,10 +331,10 @@ export class LectureSeriesCreateComponent {
     }
 
     private computeSeriesEndDateInvalid(): boolean {
-        const latestFirstLectureDate = this.firstLectures()
+        const latestInitialLectureDate = this.initialLectures()
             .flatMap((lecture) => [lecture.startDate(), lecture.endDate()])
             .filter((date): date is Date => date !== undefined)
             .sort((first, second) => first.getTime() - second.getTime())[0];
-        return isFirstDateAfterOrEqualSecond(latestFirstLectureDate ?? new Date(), this.seriesEndDate());
+        return isFirstDateAfterOrEqualSecond(latestInitialLectureDate ?? new Date(), this.seriesEndDate());
     }
 }
