@@ -604,21 +604,26 @@ public class CourseUtilService {
         // Setup results
         Result resultModeling = generateResult(true, 100D);
         resultModeling.setAssessmentType(AssessmentType.MANUAL);
+        resultModeling.setExerciseId(modelingExercise.getId());
         resultModeling.setCompletionDate(ZonedDateTime.now());
 
         Result resultText = generateResult(true, 12D);
+        resultText.setExerciseId(textExercise.getId());
         resultText.setAssessmentType(AssessmentType.MANUAL);
         resultText.setCompletionDate(ZonedDateTime.now());
 
         Result resultFileUpload = generateResult(true, 0D);
+        resultFileUpload.setExerciseId(fileUploadExercise.getId());
         resultFileUpload.setAssessmentType(AssessmentType.MANUAL);
         resultFileUpload.setCompletionDate(ZonedDateTime.now());
 
         Result resultQuiz = generateResult(true, 0D);
+        resultQuiz.setExerciseId(quizExercise.getId());
         resultQuiz.setAssessmentType(AssessmentType.AUTOMATIC);
         resultQuiz.setCompletionDate(ZonedDateTime.now());
 
         Result resultProgramming = generateResult(true, 20D);
+        resultProgramming.setExerciseId(programmingExercise.getId());
         resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
@@ -772,22 +777,27 @@ public class CourseUtilService {
 
         // Setup results
         Result resultModeling = generateResult(true, 10D);
+        resultModeling.setExerciseId(modelingExercise.getId());
         resultModeling.setAssessmentType(AssessmentType.MANUAL);
         resultModeling.setCompletionDate(ZonedDateTime.now());
 
         Result resultText = generateResult(true, 12D);
+        resultText.setExerciseId(textExercise.getId());
         resultText.setAssessmentType(AssessmentType.MANUAL);
         resultText.setCompletionDate(ZonedDateTime.now());
 
         Result resultFileUpload = generateResult(true, 0D);
+        resultFileUpload.setExerciseId(fileUploadExercise.getId());
         resultFileUpload.setAssessmentType(AssessmentType.MANUAL);
         resultFileUpload.setCompletionDate(ZonedDateTime.now());
 
         Result resultQuiz = generateResult(true, 0D);
+        resultQuiz.setExerciseId(quizExercise.getId());
         resultQuiz.setAssessmentType(AssessmentType.AUTOMATIC);
         resultQuiz.setCompletionDate(ZonedDateTime.now());
 
         Result resultProgramming = generateResult(true, 20D);
+        resultProgramming.setExerciseId(programmingExercise.getId());
         resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
