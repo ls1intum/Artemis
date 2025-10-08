@@ -188,35 +188,80 @@ export class LectureSeriesCreateComponent {
             }
             lectureDrafts = [...lectureDrafts, ...lectureDraftsFromFirstLecture];
         }
+        const sortedLectureDrafts = this.sortByOptionalKey(lectureDrafts, (draft) => this.getSortingKeyFor(draft.dto));
 
-        const existingLectures = this.existingLectures;
-        const newDtos = lectureDrafts.map((draft) => draft.dto);
-        const lectureRepresentations: (ExistingLecture | LectureSeriesCreateLectureDTO)[] = [...existingLectures, ...newDtos];
-        lectureRepresentations
-            .sort((first, second) => {
-                const firstSortingKey = this.getSortingKeyFor(first);
-                const secondSortingKey = this.getSortingKeyFor(second);
-                if (firstSortingKey && secondSortingKey) {
-                    return firstSortingKey - secondSortingKey;
+        const sortedExistingLectures = this.sortByOptionalKey(this.existingLectures, (lecture) => this.getSortingKeyFor(lecture));
+        const newDtos = sortedLectureDrafts.map((draft) => draft.dto);
+        const sortedLectureRepresentations = this.mergeLectureRepresentations(sortedExistingLectures, newDtos);
+        sortedLectureRepresentations.forEach((lectureRepresentation, index) => {
+            const standardNamePattern = /^Lecture \d+$/;
+            if ((lectureRepresentation.title && lectureRepresentation.title.match(standardNamePattern)) || !lectureRepresentation.title) {
+                lectureRepresentation.title = `Lecture ${index + 1}`;
+                if ('state' in lectureRepresentation) {
+                    lectureRepresentation.state = ExistingLectureState.ADAPTED;
                 }
-                if (!firstSortingKey && secondSortingKey) {
-                    return 1;
-                }
-                if (firstSortingKey && !secondSortingKey) {
-                    return -1;
-                }
+            }
+        });
+
+        this.lectureDrafts.set(sortedLectureDrafts);
+    }
+
+    sortByOptionalKey<T>(items: T[], getKey: (item: T) => number | undefined): T[] {
+        return [...items].sort((first, second) => {
+            const firstKey = getKey(first);
+            const secondKey = getKey(second);
+
+            const firstHasKey = firstKey !== undefined;
+            const secondHasKey = secondKey !== undefined;
+
+            if (!firstHasKey && !secondHasKey) {
                 return 0;
-            })
-            .forEach((lectureRepresentation, index) => {
-                const standardNamePattern = /^Lecture \d+$/;
-                if ((lectureRepresentation.title && lectureRepresentation.title.match(standardNamePattern)) || !lectureRepresentation.title) {
-                    lectureRepresentation.title = `Lecture ${index + 1}`;
-                    if ('state' in lectureRepresentation) {
-                        lectureRepresentation.state = ExistingLectureState.ADAPTED;
-                    }
+            }
+            if (!firstHasKey) {
+                return 1;
+            }
+            if (!secondHasKey) {
+                return -1;
+            }
+            return firstKey - secondKey;
+        });
+    }
+
+    private mergeLectureRepresentations(existingLectures: ExistingLecture[], dtos: LectureSeriesCreateLectureDTO[]): (ExistingLecture | LectureSeriesCreateLectureDTO)[] {
+        const result: (ExistingLecture | LectureSeriesCreateLectureDTO)[] = [];
+        let existingLectureIndex = 0;
+        let dtoIndex = 0;
+        while (existingLectureIndex < existingLectures.length && dtoIndex < dtos.length) {
+            const existingLecture = existingLectures[existingLectureIndex];
+            const dto = dtos[dtoIndex];
+            const existingLectureKey = this.getSortingKeyFor(existingLecture);
+            const dtoKey = this.getSortingKeyFor(dto);
+            if (existingLectureKey !== undefined && dtoKey !== undefined) {
+                if (existingLectureKey <= dtoKey!) {
+                    result.push(existingLecture);
+                    existingLectureIndex++;
+                } else {
+                    result.push(dto);
+                    dtoIndex++;
                 }
-            });
-        this.lectureDrafts.set(lectureDrafts);
+            } else if (existingLectureKey !== undefined) {
+                result.push(existingLecture);
+                existingLectureIndex++;
+            } else if (dtoKey !== undefined) {
+                result.push(dto);
+                dtoIndex++;
+            } else {
+                result.push(existingLecture);
+                existingLectureIndex++;
+            }
+        }
+        while (existingLectureIndex < existingLectures.length) {
+            result.push(existingLectures[existingLectureIndex++]);
+        }
+        while (dtoIndex < dtos.length) {
+            result.push(dtos[dtoIndex++]);
+        }
+        return result;
     }
 
     private getSortingKeyFor(lectureRepresentation: LectureSeriesCreateLectureDTO | ExistingLecture): number | undefined {
