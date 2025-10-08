@@ -47,4 +47,17 @@
         (competencyDeleted)="onRemoveCompetency($event)"
         (competenciesAdded)="onCompetenciesAdded($event)"
     />
+
+    <!-- Floating Agent Chat Button -->
+    @if (agentChatEnabled()) {
+        <button
+            class="btn btn-primary rounded-circle agent-chat-button"
+            (click)="openAgentChatModal()"
+            [attr.aria-label]="'AI Assistant'"
+            title="Chat with AI Assistant"
+            id="agent-chat-button"
+        >
+            <fa-icon [icon]="faRobot" />
+        </button>
+    }
 </div>

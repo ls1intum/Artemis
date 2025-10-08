@@ -1,0 +1,16 @@
+{
+    "artemisApp": {
+        "agent": {
+            "chat": {
+                "title": "AI Competency Assistant",
+                "inputHint": "Press Enter to send, Shift+Enter for new line",
+                "typing": "Agent is thinking...",
+                "welcome": "Hello! I'm your AI competency assistant. How can I help you with course competencies today?",
+                "error": "I apologize, but I'm having trouble processing your request right now. Please try again.",
+                "messageTooLong": "Message is too long. Please shorten your message.",
+                "you": "You",
+                "aiAssistant": "AI Assistant"
+            }
+        }
+    }
+}
