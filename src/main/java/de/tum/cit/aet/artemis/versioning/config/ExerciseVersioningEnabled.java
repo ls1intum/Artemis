@@ -7,8 +7,8 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 
 /**
- * Condition to check if the Hyperion module is enabled.
- * Based on this condition, Spring components concerning hyperion functionality can be enabled or disabled.
+ * Condition to check if the Exercise versioning module is enabled.
+ * Based on this condition, Spring components concerning exercise versioning functionality can be enabled or disabled.
  */
 public class ExerciseVersioningEnabled implements Condition {
 
