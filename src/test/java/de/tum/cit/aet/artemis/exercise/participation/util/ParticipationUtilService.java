@@ -514,8 +514,7 @@ public class ParticipationUtilService {
         ));
 
         result.addFeedbacks(feedbacks);
-        resultRepo.save(result);
-        return result;
+        return resultRepo.save(result);
     }
     // @formatter:on
 

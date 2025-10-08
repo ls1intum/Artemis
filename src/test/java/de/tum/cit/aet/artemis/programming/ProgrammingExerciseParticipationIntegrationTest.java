@@ -160,7 +160,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
         // Add a parameterized second result
-        StudentParticipation participation = (StudentParticipation) firstResult.getSubmission().getParticipation();
+        StudentParticipation participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(firstResult.getSubmission().getParticipation().getId())
+                .orElseThrow();
         Result secondResult = participationUtilService.addResultToSubmission(participation, participation.getSubmissions().iterator().next());
         secondResult.successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
         secondResult = participationUtilService.addVariousVisibilityFeedbackToResult(secondResult);
@@ -533,7 +534,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(resultResponse.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
         assertThat(resultResponse.getFeedbacks()).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
 
-        assertThat(result).usingRecursiveComparison().ignoringFields("submission", "feedbacks", "participation", "lastModifiedDate").isEqualTo(resultResponse);
+        assertThat(result).usingRecursiveComparison().ignoringFields("submission", "feedbacks", "participation", "lastModifiedDate", "exerciseId").isEqualTo(resultResponse);
         if (withSubmission) {
             assertThat(submission).isEqualTo(resultResponse.getSubmission());
         }

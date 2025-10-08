@@ -135,7 +135,6 @@ public class Result extends DomainObject implements Comparable<Result> {
     private Instant lastModifiedDate;
 
     @Column(name = "exercise_id", nullable = false)
-    @JsonIgnore
     private long exerciseId;
 
     public ZonedDateTime getCompletionDate() {

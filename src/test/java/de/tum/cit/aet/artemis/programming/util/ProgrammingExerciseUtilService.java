@@ -733,12 +733,12 @@ public class ProgrammingExerciseUtilService {
         submission = submissionRepository.save(submission);
         // TODO check if it needs to be persisted like before
         Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
         templateParticipation.addSubmission(submission);
         submission.setParticipation(templateParticipation);
         submission.addResult(result);
         submission = submissionRepository.save(submission);
         result.setSubmission(submission);
-        result.setExerciseId(programmingExercise.getId());
         result = resultRepo.save(result);
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
         return result;
@@ -756,12 +756,13 @@ public class ProgrammingExerciseUtilService {
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = submissionRepository.save(submission);
         Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
         templateParticipation.addSubmission(submission);
         submission.setParticipation(templateParticipation);
         submission.addResult(result);
         submission = submissionRepository.save(submission);
         result.setSubmission(submission);
-        result.setExerciseId(programmingExercise.getId());
+
         result = resultRepo.save(result);
         solutionProgrammingExerciseParticipationRepository.save(templateParticipation);
         return result;

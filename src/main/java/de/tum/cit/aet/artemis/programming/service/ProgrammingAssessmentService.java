@@ -90,6 +90,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
         }
 
         newManualResult.setSubmission(submission);
+        newManualResult.setExerciseId(exercise.getId());
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().orElse(false));
         newManualResult = saveManualAssessment(newManualResult, assessor);
 

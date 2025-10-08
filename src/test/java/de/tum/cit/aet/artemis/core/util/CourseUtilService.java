@@ -494,6 +494,11 @@ public class CourseUtilService {
             Result result3 = generateResult(false, 0D);
             Result result4 = generateResult(true, 12D);
             Result result5 = generateResult(false, 42D);
+            result1.setExerciseId(modelingExercise.getId());
+            result2.setExerciseId(modelingExercise.getId());
+            result3.setExerciseId(textExercise.getId());
+            result4.setExerciseId(programmingExercise.getId());
+            result5.setExerciseId(programmingExercise.getId());
 
             participation1 = studentParticipationRepo.save(participation1);
             participation2 = studentParticipationRepo.save(participation2);
