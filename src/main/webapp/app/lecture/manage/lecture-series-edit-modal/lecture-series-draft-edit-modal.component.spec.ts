@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LectureSeriesEditModalComponent } from './lecture-series-edit-modal.component';
+import { LectureSeriesDraftEditModalComponent } from './lecture-series-draft-edit-modal.component';
 
 describe('LectureSeriesEditModal', () => {
-    let component: LectureSeriesEditModalComponent;
-    let fixture: ComponentFixture<LectureSeriesEditModalComponent>;
+    let component: LectureSeriesDraftEditModalComponent;
+    let fixture: ComponentFixture<LectureSeriesDraftEditModalComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [LectureSeriesEditModalComponent],
+            imports: [LectureSeriesDraftEditModalComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(LectureSeriesEditModalComponent);
+        fixture = TestBed.createComponent(LectureSeriesDraftEditModalComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });

@@ -9,7 +9,7 @@ import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPenToSquare, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { LectureSeriesEditModalComponent } from 'app/lecture/manage/lecture-series-edit-modal/lecture-series-edit-modal.component';
+import { LectureSeriesDraftEditModalComponent } from 'app/lecture/manage/lecture-series-edit-modal/lecture-series-draft-edit-modal.component';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
@@ -55,6 +55,25 @@ export enum LectureDraftState {
     REGULAR = 'regular',
 }
 
+/**
+ * A component for scaffolding lectures (creating lectures by specifying title and timing but no contents).
+ *
+ * Users define:
+ * - `InitialLecture`s: encapsulate title, startDate and endDate of the *first* occurrence of a weekly lecture.
+ * - `seriesEndDate`: the last day up to which weekly lectures should be generated.
+ *
+ * Additionally, the component manages:
+ * - `ExistingLecture`s: represent the timing and tile of existing lectures.
+ *
+ * Based on InitialLectures and ExistingLectures the component creates:
+ * - `LectureDraft`s: encapsulate title and timing for a single potential lecture. Can be edited by the user without affecting other drafts.
+ *
+ * For each InitialLecture, the component generates weekly drafts (one per week) until the series end date.
+ * It assigns default titles in the format `Lecture ${index + 1}` by sorting the union of ExistingLectures and LectureDrafts by the earliest
+ * available of `startDate` or `endDate`; items missing both dates are placed at the end.
+ *
+ * If ExistingLectures exist on save that follow the default title format, the component asks the user whether he would like to renumber them.
+ */
 @Component({
     selector: 'jhi-lecture-series-create',
     imports: [
@@ -65,7 +84,7 @@ export enum LectureDraftState {
         InputMaskModule,
         ButtonModule,
         FaIconComponent,
-        LectureSeriesEditModalComponent,
+        LectureSeriesDraftEditModalComponent,
         NgClass,
         TranslateDirective,
         ConfirmDialogModule,
@@ -94,17 +113,12 @@ export class LectureSeriesCreateComponent {
     isLoading = signal(false);
     noDraftsGenerated = computed(() => this.lectureDrafts().length === 0);
     seriesEndDate = signal<Date | undefined>(undefined);
-    seriesEndDateInvalid = computed<boolean>(() => this.computeSeriesEndDateInvalid());
+    seriesEndDateInvalid = computed<boolean>(() => this.computeIsSeriesEndDateInvalid());
     initialLectures = signal<InitialLecture[]>([this.createInitialLecture()]);
 
     constructor() {
-        effect(() => this.updateLectureDraftsAndExistingLectures());
-        effect(() => {
-            const existingLectures = this.courseStorageService.getCourse(this.courseId())?.lectures ?? [];
-            this.existingLectures = existingLectures.map((lecture) => {
-                return { id: lecture.id, title: lecture.title, startDate: lecture.startDate, endDate: lecture.endDate, state: ExistingLectureState.ORIGINAL } as ExistingLecture;
-            });
-        });
+        effect(() => this.updateLectureDraftsAndExistingLecturesBasedOnSeriesEndDateAndInitialLectures());
+        effect(() => this.setExistingLectures());
     }
 
     addInitialLecture() {
@@ -117,6 +131,11 @@ export class LectureSeriesCreateComponent {
 
     deleteLectureDraft(lectureDraft: LectureDraft) {
         this.lectureDrafts.update((oldDrafts) => oldDrafts.filter((otherDraft) => otherDraft !== lectureDraft));
+    }
+
+    cancel() {
+        const courseId = this.courseId();
+        this.navigationUtilService.navigateBack(['course-management', courseId, 'lectures']);
     }
 
     save() {
@@ -159,118 +178,36 @@ export class LectureSeriesCreateComponent {
             });
     }
 
-    cancel() {
-        const courseId = this.courseId();
-        this.navigationUtilService.navigateBack(['course-management', courseId, 'lectures']);
-    }
-
-    private createInitialLecture(): InitialLecture {
-        const id = window.crypto.randomUUID();
-        const startDate = signal<Date | undefined>(undefined);
-        const endDate = signal<Date | undefined>(undefined);
-        const isStartDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(startDate(), endDate()) || isFirstDateAfterOrEqualSecond(startDate(), this.seriesEndDate()));
-        const isEndDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(startDate(), endDate()) || isFirstDateAfterOrEqualSecond(endDate(), this.seriesEndDate()));
-        return { id, startDate, endDate, isStartDateInvalid, isEndDateInvalid };
-    }
-
-    private updateLectureDraftsAndExistingLectures() {
-        const rawSeriesEndDate = this.seriesEndDate();
-        if (!rawSeriesEndDate) {
+    private updateLectureDraftsAndExistingLecturesBasedOnSeriesEndDateAndInitialLectures() {
+        const lectureDrafts = this.computeLectureDraftsBasedOnSeriesEndDateAndInitialLectures();
+        if (lectureDrafts === undefined) {
             return;
         }
-        const endDate = dayjs(rawSeriesEndDate).endOf('day');
 
-        let lectureDrafts: LectureDraft[] = [];
-        for (const initialLecture of this.initialLectures()) {
-            const lectureDraftsFromInitialLecture = this.computeLectureDraftsForInitialLecture(initialLecture, endDate);
-            if (lectureDraftsFromInitialLecture === undefined) {
-                return;
-            }
-            lectureDrafts = [...lectureDrafts, ...lectureDraftsFromInitialLecture];
-        }
-        const sortedLectureDrafts = this.sortByOptionalKey(lectureDrafts, (draft) => this.getSortingKeyFor(draft.dto));
-
-        const sortedExistingLectures = this.sortByOptionalKey(this.existingLectures, (lecture) => this.getSortingKeyFor(lecture));
-        const newDtos = sortedLectureDrafts.map((draft) => draft.dto);
-        const sortedLectureRepresentations = this.mergeLectureRepresentations(sortedExistingLectures, newDtos);
-        sortedLectureRepresentations.forEach((lectureRepresentation, index) => {
-            const standardNamePattern = /^Lecture \d+$/;
-            if ((lectureRepresentation.title && lectureRepresentation.title.match(standardNamePattern)) || !lectureRepresentation.title) {
-                lectureRepresentation.title = `Lecture ${index + 1}`;
-                if ('state' in lectureRepresentation) {
-                    lectureRepresentation.state = ExistingLectureState.ADAPTED;
-                }
-            }
-        });
+        const sortedLectureDrafts = this.sort(lectureDrafts, (draft) => this.getSortingKeyFor(draft.dto));
+        const sortedExistingLectures = this.sort(this.existingLectures, (lecture) => this.getSortingKeyFor(lecture));
+        this.assignTitlesToNewAndExistingLectures(sortedLectureDrafts, sortedExistingLectures);
 
         this.lectureDrafts.set(sortedLectureDrafts);
     }
 
-    sortByOptionalKey<T>(items: T[], getKey: (item: T) => number | undefined): T[] {
-        return [...items].sort((first, second) => {
-            const firstKey = getKey(first);
-            const secondKey = getKey(second);
+    /* Helpers */
 
-            const firstHasKey = firstKey !== undefined;
-            const secondHasKey = secondKey !== undefined;
-
-            if (!firstHasKey && !secondHasKey) {
-                return 0;
-            }
-            if (!firstHasKey) {
-                return 1;
-            }
-            if (!secondHasKey) {
-                return -1;
-            }
-            return firstKey - secondKey;
-        });
-    }
-
-    private mergeLectureRepresentations(existingLectures: ExistingLecture[], dtos: LectureSeriesCreateLectureDTO[]): (ExistingLecture | LectureSeriesCreateLectureDTO)[] {
-        const result: (ExistingLecture | LectureSeriesCreateLectureDTO)[] = [];
-        let existingLectureIndex = 0;
-        let dtoIndex = 0;
-        while (existingLectureIndex < existingLectures.length && dtoIndex < dtos.length) {
-            const existingLecture = existingLectures[existingLectureIndex];
-            const dto = dtos[dtoIndex];
-            const existingLectureKey = this.getSortingKeyFor(existingLecture);
-            const dtoKey = this.getSortingKeyFor(dto);
-            if (existingLectureKey !== undefined && dtoKey !== undefined) {
-                if (existingLectureKey <= dtoKey!) {
-                    result.push(existingLecture);
-                    existingLectureIndex++;
-                } else {
-                    result.push(dto);
-                    dtoIndex++;
-                }
-            } else if (existingLectureKey !== undefined) {
-                result.push(existingLecture);
-                existingLectureIndex++;
-            } else if (dtoKey !== undefined) {
-                result.push(dto);
-                dtoIndex++;
-            } else {
-                result.push(existingLecture);
-                existingLectureIndex++;
-            }
-        }
-        while (existingLectureIndex < existingLectures.length) {
-            result.push(existingLectures[existingLectureIndex++]);
-        }
-        while (dtoIndex < dtos.length) {
-            result.push(dtos[dtoIndex++]);
-        }
-        return result;
-    }
-
-    private getSortingKeyFor(lectureRepresentation: LectureSeriesCreateLectureDTO | ExistingLecture): number | undefined {
-        const keyDate = lectureRepresentation.startDate ?? lectureRepresentation.endDate;
-        if (keyDate) {
-            return keyDate.valueOf();
-        } else {
+    private computeLectureDraftsBasedOnSeriesEndDateAndInitialLectures(): LectureDraft[] | undefined {
+        const rawSeriesEndDate = this.seriesEndDate();
+        if (!rawSeriesEndDate) {
             return undefined;
         }
+        const endDate = dayjs(rawSeriesEndDate).endOf('day');
+        let lectureDrafts: LectureDraft[] = [];
+        for (const initialLecture of this.initialLectures()) {
+            const lectureDraftsFromInitialLecture = this.computeLectureDraftsForInitialLecture(initialLecture, endDate);
+            if (lectureDraftsFromInitialLecture === undefined) {
+                return undefined;
+            }
+            lectureDrafts = [...lectureDrafts, ...lectureDraftsFromInitialLecture];
+        }
+        return lectureDrafts;
     }
 
     private computeLectureDraftsForInitialLecture(initialLecture: InitialLecture, seriesEndDate: Dayjs): LectureDraft[] | undefined {
@@ -296,12 +233,17 @@ export class LectureSeriesCreateComponent {
 
     private generateDatePairs(seriesEndDate: Dayjs, startDate?: Date, endDate?: Date): [Dayjs?, Dayjs?][] {
         if (startDate && !endDate) {
-            return this.generateDatePairsWithOnlyStartDate(seriesEndDate, startDate);
+            return this.generateDatePairsWithSingleDate(seriesEndDate, startDate, 'startDate');
         } else if (!startDate && endDate) {
-            return this.generateDatePairsWithOnlyEndDate(seriesEndDate, endDate);
+            return this.generateDatePairsWithSingleDate(seriesEndDate, endDate, 'endDate');
+        } else {
+            return this.generateDatePairsWithBothDates(seriesEndDate, startDate!, endDate!);
         }
-        let currentStart = dayjs(startDate!);
-        let currentEnd = dayjs(endDate!);
+    }
+
+    private generateDatePairsWithBothDates(seriesEndDate: Dayjs, startDate: Date, endDate: Date): [Dayjs, Dayjs][] {
+        let currentStart = dayjs(startDate);
+        let currentEnd = dayjs(endDate);
         const pairs: [Dayjs, Dayjs][] = [];
         while (!currentEnd.isAfter(seriesEndDate)) {
             pairs.push([currentStart, currentEnd]);
@@ -311,30 +253,126 @@ export class LectureSeriesCreateComponent {
         return pairs;
     }
 
-    private generateDatePairsWithOnlyStartDate(seriesEndDate: Dayjs, startDate: Date): [Dayjs, undefined][] {
-        let currentStart = dayjs(startDate!);
-        const pairs: [Dayjs, undefined][] = [];
-        while (!currentStart.isAfter(seriesEndDate)) {
-            pairs.push([currentStart, undefined]);
-            currentStart = currentStart.add(1, 'week');
-        }
-        return pairs;
-    }
-    private generateDatePairsWithOnlyEndDate(seriesEndDate: Dayjs, endDate: Date): [undefined, Dayjs][] {
-        let currentEnd = dayjs(endDate!);
-        const pairs: [undefined, Dayjs][] = [];
-        while (!currentEnd.isAfter(seriesEndDate)) {
-            pairs.push([undefined, currentEnd]);
-            currentEnd = currentEnd.add(1, 'week');
+    private generateDatePairsWithSingleDate(seriesEndDate: Dayjs, date: Date, dateType: 'startDate' | 'endDate'): [Dayjs?, Dayjs?][] {
+        const pairs: [Dayjs?, Dayjs?][] = [];
+        let current = dayjs(date);
+        while (!current.isAfter(seriesEndDate)) {
+            if (dateType === 'startDate') {
+                pairs.push([current, undefined]);
+            } else {
+                pairs.push([undefined, current]);
+            }
+            current = current.add(1, 'week');
         }
         return pairs;
     }
 
-    private computeSeriesEndDateInvalid(): boolean {
+    private sort<T>(items: T[], keyProvider: (item: T) => number | undefined): T[] {
+        return [...items].sort((first, second) => {
+            const firstKey = keyProvider(first);
+            const secondKey = keyProvider(second);
+
+            const firstHasKey = firstKey !== undefined;
+            const secondHasKey = secondKey !== undefined;
+
+            if (!firstHasKey && !secondHasKey) {
+                return 0;
+            }
+            if (!firstHasKey) {
+                return 1;
+            }
+            if (!secondHasKey) {
+                return -1;
+            }
+            return firstKey - secondKey;
+        });
+    }
+
+    private getSortingKeyFor(lectureRepresentation: LectureSeriesCreateLectureDTO | ExistingLecture): number | undefined {
+        const keyDate = lectureRepresentation.startDate ?? lectureRepresentation.endDate;
+        if (keyDate) {
+            return keyDate.valueOf();
+        } else {
+            return undefined;
+        }
+    }
+
+    private assignTitlesToNewAndExistingLectures(sortedLectureDrafts: LectureDraft[], sortedExistingLectures: ExistingLecture[]) {
+        const sortedDTOs = sortedLectureDrafts.map((draft) => draft.dto);
+        const sortedLectureRepresentations = this.mergeSortedLectureRepresentations(sortedExistingLectures, sortedDTOs);
+        sortedLectureRepresentations.forEach((lectureRepresentation, index) => {
+            const standardNamePattern = /^Lecture \d+$/;
+            if ((lectureRepresentation.title && lectureRepresentation.title.match(standardNamePattern)) || !lectureRepresentation.title) {
+                lectureRepresentation.title = `Lecture ${index + 1}`;
+                if ('state' in lectureRepresentation) {
+                    lectureRepresentation.state = ExistingLectureState.ADAPTED;
+                }
+            }
+        });
+    }
+
+    private mergeSortedLectureRepresentations(
+        sortedExistingLectures: ExistingLecture[],
+        sortedDTOs: LectureSeriesCreateLectureDTO[],
+    ): (ExistingLecture | LectureSeriesCreateLectureDTO)[] {
+        const sortedResult: (ExistingLecture | LectureSeriesCreateLectureDTO)[] = [];
+        let existingLectureIndex = 0;
+        let dtoIndex = 0;
+        while (existingLectureIndex < sortedExistingLectures.length && dtoIndex < sortedDTOs.length) {
+            const existingLecture = sortedExistingLectures[existingLectureIndex];
+            const dto = sortedDTOs[dtoIndex];
+            const existingLectureKey = this.getSortingKeyFor(existingLecture);
+            const dtoKey = this.getSortingKeyFor(dto);
+            if (existingLectureKey !== undefined && dtoKey !== undefined) {
+                if (existingLectureKey <= dtoKey!) {
+                    sortedResult.push(existingLecture);
+                    existingLectureIndex++;
+                } else {
+                    sortedResult.push(dto);
+                    dtoIndex++;
+                }
+            } else if (existingLectureKey !== undefined) {
+                sortedResult.push(existingLecture);
+                existingLectureIndex++;
+            } else if (dtoKey !== undefined) {
+                sortedResult.push(dto);
+                dtoIndex++;
+            } else {
+                sortedResult.push(existingLecture);
+                existingLectureIndex++;
+            }
+        }
+        while (existingLectureIndex < sortedExistingLectures.length) {
+            sortedResult.push(sortedExistingLectures[existingLectureIndex++]);
+        }
+        while (dtoIndex < sortedDTOs.length) {
+            sortedResult.push(sortedDTOs[dtoIndex++]);
+        }
+        return sortedResult;
+    }
+
+    private createInitialLecture(): InitialLecture {
+        const id = window.crypto.randomUUID();
+        const startDate = signal<Date | undefined>(undefined);
+        const endDate = signal<Date | undefined>(undefined);
+        const isStartDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(startDate(), endDate()) || isFirstDateAfterOrEqualSecond(startDate(), this.seriesEndDate()));
+        const isEndDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(startDate(), endDate()) || isFirstDateAfterOrEqualSecond(endDate(), this.seriesEndDate()));
+        return { id, startDate, endDate, isStartDateInvalid, isEndDateInvalid };
+    }
+
+    private computeIsSeriesEndDateInvalid(): boolean {
         const latestInitialLectureDate = this.initialLectures()
             .flatMap((lecture) => [lecture.startDate(), lecture.endDate()])
             .filter((date): date is Date => date !== undefined)
             .sort((first, second) => first.getTime() - second.getTime())[0];
         return isFirstDateAfterOrEqualSecond(latestInitialLectureDate ?? new Date(), this.seriesEndDate());
+    }
+
+    private setExistingLectures() {
+        // TODO: potentially rather fetch newly to avoid inconsistencies
+        const existingLectures = this.courseStorageService.getCourse(this.courseId())?.lectures ?? [];
+        this.existingLectures = existingLectures.map((lecture) => {
+            return { id: lecture.id, title: lecture.title, startDate: lecture.startDate, endDate: lecture.endDate, state: ExistingLectureState.ORIGINAL } as ExistingLecture;
+        });
     }
 }

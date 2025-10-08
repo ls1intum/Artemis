@@ -12,13 +12,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { addOneMinuteTo, isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
 
+// TODO: clean
 @Component({
-    selector: 'jhi-lecture-series-edit-modal',
+    selector: 'jhi-lecture-series-draft-edit-modal',
     imports: [FormsModule, DialogModule, InputTextModule, DatePickerModule, ButtonModule, AutoFocusModule, TranslateDirective],
-    templateUrl: './lecture-series-edit-modal.component.html',
-    styleUrl: './lecture-series-edit-modal.component.scss',
+    templateUrl: './lecture-series-draft-edit-modal.component.html',
+    styleUrl: './lecture-series-draft-edit-modal.component.scss',
 })
-export class LectureSeriesEditModalComponent {
+export class LectureSeriesDraftEditModalComponent {
     private translateService = inject(TranslateService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 

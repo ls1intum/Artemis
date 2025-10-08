@@ -67,7 +67,7 @@
                                 {{ index + 1 }}
                             </span>
                             <span class="draft-title">{{ draft.dto.title }}</span>
-                            <button type="button" class="card-button" (click)="editModal.open(draft)">
+                            <button type="button" class="card-button" (click)="draftEditModal.open(draft)">
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
                             <button type="button" class="card-button" (click)="deleteLectureDraft(draft)">
@@ -92,5 +92,5 @@
     }
 </div>
 
-<jhi-lecture-series-edit-modal #editModal />
+<jhi-lecture-series-draft-edit-modal #draftEditModal />
 <p-confirmDialog [style]="{ maxWidth: '40rem' }" />
