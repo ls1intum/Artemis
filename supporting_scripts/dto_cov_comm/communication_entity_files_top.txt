@@ -1,6 +1,0 @@
-  6 src/main/java/de/tum/cit/aet/artemis/communication/web/ConversationMessageResource.java
-  3 src/main/java/de/tum/cit/aet/artemis/communication/web/FaqResource.java
-  3 src/main/java/de/tum/cit/aet/artemis/communication/web/SystemNotificationResource.java
-  3 src/main/java/de/tum/cit/aet/artemis/communication/web/AnswerMessageResource.java
-  3 src/main/java/de/tum/cit/aet/artemis/communication/web/admin/AdminSystemNotificationResource.java
-  1 src/main/java/de/tum/cit/aet/artemis/communication/web/GlobalNotificationSettingResource.java
