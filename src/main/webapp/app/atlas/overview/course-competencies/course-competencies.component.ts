@@ -60,6 +60,10 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
 
         // Resolve courseId from input or route params
         this._resolvedCourseId = this.courseId() ?? Number(this.activatedRoute.parent?.parent?.snapshot.paramMap.get('courseId'));
+        if (!this._resolvedCourseId || isNaN(this._resolvedCourseId)) {
+            this.alertService.error('artemisApp.error.invalidCourseId');
+            return;
+        }
         this.course = this.courseStorageService.getCourse(this.resolvedCourseId());
 
         this.dashboardFeatureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard).subscribe((active) => {
