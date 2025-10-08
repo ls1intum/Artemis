@@ -8,6 +8,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { SafeHtml } from '@angular/platform-browser';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 describe('MultipleChoiceQuestionComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionComponent>;
@@ -16,12 +17,14 @@ describe('MultipleChoiceQuestionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FontAwesomeModule],
             declarations: [MultipleChoiceQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
             providers: [ArtemisMarkdownService],
         }).compileComponents();
         fixture = TestBed.createComponent(MultipleChoiceQuestionComponent);
         component = fixture.componentInstance;
         artemisMarkdownService = TestBed.inject(ArtemisMarkdownService);
+        fixture.componentRef.setInput('selectedAnswerOptions', []);
     });
 
     afterEach(() => {
@@ -42,7 +45,9 @@ describe('MultipleChoiceQuestionComponent', () => {
             answerOptions: [{ id: 1, explanation: 'answer-explanation', hint: 'answer-hint', text: 'answer-text', invalid: false }],
         };
 
-        component.question = question;
+        fixture.componentRef.setInput('question', question);
+        fixture.detectChanges();
+
         expect(component.renderedQuestion.text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
         expect(component.renderedQuestion.hint).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.hint));
         expect(component.renderedQuestion.explanation).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.explanation));
@@ -68,7 +73,8 @@ describe('MultipleChoiceQuestionComponent', () => {
             answerOptions: [{ explanation: 'answer-explanation', text: 'false', invalid: false }],
         };
 
-        component.question = question;
+        fixture.componentRef.setInput('question', question);
+        fixture.detectChanges();
         expect(component.renderedQuestion.text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
         expect(component.renderedQuestion.hint).toBe('');
         expect(component.renderedQuestion.explanation).toBe('');
@@ -99,7 +105,7 @@ describe('MultipleChoiceQuestionComponent', () => {
             { id: 3, invalid: false },
         ];
 
-        component.selectedAnswerOptions = [answerOptions[0], answerOptions[2]];
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0], answerOptions[2]]);
         expect(component.isAnswerOptionSelected(answerOptions[0])).toBeTrue();
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
         expect(component.isAnswerOptionSelected(answerOptions[2])).toBeTrue();
@@ -112,8 +118,20 @@ describe('MultipleChoiceQuestionComponent', () => {
             { id: 3, invalid: false },
         ];
 
-        component.clickDisabled = true;
-        component.selectedAnswerOptions = [];
+        const question: MultipleChoiceQuestion = {
+            id: 1,
+            text: 'some-text',
+            hint: 'some-hint',
+            explanation: 'some-explanation',
+            exportQuiz: false,
+            randomizeOrder: true,
+            invalid: false,
+            answerOptions: [{ id: 1, explanation: 'answer-explanation', hint: 'answer-hint', text: 'answer-text', invalid: false }],
+        };
+
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('clickDisabled', true);
+        fixture.detectChanges();
         component.toggleSelection(answerOptions[1]);
         expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
@@ -135,10 +153,17 @@ describe('MultipleChoiceQuestionComponent', () => {
             scoringType: ScoringType.ALL_OR_NOTHING,
         };
 
-        component.selectedAnswerOptions = [];
-        component.question = question;
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', []);
+        fixture.detectChanges();
+
+        component.selectedAnswerOptionsChange.subscribe((v) => {
+            fixture.componentRef.setInput('selectedAnswerOptions', v ?? []);
+            fixture.detectChanges();
+        });
 
         component.toggleSelection(answerOptions[1]);
+
         expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBeTrue();
 
@@ -177,8 +202,14 @@ describe('MultipleChoiceQuestionComponent', () => {
             singleChoice: true,
         };
 
-        component.selectedAnswerOptions = [];
-        component.question = question;
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', []);
+        fixture.detectChanges();
+
+        component.selectedAnswerOptionsChange.subscribe((v) => {
+            fixture.componentRef.setInput('selectedAnswerOptions', v ?? []);
+            fixture.detectChanges();
+        });
 
         component.toggleSelection(answerOptions[1]);
         expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();

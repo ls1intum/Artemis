@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
@@ -8,10 +8,14 @@ import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobi
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
+import { faArrowUpFromBracket, faChevronLeft, faChevronRight, faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
+import { PopoverModule } from 'primeng/popover';
+import { CheckboxModule } from 'primeng/checkbox';
+import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-calendar-mobile-overview',
@@ -20,8 +24,11 @@ import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/c
         CalendarMobileDayPresentationComponent,
         TranslateDirective,
         FaIconComponent,
-        CalendarEventFilterComponent,
         CalendarSubscriptionPopoverComponent,
+        PopoverModule,
+        CheckboxModule,
+        FormsModule,
+        ButtonModule,
     ],
     templateUrl: './calendar-mobile-overview.component.html',
     styleUrl: './calendar-mobile-overview.component.scss',
@@ -31,10 +38,12 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
     private activatedRouteSubscription?: Subscription;
 
-    readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
+    readonly CalendarEventFilterOption = CalendarEventFilterOption;
     readonly faXmark = faXmark;
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
+    readonly faFilter = faFilter;
+    readonly faArrowUpFromBracket = faArrowUpFromBracket;
 
     firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     selectedDate = signal<Dayjs | undefined>(undefined);
@@ -42,6 +51,10 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     isLoading = signal<boolean>(false);
     calendarSubscriptionToken = this.calendarService.subscriptionToken;
     currentCourseId = signal<number | undefined>(undefined);
+    lectureFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.LectureEvents));
+    exerciseFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.ExerciseEvents));
+    tutorialFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.TutorialEvents));
+    examFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.ExamEvents));
 
     ngOnInit(): void {
         this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
@@ -53,6 +66,14 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
         });
 
         this.calendarService.loadSubscriptionToken().subscribe();
+    }
+
+    toggleFilterOption(option: CalendarEventFilterOption) {
+        if (this.calendarService.includedEventFilterOptions().includes(option)) {
+            this.calendarService.includedEventFilterOptions.update((oldOptions) => oldOptions.filter((otherOption) => otherOption !== option));
+        } else {
+            this.calendarService.includedEventFilterOptions.update((oldOptions) => [...oldOptions, option]);
+        }
     }
 
     ngOnDestroy() {
