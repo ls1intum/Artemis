@@ -11,17 +11,29 @@
         margin-bottom: 0;
     }
 
-    .from-section {
+    .input-row {
         display: flex;
         gap: 1rem;
+        align-items: center;
+
+        .first-lecture-enumerator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 1.3rem;
+            height: 1.3rem;
+            border-radius: 0.25rem;
+            color: var(--primary);
+            background-color: var(--body-bg);
+        }
+
+        .first-lecture-delete-button:hover {
+            color: var(--danger);
+        }
     }
 
     h3 {
         margin: 0;
-    }
-
-    .weekly-lecture-delete-button:hover {
-        color: red;
     }
 
     .draft-card {
@@ -66,7 +78,7 @@
         }
     }
 
-    .controls-section {
+    .save-and-cancel-section {
         display: flex;
         justify-content: end;
         gap: 1rem;

@@ -90,11 +90,9 @@
             "createSeries": {
                 "explanationText": "Lege mehrere Vorlesungen gleichzeitig an, indem du einen Wochentag, eine Uhrzeit und einen Zeitraum für die Vorlesungsserie festlegst. Die Vorlesungsinhalte kannst du später ergänzen. So informierst du User schon frühzeitig über Vorlesungstermine des Semesters.",
                 "inputLabel": {
-                    "weekday": "Weekday",
-                    "startTime": "Startzeit",
-                    "endTime": "Endzeit",
-                    "seriesStartDate": "Startdatum",
-                    "seriesEndDate": "Enddatum"
+                    "startDate": "Start",
+                    "endDate": "Ende",
+                    "seriesEndDate": "Serien-Enddatum"
                 },
                 "generatedLecturesHeading": "Generierte Vorlesungen",
                 "editLectureModalTitle": "Vorlesungsdetails bearbeiten",

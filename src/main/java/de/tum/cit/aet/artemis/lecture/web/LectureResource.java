@@ -152,7 +152,6 @@ public class LectureResource {
         Lecture lecture = new Lecture();
         lecture.setCourse(course);
         lecture.setTitle(lectureDTO.title());
-        lecture.setVisibleDate(lectureDTO.visibleDate());
         lecture.setStartDate(lectureDTO.startDate());
         lecture.setEndDate(lectureDTO.endDate());
         return lecture;

@@ -1,77 +1,58 @@
 <div class="frame">
     <p jhiTranslate="artemisApp.lecture.createSeries.explanationText"></p>
-    <div class="from-section">
-        <p-floatlabel variant="on">
-            <p-datepicker
-                inputId="start-date"
-                [ngModel]="seriesStartDate() ?? null"
-                (ngModelChange)="seriesStartDate.set($event)"
-                style="width: 12rem"
-                [firstDayOfWeek]="1"
-                [minDate]="minimumStartDate"
-            />
-            <label for="start-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesStartDate"></label>
-        </p-floatlabel>
-        <p-floatlabel variant="on">
-            <p-datepicker
-                inputId="end-date"
-                [ngModel]="seriesEndDate() ?? null"
-                (ngModelChange)="seriesEndDate.set($event)"
-                style="width: 12rem"
-                [firstDayOfWeek]="1"
-                [minDate]="minimumSeriesEndDate()"
-                [invalid]="isSeriesEndDateInvalid()"
-            />
-            <label for="end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
-        </p-floatlabel>
-    </div>
+    <p-floatlabel variant="on">
+        <p-datepicker
+            inputId="series-end-date"
+            [ngModel]="seriesEndDate() ?? null"
+            (ngModelChange)="seriesEndDate.set($event)"
+            [firstDayOfWeek]="1"
+            [invalid]="seriesEndDateInvalid()"
+            [appendTo]="'body'"
+        />
+        <label for="series-end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
+    </p-floatlabel>
     <p>Specify at least one weekly lecture by choosing a weekday, as well as a start time and end time:</p>
-    @for (weeklyLecture of weeklyLectures(); track weeklyLecture.id) {
-        <div class="from-section">
+    @for (weeklyLecture of firstLectures(); track weeklyLecture.id; let index = $index) {
+        <div class="input-row">
+            <div class="first-lecture-enumerator">
+                {{ index + 1 }}
+            </div>
             <p-floatlabel variant="on">
-                <p-select
-                    inputId="weekday"
-                    [options]="weekdayOptions()"
-                    [ngModel]="weeklyLecture.selectedWeekdayIndex()"
-                    (ngModelChange)="weeklyLecture.selectedWeekdayIndex.set($event)"
-                    optionLabel="label"
-                    optionValue="weekdayIndex"
-                    style="width: 12rem"
+                <p-datepicker
+                    inputId="start-date"
+                    [ngModel]="weeklyLecture.startDate() ?? null"
+                    (ngModelChange)="weeklyLecture.startDate.set($event)"
+                    [firstDayOfWeek]="1"
+                    [invalid]="weeklyLecture.isStartDateInvalid()"
+                    [showTime]="true"
+                    hourFormat="24"
+                    [appendTo]="'body'"
+                    [baseZIndex]="100000"
                 />
-                <label for="weekday" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.weekday"></label>
+                <label for="start-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.startDate"></label>
             </p-floatlabel>
             <p-floatlabel variant="on">
-                <p-inputMask
-                    inputId="start-time"
-                    mask="99 : 99"
-                    slotChar="-"
-                    [ngModel]="weeklyLecture.startTimeString() ?? ''"
-                    (ngModelChange)="weeklyLecture.startTimeString.set($event)"
-                    [invalid]="weeklyLecture.isStartAndEndTimeCombinationInvalid()"
-                    [style]="{ width: '12rem' }"
+                <p-datepicker
+                    inputId="end-date"
+                    [ngModel]="weeklyLecture.endDate() ?? null"
+                    (ngModelChange)="weeklyLecture.endDate.set($event)"
+                    [firstDayOfWeek]="1"
+                    [invalid]="weeklyLecture.isEndDateInvalid()"
+                    [showTime]="true"
+                    hourFormat="24"
+                    [appendTo]="'body'"
+                    [baseZIndex]="100000"
                 />
-                <label for="start-time" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.startTime"></label>
+                <label for="end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.endDate"></label>
             </p-floatlabel>
-            <p-floatlabel variant="on">
-                <p-inputMask
-                    inputId="end-time"
-                    mask="99 : 99"
-                    slotChar="-"
-                    [ngModel]="weeklyLecture.endTimeString() ?? ''"
-                    (ngModelChange)="weeklyLecture.endTimeString.set($event)"
-                    [invalid]="weeklyLecture.isStartAndEndTimeCombinationInvalid()"
-                    [style]="{ width: '12rem' }"
-                />
-                <label for="end-time" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.endTime"></label>
-            </p-floatlabel>
-            @if (weeklyLectures().length !== 1) {
-                <button pButton outlined severity="secondary" size="small" class="weekly-lecture-delete-button" (click)="removeWeeklyLecture(weeklyLecture)">
+            @if (firstLectures().length !== 1) {
+                <button pButton outlined severity="secondary" size="small" class="first-lecture-delete-button" (click)="removeFirstLecture(weeklyLecture)">
                     <fa-icon [icon]="faTrash" />
                 </button>
             }
         </div>
     }
-    <button pButton severity="secondary" size="small" [style]="{ width: '12rem' }" (click)="addWeeklyLecture()">Add Weekly Lecture</button>
+    <button pButton severity="secondary" size="small" [style]="{ width: '12rem' }" (click)="addFirstLecture()">Add Weekly Lecture</button>
     @let drafts = lectureDrafts();
     @if (drafts.length > 0) {
         <h3 jhiTranslate="artemisApp.lecture.createSeries.generatedLecturesHeading"></h3>
@@ -96,7 +77,7 @@
             </div>
         </div>
     }
-    <div class="controls-section">
+    <div class="save-and-cancel-section">
         <button pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
         <button pButton size="small" [disabled]="noDraftsGenerated()" (click)="save()" jhiTranslate="entity.action.save"></button>
     </div>

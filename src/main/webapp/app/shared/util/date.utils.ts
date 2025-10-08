@@ -91,7 +91,7 @@ export function addOneMinuteTo(referenceDate?: Date) {
     if (!referenceDate) {
         return undefined;
     }
-    const minimumDate = new Date(referenceDate.getTime());
-    minimumDate.setMinutes(minimumDate.getMinutes() + 1);
-    return minimumDate;
+    const resultDate = new Date(referenceDate.getTime());
+    resultDate.setMinutes(resultDate.getMinutes() + 1);
+    return resultDate;
 }
