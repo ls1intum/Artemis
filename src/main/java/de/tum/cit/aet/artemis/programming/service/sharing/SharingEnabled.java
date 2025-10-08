@@ -7,8 +7,8 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 
 /**
- * Condition to check if the Passkey feature is enabled.
- * Based on this condition, Spring components concerning Passkey functionality can be enabled or disabled.
+ * Condition to check if the Sharing feature is enabled.
+ * Based on this condition, Spring components concerning Sharing functionality can be enabled or disabled.
  */
 public class SharingEnabled implements Condition {
 

@@ -30,7 +30,7 @@ public class ArtemisConfigHelper {
      * Check if the Sharing feature is enabled.
      *
      * @param environment the Spring environment
-     * @return true if the Sjaromg feature is enabled, false otherwise
+     * @return true if the Sharing feature is enabled, false otherwise
      */
     public boolean isSharingEnabled(Environment environment) {
         return getPropertyOrExitArtemis(SHARING_ENABLED_PROPERTY_NAME, environment);

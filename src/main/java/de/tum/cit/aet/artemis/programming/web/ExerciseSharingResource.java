@@ -55,7 +55,7 @@ public class ExerciseSharingResource {
     /*
      * Customized FileInputStream to clean up the basic file after closing.
      */
-    private static class AutoDeletingFileInputStream extends FileInputStream {
+    private static final class AutoDeletingFileInputStream extends FileInputStream {
 
         private final Path path;
 
@@ -71,7 +71,7 @@ public class ExerciseSharingResource {
             }
             finally {
                 try {
-                    Files.delete(this.path);
+                    Files.deleteIfExists(this.path);
                 }
                 catch (IOException e) {
                     log.error("Could not delete temporary file {}", this.path, e);
@@ -130,10 +130,15 @@ public class ExerciseSharingResource {
      */
     @PostMapping("setup-import")
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfo sharingSetupInfo)
-            throws GitAPIException, SharingException, IOException, URISyntaxException {
-        ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
-        return ResponseEntity.ok().body(exercise);
+    public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfo sharingSetupInfo) {
+        try {
+            ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
+            return ResponseEntity.ok().body(exercise);
+        }
+        catch (GitAPIException | SharingException | IOException | URISyntaxException e) {
+            log.error("Error importing exercise from sharing platform", e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     /**
@@ -180,12 +185,11 @@ public class ExerciseSharingResource {
      *
      * @param token in base64 format and used to retrieve the exercise
      * @param sec   digest of the shared key
-     * @return a stream of the zip file
-     * @throws FileNotFoundException if the zip file does not exist anymore
+     * @return a stream of the zip file, or an internal server error, if file does not exist
      */
     @GetMapping(SHARING_EXPORT_RESOURCE_PATH + "/{token}")
     // Custom Key validation is applied
-    public ResponseEntity<Resource> exportExerciseToSharing(@PathVariable("token") String token, @RequestParam("sec") String sec) throws FileNotFoundException {
+    public ResponseEntity<Resource> exportExerciseToSharing(@PathVariable("token") String token, @RequestParam("sec") String sec) {
         if (!exerciseSharingService.validate(token, sec)) {
             log.warn("Security Token {} is not valid", sec);
             return ResponseEntity.status(401).build();
@@ -196,10 +200,15 @@ public class ExerciseSharingResource {
             return ResponseEntity.notFound().build();
         }
 
-        InputStreamResource resource = new InputStreamResource(new AutoDeletingFileInputStream(zipFilePath.get()));
-
-        return ResponseEntity.ok().contentLength(zipFilePath.get().toFile().length()).contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header("filename", zipFilePath.get().toString()).body(resource);
+        try {
+            InputStreamResource resource = new InputStreamResource(new AutoDeletingFileInputStream(zipFilePath.get()));
+            return ResponseEntity.ok().contentLength(zipFilePath.get().toFile().length()).contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header("filename", zipFilePath.get().toString()).body(resource);
+        }
+        catch (FileNotFoundException e) {
+            log.error("Exported file not found for token {}", token, e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
 }
