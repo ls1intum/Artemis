@@ -23,17 +23,6 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
 
-export interface LectureDraft {
-    id: string;
-    state: LectureDraftState;
-    dto: LectureSeriesCreateLectureDTO;
-}
-
-export enum LectureDraftState {
-    EDITED = 'edited',
-    REGULAR = 'regular',
-}
-
 interface InitialLecture {
     id: string;
     startDate: WritableSignal<Date | undefined>;
@@ -51,8 +40,19 @@ interface ExistingLecture {
 }
 
 enum ExistingLectureState {
-    ORIGINAL = 'ORIGINAL',
-    ADAPTED = 'ADAPTED',
+    ORIGINAL = 'original',
+    ADAPTED = 'adapted',
+}
+
+export interface LectureDraft {
+    id: string;
+    state: LectureDraftState;
+    dto: LectureSeriesCreateLectureDTO;
+}
+
+export enum LectureDraftState {
+    EDITED = 'edited',
+    REGULAR = 'regular',
 }
 
 @Component({
