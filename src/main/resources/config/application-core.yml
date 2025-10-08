@@ -11,6 +11,8 @@ artemis:
         enabled: true
     tutorialgroup:
         enabled: true
+    exercise-versioning:
+      enabled: true
     user-management:
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME

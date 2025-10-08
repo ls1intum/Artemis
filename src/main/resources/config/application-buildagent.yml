@@ -23,6 +23,8 @@ artemis:
     user-management:
         passkey:
             enabled: false
+    exercise-versioning:
+      enabled: false
     nebula:
       enabled: false
 
