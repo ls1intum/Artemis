@@ -77,6 +77,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
 
     private subscriptions = new Subscription();
+
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
     lecturePeriodSection = viewChild.required(LectureUpdatePeriodComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
@@ -84,6 +85,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     courseTitle = model<string>('');
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit: Lecture;
+    existingLectures = signal<Lecture[] | undefined>(undefined);
     isEditMode = signal<boolean>(false);
     isSaving: boolean;
     isProcessing: boolean;
@@ -104,6 +106,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         );
     });
 
+    // TODO: clean up
     createLectureOptions: CreateLectureOption[] = [
         { label: 'Single Lecture', mode: LectureCreationMode.SINGLE },
         { label: 'Lecture Series', mode: LectureCreationMode.SERIES },
@@ -174,6 +177,9 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         this.isEditMode.set(!this.router.url.endsWith('/new'));
         this.lectureOnInit = cloneDeep(this.lecture());
         this.courseTitle.set(this.lecture().course?.title ?? '');
+
+        const existingLectures = (this.router.currentNavigation()?.extras.state?.['existingLectures'] ?? []) as Lecture[];
+        this.existingLectures.set(existingLectures);
     }
 
     ngOnDestroy() {

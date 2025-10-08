@@ -72,7 +72,7 @@
                         <fa-icon [icon]="faFileImport" />
                         <span jhiTranslate="artemisApp.lecture.import.label"></span>
                     </button>
-                    <a id="jh-create-entity" class="btn btn-primary btn-sm jh-create-entity create-lecture" [routerLink]="['new']">
+                    <a id="jh-create-entity" class="btn btn-primary btn-sm jh-create-entity create-lecture" (click)="navigateToLectureCreationPage()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
                     </a>

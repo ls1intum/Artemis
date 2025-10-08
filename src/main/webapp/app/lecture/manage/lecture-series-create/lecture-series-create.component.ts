@@ -14,11 +14,10 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { LectureNameUpdateDTO, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+import { Lecture, LectureNameUpdateDTO, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
 import { finalize } from 'rxjs';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
@@ -100,14 +99,14 @@ export class LectureSeriesCreateComponent {
     private router = inject(Router);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private confirmationService = inject(ConfirmationService);
-    private courseStorageService = inject(CourseStorageService);
-    private existingLectures: ExistingLecture[] = [];
+    private existingLectures = computed<ExistingLecture[]>(() => this.computeExistingLectures());
 
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faXmark = faXmark;
     protected readonly faTrash = faTrash;
     protected readonly LectureDraftState = LectureDraftState;
 
+    rawExistingLectures = input<Lecture[]>();
     courseId = input.required<number>();
     lectureDrafts = signal<LectureDraft[]>([]);
     isLoading = signal(false);
@@ -118,7 +117,6 @@ export class LectureSeriesCreateComponent {
 
     constructor() {
         effect(() => this.updateLectureDraftsAndExistingLecturesBasedOnSeriesEndDateAndInitialLectures());
-        effect(() => this.setExistingLectures());
     }
 
     addInitialLecture() {
@@ -152,7 +150,7 @@ export class LectureSeriesCreateComponent {
     }
 
     private updateNamesOfExistingLecturesAndSaveNewLectures(courseId: number) {
-        const updateNameDTOs = this.existingLectures
+        const updateNameDTOs = this.existingLectures()
             .filter((lecture) => lecture.state === ExistingLectureState.ADAPTED)
             .map((lecture) => new LectureNameUpdateDTO(lecture.id!, lecture.title!));
         this.lectureService.updateNames(updateNameDTOs, courseId).subscribe({
@@ -185,7 +183,7 @@ export class LectureSeriesCreateComponent {
         }
 
         const sortedLectureDrafts = this.sort(lectureDrafts, (draft) => this.getSortingKeyFor(draft.dto));
-        const sortedExistingLectures = this.sort(this.existingLectures, (lecture) => this.getSortingKeyFor(lecture));
+        const sortedExistingLectures = this.sort(this.existingLectures(), (lecture) => this.getSortingKeyFor(lecture));
         this.assignTitlesToNewAndExistingLectures(sortedLectureDrafts, sortedExistingLectures);
 
         this.lectureDrafts.set(sortedLectureDrafts);
@@ -368,10 +366,9 @@ export class LectureSeriesCreateComponent {
         return isFirstDateAfterOrEqualSecond(latestInitialLectureDate ?? new Date(), this.seriesEndDate());
     }
 
-    private setExistingLectures() {
-        // TODO: potentially rather fetch newly to avoid inconsistencies
-        const existingLectures = this.courseStorageService.getCourse(this.courseId())?.lectures ?? [];
-        this.existingLectures = existingLectures.map((lecture) => {
+    private computeExistingLectures(): ExistingLecture[] {
+        const rawExistingLectures = this.rawExistingLectures() ?? [];
+        return rawExistingLectures.map((lecture) => {
             return { id: lecture.id, title: lecture.title, startDate: lecture.startDate, endDate: lecture.endDate, state: ExistingLectureState.ORIGINAL } as ExistingLecture;
         });
     }
