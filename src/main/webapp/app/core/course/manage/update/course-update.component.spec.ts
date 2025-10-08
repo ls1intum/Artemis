@@ -606,13 +606,13 @@ describe('Course Management Update Component', () => {
             expect(comp.isValidEnrollmentPeriod).toBeFalse();
         });
 
-        it('should handle invalid enrollment start date after course start date', () => {
+        it('should handle valid enrollment start date after course start date', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(2, 'day');
             comp.course.endDate = dayjs().add(1, 'day');
             comp.course.enrollmentStartDate = dayjs().subtract(1, 'day');
             comp.course.enrollmentEndDate = dayjs();
-            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+            expect(comp.isValidEnrollmentPeriod).toBeTrue();
         });
 
         it('should handle invalid enrollment end date after course end date', () => {

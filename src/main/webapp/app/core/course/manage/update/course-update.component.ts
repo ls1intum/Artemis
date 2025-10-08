@@ -604,11 +604,7 @@ export class CourseUpdateComponent implements OnInit {
             return false;
         }
 
-        return (
-            dayjs(this.course.enrollmentStartDate).isBefore(this.course.enrollmentEndDate) &&
-            !dayjs(this.course.enrollmentStartDate).isAfter(this.course.startDate) &&
-            !dayjs(this.course.enrollmentEndDate).isAfter(this.course.endDate)
-        );
+        return dayjs(this.course.enrollmentStartDate).isBefore(this.course.enrollmentEndDate) && !dayjs(this.course.enrollmentEndDate).isAfter(this.course.endDate);
     }
 
     /**
