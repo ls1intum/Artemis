@@ -30,11 +30,7 @@ artemis:
         debug: "7F:CB:99:74:19:30:15:4B:86:4B:8A:73:B0:09:94:52:19:F6:BD:90:6A:7C:16:B1:76:37:AF:74:B1:48:3B:6C"
 
     push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
-    # exercise versioning should be disabled by default in test environment
-    # ExerciseVersionService registers an asynchronous callback to execute after commit of transaction context
-    # In Test environment, rollback would be triggered after commit, causing race conditions and flaky tests
-    exercise-versioning:
-      enabled: false
+
     continuous-integration:
     # Defines the used docker images for certain programming languages
         build:
