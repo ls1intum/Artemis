@@ -51,6 +51,7 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
@@ -556,8 +557,34 @@ public class GitService extends AbstractGitService {
         try (Git git = new Git(repo)) {
             log.info("Pull {}", repo.getLocalPath());
             setRemoteUrl(repo);
+
+            if (shouldRaiseConflict(repo, git)) {
+                throw new WrongRepositoryStateException("Working tree contains uncommited changes that conflict with remote HEAD.");
+            }
+
             return pullCommand(git).call();
         }
+        catch (IOException e) {
+            throw new RuntimeException(e); // TODO: Not ready.
+        }
+    }
+
+    private boolean shouldRaiseConflict(Repository repo, Git git) throws GitAPIException, IOException {
+        if (git.status().call().isClean()) {
+            return false;
+        }
+
+        git.fetch().setRemote(REMOTE_NAME).call();
+        String remoteRefName = Constants.R_REMOTES + REMOTE_NAME + "/" + repo.getBranch();
+        Ref remoteRef = repo.findRef(remoteRefName);
+        ObjectId remoteHead = remoteRef != null ? remoteRef.getObjectId() : null;
+
+        if (remoteHead == null) {
+            return false;
+        }
+
+        ObjectId localHead = repo.resolve(Constants.HEAD);
+        return !remoteHead.equals(localHead);
     }
 
     /**
