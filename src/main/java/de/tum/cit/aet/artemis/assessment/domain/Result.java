@@ -173,6 +173,11 @@ public class Result extends DomainObject implements Comparable<Result> {
         return this;
     }
 
+    public Result exerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
+        return this;
+    }
+
     public Instant getLastModifiedDate() {
         return lastModifiedDate;
     }

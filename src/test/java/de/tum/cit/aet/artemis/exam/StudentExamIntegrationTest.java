@@ -1264,7 +1264,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             var participation = exercise.getStudentParticipations().iterator().next();
             final var submission = createSubmission(exercise);
             if (submission != null) {
-                submission.addResult(new Result());
+                Result result = new Result();
+                result.setExerciseId(exercise.getId());
+                submission.addResult(result);
                 Set<Submission> submissions = new HashSet<>();
                 submissions.add(submission);
                 participation.setSubmissions(submissions);

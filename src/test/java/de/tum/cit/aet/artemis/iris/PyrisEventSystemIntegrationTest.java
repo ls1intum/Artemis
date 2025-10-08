@@ -155,6 +155,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         Result result = ParticipationFactory.generateResult(true, score);
         result.setSubmission(submission);
+        result.setExerciseId(studentParticipation.getExercise().getId());
         result.completionDate(ZonedDateTime.now());
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         submission.addResult(result);

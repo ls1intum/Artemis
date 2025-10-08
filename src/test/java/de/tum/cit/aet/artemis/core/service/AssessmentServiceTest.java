@@ -174,6 +174,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setExerciseId(exercise.getId());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -195,6 +196,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setExerciseId(exercise.getId());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -216,6 +218,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setExerciseId(exercise.getId());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -239,6 +242,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setExerciseId(exercise.getId());
         submissionWithoutResult.addResult(result);
 
         if (isDueDateIndividual) {
@@ -275,6 +279,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setExerciseId(exercise.getId());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);
@@ -296,6 +301,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         var result = new Result();
         result.setSubmission(submissionWithoutResult);
         result.setFeedbacks(feedbacks);
+        result.setExerciseId(exercise.getId());
         submissionWithoutResult.addResult(result);
 
         resultRepository.submitResult(result, exercise);

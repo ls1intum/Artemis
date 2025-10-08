@@ -104,6 +104,7 @@ public class ComplaintUtilService {
     public void addComplaints(String studentLogin, Submission submission, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
             Result dummyResult = new Result().submission(submission);
+            dummyResult.setExerciseId(submission.getParticipation().getExercise().getId());
             dummyResult = resultTestRepository.save(dummyResult);
             Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
@@ -138,6 +139,7 @@ public class ComplaintUtilService {
     public void addTeamComplaints(Team team, Submission submission, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
             Result dummyResult = new Result().submission(submission);
+            dummyResult.setExerciseId(submission.getParticipation().getExercise().getId());
             dummyResult = resultTestRepository.save(dummyResult);
             Complaint complaint = new Complaint().participant(team).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);

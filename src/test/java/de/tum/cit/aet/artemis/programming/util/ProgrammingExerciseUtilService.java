@@ -713,6 +713,7 @@ public class ProgrammingExerciseUtilService {
         submission.setParticipation(participation);
         submission.addResult(result);
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         programmingSubmissionRepo.save(submission);
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
@@ -737,6 +738,7 @@ public class ProgrammingExerciseUtilService {
         submission.addResult(result);
         submission = submissionRepository.save(submission);
         result.setSubmission(submission);
+        result.setExerciseId(programmingExercise.getId());
         result = resultRepo.save(result);
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
         return result;
@@ -759,6 +761,7 @@ public class ProgrammingExerciseUtilService {
         submission.addResult(result);
         submission = submissionRepository.save(submission);
         result.setSubmission(submission);
+        result.setExerciseId(programmingExercise.getId());
         result = resultRepo.save(result);
         solutionProgrammingExerciseParticipationRepository.save(templateParticipation);
         return result;
@@ -792,6 +795,7 @@ public class ProgrammingExerciseUtilService {
         submission.setParticipation(participation);
 
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
         submission.addResult(result);
         // Manual results are always rated
@@ -815,6 +819,7 @@ public class ProgrammingExerciseUtilService {
         submission.addResult(result);
         submission.setCommitHash(commitHash);
         result.setSubmission(submission);
+        result.setExerciseId(participation.getExercise().getId());
         resultRepo.save(result);
         participation.addSubmission(submission);
         studentParticipationRepo.save(participation);

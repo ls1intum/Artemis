@@ -437,6 +437,7 @@ public class ParticipationFactory {
 
     /**
      * Generates a Result with the given arguments.
+     * NOTE: The caller MUST set exerciseId on the returned Result before saving it to the database.
      *
      * @param rated True, if the Result is rated
      * @param score The score of the Result
@@ -446,6 +447,22 @@ public class ParticipationFactory {
         Result result = new Result();
         result.setRated(rated);
         result.setScore(score);
+        return result;
+    }
+
+    /**
+     * Generates a Result with the given arguments including exercise ID.
+     *
+     * @param rated      True, if the Result is rated
+     * @param score      The score of the Result
+     * @param exerciseId The ID of the exercise this result belongs to
+     * @return The generated Result
+     */
+    public static Result generateResult(boolean rated, double score, Long exerciseId) {
+        Result result = new Result();
+        result.setRated(rated);
+        result.setScore(score);
+        result.setExerciseId(exerciseId);
         return result;
     }
 

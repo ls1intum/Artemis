@@ -407,6 +407,7 @@ public class ParticipationUtilService {
      */
     public Result addResultToSubmission(AssessmentType type, ZonedDateTime completionDate, Submission submission, boolean successful, boolean rated, double score) {
         Result result = new Result().submission(submission).successful(successful).rated(rated).score(score).assessmentType(type).completionDate(completionDate);
+        result.setExerciseId(submission.getParticipation().getExercise().getId());
         return resultRepo.save(result);
     }
 
@@ -420,6 +421,7 @@ public class ParticipationUtilService {
      */
     public Result addResultToSubmission(AssessmentType assessmentType, ZonedDateTime completionDate, Submission submission) {
         Result result = new Result().submission(submission).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
+        result.setExerciseId(submission.getParticipation().getExercise().getId());
         submission.addResult(result);
         result = resultRepo.save(result);
         submissionRepository.save(submission);
@@ -439,6 +441,7 @@ public class ParticipationUtilService {
     public Result addResultToSubmission(AssessmentType assessmentType, ZonedDateTime completionDate, Submission submission, String assessorLogin, List<Feedback> feedbacks) {
         Result result = new Result().submission(submission).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
+        result.setExerciseId(submission.getParticipation().getExercise().getId());
         return resultRepo.save(result);
     }
 
@@ -451,6 +454,7 @@ public class ParticipationUtilService {
     public Result addResultToSubmission(Participation participation, Submission submission) {
         Result result = new Result().submission(submission).successful(true).score(100D).rated(true).completionDate(ZonedDateTime.now());
         result.setSubmission(submission);
+        result.setExerciseId(participation.getExercise().getId());
         result = resultRepo.save(result);
         submission.addResult(result);
         submission.setParticipation(participation);
@@ -557,6 +561,7 @@ public class ParticipationUtilService {
         Result result = new Result().submission(submission).assessmentType(assessmentType).score(score).rated(rated).completionDate(completionDate);
         result.setAssessor(user);
         result.setSubmission(submission);
+        result.setExerciseId(submission.getParticipation().getExercise().getId());
         result = resultRepo.save(result);
         submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
@@ -756,6 +761,7 @@ public class ParticipationUtilService {
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setCompletionDate(ZonedDateTime.now());
         result.setSubmission(submission);
+        result.setExerciseId(participation.getExercise().getId());
         submission.setParticipation(participation);
         submission.addResult(result);
         submission = saveSubmissionToRepo(submission);

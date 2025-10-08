@@ -87,6 +87,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         result.setHasComplaint(true);
         submission.addResult(result);
         result.setSubmission(submission);
+        result.setExerciseId(textExercise.getId());
         result = resultRepository.saveAndFlush(result);
         submissionRepository.save(submission);
 
