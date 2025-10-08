@@ -16,6 +16,8 @@ import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { faCheck, faClock, faQuestion, faStar, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { AccordionModule } from 'primeng/accordion';
 
 @Component({
     selector: 'jhi-course-practice',
@@ -32,6 +34,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
         DialogModule,
         FormsModule,
         FontAwesomeModule,
+        ToggleSwitchModule,
+        AccordionModule,
     ],
     templateUrl: './course-training.component.html',
     styleUrl: './course-training.component.scss',
@@ -130,11 +134,6 @@ export class CourseTrainingComponent {
     wrongQuestions = computed(() => {
         const entry = this.currentUserEntry();
         return entry?.answeredWrong ?? 0;
-    });
-
-    streak = computed(() => {
-        const entry = this.currentUserEntry();
-        return entry?.streak ?? 0;
     });
 
     leaderboardEntries = signal<LeaderboardEntry[]>([]);
