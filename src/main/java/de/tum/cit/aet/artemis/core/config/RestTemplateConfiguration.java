@@ -10,7 +10,6 @@ import java.util.ArrayList;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +27,7 @@ import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 
 /**
  * For now only provides a basic {@link org.springframework.web.client.RestTemplate RestTemplate} bean. Can be extended
@@ -72,10 +72,7 @@ public class RestTemplateConfiguration {
      * @return a RestTemplate with short timeouts for sharing platform integration
      */
     @Bean
-    @ConditionalOnProperty(name = "artemis.sharing.enabled",   // property key
-            havingValue = "true",              // required value
-            matchIfMissing = false             // default behavior if property is absent
-    )
+    @Conditional(SharingEnabled.class)
     public RestTemplate sharingRestTemplate() {
         return createShortTimeoutRestTemplate();
     }

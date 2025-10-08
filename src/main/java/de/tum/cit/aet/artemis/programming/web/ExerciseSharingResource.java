@@ -18,7 +18,7 @@ import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.sharing.ExerciseSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImportFromSharingService;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingException;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfo;
 import tech.jhipster.web.util.ResponseUtil;
@@ -47,7 +48,7 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @RestController
 @RequestMapping("api/programming/sharing/")
-@ConditionalOnProperty(name = "artemis.sharing.enabled", havingValue = "true", matchIfMissing = false)
+@Conditional(SharingEnabled.class)
 @Lazy
 public class ExerciseSharingResource {
 

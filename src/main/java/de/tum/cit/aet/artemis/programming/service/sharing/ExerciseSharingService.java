@@ -42,7 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -67,7 +67,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportServi
  * service for sharing exercises via the sharing platform.
  */
 @Service
-@ConditionalOnProperty(name = "artemis.sharing.enabled", havingValue = "true", matchIfMissing = false)
+@Conditional(SharingEnabled.class)
 @Lazy
 public class ExerciseSharingService {
 

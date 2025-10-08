@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -8,18 +10,18 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import org.apache.commons.collections4.list.UnmodifiableList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
  * Health indicator that shows the status of the Sharing Platform connector.
  */
 @Component
+@Profile({ PROFILE_CORE })
 @Lazy
 public class SharingHealthIndicator implements HealthIndicator {
 
@@ -27,12 +29,10 @@ public class SharingHealthIndicator implements HealthIndicator {
 
     private static final DateTimeFormatter TIME_STAMP_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm:ss");
 
-    private static final Logger log = LoggerFactory.getLogger(SharingHealthIndicator.class);
-
     @Value("${artemis.sharing.enabled:'undefined'}")
     private String sharingEnabled;
 
-    private Optional<SharingConnectorService> sharingConnectorService;
+    private final Optional<SharingConnectorService> sharingConnectorService;
 
     public SharingHealthIndicator(Optional<SharingConnectorService> sharingConnectorService) {
         this.sharingConnectorService = sharingConnectorService;

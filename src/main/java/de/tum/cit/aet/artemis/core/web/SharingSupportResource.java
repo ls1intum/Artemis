@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +20,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 
 /**
  * REST controller for the exchange of configuration data between artemis and the sharing platform.
  */
 @RestController
 @RequestMapping("api/core/sharing/")
-@ConditionalOnProperty(name = "artemis.sharing.enabled", havingValue = "true", matchIfMissing = false)
+@Conditional(SharingEnabled.class)
 @Lazy
 public class SharingSupportResource {
 
