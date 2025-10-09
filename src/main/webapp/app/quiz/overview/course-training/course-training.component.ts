@@ -38,7 +38,6 @@ export class CourseTrainingComponent {
 
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
-
     isFirstVisit = signal<boolean>(true);
     leaderboardEntries = signal<LeaderboardEntry[]>([]);
     currentUserEntry = signal<LeaderboardEntry | undefined>(undefined);
