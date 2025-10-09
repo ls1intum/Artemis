@@ -92,21 +92,21 @@
                 "lectureSeriesLabel": "Vorlesungsserie"
             },
             "createSeries": {
-                "explanationText": "Lege eine oder mehrere Vorlesungsserien an, indem du die Zeit für eine oder mehrere initiale Vorlesungen angibts. Die initialen Vorlesungen werden wöchentlich wiederholt bis zum spezifizierten Serienenddatum. Ergänze Vorlesungsinhalte später. So kannst du User schon frühzeitig über die Vorlesungstermine des Semesters informieren.",
-                "startAndEndDateExplanation": "Start- und Enddatum sollten Benutzer informieren, wann sie teilnehmen müssen. Vermeide Vorlesungen, die länger als ein paar Stunden dauern, da Artemis sie als ein einzelnes Kalenderelement darstellt. Erstelle bei mehrtägigen Terminen bitte separate Vorlesungen pro Tag.",
+                "explanationText": "Lege eine oder mehrere Vorlesungsserien an, indem du die Zeit für eine oder mehrere initiale Vorlesungen angibst. Die initialen Vorlesungen werden wöchentlich bis zum spezifizierten Serienenddatum wiederholt. Ergänze Vorlesungsinhalte später. So kannst du Nutzer frühzeitig über die Vorlesungstermine des Semesters informieren.",
+                "startAndEndDateExplanation": "Start- und Enddatum sollen Nutzer darüber informieren, wann sie teilnehmen müssen. Vermeide Vorlesungen, die länger als ein paar Stunden dauern, da Artemis sie als ein einzelnes Kalenderevent darstellt. Erstelle bei mehrtägigen Terminen bitte separate Vorlesungen pro Tag.",
                 "inputLabel": {
                     "startDate": "Start",
                     "endDate": "Ende",
-                    "seriesEndDate": "Serien-Enddatum"
+                    "seriesEndDate": "Serienenddatum"
                 },
-                "addInitialLectureButtonLabel": "Initiale Vorlesung Hinzufügen",
+                "addInitialLectureButtonLabel": "Initiale Vorlesung hinzufügen",
                 "generatedLecturesHeading": "Generierte Vorlesungen",
                 "editLectureModalTitle": "Vorlesungsdetails bearbeiten",
-                "seriesCreationError": "Beim Erstellen der Vorlesungsserie ist etwas schief gegangen. Bitte versuche es erneut.",
-                "updateNameError": "Beim Anpassen der Namen der existierenden Vorlesungen ist etwas schief gegangen. Bitte versuche es erneut.",
+                "seriesCreationError": "Beim Erstellen der Vorlesungsserie ist etwas schiefgegangen. Bitte versuche es erneut.",
+                "updateNameError": "Beim Anpassen der Namen der bestehenden Vorlesungen ist etwas schiefgegangen. Bitte versuche es erneut.",
                 "updateNameConfirmation": {
-                    "header": "Existierende Vorlesungsnamen aktualisieren?",
-                    "message": "Manche existierenden Vorlesungen folgen dem default Namenformat (z.B. \"Lecture 1\"). Willst du die Nummerierung dieser Vorlesungen gemäß der neuen Reihenfolge anpassen?"
+                    "header": "Bestehende Vorlesungsnamen aktualisieren?",
+                    "message": "Einige bestehende Vorlesungen folgen dem Standard-Namensformat (z.B. „Lecture 1“). Möchtest du die Nummerierung dieser Vorlesungen gemäß der neuen Reihenfolge anpassen?"
                 }
             }
         },

@@ -92,8 +92,8 @@
                 "lectureSeriesLabel": "Lecture Series"
             },
             "createSeries": {
-                "explanationText": "Scaffold one or multiple lecture series by defining the timing of one or several initial lectures. The initial lectures will be repeated weekly until the specified series end date. Create lecture contents later. With this you can inform user early about lectures taking place during the semester.",
-                "startAndEndDateExplanation": "The start and end date should inform user when they have to attend. Avoid lectures lasting more than a few hours, as Artemis displays them as a single calendar event. For multi-day lectures, please create one lecture per day.",
+                "explanationText": "Create one or multiple lecture series by defining the timing of one or several initial lectures. The initial lectures will be repeated weekly until the specified series end date. You can add lecture content later. This allows you to inform users early about lectures taking place during the semester.",
+                "startAndEndDateExplanation": "The start and end dates should inform users when they need to attend. Avoid lectures lasting more than a few hours, as Artemis displays them as a single calendar event. For multi-day lectures, please create one lecture per day.",
                 "inputLabel": {
                     "startDate": "Start",
                     "endDate": "End",
@@ -103,10 +103,10 @@
                 "generatedLecturesHeading": "Generated Lectures",
                 "editLectureModalTitle": "Edit Lecture Details",
                 "seriesCreationError": "Something went wrong while creating the lecture series. Please try again.",
-                "updateNameError": "Something went wrong while adapting the names of the existing lectures. Please try again.",
+                "updateNameError": "Something went wrong while updating the names of existing lectures. Please try again.",
                 "updateNameConfirmation": {
                     "header": "Update existing lecture names?",
-                    "message": "Some existing lectures match the default name format (e.g. \"Lecture 1\"). Would you like to update the numbering of these lectures according to the new order?"
+                    "message": "Some existing lectures follow the default naming format (e.g., \"Lecture 1\"). Would you like to update the numbering of these lectures according to the new order?"
                 }
             }
         },
