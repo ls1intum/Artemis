@@ -429,7 +429,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.course.enrollmentStartDate = this.course.startDate;
                 this.courseForm.controls['enrollmentStartDate'].setValue(this.course.startDate);
             }
-            if (!this.course.unenrollmentEnabled) {
+            if (!this.course.enrollmentEndDate) {
                 this.course.enrollmentEndDate = this.course.endDate;
                 this.courseForm.controls['enrollmentEndDate'].setValue(this.course.endDate);
             }
