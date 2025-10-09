@@ -178,7 +178,7 @@ export class CourseTrainingComponent {
         const leaderboardSettings = new LeaderboardSettingsDTO();
         leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
 
-        this.leaderboardService.initializeLeaderboardEntry(this.courseId(), leaderboardSettings).subscribe({
+        this.leaderboardService.initializeLeaderboardEntry(leaderboardSettings).subscribe({
             next: () => {
                 this.loadLeaderboard(this.courseId());
             },
