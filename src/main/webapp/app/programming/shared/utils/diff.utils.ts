@@ -144,6 +144,8 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
             const diffEditor = monaco.editor.createDiffEditor(document.createElement('div'), {
                 readOnly: true,
                 automaticLayout: false,
+                maxFileSize: 20,
+                maxComputationTime: 3000,
             });
 
             diffEditor.setModel({ original: originalModel, modified: modifiedModel });
