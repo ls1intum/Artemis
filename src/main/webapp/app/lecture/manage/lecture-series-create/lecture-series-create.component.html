@@ -6,7 +6,7 @@
             [ngModel]="seriesEndDate() ?? null"
             (ngModelChange)="seriesEndDate.set($event ?? undefined)"
             [firstDayOfWeek]="1"
-            [invalid]="seriesEndDateInvalid()"
+            [invalid]="isSeriesEndDateInvalid()"
             [appendTo]="'body'"
         />
         <label for="series-end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>

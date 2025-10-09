@@ -27,8 +27,8 @@ export class LectureService {
         return this.http.post<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
-    createSeries(lectures: LectureSeriesCreateLectureDTO[], courseId: number): Observable<EntityArrayResponseType> {
-        return this.http.post<EntityArrayResponseType>(`api/lecture/courses/${courseId}/lectures`, lectures);
+    createSeries(lectures: LectureSeriesCreateLectureDTO[], courseId: number): Observable<void> {
+        return this.http.post<void>(`api/lecture/courses/${courseId}/lectures`, lectures);
     }
 
     update(lecture: Lecture): Observable<EntityResponseType> {

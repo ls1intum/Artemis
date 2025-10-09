@@ -1,26 +1,25 @@
 import { Component, Signal, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faPenToSquare, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { FloatLabelModule } from 'primeng/floatlabel';
-import { InputMaskModule } from 'primeng/inputmask';
 import { ButtonModule } from 'primeng/button';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faPenToSquare, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
-import dayjs, { Dayjs } from 'dayjs/esm';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 import { LectureSeriesDraftEditModalComponent } from 'app/lecture/manage/lecture-series-edit-modal/lecture-series-draft-edit-modal.component';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Router } from '@angular/router';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { Lecture, LectureNameUpdateDTO, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
-import { finalize } from 'rxjs';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ConfirmationService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { Router } from '@angular/router';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import dayjs, { Dayjs } from 'dayjs/esm';
+import { finalize } from 'rxjs';
+import { Lecture, LectureNameUpdateDTO, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+import { isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
 
 interface InitialLecture {
     id: string;
@@ -76,17 +75,16 @@ export enum LectureDraftState {
 @Component({
     selector: 'jhi-lecture-series-create',
     imports: [
+        NgClass,
+        TranslateDirective,
         SelectModule,
         FormsModule,
         DatePickerModule,
         FloatLabelModule,
-        InputMaskModule,
         ButtonModule,
+        ConfirmDialogModule,
         FaIconComponent,
         LectureSeriesDraftEditModalComponent,
-        NgClass,
-        TranslateDirective,
-        ConfirmDialogModule,
     ],
     providers: [ConfirmationService],
     templateUrl: './lecture-series-create.component.html',
@@ -108,12 +106,12 @@ export class LectureSeriesCreateComponent {
 
     rawExistingLectures = input<Lecture[]>();
     courseId = input.required<number>();
-    lectureDrafts = signal<LectureDraft[]>([]);
-    isLoading = signal(false);
-    noDraftsGenerated = computed(() => this.lectureDrafts().length === 0);
     seriesEndDate = signal<Date | undefined>(undefined);
-    seriesEndDateInvalid = computed<boolean>(() => this.computeIsSeriesEndDateInvalid());
+    isSeriesEndDateInvalid = computed<boolean>(() => this.computeIsSeriesEndDateInvalid());
+    lectureDrafts = signal<LectureDraft[]>([]);
+    noDraftsGenerated = computed(() => this.lectureDrafts().length === 0);
     initialLectures = signal<InitialLecture[]>([this.createInitialLecture()]);
+    isLoading = signal(false);
 
     constructor() {
         effect(() => this.updateLectureDraftsAndExistingLecturesBasedOnSeriesEndDateAndInitialLectures());
@@ -139,20 +137,23 @@ export class LectureSeriesCreateComponent {
     save() {
         this.isLoading.set(true);
         const courseId = this.courseId();
-        this.confirmationService.confirm({
-            header: this.translateService.instant('artemisApp.lecture.createSeries.updateNameConfirmation.header'),
-            message: this.translateService.instant('artemisApp.lecture.createSeries.updateNameConfirmation.message'),
-            acceptLabel: this.translateService.instant('global.generic.yes'),
-            rejectLabel: this.translateService.instant('global.generic.no'),
-            accept: () => this.updateNamesOfExistingLecturesAndSaveNewLectures(courseId),
-            reject: () => this.saveNewLectures(courseId),
-        });
+        const adaptedExistingLectures = this.existingLectures().filter((lecture) => lecture.state === ExistingLectureState.ADAPTED);
+        if (adaptedExistingLectures.length > 0) {
+            this.confirmationService.confirm({
+                header: this.translateService.instant('artemisApp.lecture.createSeries.updateNameConfirmation.header'),
+                message: this.translateService.instant('artemisApp.lecture.createSeries.updateNameConfirmation.message'),
+                acceptLabel: this.translateService.instant('global.generic.yes'),
+                rejectLabel: this.translateService.instant('global.generic.no'),
+                accept: () => this.updateNamesOfExistingLecturesAndSaveNewLectures(adaptedExistingLectures, courseId),
+                reject: () => this.saveNewLectures(courseId),
+            });
+        } else {
+            this.saveNewLectures(courseId);
+        }
     }
 
-    private updateNamesOfExistingLecturesAndSaveNewLectures(courseId: number) {
-        const updateNameDTOs = this.existingLectures()
-            .filter((lecture) => lecture.state === ExistingLectureState.ADAPTED)
-            .map((lecture) => new LectureNameUpdateDTO(lecture.id!, lecture.title!));
+    private updateNamesOfExistingLecturesAndSaveNewLectures(adaptedExistingLectures: ExistingLecture[], courseId: number) {
+        const updateNameDTOs = adaptedExistingLectures.map((lecture) => new LectureNameUpdateDTO(lecture.id!, lecture.title!));
         this.lectureService.updateNames(updateNameDTOs, courseId).subscribe({
             next: () => this.saveNewLectures(courseId),
             error: () => {
