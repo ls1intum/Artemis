@@ -3,7 +3,6 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPenToSquare, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { ButtonModule } from 'primeng/button';
@@ -77,7 +76,6 @@ export enum LectureDraftState {
     imports: [
         NgClass,
         TranslateDirective,
-        SelectModule,
         FormsModule,
         DatePickerModule,
         FloatLabelModule,
@@ -363,8 +361,8 @@ export class LectureSeriesCreateComponent {
         const latestInitialLectureDate = this.initialLectures()
             .flatMap((lecture) => [lecture.startDate(), lecture.endDate()])
             .filter((date): date is Date => date !== undefined)
-            .sort((first, second) => first.getTime() - second.getTime())[0];
-        return isFirstDateAfterOrEqualSecond(latestInitialLectureDate ?? new Date(), this.seriesEndDate());
+            .sort((first, second) => second.getTime() - first.getTime())[0];
+        return isFirstDateAfterOrEqualSecond(latestInitialLectureDate, this.seriesEndDate());
     }
 
     private computeExistingLectures(): ExistingLecture[] {
