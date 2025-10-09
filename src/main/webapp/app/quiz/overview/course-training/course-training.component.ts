@@ -9,7 +9,7 @@ import { LeaderboardComponent } from 'app/quiz/overview/course-training/course-t
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
-import { faCheck, faClock, faQuestion, faStar, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faClock, faQuestion, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AccordionModule } from 'primeng/accordion';
@@ -27,7 +27,6 @@ export class CourseTrainingComponent {
     private leaderboardService = inject(LeaderboardService);
 
     faClock = faClock;
-    faStar = faStar;
     faQuestion = faQuestion;
     faXmark = faXmark;
     faCheck = faCheck;
@@ -41,6 +40,11 @@ export class CourseTrainingComponent {
     courseId = computed(() => this.paramsSignal()?.['courseId']);
 
     isFirstVisit = signal<boolean>(true);
+    leaderboardEntries = signal<LeaderboardEntry[]>([]);
+    currentUserEntry = signal<LeaderboardEntry | undefined>(undefined);
+    isLoading = signal<boolean>(false);
+    isDataLoaded = signal<boolean>(false);
+
     showDialog = true;
     showInLeaderboard = true;
 
@@ -78,7 +82,7 @@ export class CourseTrainingComponent {
 
     dueDate = computed(() => {
         const entry = this.currentUserEntry();
-        return entry?.dueDate ?? 0;
+        return entry?.dueDate;
     });
 
     dueIn = computed(() => {
@@ -117,11 +121,6 @@ export class CourseTrainingComponent {
         return entry?.answeredWrong ?? 0;
     });
 
-    leaderboardEntries = signal<LeaderboardEntry[]>([]);
-    currentUserEntry = signal<LeaderboardEntry>(undefined!);
-    isLoading = signal<boolean>(false);
-    isDataLoaded = signal<boolean>(false);
-
     constructor() {
         effect(() => {
             const id = this.courseId();
@@ -150,7 +149,10 @@ export class CourseTrainingComponent {
     }
 
     public navigateToTraining(): void {
-        this.router.navigate(['courses', this.courseId(), 'training', 'quiz']);
+        const courseId = this.courseId();
+        if (courseId !== undefined) {
+            this.router.navigate(['courses', courseId, 'training', 'quiz']);
+        }
     }
 
     onSaveDialog(): void {

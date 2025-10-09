@@ -20,18 +20,7 @@
         <div class="league-info">
             <div class="league-name" jhiTranslate="artemisApp.quizTraining.{{ league().toLowerCase() }}League"></div>
             @if (league() !== 'Master') {
-                <div class="league-points">
-                    {{ points() }} /
-                    {{
-                        league() === 'Bronze'
-                            ? pointsBronzeLeague()
-                            : league() === 'Silver'
-                              ? pointsSilverLeague()
-                              : league() === 'Gold'
-                                ? pointsGoldLeague()
-                                : pointsDiamondLeague()
-                    }}
-                </div>
+                <div class="league-points">{{ points() }} / {{ maxPointsForCurrentLeague() }}</div>
             } @else {
                 <div class="league-points">{{ points() }}</div>
             }

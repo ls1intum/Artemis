@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -66,15 +67,20 @@ public class QuizTrainingLeaderboardService {
         var userLeaderboardEntryForCurrentCourse = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId);
         boolean hasUserSetSettings = quizTrainingLeaderboardRepository.existsQuizTrainingLeaderboardByUser_Id(userId);
 
-        if (userLeaderboardEntryForCurrentCourse.isEmpty()) {
-            if (hasUserSetSettings) {
-                boolean showInLeaderboard = quizTrainingLeaderboardRepository.findFirstByUser_Id(userId)
-                        .orElseThrow(() -> new IllegalStateException("Entry should exist but was not found")).isShowInLeaderboard();
-                setInitialLeaderboardEntry(userId, courseId, showInLeaderboard);
+        try {
+            if (userLeaderboardEntryForCurrentCourse.isEmpty()) {
+                if (hasUserSetSettings) {
+                    boolean showInLeaderboard = quizTrainingLeaderboardRepository.findFirstByUser_Id(userId)
+                            .orElseThrow(() -> new IllegalStateException("Entry should exist but was not found")).isShowInLeaderboard();
+                    setInitialLeaderboardEntry(userId, courseId, showInLeaderboard);
+                }
+                else {
+                    setInitialLeaderboardEntry(userId, courseId, false);
+                }
+                userLeaderboardEntryForCurrentCourse = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId);
             }
-            else {
-                setInitialLeaderboardEntry(userId, courseId, false);
-            }
+        }
+        catch (DataIntegrityViolationException e) {
             userLeaderboardEntryForCurrentCourse = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId);
         }
 

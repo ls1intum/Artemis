@@ -23,7 +23,7 @@
 
 .league-name {
     font-weight: 500;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .league-points {
@@ -35,7 +35,7 @@
 .progress-bar {
     width: 100%;
     height: 6px;
-    background-color: #e0e0e0;
+    background-color: var(--progress-bg);
     border-radius: 3px;
     overflow: visible;
     position: relative;
@@ -56,26 +56,26 @@
 }
 
 .bronze .progress {
-    background-color: #cd7f32;
+    background-color: var(--league-badge-bronze-color);
 }
 
 .silver .progress {
-    background-color: #c0c0c0;
+    background-color: var(--league-badge-silver-color);
 }
 
 .gold .progress {
-    background-color: #ffd700;
+    background-color: var(--league-badge-gold-color);
 }
 
 .diamond .progress {
-    background-color: hsl(195, 60%, 50%);
+    background-color: var(--league-badge-diamond-color);
 }
 
 .master .progress {
-    background-color: hsl(270, 60%, 50%);
+    background-color: var(--league-badge-master-color);
 }
 
 .max-level {
-    color: #ffd700;
+    color: var(--league-badge-star-color);
     font-size: 16px;
 }

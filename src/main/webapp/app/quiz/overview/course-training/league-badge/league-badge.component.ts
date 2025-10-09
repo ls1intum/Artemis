@@ -59,4 +59,20 @@ export class LeagueBadgeComponent {
         if (leagueValue === 'Diamond') return 'Master';
         return '';
     });
+
+    maxPointsForCurrentLeague = computed(() => {
+        const leagueValue = this.league();
+        switch (leagueValue) {
+            case 'Bronze':
+                return this.pointsBronzeLeague();
+            case 'Silver':
+                return this.pointsSilverLeague();
+            case 'Gold':
+                return this.pointsGoldLeague();
+            case 'Diamond':
+                return this.pointsDiamondLeague();
+            default:
+                return 0;
+        }
+    });
 }

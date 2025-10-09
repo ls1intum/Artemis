@@ -7,8 +7,7 @@
 }
 
 .highlight-box {
-    background: white;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 5px;
     padding: 20px;
     min-width: min-content;
@@ -32,14 +31,14 @@
 
 .highlight-label {
     font-size: 0.875rem;
-    color: black;
+    color: var(--bs-body-color);
     margin-bottom: 4px;
     font-weight: 500;
 }
 
 .highlight-value {
     font-size: 1.5rem;
-    color: black;
+    color: var(--bs-body-color);
     font-weight: bold;
 }
 
@@ -48,9 +47,8 @@
 }
 
 .table-frame {
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 5px;
-    background: #fff;
     overflow: hidden;
     width: 100%;
     min-width: min-content;
@@ -67,7 +65,7 @@
     td {
         padding: 12px 16px;
         border: none;
-        border-bottom: 1px solid #d1d5db;
+        border-bottom: 1px solid var(--gray-300);
         overflow: hidden;
     }
 
