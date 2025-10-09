@@ -144,8 +144,8 @@ public class Lecture extends DomainObject {
 
     @Override
     public String toString() {
-        return "Lecture{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='"
-                + getEndDate() + "'" + "}";
+        return "Lecture{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", visibleDate='" + getVisibleDate() + "'"
+                + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + "}";
     }
 
     public String getChannelName() {
