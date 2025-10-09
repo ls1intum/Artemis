@@ -273,7 +273,7 @@ describe('CodeEditorMonacoComponent', () => {
 
     it('should display build annotations for the current file', async () => {
         const setAnnotationsStub = jest.spyOn(comp.editor(), 'setAnnotations').mockImplementation();
-        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
+        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         const buildAnnotations: Annotation[] = [
             {
                 fileName: 'file1',
@@ -311,8 +311,8 @@ describe('CodeEditorMonacoComponent', () => {
 
     it('should display feedback when viewing a tutor assessment', async () => {
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
-        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
-        loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: 'loaded file content' }));
+        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        loadFileFromRepositoryStub.mockReturnValueOnce(of({ fileContent: 'loaded file content' }));
         fixture.componentRef.setInput('isTutorAssessment', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
