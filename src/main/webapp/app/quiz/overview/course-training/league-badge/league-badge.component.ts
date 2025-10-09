@@ -30,7 +30,6 @@ export class LeagueBadgeComponent {
     pointsSilverLeague = input<number>(200);
     pointsGoldLeague = input<number>(300);
     pointsDiamondLeague = input<number>(400);
-
     faStar = faStar;
 
     progressWidth = computed(() => {
