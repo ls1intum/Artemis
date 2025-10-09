@@ -345,43 +345,33 @@ describe('CodeEditorMonacoComponent', () => {
         expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased, `feedback-new-${feedbackLineZeroBased}`, element);
     }));
 
-    it('should open feedback widget using keybind viewing a tutor assessment', fakeAsync(() => {
-        // Feedback is stored as 0-based line numbers, but the editor requires 1-based line numbers.
+    it('should open feedback widget using keybind viewing a tutor assessment', () => {
         const feedbackLineOneBased = 4;
-        const feedbackLineZeroBased = feedbackLineOneBased - 1;
-        const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
-        const getPositionStub = jest.spyOn(comp.editor(), 'getPosition').mockImplementation();
-        getPositionStub.mockReturnValue({
-            lineNumber: feedbackLineOneBased,
-            column: 0,
-        });
-
+        const addNewFeedbackSpy = jest.spyOn(comp, 'addNewFeedback');
         let capturedOnKeyDown: ((e: IKeyboardEvent) => void) | undefined;
+
         jest.spyOn(comp.editor(), 'onKeyDown').mockImplementation((kd) => {
             capturedOnKeyDown = kd;
             return { dispose: jest.fn() } as any;
         });
-
-        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
+        jest.spyOn(comp.editor(), 'getPosition').mockReturnValue({ lineNumber: feedbackLineOneBased, column: 0 });
 
         fixture.componentRef.setInput('isTutorAssessment', true);
-        fixture.componentRef.setInput('selectedFile', 'file1.java');
-        fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
+        fixture.componentRef.setInput('readOnlyManualFeedback', false);
         fixture.detectChanges();
 
-        comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) }).then(() => {
-            // Simulate adding the element.
-            const event = new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd' });
-            expect(capturedOnKeyDown).toBeDefined();
-            // @ts-ignore
-            capturedOnKeyDown({ browserEvent: event });
+        (comp as any).setupAddFeedbackShortcut();
 
-            expect(comp.newFeedbackLines()).toEqual([feedbackLineZeroBased]);
-            tick(1);
-            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased, `feedback-new-${feedbackLineZeroBased}`, element);
-            expect(selectFileInEditorStub).toHaveBeenCalledOnce();
-        });
-    }));
+        const browserEvent = new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd' });
+        const preventDefaultMock = jest.fn();
+        expect(capturedOnKeyDown).toBeDefined();
+        capturedOnKeyDown!({ browserEvent, preventDefault: preventDefaultMock } as unknown as IKeyboardEvent);
+
+        expect(preventDefaultMock).toHaveBeenCalled();
+        expect(addNewFeedbackSpy).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased);
+
+        (comp as any).disposeAddFeedbackShortcut();
+    });
 
     it('should delete feedbacks and notify', () => {
         const feedbackToDelete = exampleFeedbacks[0];
