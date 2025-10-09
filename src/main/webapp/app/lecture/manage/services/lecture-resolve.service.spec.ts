@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot } from '@angular/router';
-
 import { AttachmentResolve, LectureResolve } from 'app/lecture/manage/services/lecture-resolve.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
