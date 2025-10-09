@@ -46,7 +46,9 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -139,14 +141,20 @@ public class LectureResource {
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
-    // TODO: add javaDoc
+    /**
+     * POST /courses/{courseId}/lectures : Creates a series of lectures for the given course.
+     *
+     * @param courseId    the ID of the course for which to create the lectures
+     * @param lectureDTOs a list of DTOs defining the individual lectures to create
+     * @return 204 (No Content) if the lecture series was successfully created
+     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user is not at least editor in the course
+     * @throws EntityNotFoundException  {@code 404 (Not Found)} if the course for the given ID does not exist
+     */
     @PostMapping("courses/{courseId}/lectures")
-    @EnforceAtLeastEditor
-    public ResponseEntity<Void> createLectureSeries(@PathVariable long courseId, @RequestBody List<LectureSeriesCreateLectureDTO> lectureDTOs) throws URISyntaxException {
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Void> createLectureSeries(@PathVariable long courseId, @RequestBody List<LectureSeriesCreateLectureDTO> lectureDTOs) {
         log.debug("REST request to save Lecture series for courseId {} with lectures: {}", courseId, lectureDTOs);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         List<Lecture> lectures = lectureDTOs.stream().map(lectureDTO -> createLectureUsing(lectureDTO, course)).toList();
         List<Lecture> savedLectures = lectureRepository.saveAll(lectures);
         savedLectures.forEach(lecture -> channelService.createLectureChannel(lecture, Optional.empty()));
@@ -190,6 +198,16 @@ public class LectureResource {
         return ResponseEntity.ok().body(result);
     }
 
+    /**
+     * PUT /courses/{courseId}/lectures/lecture-names : Update the titles of multiple lectures in a course.
+     *
+     * @param courseId              the ID of the course containing the lectures
+     * @param lectureNameUpdateDTOs a list of DTOs, each containing a lecture ID and its new title
+     * @return 204 (No Content) if the update was successful
+     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user is not at least editor in the course
+     * @throws EntityNotFoundException  {@code 404 (Not Found)} if the course for the given ID does not exist
+     * @throws BadRequestException      {@code 400 (Bad Request)} if duplicate lecture IDs are provided or some lectures do not belong to the course
+     */
     @PutMapping("courses/{courseId}/lectures/lecture-names")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> updateLectureNames(@PathVariable long courseId, @RequestBody @NotEmpty List<@Valid LectureNameUpdateDTO> lectureNameUpdateDTOs) {
