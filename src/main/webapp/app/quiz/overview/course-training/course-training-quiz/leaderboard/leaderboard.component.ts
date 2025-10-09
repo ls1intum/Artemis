@@ -12,7 +12,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     styleUrl: './leaderboard.component.scss',
 })
 export class LeaderboardComponent {
-    currentUserId = input<number>(undefined!);
+    currentUserId = input.required<number>();
     leaderboardName = input<string>('');
     leaderboard = input<LeaderboardEntry[]>([]);
 
@@ -24,20 +24,22 @@ export class LeaderboardComponent {
         return this.leaderboard().some((entry) => entry.userId === this.currentUserId());
     });
 
+    currentUser = computed(() => {
+        const userId = this.currentUserId();
+        return this.leaderboard().find((entry) => entry.userId === userId);
+    });
+
     // Computed properties for the highlight box
     get currentUserRank(): number {
-        const user = this.leaderboard().find((entry) => entry.userId === this.currentUserId());
-        return user?.rank || 0;
+        return this.currentUser()?.rank || 0;
     }
 
     get currentUserScore(): number {
-        const user = this.leaderboard().find((entry) => entry.userId === this.currentUserId());
-        return user?.score || 0;
+        return this.currentUser()?.score || 0;
     }
 
     get currentUserPictureUrl(): string {
-        const user = this.leaderboard().find((entry) => entry.userId === this.currentUserId());
-        return user?.imageURL || '';
+        return this.currentUser()?.imageURL || '';
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;

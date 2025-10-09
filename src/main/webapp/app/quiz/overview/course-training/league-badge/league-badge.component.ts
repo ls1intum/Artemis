@@ -1,0 +1,62 @@
+import { Component, computed, input } from '@angular/core';
+import { LeagueBronzeIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/bronze-icon.component';
+import { LeagueSilverIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/silver-icon.component';
+import { LeagueGoldIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/gold-icon.component';
+import { LeagueDiamondIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/diamond-icon.component';
+import { LeagueMasterIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/master-icon.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+
+@Component({
+    selector: 'jhi-league-badge',
+    standalone: true,
+    imports: [
+        LeagueBronzeIconComponent,
+        LeagueSilverIconComponent,
+        LeagueGoldIconComponent,
+        LeagueDiamondIconComponent,
+        LeagueMasterIconComponent,
+        TranslateDirective,
+        FontAwesomeModule,
+    ],
+    templateUrl: './league-badge.component.html',
+    styleUrl: './league-badge.component.scss',
+})
+export class LeagueBadgeComponent {
+    league = input<string>('');
+    points = input<number>(0);
+    pointsBronzeLeague = input<number>(100);
+    pointsSilverLeague = input<number>(200);
+    pointsGoldLeague = input<number>(300);
+    pointsDiamondLeague = input<number>(400);
+
+    faStar = faStar;
+
+    progressWidth = computed(() => {
+        const leagueValue = this.league();
+        const pointsValue = this.points();
+
+        if (leagueValue === 'Bronze') {
+            return `${(pointsValue / this.pointsBronzeLeague()) * 100}%`;
+        } else if (leagueValue === 'Silver') {
+            return `${((pointsValue - this.pointsBronzeLeague()) / (this.pointsSilverLeague() - this.pointsBronzeLeague())) * 100}%`;
+        } else if (leagueValue === 'Gold') {
+            return `${((pointsValue - this.pointsSilverLeague()) / (this.pointsGoldLeague() - this.pointsSilverLeague())) * 100}%`;
+        } else if (leagueValue === 'Diamond') {
+            return `${((pointsValue - this.pointsGoldLeague()) / (this.pointsDiamondLeague() - this.pointsGoldLeague())) * 100}%`;
+        } else if (leagueValue === 'Master') {
+            return '100%';
+        }
+        return '0%';
+    });
+
+    nextLeague = computed(() => {
+        const leagueValue = this.league();
+        if (leagueValue === 'Bronze') return 'Silver';
+        if (leagueValue === 'Silver') return 'Gold';
+        if (leagueValue === 'Gold') return 'Diamond';
+        if (leagueValue === 'Diamond') return 'Master';
+        return '';
+    });
+}

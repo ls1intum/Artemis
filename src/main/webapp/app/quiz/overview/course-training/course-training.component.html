@@ -53,76 +53,14 @@
                 <div class="legend-section p-3">
                     <h5 jhiTranslate="artemisApp.quizTraining.scorecard"></h5>
                     <div class="league-display">
-                        @if (league() === 'Bronze') {
-                            <div class="league-badge bronze">
-                                <app-league-bronze-icon [league]="league()" />
-                                <div class="league-info">
-                                    <div class="league-name" jhiTranslate="artemisApp.quizTraining.bronzeLeague"></div>
-                                    <div class="league-points">{{ points() }} / {{ pointsBronzeLeague }}</div>
-                                    <div class="progress-bar">
-                                        <div class="progress" [style.width]="(points() / 100) * 100 + '%'"></div>
-                                        <app-league-silver-icon [league]="'Silver'" class="small-icon" />
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        @if (league() === 'Silver') {
-                            <div class="league-badge silver">
-                                <app-league-silver-icon [league]="league()" />
-                                <div class="league-info">
-                                    <div class="league-name" jhiTranslate="artemisApp.quizTraining.silverLeague"></div>
-                                    <div class="league-points">{{ points() }} / {{ pointsSilverLeague }}</div>
-                                    <div class="progress-bar">
-                                        <div class="progress" [style.width]="((points() - pointsBronzeLeague) / (pointsSilverLeague - pointsBronzeLeague)) * 100 + '%'"></div>
-                                        <app-league-gold-icon [league]="'Gold'" class="small-icon" />
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        @if (league() === 'Gold') {
-                            <div class="league-badge gold">
-                                <app-league-gold-icon [league]="league()" />
-                                <div class="league-info">
-                                    <div class="league-name" jhiTranslate="artemisApp.quizTraining.goldLeague"></div>
-                                    <div class="league-points">{{ points() }} / {{ pointsGoldLeague }}</div>
-                                    <div class="progress-bar">
-                                        <div class="progress" [style.width]="((points() - pointsSilverLeague) / (pointsGoldLeague - pointsSilverLeague)) * 100 + '%'"></div>
-                                        <app-league-diamond-icon [league]="'Diamond'" class="small-icon" />
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        @if (league() === 'Diamond') {
-                            <div class="league-badge diamond">
-                                <app-league-diamond-icon [league]="league()" />
-                                <div class="league-info">
-                                    <div class="league-name" jhiTranslate="artemisApp.quizTraining.diamondLeague"></div>
-                                    <div class="league-points">{{ points() }} / {{ pointsDiamondLeague }}</div>
-                                    <div class="progress-bar">
-                                        <div class="progress" [style.width]="((points() - pointsGoldLeague) / (pointsDiamondLeague - pointsGoldLeague)) * 100 + '%'"></div>
-                                        <app-league-master-icon [league]="'Master'" class="small-icon" />
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        @if (league() === 'Master') {
-                            <div class="league-badge master">
-                                <app-league-master-icon [league]="league()" />
-                                <div class="league-info">
-                                    <div class="league-name" jhiTranslate="artemisApp.quizTraining.masterLeague"></div>
-                                    <div class="league-points">{{ points() }}</div>
-                                    <div class="progress-bar">
-                                        <div class="progress" [style.width]="100 + '%'"></div>
-                                        <fa-icon class="max-level small-icon" [icon]="faStar" />
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        @if (league() === 'No League') {
-                            <div class="league-badge no-league">
-                                <span jhiTranslate="artemisApp.quizTraining.noLeague"></span>
-                            </div>
-                        }
+                        <jhi-league-badge
+                            [league]="league()"
+                            [points]="points()"
+                            [pointsBronzeLeague]="pointsBronzeLeague"
+                            [pointsSilverLeague]="pointsSilverLeague"
+                            [pointsGoldLeague]="pointsGoldLeague"
+                            [pointsDiamondLeague]="pointsDiamondLeague"
+                        />
                     </div>
                     <div class="due-date-container mt-5">
                         <fa-icon [icon]="faClock" />

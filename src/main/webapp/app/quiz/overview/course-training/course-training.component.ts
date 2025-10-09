@@ -5,11 +5,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY } from 'rxjs';
 import { LeaderboardService } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/service/leaderboard-service';
 import { LeaderboardEntry, LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
-import { LeagueSilverIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/silver-icon.component';
-import { LeagueBronzeIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/bronze-icon.component';
-import { LeagueGoldIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/gold-icon.component';
-import { LeagueDiamondIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/diamond-icon.component';
-import { LeagueMasterIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/master-icon.component';
 import { LeaderboardComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DialogModule } from 'primeng/dialog';
@@ -18,25 +13,11 @@ import { faCheck, faClock, faQuestion, faStar, faXmark } from '@fortawesome/free
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AccordionModule } from 'primeng/accordion';
+import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-badge/league-badge.component';
 
 @Component({
     selector: 'jhi-course-practice',
-    imports: [
-        ButtonComponent,
-        LeagueSilverIconComponent,
-        LeagueBronzeIconComponent,
-        LeagueGoldIconComponent,
-        LeagueDiamondIconComponent,
-        LeagueMasterIconComponent,
-        LeagueDiamondIconComponent,
-        LeaderboardComponent,
-        TranslateDirective,
-        DialogModule,
-        FormsModule,
-        FontAwesomeModule,
-        ToggleSwitchModule,
-        AccordionModule,
-    ],
+    imports: [ButtonComponent, LeaderboardComponent, TranslateDirective, DialogModule, FormsModule, FontAwesomeModule, ToggleSwitchModule, AccordionModule, LeagueBadgeComponent],
     templateUrl: './course-training.component.html',
     styleUrl: './course-training.component.scss',
 })
@@ -173,14 +154,17 @@ export class CourseTrainingComponent {
     }
 
     onSaveDialog(): void {
-        this.isFirstVisit.set(false);
         this.isLoading.set(true);
         const leaderboardSettings = new LeaderboardSettingsDTO();
         leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
 
         this.leaderboardService.initializeLeaderboardEntry(leaderboardSettings).subscribe({
             next: () => {
-                this.loadLeaderboard(this.courseId());
+                this.isFirstVisit.set(false);
+                const courseId = this.courseId();
+                if (courseId !== undefined) {
+                    this.loadLeaderboard(courseId);
+                }
             },
             error: () => {
                 this.isLoading.set(false);

@@ -145,7 +145,7 @@ public class QuizTrainingResource {
      *
      * <p>
      * This endpoint allows a user to update their preference for being shown in the leaderboard.
-     * If the `shownInLeaderboard` property is provided in the request body, the user's setting is updated accordingly.
+     * If the `showInLeaderboard` property is provided in the request body, the user's setting is updated accordingly.
      * </p>
      *
      * @param leaderboardSettingDTO the DTO containing the leaderboard visibility setting

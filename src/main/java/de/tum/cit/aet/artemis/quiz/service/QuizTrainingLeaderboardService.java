@@ -111,11 +111,11 @@ public class QuizTrainingLeaderboardService {
      * and sets the visibility in the leaderboard according to the provided parameter.
      * </p>
      *
-     * @param userId             the ID of the user for whom the leaderboard entry is created
-     * @param courseId           the ID of the course for which the leaderboard entry is created
-     * @param shownInLeaderboard whether the user should be shown in the leaderboard
+     * @param userId            the ID of the user for whom the leaderboard entry is created
+     * @param courseId          the ID of the course for which the leaderboard entry is created
+     * @param showInLeaderboard whether the user should be shown in the leaderboard
      */
-    public void setInitialLeaderboardEntry(long userId, long courseId, boolean shownInLeaderboard) {
+    public void setInitialLeaderboardEntry(long userId, long courseId, boolean showInLeaderboard) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.findByIdElseThrow(userId);
         QuizTrainingLeaderboard leaderboardEntry = new QuizTrainingLeaderboard();
@@ -127,7 +127,7 @@ public class QuizTrainingLeaderboardService {
         leaderboardEntry.setAnsweredWrong(0);
         leaderboardEntry.setDueDate(ZonedDateTime.now());
         leaderboardEntry.setStreak(0);
-        leaderboardEntry.setShowInLeaderboard(shownInLeaderboard);
+        leaderboardEntry.setShowInLeaderboard(showInLeaderboard);
         quizTrainingLeaderboardRepository.save(leaderboardEntry);
     }
 
@@ -194,7 +194,7 @@ public class QuizTrainingLeaderboardService {
         return delta;
     }
 
-    public void updateShownInLeaderboard(long userId, boolean shownInLeaderboard) {
-        quizTrainingLeaderboardRepository.updateShownInLeaderboard(userId, shownInLeaderboard);
+    public void updateShownInLeaderboard(long userId, boolean showInLeaderboard) {
+        quizTrainingLeaderboardRepository.updateShownInLeaderboard(userId, showInLeaderboard);
     }
 }

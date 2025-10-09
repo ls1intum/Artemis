@@ -1,0 +1,65 @@
+@if (league() !== 'No League') {
+    <div class="league-badge {{ league().toLowerCase() }}">
+        @switch (league()) {
+            @case ('Bronze') {
+                <app-league-bronze-icon [league]="league()" />
+            }
+            @case ('Silver') {
+                <app-league-silver-icon [league]="league()" />
+            }
+            @case ('Gold') {
+                <app-league-gold-icon [league]="league()" />
+            }
+            @case ('Diamond') {
+                <app-league-diamond-icon [league]="league()" />
+            }
+            @case ('Master') {
+                <app-league-master-icon [league]="league()" />
+            }
+        }
+        <div class="league-info">
+            <div class="league-name" jhiTranslate="artemisApp.quizTraining.{{ league().toLowerCase() }}League"></div>
+            @if (league() !== 'Master') {
+                <div class="league-points">
+                    {{ points() }} /
+                    {{
+                        league() === 'Bronze'
+                            ? pointsBronzeLeague()
+                            : league() === 'Silver'
+                              ? pointsSilverLeague()
+                              : league() === 'Gold'
+                                ? pointsGoldLeague()
+                                : pointsDiamondLeague()
+                    }}
+                </div>
+            } @else {
+                <div class="league-points">{{ points() }}</div>
+            }
+            <div class="progress-bar">
+                <div class="progress" [style.width]="progressWidth()"></div>
+                @if (league() !== 'Master') {
+                    @switch (nextLeague()) {
+                        @case ('Silver') {
+                            <app-league-silver-icon [league]="'Silver'" class="small-icon" />
+                        }
+                        @case ('Gold') {
+                            <app-league-gold-icon [league]="'Gold'" class="small-icon" />
+                        }
+                        @case ('Diamond') {
+                            <app-league-diamond-icon [league]="'Diamond'" class="small-icon" />
+                        }
+                        @case ('Master') {
+                            <app-league-master-icon [league]="'Master'" class="small-icon" />
+                        }
+                    }
+                } @else {
+                    <fa-icon class="max-level small-icon" [icon]="faStar" />
+                }
+            </div>
+        </div>
+    </div>
+} @else {
+    <div class="league-badge no-league">
+        <span jhiTranslate="artemisApp.quizTraining.noLeague"></span>
+    </div>
+}
