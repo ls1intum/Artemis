@@ -5,14 +5,15 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { QuizTrainingAnswer } from '../course-training-quiz/QuizTrainingAnswer';
 import { SubmittedAnswerAfterEvaluation } from '../course-training-quiz/SubmittedAnswerAfterEvaluation';
+import { SubmittedAnswer } from '../../shared/entities/submitted-answer.model';
 
 describe('CourseTrainingQuizService', () => {
     let service: CourseTrainingQuizService;
     let httpMock: HttpTestingController;
     let questionId: number;
     let courseId: number;
+    let isRated: boolean;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -22,6 +23,7 @@ describe('CourseTrainingQuizService', () => {
         httpMock = TestBed.inject(HttpTestingController);
         questionId = 123;
         courseId = 1;
+        isRated = true;
     });
 
     afterEach(() => {
@@ -34,20 +36,20 @@ describe('CourseTrainingQuizService', () => {
             expect(questions).toEqual(mockQuestions);
         });
         const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training-questions`);
-        expect(req.request.method).toBe('GET');
+        expect(req.request.method).toBe('POST');
         req.flush(mockQuestions);
     });
 
     it('should submit submission for training', fakeAsync(() => {
-        const mockTrainingAnswer = new QuizTrainingAnswer();
+        const mockTrainingAnswer: SubmittedAnswer = [{}] as SubmittedAnswer;
         const mockAnswer = new SubmittedAnswerAfterEvaluation();
         mockAnswer.scoreInPoints = 10;
 
-        service.submitForTraining(mockTrainingAnswer, questionId, courseId).subscribe((res) => {
+        service.submitForTraining(mockTrainingAnswer, questionId, courseId, isRated).subscribe((res) => {
             expect(res.body!.scoreInPoints).toBe(10);
         });
 
-        const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training-questions/${questionId}/submit`);
+        const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training-questions/${questionId}/submit?isRated=true`);
         expect(req.request.method).toBe('POST');
         req.flush(mockAnswer);
         tick();

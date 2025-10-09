@@ -3,7 +3,7 @@
     <textarea
         id="mc-question"
         class="form-control form-group-narrow"
-        [(ngModel)]="this.question.text"
+        [(ngModel)]="question().text"
         rows="5"
         (input)="this.questionChanged.emit()"
         placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"
@@ -12,7 +12,7 @@
         <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1" ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}" />
         <input
             class="form-control"
-            [(ngModel)]="question.hint"
+            [(ngModel)]="question().hint"
             (input)="this.questionChanged.emit()"
             placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintPlaceholder' | artemisTranslate }}"
         />
@@ -25,13 +25,13 @@
         />
         <input
             class="form-control"
-            [(ngModel)]="question.explanation"
+            [(ngModel)]="question().explanation"
             (input)="this.questionChanged.emit()"
             placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationPlaceholder' | artemisTranslate }}"
         />
     </div>
     <h4 jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.answersTitle"></h4>
-    @for (answerOption of question.answerOptions; track answerOption; let i = $index) {
+    @for (answerOption of question().answerOptions; track answerOption; let i = $index) {
         <div id="answer-option-{{ i }}" class="visual-answer-option form-group-narrow">
             <div class="form-group-narrow visual-answer-question-container">
                 <div
