@@ -109,6 +109,9 @@ describe('LectureUpdateComponent', () => {
 
         lectureService = TestBed.inject(LectureService);
         router = TestBed.inject(Router);
+        jest.spyOn(router, 'currentNavigation').mockReturnValue({
+            extras: { state: { existingLectures: [] } },
+        } as any);
         TestBed.inject(ActivatedRoute);
     }
 

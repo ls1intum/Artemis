@@ -81,8 +81,8 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     private subscriptions = new Subscription();
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
-    titleSection = viewChild.required(LectureTitleChannelNameComponent);
-    lecturePeriodSection = viewChild.required(LectureUpdatePeriodComponent);
+    titleSection = viewChild(LectureTitleChannelNameComponent);
+    lecturePeriodSection = viewChild(LectureUpdatePeriodComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
     courseTitle = model<string>('');
@@ -108,29 +108,28 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     constructor() {
         effect(() => {
-            if (this.titleSection().titleChannelNameComponent() && this.lecturePeriodSection()) {
+            if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) return;
+            const titleChannelNameComponent = this.titleSection()?.titleChannelNameComponent();
+            const lecturePeriodSection = this.lecturePeriodSection();
+            if (titleChannelNameComponent) {
                 this.subscriptions.add(
-                    this.titleSection()
-                        .titleChannelNameComponent()
-                        .titleChange.subscribe(() => {
-                            this.updateIsChangesMadeToTitleOrPeriodSection();
-                        }),
+                    titleChannelNameComponent.titleChange.subscribe(() => {
+                        this.updateIsChangesMadeToTitleOrPeriodSection();
+                    }),
                 );
                 this.subscriptions.add(
-                    this.titleSection()
-                        .titleChannelNameComponent()
-                        .channelNameChange.subscribe(() => {
-                            this.updateIsChangesMadeToTitleOrPeriodSection();
-                        }),
+                    titleChannelNameComponent.channelNameChange.subscribe(() => {
+                        this.updateIsChangesMadeToTitleOrPeriodSection();
+                    }),
                 );
+            }
+            if (lecturePeriodSection) {
                 this.subscriptions.add(
-                    this.lecturePeriodSection()!
-                        .periodSectionDatepickers()
-                        .forEach((datepicker: FormDateTimePickerComponent) => {
-                            datepicker.valueChange.subscribe(() => {
-                                this.updateIsChangesMadeToTitleOrPeriodSection();
-                            });
-                        }),
+                    lecturePeriodSection.periodSectionDatepickers().forEach((datepicker: FormDateTimePickerComponent) => {
+                        datepicker.valueChange.subscribe(() => {
+                            this.updateIsChangesMadeToTitleOrPeriodSection();
+                        });
+                    }),
                 );
             }
         });
@@ -147,6 +146,13 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
                 }
             }.bind(this),
         );
+
+        effect(() => {
+            if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) {
+                this.subscriptions.unsubscribe();
+                this.subscriptions = new Subscription();
+            }
+        });
     }
 
     ngOnInit() {
@@ -181,11 +187,11 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         updatedFormStatusSections.push(
             {
                 title: 'artemisApp.lecture.sections.title',
-                valid: this.titleSection().titleChannelNameComponent().isValid(),
+                valid: this.titleSection()?.titleChannelNameComponent().isValid() ?? false,
             },
             {
                 title: 'artemisApp.lecture.sections.period',
-                valid: Boolean(this.lecturePeriodSection().isPeriodSectionValid()),
+                valid: this.lecturePeriodSection()?.isPeriodSectionValid() ?? false,
             },
         );
 
@@ -352,11 +358,17 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     }
 
     private computeAreSectionsValid(): boolean {
-        return (
-            this.titleSection().titleChannelNameComponent().isValid() &&
-            this.lecturePeriodSection().isPeriodSectionValid() &&
-            (this.unitSection()?.isUnitConfigurationValid() ?? true)
-        );
+        const titleSection = this.titleSection();
+        const lecturePeriodSection = this.lecturePeriodSection();
+        const unitSection = this.unitSection();
+        if (titleSection && lecturePeriodSection) {
+            if (unitSection) {
+                return titleSection.titleChannelNameComponent().isValid() && lecturePeriodSection.isPeriodSectionValid() && unitSection.isUnitConfigurationValid();
+            } else {
+                return titleSection.titleChannelNameComponent().isValid() && lecturePeriodSection.isPeriodSectionValid();
+            }
+        }
+        return false;
     }
 
     private computeCreateLectureOptions(): CreateLectureOption[] {

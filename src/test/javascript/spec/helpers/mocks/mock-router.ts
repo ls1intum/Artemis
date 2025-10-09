@@ -1,5 +1,5 @@
 import { Observable, Subject } from 'rxjs';
-import { NavigationEnd, RouterEvent, RouterState, UrlTree } from '@angular/router';
+import { NavigationEnd, RouterEvent, RouterState, UrlTree, Router } from '@angular/router';
 
 // When using the spies, bear in mind jest.resetAllMocks does not affect them, they need to be reset manually
 export class MockRouter {
@@ -11,6 +11,8 @@ export class MockRouter {
     serializeUrl = jest.fn().mockReturnValue('testValue');
 
     eventSubject: Subject<RouterEvent> = new Subject<RouterEvent>();
+
+    currentNavigation = jest.fn<ReturnType<Router['currentNavigation']>, []>().mockReturnValue(null);
 
     setRouterState(routerState: RouterState) {
         this.routerState = routerState;
