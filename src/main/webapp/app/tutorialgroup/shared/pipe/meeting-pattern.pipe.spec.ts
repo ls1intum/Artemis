@@ -47,7 +47,7 @@ describe('MeetingPatternPipe', () => {
 
         const result = pipe.transform(schedule, true);
 
-        expect(result).toBe('artemisApp.generic.repetitions.everyWeek, artemisApp.generic.weekdays.monday, 14:00 - 15:00');
+        expect(result).toBe('artemisApp.generic.repetitions.everyWeek, global.weekdays.monday, 14:00 - 15:00');
         expect(translateSpy).toHaveBeenCalledTimes(2);
     });
 
@@ -62,7 +62,7 @@ describe('MeetingPatternPipe', () => {
 
         const result = pipe.transform(schedule, true);
 
-        expect(result).toBe('artemisApp.generic.repetitions.everyNWeeks, artemisApp.generic.weekdays.tuesday, 14:00 - 15:00');
+        expect(result).toBe('artemisApp.generic.repetitions.everyNWeeks, global.weekdays.tuesday, 14:00 - 15:00');
         expect(translateSpy).toHaveBeenCalledTimes(2);
     });
 
@@ -77,7 +77,7 @@ describe('MeetingPatternPipe', () => {
 
         const result = pipe.transform(schedule);
 
-        expect(result).toBe('artemisApp.generic.weekdays.tuesday, 14:00 - 15:00');
+        expect(result).toBe('global.weekdays.tuesday, 14:00 - 15:00');
         expect(translateSpy).toHaveBeenCalledOnce();
     });
 });
