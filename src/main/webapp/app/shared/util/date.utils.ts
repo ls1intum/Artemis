@@ -86,12 +86,3 @@ export function isFirstDateAfterOrEqualSecond(firstDate?: Date, secondDate?: Dat
     }
     return firstDate.getTime() >= secondDate.getTime();
 }
-
-export function addOneMinuteTo(referenceDate?: Date) {
-    if (!referenceDate) {
-        return undefined;
-    }
-    const resultDate = new Date(referenceDate.getTime());
-    resultDate.setMinutes(resultDate.getMinutes() + 1);
-    return resultDate;
-}
