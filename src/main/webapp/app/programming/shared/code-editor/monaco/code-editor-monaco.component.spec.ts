@@ -312,7 +312,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should display feedback when viewing a tutor assessment', async () => {
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
-        loadFileFromRepositoryStub.mockReturnValueOnce(of({ fileContent: 'loaded file content' }));
+        loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: 'loaded file content' }));
         fixture.componentRef.setInput('isTutorAssessment', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
