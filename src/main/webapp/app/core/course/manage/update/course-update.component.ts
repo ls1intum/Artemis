@@ -430,8 +430,11 @@ export class CourseUpdateComponent implements OnInit {
                 this.courseForm.controls['enrollmentStartDate'].setValue(this.course.startDate);
             }
             if (!this.course.enrollmentEndDate) {
-                this.course.enrollmentEndDate = this.course.endDate;
-                this.courseForm.controls['enrollmentEndDate'].setValue(this.course.endDate);
+                // default unenrollment end date would be set as course end date (when enabled)
+                // therefore default enrollment end date should be before unenrollment end date to be valid
+                const defaultEnrollmentEndDate = this.course.endDate?.subtract(1, 'minute');
+                this.course.enrollmentEndDate = defaultEnrollmentEndDate;
+                this.courseForm.controls['enrollmentEndDate'].setValue(defaultEnrollmentEndDate);
             }
         } else {
             if (this.course.enrollmentStartDate) {
