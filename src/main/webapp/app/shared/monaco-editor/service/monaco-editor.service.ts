@@ -79,6 +79,8 @@ export class MonacoEditorService {
             automaticLayout: true,
             glyphMargin: true,
             minimap: { enabled: false },
+            maxFileSize: 20,
+            maxComputationTime: 3000,
             readOnly: true,
             renderSideBySide: true,
             scrollBeyondLastLine: false,
