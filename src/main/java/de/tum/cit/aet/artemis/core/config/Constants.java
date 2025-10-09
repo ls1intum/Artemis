@@ -401,11 +401,6 @@ public final class Constants {
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
 
     /**
-     * The name of the module feature used for Exercise Versioning functionality.
-     */
-    public static final String MODULE_FEATURE_EXERCISE_VERSIONING = "exercise-versioning";
-
-    /**
      * The name of the module feature used for Exam functionality.
      */
     public static final String MODULE_FEATURE_EXAM = "exam";
@@ -439,11 +434,6 @@ public final class Constants {
      * The name of the property used to enable or disable Hyperion functionality.
      */
     public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
-
-    /**
-     * The name of the property used to enable or disable Exercise Versioning functionality.
-     */
-    public static final String EXERCISE_VERSIONING_ENABLED_PROPERTY_NAME = "artemis.exercise-versioning.enabled";
 
     /**
      * The name of the property used to enable or disable exam functionality.

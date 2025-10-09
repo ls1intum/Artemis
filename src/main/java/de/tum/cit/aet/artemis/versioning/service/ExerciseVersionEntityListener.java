@@ -7,8 +7,6 @@ import jakarta.persistence.PostUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Configurable;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 
@@ -23,16 +21,11 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.versioning.event.ExerciseChangedEvent;
 
 @Configurable
-@ConditionalOnProperty(name = "artemis.version-control.exercise-versioning.enabled", havingValue = "true")
-
 public class ExerciseVersionEntityListener implements ApplicationEventPublisherAware {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVersionEntityListener.class);
 
     private ApplicationEventPublisher eventPublisher;
-
-    @Value("${artemis.version-control.exercise-versioning.enabled:false}")
-    private boolean exerciseVersioningEnabled;
 
     @Override
     public void setApplicationEventPublisher(ApplicationEventPublisher eventPublisher) {
@@ -102,9 +95,6 @@ public class ExerciseVersionEntityListener implements ApplicationEventPublisherA
      * @param exerciseType the type of the exercise to publish the event for
      */
     private void publishExerciseChangedEvent(Long exerciseId, ExerciseType exerciseType) {
-        if (!exerciseVersioningEnabled) {
-            return;
-        }
         if (eventPublisher == null) {
             log.error("No application event publisher found, cannot publish ExerciseChangedEvent");
             return;

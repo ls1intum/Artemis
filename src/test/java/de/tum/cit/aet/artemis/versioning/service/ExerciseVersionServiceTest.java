@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -59,7 +58,6 @@ import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.versioning.repository.FileUploadExerciseVersioningRepository;
 import de.tum.cit.aet.artemis.versioning.repository.TextExerciseVersioningRepository;
 
-@TestPropertySource(properties = { "artemis.exercise-versioning.enabled=true" })
 class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "exerciseversiontest";

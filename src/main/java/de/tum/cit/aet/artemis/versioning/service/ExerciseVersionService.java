@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.versioning.config.ExerciseVersioningEnabled;
 import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.versioning.event.ExerciseChangedEvent;
@@ -30,7 +28,6 @@ import de.tum.cit.aet.artemis.versioning.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.versioning.repository.FileUploadExerciseVersioningRepository;
 import de.tum.cit.aet.artemis.versioning.repository.TextExerciseVersioningRepository;
 
-@Conditional(ExerciseVersioningEnabled.class)
 @Profile(PROFILE_CORE)
 @Service
 @Lazy
