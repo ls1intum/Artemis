@@ -156,7 +156,6 @@ describe('CourseTrainingComponent', () => {
 
         expect(component.isFirstVisit()).toBeFalse();
         expect(saveSpy).toHaveBeenCalledWith(
-            1,
             expect.objectContaining({
                 showInLeaderboard: true,
             }),
