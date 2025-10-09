@@ -16,7 +16,6 @@ import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { Router } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { finalize } from 'rxjs';
 import { Lecture, LectureNameUpdateDTO, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { isFirstDateAfterOrEqualSecond } from 'app/shared/util/date.utils';
 
@@ -163,16 +162,16 @@ export class LectureSeriesCreateComponent {
 
     private saveNewLectures(courseId: number) {
         const lecturesToSave = this.lectureDrafts().map((d) => d.dto);
-        this.lectureService
-            .createSeries(lecturesToSave, courseId)
-            .pipe(finalize(() => this.isLoading.set(false)))
-            .subscribe({
-                next: () => this.router.navigate(['course-management', courseId, 'lectures']),
-                error: () => {
-                    this.alertService.addErrorAlert('artemisApp.lecture.createSeries.seriesCreationError');
-                    this.isLoading.set(false);
-                },
-            });
+        this.lectureService.createSeries(lecturesToSave, courseId).subscribe({
+            next: () => {
+                this.router.navigate(['course-management', courseId, 'lectures']);
+                this.isLoading.set(false);
+            },
+            error: () => {
+                this.alertService.addErrorAlert('artemisApp.lecture.createSeries.seriesCreationError');
+                this.isLoading.set(false);
+            },
+        });
     }
 
     private updateLectureDraftsAndExistingLecturesBasedOnSeriesEndDateAndInitialLectures() {
@@ -316,27 +315,22 @@ export class LectureSeriesCreateComponent {
         let existingLectureIndex = 0;
         let dtoIndex = 0;
         while (existingLectureIndex < sortedExistingLectures.length && dtoIndex < sortedDTOs.length) {
-            const existingLecture = sortedExistingLectures[existingLectureIndex];
             const dto = sortedDTOs[dtoIndex];
-            const existingLectureKey = this.getSortingKeyFor(existingLecture);
+            const existingLecture = sortedExistingLectures[existingLectureIndex];
             const dtoKey = this.getSortingKeyFor(dto);
-            if (existingLectureKey !== undefined && dtoKey !== undefined) {
-                if (existingLectureKey <= dtoKey!) {
+            const existingLectureKey = this.getSortingKeyFor(existingLecture);
+            if (dtoKey !== undefined && existingLectureKey !== undefined) {
+                if (existingLectureKey <= dtoKey) {
                     sortedResult.push(existingLecture);
                     existingLectureIndex++;
                 } else {
                     sortedResult.push(dto);
                     dtoIndex++;
                 }
-            } else if (existingLectureKey !== undefined) {
-                sortedResult.push(existingLecture);
-                existingLectureIndex++;
-            } else if (dtoKey !== undefined) {
+            } else {
+                // our validation logic enforces that there must be a key for all DTOs
                 sortedResult.push(dto);
                 dtoIndex++;
-            } else {
-                sortedResult.push(existingLecture);
-                existingLectureIndex++;
             }
         }
         while (existingLectureIndex < sortedExistingLectures.length) {
