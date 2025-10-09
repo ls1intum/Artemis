@@ -200,7 +200,7 @@ public class LectureResource {
         if (uniqueIds.size() != ids.size()) {
             throw new BadRequestException("Request payload contains duplicate lecture IDs.");
         }
-        Set<Lecture> lectures = lectureRepository.findAllByCourseIdAndIdIn(courseId, uniqueIds);
+        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithIdIn(courseId, uniqueIds);
         if (lectures.size() != uniqueIds.size()) {
             throw new BadRequestException("Some lectures do not belong to the course.");
         }
