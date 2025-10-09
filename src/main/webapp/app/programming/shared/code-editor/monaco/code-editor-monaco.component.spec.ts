@@ -60,6 +60,8 @@ describe('CodeEditorMonacoComponent', () => {
         comp = fixture.componentInstance;
         codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
         loadFileFromRepositoryStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
+        // Provide a safe default so accidental file loads during change detection don't throw
+        loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: '' }));
         getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
@@ -310,6 +312,7 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should display feedback when viewing a tutor assessment', async () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: 'loaded file content' }));
@@ -325,6 +328,7 @@ describe('CodeEditorMonacoComponent', () => {
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2-line-3`, document.createElement('div'));
         expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(6);
         expect(selectFileInEditorStub).toHaveBeenCalled();
+        consoleErrorSpy.mockRestore();
     });
 
     it('should add a new feedback widget', fakeAsync(() => {
