@@ -6,6 +6,7 @@ import static org.springframework.http.HttpStatus.OK;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.assertj.core.api.Assertions;
@@ -122,7 +123,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         userTestRepository.save(user);
         courseTestRepository.save(course);
         LeaderboardSettingDTO settingDTO = new LeaderboardSettingDTO(true);
-        request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/leaderboard-entry", settingDTO, Void.class, OK);
+        request.get("/api/quiz/courses/" + course.getId() + "/training/leaderboard", OK, LeaderboardWithCurrentUserIdDTO.class);
         QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
         assertThat(leaderboardEntry.getScore()).isEqualTo(0);
         assertThat(leaderboardEntry.getLeague()).isEqualTo(5);
@@ -131,7 +132,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         assertThat(leaderboardEntry.getCourse().getId()).isEqualTo(course.getId());
         assertThat(leaderboardEntry.getUser().getId()).isEqualTo(user.getId());
         assertThat(leaderboardEntry.getStreak()).isEqualTo(0);
-        assertThat(leaderboardEntry.isShowInLeaderboard()).isTrue();
+        assertThat(leaderboardEntry.isShowInLeaderboard()).isFalse();
         assertThat(leaderboardEntry.getDueDate()).isCloseTo(ZonedDateTime.now(), Assertions.within(5, ChronoUnit.MINUTES));
     }
 
@@ -148,5 +149,39 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         request.put("/api/quiz/leaderboard-settings", settingDTO, OK);
         QuizTrainingLeaderboard updatedEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
         assertThat(updatedEntry.isShowInLeaderboard()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateQuizLeaderboardEntryWithFailedAttemptOnSameDay() {
+        User user = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
+        Course course = courseUtilService.createCourse();
+        QuizTrainingLeaderboard quizTrainingLeaderboard = getQuizTrainingLeaderboard(course, user);
+        quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard);
+
+        QuizQuestionProgressData data = new QuizQuestionProgressData();
+        data.setLastScore(1.0);
+        data.setBox(2);
+
+        List<QuizQuestionProgressData.Attempt> attempts = new ArrayList<>();
+
+        QuizQuestionProgressData.Attempt failedAttempt = new QuizQuestionProgressData.Attempt();
+        failedAttempt.setScore(0.5);
+        failedAttempt.setAnsweredAt(ZonedDateTime.now().minusHours(1));
+        attempts.add(failedAttempt);
+
+        QuizQuestionProgressData.Attempt successfulAttempt = new QuizQuestionProgressData.Attempt();
+        successfulAttempt.setScore(1.0);
+        successfulAttempt.setAnsweredAt(ZonedDateTime.now());
+        attempts.add(successfulAttempt);
+
+        data.setAttempts(attempts);
+
+        quizTrainingLeaderboardService.updateLeaderboardScore(user.getId(), course.getId(), data);
+
+        QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
+        assertThat(leaderboardEntry.getScore()).isEqualTo(11);
+        assertThat(leaderboardEntry.getAnsweredCorrectly()).isEqualTo(11);
+        assertThat(leaderboardEntry.getAnsweredWrong()).isEqualTo(10);
     }
 }

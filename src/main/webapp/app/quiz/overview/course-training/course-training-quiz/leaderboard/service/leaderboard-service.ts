@@ -13,7 +13,7 @@ export class LeaderboardService {
         return this.http.get<LeaderboardDTO>(`api/quiz/courses/${courseId}/training/leaderboard`);
     }
 
-    initializeLeaderboardEntry(courseId: number, leaderboardSettings: LeaderboardSettingsDTO): Observable<void> {
-        return this.http.post<void>(`api/quiz/courses/${courseId}/leaderboard-entry`, leaderboardSettings);
+    initializeLeaderboardEntry(leaderboardSettings: LeaderboardSettingsDTO): Observable<void> {
+        return this.http.post<void>(`api/quiz/leaderboard-settings`, leaderboardSettings);
     }
 }
