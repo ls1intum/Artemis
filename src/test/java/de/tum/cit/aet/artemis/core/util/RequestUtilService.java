@@ -553,6 +553,18 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(StandardCharsets.UTF_8), responseType);
     }
 
+    public MockHttpServletResponse putWithoutResponseBody(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+
+        var request = MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
+
+        MvcResult res = performMvcRequest(request).andExpect(status().is(expectedStatus.value())).andReturn();
+
+        restoreSecurityContext();
+
+        return res.getResponse();
+    }
+
     @SuppressWarnings("unchecked")
     public <R> R patchWithResponseBody(String path, String body, Class<R> responseType, HttpStatus expectedStatus, MediaType mediaType) throws Exception {
         MvcResult res = performMvcRequest(MockMvcRequestBuilders.patch(new URI(path)).contentType(mediaType).content(body)).andExpect(status().is(expectedStatus.value()))

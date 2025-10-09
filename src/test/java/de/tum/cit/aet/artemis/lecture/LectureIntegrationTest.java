@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -38,6 +37,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureNameUpdateDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -149,7 +149,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
-        request.postListWithResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(), Lecture.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -487,8 +486,26 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateLectureSeriesShouldReturnNotFoundIfCourseDoesNotExist() throws Exception {
-        request.postListWithResponseBody("/api/lecture/courses/-1/lectures", List.of(), Lecture.class, HttpStatus.NOT_FOUND);
+    void testCreateLectureSeriesShouldReturnForbiddenIfCourseDoesNotExist() throws Exception {
+        ZoneId timezone = ZoneId.of("Europe/Berlin");
+        ZonedDateTime startLecture1 = ZonedDateTime.of(1989, 11, 9, 18, 53, 0, 0, timezone);
+        ZonedDateTime endLecture1 = startLecture1.plusHours(1);
+        String titleLecture1 = "Requirements Engineering";
+        LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleLecture1, startLecture1, endLecture1);
+
+        request.postWithoutResponseBody("/api/lecture/courses/-1/lectures", List.of(dto1), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateLectureSeriesShouldReturnForbiddenIfUserNotAtLeastInstructor() throws Exception {
+        ZoneId timezone = ZoneId.of("Europe/Berlin");
+        ZonedDateTime startLecture1 = ZonedDateTime.of(1989, 11, 9, 18, 53, 0, 0, timezone);
+        ZonedDateTime endLecture1 = startLecture1.plusHours(1);
+        String titleLecture1 = "Requirements Engineering";
+        LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleLecture1, startLecture1, endLecture1);
+
+        request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -504,13 +521,85 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleLecture1, startLecture1, endLecture1);
         LectureSeriesCreateLectureDTO dto2 = new LectureSeriesCreateLectureDTO(titleLecture2, startLecture2, endLecture2);
 
-        List<Lecture> lectures = request.postListWithResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1, dto2), Lecture.class, HttpStatus.CREATED);
+        request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1, dto2), HttpStatus.NO_CONTENT);
+    }
 
-        assertThat(lectures).hasSize(2);
-        assertThat(lectures).extracting(Lecture::getTitle).containsExactlyInAnyOrder("Requirements Engineering", "System Design");
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateLectureNamesShouldReturnForbiddenIfCourseDoesNotExist() throws Exception {
+        Lecture lecture1 = new Lecture();
+        lecture1.setTitle("Lecture 1");
+        lecture1.setCourse(course1);
+        Lecture savedLecture1 = lectureRepository.save(lecture1);
+        Lecture lecture2 = new Lecture();
+        lecture2.setTitle("Lecture 2");
+        lecture2.setCourse(course1);
+        Lecture savedLecture2 = lectureRepository.save(lecture2);
 
-        assertThat(lectures).extracting(Lecture::getTitle, Lecture::getChannelName, Lecture::getVisibleDate, l -> l.getStartDate().toInstant(), l -> l.getEndDate().toInstant())
-                .containsExactlyInAnyOrder(tuple(titleLecture1, startLecture1.toInstant(), endLecture1.toInstant()),
-                        tuple(titleLecture2, startLecture2.toInstant(), endLecture2.toInstant()));
+        List<LectureNameUpdateDTO> dtoList = List.of(new LectureNameUpdateDTO(savedLecture1.getId(), "Updated Lecture 1"),
+                new LectureNameUpdateDTO(savedLecture2.getId(), "Updated Lecture 2"));
+
+        request.putWithoutResponseBody("/api/lecture/courses/-1/lectures/lecture-names", dtoList, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateLectureNamesShouldReturnForbiddenIfUserNotAtLeastInstructor() throws Exception {
+        Lecture lecture1 = new Lecture();
+        lecture1.setTitle("Lecture 1");
+        lecture1.setCourse(course1);
+        Lecture savedLecture1 = lectureRepository.save(lecture1);
+        Lecture lecture2 = new Lecture();
+        lecture2.setTitle("Lecture 2");
+        lecture2.setCourse(course1);
+        Lecture savedLecture2 = lectureRepository.save(lecture2);
+
+        List<LectureNameUpdateDTO> dtoList = List.of(new LectureNameUpdateDTO(savedLecture1.getId(), "Updated Lecture 1"),
+                new LectureNameUpdateDTO(savedLecture2.getId(), "Updated Lecture 2"));
+
+        request.putWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures/lecture-names", dtoList, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateLectureNamesShouldReturnBadRequestIfDTOsContainIdDuplicate() throws Exception {
+        List<LectureNameUpdateDTO> dtoList = List.of(new LectureNameUpdateDTO(1L, "Updated Lecture 1"), new LectureNameUpdateDTO(1L, "Updated Lecture 2"));
+
+        request.putWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures/lecture-names", dtoList, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateLectureNamesShouldReturnBadRequestIfAnyLectureDoesNotBelongToCourse() throws Exception {
+        Lecture lecture1 = new Lecture();
+        lecture1.setTitle("Lecture 1");
+        lecture1.setCourse(course1);
+        Lecture savedLecture1 = lectureRepository.save(lecture1);
+        Lecture lecture2 = new Lecture();
+        lecture2.setTitle("Lecture 2");
+        Lecture savedLecture2 = lectureRepository.save(lecture2);
+
+        List<LectureNameUpdateDTO> dtoList = List.of(new LectureNameUpdateDTO(savedLecture1.getId(), "Updated Lecture 1"),
+                new LectureNameUpdateDTO(savedLecture2.getId(), "Updated Lecture 2"));
+
+        request.putWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures/lecture-names", dtoList, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateLectureNames() throws Exception {
+        Lecture lecture1 = new Lecture();
+        lecture1.setTitle("Lecture 1");
+        lecture1.setCourse(course1);
+        Lecture savedLecture1 = lectureRepository.save(lecture1);
+        Lecture lecture2 = new Lecture();
+        lecture2.setTitle("Lecture 2");
+        lecture2.setCourse(course1);
+        Lecture savedLecture2 = lectureRepository.save(lecture2);
+
+        List<LectureNameUpdateDTO> dtoList = List.of(new LectureNameUpdateDTO(savedLecture1.getId(), "Updated Lecture 1"),
+                new LectureNameUpdateDTO(savedLecture2.getId(), "Updated Lecture 2"));
+
+        request.putWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures/lecture-names", dtoList, HttpStatus.NO_CONTENT);
     }
 }
