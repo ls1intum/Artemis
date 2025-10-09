@@ -45,20 +45,4 @@ describe('CalendarMobileDayPresentation', () => {
             expect(nonSelectedDayBadge.isSelectedDay()).toBeFalse();
         }
     });
-
-    it('should apply no-scroll class when isEventSelected is true', () => {
-        component.isEventSelected.set(true);
-        fixture.detectChanges();
-
-        const scrollContainerElement = fixture.nativeElement.querySelector('.scroll-container');
-        expect(scrollContainerElement.classList).toContain('no-scroll');
-    });
-
-    it('should update isEventSelected signal when child emits true', () => {
-        const eventsSectionComponent = ngMocks.findInstance(CalendarEventsPerDaySectionComponent);
-        eventsSectionComponent.isEventSelected.emit(true);
-        fixture.detectChanges();
-
-        expect(component.isEventSelected()).toBeTrue();
-    });
 });

@@ -134,7 +134,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     it('should change code of active action', () => {
         comp.changeActiveAction('gradle');
         expect(comp.code).toBe(gradleBuildAction.script);
-        comp.codeChanged('test');
+        comp.codeChanged({ text: 'test', fileName: 'build-script.sh' });
         expect(gradleBuildAction.script).toBe('test');
     });
 
@@ -166,7 +166,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should change code', () => {
         comp.changeActiveAction('gradle');
-        comp.codeChanged('this is some code');
+        comp.codeChanged({ text: 'this is some code', fileName: 'build-script.sh' });
         const action: BuildAction | undefined = comp.active;
         expect(action).toBeDefined();
         expect(action).toBeInstanceOf(ScriptAction);
