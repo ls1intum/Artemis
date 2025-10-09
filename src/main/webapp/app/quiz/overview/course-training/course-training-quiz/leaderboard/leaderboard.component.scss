@@ -82,12 +82,12 @@
         text-overflow: ellipsis;
     }
 
-    tbody tr:last-child td {
-        border-bottom: none;
-    }
-
     th:last-child,
     td:last-child {
         text-align: center;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: none;
     }
 }

@@ -10,7 +10,7 @@ import { LeagueBronzeIconComponent } from 'app/quiz/overview/course-training/cou
 import { LeagueGoldIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/gold-icon.component';
 import { LeagueDiamondIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/diamond-icon.component';
 import { LeagueMasterIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/master-icon.component';
-import { Leaderboard } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard.component';
+import { LeaderboardComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
@@ -29,7 +29,7 @@ import { AccordionModule } from 'primeng/accordion';
         LeagueDiamondIconComponent,
         LeagueMasterIconComponent,
         LeagueDiamondIconComponent,
-        Leaderboard,
+        LeaderboardComponent,
         TranslateDirective,
         DialogModule,
         FormsModule,

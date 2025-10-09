@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Leaderboard } from './leaderboard.component';
+import { LeaderboardComponent } from './leaderboard.component';
 import { LeaderboardEntry } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
@@ -8,8 +8,8 @@ import { MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Leaderboard', () => {
-    let component: Leaderboard;
-    let fixture: ComponentFixture<Leaderboard>;
+    let component: LeaderboardComponent;
+    let fixture: ComponentFixture<LeaderboardComponent>;
     let mockLeaderboardEntries: LeaderboardEntry[];
 
     const currentUserId = 1;
@@ -44,11 +44,11 @@ describe('Leaderboard', () => {
         ];
 
         await TestBed.configureTestingModule({
-            imports: [Leaderboard, FontAwesomeModule, MockComponent(ProfilePictureComponent)],
+            imports: [LeaderboardComponent, FontAwesomeModule, MockComponent(ProfilePictureComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(Leaderboard);
+        fixture = TestBed.createComponent(LeaderboardComponent);
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('currentUserId', currentUserId);

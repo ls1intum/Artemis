@@ -11,7 +11,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     templateUrl: './leaderboard.component.html',
     styleUrl: './leaderboard.component.scss',
 })
-export class Leaderboard {
+export class LeaderboardComponent {
     currentUserId = input<number>(undefined!);
     leaderboardName = input<string>('');
     leaderboard = input<LeaderboardEntry[]>([]);
