@@ -9,7 +9,7 @@ import { CodeEditorFileService } from 'app/programming/shared/code-editor/servic
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
 import { SimpleChange } from '@angular/core';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileType, RenameFileChange } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
@@ -312,6 +312,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should display feedback when viewing a tutor assessment', async () => {
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
+        loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: 'loaded file content' }));
         fixture.componentRef.setInput('isTutorAssessment', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
