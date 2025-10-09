@@ -44,6 +44,8 @@ import { facSidebar } from 'app/shared/icons/icons';
 import { User } from 'app/core/user/user.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { faCloud, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { CloudSettingsService } from 'app/iris/overview/services/cloud-settings.service';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -105,6 +107,7 @@ import { faCloud, faDownload } from '@fortawesome/free-solid-svg-icons';
         FaIconComponent,
         NgbTooltip,
         TranslateDirective,
+        TranslatePipe,
         ChatStatusBarComponent,
         FormsModule,
         ButtonComponent,
@@ -185,6 +188,11 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     isCloudEnabled = false;
     faDownload = faDownload;
     faCloud = faCloud;
+    private readonly cloudSrv = inject(CloudSettingsService);
+
+    onChange(): void {
+        this.cloudSrv.setEnabled(this.isCloudEnabled);
+    }
 
     // User preferences
     user: User | undefined;

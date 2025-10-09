@@ -15,6 +15,7 @@ import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { CloudSettingsService } from 'app/iris/overview/services/cloud-settings.service';
 import { Router } from '@angular/router';
 import { captureException } from '@sentry/angular';
 import dayjs from 'dayjs/esm';
@@ -86,6 +87,8 @@ export class IrisChatService implements OnDestroy {
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
+    isCloudEnabled: boolean = false;
+    private readonly cloudSrv = inject(CloudSettingsService);
 
     rateLimitInfo?: IrisRateLimitInformation;
 
@@ -93,6 +96,7 @@ export class IrisChatService implements OnDestroy {
     private acceptSubscription?: Subscription;
     private chatSessionSubscription?: Subscription;
     private chatSessionByIdSubscription?: Subscription;
+    private isCloudEnabledSubscription?: Subscription;
 
     private sessionCreationIdentifier?: string;
 
@@ -109,6 +113,7 @@ export class IrisChatService implements OnDestroy {
 
     protected constructor() {
         this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
+        this.isCloudEnabledSubscription = this.cloudSrv.enabled$.subscribe((v) => (this.isCloudEnabled = v));
         this.updateCourseId();
     }
 
@@ -160,13 +165,14 @@ export class IrisChatService implements OnDestroy {
         this.acceptSubscription?.unsubscribe();
         this.chatSessionSubscription?.unsubscribe();
         this.chatSessionByIdSubscription?.unsubscribe();
+        this.isCloudEnabledSubscription?.unsubscribe();
     }
 
     protected start() {
         const requiresAcceptance = this.sessionCreationIdentifier
             ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
             : true;
-        if (requiresAcceptance === false || this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
+        if (requiresAcceptance === false || this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage || !this.isCloudEnabled) {
             this.getCurrentSessionOrCreate().subscribe({
                 ...this.handleNewSession(),
                 complete: () => this.loadChatSessions(),

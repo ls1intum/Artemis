@@ -31,10 +31,10 @@
                 </a>
             }
             <label class="switch">
-                <fa-icon [icon]="faDownload" class="icon-left" title="Local" />
-                <input type="checkbox" [(ngModel)]="isCloudEnabled" />
+                <fa-icon [icon]="faDownload" class="icon-left" [title]="'artemisApp.exerciseActions.useLocalLLM' | translate" />
+                <input type="checkbox" [(ngModel)]="isCloudEnabled" (change)="onChange()" />
                 <span class="slider round"></span>
-                <fa-icon [icon]="faCloud" class="icon-right" title="Cloud" />
+                <fa-icon [icon]="faCloud" class="icon-right" [title]="'artemisApp.exerciseActions.useCloudLLM' | translate" />
             </label>
         </div>
         <div class="d-flex gap-2">
@@ -165,7 +165,7 @@
             <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                 @if (
                     suggestions?.length &&
-                    userAccepted &&
+                    (userAccepted || !isCloudEnabled) &&
                     !this.isLoading &&
                     this.active &&
                     (!this.rateLimitInfo?.rateLimit || this.rateLimitInfo?.currentMessageCount !== this.rateLimitInfo?.rateLimit) &&
@@ -237,7 +237,7 @@
             </div>
         }
         <jhi-chat-status-bar [stages]="stages" />
-        @if (!userAccepted) {
+        @if (!userAccepted && isCloudEnabled) {
             <div class="p-chat">
                 <div class="message-text" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></div>
                 <div class="button-container">
@@ -259,7 +259,7 @@
         @if (!active) {
             <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
         }
-        @if (userAccepted) {
+        @if (userAccepted || !isCloudEnabled) {
             <div class="chat-input">
                 <textarea
                     [(ngModel)]="newMessageTextContent"
