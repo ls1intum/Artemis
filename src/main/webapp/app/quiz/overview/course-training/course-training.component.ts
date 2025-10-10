@@ -82,6 +82,10 @@ export class CourseTrainingComponent {
 
     dueDate = computed(() => {
         const entry = this.currentUserEntry();
+        // eslint-disable-next-line
+        console.log('dueDate before converting to dayjs: ', entry?.dueDate);
+        // eslint-disable-next-line
+        console.log('dueDate after converting to dayjs: ', dayjs(entry?.dueDate));
         return entry?.dueDate ? dayjs(entry.dueDate) : undefined;
     });
 
@@ -92,17 +96,27 @@ export class CourseTrainingComponent {
         }
 
         const now = dayjs();
+        // eslint-disable-next-line
+        console.log('Current time: ', now);
 
         if (now.isAfter(dueDateDayjs)) {
             return { isValid: true, isPast: true, days: 0, hours: 0, minutes: 0 };
         }
 
         const diffDays = dueDateDayjs.diff(now, 'day');
+        // eslint-disable-next-line
+        console.log('Difference in days: ', diffDays);
         const diffHours = dueDateDayjs.diff(now, 'hour') % 24;
+        // eslint-disable-next-line
+        console.log('Difference in hours: ', diffHours);
         const diffMinutes = dueDateDayjs.diff(now, 'minute') % 60;
+        // eslint-disable-next-line
+        console.log('Difference in minutes: ', diffMinutes);
 
         if (diffDays === 0 && diffHours === 0 && diffMinutes === 0) {
             const diffSeconds = dueDateDayjs.diff(now, 'second');
+            // eslint-disable-next-line
+            console.log('Difference in seconds: ', diffSeconds);
             if (diffSeconds < 60) {
                 return { isValid: true, isPast: true, days: 0, hours: 0, minutes: 0 };
             }
