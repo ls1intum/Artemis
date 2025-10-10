@@ -5,13 +5,13 @@
     <div class="card-body row pb-0">
         <div class="form-group col">
             <label for="title-filter" jhiTranslate="artemisApp.standardizedCompetency.model.title"> </label>
-            <input id="title-filter" class="form-control" [(ngModel)]="competencyTitleFilter" (input)="titleFilterSubject.next()" />
+            <input id="title-filter" class="form-control" [ngModel]="competencyTitleFilter()" (ngModelChange)="onTitleChange($event)" />
         </div>
         <div class="form-group col">
             <label for="knowledge-area-filter" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
-            <select [(ngModel)]="knowledgeAreaFilter" (ngModelChange)="knowledgeAreaFilterChange.emit(knowledgeAreaFilter)" class="form-select" id="knowledge-area-filter">
+            <select [ngModel]="knowledgeAreaFilter()" (ngModelChange)="onKnowledgeAreaChange($event)" class="form-select" id="knowledge-area-filter">
                 <option [ngValue]="undefined"></option>
-                @for (knowledgeArea of knowledgeAreasForSelect; track knowledgeArea.id) {
+                @for (knowledgeArea of knowledgeAreasForSelect(); track knowledgeArea.id) {
                     <option [ngValue]="knowledgeArea">
                         {{ knowledgeArea.title }}
                     </option>
