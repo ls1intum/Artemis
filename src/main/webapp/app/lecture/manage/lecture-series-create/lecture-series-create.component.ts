@@ -176,9 +176,6 @@ export class LectureSeriesCreateComponent {
 
     private updateLectureDraftsAndExistingLecturesBasedOnSeriesEndDateAndInitialLectures() {
         const lectureDrafts = this.computeLectureDraftsBasedOnSeriesEndDateAndInitialLectures();
-        if (lectureDrafts === undefined) {
-            return;
-        }
 
         const sortedLectureDrafts = this.sort(lectureDrafts, (draft) => this.getSortingKeyFor(draft.dto));
         const sortedExistingLectures = this.sort(this.existingLectures(), (lecture) => this.getSortingKeyFor(lecture));
@@ -189,30 +186,27 @@ export class LectureSeriesCreateComponent {
 
     /* Helpers */
 
-    private computeLectureDraftsBasedOnSeriesEndDateAndInitialLectures(): LectureDraft[] | undefined {
+    private computeLectureDraftsBasedOnSeriesEndDateAndInitialLectures(): LectureDraft[] {
         const rawSeriesEndDate = this.seriesEndDate();
         if (!rawSeriesEndDate) {
-            return undefined;
+            return [];
         }
         const endDate = dayjs(rawSeriesEndDate).endOf('day');
         let lectureDrafts: LectureDraft[] = [];
         for (const initialLecture of this.initialLectures()) {
             const lectureDraftsFromInitialLecture = this.computeLectureDraftsForInitialLecture(initialLecture, endDate);
-            if (lectureDraftsFromInitialLecture === undefined) {
-                return undefined;
-            }
             lectureDrafts = [...lectureDrafts, ...lectureDraftsFromInitialLecture];
         }
         return lectureDrafts;
     }
 
-    private computeLectureDraftsForInitialLecture(initialLecture: InitialLecture, seriesEndDate: Dayjs): LectureDraft[] | undefined {
+    private computeLectureDraftsForInitialLecture(initialLecture: InitialLecture, seriesEndDate: Dayjs): LectureDraft[] {
         const startDate = initialLecture.startDate();
         const endDate = initialLecture.endDate();
         const isStartDateInvalid = initialLecture.isStartDateInvalid();
         const isEndDateInvalid = initialLecture.isEndDateInvalid();
         if ((!startDate && !endDate) || isStartDateInvalid || isEndDateInvalid) {
-            return undefined;
+            return [];
         }
 
         const lectureDates = this.generateDatePairs(seriesEndDate, startDate, endDate);
