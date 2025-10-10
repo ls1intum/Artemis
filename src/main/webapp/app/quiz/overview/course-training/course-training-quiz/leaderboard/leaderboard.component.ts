@@ -12,7 +12,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     styleUrl: './leaderboard.component.scss',
 })
 export class LeaderboardComponent {
-    currentUserId = input.required<number>();
+    currentUserId = input<number>();
     leaderboardName = input<string>('');
     leaderboard = input<LeaderboardEntry[]>([]);
 
