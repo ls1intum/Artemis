@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, effect, input } from '@angular/core';
 import { CourseCompetencyFormComponent, CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
@@ -14,8 +14,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     styleUrls: ['./prerequisite-form.component.scss'],
     imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective],
 })
-export class PrerequisiteFormComponent extends CourseCompetencyFormComponent implements OnInit, OnChanges {
-    @Input() formData: CourseCompetencyFormData = {
+export class PrerequisiteFormComponent extends CourseCompetencyFormComponent implements OnChanges {
+    formData = input<CourseCompetencyFormData>({
         id: undefined,
         title: undefined,
         description: undefined,
@@ -23,22 +23,31 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
         taxonomy: undefined,
         masteryThreshold: undefined,
         optional: false,
-    };
-    @Input() prerequisite: Prerequisite;
-
-    @Output() formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
+    });
+    prerequisite = input.required<Prerequisite>();
 
     readonly CourseCompetencyType = CourseCompetencyType;
 
-    ngOnChanges() {
-        this.initializeForm();
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
-        }
+    constructor() {
+        super();
+        effect(() => {
+            this.courseId();
+            if (!this.form) {
+                this.initializeForm();
+            }
+            const fd = this.formData();
+            if (this.isEditMode() && fd) {
+                this.setFormValues(fd);
+            }
+        });
     }
 
-    ngOnInit() {
+    ngOnChanges(changes: SimpleChanges): void {
         this.initializeForm();
+        const fd = this.formData();
+        if (this.isEditMode() && fd) {
+            this.setFormValues(fd);
+        }
     }
 
     private setFormValues(formData: CourseCompetencyFormData) {
