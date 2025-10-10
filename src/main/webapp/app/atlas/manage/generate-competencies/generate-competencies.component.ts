@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject, viewChild } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -71,7 +71,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     private translateService = inject(TranslateService);
     private websocketService = inject(WebsocketService);
 
-    @ViewChild(CourseDescriptionFormComponent) courseDescriptionForm: CourseDescriptionFormComponent;
+    readonly courseDescriptionForm = viewChild.required(CourseDescriptionFormComponent);
 
     courseId: number;
     isLoading = false;
@@ -91,7 +91,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             firstValueFrom(this.courseManagementService.find(this.courseId))
-                .then((course) => this.courseDescriptionForm.setCourseDescription(course.body?.description ?? ''))
+                .then((course) => this.courseDescriptionForm().setCourseDescription(course.body?.description ?? ''))
                 .catch((res: HttpErrorResponse) => onError(this.alertService, res));
         });
     }
