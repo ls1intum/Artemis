@@ -72,5 +72,5 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
 
     boolean existsQuizTrainingLeaderboardByUser_Id(long userId);
 
-    Optional<QuizTrainingLeaderboard> findFirstByUser_Id(Long userId);
+    Optional<QuizTrainingLeaderboard> findFirstByUser_Id(long userId);
 }
