@@ -162,8 +162,15 @@ public class QuizTrainingLeaderboardService {
      * @return the earliest due date found or the current time if none exists
      */
     private ZonedDateTime findEarliestDueDate(long userId, long courseId) {
-        return quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId).stream().map(QuizQuestionProgress::getProgressJson)
-                .map(QuizQuestionProgressData::getDueDate).filter(Objects::nonNull).min(ZonedDateTime::compareTo).orElse(ZonedDateTime.now());
+        long totalQuestionCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
+        long progressCount = quizQuestionProgressRepository.countByUserIdAndCourseId(userId, courseId);
+        if (totalQuestionCount > progressCount) {
+            return ZonedDateTime.now();
+        }
+        else {
+            return quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId).stream().map(QuizQuestionProgress::getProgressJson)
+                    .map(QuizQuestionProgressData::getDueDate).filter(Objects::nonNull).min(ZonedDateTime::compareTo).orElse(ZonedDateTime.now());
+        }
     }
 
     /**
@@ -190,7 +197,7 @@ public class QuizTrainingLeaderboardService {
             }
         }
 
-        double questionDelta = 2 * lastScore + box * lastScore + 50; // 50 will be removed and is just for testing purposes
+        double questionDelta = 2 * lastScore + box * lastScore + 34; // 34 will be removed and is just for testing purposes
 
         if (hadFailedAttemptToday && lastScore == 1.0) {
             questionDelta = lastScore;

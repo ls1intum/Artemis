@@ -44,17 +44,17 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
     @Modifying
     @Query("""
                 UPDATE QuizTrainingLeaderboard qtl
-                SET qtl.score = qtl.score + :scoreDelta,
-                       qtl.answeredCorrectly = qtl.answeredCorrectly + :correctAnswers,
-                       qtl.answeredWrong = qtl.answeredWrong + :wrongAnswers,
-                       qtl.league =
+                SET qtl.league =
                             CASE
                                 WHEN (qtl.score + :scoreDelta) < 100 THEN 5
-                                WHEN (qtl.score + :scoreDelta) < 200 THEN 4
-                                WHEN (qtl.score + :scoreDelta) < 300 THEN 3
-                                WHEN (qtl.score + :scoreDelta) < 400 THEN 2
+                                WHEN (qtl.score + :scoreDelta) >= 100 AND (qtl.score + :scoreDelta) < 200 THEN 4
+                                WHEN (qtl.score + :scoreDelta) >= 200 AND (qtl.score + :scoreDelta) < 300 THEN 3
+                                WHEN (qtl.score + :scoreDelta) >= 300 AND (qtl.score + :scoreDelta)< 400 THEN 2
                                 ELSE 1
                             END,
+                       qtl.score = qtl.score + :scoreDelta,
+                       qtl.answeredCorrectly = qtl.answeredCorrectly + :correctAnswers,
+                       qtl.answeredWrong = qtl.answeredWrong + :wrongAnswers,
                        qtl.dueDate = :dueDate
                 WHERE qtl.user.id = :userId AND qtl.course.id = :courseId
             """)
