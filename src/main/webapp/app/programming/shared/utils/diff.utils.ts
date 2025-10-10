@@ -37,21 +37,6 @@ export enum FileStatus {
     UNCHANGED = 'unchanged',
 }
 
-// helper: simple concurrency limiter
-async function mapWithLimit<T, R>(items: T[], limit: number, fn: (x: T) => Promise<R>): Promise<R[]> {
-    const results: R[] = new Array(items.length);
-    let i = 0;
-    await Promise.all(
-        Array.from({ length: Math.max(1, limit) }, async () => {
-            while (i < items.length) {
-                const idx = i++;
-                results[idx] = await fn(items[idx]);
-            }
-        }),
-    );
-    return results;
-}
-
 /**
  * Processes the repository diff information
  * @param originalFileContentByPath The original file content by path
@@ -66,16 +51,24 @@ export async function processRepositoryDiff(originalFileContentByPath: Map<strin
         totalLineChange: { addedLineCount: 0, removedLineCount: 0 },
     };
 
-    // Limit concurrent Monaco diff computations (e.g., 3 at a time)
-    await mapWithLimit(diffInformation, 3, async (diffInfo) => {
-        const original = originalFileContentByPath.get(diffInfo.originalPath) ?? '';
-        const modified = modifiedFileContentByPath.get(diffInfo.modifiedPath) ?? '';
-        const lineChange = await computeDiffsMonaco(original, modified);
+    // Process diff information in batches to avoid memory spikes when there are many files
+    const chunk = <T>(array: T[], size: number) => Array.from({ length: Math.ceil(array.length / size) }, (_, i) => array.slice(i * size, (i + 1) * size));
+    const batchSize = 5;
 
-        diffInfo.lineChange = lineChange;
-        repositoryDiffInformation.totalLineChange.addedLineCount += lineChange.addedLineCount;
-        repositoryDiffInformation.totalLineChange.removedLineCount += lineChange.removedLineCount;
-    });
+    // Process diff information in batches to avoid memory spikes when there are many files
+    for (const batch of chunk(diffInformation, batchSize)) {
+        await Promise.all(
+            batch.map(async (diffInfo) => {
+                const original = originalFileContentByPath.get(diffInfo.originalPath) ?? '';
+                const modified = modifiedFileContentByPath.get(diffInfo.modifiedPath) ?? '';
+                const lineChange = await computeDiffsMonaco(original, modified);
+
+                diffInfo.lineChange = lineChange;
+                repositoryDiffInformation.totalLineChange.addedLineCount += lineChange.addedLineCount;
+                repositoryDiffInformation.totalLineChange.removedLineCount += lineChange.removedLineCount;
+            }),
+        );
+    }
 
     return repositoryDiffInformation;
 }
@@ -187,26 +180,12 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
                 return;
             }
             finished = true;
-            try {
-                diffListener?.dispose();
-            } catch {
-                // do nothing
-            }
-            try {
-                diffEditor?.dispose();
-            } catch {
-                // do nothing
-            }
-            try {
-                originalModel?.dispose();
-            } catch {
-                // do nothing
-            }
-            try {
-                modifiedModel?.dispose();
-            } catch {
-                // do nothing
-            }
+            // Dispose resources in reverse order of creation
+            // Monaco's dispose() methods are designed to be safe and shouldn't throw
+            diffListener?.dispose();
+            diffEditor?.dispose();
+            modifiedModel?.dispose();
+            originalModel?.dispose();
             resolve(res);
         };
 
