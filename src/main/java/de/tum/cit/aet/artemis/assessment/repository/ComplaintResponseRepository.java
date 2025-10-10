@@ -31,7 +31,7 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
      *
      * @param complaintType - complaint type we want to filter by
      * @param exerciseIds   - of the exercises we want to filter by
-     * @return number of complaints response associated to course courseId
+     * @return number of complaints response associated to the given exercise ids
      *
      */
 
