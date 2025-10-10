@@ -9,6 +9,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LeaderboardService } from './course-training-quiz/leaderboard/service/leaderboard-service';
 import { LeaderboardDTO, LeaderboardEntry } from './course-training-quiz/leaderboard/leaderboard-types';
 import { LocationStrategy, PathLocationStrategy } from '@angular/common';
+import dayjs from 'dayjs/esm';
 
 describe('CourseTrainingComponent', () => {
     let component: CourseTrainingComponent;
@@ -118,33 +119,65 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should calculate due date information correctly', () => {
-        const futureDate = new Date();
-        futureDate.setDate(futureDate.getDate() + 2);
-        futureDate.setHours(futureDate.getHours() + 3);
+        component.currentTime.set('2023-06-15 12:00:00');
+        const futureDateString = '2023-06-17 15:00:00';
 
         component.currentUserEntry.set({
             ...mockLeaderboardEntry,
-            dueDate: futureDate.toISOString(),
+            dueDate: futureDateString,
         });
 
         const dueIn = component.dueIn();
         expect(dueIn.isValid).toBeTrue();
         expect(dueIn.isPast).toBeFalse();
         expect(dueIn.days).toBe(2);
+        expect(dueIn.hours).toBe(3);
     });
 
     it('should handle expired due dates', () => {
-        const pastDate = new Date();
-        pastDate.setDate(pastDate.getDate() - 1);
+        component.currentTime.set('2023-06-15 12:00:00');
+        const pastDateString = '2023-06-14 10:00:00';
 
         component.currentUserEntry.set({
             ...mockLeaderboardEntry,
-            dueDate: pastDate.toISOString(),
+            dueDate: pastDateString,
         });
 
         const dueIn = component.dueIn();
         expect(dueIn.isValid).toBeTrue();
         expect(dueIn.isPast).toBeTrue();
+    });
+
+    it('should handle undefined due date', () => {
+        component.currentTime.set('2023-06-15 12:00:00');
+        component.currentUserEntry.set({
+            ...mockLeaderboardEntry,
+            dueDate: undefined,
+        });
+
+        const dueIn = component.dueIn();
+        expect(dueIn.isValid).toBeFalse();
+        expect(dueIn.isPast).toBeFalse();
+        expect(dueIn.days).toBe(0);
+        expect(dueIn.hours).toBe(0);
+        expect(dueIn.minutes).toBe(0);
+    });
+
+    it('should handle due date less than 60 seconds in future', () => {
+        component.currentTime.set('2023-06-15 12:00:00');
+        const almostDueDate = dayjs('2023-06-15 12:00:00').add(30, 'second').format();
+
+        component.currentUserEntry.set({
+            ...mockLeaderboardEntry,
+            dueDate: almostDueDate,
+        });
+
+        const dueIn = component.dueIn();
+        expect(dueIn.isValid).toBeTrue();
+        expect(dueIn.isPast).toBeTrue();
+        expect(dueIn.days).toBe(0);
+        expect(dueIn.hours).toBe(0);
+        expect(dueIn.minutes).toBe(0);
     });
 
     it('should save leaderboard settings', () => {

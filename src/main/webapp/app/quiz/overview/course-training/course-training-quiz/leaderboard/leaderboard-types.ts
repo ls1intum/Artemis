@@ -15,7 +15,7 @@ export class LeaderboardEntry {
     public answeredCorrectly: number;
     public answeredWrong: number;
     public totalQuestions: number;
-    public dueDate: string;
+    public dueDate?: string;
     public streak: number;
 }
 
