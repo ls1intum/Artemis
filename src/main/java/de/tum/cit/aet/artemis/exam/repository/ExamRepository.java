@@ -58,15 +58,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             """)
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
-    @Query("""
-            SELECT DISTINCT ex
-            FROM Exam ex
-                LEFT JOIN FETCH ex.exerciseGroups eg
-                LEFT JOIN FETCH eg.exercises
-            WHERE ex.id = :examId
-            """)
-    Optional<Exam> findIdWithExerciseGroupsAndExercises(@Param("examId") long examId);
-
     /**
      * Find all exams for a given course that are already visible to the user (either registered, at least tutor or the exam is a test exam)
      *
@@ -529,4 +520,11 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             """)
 
     Set<ExamSidebarDataDTO> findSidebarDataForRealStudentExamsByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now, @Param("studentId") long studentId);
+
+    @Query("""
+            SELECT DISTINCT exam.id
+            FROM Exam exam
+            WHERE exam.course.id = :courseId
+            """)
+    Set<Long> findExamIdsByCourseId(@Param("courseId") long courseId);
 }

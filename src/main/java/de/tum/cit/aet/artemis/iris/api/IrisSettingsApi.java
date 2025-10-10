@@ -57,7 +57,7 @@ public class IrisSettingsApi extends AbstractIrisApi {
         irisSettingsService.deleteSettingsFor(course);
     }
 
-    public void deleteSettingsFor(Exercise exercise) {
-        irisSettingsService.deleteSettingsFor(exercise);
+    public void deleteSettingsForExercise(long exerciseId) {
+        irisSettingsService.deleteSettingsForExercise(exerciseId);
     }
 }
