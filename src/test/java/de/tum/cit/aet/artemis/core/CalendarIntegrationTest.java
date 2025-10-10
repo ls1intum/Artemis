@@ -343,19 +343,22 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                         .isEqualTo(expectedResponse);
             }
 
-            @Test
-            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-            void shouldReturnNoEventForInvisibleLectureWithStartAndEndAsStudent() throws Exception {
-                Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
-                Long courseId = course.getId();
-                String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
-                Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                        .isEqualTo(expectedResponse);
-            }
+            // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO:
+            // add issue here.
+            /*
+             * @Test
+             * @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+             * void shouldReturnNoEventForInvisibleLectureWithStartAndEndAsStudent() throws Exception {
+             * Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
+             * Long courseId = course.getId();
+             * String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+             * + "&language=" + TEST_LANGUAGE_STRING;
+             * Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+             * Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+             * assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+             * .isEqualTo(expectedResponse);
+             * }
+             */
 
             @Test
             @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
