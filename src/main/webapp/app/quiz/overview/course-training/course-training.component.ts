@@ -14,6 +14,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AccordionModule } from 'primeng/accordion';
 import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-badge/league-badge.component';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-course-practice',
@@ -81,28 +82,39 @@ export class CourseTrainingComponent {
 
     dueDate = computed(() => {
         const entry = this.currentUserEntry();
-        return entry?.dueDate;
+        return entry?.dueDate ? dayjs(entry.dueDate) : undefined;
     });
 
     dueIn = computed(() => {
-        const dueDateValue = this.dueDate();
-        if (!dueDateValue) {
+        const dueDateDayjs = this.dueDate();
+        if (!dueDateDayjs) {
             return { isValid: false, isPast: false, days: 0, hours: 0, minutes: 0 };
         }
 
-        const now = new Date();
-        const dueDate = new Date(dueDateValue);
+        const now = dayjs();
 
-        if (dueDate <= now) {
+        if (now.isAfter(dueDateDayjs)) {
             return { isValid: true, isPast: true, days: 0, hours: 0, minutes: 0 };
         }
 
-        const diffMs = dueDate.getTime() - now.getTime();
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const diffDays = dueDateDayjs.diff(now, 'day');
+        const diffHours = dueDateDayjs.diff(now, 'hour') % 24;
+        const diffMinutes = dueDateDayjs.diff(now, 'minute') % 60;
 
-        return { isValid: true, isPast: false, days: diffDays, hours: diffHours, minutes: diffMinutes };
+        if (diffDays === 0 && diffHours === 0 && diffMinutes === 0) {
+            const diffSeconds = dueDateDayjs.diff(now, 'second');
+            if (diffSeconds < 60) {
+                return { isValid: true, isPast: true, days: 0, hours: 0, minutes: 0 };
+            }
+        }
+
+        return {
+            isValid: true,
+            isPast: false,
+            days: diffDays,
+            hours: diffHours,
+            minutes: diffMinutes,
+        };
     });
 
     totalQuestions = computed(() => {

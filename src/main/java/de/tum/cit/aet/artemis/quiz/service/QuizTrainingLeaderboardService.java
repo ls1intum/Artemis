@@ -165,7 +165,7 @@ public class QuizTrainingLeaderboardService {
         long totalQuestionCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
         long progressCount = quizQuestionProgressRepository.countByUserIdAndCourseId(userId, courseId);
         if (totalQuestionCount > progressCount) {
-            return ZonedDateTime.now();
+            return ZonedDateTime.now().minusDays(1);
         }
         else {
             return quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId).stream().map(QuizQuestionProgress::getProgressJson)
@@ -197,7 +197,7 @@ public class QuizTrainingLeaderboardService {
             }
         }
 
-        double questionDelta = 2 * lastScore + box * lastScore + 34; // 34 will be removed and is just for testing purposes
+        double questionDelta = 2 * lastScore + box * lastScore + 34 * lastScore; // 34 will be removed and is just for testing purposes
 
         if (hadFailedAttemptToday && lastScore == 1.0) {
             questionDelta = lastScore;
