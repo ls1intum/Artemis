@@ -28,7 +28,7 @@ describe('Fireworks', () => {
     });
 
     it('should be visible', () => {
-        component.active = true;
+        fixture.componentRef.setInput('active', true);
 
         fixture.detectChanges();
 
