@@ -14,6 +14,6 @@ export class LeaderboardService {
     }
 
     initializeLeaderboardEntry(leaderboardSettings: LeaderboardSettingsDTO): Observable<void> {
-        return this.http.post<void>(`api/quiz/leaderboard-settings`, leaderboardSettings);
+        return this.http.put<void>(`api/quiz/leaderboard-settings`, leaderboardSettings);
     }
 }

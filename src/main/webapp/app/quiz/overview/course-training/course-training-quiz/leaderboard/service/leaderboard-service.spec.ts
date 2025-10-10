@@ -69,7 +69,7 @@ describe('LeaderboardService', () => {
     });
 
     describe('initializeLeaderboardEntry', () => {
-        it('should send POST request with leaderboard settings to the correct URL', fakeAsync(() => {
+        it('should send PUT request with leaderboard settings to the correct URL', fakeAsync(() => {
             const mockSettings: LeaderboardSettingsDTO = {
                 showInLeaderboard: true,
             };
@@ -79,7 +79,7 @@ describe('LeaderboardService', () => {
             });
 
             const req = httpMock.expectOne(`api/quiz/leaderboard-settings`);
-            expect(req.request.method).toBe('POST');
+            expect(req.request.method).toBe('PUT');
             expect(req.request.body).toEqual(mockSettings);
             req.flush(null);
             tick();
