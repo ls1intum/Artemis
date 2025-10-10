@@ -3,7 +3,7 @@
         <div class="form-grid">
             <label for="title" jhiTranslate="artemisApp.lecture.title"></label>
             <input pInputText id="title" [pAutoFocus]="true" [ngModel]="title()" (ngModelChange)="this.title.set($event)" [invalid]="isTitleInvalid()" />
-            <label for="visibleDate" jhiTranslate="artemisApp.lecture.startDate"></label>
+            <label for="startDate" jhiTranslate="artemisApp.lecture.startDate"></label>
             <p-datepicker
                 inputId="startDate"
                 [ngModel]="startDate() ?? null"
