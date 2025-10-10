@@ -137,9 +137,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     programmingExercise: ProgrammingExercise;
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
-    repositoryDiffInformation: RepositoryDiffInformation;
-    templateFileContentByPath: Map<string, string>;
-    solutionFileContentByPath: Map<string, string>;
+    repositoryDiffInformation?: RepositoryDiffInformation;
+    templateFileContentByPath?: Map<string, string>;
+    solutionFileContentByPath?: Map<string, string>;
     competencies: Competency[];
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;
@@ -149,6 +149,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
     diffReady = false;
+    lineChangesLoading = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
     formattedGradingInstructions: SafeHtml;
@@ -470,10 +471,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
-                this.repositoryDiffInformation &&
-                    this.templateFileContentByPath &&
-                    this.solutionFileContentByPath &&
-                    this.diffReady && {
+                this.templateFileContentByPath &&
+                    this.solutionFileContentByPath && {
                         type: DetailType.ProgrammingDiffReport,
                         title: 'artemisApp.programmingExercise.diffReport.title',
                         titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
@@ -481,6 +480,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             repositoryDiffInformation: this.repositoryDiffInformation,
                             templateFileContentByPath: this.templateFileContentByPath,
                             solutionFileContentByPath: this.solutionFileContentByPath,
+                            lineChangesLoading: this.lineChangesLoading,
                         },
                     },
                 !!exercise.buildConfig?.buildScript &&
@@ -738,20 +738,32 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    async handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined) {
+    async handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined): Promise<void> {
+        this.templateFileContentByPath = templateFiles;
+        this.solutionFileContentByPath = solutionFiles;
+
         if (!templateFiles || !solutionFiles) {
+            this.diffReady = false;
+            this.repositoryDiffInformation = undefined;
+            this.lineChangesLoading = false;
+            this.exerciseDetailSections = this.getExerciseDetails();
             return;
         }
 
+        this.diffReady = false;
+        this.repositoryDiffInformation = undefined;
+        this.lineChangesLoading = true;
+        this.exerciseDetailSections = this.getExerciseDetails();
+
+        await this.calculateRepositoryDiff(templateFiles, solutionFiles);
+    }
+
+    private async calculateRepositoryDiff(templateFiles: Map<string, string>, solutionFiles: Map<string, string>): Promise<void> {
         try {
-            this.templateFileContentByPath = templateFiles;
-            this.solutionFileContentByPath = solutionFiles;
             this.repositoryDiffInformation = await processRepositoryDiff(templateFiles, solutionFiles);
-            // Set ready state to true when diff processing is complete
             this.diffReady = true;
         } catch (error) {
             this.alertService.error('artemisApp.programmingExercise.diffProcessingError');
-            // Reset to a consistent state
             this.diffReady = false;
             this.repositoryDiffInformation = {
                 diffInformations: [],
@@ -760,6 +772,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     removedLineCount: 0,
                 },
             };
+        } finally {
+            this.lineChangesLoading = false;
+            this.exerciseDetailSections = this.getExerciseDetails();
         }
     }
 }

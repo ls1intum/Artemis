@@ -124,6 +124,7 @@ export interface ProgrammingDiffReportDetail extends DetailBase {
         repositoryDiffInformation?: RepositoryDiffInformation;
         templateFileContentByPath: Map<string, string>;
         solutionFileContentByPath: Map<string, string>;
+        lineChangesLoading?: boolean;
     };
 }
 
