@@ -19,7 +19,7 @@
             </div>
             <p-floatlabel variant="on">
                 <p-datepicker
-                    inputId="start-date"
+                    [inputId]="'start-date-' + (index + 1)"
                     [ngModel]="weeklyLecture.startDate() ?? null"
                     (ngModelChange)="weeklyLecture.startDate.set($event ?? undefined)"
                     [firstDayOfWeek]="1"
@@ -29,11 +29,11 @@
                     [appendTo]="'body'"
                     [baseZIndex]="100000"
                 />
-                <label for="start-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.startDate"></label>
+                <label [for]="'start-date-' + (index + 1)" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.startDate"></label>
             </p-floatlabel>
             <p-floatlabel variant="on">
                 <p-datepicker
-                    inputId="end-date"
+                    [inputId]="'end-date-' + (index + 1)"
                     [ngModel]="weeklyLecture.endDate() ?? null"
                     (ngModelChange)="weeklyLecture.endDate.set($event ?? undefined)"
                     [firstDayOfWeek]="1"
@@ -43,10 +43,18 @@
                     [appendTo]="'body'"
                     [baseZIndex]="100000"
                 />
-                <label for="end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.endDate"></label>
+                <label [for]="'end-date-' + (index + 1)" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.endDate"></label>
             </p-floatlabel>
             @if (initialLectures().length !== 1) {
-                <button pButton outlined severity="secondary" size="small" class="first-lecture-delete-button" (click)="removeInitialLecture(weeklyLecture)">
+                <button
+                    pButton
+                    outlined
+                    severity="secondary"
+                    size="small"
+                    class="first-lecture-delete-button"
+                    (click)="removeInitialLecture(weeklyLecture)"
+                    [attr.aria-label]="'Remove Initial Lecture ' + (index + 1)"
+                >
                     <fa-icon [icon]="faTrash" />
                 </button>
             }
@@ -67,10 +75,10 @@
                                 {{ index + 1 }}
                             </span>
                             <span class="draft-title">{{ draft.dto.title }}</span>
-                            <button type="button" class="card-button" (click)="draftEditModal.open(draft)">
+                            <button type="button" class="card-button" (click)="draftEditModal.open(draft)" [attr.aria-label]="'Edit ' + draft.dto.title">
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
-                            <button type="button" class="card-button" (click)="deleteLectureDraft(draft)">
+                            <button type="button" class="card-button" (click)="deleteLectureDraft(draft)" [attr.aria-label]="'Delete ' + draft.dto.title">
                                 <fa-icon [icon]="faXmark" />
                             </button>
                         </div>
