@@ -112,6 +112,7 @@ public class Lecture extends DomainObject {
     }
 
     /**
+     * @param visibleDate the visibleDate to set for this lecture
      * @deprecated The visibleDate property of lectures is deprecated as it serves no practical purpose.
      *             Lecture contents (such as units and attachments) now have their own release dates,
      *             which control their visibility. There is no reason to hide when or if
