@@ -2,6 +2,7 @@ export class LeaderboardDTO {
     public leaderboardEntryDTO: LeaderboardEntry[];
     public hasUserSetSettings: boolean;
     public currentUserEntry: LeaderboardEntry;
+    public currentTime: string;
 }
 
 export class LeaderboardEntry {

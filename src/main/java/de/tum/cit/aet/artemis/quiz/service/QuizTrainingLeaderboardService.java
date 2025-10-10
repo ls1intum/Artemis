@@ -85,11 +85,12 @@ public class QuizTrainingLeaderboardService {
         }
 
         QuizTrainingLeaderboard currentUserEntry = userLeaderboardEntryForCurrentCourse.orElseThrow();
+        ZonedDateTime currentTime = ZonedDateTime.now();
 
         List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdAndShowInLeaderboardTrueOrderByScoreDescUserAscId(league,
                 courseId);
         List<LeaderboardEntryDTO> leaderboardEntryDTOs = getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
-        return new LeaderboardWithCurrentUserIdDTO(leaderboardEntryDTOs, hasUserSetSettings, LeaderboardEntryDTO.of(currentUserEntry, 0, league, totalQuestions));
+        return new LeaderboardWithCurrentUserIdDTO(leaderboardEntryDTOs, hasUserSetSettings, LeaderboardEntryDTO.of(currentUserEntry, 0, league, totalQuestions), currentTime);
     }
 
     /**

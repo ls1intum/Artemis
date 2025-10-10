@@ -17,7 +17,7 @@ import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-b
 import dayjs from 'dayjs/esm';
 
 @Component({
-    selector: 'jhi-course-practice',
+    selector: 'jhi-course-training',
     imports: [ButtonComponent, LeaderboardComponent, TranslateDirective, DialogModule, FormsModule, FontAwesomeModule, ToggleSwitchModule, AccordionModule, LeagueBadgeComponent],
     templateUrl: './course-training.component.html',
     styleUrl: './course-training.component.scss',
@@ -44,6 +44,7 @@ export class CourseTrainingComponent {
     currentUserEntry = signal<LeaderboardEntry | undefined>(undefined);
     isLoading = signal<boolean>(false);
     isDataLoaded = signal<boolean>(false);
+    currentTime = signal<string>('');
 
     showDialog = true;
     showInLeaderboard = true;
@@ -95,7 +96,7 @@ export class CourseTrainingComponent {
             return { isValid: false, isPast: false, days: 0, hours: 0, minutes: 0 };
         }
 
-        const now = dayjs().utc();
+        const now = dayjs(this.currentTime());
         // eslint-disable-next-line
         console.log('Current time: ', now);
 
@@ -161,6 +162,7 @@ export class CourseTrainingComponent {
             next: (leaderboard) => {
                 this.leaderboardEntries.set(leaderboard.leaderboardEntryDTO);
                 this.currentUserEntry.set(leaderboard.currentUserEntry);
+                this.currentTime.set(leaderboard.currentTime);
                 this.isLoading.set(false);
                 this.isDataLoaded.set(true);
 
