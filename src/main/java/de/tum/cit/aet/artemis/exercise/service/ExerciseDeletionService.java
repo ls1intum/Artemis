@@ -141,7 +141,7 @@ public class ExerciseDeletionService {
         long start = System.nanoTime();
         Channel exerciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
         channelService.deleteChannel(exerciseChannel);
-        log.info("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
 
         if (exercise instanceof TextExercise) {
             log.info("Cancel scheduled operations of exercise {}", exercise.getId());
@@ -151,9 +151,8 @@ public class ExerciseDeletionService {
         // delete all exercise units linking to the exercise
         lectureUnitApi.ifPresent(api -> api.removeLectureUnitFromExercise(exerciseId));
 
-        if (irisSettingsApi.isPresent()) {
-            irisSettingsApi.get().deleteSettingsFor(exercise);
-        }
+        // delete all iris settings for this exercise
+        irisSettingsApi.ifPresent(api -> api.deleteSettingsForExercise(exerciseId));
 
         // delete all plagiarism results belonging to this exercise
         plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exerciseId));
