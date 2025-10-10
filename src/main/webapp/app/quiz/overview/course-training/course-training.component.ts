@@ -95,7 +95,7 @@ export class CourseTrainingComponent {
             return { isValid: false, isPast: false, days: 0, hours: 0, minutes: 0 };
         }
 
-        const now = dayjs();
+        const now = dayjs().utc();
         // eslint-disable-next-line
         console.log('Current time: ', now);
 
