@@ -54,10 +54,9 @@ export class GitDiffReportComponent {
     readonly addedLineCount = computed(() => this.repositoryDiffInformation().totalLineChange.addedLineCount);
     readonly removedLineCount = computed(() => this.repositoryDiffInformation().totalLineChange.removedLineCount);
 
-    // threshold for auto-collapsing diffs; diffs with more changed lines will be collapsed by default because it's compute expensive to render them
+    // Threshold for auto-collapsing diffs. Diffs with more changed lines will be collapsed by default because it is computationally expensive to render them.
     readonly collapseThreshold = 200;
 
-    // track per-file manual state after the user toggles
     private readonly userCollapsed = new Map<string, boolean>();
 
     /**
@@ -100,7 +99,7 @@ export class GitDiffReportComponent {
     }
 
     onToggleClick(title: string, wasCollapsed: boolean) {
-        // ngb will flip it after the click; remember the new state
+        // NgB will flip it after this click, so remember the new state.
         this.userCollapsed.set(title, !wasCollapsed);
     }
 }
