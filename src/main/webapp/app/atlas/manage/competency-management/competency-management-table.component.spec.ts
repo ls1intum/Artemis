@@ -7,7 +7,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockProvider } from 'ng-mocks';
-import { CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -17,18 +17,45 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import { Component as NgComponent } from '@angular/core';
+import { By } from '@angular/platform-browser';
+
+@NgComponent({
+    template: `
+        <jhi-competency-management-table
+            [courseId]="1"
+            [courseCompetencies]="courseCompetencies"
+            [competencyType]="competencyType"
+            [standardizedCompetenciesEnabled]="true"
+            (competencyDeleted)="competencyDeleted($event)"
+            (competenciesAdded)="competenciesAdded($event)"
+        />
+    `,
+    imports: [CompetencyManagementTableComponent],
+})
+class WrappedComponent {
+    protected readonly CourseCompetencyType = CourseCompetencyType;
+    courseCompetencies: CourseCompetency[] = [];
+    allCompetencies: CourseCompetency[] = [];
+    competencyType = CourseCompetencyType.COMPETENCY;
+
+    competencyDeleted(competencyId: number) {}
+    competenciesAdded(added: CourseCompetency[]) {
+        this.allCompetencies = this.allCompetencies.concat(added);
+    }
+}
 
 describe('CompetencyManagementTableComponent', () => {
-    let fixture: ComponentFixture<CompetencyManagementTableComponent>;
-    let component: CompetencyManagementTableComponent;
+    let fixture: ComponentFixture<WrappedComponent>;
+    let component: WrappedComponent;
+    let competencyManagementTableComponent: CompetencyManagementTableComponent;
 
     let competencyService: CompetencyService;
     let prerequisiteService: PrerequisiteService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyManagementTableComponent],
-            declarations: [],
+            imports: [WrappedComponent],
             providers: [
                 MockProvider(AlertService),
                 { provide: NgbModal, useClass: MockNgbModalService },
@@ -42,8 +69,12 @@ describe('CompetencyManagementTableComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CompetencyManagementTableComponent);
+                fixture = TestBed.createComponent(WrappedComponent);
                 component = fixture.componentInstance;
+                fixture.detectChanges();
+
+                const debugEl = fixture.debugElement.query(By.directive(CompetencyManagementTableComponent));
+                competencyManagementTableComponent = debugEl.componentInstance as CompetencyManagementTableComponent;
 
                 competencyService = TestBed.inject(CompetencyService);
                 prerequisiteService = TestBed.inject(PrerequisiteService);
@@ -56,39 +87,35 @@ describe('CompetencyManagementTableComponent', () => {
 
     it('should initialize values', () => {
         component.competencyType = CourseCompetencyType.COMPETENCY;
-        component.ngOnInit();
-        expect(component.service).toEqual(competencyService);
+        fixture.detectChanges();
+        expect(competencyManagementTableComponent.service).toEqual(competencyService);
 
         component.competencyType = CourseCompetencyType.PREREQUISITE;
-        component.ngOnInit();
-        expect(component.service).toEqual(prerequisiteService);
+        fixture.detectChanges();
+        expect(competencyManagementTableComponent.service).toEqual(prerequisiteService);
     });
 
     it('should handle import all data', () => {
-        fixture.componentRef.setInput('allCompetencies', []);
-        fixture.detectChanges();
-        component.courseCompetencies = [];
-
         const responseBody: CompetencyWithTailRelationDTO[] = [
             { competency: { id: 1 }, tailRelations: [] },
             { competency: { id: 2 }, tailRelations: [{ id: 3, tailCompetencyId: 2, headCompetencyId: 1, relationType: CompetencyRelationType.ASSUMES }] },
         ];
 
-        component.updateDataAfterImportAll(responseBody);
-        expect(component.courseCompetencies).toHaveLength(2);
+        competencyManagementTableComponent.updateDataAfterImportAll(responseBody);
+        expect(component.allCompetencies).toHaveLength(2);
     });
 
     it('should handle delete competency', () => {
         const deleteSpy = jest.spyOn(competencyService, 'delete').mockReturnValue(of(new HttpResponse<object>({ status: 200 })));
-        const competencyDeletedNextSpy = jest.spyOn(component.competencyDeleted, 'next');
-        const competency1 = { id: 1, type: CourseCompetencyType.COMPETENCY };
-        const competency2 = { id: 2, type: CourseCompetencyType.COMPETENCY };
-        component.service = competencyService;
+        const competencyDeletedSpy = jest.spyOn(component, 'competencyDeleted');
+        const competency1 = { id: 1, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;
+        const competency2 = { id: 2, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;
+        competencyManagementTableComponent.service = competencyService;
         component.courseCompetencies = [competency1, competency2];
+        fixture.detectChanges();
 
-        component.deleteCompetency(1);
+        competencyManagementTableComponent.deleteCompetency(1);
         expect(deleteSpy).toHaveBeenCalledOnce();
-        // Assert that competencyDeleted.next is called with the correct id
-        expect(competencyDeletedNextSpy).toHaveBeenCalledWith(1);
+        expect(competencyDeletedSpy).toHaveBeenCalledWith(1);
     });
 });
