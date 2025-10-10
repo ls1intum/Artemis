@@ -125,13 +125,12 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
                 );
             }
             if (lecturePeriodSection) {
-                this.subscriptions.add(
-                    lecturePeriodSection.periodSectionDatepickers().forEach((datepicker: FormDateTimePickerComponent) => {
-                        datepicker.valueChange.subscribe(() => {
-                            this.updateIsChangesMadeToTitleOrPeriodSection();
-                        });
-                    }),
-                );
+                lecturePeriodSection.periodSectionDatepickers().forEach((datepicker: FormDateTimePickerComponent) => {
+                    const subscription = datepicker.valueChange.subscribe(() => {
+                        this.updateIsChangesMadeToTitleOrPeriodSection();
+                    });
+                    this.subscriptions.add(subscription);
+                });
             }
         });
 
@@ -170,7 +169,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
+        this.activatedRoute.parent!.paramMap.subscribe((parameterMap) => {
             const courseIdAsString = parameterMap.get('courseId');
             this.courseId.set(courseIdAsString ? Number(courseIdAsString) : undefined);
         });
