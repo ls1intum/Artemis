@@ -76,8 +76,8 @@ public class IrisLectureChatSessionResource {
 
         var lecture = api.findByIdElseThrow(lectureId);
 
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
         // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -108,8 +108,8 @@ public class IrisLectureChatSessionResource {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
 
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
         // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -135,8 +135,8 @@ public class IrisLectureChatSessionResource {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
 
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
         // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();

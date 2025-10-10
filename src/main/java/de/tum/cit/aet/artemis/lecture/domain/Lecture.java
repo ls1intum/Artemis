@@ -159,8 +159,8 @@ public class Lecture extends DomainObject {
 
     @Override
     public String toString() {
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove visibleDate from the string representation OR leave as is */
         return "Lecture{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", visibleDate='" + getVisibleDate() + "'"
                 + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + "}";
     }

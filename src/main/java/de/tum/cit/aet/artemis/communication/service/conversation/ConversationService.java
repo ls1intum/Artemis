@@ -540,8 +540,8 @@ public class ConversationService {
      * @return true if the channel is visible to students
      */
     public boolean isChannelVisibleToStudents(@NotNull Channel channel) {
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
         // if (channel.getLecture() != null) {
         // return channel.getLecture().isVisibleToStudents();
         // }

@@ -127,8 +127,8 @@ public class LectureService {
 
         Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
         for (Lecture lecture : lecturesWithAttachments) {
-            // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO:
-            // add issue here.
+            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+            /* TODO: #11479 - remove the commented out code OR comment back in */
             // if (lecture.isVisibleToStudents()) {
             lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
             // }
@@ -332,8 +332,8 @@ public class LectureService {
      * @return the derived event
      */
     private Optional<CalendarEventDTO> deriveCalendarEventDTO(LectureCalendarEventDTO dto, boolean userIsStudent, Language language) {
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
         // if (userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate())) {
         // return Optional.empty();
         // }

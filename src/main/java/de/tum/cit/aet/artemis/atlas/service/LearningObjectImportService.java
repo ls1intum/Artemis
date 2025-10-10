@@ -406,8 +406,8 @@ public class LearningObjectImportService {
 
         if (isReleaseDate) {
             Stream<ZonedDateTime> exerciseDates = importedExercises.stream().map(Exercise::getReleaseDate);
-            // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO:
-            // add issue here.
+            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+            /* TODO: #11479 - remove the following line (not the one after that that concerns lecture units) or exchange the empty stream with the commented out one */
             Stream<ZonedDateTime> lectureDates = Stream.empty(); // importedLectures.stream().map(Lecture::getVisibleDate);
             Stream<ZonedDateTime> lectureUnitDates = importedLectureUnits.stream().map(LectureUnit::getReleaseDate);
             earliestTime = Stream.concat(exerciseDates, Stream.concat(lectureDates, lectureUnitDates)).filter(Objects::nonNull).min(Comparator.naturalOrder());
@@ -453,8 +453,8 @@ public class LearningObjectImportService {
     }
 
     private void setAllLectureDates(Lecture lecture, long timeOffset) {
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
         // if (lecture.getVisibleDate() != null) {
         // lecture.setVisibleDate(lecture.getVisibleDate().plusSeconds(timeOffset));
         // }

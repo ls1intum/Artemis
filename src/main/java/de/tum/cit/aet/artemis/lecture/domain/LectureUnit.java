@@ -138,8 +138,8 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
      */
     @JsonProperty("visibleToStudents")
     public boolean isVisibleToStudents() {
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
         // if (lecture == null || !lecture.isVisibleToStudents()) {
         // return false;
         // }
