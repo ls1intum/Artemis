@@ -332,9 +332,11 @@ public class LectureService {
      * @return the derived event
      */
     private Optional<CalendarEventDTO> deriveCalendarEventDTO(LectureCalendarEventDTO dto, boolean userIsStudent, Language language) {
-        if (userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate())) {
-            return Optional.empty();
-        }
+        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
+        // issue here.
+        // if (userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate())) {
+        // return Optional.empty();
+        // }
         String titlePrefix;
         if (dto.startDate() == null && dto.endDate() != null) {
             titlePrefix = switch (language) {
