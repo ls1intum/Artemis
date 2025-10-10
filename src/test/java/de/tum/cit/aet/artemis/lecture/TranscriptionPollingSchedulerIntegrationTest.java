@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -11,7 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
@@ -20,14 +23,15 @@ import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.lecture.service.TranscriptionPollingScheduler;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+@TestPropertySource(properties = { "artemis.nebula.enabled=true" })
 class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "transcriptionpollingschedulertest";
 
-    @MockitoBean
+    @Autowired
     private TranscriptionPollingScheduler transcriptionPollingScheduler;
 
-    @MockitoBean
+    @Autowired
     private LectureTranscriptionService lectureTranscriptionService;
 
     @Autowired
@@ -65,14 +69,12 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void pollPendingTranscriptions_callsServiceForEachPendingWithJobId() {
-        // Mock the scheduler to simulate calling the service for each pending transcription
-        doAnswer(invocation -> {
-            List<LectureTranscription> pendingWithJob = lectureTranscriptionRepository.findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus.PENDING);
-            for (LectureTranscription t : pendingWithJob) {
-                lectureTranscriptionService.processTranscription(t);
-            }
-            return null;
-        }).when(transcriptionPollingScheduler).pollPendingTranscriptions();
+        // Spy the existing bean so we don't trigger real HTTP in processTranscription
+        LectureTranscriptionService spyService = spy(lectureTranscriptionService);
+        doNothing().when(spyService).processTranscription(any(LectureTranscription.class));
+
+        // Replace the field inside the scheduler bean
+        ReflectionTestUtils.setField(transcriptionPollingScheduler, "transcriptionService", spyService);
 
         transcriptionPollingScheduler.pollPendingTranscriptions();
 
@@ -81,8 +83,8 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
         assertThat(pendingWithJob).hasSize(2);
 
         for (LectureTranscription t : pendingWithJob) {
-            verify(lectureTranscriptionService).processTranscription(t);
+            verify(spyService).processTranscription(t);
         }
-        verifyNoMoreInteractions(lectureTranscriptionService);
+        verifyNoMoreInteractions(spyService);
     }
 }
