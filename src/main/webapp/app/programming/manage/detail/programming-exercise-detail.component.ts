@@ -182,6 +182,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     exerciseDetailSections: DetailOverviewSection[];
 
+    private diffRunId = 0;
     private lastUpdateTime = 0;
     private readonly UPDATE_DEBOUNCE_MS = 1000;
 
@@ -306,6 +307,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
         this.ensureExerciseDetailsInitialized();
 
+        // Increment diff run sequence; used to ignore stale results from previous runs
+        const runId = ++this.diffRunId;
+
         this.diffFetchSubscription = this.fetchRepositoryFiles()
             .pipe(
                 catchError(() => {
@@ -313,7 +317,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     return of({ templateFiles: undefined, solutionFiles: undefined });
                 }),
                 switchMap(({ templateFiles, solutionFiles }) =>
-                    from(this.handleDiff(templateFiles, solutionFiles)).pipe(
+                    from(this.handleDiff(templateFiles, solutionFiles, runId)).pipe(
                         tap(() => {
                             const diffDataChanged =
                                 this.repositoryDiffInformation !== previousDiffInfo ||
@@ -781,7 +785,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    async handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined): Promise<void> {
+    async handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined, runId: number): Promise<void> {
         this.templateFileContentByPath = templateFiles;
         this.solutionFileContentByPath = solutionFiles;
 
@@ -807,15 +811,22 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
         this.ensureExerciseDetailsInitialized();
 
-        await this.calculateRepositoryDiff(templateFiles, solutionFiles);
+        await this.calculateRepositoryDiff(templateFiles, solutionFiles, runId);
     }
 
-    private async calculateRepositoryDiff(templateFiles: Map<string, string>, solutionFiles: Map<string, string>): Promise<void> {
+    private async calculateRepositoryDiff(templateFiles: Map<string, string>, solutionFiles: Map<string, string>, runId: number): Promise<void> {
         try {
             this.repositoryDiffInformation = await processRepositoryDiff(templateFiles, solutionFiles);
+            // Ignore stale results
+            if (runId !== this.diffRunId) {
+                return;
+            }
             this.diffDetailData.repositoryDiffInformation = this.repositoryDiffInformation;
             this.diffReady = true;
         } catch (error) {
+            if (runId !== this.diffRunId) {
+                return;
+            }
             this.alertService.error('artemisApp.programmingExercise.diffProcessingError');
             this.diffReady = false;
             this.repositoryDiffInformation = {
@@ -827,8 +838,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             };
             this.diffDetailData.repositoryDiffInformation = this.repositoryDiffInformation;
         } finally {
-            this.lineChangesLoading = false;
-            this.diffDetailData.lineChangesLoading = false;
+            if (runId === this.diffRunId) {
+                this.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading = false;
+            }
         }
     }
 }

@@ -18,6 +18,7 @@ import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programmin
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private route = inject(ActivatedRoute);
+    private diffRunId = 0;
 
     exerciseId: number;
     repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
@@ -114,6 +115,9 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         // Set ready state to false when starting diff processing
         this.diffReady = false;
 
+        // Increment diff run sequence; used to ignore stale results from previous runs
+        const runId = ++this.diffRunId;
+
         const leftCommitObservable = this.isTemplate
             ? of(new Map())
             : this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
@@ -137,12 +141,24 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
             next: async (result) => {
                 this.leftCommitFileContentByPath = result.leftFiles || new Map();
                 this.rightCommitFileContentByPath = result.rightFiles || new Map();
-                this.repositoryDiffInformation = await processRepositoryDiff(this.leftCommitFileContentByPath, this.rightCommitFileContentByPath);
+                const diffInformation = await processRepositoryDiff(this.leftCommitFileContentByPath, this.rightCommitFileContentByPath);
+
+                // Ignore stale results
+                if (runId !== this.diffRunId) {
+                    return;
+                }
+
+                this.repositoryDiffInformation = diffInformation;
 
                 // Set ready state to true when diff processing is complete
                 this.diffReady = true;
             },
             error: () => {
+                // Ignore stale results
+                if (runId !== this.diffRunId) {
+                    return;
+                }
+
                 this.errorWhileFetching = true;
                 this.leftCommitFileContentByPath = new Map();
                 this.rightCommitFileContentByPath = new Map();

@@ -119,8 +119,8 @@ function getDiffInformation(originalFileContentByPath: Map<string, string>, modi
             const modified = modifiedFileContentByPath.get(path);
 
             // helper: only inline when reasonably small
-            const inlineOriginal = original && original.length <= MAX_INLINE_BYTES ? original : undefined;
-            const inlineModified = modified && modified.length <= MAX_INLINE_BYTES ? modified : undefined;
+            const inlineOriginal = typeof original === 'string' && original.length <= MAX_INLINE_BYTES ? original : undefined;
+            const inlineModified = typeof modified === 'string' && modified.length <= MAX_INLINE_BYTES ? modified : undefined;
 
             if (!modified && original) {
                 // DELETED
