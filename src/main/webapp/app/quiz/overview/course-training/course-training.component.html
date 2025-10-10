@@ -1,12 +1,12 @@
 @if (!isLoading()) {
     <div>
-        <p-dialog [(visible)]="showDialog" [modal]="true" [draggable]="false" [closable]="false" [style]="{ width: '900px' }">
+        <p-dialog [(visible)]="showDialog" [modal]="true" [closable]="false" [style]="{ width: '900px', height: 'auto' }">
             <ng-template pTemplate="header">
                 <h5 jhiTranslate="artemisApp.quizTraining.theQuizTraining"></h5>
             </ng-template>
 
             <div class="training-description mb-3">
-                <p-accordion [value]="['0']" [multiple]="true">
+                <p-accordion [value]="['0']">
                     <p-accordion-panel value="0">
                         <p-accordion-header jhiTranslate="artemisApp.quizTraining.howItWorks.title" />
                         <p-accordion-content>
