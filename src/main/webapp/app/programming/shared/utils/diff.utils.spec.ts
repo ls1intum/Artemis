@@ -59,7 +59,22 @@ describe('DiffUtils', () => {
         });
 
         (monaco.editor.createDiffEditor as jest.Mock).mockReturnValue(mockDiffEditor);
-        jest.spyOn(Document.prototype, 'createElement').mockImplementation(() => ({}) as HTMLElement);
+
+        // Mock DOM elements with proper structure for the new getDiffHost() implementation
+        jest.spyOn(Document.prototype, 'createElement').mockImplementation(() => {
+            const mockElement = {
+                style: {},
+                appendChild: jest.fn(),
+                removeChild: jest.fn(),
+                parentElement: {
+                    removeChild: jest.fn(),
+                },
+            };
+            return mockElement as unknown as HTMLElement;
+        });
+
+        // Mock document.body.appendChild to accept mock elements
+        jest.spyOn(document.body, 'appendChild').mockImplementation((node: Node) => node as any);
     });
 
     describe('processRepositoryDiff', () => {
