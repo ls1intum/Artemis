@@ -6,7 +6,8 @@
                 <jhi-documentation-button [type]="documentationType" />
             </div>
             <div class="flex-grow-1"></div>
-            @if (!isEditMode()) {
+            @let currentCourseId = courseId();
+            @if (!isEditMode() && currentCourseId) {
                 <p-selectbutton
                     [options]="createLectureOptions()"
                     [ngModel]="selectedCreateLectureOption()"
@@ -18,8 +19,8 @@
                 />
             }
         </div>
-        @if (isLectureSeriesCreationMode()) {
-            <jhi-lecture-series-create [rawExistingLectures]="existingLectures()" [courseId]="1" />
+        @if (isLectureSeriesCreationMode() && currentCourseId) {
+            <jhi-lecture-series-create [rawExistingLectures]="existingLectures()" [courseId]="courseId" />
         } @else {
             <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
                 <jhi-form-status-bar [formStatusSections]="formStatusSections" />

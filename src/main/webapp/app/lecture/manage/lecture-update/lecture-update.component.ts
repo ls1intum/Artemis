@@ -86,6 +86,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
     courseTitle = model<string>('');
+    courseId = signal<number | undefined>(undefined);
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit: Lecture;
     existingLectures = signal<Lecture[] | undefined>(undefined);
@@ -167,6 +168,11 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             if (course) {
                 this.lecture().course = course;
             }
+        });
+
+        this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
+            const courseIdAsString = parameterMap.get('courseId');
+            this.courseId.set(courseIdAsString ? Number(courseIdAsString) : undefined);
         });
 
         this.isEditMode.set(!this.router.url.endsWith('/new'));
