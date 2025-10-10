@@ -63,10 +63,9 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
         course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId());
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
 
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
         // Lecture hiddenLecture = course.getLectures().stream().max(Comparator.comparing(Lecture::getId)).orElseThrow();
-        //
         // Set one lecture only visible in the future for filtering tests
         // ZonedDateTime future = ZonedDateTime.now().plusDays(3);
         // hiddenLecture.setVisibleDate(future);
@@ -83,8 +82,8 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(lecture.getLectureUnits()).isNotEmpty();
         assertThat(lecture.getAttachments()).isNotEmpty();
 
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
         // assertThat(lecture.getId()).isLessThan(hiddenLecture.getId());
     }
 
@@ -111,8 +110,8 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(testLecture.getAttachments()).doesNotContain(testAttachment);
         // Ensure that hidden lecture is filtered out for students
 
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
         // assertThat(testLectures.size()).isEqualTo(1);
     }
 

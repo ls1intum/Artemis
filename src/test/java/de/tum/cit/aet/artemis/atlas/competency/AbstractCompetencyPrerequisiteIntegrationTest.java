@@ -435,8 +435,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         assertThat(course2.getExercises()).hasSize(1);
         assertThat(course2.getExercises().stream().findFirst().get().getReleaseDate()).isCloseTo(newReleaseDate, HalfSecond());
         assertThat(course2.getLectures()).hasSize(1);
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
         // assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
@@ -590,8 +590,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         assertThat(course2.getExercises()).hasSize(1);
         assertThat(course2.getExercises().stream().findFirst().get().getReleaseDate()).isCloseTo(newReleaseDate, HalfSecond());
         assertThat(course2.getLectures()).hasSize(1);
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
         // assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
@@ -722,8 +722,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         assertThat(course2.getExercises()).hasSize(1);
         assertThat(course2.getExercises().stream().findFirst().get().getReleaseDate()).isCloseTo(newReleaseDate, HalfSecond());
         assertThat(course2.getLectures()).hasSize(1);
-        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
-        // issue here.
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
         // assertThat(course2.getLectures().stream().findFirst().get().getVisibleDate()).isCloseTo(newReleaseDate.plusSeconds(visibleDateDiff), HalfSecond());
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(1);
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits().stream().findFirst().get().getReleaseDate())
