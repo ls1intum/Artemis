@@ -429,7 +429,7 @@ describe('Course Management Update Component', () => {
             comp.course.enrollmentStartDate = undefined;
             comp.course.enrollmentEndDate = undefined;
             comp.course.enrollmentEnabled = false;
-            const expectedUnenrollmentEndDate = comp.course.endDate.subtract(1, 'minute');
+            const expectedEnrollmentEndDate = comp.course.endDate.subtract(1, 'minute');
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(false),
                 enrollmentEnabled: new FormControl(false),
@@ -438,9 +438,9 @@ describe('Course Management Update Component', () => {
             });
             comp.changeEnrollmentEnabled();
             expect(comp.course.enrollmentStartDate).toBe(comp.course.startDate);
-            expect(comp.course.enrollmentEndDate).toStrictEqual(expectedUnenrollmentEndDate);
+            expect(comp.course.enrollmentEndDate).toStrictEqual(expectedEnrollmentEndDate);
             expect(comp.courseForm.controls['enrollmentStartDate'].value).toBe(comp.course.startDate);
-            expect(comp.courseForm.controls['enrollmentEndDate'].value).toStrictEqual(expectedUnenrollmentEndDate);
+            expect(comp.courseForm.controls['enrollmentEndDate'].value).toStrictEqual(expectedEnrollmentEndDate);
             expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeTrue();
         });
     });
