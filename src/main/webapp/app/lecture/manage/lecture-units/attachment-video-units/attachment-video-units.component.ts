@@ -91,7 +91,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
             return;
         }
 
-        //regularly re-upload the file when it gets deleted in the backend
+        //regularly re-upload the file when it gets deleted in the server
         setTimeout(
             () => {
                 this.attachmentVideoUnitService
