@@ -17,14 +17,10 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -52,12 +48,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     @Query("""
-
             SELECT r
                 FROM Result r
                     LEFT JOIN FETCH r.assessor
                 WHERE r.id = :resultId
-                """)
+            """)
     Optional<Result> findByIdWithEagerAssessor(@Param("resultId") long resultId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")
@@ -936,37 +931,4 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                )
             """)
     Set<Result> findLatestResultsByParticipationIds(@Param("participationIds") Set<Long> participationIds);
-
-    @Transactional
-    @Modifying
-    @Query("""
-                UPDATE Result r
-                   SET r.exerciseId = (
-                       SELECT p.exercise.id
-                         FROM Submission s
-                         JOIN s.participation p
-                        WHERE s.id = r.submission.id
-                   )
-                 WHERE r.exerciseId IS NULL
-                   AND r.id IN :ids
-            """)
-    int backfillExerciseIdBatch(@Param("ids") List<Long> ids);
-
-    @Query("""
-                SELECT r.id
-                  FROM Result r
-                 WHERE r.exerciseId IS NULL
-                 ORDER BY r.id
-            """)
-    Slice<Long> findResultIdsWithoutExerciseId(Pageable pageable);
-
-    @Query("""
-              SELECT r.id
-                FROM Result r
-               WHERE r.exerciseId IS NULL
-                 AND r.id > :afterId
-            ORDER BY r.id
-            """)
-    List<Long> findNextIds(@Param("afterId") long afterId, Pageable pageable);
-
 }

@@ -30,7 +30,7 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
      * This magic method counts the number of complaints responses by complaint type associated to a course id
      *
      * @param complaintType - complaint type we want to filter by
-     * @param exerciseIds   - the id of the exercises we want to filter by
+     * @param exerciseIds   - of the exercises we want to filter by
      * @return number of complaints response associated to course courseId
      *
      */
