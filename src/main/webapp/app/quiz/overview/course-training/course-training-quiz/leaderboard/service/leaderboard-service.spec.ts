@@ -55,6 +55,7 @@ describe('LeaderboardService', () => {
                 leaderboardEntryDTO: mockEntries,
                 hasUserSetSettings: true,
                 currentUserEntry: mockEntries[0],
+                currentTime: '2023-06-15 12:00:00',
             };
 
             service.getQuizTrainingLeaderboard(courseId).subscribe((data) => {
