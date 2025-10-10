@@ -33,6 +33,7 @@ describe('CourseTrainingComponent', () => {
         leaderboardEntryDTO: [mockLeaderboardEntry],
         hasUserSetSettings: true,
         currentUserEntry: mockLeaderboardEntry,
+        currentTime: '2023-06-15 12:00:00',
     };
 
     beforeEach(async () => {
