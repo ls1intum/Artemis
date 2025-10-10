@@ -12,7 +12,7 @@ Running Artemis consists of two main steps:
 
 Artemis is based on `JHipster <https://jhipster.github.io>`__, combining:
 
-* `Spring Boot <http://projects.spring.io/spring-boot>`__ (Java 21) for the backend.
+* `Spring Boot <http://projects.spring.io/spring-boot>`__ (Java 25) for the backend.
 * `Angular 20 <https://angular.dev>`__ (TypeScript) for the frontend.
 
 To get an overview of the technology stack, visit the `JHipster Technology Stack <https://jhipster.github.io/tech-stack>`__
@@ -25,7 +25,7 @@ Development Environment Setup
 
 Before installing Artemis, install and configure the following dependencies:
 
-1. **Java JDK 21**
+1. **Java JDK 25**
    Download and install Java from `Oracle JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__.
 
 2. **Database Server**
