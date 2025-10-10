@@ -127,9 +127,11 @@ public class LectureService {
 
         Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
         for (Lecture lecture : lecturesWithAttachments) {
-            if (lecture.isVisibleToStudents()) {
-                lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
-            }
+            // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO:
+            // add issue here.
+            // if (lecture.isVisibleToStudents()) {
+            lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
+            // }
         }
         return lecturesWithFilteredAttachments;
     }

@@ -277,7 +277,9 @@ public class LectureResource {
         log.info("Getting all lectures with slides for course {}", courseId);
         long start = System.currentTimeMillis();
 
-        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId).stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
+        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
+        // issue here.
+        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId); // .stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
         Set<Long> attachmentVideoUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream())
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(DomainObject::getId).collect(Collectors.toSet());
 
@@ -321,6 +323,8 @@ public class LectureResource {
             // only attachment video units visible to students are included
             List<AttachmentVideoUnitDTO> attachmentVideoUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
                     .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents).map(AttachmentVideoUnitDTO::from).toList();
+            // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO:
+            // add issue here.
             return new LectureDTO(lecture.getId(), lecture.getTitle(), lecture.getVisibleDate(), lecture.getStartDate(), lecture.getEndDate(), attachmentDTOs,
                     attachmentVideoUnitDTOs);
         }
@@ -345,7 +349,7 @@ public class LectureResource {
     }
 
     /**
-     * GET /lectures/:lectureId : get the "lectureId" lecture.
+     * GET /lectures/:lectureId : get the lecture for the given ID.
      *
      * @param lectureId the lectureId of the lecture to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
@@ -355,7 +359,10 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
+
+        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
+        // issue here.
+        // authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
 
         Channel lectureChannel = channelRepository.findChannelByLectureId(lectureId);
         if (lectureChannel != null) {
