@@ -229,17 +229,33 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         assertThat(channelsOfUser).hasSize(6);
     }
 
+    // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add issue
+    // here.
+    // @Test
+    // @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    // void shouldNotReturnChannelIfExerciseOrLectureOrExamHidden_asStudent() throws Exception {
+    // Course course = courseUtilService.createCourseWithMessagingEnabled();
+    // createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().plusDays(1), "student1");
+    // List<Long> visibleChannelIds = createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().minusDays(1), "student1");
+    //
+    // List<ConversationDTO> channelsOfUser = request.getList("/api/communication/courses/" + course.getId() + "/conversations", HttpStatus.OK, ConversationDTO.class);
+    //
+    // assertThat(channelsOfUser).hasSize(3);
+    // channelsOfUser.forEach(conv -> assertThat(conv.getId()).isIn(visibleChannelIds));
+    // }
+
+    // In case the deprecation is reverted, remove this new test again
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotReturnChannelIfExerciseOrLectureOrExamHidden_asStudent() throws Exception {
+    void shouldNotReturnChannelIfExerciseOrExamHidden_asStudent() throws Exception {
         Course course = courseUtilService.createCourseWithMessagingEnabled();
-        createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().plusDays(1), "student1");
-        List<Long> visibleChannelIds = createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().minusDays(1), "student1");
+        List<Long> futureVisibleDateIds = createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().plusDays(1), "student1");
+        List<Long> pastVisibleChannelIds = createExerciseAndExamAndLectureChannels(course, ZonedDateTime.now().minusDays(1), "student1");
+        List<Long> visibleIds = List.of(futureVisibleDateIds.get(2), pastVisibleChannelIds.get(0), pastVisibleChannelIds.get(1), pastVisibleChannelIds.get(2));
 
         List<ConversationDTO> channelsOfUser = request.getList("/api/communication/courses/" + course.getId() + "/conversations", HttpStatus.OK, ConversationDTO.class);
-
-        assertThat(channelsOfUser).hasSize(3);
-        channelsOfUser.forEach(conv -> assertThat(conv.getId()).isIn(visibleChannelIds));
+        assertThat(channelsOfUser).hasSize(4);
+        channelsOfUser.forEach(conv -> assertThat(conv.getId()).isIn(visibleIds));
     }
 
     @Test

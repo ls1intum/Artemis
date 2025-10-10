@@ -834,8 +834,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var courseWideChannelWhereNotMember = createCourseWideChannel(TEST_PREFIX + "6");
         var visibleLecture = lectureUtilService.createLecture(exampleCourse, null);
         var visibleLectureChannel = lectureUtilService.addLectureChannel(visibleLecture);
-        var invisibleLecture = lectureUtilService.createLecture(exampleCourse, ZonedDateTime.now().plusDays(1));
-        var invisibleLectureChannel = lectureUtilService.addLectureChannel(invisibleLecture);
+        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
+        // issue here.
+        // var invisibleLecture = lectureUtilService.createLecture(exampleCourse, ZonedDateTime.now().plusDays(1));
+        // var invisibleLectureChannel = lectureUtilService.addLectureChannel(invisibleLecture);
 
         // then
         userUtilService.changeUser(testPrefix + userLogin);
@@ -852,7 +854,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(courseWideChannelWhereMember.getId());
         conversationRepository.deleteById(courseWideChannelWhereNotMember.getId());
         conversationRepository.deleteById(visibleLectureChannel.getId());
-        conversationRepository.deleteById(invisibleLectureChannel.getId());
+        // The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal in TODO: add
+        // issue here.
+        // conversationRepository.deleteById(invisibleLectureChannel.getId());
     }
 
     @Test
