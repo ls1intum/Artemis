@@ -52,7 +52,7 @@ export async function processRepositoryDiff(originalFileContentByPath: Map<strin
     };
 
     // Process diff information in batches to avoid memory spikes when there are many files
-    const chunk = <T>(array: T[], size: number) => Array.from({ length: Math.ceil(array.length / size) }, (_, i) => array.slice(i * size, (i + 1) * size));
+    const chunk = <T>(array: T[], size: number) => Array.from({ length: Math.ceil(array.length / size) }, (_, index) => array.slice(index * size, (index + 1) * size));
     const batchSize = 5;
 
     // Process diff information in batches to avoid memory spikes when there are many files
@@ -75,12 +75,23 @@ export async function processRepositoryDiff(originalFileContentByPath: Map<strin
 
 const MAX_INLINE_BYTES = 512 * 1024; // keep contents only if <= 512 KB per side
 
-// Cheap difference check that avoids full linear scans where possible
-function differs(a?: string, b?: string): boolean {
-    if (a === b) return false; // covers both undefined
-    if (a === undefined || b === undefined) return true;
-    if (a.length !== b.length) return true; // cheap guard
-    return a !== b; // deep compare only when same length
+/**
+ * Cheap difference check that avoids full linear scans where possible
+ * @param firstString The first string to compare
+ * @param secondString The second string to compare
+ * @returns True if the strings differ, false otherwise
+ */
+function differs(firstString?: string, secondString?: string): boolean {
+    if (firstString === secondString) {
+        return false;
+    }
+    if (firstString === undefined || secondString === undefined) {
+        return true;
+    }
+    if (firstString.length !== secondString.length) {
+        return true;
+    }
+    return firstString !== secondString;
 }
 
 /**
@@ -153,17 +164,22 @@ function getDiffInformation(originalFileContentByPath: Map<string, string>, modi
     return diffInformation;
 }
 
-let __diffHost: HTMLDivElement | undefined = undefined;
+let diffHost: HTMLDivElement | undefined = undefined;
+
+/**
+ * Gets or creates the hidden DOM container for Monaco diff editors
+ * @returns The cached diff host element
+ */
 function getDiffHost(): HTMLDivElement {
-    if (!__diffHost) {
-        __diffHost = document.createElement('div');
-        __diffHost.style.position = 'fixed';
-        __diffHost.style.width = '1px';
-        __diffHost.style.height = '1px';
-        __diffHost.style.left = '-99999px';
-        document.body.appendChild(__diffHost);
+    if (!diffHost) {
+        diffHost = document.createElement('div');
+        diffHost.style.position = 'fixed';
+        diffHost.style.width = '1px';
+        diffHost.style.height = '1px';
+        diffHost.style.left = '-99999px';
+        document.body.appendChild(diffHost);
     }
-    return __diffHost;
+    return diffHost;
 }
 
 /**
@@ -175,6 +191,12 @@ function getDiffHost(): HTMLDivElement {
 function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: string): Promise<LineChange> {
     return new Promise((resolve) => {
         let finished = false;
+        const hostElement = getDiffHost();
+        const diffContainer = document.createElement('div');
+        diffContainer.style.width = '1px';
+        diffContainer.style.height = '1px';
+        hostElement.appendChild(diffContainer);
+
         const finish = (res: LineChange) => {
             if (finished) {
                 return;
@@ -182,6 +204,7 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
             finished = true;
             // Dispose resources in reverse order of creation
             // Monaco's dispose() methods are designed to be safe and shouldn't throw
+            diffContainer.parentElement?.removeChild(diffContainer);
             diffListener?.dispose();
             diffEditor?.dispose();
             modifiedModel?.dispose();
@@ -198,21 +221,21 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
             originalModel = monaco.editor.createModel(originalFileContent, 'plaintext');
             modifiedModel = monaco.editor.createModel(modifiedFileContent, 'plaintext');
 
-            diffEditor = monaco.editor.createDiffEditor(getDiffHost(), { readOnly: true, automaticLayout: false });
+            diffEditor = monaco.editor.createDiffEditor(diffContainer, { readOnly: true, automaticLayout: false });
             diffEditor.setModel({ original: originalModel, modified: modifiedModel });
 
             diffListener = diffEditor.onDidUpdateDiff(() => {
                 try {
                     const changes = diffEditor!.getLineChanges() ?? [];
-                    let added = 0,
-                        removed = 0;
-                    for (const c of changes) {
-                        const o0 = c.originalEndLineNumber === 0;
-                        const m0 = c.modifiedEndLineNumber === 0;
-                        const origCount = o0 ? 0 : c.originalEndLineNumber - c.originalStartLineNumber + 1;
-                        const modCount = m0 ? 0 : c.modifiedEndLineNumber - c.modifiedStartLineNumber + 1;
-                        added += modCount;
-                        removed += origCount;
+                    let added = 0;
+                    let removed = 0;
+                    for (const change of changes) {
+                        const isOriginalEmpty = change.originalEndLineNumber === 0;
+                        const isModifiedEmpty = change.modifiedEndLineNumber === 0;
+                        const originalCount = isOriginalEmpty ? 0 : change.originalEndLineNumber - change.originalStartLineNumber + 1;
+                        const modifiedCount = isModifiedEmpty ? 0 : change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1;
+                        added += modifiedCount;
+                        removed += originalCount;
                     }
                     finish({ addedLineCount: added, removedLineCount: removed });
                 } catch {
@@ -230,118 +253,158 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
 
 /**
  * Calculates the similarity ratio between two strings.
- * - For small inputs: Levenshtein (two-row DP) => 1 - distance / maxLen
+ * - For small inputs: Levenshtein (two-row DP) => 1 - distance / maxLength
  * - For large inputs: 5-gram Jaccard similarity (fast, O(n))
  * Returns a value in [0, 1].
+ * @param firstString The first string to compare
+ * @param secondString The second string to compare
+ * @returns Similarity ratio between 0 and 1
  */
-function calculateStringSimilarity(str1: string, str2: string): number {
-    if (!str1 || !str2) return 0;
-    if (str1 === str2) return 1;
+function calculateStringSimilarity(firstString: string, secondString: string): number {
+    if (!firstString || !secondString) {
+        return 0;
+    }
+    if (firstString === secondString) {
+        return 1;
+    }
 
-    const len1 = str1.length;
-    const len2 = str2.length;
-    const maxLen = Math.max(len1, len2);
+    const firstLength = firstString.length;
+    const secondLength = secondString.length;
+    const maxLength = Math.max(firstLength, secondLength);
 
     // Quick guards
-    if (len1 === 0 || len2 === 0) return 0;
-    if (len1 === len2 && len1 <= 4096 && str1 === str2) return 1; // tiny fast path
+    if (firstLength === 0 || secondLength === 0) {
+        return 0;
+    }
 
     // If the DP would be too big (time-wise), fall back to Jaccard on 5-grams
     // With two-row DP, time is still O(n*m). Cap the "cell count" to keep UI responsive.
     const MAX_DP_CELLS = 4_000_000; // ~2k x 2k; adjust if you can afford more
-    if (len1 * len2 > MAX_DP_CELLS) {
-        return jaccardNGramSimilarity(str1, str2, 5, 250_000);
+    if (firstLength * secondLength > MAX_DP_CELLS) {
+        return jaccardNGramSimilarity(firstString, secondString, 5, 250_000);
     }
 
     // Two-row Levenshtein (O(min(n,m)) memory)
-    return 1 - levenshteinRatioTwoRow(str1, str2) / maxLen;
+    return 1 - levenshteinRatioTwoRow(firstString, secondString) / maxLength;
 }
 
-/** Two-row Levenshtein distance (returns integer edit distance). */
-function levenshteinRatioTwoRow(a: string, b: string): number {
-    // Ensure a is the shorter one to minimize memory and cache misses
-    if (a.length > b.length) {
-        const t = a;
-        a = b;
-        b = t;
+/**
+ * Two-row Levenshtein distance (returns integer edit distance).
+ * @param firstString The first string to compare
+ * @param secondString The second string to compare
+ * @returns The edit distance between the two strings
+ */
+function levenshteinRatioTwoRow(firstString: string, secondString: string): number {
+    // Ensure firstString is the shorter one to minimize memory and cache misses
+    if (firstString.length > secondString.length) {
+        const temp = firstString;
+        firstString = secondString;
+        secondString = temp;
     }
-    const n = a.length,
-        m = b.length;
+    const shorterLength = firstString.length;
+    const longerLength = secondString.length;
 
-    const prev = new Uint32Array(n + 1);
-    const curr = new Uint32Array(n + 1);
-    for (let i = 0; i <= n; i++) prev[i] = i;
+    const previousRow = new Uint32Array(shorterLength + 1);
+    const currentRow = new Uint32Array(shorterLength + 1);
+    for (let i = 0; i <= shorterLength; i++) {
+        previousRow[i] = i;
+    }
 
-    for (let j = 1; j <= m; j++) {
-        curr[0] = j;
-        const bj = b.charCodeAt(j - 1);
-        for (let i = 1; i <= n; i++) {
-            const cost = a.charCodeAt(i - 1) === bj ? 0 : 1;
-            const del = prev[i] + 1;
-            const ins = curr[i - 1] + 1;
-            const sub = prev[i - 1] + cost;
-            curr[i] = del < ins ? (del < sub ? del : sub) : ins < sub ? ins : sub;
+    for (let j = 1; j <= longerLength; j++) {
+        currentRow[0] = j;
+        const currentCharCode = secondString.charCodeAt(j - 1);
+        for (let i = 1; i <= shorterLength; i++) {
+            const cost = firstString.charCodeAt(i - 1) === currentCharCode ? 0 : 1;
+            const deletionCost = previousRow[i] + 1;
+            const insertionCost = currentRow[i - 1] + 1;
+            const substitutionCost = previousRow[i - 1] + cost;
+            currentRow[i] = Math.min(deletionCost, insertionCost, substitutionCost);
         }
-        // swap rows
-        for (let k = 0; k <= n; k++) {
-            prev[k] = curr[k];
+        // Swap rows
+        for (let k = 0; k <= shorterLength; k++) {
+            previousRow[k] = currentRow[k];
         }
     }
-    return prev[n];
+    return previousRow[shorterLength];
 }
 
 /**
  * Fast similarity for large strings: Jaccard over character n-grams.
- * - n: gram size (default 5)
- * - limit: max grams considered per string (sampling down if needed)
+ * @param firstString The first string to compare
+ * @param secondString The second string to compare
+ * @param gramSize The size of n-grams (default 5)
+ * @param gramLimit The max grams considered per string (sampling down if needed, default 250,000)
+ * @returns Similarity ratio between 0 and 1
  */
-function jaccardNGramSimilarity(a: string, b: string, n = 5, limit = 250_000): number {
-    if (a.length < n || b.length < n) {
-        // fallback to simple prefix equality ratio if too short for n-grams
-        const L = Math.min(a.length, b.length, 1024);
-        if (L === 0) return 0;
-        let same = 0;
-        for (let i = 0; i < L; i++) if (a.charCodeAt(i) === b.charCodeAt(i)) same++;
-        return ((same / L) * Math.min(a.length, b.length)) / Math.max(a.length, b.length);
+function jaccardNGramSimilarity(firstString: string, secondString: string, gramSize = 5, gramLimit = 250_000): number {
+    if (firstString.length < gramSize || secondString.length < gramSize) {
+        // Fallback to simple prefix equality ratio if too short for n-grams
+        const comparisonLength = Math.min(firstString.length, secondString.length, 1024);
+        if (comparisonLength === 0) {
+            return 0;
+        }
+        let sameCharacters = 0;
+        for (let i = 0; i < comparisonLength; i++) {
+            if (firstString.charCodeAt(i) === secondString.charCodeAt(i)) {
+                sameCharacters++;
+            }
+        }
+        return ((sameCharacters / comparisonLength) * Math.min(firstString.length, secondString.length)) / Math.max(firstString.length, secondString.length);
     }
 
     // Build n-gram sets (with lightweight hashing) and optionally sample
-    const setA = buildGramSet(a, n, limit);
-    const setB = buildGramSet(b, n, limit);
+    const firstGramSet = buildGramSet(firstString, gramSize, gramLimit);
+    const secondGramSet = buildGramSet(secondString, gramSize, gramLimit);
 
     // Compute Jaccard
     let intersection = 0;
     // Iterate over smaller set for speed
-    const [small, large] = setA.size <= setB.size ? [setA, setB] : [setB, setA];
-    for (const h of small) if (large.has(h)) intersection++;
-    const union = setA.size + setB.size - intersection;
+    const [smallerSet, largerSet] = firstGramSet.size <= secondGramSet.size ? [firstGramSet, secondGramSet] : [secondGramSet, firstGramSet];
+    for (const hash of smallerSet) {
+        if (largerSet.has(hash)) {
+            intersection++;
+        }
+    }
+    const union = firstGramSet.size + secondGramSet.size - intersection;
     return union === 0 ? 1 : intersection / union;
 }
 
-function buildGramSet(s: string, n: number, limit: number): Set<number> {
-    const total = s.length - n + 1;
+/**
+ * Builds a set of n-gram hashes for a string using rolling hash.
+ * @param inputString The string to extract n-grams from
+ * @param gramSize The size of each n-gram
+ * @param gramLimit The maximum number of grams to sample
+ * @returns A set of hash values representing the n-grams
+ */
+function buildGramSet(inputString: string, gramSize: number, gramLimit: number): Set<number> {
+    const totalGrams = inputString.length - gramSize + 1;
     // If total grams exceed limit, sample at a stride
-    const stride = Math.max(1, Math.floor(total / limit));
-    const set = new Set<number>();
+    const stride = Math.max(1, Math.floor(totalGrams / gramLimit));
+    const gramSet = new Set<number>();
     // Simple rolling hash (base 257, modulo 2^32 via >>> 0)
     const BASE = 257 >>> 0;
     let hash = 0 >>> 0;
-    let pow = 1 >>> 0;
-    for (let i = 0; i < n; i++) {
-        hash = (hash * BASE + s.charCodeAt(i)) >>> 0;
-        if (i < n - 1) pow = (pow * BASE) >>> 0;
-    }
-    for (let i = 0; i < total; i++) {
-        if (i % stride === 0) set.add(hash);
-        if (i + n < s.length) {
-            const outCode = s.charCodeAt(i);
-            const inCode = s.charCodeAt(i + n);
-            // remove leading char and add trailing char
-            hash = (((hash - ((outCode * pow) >>> 0)) >>> 0) * BASE + inCode) >>> 0;
+    let power = 1 >>> 0;
+    for (let i = 0; i < gramSize; i++) {
+        hash = (hash * BASE + inputString.charCodeAt(i)) >>> 0;
+        if (i < gramSize - 1) {
+            power = (power * BASE) >>> 0;
         }
     }
-    return set;
+    for (let i = 0; i < totalGrams; i++) {
+        if (i % stride === 0) {
+            gramSet.add(hash);
+        }
+        if (i + gramSize < inputString.length) {
+            const outgoingCharCode = inputString.charCodeAt(i);
+            const incomingCharCode = inputString.charCodeAt(i + gramSize);
+            // Remove leading char and add trailing char
+            hash = (((hash - ((outgoingCharCode * power) >>> 0)) >>> 0) * BASE + incomingCharCode) >>> 0;
+        }
+    }
+    return gramSet;
 }
+
 /**
  * Checks similarity between CREATED and DELETED files and merges them into a RENAMED file if they are similar enough.
  *
@@ -353,54 +416,71 @@ function buildGramSet(s: string, n: number, limit: number): Set<number> {
 function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[], deleted?: string[]): DiffInformation[] {
     // Build lists if not provided
     if (!created || !deleted) {
-        created = diffInformation.filter((i) => i.fileStatus === FileStatus.CREATED).map((i) => i.modifiedPath);
-        deleted = diffInformation.filter((i) => i.fileStatus === FileStatus.DELETED).map((i) => i.originalPath);
+        created = diffInformation.filter((info) => info.fileStatus === FileStatus.CREATED).map((info) => info.modifiedPath);
+        deleted = diffInformation.filter((info) => info.fileStatus === FileStatus.DELETED).map((info) => info.originalPath);
     }
-    if (!created.length || !deleted.length) return diffInformation;
+    if (!created.length || !deleted.length) {
+        return diffInformation;
+    }
 
     // Helper to fetch contents from the DiffInformation entries (only CREATED/DELETED have them)
-    const getByModPath = (p: string) => diffInformation.find((i) => i.modifiedPath === p);
-    const getByOrigPath = (p: string) => diffInformation.find((i) => i.originalPath === p);
+    const getByModifiedPath = (path: string) => diffInformation.find((info) => info.modifiedPath === path);
+    const getByOriginalPath = (path: string) => diffInformation.find((info) => info.originalPath === path);
 
-    // Cheap guards
-    const LEN_TOL = 0.02; // ±2%
-    const k = 2048; // prefix/suffix sample
-    const quickLikelySame = (a: string, b: string) => a.length >= k && b.length >= k && a.slice(0, k) === b.slice(0, k) && a.slice(-k) === b.slice(-k);
+    // Quick similarity checks
+    const LENGTH_TOLERANCE = 0.02; // ±2%
+    const SAMPLE_SIZE = 2048; // prefix/suffix sample for large files
+    const quickLikelySame = (firstContent: string, secondContent: string) =>
+        firstContent.slice(0, SAMPLE_SIZE) === secondContent.slice(0, SAMPLE_SIZE) && firstContent.slice(-SAMPLE_SIZE) === secondContent.slice(-SAMPLE_SIZE);
 
     const SIMILARITY_THRESHOLD = 0.8;
 
     // Track merges to apply after scanning
     const merges: Array<{ createdPath: string; deletedPath: string }> = [];
 
-    for (const cPath of created) {
-        const cInfo = getByModPath(cPath);
-        const c = cInfo?.modifiedFileContent;
-        if (!c) continue;
+    for (const createdPath of created) {
+        const createdInfo = getByModifiedPath(createdPath);
+        const createdContent = createdInfo?.modifiedFileContent;
+        if (!createdContent) {
+            continue;
+        }
 
-        const lenLow = Math.floor(c.length * (1 - LEN_TOL));
-        const lenHigh = Math.ceil(c.length * (1 + LEN_TOL));
+        const minLength = Math.floor(createdContent.length * (1 - LENGTH_TOLERANCE));
+        const maxLength = Math.ceil(createdContent.length * (1 + LENGTH_TOLERANCE));
 
-        for (const dPath of deleted) {
-            const dInfo = getByOrigPath(dPath);
-            const d = dInfo?.originalFileContent;
-            if (!d) continue;
+        for (const deletedPath of deleted) {
+            const deletedInfo = getByOriginalPath(deletedPath);
+            const deletedContent = deletedInfo?.originalFileContent;
+            if (!deletedContent) {
+                continue;
+            }
 
-            if (d.length < lenLow || d.length > lenHigh) continue;
-            if (!quickLikelySame(c, d)) continue;
+            if (deletedContent.length < minLength || deletedContent.length > maxLength) {
+                continue;
+            }
 
-            const sim = calculateStringSimilarity(c, d); // safe implementation you added earlier
-            if (sim >= SIMILARITY_THRESHOLD) {
-                merges.push({ createdPath: cPath, deletedPath: dPath });
-                break; // one deleted partner is enough for this created
+            // For large files, use quick prefix/suffix check as optimization
+            // For small files, always calculate similarity
+            const bothLargeEnough = createdContent.length >= SAMPLE_SIZE && deletedContent.length >= SAMPLE_SIZE;
+            if (bothLargeEnough && !quickLikelySame(createdContent, deletedContent)) {
+                continue;
+            }
+
+            const similarity = calculateStringSimilarity(createdContent, deletedContent);
+            if (similarity >= SIMILARITY_THRESHOLD) {
+                merges.push({ createdPath, deletedPath });
+                break; // One deleted partner is enough for this created
             }
         }
     }
 
     // Apply merges
     for (const { createdPath, deletedPath } of merges) {
-        const createdIndex = diffInformation.findIndex((i) => i.modifiedPath === createdPath);
-        const deletedIndex = diffInformation.findIndex((i) => i.originalPath === deletedPath);
-        if (createdIndex === -1 || deletedIndex === -1) continue;
+        const createdIndex = diffInformation.findIndex((info) => info.modifiedPath === createdPath);
+        const deletedIndex = diffInformation.findIndex((info) => info.originalPath === deletedPath);
+        if (createdIndex === -1 || deletedIndex === -1) {
+            continue;
+        }
 
         const createdInfo = diffInformation[createdIndex];
         const deletedInfo = diffInformation[deletedIndex];
