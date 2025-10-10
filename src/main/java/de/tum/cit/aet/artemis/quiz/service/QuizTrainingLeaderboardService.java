@@ -190,7 +190,7 @@ public class QuizTrainingLeaderboardService {
             }
         }
 
-        double questionDelta = 2 * lastScore + box * lastScore;
+        double questionDelta = 2 * lastScore + box * lastScore + 50; // 50 will be removed and is just for testing purposes
 
         if (hadFailedAttemptToday && lastScore == 1.0) {
             questionDelta = lastScore;
