@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -31,8 +31,9 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     private courseCompetencyService = inject(CourseCompetencyService);
     private readonly scienceService = inject(ScienceService);
 
-    @Input()
-    courseId: number;
+    courseId = input<number>();
+    private _resolvedCourseId?: number;
+    resolvedCourseId = computed(() => this.courseId() ?? this._resolvedCourseId!);
 
     isLoading = false;
     course?: Course;
@@ -53,13 +54,17 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
         if (courseIdParams$) {
             this.parentParamSubscription = courseIdParams$.subscribe((params) => {
-                this.courseId = Number(params.courseId);
-
-                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN_OVERVIEW, this.courseId);
+                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN_OVERVIEW, Number(params.courseId));
             });
         }
 
-        this.course = this.courseStorageService.getCourse(this.courseId);
+        // Resolve courseId from input or route params
+        this._resolvedCourseId = this.courseId() ?? Number(this.activatedRoute.parent?.parent?.snapshot.paramMap.get('courseId'));
+        if (!this._resolvedCourseId || isNaN(this._resolvedCourseId)) {
+            this.alertService.error('artemisApp.error.invalidCourseId');
+            return;
+        }
+        this.course = this.courseStorageService.getCourse(this.resolvedCourseId());
 
         this.dashboardFeatureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard).subscribe((active) => {
             this.dashboardFeatureActive = active;
@@ -94,8 +99,8 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     loadData() {
         this.isLoading = true;
 
-        const courseCompetencyObservable = this.courseCompetencyService.getAllForCourse(this.courseId, true);
-        const competencyJolObservable = this.judgementOfLearningEnabled ? this.courseCompetencyService.getJoLAllForCourse(this.courseId) : of(undefined);
+        const courseCompetencyObservable = this.courseCompetencyService.getAllForCourse(this.resolvedCourseId(), false);
+        const competencyJolObservable = this.judgementOfLearningEnabled ? this.courseCompetencyService.getJoLAllForCourse(this.resolvedCourseId()) : of(undefined);
 
         forkJoin([courseCompetencyObservable, competencyJolObservable]).subscribe({
             next: ([courseCompetencies, judgementOfLearningMap]) => {
