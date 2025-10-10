@@ -26,11 +26,12 @@ Development Environment Setup
 Before installing Artemis, install and configure the following dependencies:
 
 1. **Java JDK 25**
-   Download and install Java from `Oracle JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__.
+   Download and install Java, e.g. from `Oracle JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__.
 
 2. **Database Server**
    Please refer to :ref:`this guide <Database Setup>` for setting up a database server.
    Artemis uses Hibernate for database interactions and Liquibase for schema migrations.
+   You can either use MySQL or PostgreSQL as the database server.
 
 3. **Node.js (LTS >=24.7.0 < 25)**
    Download from `Node.js <https://nodejs.org/en/download>`__.
