@@ -69,7 +69,7 @@
     @for (diffInformation of repositoryDiffInformation().diffInformations; track diffInformation) {
         <div class="mt-2">
             <div ngbAccordion [destroyOnHide]="false" class="git-diff-file-panel">
-                <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="false">
+                <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="isCollapsed(diffInformation)">
                     <div ngbAccordionHeader class="d-flex align-items-center justify-content-between">
                         <jhi-git-diff-file-panel-title [diffInformation]="diffInformation" />
                         <div>
@@ -83,7 +83,7 @@
                                     ) | artemisTranslate
                                 }}"
                             />
-                            <button ngbAccordionToggle class="btn ms-1">
+                            <button ngbAccordionToggle class="btn ms-1" (click)="onToggleClick(diffInformation.title, fileDiffPanel.collapsed)">
                                 <fa-icon [icon]="!fileDiffPanel.collapsed ? faAngleUp : faAngleDown" />
                             </button>
                         </div>

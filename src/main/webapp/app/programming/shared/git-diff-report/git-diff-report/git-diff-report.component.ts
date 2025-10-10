@@ -9,7 +9,7 @@ import { captureException } from '@sentry/angular';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { DiffInformation, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 @Component({
     selector: 'jhi-git-diff-report',
@@ -54,10 +54,16 @@ export class GitDiffReportComponent {
     readonly addedLineCount = computed(() => this.repositoryDiffInformation().totalLineChange.addedLineCount);
     readonly removedLineCount = computed(() => this.repositoryDiffInformation().totalLineChange.removedLineCount);
 
+    // threshold for auto-collapsing diffs; diffs with more changed lines will be collapsed by default because it's compute expensive to render them
+    readonly collapseThreshold = 200;
+
+    // track per-file manual state after the user toggles
+    private readonly userCollapsed = new Map<string, boolean>();
+
     /**
      * Records that the diff editor for a file has changed its "ready" state.
      * If all paths have reported that they are ready, {@link allDiffsReady} will be set to true.
-     * @param path The path of the file whose diff this event refers to.
+     * @param title The path of the file whose diff this event refers to.
      * @param ready Whether the diff is ready to be displayed or not.
      */
     onDiffReady(title: string, ready: boolean) {
@@ -80,5 +86,21 @@ export class GitDiffReportComponent {
      */
     handleDiffReady(title: string, ready: boolean): void {
         this.onDiffReady(title, ready);
+    }
+
+    isCollapsed(diffInformation: DiffInformation): boolean {
+        const override = this.userCollapsed.get(diffInformation.title);
+        if (override !== undefined) {
+            return override;
+        }
+
+        const added = diffInformation.lineChange?.addedLineCount ?? 0;
+        const removed = diffInformation.lineChange?.removedLineCount ?? 0;
+        return added + removed > this.collapseThreshold;
+    }
+
+    onToggleClick(title: string, wasCollapsed: boolean) {
+        // ngb will flip it after the click; remember the new state
+        this.userCollapsed.set(title, !wasCollapsed);
     }
 }
