@@ -7,7 +7,7 @@ jest.mock('monaco-editor', () => ({
 }));
 
 import * as monaco from 'monaco-editor';
-import { FileStatus, processRepositoryDiff } from './diff.utils';
+import { FileStatus, __diffUtilsTesting, processRepositoryDiff } from './diff.utils';
 
 describe('DiffUtils', () => {
     let mockOriginalModel: monaco.editor.ITextModel;
@@ -78,6 +78,17 @@ describe('DiffUtils', () => {
     });
 
     describe('processRepositoryDiff', () => {
+        it('should ignore files without content changes', async () => {
+            const originalFiles = new Map([['unchanged.txt', 'same content']]);
+            const modifiedFiles = new Map([['unchanged.txt', 'same content']]);
+
+            setupMonacoMocks([]);
+            const result = await processRepositoryDiff(originalFiles, modifiedFiles);
+
+            expect(result.diffInformations).toHaveLength(0);
+            expect(result.totalLineChange).toEqual({ addedLineCount: 0, removedLineCount: 0 });
+        });
+
         it('should process empty file maps', async () => {
             const originalFiles = new Map<string, string>();
             const modifiedFiles = new Map<string, string>();
@@ -200,6 +211,56 @@ describe('DiffUtils', () => {
             expect(result.diffInformations).toHaveLength(2);
             expect(result.diffInformations).toSatisfyAll((info) => info.fileStatus === FileStatus.RENAMED);
         });
+
+        it('should fall back to zero changes if diff computation throws', async () => {
+            const originalFiles = new Map([['error.txt', 'original content']]);
+            const modifiedFiles = new Map([['error.txt', 'modified content']]);
+
+            setupMonacoMocks();
+            mockDiffEditor.getLineChanges.mockImplementation(() => {
+                throw new Error('monaco failure');
+            });
+
+            const result = await processRepositoryDiff(originalFiles, modifiedFiles);
+
+            expect(result.totalLineChange).toEqual({ addedLineCount: 0, removedLineCount: 0 });
+        });
+
+        it('should resolve gracefully when Monaco initialization fails', async () => {
+            const originalFiles = new Map([['error.txt', 'original content']]);
+            const modifiedFiles = new Map([['error.txt', 'modified content']]);
+
+            setupMonacoMocks();
+            (monaco.editor.createModel as jest.Mock).mockImplementationOnce(() => {
+                throw new Error('init error');
+            });
+
+            const result = await processRepositoryDiff(originalFiles, modifiedFiles);
+
+            expect(result.totalLineChange).toEqual({ addedLineCount: 0, removedLineCount: 0 });
+            expect(mockDiffEditor.setModel).not.toHaveBeenCalled();
+        });
+
+        it('should ignore timeout completion after diff results are processed', async () => {
+            jest.useFakeTimers();
+
+            const originalFiles = new Map([['double-callback.txt', 'original content']]);
+            const modifiedFiles = new Map([['double-callback.txt', 'modified content']]);
+
+            setupMonacoMocks([createLineChange(1, 1, 1, 1)]);
+
+            try {
+                const resultPromise = processRepositoryDiff(originalFiles, modifiedFiles);
+                jest.runOnlyPendingTimers();
+                const result = await resultPromise;
+
+                expect(result.totalLineChange).toEqual({ addedLineCount: 1, removedLineCount: 1 });
+                expect(mockDiffListener.dispose).toHaveBeenCalledOnce();
+                expect(mockDiffEditor.dispose).toHaveBeenCalledOnce();
+            } finally {
+                jest.useRealTimers();
+            }
+        });
     });
 
     describe('Edge Cases and Error Handling', () => {
@@ -280,6 +341,49 @@ describe('DiffUtils', () => {
             const result = await processRepositoryDiff(originalFiles, modifiedFiles);
 
             expect(result.diffInformations[0].fileStatus).toBe(FileStatus.RENAMED);
+        });
+
+        it('should rely on n-gram similarity for extremely large but identical files', async () => {
+            const hugePrefix = 'x'.repeat(2500);
+            const hugeMiddle = 'y'.repeat(1200);
+            const hugeSuffix = 'z'.repeat(2500);
+            const hugeContent = `${hugePrefix}${hugeMiddle}${hugeSuffix}`;
+
+            const originalFiles = new Map([['originalHuge.txt', hugeContent]]);
+            const modifiedFiles = new Map([['renamedHuge.txt', hugeContent]]);
+
+            setupMonacoMocks([]);
+            const result = await processRepositoryDiff(originalFiles, modifiedFiles);
+
+            expect(result.diffInformations).toHaveLength(1);
+            expect(result.diffInformations[0].fileStatus).toBe(FileStatus.RENAMED);
+            expect(result.diffInformations[0].title).toBe('originalHuge.txt → renamedHuge.txt');
+        });
+
+        it('should keep files separate when large contents differ significantly despite matching prefixes and suffixes', async () => {
+            const prefix = 'a'.repeat(2048);
+            const differingMiddleOriginal = 'b'.repeat(2000);
+            const differingMiddleModified = 'c'.repeat(2000);
+            const suffix = 'z'.repeat(2048);
+
+            const originalContent = `${prefix}${differingMiddleOriginal}${suffix}`;
+            const modifiedContent = `${prefix}${differingMiddleModified}${suffix}`;
+
+            const originalFiles = new Map([['originalHuge.txt', originalContent]]);
+            const modifiedFiles = new Map([['renamedHuge.txt', modifiedContent]]);
+
+            setupMonacoMocks([]);
+            const result = await processRepositoryDiff(originalFiles, modifiedFiles);
+
+            expect(result.diffInformations).toHaveLength(2);
+            expect(result.diffInformations.map((info) => info.fileStatus)).toIncludeSameMembers([FileStatus.CREATED, FileStatus.DELETED]);
+        });
+
+        it('should expose helper similarities for targeted edge cases', () => {
+            const { calculateStringSimilarity, jaccardNGramSimilarity } = __diffUtilsTesting;
+
+            expect(calculateStringSimilarity('', 'non-empty')).toBe(0);
+            expect(jaccardNGramSimilarity('abc', 'abd', 5)).toBeCloseTo(2 / 3, 5);
         });
     });
 });

@@ -501,3 +501,8 @@ function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[
 
     return diffInformation;
 }
+
+export const __diffUtilsTesting = {
+    calculateStringSimilarity,
+    jaccardNGramSimilarity,
+};
