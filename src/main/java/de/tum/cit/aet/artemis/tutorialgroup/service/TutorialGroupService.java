@@ -810,7 +810,7 @@ public class TutorialGroupService {
      * This method retrieves tutorial groups for the specified course ID and maps each one
      * to a {@link TutorialGroupExportDTO}. Only the fields explicitly listed in {@code selectedFields}
      * are populated; all others remain {@code null}. Field names must match exactly with those
-     * defined in the corresponding frontend component (e.g., {@code tutorial-groups-export-button.component.ts}).
+     * defined in the corresponding client component (e.g., {@code tutorial-groups-export-button.component.ts}).
      * <p>
      * If the "Students" field is selected, the list of registered students is included using
      * {@link StudentExportDTO}.
