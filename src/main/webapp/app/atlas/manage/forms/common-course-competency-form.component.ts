@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Component, OnChanges, effect, inject, input, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,7 +6,7 @@ import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAU
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { merge } from 'rxjs';
+import { Subscription, merge } from 'rxjs';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -30,19 +30,19 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
         MarkdownEditorMonacoComponent,
     ],
 })
-export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
+export class CommonCourseCompetencyFormComponent implements OnChanges {
     private translateService = inject(TranslateService);
 
-    @Input() formData: CourseCompetencyFormData;
-    @Input() isEditMode = false;
-    @Input() isInConnectMode = false;
-    @Input() isInSingleLectureMode = false;
-    @Input() lecturesOfCourseWithLectureUnits: Lecture[] = [];
-    @Input() averageStudentScore?: number;
-    @Input() form: FormGroup;
-    @Input() courseCompetency: CourseCompetency;
+    formData = input.required<CourseCompetencyFormData>();
+    isEditMode = input<boolean>(false);
+    isInConnectMode = input<boolean>(false);
+    isInSingleLectureMode = input<boolean>(false);
+    lecturesOfCourseWithLectureUnits = input<Lecture[]>([]);
+    averageStudentScore = input<number>();
+    form = input.required<FormGroup>();
+    courseCompetency = input.required<CourseCompetency>();
 
-    @Output() onTitleOrDescriptionChange = new EventEmitter<void>();
+    onTitleOrDescriptionChange = output<void>();
 
     protected readonly competencyValidators = CourseCompetencyValidators;
     protected readonly DateTimePickerType = DateTimePickerType;
@@ -57,19 +57,19 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     protected readonly competencyTaxonomy = CompetencyTaxonomy;
 
     get titleControl() {
-        return this.form.get('title');
+        return this.form().get('title');
     }
 
     get descriptionControl() {
-        return this.form.get('description');
+        return this.form().get('description');
     }
 
     get masteryThresholdControl() {
-        return this.form.get('masteryThreshold');
+        return this.form().get('masteryThreshold');
     }
 
     get taxonomyControl() {
-        return this.form.get('taxonomy') as FormControl;
+        return this.form().get('taxonomy') as FormControl;
     }
 
     /**
@@ -79,20 +79,31 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     updateDescriptionControl(content: string) {
         this.descriptionControl?.setValue(content);
         this.descriptionControl?.markAsDirty();
+        this.onTitleOrDescriptionChange.emit();
     }
 
-    ngOnInit() {
-        merge(this.titleControl!.valueChanges, this.descriptionControl!.valueChanges).subscribe(() => this.suggestTaxonomies());
+    constructor() {
+        effect((onCleanup) => {
+            const titleCtrl = this.titleControl;
+            const descCtrl = this.descriptionControl;
+            if (titleCtrl && descCtrl) {
+                const subscription: Subscription = merge(titleCtrl.valueChanges, descCtrl.valueChanges).subscribe(() => {
+                    this.suggestTaxonomies();
+                    this.onTitleOrDescriptionChange.emit();
+                });
+                onCleanup(() => subscription.unsubscribe());
+            }
+        });
     }
 
     ngOnChanges() {
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        if (this.isEditMode() && this.formData()) {
+            this.setFormValues(this.formData());
         }
     }
 
     private setFormValues(formData: CourseCompetencyFormData) {
-        this.form.patchValue(formData);
+        this.form().patchValue(formData);
     }
 
     /**
