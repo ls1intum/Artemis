@@ -107,6 +107,12 @@ public class AtlasAgentToolsService {
 
     /**
      * Tool for creating a new competency in a course.
+     *
+     * @param courseId      the course ID
+     * @param title         the competency title
+     * @param description   the competency description
+     * @param taxonomyLevel the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)
+     * @return JSON response indicating success or error
      */
     @Tool(description = "Create a new competency for a course")
     public String createCompetency(@ToolParam(description = "the ID of the course") Long courseId, @ToolParam(description = "the title of the competency") String title,
@@ -163,6 +169,9 @@ public class AtlasAgentToolsService {
 
     /**
      * Tool for getting course description.
+     *
+     * @param courseId the course ID
+     * @return the course description or empty string if not found
      */
     @Tool(description = "Get the description of a course")
     public String getCourseDescription(@ToolParam(description = "the ID of the course") Long courseId) {
@@ -186,6 +195,9 @@ public class AtlasAgentToolsService {
 
     /**
      * Tool for getting exercises for a course.
+     *
+     * @param courseId the course ID
+     * @return JSON representation of exercises
      */
     @Tool(description = "List exercises for a course")
     public String getExercisesListed(@ToolParam(description = "the ID of the course") Long courseId) {
