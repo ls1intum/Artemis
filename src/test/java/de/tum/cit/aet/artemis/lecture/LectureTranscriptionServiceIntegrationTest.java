@@ -16,7 +16,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,7 +33,6 @@ import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-@TestPropertySource(properties = { "artemis.nebula.enabled=true" })
 class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired

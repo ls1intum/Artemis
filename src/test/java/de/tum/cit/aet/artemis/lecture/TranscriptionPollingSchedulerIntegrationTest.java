@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -24,7 +23,6 @@ import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.lecture.service.TranscriptionPollingScheduler;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-@TestPropertySource(properties = { "artemis.nebula.enabled=true" })
 @ActiveProfiles({ "core", "scheduling" })
 class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
