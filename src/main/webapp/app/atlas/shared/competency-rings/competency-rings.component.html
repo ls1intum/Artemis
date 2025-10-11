@@ -1,10 +1,10 @@
 <!-- Adapted from https://www.chilitime.design/2018/09/ActivityRings/ -->
-<div [class.muted-competency-rings]="hideProgress" class="position-relative" [ngbTooltip]="hideTooltip ? undefined : (tooltipText | artemisTranslate)" #container>
+<div [class.muted-competency-rings]="hideProgress()" class="position-relative" [ngbTooltip]="hideTooltip() ? undefined : (tooltipText | artemisTranslate)" #container>
     <svg viewBox="0 0 35 35" xmlns="http://www.w3.org/2000/svg">
         <g class="ring mastery-ring">
             <circle class="background" cx="50%" cy="50%" r="15.915" stroke-width="4" />
             <circle
-                [class.progressbar-anim]="playAnimation"
+                [class.progressbar-anim]="playAnimation()"
                 class="progressbar"
                 cx="50%"
                 cy="50%"
@@ -18,7 +18,7 @@
         <g class="ring progress-ring">
             <circle class="background" cx="50%" cy="50%" r="15.915" stroke-width="6" />
             <circle
-                [class.progressbar-anim]="playAnimation"
+                [class.progressbar-anim]="playAnimation()"
                 class="progressbar"
                 cx="50%"
                 cy="50%"
@@ -29,7 +29,7 @@
             />
         </g>
     </svg>
-    @if (this.hideProgress) {
+    @if (hideProgress()) {
         <div class="position-absolute top-50 start-50 translate-middle">
             <fa-icon [icon]="faQuestion" class="question-mark" [style]="{ fontSize: container.offsetWidth * 0.6 + 'px' }" />
         </div>

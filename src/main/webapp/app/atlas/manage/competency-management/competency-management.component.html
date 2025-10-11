@@ -33,19 +33,19 @@
     }
     <jhi-competency-management-table
         [courseId]="courseId()"
-        [(allCompetencies)]="courseCompetencies"
         [courseCompetencies]="competencies()"
         [competencyType]="CourseCompetencyType.COMPETENCY"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
         (competencyDeleted)="onRemoveCompetency($event)"
+        (competenciesAdded)="onCompetenciesAdded($event)"
     />
     <jhi-competency-management-table
         [courseId]="courseId()"
-        [(allCompetencies)]="courseCompetencies"
         [courseCompetencies]="prerequisites()"
         [competencyType]="CourseCompetencyType.PREREQUISITE"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
         (competencyDeleted)="onRemoveCompetency($event)"
+        (competenciesAdded)="onCompetenciesAdded($event)"
     />
 
     <!-- Floating Agent Chat Button -->
