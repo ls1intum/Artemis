@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -16,6 +15,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
@@ -47,6 +47,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     private LectureTestRepository lectureRepository;
 
+    @MockitoBean(name = "nebulaRestTemplate")
     private RestTemplate restTemplate;
 
     private LectureTranscription createTranscription(String jobId, TranscriptionStatus status) {
@@ -58,9 +59,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
     @BeforeEach
     void setUp() {
-        // Create and inject mock RestTemplate and configuration values
-        restTemplate = mock(RestTemplate.class);
-        ReflectionTestUtils.setField(service, "restTemplate", restTemplate);
+        // Set configuration values via reflection (consider making these configurable via test properties instead)
         ReflectionTestUtils.setField(service, "nebulaBaseUrl", "http://localhost:8080");
         ReflectionTestUtils.setField(service, "nebulaSecretToken", "test-token");
     }

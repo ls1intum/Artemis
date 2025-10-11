@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -11,10 +11,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
@@ -34,7 +35,7 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
     @Autowired
     private LectureTranscriptionRepository lectureTranscriptionRepository;
 
-    @Autowired
+    @MockitoSpyBean
     private LectureTranscriptionService lectureTranscriptionService;
 
     private LectureTranscription createPendingTranscription(String jobId) {
@@ -68,22 +69,19 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void pollPendingTranscriptions_callsServiceForEachPendingWithJobId() {
-        // Spy the existing bean so we don’t trigger real HTTP in processTranscription
-        LectureTranscriptionService spyService = spy(lectureTranscriptionService);
-        doNothing().when(spyService).processTranscription(any(LectureTranscription.class));
-
-        // Replace the field inside the scheduler bean
-        ReflectionTestUtils.setField(transcriptionPollingScheduler, "transcriptionService", spyService);
+        // Stub the spy bean to avoid real HTTP calls
+        doNothing().when(lectureTranscriptionService).processTranscription(any(LectureTranscription.class));
 
         transcriptionPollingScheduler.pollPendingTranscriptions();
 
-        // Verify only the PENDING with non-null jobId were processed
-        List<LectureTranscription> pendingWithJob = lectureTranscriptionRepository.findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus.PENDING);
-        assertThat(pendingWithJob).hasSize(2);
+        // Verify only the two PENDING transcriptions with non-null jobId were processed
+        ArgumentCaptor<LectureTranscription> captor = ArgumentCaptor.forClass(LectureTranscription.class);
+        verify(lectureTranscriptionService, times(2)).processTranscription(captor.capture());
 
-        for (LectureTranscription t : pendingWithJob) {
-            verify(spyService).processTranscription(t);
-        }
-        verifyNoMoreInteractions(spyService);
+        List<LectureTranscription> processed = captor.getAllValues();
+        assertThat(processed).extracting(LectureTranscription::getJobId).containsExactlyInAnyOrder("job-1", "job-2");
+        assertThat(processed).allMatch(t -> t.getTranscriptionStatus() == TranscriptionStatus.PENDING);
+
+        verifyNoMoreInteractions(lectureTranscriptionService);
     }
 }
