@@ -37,7 +37,6 @@ describe('CodeEditorFileBrowserComponent', () => {
     const createFileRoot = '#create_file_root';
     const createFolderRoot = '#create_folder_root';
     const compressTree = '#compress_tree';
-    const problemStatementSelector = '#file-browser-problem-statement, jhi-code-editor-file-browser-problem-statement';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
