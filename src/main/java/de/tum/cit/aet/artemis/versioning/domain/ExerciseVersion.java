@@ -22,24 +22,48 @@ import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshotDTO;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class ExerciseVersion extends AbstractAuditingEntity {
 
+    // Direct ID access (for saving)
+    @Column(name = "exercise_id", updatable = false, nullable = false)
+    private Long exerciseId;
+
+    @Column(name = "author_id", updatable = false, nullable = false)
+    private Long authorId;
+
+    // Entity references (for queries, read-only)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exercise_id", updatable = false, nullable = false)
+    @JoinColumn(name = "exercise_id", insertable = false, updatable = false)
     private Exercise exercise;
 
-    @ManyToOne
-    @JoinColumn(name = "author_id", updatable = false, nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", insertable = false, updatable = false)
     private User author;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "exercise_snapshot", columnDefinition = "json")
     private ExerciseSnapshotDTO exerciseSnapshotDTO;
 
+    public Long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(Long exerciseId) {
+        this.exerciseId = exerciseId;
+    }
+
+    public Long getAuthorId() {
+        return authorId;
+    }
+
+    public void setAuthorId(Long authorId) {
+        this.authorId = authorId;
+    }
+
     public Exercise getExercise() {
         return exercise;
     }
 
     public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
+        this.exerciseId = exercise.getId();
     }
 
     public User getAuthor() {
@@ -47,7 +71,7 @@ public class ExerciseVersion extends AbstractAuditingEntity {
     }
 
     public void setAuthor(User author) {
-        this.author = author;
+        this.authorId = author.getId();
     }
 
     public ExerciseSnapshotDTO getExerciseSnapshot() {
@@ -57,4 +81,5 @@ public class ExerciseVersion extends AbstractAuditingEntity {
     public void setExerciseSnapshot(ExerciseSnapshotDTO exerciseSnapshotDTO) {
         this.exerciseSnapshotDTO = exerciseSnapshotDTO;
     }
+
 }

@@ -10,11 +10,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -54,11 +51,9 @@ public class ExerciseVersionService {
 
     private final UserRepository userRepository;
 
-    private final TransactionTemplate transactionTemplate;
-
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseVersioningRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
-            FileUploadExerciseVersioningRepository fileUploadExerciseRepository, UserRepository userRepository, PlatformTransactionManager transactionManager) {
+            FileUploadExerciseVersioningRepository fileUploadExerciseRepository, UserRepository userRepository) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -67,9 +62,6 @@ public class ExerciseVersionService {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
-        this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-        this.transactionTemplate.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
     }
 
     /**
@@ -97,34 +89,32 @@ public class ExerciseVersionService {
      */
     private void createExerciseVersion(Long exerciseId, ExerciseType exerciseType, String userLogin) {
         try {
-            transactionTemplate.executeWithoutResult(status -> {
-                User author = userRepository.findOneByLogin(userLogin).orElse(null);
-                if (author == null) {
-                    log.error("No active user during exercise version creation check");
+            User author = userRepository.findOneByLogin(userLogin).orElse(null);
+            if (author == null) {
+                log.error("No active user during exercise version creation check");
+                return;
+            }
+            Exercise exercise = fetchExerciseEagerly(exerciseId, exerciseType);
+            if (exercise == null) {
+                log.error("Exercise with id {} not found", exerciseId);
+                return;
+            }
+            ExerciseVersion exerciseVersion = new ExerciseVersion();
+            exerciseVersion.setExercise(exercise);
+            exerciseVersion.setAuthor(author);
+            ExerciseSnapshotDTO exerciseSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+            Optional<ExerciseVersion> previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
+            if (previousVersion.isPresent()) {
+                ExerciseSnapshotDTO previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
+                boolean equal = previousVersionSnapshot.equals(exerciseSnapshot);
+                if (equal) {
+                    log.info("Exercise {} has no versionable changes from last version", exercise.getId());
                     return;
                 }
-                Exercise exercise = fetchExerciseEagerly(exerciseId, exerciseType);
-                if (exercise == null) {
-                    log.error("Exercise with id {} not found", exerciseId);
-                    return;
-                }
-                ExerciseVersion exerciseVersion = new ExerciseVersion();
-                exerciseVersion.setExercise(exercise);
-                exerciseVersion.setAuthor(author);
-                ExerciseSnapshotDTO exerciseSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
-                Optional<ExerciseVersion> previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
-                if (previousVersion.isPresent()) {
-                    ExerciseSnapshotDTO previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
-                    boolean equal = previousVersionSnapshot.equals(exerciseSnapshot);
-                    if (equal) {
-                        log.info("Exercise {} has no versionable changes from last version", exercise.getId());
-                        return;
-                    }
-                }
-                exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
-                ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
-                log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
-            });
+            }
+            exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
+            ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
+            log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
         }
         catch (Exception e) {
             log.error("Error creating exercise version for exercise with id {}: {}", exerciseId, e.getMessage(), e);
