@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -50,6 +51,13 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
     private RestTemplate restTemplate;
 
+    private LectureTranscription createTranscription(String jobId, TranscriptionStatus status) {
+        var transcription = new LectureTranscription();
+        transcription.setJobId(jobId);
+        transcription.setTranscriptionStatus(status);
+        return transcription;
+    }
+
     @BeforeEach
     void setUp() {
         // Create and inject mock RestTemplate and configuration values
@@ -77,9 +85,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         unit = (AttachmentVideoUnit) lecture.getLectureUnits().get(0);
 
         var jobId = "job-123";
-        var t = new LectureTranscription();
-        t.setJobId(jobId);
-        t.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        var t = createTranscription(jobId, TranscriptionStatus.PENDING);
         t.setLectureUnit(unit);
         t = transcriptionRepository.saveAndFlush(t);
 
@@ -98,8 +104,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     void processTranscription_error_marksFailedAndSaves() {
-        var t = new LectureTranscription();
-        t.setJobId("job-err");
+        var t = createTranscription("job-err", TranscriptionStatus.PENDING);
         t = transcriptionRepository.save(t);
 
         NebulaTranscriptionStatusResponseDTO errorResponse = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.ERROR, "Boom!", null, null);
@@ -117,9 +122,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     void processTranscription_running_noStatusChange() {
-        var t = new LectureTranscription();
-        t.setJobId("job-running");
-        t.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        var t = createTranscription("job-running", TranscriptionStatus.PENDING);
         t = transcriptionRepository.save(t);
         Long id = t.getId();
 
@@ -137,9 +140,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     void processTranscription_processing_noStatusChange() {
-        var t = new LectureTranscription();
-        t.setJobId("job-processing");
-        t.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        var t = createTranscription("job-processing", TranscriptionStatus.PENDING);
         t = transcriptionRepository.save(t);
         Long id = t.getId();
 
@@ -158,9 +159,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
     @Test
     void saveFinalTranscriptionResult_setsFieldsAndSaves() {
         var jobId = "job-done-1";
-        var existing = new LectureTranscription();
-        existing.setJobId(jobId);
-        existing.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        var existing = createTranscription(jobId, TranscriptionStatus.PENDING);
         existing = transcriptionRepository.save(existing);
 
         var dto = new LectureTranscriptionDTO(null, "en", java.util.List.of());
@@ -176,9 +175,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     void markTranscriptionAsFailed_setsStatusAndSaves() {
-        var t = new LectureTranscription();
-        t.setJobId("job-x");
-        t.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        var t = createTranscription("job-x", TranscriptionStatus.PENDING);
         t = transcriptionRepository.save(t);
 
         service.markTranscriptionAsFailed(t, "nope");
@@ -202,10 +199,8 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         unit = lectureUnitRepository.save(unit);
         Long unitId = unit.getId();
 
-        var existing = new LectureTranscription();
+        var existing = createTranscription("old-job", TranscriptionStatus.PENDING);
         existing.setLectureUnit(unit);
-        existing.setJobId("old-job");
-        existing.setTranscriptionStatus(TranscriptionStatus.PENDING);
         existing = transcriptionRepository.save(existing);
         Long existingId = existing.getId();
 
@@ -237,7 +232,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         unit = lectureUnitRepository.save(unit);
         Long unitId = unit.getId();
 
-        assertThatThrownBy(() -> service.createEmptyTranscription(lectureId, unitId, "job-z")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.createEmptyTranscription(lectureId, unitId, "job-z")).isInstanceOf(ResponseStatusException.class);
 
         var transcriptions = transcriptionRepository.findByLectureUnit_Id(unitId);
         assertThat(transcriptions).isEmpty();

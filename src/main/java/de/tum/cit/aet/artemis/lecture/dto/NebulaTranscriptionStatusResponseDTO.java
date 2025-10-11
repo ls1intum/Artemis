@@ -22,11 +22,14 @@ public record NebulaTranscriptionStatusResponseDTO(@NotNull NebulaTranscriptionS
      *
      * @param lectureUnitId The ID of the lecture unit this transcription belongs to
      * @return LectureTranscriptionDTO containing the transcription data
-     * @throws IllegalStateException if called when status is not DONE
+     * @throws IllegalStateException if called when status is not DONE or if language/segments are missing
      */
     public LectureTranscriptionDTO toLectureTranscriptionDTO(Long lectureUnitId) {
         if (!status.isCompleted()) {
             throw new IllegalStateException("Cannot convert to LectureTranscriptionDTO when status is not DONE. Current status: " + status);
+        }
+        if (language == null || segments == null) {
+            throw new IllegalStateException("Cannot convert to LectureTranscriptionDTO: language or segments are missing");
         }
         return new LectureTranscriptionDTO(lectureUnitId, language, segments);
     }

@@ -13,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -22,6 +24,8 @@ import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.lecture.service.TranscriptionPollingScheduler;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+@TestPropertySource(properties = { "artemis.nebula.enabled=true" })
+@ActiveProfiles({ "core", "scheduling" })
 class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "transcriptionpollingschedulertest";
@@ -35,33 +39,32 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
     @Autowired
     private LectureTranscriptionService lectureTranscriptionService;
 
+    private LectureTranscription createPendingTranscription(String jobId) {
+        var transcription = new LectureTranscription();
+        transcription.setJobId(jobId);
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        return lectureTranscriptionRepository.save(transcription);
+    }
+
+    private LectureTranscription createTranscription(String jobId, TranscriptionStatus status) {
+        var transcription = new LectureTranscription();
+        transcription.setJobId(jobId);
+        transcription.setTranscriptionStatus(status);
+        return lectureTranscriptionRepository.save(transcription);
+    }
+
     @BeforeEach
     void initData() {
-        // Clean out anything lingering (if your base doesn’t auto-rollback per test)
+        // Clean out anything lingering (if your base doesn't auto-rollback per test)
         lectureTranscriptionRepository.deleteAll();
 
         // PENDING with jobId (should be polled)
-        var t1 = new LectureTranscription();
-        t1.setJobId("job-1");
-        t1.setTranscriptionStatus(TranscriptionStatus.PENDING);
-        lectureTranscriptionRepository.save(t1);
-
-        var t2 = new LectureTranscription();
-        t2.setJobId("job-2");
-        t2.setTranscriptionStatus(TranscriptionStatus.PENDING);
-        lectureTranscriptionRepository.save(t2);
-
+        createPendingTranscription("job-1");
+        createPendingTranscription("job-2");
         // PENDING but jobId == null (should be ignored by the query)
-        var t3 = new LectureTranscription();
-        t3.setJobId(null);
-        t3.setTranscriptionStatus(TranscriptionStatus.PENDING);
-        lectureTranscriptionRepository.save(t3);
-
+        createTranscription(null, TranscriptionStatus.PENDING);
         // COMPLETED (should not be polled)
-        var t4 = new LectureTranscription();
-        t4.setJobId("job-4");
-        t4.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-        lectureTranscriptionRepository.save(t4);
+        createTranscription("job-4", TranscriptionStatus.COMPLETED);
     }
 
     @Test

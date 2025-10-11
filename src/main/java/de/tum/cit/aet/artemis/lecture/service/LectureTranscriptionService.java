@@ -70,6 +70,11 @@ public class LectureTranscriptionService {
      */
     public void processTranscription(LectureTranscription transcription) {
         String jobId = transcription.getJobId();
+        if (jobId == null) {
+            log.warn("Transcription has no jobId, skipping: {}", transcription.getId());
+            return;
+        }
+
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", nebulaSecretToken);
@@ -78,8 +83,17 @@ public class LectureTranscriptionService {
             String url = nebulaBaseUrl + "/transcribe/status/" + jobId;
             ResponseEntity<NebulaTranscriptionStatusResponseDTO> responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity, NebulaTranscriptionStatusResponseDTO.class);
             NebulaTranscriptionStatusResponseDTO response = responseEntity.getBody();
+            if (response == null) {
+                log.warn("Nebula status response has no body for jobId={}", jobId);
+                return;
+            }
 
             if (response.isCompleted()) {
+                if (transcription.getLectureUnit() == null) {
+                    log.error("Transcription has no associated lecture unit for jobId={}", jobId);
+                    markTranscriptionAsFailed(transcription, "No associated lecture unit");
+                    return;
+                }
                 LectureTranscriptionDTO dto = response.toLectureTranscriptionDTO(transcription.getLectureUnit().getId());
                 saveFinalTranscriptionResult(jobId, dto);
                 log.info("Transcription completed and saved for jobId={}", jobId);
@@ -150,13 +164,17 @@ public class LectureTranscriptionService {
      * @param lectureId     ID of the lecture
      * @param lectureUnitId ID of the lecture unit
      * @return The validated LectureUnit entity
-     * @throws IllegalArgumentException if the unit does not belong to the lecture
+     * @throws ResponseStatusException if the unit does not belong to the lecture
      */
     private LectureUnit validateAndCleanup(Long lectureId, Long lectureUnitId) {
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
 
+        if (lectureUnit.getLecture() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lecture Unit has no associated Lecture.");
+        }
+
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
-            throw new IllegalArgumentException("Lecture Unit does not belong to the Lecture.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lecture Unit does not belong to the Lecture.");
         }
 
         lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(existing -> {
@@ -190,6 +208,11 @@ public class LectureTranscriptionService {
             NebulaTranscriptionInitResponseDTO response = responseEntity.getBody();
 
             // Validate response
+            if (response == null) {
+                log.error("Nebula returned null response body for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nebula did not return a response body");
+            }
+
             if (response.transcriptionId() == null) {
                 log.error("Nebula returned null or missing transcription ID for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nebula did not return a valid transcription ID");
