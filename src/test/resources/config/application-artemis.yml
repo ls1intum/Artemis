@@ -77,6 +77,8 @@ artemis:
     plagiarism-checks:
         plagiarism-results-limit: 100
     nebula:
+        url: http://localhost:9090
+        secret: abcdef
         enabled: true
 
 info:
