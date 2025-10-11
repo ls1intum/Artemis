@@ -20,10 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -37,9 +35,8 @@ import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionInitResponseDTO;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class NebulaTranscriptionResourceIntegrationTest extends AbstractLectureTranscriptionIntegrationTest {
 
     private static final String TEST_PREFIX = "nebulatranscriptionresource";
 
@@ -57,9 +54,6 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @MockitoBean(name = "nebulaRestTemplate")
-    private RestTemplate nebulaRestTemplate;
 
     private Course course;
 

@@ -1,12 +1,5 @@
 package de.tum.cit.aet.artemis.lecture;
 
-import static org.mockito.Mockito.mock;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -33,22 +26,7 @@ public abstract class AbstractLectureTranscriptionIntegrationTest extends Abstra
     @MockitoBean
     protected NebulaConnectionService nebulaConnectionService;
 
-    // RestTemplate for Nebula API calls - injected from TestConfiguration
-    @Autowired
-    @Qualifier("nebulaRestTemplate")
+    // Mock RestTemplate for Nebula API calls - directly mocked with @MockitoBean
+    @MockitoBean(name = "nebulaRestTemplate")
     protected RestTemplate nebulaRestTemplate;
-
-    @TestConfiguration
-    static class LectureTranscriptionTestConfig {
-
-        /**
-         * Provide a mock RestTemplate bean for Nebula API calls.
-         * This replaces the production nebulaRestTemplate bean during tests.
-         */
-        @Bean(name = "nebulaRestTemplate")
-        @Primary
-        public RestTemplate nebulaRestTemplateMock() {
-            return mock(RestTemplate.class);
-        }
-    }
 }

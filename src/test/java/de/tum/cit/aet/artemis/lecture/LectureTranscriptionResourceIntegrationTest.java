@@ -29,9 +29,8 @@ import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class LectureTranscriptionResourceIntegrationTest extends AbstractLectureTranscriptionIntegrationTest {
 
     private static final String TEST_PREFIX = "lecturetranscriptionresource";
 

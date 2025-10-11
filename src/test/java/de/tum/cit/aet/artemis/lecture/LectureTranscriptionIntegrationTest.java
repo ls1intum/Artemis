@@ -22,9 +22,8 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class LectureTranscriptionIntegrationTest extends AbstractLectureTranscriptionIntegrationTest {
 
     private static final String TEST_PREFIX = "pyristranscriptioncreationtest";
 

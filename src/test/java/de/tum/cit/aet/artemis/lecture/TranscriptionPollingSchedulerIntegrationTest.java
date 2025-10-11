@@ -14,16 +14,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.lecture.service.TranscriptionPollingScheduler;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class TranscriptionPollingSchedulerIntegrationTest extends AbstractLectureTranscriptionIntegrationTest {
 
     private static final String TEST_PREFIX = "transcriptionpollingschedulertest";
 
@@ -32,9 +29,6 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     private LectureTranscriptionRepository lectureTranscriptionRepository;
-
-    @MockitoSpyBean
-    private LectureTranscriptionService lectureTranscriptionService;
 
     private LectureTranscription createPendingTranscription(String jobId) {
         var transcription = new LectureTranscription();
