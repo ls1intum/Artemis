@@ -8,17 +8,6 @@
             "fridayShort": "Fri",
             "saturdayShort": "Sat",
             "sundayShort": "Sun",
-            "eventSubtypeName": {
-                "lectureStart": "Start",
-                "lectureEnd": "End",
-                "examPublishResults": "Results Release",
-                "examReviewStart": "Review Start",
-                "examReviewEnd": "Review End",
-                "exerciseRelease": "Release",
-                "exerciseStart": "Start",
-                "exerciseDue": "Due",
-                "exerciseAssessmentDue": "Assessment Due"
-            },
             "eventTypeName": {
                 "programming": "Programming Exercise",
                 "text": "Text Exercise",
@@ -35,11 +24,22 @@
                 "tutorials": "Tutorials",
                 "exams": "Exams"
             },
-            "filterButtonLabel": "Filter",
+            "filterComponentPlaceholder": "Choose Event-Types",
+            "subscribeButtonLabel": "Subscribe",
             "todayButtonLabel": "Today",
             "weekButtonLabel": "Week",
             "monthButtonLabel": "Month",
-            "loadingError": "The calendar events could not be loaded. Please try again by refreshing the page."
+            "eventsLoadingError": "The calendar events could not be loaded. Please try again by refreshing the page.",
+            "tokenLoadingError": "Data that is needed to configure calendar subscriptions could not be loaded. Please refresh the page to try again and display the option to configure a subscription.",
+            "subscriptionPopover": {
+                "title": "iCalendar subscription",
+                "configurationExplanation": "To configure a subscription, please choose a language and select course contents for which you would like to include events:",
+                "copyExplanation": "You can use the following link to subscribe external calendar applications to the Artemis calendar.",
+                "languageOption": {
+                    "german": "German",
+                    "english": "English"
+                }
+            }
         }
     }
 }

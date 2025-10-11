@@ -8,17 +8,6 @@
             "fridayShort": "Fr",
             "saturdayShort": "Sa",
             "sundayShort": "So",
-            "eventSubtypeName": {
-                "lectureStart": "Anfang",
-                "lectureEnd": "Ende",
-                "examPublishResults": "Veröffentlichung Ergebnisse",
-                "examReviewStart": "Einsicht Start",
-                "examReviewEnd": "Einsicht Ende",
-                "exerciseRelease": "Veröffentlichung",
-                "exerciseStart": "Start",
-                "exerciseDue": "Ende",
-                "exerciseAssessmentDue": "Korrektur Ende"
-            },
             "eventTypeName": {
                 "programming": "Programmieraufgabe",
                 "text": "Textaufgabe",
@@ -35,11 +24,22 @@
                 "tutorials": "Tutorien",
                 "exams": "Klausuren"
             },
-            "filterButtonLabel": "Filter",
+            "filterComponentPlaceholder": "Wähle Event-Typen",
+            "subscribeButtonLabel": "Abonnieren",
             "todayButtonLabel": "Heute",
             "weekButtonLabel": "Woche",
             "monthButtonLabel": "Monat",
-            "loadingError": "Die Kalenderevents konnten nicht geladen werden. Bitte versuche es erneut indem du die Seite aktualisierst."
+            "eventsLoadingError": "Die Kalenderevents konnten nicht geladen werden. Bitte versuche es erneut indem du die Seite aktualisierst.",
+            "tokenLoadingError": "Daten, die für das Konfigurieren von Kalender Abonnements gebraucht werden, konnten nicht geladen werden. Bitte aktualisiere die Seite, um es erneut zu versuchen und die Option ein Abonnement zu konfigurieren anzuzeigen.",
+            "subscriptionPopover": {
+                "title": "iCalendar Abonnement",
+                "configurationExplanation": "Um dein Abonnement zu konfigurieren, wähle bitte eine Sprache und entscheide für welche Kursinhalte du Events abonnieren möchtest:",
+                "copyExplanation": "Du kannst den folgenden Link verwenden, um den Artemis Kalender in externen Kalender Anwendungen zu abonnieren.",
+                "languageOption": {
+                    "german": "Deutsch",
+                    "english": "Englisch"
+                }
+            }
         }
     }
 }

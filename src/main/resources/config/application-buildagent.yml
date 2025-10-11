@@ -9,18 +9,22 @@
 # TODO: we should make sure this is not required here, because build agent could never enable those modules / features
 artemis:
     atlas:
-      enabled: false
-    exam:
-      enabled: false
-    plagiarism:
-      enabled: false
-    text:
-      enabled: false
-    tutorialgroup:
-      enabled: false
-    user-management:
-      passkey:
         enabled: false
+    hyperion:
+        enabled: false
+    exam:
+        enabled: false
+    plagiarism:
+        enabled: false
+    text:
+        enabled: false
+    tutorialgroup:
+        enabled: false
+    user-management:
+        passkey:
+            enabled: false
+    nebula:
+      enabled: false
 
     checked-out-repos-path: ./checked-out-repos # The directory to which repositories temporarily get cloned for the build job execution
     repo-clone-path: ./repos
@@ -76,12 +80,14 @@ spring:
             # Hibernate and DataSource are not needed in the build agent
             - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
             - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-            # Those metrics are repeated here, because overriding the `exclude` array is not possible
+            # Those 6 exclusions are repeated here from application-core.yml, because overriding the `exclude` array is not possible
+            # Important: Make sure to keep the exclusions in sync with the `application-core.yml` file, except for the build agent specific exclusions
             - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+            - tech.jhipster.config.apidoc.JHipsterSpringDocAutoConfiguration
     cloud:
         loadbalancer:
             cache:
@@ -109,5 +115,5 @@ eureka:
         enabled: true
 
 helios:
-  status:
-    enabled: false
+    status:
+        enabled: false

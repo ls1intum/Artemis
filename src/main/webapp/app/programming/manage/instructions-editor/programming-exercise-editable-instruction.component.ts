@@ -16,7 +16,6 @@ import {
     signal,
 } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
@@ -41,7 +40,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -55,16 +54,7 @@ import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-in
     templateUrl: './programming-exercise-editable-instruction.component.html',
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        MarkdownEditorMonacoComponent,
-        ProgrammingExerciseInstructionComponent,
-        NgClass,
-        FaIconComponent,
-        TranslateDirective,
-        NgbTooltip,
-        ProgrammingExerciseInstructionAnalysisComponent,
-        ArtemisTranslatePipe,
-    ],
+    imports: [MarkdownEditorMonacoComponent, NgClass, FaIconComponent, TranslateDirective, NgbTooltip, ProgrammingExerciseInstructionAnalysisComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
     private activatedRoute = inject(ActivatedRoute);
@@ -87,19 +77,24 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     courseId: number;
     exerciseId: number;
     irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-    artemisIntelligenceActions = computed(() =>
-        this.irisEnabled
-            ? [
-                  new RewriteAction(
-                      this.artemisIntelligenceService,
-                      RewritingVariant.PROBLEM_STATEMENT,
-                      this.courseId,
-                      signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
-                  ),
-                  ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId, this.renderedConsistencyCheckResultMarkdown)] : []),
-              ]
-            : [],
-    );
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    artemisIntelligenceActions = computed(() => {
+        const actions = [];
+        if (this.hyperionEnabled) {
+            actions.push(
+                new RewriteAction(
+                    this.artemisIntelligenceService,
+                    RewritingVariant.PROBLEM_STATEMENT,
+                    this.courseId, // Use exerciseId for Hyperion, not courseId
+                    signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
+                ),
+            );
+            if (this.exerciseId) {
+                actions.push(new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId, this.renderedConsistencyCheckResultMarkdown));
+            }
+        }
+        return actions;
+    });
 
     savingInstructions = false;
     unsavedChangesValue = false;

@@ -15,14 +15,15 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    // science is disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 2;
+    // science, TutorSuggestions, Memiris, AtlasAgent disabled by default
+    private static final int FEATURES_DISABLED_DEFAULT = 4;
 
     @Autowired
     private FeatureToggleService featureToggleService;
 
     @AfterEach
     void checkReset() {
+        resetToDefaultState();
         // Verify that the test has reset the state
         // Must be extended if additional features are added
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
@@ -33,6 +34,23 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.StudentCourseAnalyticsDashboard)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.Science)).isFalse();
         assertThat(featureToggleService.isFeatureEnabled(Feature.TutorSuggestions)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).isFalse();
+
+    }
+
+    private void resetToDefaultState() {
+        // Enable features that should be enabled by default
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
+        featureToggleService.enableFeature(Feature.PlagiarismChecks);
+        featureToggleService.enableFeature(Feature.Exports);
+        featureToggleService.enableFeature(Feature.LearningPaths);
+        featureToggleService.enableFeature(Feature.StandardizedCompetencies);
+        featureToggleService.enableFeature(Feature.StudentCourseAnalyticsDashboard);
+
+        // Disable features that should be disabled by default
+        featureToggleService.disableFeature(Feature.Science);
+        featureToggleService.disableFeature(Feature.TutorSuggestions);
+        featureToggleService.disableFeature(Feature.AtlasAgent);
     }
 
     @Test

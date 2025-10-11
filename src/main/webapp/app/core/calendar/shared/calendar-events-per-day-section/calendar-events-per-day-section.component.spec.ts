@@ -1,14 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
-import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
+import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
-import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
-import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 describe('CalendarEventsPerDaySectionComponent', () => {
     let component: CalendarEventsPerDaySectionComponent;
@@ -21,41 +22,10 @@ describe('CalendarEventsPerDaySectionComponent', () => {
     const startOfWednesday = startOfTuesday.add(1, 'day');
     const week = Array.from({ length: 7 }, (_, i) => startOfMonday.add(i, 'day'));
     const events = [
-        new CalendarEvent(
-            CalendarEventType.Exam,
-            CalendarEventSubtype.StartAndEndDate,
-            'Exam',
-            startOfTuesday.add(12, 'hour'),
-            startOfTuesday.add(13, 'hour'),
-            undefined,
-            'Marlon Nienaber',
-        ),
-        new CalendarEvent(
-            CalendarEventType.Lecture,
-            CalendarEventSubtype.StartAndEndDate,
-            'Object Design',
-            startOfWednesday.add(10, 'hour'),
-            startOfWednesday.add(12, 'hour'),
-            undefined,
-            undefined,
-        ),
-        new CalendarEvent(
-            CalendarEventType.Tutorial,
-            CalendarEventSubtype.StartAndEndDate,
-            'Tutorial',
-            startOfWednesday.add(11, 'hour'),
-            startOfWednesday.add(13, 'hour'),
-            'Zoom',
-            'Marlon Nienaber',
-        ),
-        new CalendarEvent(
-            CalendarEventType.TextExercise,
-            CalendarEventSubtype.StartDate,
-            'Your aspirations as a programmer',
-            startOfWednesday.add(12, 'hour'),
-            undefined,
-            undefined,
-        ),
+        new CalendarEvent(CalendarEventType.Exam, 'Exam', startOfTuesday.add(12, 'hour'), startOfTuesday.add(13, 'hour'), undefined, 'Marlon Nienaber'),
+        new CalendarEvent(CalendarEventType.Lecture, 'Object Design', startOfWednesday.add(10, 'hour'), startOfWednesday.add(12, 'hour'), undefined, undefined),
+        new CalendarEvent(CalendarEventType.Tutorial, 'Tutorial', startOfWednesday.add(11, 'hour'), startOfWednesday.add(13, 'hour'), 'Zoom', 'Marlon Nienaber'),
+        new CalendarEvent(CalendarEventType.TextExercise, 'Start: Your aspirations as a programmer', startOfWednesday.add(12, 'hour'), undefined, undefined),
     ];
 
     beforeAll(() => {
@@ -74,9 +44,10 @@ describe('CalendarEventsPerDaySectionComponent', () => {
             declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 {
-                    provide: CalendarEventService,
-                    useFactory: () => new MockCalendarEventService(mockMap),
+                    provide: CalendarService,
+                    useFactory: () => new MockCalendarService(mockMap),
                 },
+                provideNoopAnimations(),
             ],
         }).compileComponents();
 
@@ -95,7 +66,7 @@ describe('CalendarEventsPerDaySectionComponent', () => {
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'))?.nativeElement;
         const lectureEventCell = fixture.debugElement.query(By.css('[data-testid="Object Design"]'))?.nativeElement;
         const tutorialEventCell = fixture.debugElement.query(By.css('[data-testid="Tutorial"]'))?.nativeElement;
-        const textExerciseEventCell = fixture.debugElement.query(By.css('[data-testid="Your aspirations as a programmer"]'))?.nativeElement;
+        const textExerciseEventCell = fixture.debugElement.query(By.css('[data-testid="Start: Your aspirations as a programmer"]'))?.nativeElement;
 
         expect(examEventCell).toBeTruthy();
         expect(lectureEventCell).toBeTruthy();
@@ -141,73 +112,40 @@ describe('CalendarEventsPerDaySectionComponent', () => {
         expect(textExerciseStyle.left).toBeCloseTo(67.17, 1);
     });
 
-    it('should open popover', () => {
+    it('should open popover', async () => {
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         expect(examEventCell).toBeTruthy();
 
+        const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
+        const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
+
         examEventCell.nativeElement.click();
         fixture.detectChanges();
-
-        const popover = document.querySelector('jhi-calendar-event-detail-popover');
-        expect(popover).toBeTruthy();
+        await fixture.whenStable();
+        expect(popoverComponent.isOpen()).toBeTrue();
     });
 
-    it('should close popover only when close button used', () => {
+    it('should close popover', () => {
+        const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
+        const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
+        const closeSpy = jest.spyOn(popoverComponent, 'close');
+
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         examEventCell.nativeElement.click();
         fixture.detectChanges();
-
-        let popover = document.querySelector('jhi-calendar-event-detail-popover');
-        expect(popover).toBeTruthy();
 
         const infoColumn = fixture.debugElement.query(By.css('.info-column'));
         infoColumn.nativeElement.click();
         fixture.detectChanges();
+        expect(popoverComponent.isOpen()).toBeFalse();
 
-        popover = document.querySelector('jhi-calendar-event-detail-popover');
-        expect(popover).toBeTruthy();
+        examEventCell.nativeElement.click();
+        fixture.detectChanges();
 
-        const closeButton = popover!.querySelector('.close-button') as HTMLElement;
+        const closeButton = document.querySelector('.close-button') as HTMLElement;
         expect(closeButton).toBeTruthy();
-
         closeButton.click();
         fixture.detectChanges();
-
-        popover = document.querySelector('jhi-calendar-event-detail-popover');
-        expect(popover).toBeNull();
-    });
-
-    it('should replace popover when other event selected', () => {
-        const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
-        const lectureEventCell = fixture.debugElement.query(By.css('[data-testid="Object Design"]'));
-
-        examEventCell.nativeElement.click();
-        fixture.detectChanges();
-
-        let popover = document.querySelector('jhi-calendar-event-detail-popover');
-        expect(popover).toBeTruthy();
-        expect(component.selectedEvent()?.id).toBe(events[0].id);
-
-        lectureEventCell.nativeElement.click();
-        fixture.detectChanges();
-
-        popover = document.querySelector('jhi-calendar-event-detail-popover');
-        expect(popover).toBeTruthy();
-        expect(component.selectedEvent()?.id).toBe(events[1].id);
-    });
-
-    it('should emit isEventSelected correctly when popover opens/closes', () => {
-        const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
-        expect(examEventCell).toBeTruthy();
-
-        const emitSpy = jest.spyOn(component.isEventSelected, 'emit');
-
-        examEventCell.nativeElement.click();
-        fixture.detectChanges();
-        expect(emitSpy).toHaveBeenCalledWith(true);
-
-        examEventCell.nativeElement.click();
-        fixture.detectChanges();
-        expect(emitSpy).toHaveBeenCalledWith(false);
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 });

@@ -40,7 +40,7 @@
             <div class="navigation-item">
                 <button class="btn btn-secondary w-100" (click)="changePage(false, exerciseIndex - 1, false)" [disabled]="exerciseIndex <= 0">
                     <span aria-hidden="true">&laquo;</span>
-                    <span class="sr-only">Previous</span>
+                    <span class="visually-hidden" jhiTranslate="artemisApp.examParticipation.navigation.previousButton"></span>
                 </button>
             </div>
             @for (exercise of exercises; track exercise; let i = $index) {
@@ -72,7 +72,7 @@
                     [disabled]="exerciseIndex >= exercises.length - 1 || exerciseIndex < 0"
                 >
                     <span aria-hidden="true">&raquo;</span>
-                    <span class="sr-only">Next</span>
+                    <span class="visually-hidden" jhiTranslate="artemisApp.examParticipation.navigation.nextButton"></span>
                 </button>
             </div>
         </div>

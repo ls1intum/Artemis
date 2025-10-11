@@ -6,7 +6,6 @@ import { Subject, of } from 'rxjs';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApollonEditor, Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
-import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { cloneDeep } from 'lodash-es';
@@ -16,11 +15,6 @@ import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-
-// has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
-Text.size = () => {
-    return { width: 0, height: 0 };
-};
 
 describe('ModelingEditorComponent', () => {
     let fixture: ComponentFixture<ModelingEditorComponent>;
@@ -55,6 +49,7 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('ngAfterViewInit', async () => {
+        jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
         component.umlModel = classDiagram;
         fixture.detectChanges();
 

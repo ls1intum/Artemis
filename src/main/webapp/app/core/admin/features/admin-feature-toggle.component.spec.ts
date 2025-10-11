@@ -29,7 +29,7 @@ describe('AdminFeatureToggleComponentTest', () => {
     it('onInit test if features mapped successfully', () => {
         expect(comp.availableToggles).toHaveLength(0);
         comp.ngOnInit();
-        expect(comp.availableToggles).toHaveLength(8);
+        expect(comp.availableToggles).toHaveLength(10);
     });
 
     it('onFeatureToggle test if feature disabled on toggle', () => {

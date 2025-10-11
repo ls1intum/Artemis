@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguratio
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -27,29 +26,25 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.GitCommand;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
@@ -73,9 +68,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,15 +80,12 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
-import de.tum.cit.aet.artemis.core.service.ZipFileService;
-import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
@@ -120,55 +110,11 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
-    @Value("${artemis.version-control.user}")
-    protected String gitUser;
-
-    @Value("${artemis.version-control.password}")
-    protected String gitPassword;
-
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
-
-    private final ZipFileService zipFileService;
 
     private static final String ANONYMIZED_STUDENT_NAME = "student";
 
     private static final String ANONYMIZED_STUDENT_EMAIL = "";
-
-    public GitService(ZipFileService zipFileService) {
-        super();
-        this.zipFileService = zipFileService;
-    }
-
-    /**
-     * initialize the GitService, in particular which authentication mechanism should be used
-     * EventListener cannot be used here, as the bean is lazy
-     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
-     * Artemis uses the following order for authentication:
-     * 1. ssh key (if available)
-     * 2. username + personal access token (if available)
-     * 3. username + password
-     */
-    @PostConstruct
-    public void init() {
-        if (useSsh()) {
-            log.info("GitService will use ssh keys as authentication method to interact with remote git repositories");
-            configureSsh();
-        }
-        else if (gitToken.isPresent()) {
-            log.info("GitService will use username + token as authentication method to interact with remote git repositories");
-            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitToken.get()));
-        }
-        else {
-            log.info("GitService will use username + password as authentication method to interact with remote git repositories");
-            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
-        }
-    }
-
-    @PreDestroy
-    @Override
-    public void cleanup() {
-        super.cleanup();
-    }
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -1321,69 +1267,6 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Get the content of a git repository that contains a participation, as zip or directory.
-     *
-     * @param repo            Local Repository Object.
-     * @param repositoryDir   path where the repo is located on disk
-     * @param hideStudentName option to hide the student name for the zip file or directory
-     * @param zipOutput       If true the method returns a zip file otherwise a directory.
-     * @return path to zip file or directory.
-     * @throws IOException if the zipping or copying process failed.
-     */
-    public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName, boolean zipOutput) throws IOException, UncheckedIOException {
-        var exercise = repo.getParticipation().getProgrammingExercise();
-        var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
-
-        String repoName = FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
-        if (hideStudentName) {
-            repoName += "-student-submission.git";
-        }
-        else {
-            // The zip filename is either the student login, team short name or some default string.
-            var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
-
-            repoName += "-" + studentTeamOrDefault;
-        }
-        repoName = participation.addPracticePrefixIfTestRun(repoName);
-
-        if (zipOutput) {
-            return zipFiles(repo.getLocalPath(), repoName, repositoryDir, null);
-        }
-        else {
-            Path targetDir = Path.of(repositoryDir, repoName);
-
-            FileUtils.copyDirectory(repo.getLocalPath().toFile(), targetDir.toFile());
-            return targetDir;
-        }
-
-    }
-
-    /**
-     * Zips the contents of a folder, files are filtered according to the contentFilter.
-     * Content filtering is added with the intention of optionally excluding ".git" directory from the result.
-     *
-     * @param contentRootPath the root path of the content to zip
-     * @param zipFilename     the name of the zipped file
-     * @param zipDir          path of folder where the zip should be located on disk
-     * @param contentFilter   path filter to exclude some files, can be null to include everything
-     * @return path to the zip file
-     * @throws IOException if the zipping process failed.
-     */
-    public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
-        // Strip slashes from name
-        var zipFilenameWithoutSlash = zipFilename.replaceAll("\\s", "");
-
-        if (!zipFilenameWithoutSlash.endsWith(".zip")) {
-            zipFilenameWithoutSlash += ".zip";
-        }
-
-        Path zipFilePath = Path.of(zipDir, zipFilenameWithoutSlash);
-        Files.createDirectories(Path.of(zipDir));
-        return zipFileService.createZipFileWithFolderContent(zipFilePath, contentRootPath, contentFilter);
-    }
-
-    /**
      * Checks if repo was already checked out and is present on disk
      *
      * @param repoUri URL of the remote repository.
@@ -1416,22 +1299,27 @@ public class GitService extends AbstractGitService {
     }
 
     private PullCommand pullCommand(Git git) {
-        return authenticate(git.pull());
+        return git.pull();
     }
 
     private PushCommand pushCommand(Git git) {
-        return authenticate(git.push());
+        return git.push();
     }
 
     private FetchCommand fetchCommand(Git git) {
-        return authenticate(git.fetch());
+        return git.fetch();
     }
 
-    private LsRemoteCommand lsRemoteCommand(Git git) {
-        return authenticate(git.lsRemote());
+    protected LsRemoteCommand lsRemoteCommand(Git git) {
+        return git.lsRemote();
     }
 
-    protected <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
-        return command.setTransportConfigCallback(sshCallback);
+    @Override
+    protected LsRemoteCommand lsRemoteCommand() {
+        return Git.lsRemoteRepository();
+    }
+
+    protected CloneCommand cloneCommand() {
+        return Git.cloneRepository();
     }
 }

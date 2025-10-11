@@ -15,6 +15,22 @@
             "copied": "Kopiert",
             "new": "Neu"
         },
+        "weekdays": {
+            "monday": "Montag",
+            "tuesday": "Dienstag",
+            "wednesday": "Mittwoch",
+            "thursday": "Donnerstag",
+            "friday": "Freitag",
+            "saturday": "Samstag",
+            "sunday": "Sonntag",
+            "mondayShort": "Mo",
+            "tuesdayShort": "Di",
+            "wednesdayShort": "Mi",
+            "thursdayShort": "Do",
+            "fridayShort": "Fr",
+            "saturdayShort": "Sa",
+            "sundayShort": "So"
+        },
         "importTable": {
             "searchPlaceholder": "Suchen"
         },
@@ -122,7 +138,8 @@
                 "lti": "LTI Konfiguration",
                 "standardizedCompetencies": "Standardisierte Kompetenzen",
                 "cleanupService": "Aufräumdienst",
-                "lectureTranscription": "Vorlesungstranskription"
+                "lectureTranscription": "Vorlesungstranskription",
+                "examRooms": "Prüfungsräume"
             },
             "language": "Sprache",
             "settings": "Einstellungen"

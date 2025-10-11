@@ -22,7 +22,7 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:21-jdk AS builder
+FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25-jdk AS builder
 
 # some Apple M1 (arm64) builds need python3 and build-essential(make+gcc) for node-gyp to not fail
 RUN echo "Installing build dependencies" \
@@ -69,7 +69,7 @@ RUN \
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/alpine:3.21.3 AS external_builder
+FROM docker.io/library/alpine:3.21.1 AS external_builder
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
@@ -86,7 +86,7 @@ FROM ${WAR_FILE_STAGE} AS war_file
 #-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/eclipse-temurin:21-jdk AS runtime
+FROM docker.io/library/eclipse-temurin:25-jdk AS runtime
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"

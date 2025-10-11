@@ -11,6 +11,7 @@ import { downloadFile, downloadZipFromFilePromises } from 'app/shared/util/downl
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import JSZip from 'jszip';
 import { FileService } from 'app/shared/service/file.service';
+import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-update-dto.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -78,14 +79,15 @@ export class QuizExerciseService {
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
 
+        const exerciseDTO = toQuizExerciseUpdateDTO(copy);
         const formData = new FormData();
-        formData.append('exercise', objectToJsonBlob(copy));
+        formData.append('exercise', objectToJsonBlob(exerciseDTO));
         files.forEach((file, fileName) => {
             formData.append('files', file, fileName);
         });
 
         return this.http
-            .put<QuizExercise>(this.resourceUrl + '/' + id, formData, { params: options, observe: 'response' })
+            .patch<QuizExercise>(this.resourceUrl + '/' + id, formData, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

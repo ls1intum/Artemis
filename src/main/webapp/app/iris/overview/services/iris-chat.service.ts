@@ -37,6 +37,8 @@ export function chatModeToUrlComponent(mode: ChatServiceMode): string | undefine
             return 'programming-exercise-chat';
         case ChatServiceMode.TEXT_EXERCISE:
             return 'text-exercise-chat';
+        case ChatServiceMode.TUTOR_SUGGESTION:
+            return 'tutor-suggestion';
         default:
             return undefined;
     }
