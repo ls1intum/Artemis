@@ -1,8 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 @Component({
     selector: 'jhi-fireworks',
-    template: ` @if (active) {
+    template: ` @if (active()) {
         <div class="pyro">
             <div class="before"></div>
             <div class="after"></div>
@@ -11,5 +11,5 @@ import { Component, Input } from '@angular/core';
     styleUrls: ['./fireworks.component.scss'],
 })
 export class FireworksComponent {
-    @Input() active = false;
+    active = input(false);
 }

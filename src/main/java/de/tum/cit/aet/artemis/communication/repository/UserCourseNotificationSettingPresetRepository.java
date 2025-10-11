@@ -9,6 +9,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,4 +65,10 @@ public interface UserCourseNotificationSettingPresetRepository extends ArtemisJp
      * @return list of course notification setting presets for the user
      */
     List<UserCourseNotificationSettingPreset> findAllByUserId(long userId);
+
+    // NOTE: We must clear all entries because we don't know which users had a preset for the course
+    @Transactional // ok because of delete
+    @Modifying
+    @CacheEvict(allEntries = true)
+    void deleteAllByCourseId(long courseId);
 }
