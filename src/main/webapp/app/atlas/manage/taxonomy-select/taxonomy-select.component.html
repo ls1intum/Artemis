@@ -1,4 +1,4 @@
-<select [formControl]="form" class="form-select" id="{{ selectId }}">
+<select [formControl]="form()" class="form-select" [id]="selectId()">
     <option [ngValue]="undefined"></option>
     @for (taxonomy of competencyTaxonomy | keyvalue: keepOrder; track taxonomy; let i = $index) {
         <option [ngValue]="taxonomy.key">

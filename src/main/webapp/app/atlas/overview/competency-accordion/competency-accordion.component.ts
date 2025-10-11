@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, inject, input, output } from '@angular/core';
 import { faFile, faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SCORE_GREEN } from 'app/app.constants';
 import { Competency, CompetencyJol, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
@@ -42,13 +42,13 @@ export interface CompetencyAccordionToggleEvent {
 export class CompetencyAccordionComponent implements OnChanges {
     private router = inject(Router);
 
-    @Input() course: Course | undefined;
-    @Input() competency: CompetencyInformation;
-    @Input() metrics: StudentMetrics;
-    @Input() index: number;
-    @Input() openedIndex: number | undefined;
+    course = input<Course>();
+    competency = input.required<CompetencyInformation>();
+    metrics = input.required<StudentMetrics>();
+    index = input.required<number>();
+    openedIndex = input<number>();
 
-    @Output() accordionToggle = new EventEmitter<CompetencyAccordionToggleEvent>();
+    accordionToggle = output<CompetencyAccordionToggleEvent>();
 
     open = false;
     nextExercises: Exercise[] = [];
@@ -74,7 +74,7 @@ export class CompetencyAccordionComponent implements OnChanges {
     protected readonly round = round;
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.openedIndex && this.index !== this.openedIndex) {
+        if (changes.openedIndex && this.index() !== this.openedIndex()) {
             this.open = false;
         }
         if (changes.metrics) {
@@ -82,22 +82,22 @@ export class CompetencyAccordionComponent implements OnChanges {
             this.setNextLessonUnits();
             this.calculateProgressValues();
 
-            const courseCompetencies = Object.values(this.metrics.competencyMetrics?.competencyInformation ?? {}).map((competency) => {
+            const courseCompetencies = Object.values(this.metrics().competencyMetrics?.competencyInformation ?? {}).map((competency) => {
                 return {
                     ...competency,
                     userProgress: [
                         {
-                            progress: this.metrics.competencyMetrics?.progress?.[competency.id] ?? 0,
-                            confidence: this.metrics.competencyMetrics?.confidence?.[competency.id] ?? 1,
+                            progress: this.metrics().competencyMetrics?.progress?.[competency.id] ?? 0,
+                            confidence: this.metrics().competencyMetrics?.confidence?.[competency.id] ?? 1,
                         },
                     ],
                 } satisfies Competency;
             });
             this.promptForRating = CompetencyJol.shouldPromptForJol(
-                this.competency satisfies Competency,
+                this.competency() satisfies Competency,
                 {
-                    progress: this.metrics.competencyMetrics?.progress?.[this.competency.id],
-                    confidence: this.metrics.competencyMetrics?.confidence?.[this.competency.id],
+                    progress: this.metrics().competencyMetrics?.progress?.[this.competency().id],
+                    confidence: this.metrics().competencyMetrics?.confidence?.[this.competency().id],
                 },
                 courseCompetencies,
             );
@@ -105,13 +105,13 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     setNextExercises() {
-        if (!this.metrics) {
+        if (!this.metrics()) {
             this.nextExercises = [];
+            return;
         }
-
-        const courseExercises = this.course?.exercises ?? [];
+        const courseExercises = this.course()?.exercises ?? [];
         const exerciseIdToExercise = Object.fromEntries(courseExercises.map((exercise) => [exercise.id, exercise] as [number, Exercise]));
-        const activeCompetencyExercises = (this.metrics.competencyMetrics?.exercises?.[this.competency.id] ?? [])
+        const activeCompetencyExercises = (this.metrics().competencyMetrics?.exercises?.[this.competency().id] ?? [])
             .flatMap((exerciseId) => [exerciseIdToExercise[exerciseId]])
             .filter((exercise) => exercise.releaseDate?.isBefore(dayjs()))
             .filter((exercise) => exercise.dueDate?.isAfter(dayjs()) || isStartPracticeAvailable(exercise));
@@ -144,22 +144,22 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     setNextLessonUnits() {
-        if (!this.metrics) {
+        if (!this.metrics()) {
             this.nextLectureUnits = [];
+            return;
         }
-
-        const completedLectureUnits = this.metrics.lectureUnitStudentMetricsDTO?.completed ?? [];
-        const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id] ?? [];
+        const completedLectureUnits = this.metrics().lectureUnitStudentMetricsDTO?.completed ?? [];
+        const competencyLectureUnits = this.metrics().competencyMetrics?.lectureUnits?.[this.competency().id] ?? [];
         this.nextLectureUnits = competencyLectureUnits
             .filter((lectureUnitId) => !completedLectureUnits.includes(lectureUnitId))
-            .flatMap((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId] ?? [])
+            .flatMap((lectureUnitId) => this.metrics().lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId] ?? [])
             .filter((lectureUnit) => lectureUnit.releaseDate?.isBefore(dayjs()))
             .sort((a, b) => (a.releaseDate?.isBefore(b?.releaseDate) ? -1 : 1))
             .slice(0, Math.max(0, 5 - this.nextExercises.length));
     }
 
     calculateProgressValues() {
-        const jol = this.metrics.competencyMetrics?.currentJolValues?.[this.competency.id];
+        const jol = this.metrics().competencyMetrics?.currentJolValues?.[this.competency().id];
         this.jolRating = jol?.jolValue;
         this.exercisesProgress = this.calculateExercisesProgress();
         this.lectureUnitsProgress = this.calculateLectureUnitsProgress();
@@ -176,62 +176,67 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     calculateExercisesProgress(): number | undefined {
-        if (!this.metrics.exerciseMetrics) {
+        if (!this.metrics().exerciseMetrics) {
             return undefined;
         }
 
-        const competencyExercises = this.metrics.competencyMetrics?.exercises?.[this.competency.id];
+        const competencyExercises = this.metrics().competencyMetrics?.exercises?.[this.competency().id];
 
         if (competencyExercises === undefined || competencyExercises.length === 0) {
             return undefined;
         }
 
         const competencyPoints = competencyExercises
-            ?.map((exercise) => ((this.metrics.exerciseMetrics?.score?.[exercise] ?? 0) * (this.metrics.exerciseMetrics?.exerciseInformation?.[exercise]?.maxPoints ?? 0)) / 100)
+            ?.map(
+                (exercise) => ((this.metrics().exerciseMetrics?.score?.[exercise] ?? 0) * (this.metrics().exerciseMetrics?.exerciseInformation?.[exercise]?.maxPoints ?? 0)) / 100,
+            )
             .reduce((a, b) => a + b, 0);
         const competencyMaxPoints = competencyExercises
-            ?.map((exercise) => this.metrics.exerciseMetrics?.exerciseInformation?.[exercise]?.maxPoints ?? 0)
+            ?.map((exercise) => this.metrics().exerciseMetrics?.exerciseInformation?.[exercise]?.maxPoints ?? 0)
             .reduce((a, b) => a + b, 0);
 
-        const progress = (competencyPoints / competencyMaxPoints) * 100;
-        return round(progress, 1);
+        if (!competencyMaxPoints) {
+            return undefined;
+        }
+        return round((competencyPoints / competencyMaxPoints) * 100, 1);
     }
 
     calculateLectureUnitsProgress(): number | undefined {
-        if (!this.metrics.lectureUnitStudentMetricsDTO) {
+        if (!this.metrics().lectureUnitStudentMetricsDTO) {
             return undefined;
         }
 
-        const competencyLectureUnits = this.metrics.competencyMetrics?.lectureUnits?.[this.competency.id];
+        const competencyLectureUnits = this.metrics().competencyMetrics?.lectureUnits?.[this.competency().id];
         const releasedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) =>
-            this.metrics.lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId]?.releaseDate?.isBefore(dayjs()),
+            this.metrics().lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId]?.releaseDate?.isBefore(dayjs()),
         );
         if (releasedLectureUnits === undefined || releasedLectureUnits.length === 0) {
             return undefined;
         }
 
-        const completedLectureUnits = releasedLectureUnits?.filter((lectureUnitId) => this.metrics.lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
+        const completedLectureUnits = releasedLectureUnits?.filter((lectureUnitId) => this.metrics().lectureUnitStudentMetricsDTO?.completed?.includes(lectureUnitId)).length ?? 0;
         const progress = (completedLectureUnits / releasedLectureUnits.length) * 100;
         return round(progress, 1);
     }
 
     getUserProgress(): CompetencyProgress {
-        const progress = this.metrics.competencyMetrics?.progress?.[this.competency.id] ?? 0;
-        const confidence = this.metrics.competencyMetrics?.confidence?.[this.competency.id] ?? 1;
+        const progress = this.metrics().competencyMetrics?.progress?.[this.competency().id] ?? 0;
+        const confidence = this.metrics().competencyMetrics?.confidence?.[this.competency().id] ?? 1;
         return { progress, confidence };
     }
 
     toggle() {
         this.open = !this.open;
-        this.accordionToggle.emit({ opened: this.open, index: this.index });
+        this.accordionToggle.emit({ opened: this.open, index: this.index() });
     }
 
     onRatingChange(newRating: number) {
-        if (this.metrics.competencyMetrics) {
-            this.metrics.competencyMetrics.currentJolValues = {
-                ...this.metrics.competencyMetrics.currentJolValues,
-                [this.competency.id]: {
-                    competencyId: this.competency.id,
+        const competencyMetrics = this.metrics().competencyMetrics;
+        if (competencyMetrics) {
+            competencyMetrics.currentJolValues = {
+                ...(competencyMetrics.currentJolValues ?? {}),
+                [this.competency().id]: {
+                    competencyId: this.competency().id,
                     jolValue: newRating,
                     judgementTime: dayjs().toString(),
                     competencyProgress: this.progress,
@@ -244,6 +249,10 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     navigateToCompetencyDetailPage(event: Event) {
         event.stopPropagation();
-        this.router.navigate(['/courses', this.course!.id, 'competencies', this.competency.id]);
+        const course = this.course();
+        if (!course?.id) {
+            return;
+        }
+        this.router.navigate(['/courses', course.id, 'competencies', this.competency().id]);
     }
 }
