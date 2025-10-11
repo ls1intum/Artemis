@@ -36,7 +36,8 @@ class AtlasAgentServiceTest {
     @BeforeEach
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        atlasAgentService = new AtlasAgentService(chatClient, templateService);
+        // Pass null for ToolCallbackProvider and ChatMemory in tests
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null);
     }
 
     @Test
@@ -44,13 +45,14 @@ class AtlasAgentServiceTest {
         // Given
         String testMessage = "Help me create competencies for Java programming";
         Long courseId = 123L;
+        String sessionId = "course_123";
         String expectedResponse = "I can help you create competencies for Java programming. Here are my suggestions:\n1. Object-Oriented Programming (APPLY)\n2. Data Structures (UNDERSTAND)\n3. Algorithms (ANALYZE)";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
 
         // When
-        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId);
+        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         // Then
         assertThat(result).isNotNull();
@@ -62,13 +64,14 @@ class AtlasAgentServiceTest {
         // Given
         String testMessage = "Test message";
         Long courseId = 456L;
+        String sessionId = "course_456";
         String emptyResponse = "";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(emptyResponse)))));
 
         // When
-        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId);
+        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         // Then
         assertThat(result).isNotNull();
@@ -80,12 +83,13 @@ class AtlasAgentServiceTest {
         // Given
         String testMessage = "Test message";
         Long courseId = 789L;
+        String sessionId = "course_789";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
 
         // When
-        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId);
+        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         // Then
         assertThat(result).isNotNull();
@@ -97,13 +101,14 @@ class AtlasAgentServiceTest {
         // Given
         String testMessage = "Test message";
         Long courseId = 321L;
+        String sessionId = "course_321";
         String whitespaceResponse = "   \n\t  ";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(whitespaceResponse)))));
 
         // When
-        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId);
+        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         // Then
         assertThat(result).isNotNull();
@@ -115,13 +120,14 @@ class AtlasAgentServiceTest {
         // Given
         String testMessage = "Test message";
         Long courseId = 654L;
+        String sessionId = "course_654";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         // Mock the ChatModel to throw an exception
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("ChatModel error"));
 
         // When
-        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId);
+        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         // Then
         assertThat(result).isNotNull();
@@ -139,8 +145,8 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        // Given
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService);
+        // Given - pass null for all optional parameters
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null);
 
         // When
         boolean available = serviceWithNullClient.isAvailable();

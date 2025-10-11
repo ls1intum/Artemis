@@ -34,6 +34,7 @@ describe('AgentChatModalComponent', () => {
 
         mockAgentChatService = {
             sendMessage: jest.fn(),
+            getHistory: jest.fn().mockReturnValue(of([])),
         } as any;
 
         mockTranslateService = {
@@ -121,8 +122,8 @@ describe('AgentChatModalComponent', () => {
             // Act
             component.ngOnInit();
 
-            // Assert
-            expect(component['sessionId']).toBe(`course_456_session_${mockDateNow}`);
+            // Assert - component no longer has sessionId, it's generated in service
+            expect(component.messages.length).toBeGreaterThan(0);
         });
     });
 
@@ -245,14 +246,20 @@ describe('AgentChatModalComponent', () => {
             component.currentMessage.set('Test message');
             component.isAgentTyping.set(false);
             component.courseId = 123;
-            component['sessionId'] = 'test-session-123';
         });
 
         it('should send message when send button is clicked', () => {
             // Arrange
             component.currentMessage.set('Test message');
             component.isAgentTyping.set(false);
-            mockAgentChatService.sendMessage.mockReturnValue(of('Agent response'));
+            const mockResponse = {
+                message: 'Agent response',
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
 
             // Clear any existing messages to start fresh
             component.messages = [];
@@ -263,7 +270,7 @@ describe('AgentChatModalComponent', () => {
             sendButton.click();
 
             // Assert
-            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Test message', 123, component['sessionId']);
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Test message', 123);
             expect(component.messages).toHaveLength(3); // Welcome + User message + agent response
         });
 
@@ -271,7 +278,14 @@ describe('AgentChatModalComponent', () => {
             // Arrange
             component.currentMessage.set('Test message');
             component.isAgentTyping.set(false);
-            mockAgentChatService.sendMessage.mockReturnValue(of('Agent response'));
+            const mockResponse = {
+                message: 'Agent response',
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
             fixture.detectChanges();
 
             // Act - Test through keyboard interaction
@@ -284,7 +298,7 @@ describe('AgentChatModalComponent', () => {
             textarea.dispatchEvent(enterEvent);
 
             // Assert
-            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Test message', 123, component['sessionId']);
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Test message', 123);
         });
 
         it('should handle service error gracefully', fakeAsync(() => {
