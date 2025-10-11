@@ -4,29 +4,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.NebulaTranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
+import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionStatusResponseDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+@TestPropertySource(properties = { "artemis.nebula.enabled=true" })
 class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    @MockitoBean
+    @Autowired
     private LectureTranscriptionService service;
 
     @Autowired
@@ -38,12 +48,15 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     private LectureTestRepository lectureRepository;
 
-    @MockitoBean
     private RestTemplate restTemplate;
 
     @BeforeEach
     void setUp() {
-        // Mock service behavior will be configured in each test method
+        // Create and inject mock RestTemplate and configuration values
+        restTemplate = mock(RestTemplate.class);
+        ReflectionTestUtils.setField(service, "restTemplate", restTemplate);
+        ReflectionTestUtils.setField(service, "nebulaBaseUrl", "http://localhost:8080");
+        ReflectionTestUtils.setField(service, "nebulaSecretToken", "test-token");
     }
 
     @Test
@@ -70,14 +83,10 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         t.setLectureUnit(unit);
         t = transcriptionRepository.saveAndFlush(t);
 
-        // Mock the service behavior to simulate successful transcription processing
-        doAnswer(invocation -> {
-            LectureTranscription transcription = invocation.getArgument(0);
-            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-            transcription.setLanguage("en");
-            transcriptionRepository.save(transcription);
-            return null;
-        }).when(service).processTranscription(any(LectureTranscription.class));
+        NebulaTranscriptionStatusResponseDTO response = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.DONE, null, "en", List.of());
+
+        when(restTemplate.exchange(eq("http://localhost:8080/transcribe/status/" + jobId), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(new ResponseEntity<>(response, HttpStatus.OK));
 
         service.processTranscription(t);
 
@@ -93,13 +102,10 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         t.setJobId("job-err");
         t = transcriptionRepository.save(t);
 
-        // Mock the service behavior to simulate error handling
-        doAnswer(invocation -> {
-            LectureTranscription transcription = invocation.getArgument(0);
-            transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-            transcriptionRepository.save(transcription);
-            return null;
-        }).when(service).processTranscription(any(LectureTranscription.class));
+        NebulaTranscriptionStatusResponseDTO errorResponse = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.ERROR, "Boom!", null, null);
+
+        when(restTemplate.exchange(eq("http://localhost:8080/transcribe/status/job-err"), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(new ResponseEntity<>(errorResponse, HttpStatus.OK));
 
         service.processTranscription(t);
 
@@ -117,11 +123,10 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         t = transcriptionRepository.save(t);
         Long id = t.getId();
 
-        // Mock the service behavior to simulate no status change (still running)
-        doAnswer(invocation -> {
-            // No status change - job is still running
-            return null;
-        }).when(service).processTranscription(any(LectureTranscription.class));
+        NebulaTranscriptionStatusResponseDTO runningResponse = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.RUNNING, null, null, null);
+
+        when(restTemplate.exchange(eq("http://localhost:8080/transcribe/status/job-running"), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(new ResponseEntity<>(runningResponse, HttpStatus.OK));
 
         service.processTranscription(t);
 
@@ -138,11 +143,10 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         t = transcriptionRepository.save(t);
         Long id = t.getId();
 
-        // Mock the service behavior to simulate no status change (still processing)
-        doAnswer(invocation -> {
-            // No status change - job is still processing
-            return null;
-        }).when(service).processTranscription(any(LectureTranscription.class));
+        NebulaTranscriptionStatusResponseDTO processingResponse = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.PROCESSING, null, null, null);
+
+        when(restTemplate.exchange(eq("http://localhost:8080/transcribe/status/job-processing"), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(new ResponseEntity<>(processingResponse, HttpStatus.OK));
 
         service.processTranscription(t);
 
@@ -161,20 +165,6 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
         var dto = new LectureTranscriptionDTO(null, "en", java.util.List.of());
 
-        // Mock the service behavior to simulate saving final transcription result
-        doAnswer(invocation -> {
-            String jobIdArg = invocation.getArgument(0);
-            LectureTranscriptionDTO dtoArg = invocation.getArgument(1);
-            var transcription = transcriptionRepository.findByJobId(jobIdArg).orElse(null);
-            if (transcription != null) {
-                transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-                transcription.setLanguage(dtoArg.language());
-                transcription.setSegments(dtoArg.segments());
-                transcriptionRepository.save(transcription);
-            }
-            return null;
-        }).when(service).saveFinalTranscriptionResult(eq(jobId), any(LectureTranscriptionDTO.class));
-
         service.saveFinalTranscriptionResult(jobId, dto);
 
         var saved = transcriptionRepository.findByJobId(jobId);
@@ -190,14 +180,6 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         t.setJobId("job-x");
         t.setTranscriptionStatus(TranscriptionStatus.PENDING);
         t = transcriptionRepository.save(t);
-
-        // Mock the service behavior to simulate marking transcription as failed
-        doAnswer(invocation -> {
-            LectureTranscription transcription = invocation.getArgument(0);
-            transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-            transcriptionRepository.save(transcription);
-            return null;
-        }).when(service).markTranscriptionAsFailed(any(LectureTranscription.class), any(String.class));
 
         service.markTranscriptionAsFailed(t, "nope");
 
@@ -227,30 +209,6 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         existing = transcriptionRepository.save(existing);
         Long existingId = existing.getId();
 
-        // Mock the service behavior to simulate creating empty transcription
-        doAnswer(invocation -> {
-            Long lectureIdArg = invocation.getArgument(0);
-            Long unitIdArg = invocation.getArgument(1);
-            String jobIdArg = invocation.getArgument(2);
-
-            // Delete existing transcription for this unit
-            var existingTranscriptions = transcriptionRepository.findByLectureUnit_Id(unitIdArg);
-            if (existingTranscriptions.isPresent()) {
-                transcriptionRepository.delete(existingTranscriptions.get());
-            }
-
-            // Create new transcription
-            var lectureUnit = lectureUnitRepository.findById(unitIdArg).orElse(null);
-            if (lectureUnit != null) {
-                var newTranscription = new LectureTranscription();
-                newTranscription.setJobId(jobIdArg);
-                newTranscription.setTranscriptionStatus(TranscriptionStatus.PENDING);
-                newTranscription.setLectureUnit(lectureUnit);
-                transcriptionRepository.save(newTranscription);
-            }
-            return null;
-        }).when(service).createEmptyTranscription(eq(lectureId), eq(unitId), eq("job-new"));
-
         service.createEmptyTranscription(lectureId, unitId, "job-new");
 
         assertThat(transcriptionRepository.findById(existingId)).isEmpty();
@@ -278,10 +236,6 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         unit.setLecture(lecture2);
         unit = lectureUnitRepository.save(unit);
         Long unitId = unit.getId();
-
-        // Mock the service behavior to simulate validation error
-        doThrow(new IllegalArgumentException("Lecture unit does not belong to the specified lecture")).when(service).createEmptyTranscription(eq(lectureId), eq(unitId),
-                eq("job-z"));
 
         assertThatThrownBy(() -> service.createEmptyTranscription(lectureId, unitId, "job-z")).isInstanceOf(IllegalArgumentException.class);
 
