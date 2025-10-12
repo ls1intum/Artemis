@@ -88,17 +88,9 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createFaq_alreadyId_shouldReturnBadRequest() throws Exception {
-        Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
-        newFaq.setId(this.faq.getId());
-        request.postWithResponseBody("/api/communication/courses/" + course1.getId() + "/faqs", newFaq, Faq.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFaq_courseId_noMatch_shouldReturnBadRequest() throws Exception {
-        Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
-        request.postWithResponseBody("/api/communication/courses/" + course2.getId() + "/faqs", newFaq, Faq.class, HttpStatus.BAD_REQUEST);
+        CreateFaqDTO dto = new CreateFaqDTO(course1.getId(), "title", "answer", Set.of(), FaqState.ACCEPTED);
+        request.postWithResponseBody("/api/communication/courses/" + course2.getId() + "/faqs", dto, FaqDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -135,7 +127,8 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
         faq.setQuestionTitle("Updated");
         faq.setFaqState(FaqState.ACCEPTED);
-        request.putWithResponseBody("/api/communication/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), faq, Faq.class, HttpStatus.FORBIDDEN);
+        UpdateFaqDTO dto = new UpdateFaqDTO(faq.getId(), faq.getCourse().getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
+        request.putWithResponseBody("/api/communication/courses/" + dto.courseId() + "/faqs/" + dto.id(), dto, FaqDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -144,7 +137,9 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
         faq.setQuestionTitle("Updated");
         faq.setFaqState(FaqState.ACCEPTED);
-        request.putWithResponseBody("/api/communication/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), faq, Faq.class, HttpStatus.OK);
+        UpdateFaqDTO dto = new UpdateFaqDTO(faq.getId(), faq.getCourse().getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
+        FaqDTO returnedFaq = request.putWithResponseBody("/api/communication/courses/" + dto.courseId() + "/faqs/" + dto.id(), dto, FaqDTO.class, HttpStatus.OK);
+        assertThat(returnedFaq.faqState()).isEqualTo(FaqState.ACCEPTED);
     }
 
     @Test

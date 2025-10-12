@@ -131,8 +131,6 @@ public class FaqResource {
         existingFaq.setQuestionAnswer(updateFaqDTO.questionAnswer());
         existingFaq.setFaqState(updateFaqDTO.faqState());
         existingFaq.setCategories(updateFaqDTO.categories());
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        existingFaq.setCourse(course);
         Faq updatedFaq = faqRepository.save(existingFaq);
         faqService.autoIngestFaqIntoPyris(updatedFaq);
         FaqDTO dto = new FaqDTO(updatedFaq);
