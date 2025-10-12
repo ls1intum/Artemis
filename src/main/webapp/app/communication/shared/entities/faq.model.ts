@@ -19,20 +19,28 @@ export class Faq implements BaseEntity {
 
 export class CreateFaqDTO {
     constructor(
-        public courseId: number,
         public faqState: FaqState,
         public questionTitle: string,
+        public courseId?: number,
         public categories?: FaqCategory[],
         public questionAnswer?: string,
     ) {}
+
+    public static toCreateFaqDto(faq: Faq): CreateFaqDTO {
+        if (!faq?.faqState) {
+            throw new Error('The state should be present to update FAQ');
+        }
+
+        return new CreateFaqDTO(faq.faqState, (faq.questionTitle ?? '').trim(), faq.course?.id, faq.categories, faq.questionAnswer);
+    }
 }
 
 export class UpdateFaqDTO {
     constructor(
         public id: number,
-        public courseId: number,
         public faqState: FaqState,
         public questionTitle: string,
+        public courseId?: number,
         public categories?: FaqCategory[],
         public questionAnswer?: string,
     ) {}
@@ -45,11 +53,6 @@ export class UpdateFaqDTO {
             throw new Error('The state should be present to update FAQ');
         }
 
-        const courseId = faq?.course?.id;
-        if (!courseId) {
-            throw new Error('The course should be present to update FAQ');
-        }
-
-        return new UpdateFaqDTO(faq.id, courseId, faq.faqState, (faq.questionTitle ?? '').trim(), faq.categories, faq.questionAnswer);
+        return new UpdateFaqDTO(faq.id, faq.faqState, (faq.questionTitle ?? '').trim(), faq.course?.id, faq.categories, faq.questionAnswer);
     }
 }

@@ -38,8 +38,8 @@ describe('Faq Service', () => {
         elemDefault.categories = [new FaqCategory('category1', '#6ae8ac')];
         courseId = 1;
 
-        createFaqDTODefault = new CreateFaqDTO(courseId, FaqState.ACCEPTED, 'Title', [new FaqCategory('category1', '#6ae8ac')], 'Answer');
-        updateFaqDTODefault = new UpdateFaqDTO(1, courseId, FaqState.ACCEPTED, 'Title', [new FaqCategory('category1', '#6ae8ac')], 'Answer');
+        createFaqDTODefault = new CreateFaqDTO(FaqState.ACCEPTED, 'Title', courseId, [new FaqCategory('category1', '#6ae8ac')], 'Answer');
+        updateFaqDTODefault = new UpdateFaqDTO(1, FaqState.ACCEPTED, 'Title', courseId, [new FaqCategory('category1', '#6ae8ac')], 'Answer');
     });
 
     afterEach(() => {
