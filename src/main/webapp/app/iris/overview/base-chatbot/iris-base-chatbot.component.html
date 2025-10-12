@@ -160,12 +160,12 @@
             }
         </div>
     }
-    <div class="chat-body" [class.not-accepted]="!userAccepted" #chatBody>
+    <div class="chat-body" [class.not-accepted]="!userAcceptedCloud" #chatBody>
         @if (messages?.length) {
             <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                 @if (
                     suggestions?.length &&
-                    (userAccepted || !isCloudEnabled) &&
+                    (userAcceptedCloud || !isCloudEnabled) &&
                     !this.isLoading &&
                     this.active &&
                     (!this.rateLimitInfo?.rateLimit || this.rateLimitInfo?.currentMessageCount !== this.rateLimitInfo?.rateLimit) &&
@@ -237,7 +237,7 @@
             </div>
         }
         <jhi-chat-status-bar [stages]="stages" />
-        @if (!userAccepted && isCloudEnabled) {
+        @if (!userAcceptedCloud && isCloudEnabled) {
             <div class="p-chat">
                 <div class="message-text" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></div>
                 <div class="button-container">
@@ -259,7 +259,7 @@
         @if (!active) {
             <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
         }
-        @if (userAccepted || !isCloudEnabled) {
+        @if (userAcceptedCloud || !isCloudEnabled) {
             <div class="chat-input">
                 <textarea
                     [(ngModel)]="newMessageTextContent"

@@ -506,7 +506,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      */
     public void hasAcceptedExternalLLMUsageElseThrow() {
         if (externalLLMUsageAccepted == null) {
-            // throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
+            throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
         }
     }
 

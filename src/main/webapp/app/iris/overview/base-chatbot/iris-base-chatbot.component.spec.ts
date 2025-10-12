@@ -129,12 +129,12 @@ describe('IrisBaseChatbotComponent', () => {
     it('should set userAccepted to false if user has not accepted the external LLM usage policy', () => {
         accountMock.userIdentity.externalLLMUsageAccepted = undefined;
         component.ngOnInit();
-        expect(component.userAccepted).toBeFalse();
+        expect(component.userAcceptedCloud).toBeFalse();
     });
 
     it('should set userAccepted to true if user has accepted the external LLM usage policy', () => {
         component.ngOnInit();
-        expect(component.userAccepted).toBeTrue();
+        expect(component.userAcceptedCloud).toBeTrue();
     });
 
     it('should call API when user accept the policy', () => {
@@ -144,7 +144,7 @@ describe('IrisBaseChatbotComponent', () => {
         component.acceptPermission();
 
         expect(stub).toHaveBeenCalledOnce();
-        expect(component.userAccepted).toBeTrue();
+        expect(component.userAcceptedCloud).toBeTrue();
     });
 
     it('should add user message on send', async () => {
@@ -272,7 +272,7 @@ describe('IrisBaseChatbotComponent', () => {
         jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
         const getChatSessionsSpy = jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
-        component.userAccepted = true;
+        component.userAcceptedCloud = true;
         chatService.switchTo(ChatServiceMode.COURSE, 123);
 
         component.ngAfterViewInit();
@@ -449,7 +449,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should not render submit button if hasUserAcceptedExternalLLMUsage is false', () => {
-        component.userAccepted = false;
+        component.userAcceptedCloud = false;
         component.isLoading = false;
         component.error = undefined;
         fixture.detectChanges();
@@ -459,7 +459,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should not disable submit button if isLoading is false and no error exists', () => {
-        component.userAccepted = true;
+        component.userAcceptedCloud = true;
         component.isLoading = false;
         component.error = undefined;
         fixture.detectChanges();
@@ -469,7 +469,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should not disable submit button if isLoading is false and error is not fatal', () => {
-        component.userAccepted = true;
+        component.userAcceptedCloud = true;
         component.isLoading = false;
         component.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
         fixture.detectChanges();
@@ -573,7 +573,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         // Act
         component.ngOnInit();
-        component.userAccepted = false;
+        component.userAcceptedCloud = false;
         fixture.detectChanges();
 
         // Assert

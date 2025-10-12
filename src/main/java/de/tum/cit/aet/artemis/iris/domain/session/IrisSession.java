@@ -16,6 +16,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -79,6 +80,12 @@ public abstract class IrisSession extends DomainObject {
 
     public List<IrisMessage> getMessages() {
         return messages;
+    }
+
+    public boolean getIsLastCloudEnabled() {
+        if (!Hibernate.isInitialized(messages))
+            return false;
+        return messages != null && !messages.isEmpty() ? messages.getLast().getIsCloudEnabled() : false;
     }
 
     public void setMessages(List<IrisMessage> messages) {

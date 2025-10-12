@@ -97,7 +97,7 @@ public class IrisSessionService {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
         var wrapper = getIrisSessionSubService(session);
-        if (session.shouldAcceptExternalLLMUsage()) {
+        if (session.getIsLastCloudEnabled() && session.shouldAcceptExternalLLMUsage()) {
             user.hasAcceptedExternalLLMUsageElseThrow();
         }
         wrapper.irisSubFeatureInterface.checkHasAccessTo(user, wrapper.irisSession);
@@ -183,10 +183,10 @@ public class IrisSessionService {
      * Get all IrisChatSessions for a course and map the IrisChatSessionDAO to IrisChatSessionDTO
      *
      * @param course The course
-     * @param userId The id of the user
+     * @param user   The current the user
      * @return A list of all IrisChatSessionsDTOs for a course
      */
-    public List<IrisChatSessionDTO> getIrisSessionsByCourseAndUserId(Course course, Long userId) {
+    public List<IrisChatSessionDTO> getIrisSessionsByCourseAndUserId(Course course, User user) {
         var settings = irisSettingsService.getCombinedIrisSettingsForCourse(course.getId(), true);
         List<Class<? extends IrisChatSession>> enabledTypes = new ArrayList<>();
 
@@ -206,7 +206,8 @@ public class IrisSessionService {
             enabledTypes.add(IrisLectureChatSession.class);
         }
 
-        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId, enabledTypes).stream()
+        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), user.getId(), enabledTypes).stream()
+                .filter(dao -> !dao.session().getIsLastCloudEnabled() || user.hasAcceptedExternalLLMUsage())
                 .map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(), dao.entityName(), dao.session().getCreationDate(), dao.session().getMode())).toList();
     }
 }

@@ -76,9 +76,11 @@ public class IrisCourseChatSessionResource {
     public ResponseEntity<IrisCourseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
 
         var session = irisCourseChatSessionService.getCurrentSessionOrCreateIfNotExists(course, user, true);
+        if (session.getIsLastCloudEnabled()) {
+            user.hasAcceptedExternalLLMUsageElseThrow();
+        }
         return ResponseEntity.ok(session);
     }
 
@@ -95,10 +97,10 @@ public class IrisCourseChatSessionResource {
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
 
         var sessions = irisCourseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(course.getId(), user.getId());
-        sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
+        // Only find sessions with cloud enabled and accepted or cloud disabled
+        sessions.stream().filter(s -> user.hasAcceptedExternalLLMUsage() || !s.getIsLastCloudEnabled()).forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
         return ResponseEntity.ok(sessions);
     }
 
@@ -115,8 +117,7 @@ public class IrisCourseChatSessionResource {
     public ResponseEntity<IrisCourseChatSession> createSessionForCourse(@PathVariable Long courseId) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
-
+        // If a user creates a new session cloud is disabled per default
         var session = irisCourseChatSessionService.createSession(course, user, false);
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);

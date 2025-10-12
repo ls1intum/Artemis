@@ -111,12 +111,7 @@ public class IrisChatSessionResource {
     public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findById(courseId).orElseThrow();
-        if (user.hasAcceptedExternalLLMUsage() || true) {
-            List<IrisChatSessionDTO> irisSessionDTOs = irisSessionService.getIrisSessionsByCourseAndUserId(course, user.getId());
-            return ResponseEntity.ok(irisSessionDTOs);
-        }
-        else {
-            return ResponseEntity.ok(List.of());
-        }
+        List<IrisChatSessionDTO> irisSessionDTOs = irisSessionService.getIrisSessionsByCourseAndUserId(course, user);
+        return ResponseEntity.ok(irisSessionDTOs);
     }
 }

@@ -196,7 +196,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     // User preferences
     user: User | undefined;
-    userAccepted: boolean;
+    userAcceptedCloud: boolean;
     isScrolledToBottom = true;
     rows = 1;
     resendAnimationActive: boolean;
@@ -315,7 +315,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     checkIfUserAcceptedExternalLLMUsage(): void {
-        this.userAccepted = !!this.accountService.userIdentity?.externalLLMUsageAccepted;
+        this.userAcceptedCloud = !!this.accountService.userIdentity?.externalLLMUsageAccepted;
         setTimeout(() => this.adjustTextareaRows(), 0);
     }
 
@@ -401,7 +401,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      */
     acceptPermission() {
         this.chatService.updateExternalLLMUsageConsent(true);
-        this.userAccepted = true;
+        this.userAcceptedCloud = true;
     }
 
     /**

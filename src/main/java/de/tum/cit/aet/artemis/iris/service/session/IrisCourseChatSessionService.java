@@ -84,7 +84,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     @Override
     public void checkHasAccessTo(User user, IrisCourseChatSession session) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        if (session.getIsLastCloudEnabled()) {
+            user.hasAcceptedExternalLLMUsageElseThrow();
+        }
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         if (!Objects.equals(session.getUserId(), user.getId())) {
@@ -178,7 +180,6 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @return The current Iris session
      */
     public IrisCourseChatSession getCurrentSessionOrCreateIfNotExists(Course course, User user, boolean sendInitialMessageIfCreated) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
         return getCurrentSessionOrCreateIfNotExistsInternal(course, user, sendInitialMessageIfCreated);
     }
@@ -190,6 +191,10 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
             // if session is of today we can continue it; otherwise create a new one
             if (session.getCreationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().isEqual(LocalDate.now(ZoneId.systemDefault()))) {
+                // if session exists check for cloud usage else assume disabled by default at empty session
+                if (session.getIsLastCloudEnabled()) {
+                    user.hasAcceptedExternalLLMUsageElseThrow();
+                }
                 checkHasAccessTo(user, session);
                 return session;
             }
@@ -208,7 +213,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @return The created Iris session
      */
     public IrisCourseChatSession createSession(Course course, User user, boolean sendInitialMessage) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        // If a user creates a new session cloud is disabled per default
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
         return createSessionInternal(course, user, sendInitialMessage);
     }

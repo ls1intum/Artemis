@@ -105,7 +105,7 @@ public class IrisTextExerciseChatSessionResource {
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, textExercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        // If a user creates a new session cloud is disabled per default
 
         var session = irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
         var uriString = "/api/iris/sessions/" + session.getId();
@@ -127,12 +127,13 @@ public class IrisTextExerciseChatSessionResource {
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
 
         var sessions = irisTextExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         // TODO: Discuss this with the team: should we filter out sessions where the user does not have access, or throw an exception?
         // Access check might not even be necessary here -> see comments in hasAccess method
-        var filteredSessions = sessions.stream().filter(session -> irisTextExerciseChatSessionService.hasAccess(user, session)).toList();
+        var filteredSessions = sessions.stream()
+                .filter(session -> (user.hasAcceptedExternalLLMUsage() || !session.getIsLastCloudEnabled()) && irisTextExerciseChatSessionService.hasAccess(user, session))
+                .toList();
         return ResponseEntity.ok(filteredSessions);
     }
 

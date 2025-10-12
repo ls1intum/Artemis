@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.service.session;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -318,7 +320,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The current Iris session
      */
     public IrisProgrammingExerciseChatSession getCurrentSessionOrCreateIfNotExists(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
         return getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, sendInitialMessageIfCreated);
     }
@@ -326,8 +327,20 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     private IrisProgrammingExerciseChatSession getCurrentSessionOrCreateIfNotExistsInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
         var sessionOptional = irisExerciseChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream()
                 .findFirst();
+        if (sessionOptional.isPresent()) {
+            var session = sessionOptional.get();
 
-        return sessionOptional.orElseGet(() -> createSessionInternal(exercise, user, sendInitialMessageIfCreated));
+            // if session is of today we can continue it; otherwise create a new one
+            if (session.getCreationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().isEqual(LocalDate.now(ZoneId.systemDefault()))) {
+                // if session exists check for cloud usage else assume disabled by default at empty session
+                if (session.getIsLastCloudEnabled()) {
+                    user.hasAcceptedExternalLLMUsageElseThrow();
+                }
+                checkHasAccessTo(user, session);
+                return session;
+            }
+        }
+        return createSessionInternal(exercise, user, sendInitialMessageIfCreated);
     }
 
     /**
@@ -339,7 +352,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The created session
      */
     public IrisProgrammingExerciseChatSession createSession(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
         return createSessionInternal(exercise, user, sendInitialMessage);
