@@ -203,7 +203,7 @@ export class CourseNotificationService {
      * @param statusType - The new status to set
      */
     public setNotificationStatusInMap(courseId: number, notificationIds: number[], statusType: CourseNotificationViewingStatus) {
-        // This will set the notifications to seen on the frontend.
+        // This will set the notifications to seen in the user interface.
         for (let i = 0; i < this.courseNotificationMap[courseId].length; i++) {
             if (notificationIds.includes(this.courseNotificationMap[courseId][i].notificationId!)) {
                 this.courseNotificationMap[courseId][i].status = statusType;
