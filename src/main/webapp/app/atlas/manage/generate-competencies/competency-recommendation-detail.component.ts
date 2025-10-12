@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { CourseCompetencyValidators } from 'app/atlas/shared/entities/competency.model';
-import { faChevronRight, faPencilAlt, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faPen, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyFormControlsWithViewed } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
@@ -28,41 +28,44 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
         HtmlForMarkdownPipe,
     ],
 })
-export class CompetencyRecommendationDetailComponent implements OnInit {
-    @Input({ required: true }) form: FormGroup<CompetencyFormControlsWithViewed>;
-    @Input({ required: true }) index: number;
-    @Input() isCollapsed = true;
-    isInEditMode = false;
+export class CompetencyRecommendationDetailComponent {
+    form = input<FormGroup<CompetencyFormControlsWithViewed>>();
+    index = input<number>(0);
+    isCollapsed = model<boolean>(true);
+    isInEditMode = signal<boolean>(false);
 
-    @Output() onDelete: EventEmitter<void> = new EventEmitter<void>();
+    onDelete = output<void>();
 
-    //Icons
     protected readonly faChevronRight = faChevronRight;
     protected readonly faTrash = faTrash;
     protected readonly faWrench = faWrench;
     protected readonly faSave = faSave;
-    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faPen = faPen;
 
     //Other constants for html
     protected readonly competencyValidators = CourseCompetencyValidators;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
 
-    ngOnInit(): void {
-        this.titleControl.addValidators([Validators.required, Validators.maxLength(CourseCompetencyValidators.TITLE_MAX)]);
-        this.descriptionControl.addValidators([Validators.maxLength(CourseCompetencyValidators.DESCRIPTION_MAX)]);
-        //disable all competency controls as component is not in edit mode
-        this.form.controls.competency.disable();
-        //viewed checkbox is always enabled
-        this.viewedControl.enable();
+    constructor() {
+        effect(() => {
+            const form = this.form();
+            if (!form) {
+                return;
+            }
+            this.titleControl()?.addValidators([Validators.required, Validators.maxLength(CourseCompetencyValidators.TITLE_MAX)]);
+            this.descriptionControl()?.addValidators([Validators.maxLength(CourseCompetencyValidators.DESCRIPTION_MAX)]);
+            form.controls.competency.disable();
+            this.viewedControl()?.enable();
+        });
     }
 
     /**
      * Toggles collapsed status and sets viewed to true
      */
     toggle() {
-        this.isCollapsed = !this.isCollapsed;
-        this.viewedControl.setValue(true);
+        this.isCollapsed.set(!this.isCollapsed());
+        this.viewedControl()?.setValue(true);
     }
 
     /**
@@ -76,19 +79,27 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
      * Enters edit mode: Enables all form fields and expands the element
      */
     edit() {
-        this.form.controls.competency.enable();
-        this.isInEditMode = true;
-        this.isCollapsed = false;
-        this.viewedControl.setValue(true);
+        const form = this.form();
+        if (!form) {
+            return;
+        }
+        form.controls.competency.enable();
+        this.isInEditMode.set(true);
+        this.isCollapsed.set(false);
+        this.viewedControl()?.setValue(true);
     }
 
     /**
      * Leaves edit mode: Disables all form fields again and collapses the element
      */
     save() {
-        this.form.controls.competency.disable();
-        this.isInEditMode = false;
-        this.isCollapsed = true;
+        const form = this.form();
+        if (!form) {
+            return;
+        }
+        form.controls.competency.disable();
+        this.isInEditMode.set(false);
+        this.isCollapsed.set(true);
     }
 
     /**
@@ -96,32 +107,21 @@ export class CompetencyRecommendationDetailComponent implements OnInit {
      * @param content markdown content
      */
     updateDescriptionControl(content: string) {
-        this.descriptionControl.setValue(content);
-        this.descriptionControl.markAsDirty();
+        this.descriptionControl()?.setValue(content);
+        this.descriptionControl()?.markAsDirty();
     }
 
     /**
      * Only allows save if no form controls have validation errors
      */
-    get isSavePossible() {
-        return !this.form.invalid;
-    }
+    isSavePossible = computed(() => {
+        const form = this.form();
+        return !!form && !form.invalid;
+    });
 
-    //getters for the form controls
-
-    get titleControl() {
-        return this.form.controls.competency.controls.title;
-    }
-
-    get descriptionControl() {
-        return this.form.controls.competency.controls.description;
-    }
-
-    get taxonomyControl() {
-        return this.form.controls.competency.controls.taxonomy;
-    }
-
-    get viewedControl() {
-        return this.form.controls.viewed;
-    }
+    // control accessors as computed signals to avoid unsafe non-null assertions
+    titleControl = computed(() => this.form()?.controls.competency.controls.title);
+    descriptionControl = computed(() => this.form()?.controls.competency.controls.description);
+    taxonomyControl = computed(() => this.form()?.controls.competency.controls.taxonomy);
+    viewedControl = computed(() => this.form()?.controls.viewed);
 }
