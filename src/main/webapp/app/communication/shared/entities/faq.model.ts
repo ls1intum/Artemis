@@ -16,3 +16,28 @@ export class Faq implements BaseEntity {
     public course?: Course;
     public categories?: FaqCategory[];
 }
+
+export class CreateFaqDTO {
+    constructor(
+        public courseId: number,
+        public faqState: FaqState,
+        public questionTitle: string,
+        public categories?: FaqCategory[],
+        public questionAnswer?: string,
+    ) {}
+}
+
+export class UpdateFaqDTO {
+    constructor(
+        public id: number,
+        public courseId: number,
+        public faqState: FaqState,
+        public questionTitle: string,
+        public categories?: FaqCategory[],
+        public questionAnswer?: string,
+    ) {}
+
+    public static toUpdateDto(faq: Faq): UpdateFaqDTO {
+        return new UpdateFaqDTO(faq.id!, faq.course?.id!, faq.faqState!, faq.questionTitle ?? '', faq.categories, faq.questionAnswer);
+    }
+}

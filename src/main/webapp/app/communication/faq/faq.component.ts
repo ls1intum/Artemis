@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
+import { Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
@@ -202,7 +202,7 @@ export class FaqComponent implements OnInit, OnDestroy {
         const previousState = faq.faqState;
         faq.faqState = newState;
         faq.course = this.course;
-        this.faqService.update(courseId, faq).subscribe({
+        this.faqService.update(courseId, UpdateFaqDTO.toUpdateDto(faq)).subscribe({
             next: () => this.alertService.success(successMessageKey, { title: faq.questionTitle }),
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);

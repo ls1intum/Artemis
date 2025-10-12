@@ -208,36 +208,36 @@ describe('FaqComponent', () => {
     });
 
     it('should reject faq properly', () => {
-        jest.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
+        const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
         faqComponentFixture.detectChanges();
         faqComponent.rejectFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(updateSpy).toHaveBeenCalledOnce();
         expect(faq1.faqState).toEqual(FaqState.REJECTED);
     });
 
     it('should not change status if rejection fails', () => {
         const error = { status: 500 };
-        jest.spyOn(faqService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         faqComponent.rejectFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(updateSpy).toHaveBeenCalledOnce();
         expect(faq1.faqState).toEqual(FaqState.PROPOSED);
     });
 
     it('should accepts proposed faq properly', () => {
-        jest.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
+        const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
         faqComponentFixture.detectChanges();
         faqComponent.acceptProposedFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(updateSpy).toHaveBeenCalledOnce();
         expect(faq1.faqState).toEqual(FaqState.ACCEPTED);
     });
 
     it('should not change status if acceptance fails', () => {
         const error = { status: 500 };
-        jest.spyOn(faqService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         faqComponent.acceptProposedFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(updateSpy).toHaveBeenCalledOnce();
         expect(faq1.faqState).toEqual(FaqState.PROPOSED);
     });
 
