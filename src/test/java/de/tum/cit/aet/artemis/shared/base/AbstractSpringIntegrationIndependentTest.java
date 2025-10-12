@@ -88,9 +88,8 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean
     protected ChatClient chatClient;
 
-    // Mock for lecture transcription tests to ensure same context
-    // Using MockitoBean (not SpyBean) because the service may not exist in minimal test context
-    @MockitoBean
+    // Spy for lecture transcription tests to allow real method execution in service integration tests
+    @MockitoSpyBean
     protected LectureTranscriptionService lectureTranscriptionService;
 
     // Mock for TUM Live service used in Nebula transcription resource

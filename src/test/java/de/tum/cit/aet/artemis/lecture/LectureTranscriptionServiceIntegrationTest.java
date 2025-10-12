@@ -27,14 +27,10 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionStatusResponseDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
-
-    @Autowired
-    private LectureTranscriptionService lectureTranscriptionService;
 
     @Autowired
     private LectureTranscriptionRepository transcriptionRepository;
