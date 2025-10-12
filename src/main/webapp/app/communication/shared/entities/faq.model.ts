@@ -28,7 +28,7 @@ export class CreateFaqDTO {
 
     public static toCreateFaqDto(faq: Faq): CreateFaqDTO {
         if (!faq?.faqState) {
-            throw new Error('The state should be present to update FAQ');
+            throw new Error('The state should be present to create FAQ');
         }
 
         return new CreateFaqDTO(faq.faqState, (faq.questionTitle ?? '').trim(), faq.course?.id, faq.categories, faq.questionAnswer);
