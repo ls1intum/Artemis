@@ -24,7 +24,7 @@ export class LectureSeriesDraftEditModalComponent {
 
     lectureDraft: LectureDraft | undefined;
     title = signal<string>('');
-    isTitleInvalid = computed(() => this.title() === '');
+    isTitleInvalid = computed(() => this.title().trim() === '');
     startDate = signal<Date | undefined>(undefined);
     endDate = signal<Date | undefined>(undefined);
     isEndDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(this.startDate(), this.endDate()));
@@ -50,7 +50,7 @@ export class LectureSeriesDraftEditModalComponent {
         const draft = this.lectureDraft;
         if (draft) {
             const dto = draft.dto;
-            dto.title = this.title();
+            dto.title = this.title().trim();
             dto.startDate = this.convertDateToDayjsDate(this.startDate());
             dto.endDate = this.convertDateToDayjsDate(this.endDate());
             draft.state = LectureDraftState.EDITED;

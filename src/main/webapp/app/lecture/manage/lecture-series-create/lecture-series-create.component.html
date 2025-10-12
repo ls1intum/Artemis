@@ -68,7 +68,7 @@
         <h3 jhiTranslate="artemisApp.lecture.createSeries.generatedLecturesHeading"></h3>
         <div class="container w-100 px-0">
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-                @for (draft of lectureDrafts(); track draft.id; let index = $index) {
+                @for (draft of drafts; track draft.id; let index = $index) {
                     <div class="col">
                         <div class="draft-card">
                             <span class="card-number" [ngClass]="{ edited: draft.state === LectureDraftState.EDITED }">
