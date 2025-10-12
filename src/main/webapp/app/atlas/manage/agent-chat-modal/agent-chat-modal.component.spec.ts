@@ -522,6 +522,156 @@ describe('AgentChatModalComponent', () => {
         });
     });
 
+    describe('History loading', () => {
+        it('should load conversation history on init', () => {
+            // Arrange
+            const mockHistory = [
+                {
+                    role: 'user',
+                    content: 'Course ID: 123\n\nWhat competencies should I create?',
+                },
+                {
+                    role: 'assistant',
+                    content: 'Here are some suggested competencies...',
+                },
+            ];
+            mockAgentChatService.getHistory.mockReturnValue(of(mockHistory));
+            mockTranslateService.instant.mockReturnValue('Welcome!');
+
+            // Act
+            component.ngOnInit();
+
+            // Assert
+            expect(mockAgentChatService.getHistory).toHaveBeenCalledOnce();
+            expect(mockAgentChatService.getHistory).toHaveBeenCalledWith(123);
+            expect(component.messages).toHaveLength(3); // Welcome + 2 history messages
+            expect(component.messages[1].content).toBe('What competencies should I create?'); // Prefix removed
+            expect(component.messages[1].isUser).toBeTrue();
+            expect(component.messages[2].content).toBe('Here are some suggested competencies...');
+            expect(component.messages[2].isUser).toBeFalse();
+        });
+
+        it('should not modify assistant messages in history', () => {
+            // Arrange
+            const assistantContent = 'Assistant response with Course ID: 999 text';
+            const mockHistory = [
+                {
+                    role: 'assistant',
+                    content: assistantContent,
+                },
+            ];
+            mockAgentChatService.getHistory.mockReturnValue(of(mockHistory));
+            mockTranslateService.instant.mockReturnValue('Welcome!');
+
+            // Act
+            component.ngOnInit();
+
+            // Assert
+            expect(component.messages[1].content).toBe(assistantContent);
+        });
+
+        it('should handle empty history gracefully', () => {
+            // Arrange
+            mockAgentChatService.getHistory.mockReturnValue(of([]));
+            mockTranslateService.instant.mockReturnValue('Welcome!');
+
+            // Act
+            component.ngOnInit();
+
+            // Assert
+            expect(component.messages).toHaveLength(1); // Only welcome message
+            expect(component.messages[0].content).toBe('Welcome!');
+        });
+
+        it('should handle history loading error gracefully', () => {
+            // Arrange
+            mockAgentChatService.getHistory.mockReturnValue(throwError(() => new Error('History load failed')));
+            mockTranslateService.instant.mockReturnValue('Welcome!');
+
+            // Act
+            component.ngOnInit();
+
+            // Assert
+            expect(component.messages).toHaveLength(1); // Only welcome message
+            expect(component.messages[0].content).toBe('Welcome!');
+        });
+    });
+
+    describe('Competency modification events', () => {
+        beforeEach(() => {
+            mockTranslateService.instant.mockReturnValue('Welcome');
+            component.ngOnInit();
+        });
+
+        it('should emit competencyChanged event when competenciesModified is true', () => {
+            // Arrange
+            component.currentMessage.set('Create a competency for OOP');
+            component.isAgentTyping.set(false);
+            const mockResponse = {
+                message: 'Competency created successfully',
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: true,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            const emitSpy = jest.spyOn(component.competencyChanged, 'emit');
+            fixture.detectChanges();
+
+            // Act
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            // Assert
+            expect(emitSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not emit competencyChanged event when competenciesModified is false', () => {
+            // Arrange
+            component.currentMessage.set('What competencies exist?');
+            component.isAgentTyping.set(false);
+            const mockResponse = {
+                message: 'Here are the existing competencies...',
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            const emitSpy = jest.spyOn(component.competencyChanged, 'emit');
+            fixture.detectChanges();
+
+            // Act
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            // Assert
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not emit competencyChanged event when competenciesModified is undefined', () => {
+            // Arrange
+            component.currentMessage.set('Test message');
+            component.isAgentTyping.set(false);
+            const mockResponse = {
+                message: 'Response without competenciesModified flag',
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            const emitSpy = jest.spyOn(component.competencyChanged, 'emit');
+            fixture.detectChanges();
+
+            // Act
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            // Assert
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+    });
+
     describe('Textarea auto-resize behavior', () => {
         it('should auto-resize textarea on input when content exceeds max height', () => {
             // Arrange

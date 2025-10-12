@@ -235,8 +235,9 @@ public class AtlasAgentToolsService {
     }
 
     private String escapeJson(String input) {
-        if (input == null)
+        if (input == null) {
             return "";
+        }
         return input.replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
     }
 }
