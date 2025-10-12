@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -80,19 +81,22 @@ public class AtlasAgentResource {
         }
         catch (TimeoutException te) {
             log.warn("Chat timed out for course {}: {}", courseId, te.getMessage());
+            boolean competenciesModified = AtlasAgentToolsService.wereCompetenciesModified();
             return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
-                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", request.sessionId(), ZonedDateTime.now(), false, false));
+                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", request.sessionId(), ZonedDateTime.now(), false, competenciesModified));
         }
         catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             log.warn("Chat interrupted for course {}: {}", courseId, ie.getMessage());
+            boolean competenciesModified = AtlasAgentToolsService.wereCompetenciesModified();
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(new AtlasAgentChatResponseDTO("The request was interrupted. Please try again.", request.sessionId(), ZonedDateTime.now(), false, false));
+                    .body(new AtlasAgentChatResponseDTO("The request was interrupted. Please try again.", request.sessionId(), ZonedDateTime.now(), false, competenciesModified));
         }
         catch (ExecutionException ee) {
             log.error("Upstream error processing chat for course {}: {}", courseId, ee.getMessage(), ee);
+            boolean competenciesModified = AtlasAgentToolsService.wereCompetenciesModified();
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(new AtlasAgentChatResponseDTO("Upstream error while processing your request.", request.sessionId(), ZonedDateTime.now(), false, false));
+                    .body(new AtlasAgentChatResponseDTO("Upstream error while processing your request.", request.sessionId(), ZonedDateTime.now(), false, competenciesModified));
         }
         finally {
             // Cleanup ThreadLocal to prevent memory leaks
@@ -115,8 +119,8 @@ public class AtlasAgentResource {
         List<Message> messages = atlasAgentService.getConversationHistory(sessionId);
 
         // Convert Spring AI Message objects to DTOs, filtering out system messages
-        List<ChatHistoryMessageDTO> history = messages.stream().filter(msg -> !(msg instanceof SystemMessage)).map(this::convertToDTO).collect(Collectors.toList());
-
+        List<ChatHistoryMessageDTO> history = messages.stream().filter(msg -> !(msg instanceof SystemMessage)).map(this::convertToDTO)
+                .collect(Collectors.toCollection(ArrayList::new));
         log.debug("Returning {} historical messages for course {}", history.size(), courseId);
         return ResponseEntity.ok(history);
     }

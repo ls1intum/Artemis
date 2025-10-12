@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -21,8 +22,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 /**
  * Service providing tools for the Atlas Agent using Spring AI's @Tool annotation.
- * Note: Not marked as @Lazy to ensure @Tool methods are properly scanned by MethodToolCallbackProvider.
  */
+@Lazy
 @Service
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentToolsService {
@@ -238,6 +239,6 @@ public class AtlasAgentToolsService {
         if (input == null) {
             return "";
         }
-        return input.replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
+        return input.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
     }
 }
