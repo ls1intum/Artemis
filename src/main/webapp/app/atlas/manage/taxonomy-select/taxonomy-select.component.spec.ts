@@ -20,7 +20,7 @@ describe('TaxonomySelectComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(TaxonomySelectComponent);
                 component = componentFixture.componentInstance;
-                component.form = new FormControl<CompetencyTaxonomy | undefined>(undefined);
+                componentFixture.componentRef.setInput('form', new FormControl<CompetencyTaxonomy | undefined>(undefined));
             });
     });
 
@@ -37,7 +37,7 @@ describe('TaxonomySelectComponent', () => {
         const select = componentFixture.debugElement.query(By.css('.form-select')).nativeElement;
         expect(select.value).toBe('');
 
-        component.form.setValue(CompetencyTaxonomy.ANALYZE);
+        (component.form() as FormControl).setValue(CompetencyTaxonomy.ANALYZE);
         componentFixture.detectChanges();
 
         expect(select.value).toContain(CompetencyTaxonomy.ANALYZE);
