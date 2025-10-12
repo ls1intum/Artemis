@@ -171,6 +171,10 @@
                 "question": "Willst du wirklich die Dateieinheit <strong>{{ title }}</strong> löschen? Die Datei wird auch gelöscht! Du kannst diese Aktion nicht rückgängig machen!",
                 "typeNameToConfirm": "Bitte gib den Namen der Datei/Video Unit zur Bestätigung ein.",
                 "buttonText": "Löschen"
+            },
+            "transcription": {
+                "started": "Transkriptgenerierung gestartet.",
+                "error": "Transkriptgenerierung konnte nicht gestartet werden."
             }
         },
         "exerciseUnit": {

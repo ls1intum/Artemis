@@ -171,6 +171,10 @@
                 "question": "Do you really want to delete the attachment unit <strong>{{ title }}</strong>? The attachment will also be removed! You can not undo this action!",
                 "typeNameToConfirm": "Please enter the name of the attachment/video unit for confirmation.",
                 "buttonText": "Delete"
+            },
+            "transcription": {
+                "started": "Transcript generation started.",
+                "error": "Failed to start transcript generation."
             }
         },
         "exerciseUnit": {

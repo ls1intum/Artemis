@@ -110,15 +110,11 @@ export class AttachmentVideoUnitService {
                 responseType: 'text',
             })
             .pipe(
-                map((response: HttpResponse<string>) => {
-                    if (response.status === 200) {
-                        this.alertService.success('Transcript generation started.');
-                    } else {
-                        this.alertService.error('Transcript request did not succeed. Status: ' + response.status);
-                    }
+                map(() => {
+                    this.alertService.success('artemisApp.lectureUnit.attachmentVideoUnit.transcription.started');
                 }),
                 catchError((error: any) => {
-                    this.alertService.error('Transcript failed to start: ' + (error.message || 'Unknown error'));
+                    this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcription.error');
                     return of();
                 }),
             );

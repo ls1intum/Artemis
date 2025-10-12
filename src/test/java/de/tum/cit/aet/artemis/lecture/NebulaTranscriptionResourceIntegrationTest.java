@@ -168,6 +168,9 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void getTumLivePlaylist_notTumLiveUrl_notFound() throws Exception {
+        // Mock TUM Live service to return empty for non-TUM-Live URLs
+        when(tumLiveService.getTumLivePlaylistLink(anyString())).thenReturn(java.util.Optional.empty());
+
         // Non-TUM-Live URLs should return 404
         restNebulaTranscriptionMockMvc.perform(get("/api/lecture/nebula/video-utils/tum-live-playlist").param("url", "https://youtube.com/watch?v=123"))
                 .andExpect(status().isNotFound());
@@ -176,6 +179,9 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void getTumLivePlaylist_invalidUrl_notFound() throws Exception {
+        // Mock TUM Live service to return empty for invalid URL formats
+        when(tumLiveService.getTumLivePlaylistLink(anyString())).thenReturn(java.util.Optional.empty());
+
         // Invalid TUM Live URL format should return 404
         restNebulaTranscriptionMockMvc.perform(get("/api/lecture/nebula/video-utils/tum-live-playlist").param("url", "https://tum.live/invalid-format"))
                 .andExpect(status().isNotFound());

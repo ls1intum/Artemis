@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
+import de.tum.cit.aet.artemis.lecture.service.TumLiveService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
@@ -92,6 +93,10 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean
     protected LectureTranscriptionService lectureTranscriptionService;
 
+    // Mock for TUM Live service used in Nebula transcription resource
+    @MockitoBean
+    protected TumLiveService tumLiveService;
+
     // Mock RestTemplate for Nebula API calls
     // Since Nebula is disabled, the real nebulaRestTemplate bean won't exist, so we mock it
     @MockitoBean(name = "nebulaRestTemplate")
@@ -116,6 +121,9 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         }
         if (lectureTranscriptionService != null) {
             Mockito.reset(lectureTranscriptionService);
+        }
+        if (tumLiveService != null) {
+            Mockito.reset(tumLiveService);
         }
         super.resetSpyBeans();
     }
