@@ -78,15 +78,7 @@ export class FaqService {
      * Converts a faqs categories into a json string (to send them to the server). Does nothing if no categories exist
      * @param faq the faq
      */
-    static stringifyCreateFaqCategories(faq: CreateFaqDTO) {
-        return faq.categories?.map((category) => JSON.stringify(category) as unknown as FaqCategory);
-    }
-
-    /**
-     * Converts a faqs categories into a json string (to send them to the server). Does nothing if no categories exist
-     * @param faq the faq
-     */
-    static stringifyUpdateFaqCategories(faq: UpdateFaqDTO) {
+    static stringifyFaqCategories(faq: CreateFaqDTO | UpdateFaqDTO) {
         return faq.categories?.map((category) => JSON.stringify(category) as unknown as FaqCategory);
     }
 
@@ -124,7 +116,7 @@ export class FaqService {
      */
     static convertCreateFaqFromClient<F extends CreateFaqDTO>(createFaq: F): CreateFaqDTO {
         const copy = Object.assign({}, createFaq);
-        copy.categories = FaqService.stringifyCreateFaqCategories(copy);
+        copy.categories = FaqService.stringifyFaqCategories(copy);
         return copy;
     }
 
@@ -134,7 +126,7 @@ export class FaqService {
      */
     static convertUpdateFaqFromClient<F extends UpdateFaqDTO>(updateFaq: F): UpdateFaqDTO {
         const copy = Object.assign({}, updateFaq);
-        copy.categories = FaqService.stringifyUpdateFaqCategories(copy);
+        copy.categories = FaqService.stringifyFaqCategories(copy);
         return copy;
     }
 

@@ -125,8 +125,8 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
         faq.setQuestionTitle("Updated");
         faq.setFaqState(FaqState.PROPOSED);
-        faq.setId(faq.getId() + 1);
-        request.putWithResponseBody("/api/communication/courses/" + course1.getId() + "/faqs/" + (faq.getId() - 1), faq, Faq.class, HttpStatus.BAD_REQUEST);
+        UpdateFaqDTO dto = new UpdateFaqDTO(faq.getId() + 1, course1.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
+        request.putWithResponseBody("/api/communication/courses/" + course1.getId() + "/faqs/" + (dto.id() - 1), dto, FaqDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

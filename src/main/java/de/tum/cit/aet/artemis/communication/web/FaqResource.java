@@ -123,14 +123,17 @@ public class FaqResource {
         }
         checkIsInstructorForAcceptedFaq(updateFaqDTO.faqState(), courseId);
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
-        checkIsInstructorForAcceptedFaq(updateFaqDTO.faqState(), courseId);
+        checkIsInstructorForAcceptedFaq(existingFaq.getFaqState(), courseId);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
-        Faq faqToUpdate = updateFaqDTO.toEntity();
+        existingFaq.setQuestionTitle(updateFaqDTO.questionTitle());
+        existingFaq.setQuestionAnswer(updateFaqDTO.questionAnswer());
+        existingFaq.setFaqState(updateFaqDTO.faqState());
+        existingFaq.setCategories(updateFaqDTO.categories());
         Course course = courseRepository.findByIdElseThrow(courseId);
-        faqToUpdate.setCourse(course);
-        Faq updatedFaq = faqRepository.save(faqToUpdate);
+        existingFaq.setCourse(course);
+        Faq updatedFaq = faqRepository.save(existingFaq);
         faqService.autoIngestFaqIntoPyris(updatedFaq);
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
