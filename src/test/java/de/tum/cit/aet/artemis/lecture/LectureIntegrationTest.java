@@ -562,6 +562,24 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateLectureNamesShouldReturnBadRequestIfDTOsContainNameWithWrongFormat() throws Exception {
+        Lecture lecture1 = new Lecture();
+        lecture1.setTitle("Updated Lecture 1");
+        lecture1.setCourse(course1);
+        Lecture savedLecture1 = lectureRepository.save(lecture1);
+        Lecture lecture2 = new Lecture();
+        lecture2.setTitle("Lecture 2");
+        lecture2.setCourse(course1);
+        Lecture savedLecture2 = lectureRepository.save(lecture2);
+
+        List<LectureNameUpdateDTO> dtoList = List.of(new LectureNameUpdateDTO(savedLecture1.getId(), "Some other format"),
+                new LectureNameUpdateDTO(savedLecture2.getId(), "Updated Lecture 2"));
+
+        request.putWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures/lecture-names", dtoList, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateLectureNamesShouldReturnBadRequestIfDTOsContainIdDuplicate() throws Exception {
         List<LectureNameUpdateDTO> dtoList = List.of(new LectureNameUpdateDTO(1L, "Updated Lecture 1"), new LectureNameUpdateDTO(1L, "Updated Lecture 2"));
 
