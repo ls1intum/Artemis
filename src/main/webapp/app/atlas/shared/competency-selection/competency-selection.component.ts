@@ -204,7 +204,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     registerOnTouched(_fn: any): void {}
 
     suggestCompetencies(): void {
-        if (!this.exerciseDescription?.trim()) {
+        if (!this.exerciseDescription()?.trim()) {
             return;
         }
 
@@ -212,7 +212,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         this.suggestedCompetencyIds.clear();
 
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        const requestBody = { description: this.exerciseDescription, course_id: courseId?.toString() };
+        const requestBody = { description: this.exerciseDescription(), course_id: courseId?.toString() };
 
         this.http
             .post<{ competencies: any[] }>('/api/atlas/competencies/suggest', requestBody)

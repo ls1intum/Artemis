@@ -213,7 +213,7 @@ describe('CompetencySelection', () => {
             const competency3 = { id: 3, title: 'Algorithms', optional: false } as Competency;
             jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
 
-            component.exerciseDescription = 'Create a Java program that implements a sorting algorithm';
+            fixture.componentRef.setInput('exerciseDescription', 'Create a Java program that implements a sorting algorithm');
             fixture.detectChanges();
         });
 
@@ -227,7 +227,7 @@ describe('CompetencySelection', () => {
         });
 
         it('should disable lightbulb button when no exercise description', () => {
-            component.exerciseDescription = '';
+            fixture.componentRef.setInput('exerciseDescription', '');
             fixture.detectChanges();
 
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
@@ -313,11 +313,11 @@ describe('CompetencySelection', () => {
         it('should not call API if description is empty or whitespace only', () => {
             const httpPostSpy = jest.spyOn(httpClient, 'post');
 
-            component.exerciseDescription = '';
+            fixture.componentRef.setInput('exerciseDescription', '');
             component.suggestCompetencies();
             expect(httpPostSpy).not.toHaveBeenCalled();
 
-            component.exerciseDescription = '   ';
+            fixture.componentRef.setInput('exerciseDescription', '   ');
             component.suggestCompetencies();
             expect(httpPostSpy).not.toHaveBeenCalled();
         });
@@ -400,8 +400,8 @@ describe('CompetencySelection', () => {
     describe('Exercise Creation Integration', () => {
         it('should accept exercise description as input', () => {
             const testDescription = 'Test exercise description for suggestions';
-            component.exerciseDescription = testDescription;
-            expect(component.exerciseDescription).toBe(testDescription);
+            fixture.componentRef.setInput('exerciseDescription', testDescription);
+            expect(component.exerciseDescription()).toBe(testDescription);
         });
 
         it('should emit value changes when competency is toggled', () => {
@@ -428,8 +428,8 @@ describe('CompetencySelection', () => {
             ];
 
             descriptions.forEach((desc) => {
-                component.exerciseDescription = desc;
-                expect(component.exerciseDescription?.trim()).toBeTruthy();
+                fixture.componentRef.setInput('exerciseDescription', desc);
+                expect(component.exerciseDescription()?.trim()).toBeTruthy();
 
                 // Button should be enabled for non-empty descriptions
                 fixture.detectChanges();

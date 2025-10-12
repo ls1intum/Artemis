@@ -13,7 +13,7 @@
             }
             <jhi-button
                 [btnType]="ButtonType.WARNING"
-                [disabled]="isSuggesting || disabled || !exerciseDescription?.trim()"
+                [disabled]="isSuggesting || disabled || !exerciseDescription()?.trim()"
                 (onClick)="suggestCompetencies()"
                 [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip'"
                 [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
