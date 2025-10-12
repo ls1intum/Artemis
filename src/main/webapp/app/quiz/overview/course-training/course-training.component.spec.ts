@@ -26,7 +26,7 @@ describe('CourseTrainingComponent', () => {
         answeredCorrectly: 25,
         answeredWrong: 5,
         totalQuestions: 30,
-        dueDate: '2023-12-31T23:59:59Z',
+        dueDate: new Date(Date.now()).toISOString(),
         streak: 5,
     };
 
@@ -34,7 +34,7 @@ describe('CourseTrainingComponent', () => {
         leaderboardEntryDTO: [mockLeaderboardEntry],
         hasUserSetSettings: true,
         currentUserEntry: mockLeaderboardEntry,
-        currentTime: '2023-06-15 12:00:00',
+        currentTime: new Date(Date.now()).toISOString(),
     };
 
     beforeEach(async () => {
@@ -119,8 +119,8 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should calculate due date information correctly', () => {
-        component.currentTime.set('2023-06-15 12:00:00');
-        const futureDateString = '2023-06-17 15:00:00';
+        component.currentTime.set(new Date(Date.now()).toISOString());
+        const futureDateString = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000).toISOString();
 
         component.currentUserEntry.set({
             ...mockLeaderboardEntry,
@@ -135,8 +135,8 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should handle expired due dates', () => {
-        component.currentTime.set('2023-06-15 12:00:00');
-        const pastDateString = '2023-06-14 10:00:00';
+        component.currentTime.set(new Date(Date.now()).toISOString());
+        const pastDateString = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
         component.currentUserEntry.set({
             ...mockLeaderboardEntry,
@@ -149,7 +149,7 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should handle undefined due date', () => {
-        component.currentTime.set('2023-06-15 12:00:00');
+        component.currentTime.set(new Date(Date.now()).toISOString());
         component.currentUserEntry.set({
             ...mockLeaderboardEntry,
             dueDate: undefined,
@@ -164,8 +164,8 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should handle due date less than 60 seconds in future', () => {
-        component.currentTime.set('2023-06-15 12:00:00');
-        const almostDueDate = dayjs('2023-06-15 12:00:00').add(30, 'second').format();
+        component.currentTime.set(new Date(Date.now()).toISOString());
+        const almostDueDate = dayjs('2023-06-15T12:00:00').add(30, 'second').toISOString();
 
         component.currentUserEntry.set({
             ...mockLeaderboardEntry,
