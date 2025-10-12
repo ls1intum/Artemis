@@ -6,6 +6,7 @@ import * as monaco from 'monaco-editor';
 export interface LineChange {
     addedLineCount: number;
     removedLineCount: number;
+    fileTooLarge?: boolean;
 }
 
 /**
@@ -51,23 +52,18 @@ export async function processRepositoryDiff(originalFileContentByPath: Map<strin
         totalLineChange: { addedLineCount: 0, removedLineCount: 0 },
     };
 
-    // Process diff information in batches to avoid memory spikes when there are many files
-    const chunk = <T>(array: T[], size: number) => Array.from({ length: Math.ceil(array.length / size) }, (_, index) => array.slice(index * size, (index + 1) * size));
-    const batchSize = 5;
+    for (const diffInfo of diffInformation) {
+        const original = originalFileContentByPath.get(diffInfo.originalPath) ?? '';
+        const modified = modifiedFileContentByPath.get(diffInfo.modifiedPath) ?? '';
 
-    // Process diff information in batches to avoid memory spikes when there are many files
-    for (const batch of chunk(diffInformation, batchSize)) {
-        await Promise.all(
-            batch.map(async (diffInfo) => {
-                const original = originalFileContentByPath.get(diffInfo.originalPath) ?? '';
-                const modified = modifiedFileContentByPath.get(diffInfo.modifiedPath) ?? '';
-                const lineChange = await computeDiffsMonaco(original, modified);
+        const lineChange = await computeDiffsMonaco(original, modified);
 
-                diffInfo.lineChange = lineChange;
-                repositoryDiffInformation.totalLineChange.addedLineCount += lineChange.addedLineCount;
-                repositoryDiffInformation.totalLineChange.removedLineCount += lineChange.removedLineCount;
-            }),
-        );
+        diffInfo.lineChange = lineChange;
+        repositoryDiffInformation.totalLineChange.addedLineCount += lineChange.addedLineCount;
+        repositoryDiffInformation.totalLineChange.removedLineCount += lineChange.removedLineCount;
+        if (lineChange.fileTooLarge) {
+            repositoryDiffInformation.totalLineChange.fileTooLarge = true;
+        }
     }
 
     return repositoryDiffInformation;
@@ -188,9 +184,21 @@ function getDiffHost(): HTMLDivElement {
  * @param modifiedFileContent The modified file content
  * @returns Promise resolving to the line change object containing added and removed line counts
  */
+/**
+ * Files larger than this threshold will not be diffed with Monaco because the computation is expensive and prone to timeouts.
+ * Instead we fall back to a lightweight sampling approach that estimates the line changes.
+ */
+const MAX_BYTES_FOR_DIFF = 1_000_000; // ~1 MB per side
+
 function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: string): Promise<LineChange> {
     return new Promise((resolve) => {
         let finished = false;
+        if (originalFileContent.length > MAX_BYTES_FOR_DIFF || modifiedFileContent.length > MAX_BYTES_FOR_DIFF) {
+            finished = true;
+            resolve(estimateLineChangeUsingSampling(originalFileContent, modifiedFileContent));
+            return;
+        }
+
         const hostElement = getDiffHost();
         const diffContainer = document.createElement('div');
         diffContainer.style.width = '1px';
@@ -202,8 +210,6 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
                 return;
             }
             finished = true;
-            // Dispose resources in reverse order of creation
-            // Monaco's dispose() methods are designed to be safe and shouldn't throw
             diffContainer.parentElement?.removeChild(diffContainer);
             diffListener?.dispose();
             diffEditor?.dispose();
@@ -242,9 +248,6 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
                     finish({ addedLineCount: 0, removedLineCount: 0 });
                 }
             });
-
-            // Hard timeout in case Monaco doesn't emit
-            setTimeout(() => finish({ addedLineCount: 0, removedLineCount: 0 }), 5000);
         } catch {
             finish({ addedLineCount: 0, removedLineCount: 0 });
         }
@@ -506,3 +509,108 @@ export const __diffUtilsTesting = {
     calculateStringSimilarity,
     jaccardNGramSimilarity,
 };
+
+/**
+ * Estimates line additions/deletions for very large files by sampling a subset of the lines.
+ * The approach hashes the start and end of each stride-sized block to keep memory usage constant while still detecting
+ * edits that fall near block boundaries. The result is flagged with {@link LineChange.fileTooLarge} to indicate reduced accuracy.
+ */
+function estimateLineChangeUsingSampling(originalFileContent: string, modifiedFileContent: string): LineChange {
+    const originalLineCount = countLines(originalFileContent);
+    const modifiedLineCount = countLines(modifiedFileContent);
+
+    const totalLines = Math.max(originalLineCount, modifiedLineCount);
+    const sampleStride = Math.max(1, Math.floor(totalLines / 2000)); // sample roughly up to 2000 lines per side
+
+    const originalSample = sampleLineHashes(originalFileContent, sampleStride, originalLineCount);
+    const modifiedSample = sampleLineHashes(modifiedFileContent, sampleStride, modifiedLineCount);
+
+    let added = 0;
+    let removed = 0;
+
+    for (const [hash, count] of originalSample) {
+        const modifiedCount = modifiedSample.get(hash) ?? 0;
+        if (count > modifiedCount) {
+            removed += count - modifiedCount;
+        }
+        modifiedSample.delete(hash);
+    }
+
+    for (const count of modifiedSample.values()) {
+        added += count;
+    }
+
+    return {
+        addedLineCount: added,
+        removedLineCount: removed,
+        fileTooLarge: true,
+    };
+}
+
+/**
+ * Counts the number of lines in the given content without allocating intermediate arrays.
+ */
+function countLines(content: string): number {
+    if (content.length === 0) {
+        return 0;
+    }
+
+    let count = 1;
+    for (let i = 0; i < content.length; i++) {
+        if (content.charCodeAt(i) === 10) {
+            count++;
+        }
+    }
+    return count;
+}
+
+/**
+ * Samples hashes of lines from the provided content. Both the first line and the last line of each stride-sized block
+ * are considered so single-line edits near block edges are still picked up.
+ */
+function sampleLineHashes(content: string, stride: number, totalLines: number): Map<number, number> {
+    const map = new Map<number, number>();
+    if (stride <= 0) {
+        return map;
+    }
+
+    if (content.length === 0) {
+        return map;
+    }
+
+    let lineIndex = 0;
+    let lineStart = 0;
+    for (let i = 0; i <= content.length; i++) {
+        const isLineEnd = i === content.length || content.charCodeAt(i) === 10;
+        if (!isLineEnd) {
+            continue;
+        }
+
+        const blockOffset = stride === 1 ? 0 : lineIndex % stride;
+        const isBlockStart = blockOffset === 0;
+        const isBlockEnd = stride > 1 && (blockOffset === stride - 1 || lineIndex === totalLines - 1);
+
+        if (isBlockStart || isBlockEnd) {
+            const end = i > lineStart && content.charCodeAt(i - 1) === 13 ? i - 1 : i;
+            const lineHash = hashLine(content.slice(lineStart, end));
+            map.set(lineHash, (map.get(lineHash) ?? 0) + 1);
+        }
+
+        lineIndex++;
+        lineStart = i + 1;
+    }
+
+    return map;
+}
+
+/**
+ * Computes a fast, non-cryptographic 32-bit FNV-1a hash for the provided line.
+ */
+function hashLine(line: string): number {
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < line.length; i++) {
+        hash ^= line.charCodeAt(i);
+        hash = (hash * 0x01000193) >>> 0;
+    }
+    return hash;
+}

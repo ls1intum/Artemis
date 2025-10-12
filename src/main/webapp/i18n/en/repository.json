@@ -18,7 +18,8 @@
                     "date": "Date",
                     "commit": "Commit",
                     "empty": "No changes",
-                    "fileUnchanged": "No changes in the file content"
+                    "fileUnchanged": "No changes in the file content",
+                    "fileTooLarge": "Changes are too large to display. Showing approximate summary."
                 }
             },
             "vcsAccessLog": {
