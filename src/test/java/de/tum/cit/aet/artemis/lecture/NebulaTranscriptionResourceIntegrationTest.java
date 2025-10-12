@@ -35,8 +35,9 @@ import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionInitResponseDTO;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class NebulaTranscriptionResourceIntegrationTest extends AbstractLectureTranscriptionIntegrationTest {
+class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "nebulatranscriptionresource";
 

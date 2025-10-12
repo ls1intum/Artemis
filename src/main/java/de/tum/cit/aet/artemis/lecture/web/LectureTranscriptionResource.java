@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
@@ -46,15 +45,12 @@ public class LectureTranscriptionResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
-    private final RestClient.Builder restClientBuilder;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository, RestClient.Builder restClientBuilder) {
+    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository) {
         this.lectureTranscriptionRepository = transcriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
-        this.restClientBuilder = restClientBuilder;
     }
 
     /**

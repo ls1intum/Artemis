@@ -19,8 +19,9 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.service.TranscriptionPollingScheduler;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class TranscriptionPollingSchedulerIntegrationTest extends AbstractLectureTranscriptionIntegrationTest {
+class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "transcriptionpollingschedulertest";
 

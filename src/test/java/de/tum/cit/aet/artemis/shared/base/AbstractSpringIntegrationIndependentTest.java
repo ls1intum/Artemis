@@ -33,12 +33,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
@@ -85,6 +87,16 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean
     protected ChatClient chatClient;
 
+    // Mock for lecture transcription tests to ensure same context
+    // Using MockitoBean (not SpyBean) because the service may not exist in minimal test context
+    @MockitoBean
+    protected LectureTranscriptionService lectureTranscriptionService;
+
+    // Mock RestTemplate for Nebula API calls
+    // Since Nebula is disabled, the real nebulaRestTemplate bean won't exist, so we mock it
+    @MockitoBean(name = "nebulaRestTemplate")
+    protected RestTemplate nebulaRestTemplate;
+
     @BeforeEach
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
@@ -101,6 +113,9 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         }
         if (chatClient != null) {
             Mockito.reset(chatClient);
+        }
+        if (lectureTranscriptionService != null) {
+            Mockito.reset(lectureTranscriptionService);
         }
         super.resetSpyBeans();
     }
