@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, model } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { getSemesters } from 'app/shared/util/semester-utils';
@@ -15,16 +15,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [TranslateDirective, FormsModule, NgbCollapse, ButtonComponent, FaIconComponent],
 })
 export class CompetencySearchComponent {
-    @Input() search: CourseCompetencyFilter;
-    @Output() searchChange = new EventEmitter<CourseCompetencyFilter>();
+    search = model.required<CourseCompetencyFilter>();
 
     advancedSearchEnabled = false;
 
-    //Icons
     protected readonly faChevronDown = faChevronDown;
     protected readonly faChevronUp = faChevronUp;
 
-    //Other constants for HTML
     protected readonly ButtonType = ButtonType;
     protected readonly semesters = getSemesters();
 
@@ -39,12 +36,19 @@ export class CompetencySearchComponent {
      * Resets all filters to default values
      */
     reset() {
-        this.search = {
+        this.search.set({
             title: '',
             description: '',
             courseTitle: '',
             semester: '',
-        };
+        });
+    }
+
+    /**
+     * Update a single field on the search model. Used by template event bindings.
+     */
+    updateSearchField(field: 'title' | 'description' | 'courseTitle' | 'semester', value: string) {
+        this.search.update((s) => ({ ...s, [field]: value }) as CourseCompetencyFilter);
     }
 
     /**
@@ -53,11 +57,11 @@ export class CompetencySearchComponent {
      */
     performSearch() {
         if (this.advancedSearchEnabled) {
-            this.searchChange.emit(this.search);
+            this.search.update((s) => ({ ...s }));
         } else {
             //only search with competency title if advancedSearch is disabled
-            this.searchChange.emit({
-                title: this.search.title,
+            this.search.set({
+                title: this.search().title,
                 description: '',
                 courseTitle: '',
                 semester: '',

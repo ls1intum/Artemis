@@ -43,12 +43,13 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v5
 
-    # Install Java 21
     - name: Setup Node.js
       uses: actions/setup-node@v5
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'
+
+    # Install Java
     - name: Setup Java
       uses: actions/setup-java@v5
       with:
