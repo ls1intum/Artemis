@@ -38,6 +38,18 @@ export class UpdateFaqDTO {
     ) {}
 
     public static toUpdateDto(faq: Faq): UpdateFaqDTO {
-        return new UpdateFaqDTO(faq.id!, faq.course?.id!, faq.faqState!, faq.questionTitle ?? '', faq.categories, faq.questionAnswer);
+        if (!faq?.id) {
+            throw new Error('The id should be present to update FAQ');
+        }
+        if (!faq?.faqState) {
+            throw new Error('The state should be present to update FAQ');
+        }
+
+        const courseId = faq?.course?.id;
+        if (!courseId) {
+            throw new Error('The course should be present to update FAQ');
+        }
+
+        return new UpdateFaqDTO(faq.id, courseId, faq.faqState, (faq.questionTitle ?? '').trim(), faq.categories, faq.questionAnswer);
     }
 }
