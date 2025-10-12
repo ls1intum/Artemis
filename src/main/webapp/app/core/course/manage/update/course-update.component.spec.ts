@@ -403,6 +403,46 @@ describe('Course Management Update Component', () => {
             comp.changeEnrollmentEnabled();
             expect(enabelunrollSpy).toHaveBeenCalledOnce();
         });
+
+        it('should set enrollment start and end date to undefined when enrollment is disabled', () => {
+            comp.course = new Course();
+            comp.course.enrollmentEnabled = true;
+            comp.course.enrollmentStartDate = dayjs();
+            comp.course.enrollmentEndDate = dayjs().add(1, 'day');
+            comp.courseForm = new FormGroup({
+                enrollmentEnabled: new FormControl(true),
+                enrollmentStartDate: new FormControl(comp.course.enrollmentStartDate),
+                enrollmentEndDate: new FormControl(comp.course.enrollmentEndDate),
+            });
+            comp.changeEnrollmentEnabled();
+            expect(comp.courseForm.controls['enrollmentStartDate'].value).toBeUndefined();
+            expect(comp.courseForm.controls['enrollmentEndDate'].value).toBeUndefined();
+            expect(comp.course.enrollmentStartDate).toBeUndefined();
+            expect(comp.course.enrollmentEndDate).toBeUndefined();
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeFalse();
+        });
+
+        it('should set undefined enrollment start and end date to course start and end date when enrollment is enabled', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs();
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = undefined;
+            comp.course.enrollmentEndDate = undefined;
+            comp.course.enrollmentEnabled = false;
+            const expectedEnrollmentEndDate = comp.course.endDate.subtract(1, 'minute');
+            comp.courseForm = new FormGroup({
+                onlineCourse: new FormControl(false),
+                enrollmentEnabled: new FormControl(false),
+                enrollmentStartDate: new FormControl(),
+                enrollmentEndDate: new FormControl(),
+            });
+            comp.changeEnrollmentEnabled();
+            expect(comp.course.enrollmentStartDate).toBe(comp.course.startDate);
+            expect(comp.course.enrollmentEndDate).toStrictEqual(expectedEnrollmentEndDate);
+            expect(comp.courseForm.controls['enrollmentStartDate'].value).toBe(comp.course.startDate);
+            expect(comp.courseForm.controls['enrollmentEndDate'].value).toStrictEqual(expectedEnrollmentEndDate);
+            expect(comp.courseForm.controls['enrollmentEnabled'].value).toBeTrue();
+        });
     });
 
     describe('updateCourseInformationSharingMessagingCodeOfConduct', () => {
@@ -482,6 +522,19 @@ describe('Course Management Update Component', () => {
             comp.changeUnenrollmentEnabled();
             expect(comp.courseForm.controls['unenrollmentEnabled'].value).toBeTruthy();
             expect(comp.course.unenrollmentEndDate).toBe(comp.course.endDate);
+        });
+        it('should toggle unenrollment disabled', () => {
+            comp.course = new Course();
+            comp.course.endDate = dayjs();
+            comp.course.unenrollmentEnabled = true;
+            comp.course.unenrollmentEndDate = comp.course.endDate;
+            comp.courseForm = new FormGroup({
+                unenrollmentEnabled: new FormControl(true),
+                unenrollmentEndDate: new FormControl(comp.course.endDate),
+            });
+            comp.changeUnenrollmentEnabled();
+            expect(comp.courseForm.controls['unenrollmentEnabled'].value).toBeFalsy();
+            expect(comp.course.unenrollmentEndDate).toBeUndefined();
         });
     });
 
@@ -606,13 +659,13 @@ describe('Course Management Update Component', () => {
             expect(comp.isValidEnrollmentPeriod).toBeFalse();
         });
 
-        it('should handle invalid enrollment start date after course start date', () => {
+        it('should handle valid enrollment start date after course start date', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(2, 'day');
             comp.course.endDate = dayjs().add(1, 'day');
             comp.course.enrollmentStartDate = dayjs().subtract(1, 'day');
             comp.course.enrollmentEndDate = dayjs();
-            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+            expect(comp.isValidEnrollmentPeriod).toBeTrue();
         });
 
         it('should handle invalid enrollment end date after course end date', () => {

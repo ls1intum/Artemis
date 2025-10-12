@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
 import { CompetencySearchComponent } from 'app/atlas/manage/import/competency-search.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
@@ -22,12 +21,12 @@ describe('CompetencySearchComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(CompetencySearchComponent);
                 component = componentFixture.componentInstance;
-                component.search = {
+                component.search.set({
                     title: '',
                     semester: '',
                     courseTitle: '',
                     description: '',
-                };
+                });
             });
     });
 
@@ -46,30 +45,28 @@ describe('CompetencySearchComponent', () => {
 
         componentFixture.debugElement.nativeElement.querySelector('#resetFilterButton > .jhi-btn').click();
 
-        for (const key in component.search) {
-            expect(component.search[key as keyof CourseCompetencyFilter]).toBe('');
-        }
+        const current = component.search();
+        expect(current.title).toBe('');
+        expect(current.description).toBe('');
+        expect(current.courseTitle).toBe('');
+        expect(current.semester).toBe('');
     });
 
     it('should submit with only title', () => {
         componentFixture.detectChanges();
-        const searchChangeEmitSpy = jest.spyOn(component.searchChange, 'emit');
-
         initializeSearch();
 
         componentFixture.debugElement.nativeElement.querySelector('#submitFilterButton > .jhi-btn').click();
-        expect(searchChangeEmitSpy).toHaveBeenCalledWith({ title: 'any value', description: '', courseTitle: '', semester: '' });
+        expect(component.search()).toEqual({ title: 'any value', description: '', courseTitle: '', semester: '' });
     });
 
     it('should submit with advanced search', () => {
         componentFixture.detectChanges();
-        const searchChangeEmitSpy = jest.spyOn(component.searchChange, 'emit');
-
         initializeSearch();
         component.advancedSearchEnabled = true;
 
         componentFixture.debugElement.nativeElement.querySelector('#submitFilterButton > .jhi-btn').click();
-        expect(searchChangeEmitSpy).toHaveBeenCalledWith({ title: 'any value', description: 'any value', courseTitle: 'any value', semester: 'any value' });
+        expect(component.search()).toEqual({ title: 'any value', description: 'any value', courseTitle: 'any value', semester: 'any value' });
     });
 
     it('should toggle advanced search', () => {
@@ -84,8 +81,6 @@ describe('CompetencySearchComponent', () => {
     });
 
     function initializeSearch(): void {
-        for (const key in component.search) {
-            component.search[key as keyof CourseCompetencyFilter] = 'any value';
-        }
+        component.search.set({ title: 'any value', description: 'any value', courseTitle: 'any value', semester: 'any value' });
     }
 });

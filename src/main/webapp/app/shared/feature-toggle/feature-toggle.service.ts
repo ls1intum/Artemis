@@ -20,6 +20,7 @@ export enum FeatureToggle {
     StudentCourseAnalyticsDashboard = 'StudentCourseAnalyticsDashboard',
     TutorSuggestions = 'TutorSuggestions',
     AtlasML = 'AtlasML',
+    AtlasAgent = 'AtlasAgent',
     Memiris = 'Memiris',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;

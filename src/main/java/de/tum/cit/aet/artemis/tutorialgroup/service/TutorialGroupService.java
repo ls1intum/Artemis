@@ -335,16 +335,6 @@ public class TutorialGroupService {
     }
 
     /**
-     * Find all tutorial groups for which the given user should be able to receive notifications.
-     *
-     * @param user The user for which to find the tutorial groups.
-     * @return A list of tutorial groups for which the user should receive notifications.
-     */
-    public Set<Long> findAllForNotifications(User user) {
-        return tutorialGroupRepository.findAllActiveTutorialGroupIdsWhereUserIsRegisteredOrTutor(ZonedDateTime.now(), user.getId());
-    }
-
-    /**
      * Import registrations
      * <p>
      * Important to note: A registration must contain a title of the tutorial group, but it must not contain a student.
@@ -820,7 +810,7 @@ public class TutorialGroupService {
      * This method retrieves tutorial groups for the specified course ID and maps each one
      * to a {@link TutorialGroupExportDTO}. Only the fields explicitly listed in {@code selectedFields}
      * are populated; all others remain {@code null}. Field names must match exactly with those
-     * defined in the corresponding frontend component (e.g., {@code tutorial-groups-export-button.component.ts}).
+     * defined in the corresponding client component (e.g., {@code tutorial-groups-export-button.component.ts}).
      * <p>
      * If the "Students" field is selected, the list of registered students is included using
      * {@link StudentExportDTO}.

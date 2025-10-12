@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, forwardRef, inject, input, output } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faLightbulb, faQuestionCircle, faStar } from '@fortawesome/free-solid-svg-icons';
 import { HttpClient } from '@angular/common/http';
@@ -57,11 +57,11 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     private profileService = inject(ProfileService);
     private http = inject(HttpClient);
 
-    @Input() labelName: string;
-    @Input() labelTooltip: string;
-    @Input() exerciseDescription?: string;
+    labelName = input<string>('');
+    labelTooltip = input<string>('');
+    exerciseDescription = input<string | undefined>(undefined);
 
-    @Output() valueChange = new EventEmitter();
+    valueChange = output<CompetencyLearningObjectLink[] | undefined>();
 
     disabled: boolean;
     // selected competencies
