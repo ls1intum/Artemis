@@ -88,7 +88,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: sampleCompetencies });
 
         // Setup exercise description for suggestions
-        component.exerciseDescription = 'Create a Java program that implements a binary search tree with insertion and deletion operations';
+        fixture.componentRef.setInput('exerciseDescription', 'Create a Java program that implements a binary search tree with insertion and deletion operations');
         fixture.detectChanges();
     });
 
@@ -120,7 +120,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         });
 
         it('should disable lightbulb button when exercise description is empty', () => {
-            component.exerciseDescription = '';
+            fixture.componentRef.setInput('exerciseDescription', '');
             fixture.detectChanges();
 
             const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
@@ -129,7 +129,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         });
 
         it('should disable lightbulb button when exercise description contains only whitespace', () => {
-            component.exerciseDescription = '   \n\t  ';
+            fixture.componentRef.setInput('exerciseDescription', '   \n\t  ');
             fixture.detectChanges();
 
             const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
@@ -337,7 +337,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
         exerciseScenarios.forEach((scenario) => {
             it(`should work correctly for ${scenario.type} exercises`, fakeAsync(() => {
-                component.exerciseDescription = scenario.description;
+                fixture.componentRef.setInput('exerciseDescription', scenario.description);
 
                 const mockResponse = {
                     competencies: scenario.expectedSuggestions.map((id) => ({ id, title: sampleCompetencies[id - 1].title })),
@@ -402,18 +402,18 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         it('should not make API call if description is null or undefined', () => {
             const httpPostSpy = jest.spyOn(httpClient, 'post');
 
-            component.exerciseDescription = null as any;
+            fixture.componentRef.setInput('exerciseDescription', null as any);
             component.suggestCompetencies();
             expect(httpPostSpy).not.toHaveBeenCalled();
 
-            component.exerciseDescription = undefined;
+            fixture.componentRef.setInput('exerciseDescription', undefined);
             component.suggestCompetencies();
             expect(httpPostSpy).not.toHaveBeenCalled();
         });
 
         it('should handle very long exercise descriptions', () => {
             const longDescription = 'A'.repeat(10000); // 10k character description
-            component.exerciseDescription = longDescription;
+            fixture.componentRef.setInput('exerciseDescription', longDescription);
 
             const mockResponse = { competencies: [{ id: 1, title: 'Test' }] };
             const httpPostSpy = jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
