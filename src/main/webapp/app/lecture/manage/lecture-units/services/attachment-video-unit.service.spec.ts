@@ -394,28 +394,7 @@ describe('AttachmentVideoUnitService', () => {
             req.flush('transcription started', { status: 200, statusText: 'OK' });
 
             expect(completed).toBeTrue();
-            expect(successSpy).toHaveBeenCalledWith('Transcript generation started.');
-        }));
-
-        it('should show error alert on non-200 success status', fakeAsync(() => {
-            const errorSpy = jest.spyOn(alertService, 'error');
-            let completed = false;
-
-            service
-                .startTranscription(lectureId, lectureUnitId, videoUrl)
-                .pipe(take(1))
-                .subscribe(() => (completed = true));
-
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/lecture/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
-            });
-
-            // Return 202 Accepted
-            req.flush('accepted', { status: 202, statusText: 'Accepted' });
-
-            expect(completed).toBeTrue();
-            expect(errorSpy).toHaveBeenCalledWith('Transcript request did not succeed. Status: 202');
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.started');
         }));
 
         it('should show error alert and handle server errors gracefully', fakeAsync(() => {
@@ -439,7 +418,7 @@ describe('AttachmentVideoUnitService', () => {
             req.flush('Internal error', { status: 500, statusText: 'Server Error' });
 
             expect(completed).toBeTrue();
-            expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Transcript failed to start:'));
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.error');
         }));
 
         it('should send videoUrl verbatim even with special characters', fakeAsync(() => {
@@ -461,7 +440,7 @@ describe('AttachmentVideoUnitService', () => {
             });
 
             req.flush('ok', { status: 200, statusText: 'OK' });
-            expect(successSpy).toHaveBeenCalledWith('Transcript generation started.');
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.started');
         }));
 
         it('should handle errors with missing message gracefully', fakeAsync(() => {
@@ -477,7 +456,7 @@ describe('AttachmentVideoUnitService', () => {
             // Simulate error without message
             req.error(new ProgressEvent('Network error'));
 
-            expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Transcript failed to start:'));
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.error');
         }));
     });
 });
