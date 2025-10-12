@@ -6,7 +6,7 @@
                     @for (competency of competencies; track identify(i, competency); let i = $index) {
                         <jhi-competency-card
                             [competency]="competency"
-                            [courseId]="courseId"
+                            [courseId]="resolvedCourseId()"
                             [hideProgress]="
                                 judgementOfLearningEnabled &&
                                 competency.id !== undefined &&
