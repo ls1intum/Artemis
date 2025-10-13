@@ -505,11 +505,6 @@ function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[
     return diffInformation;
 }
 
-export const __diffUtilsTesting = {
-    calculateStringSimilarity,
-    jaccardNGramSimilarity,
-};
-
 /**
  * Estimates line additions/deletions for very large files by sampling a subset of the lines.
  * The approach hashes the start and end of each stride-sized block to keep memory usage constant while still detecting
@@ -614,3 +609,13 @@ function hashLine(line: string): number {
     }
     return hash;
 }
+
+export const __diffUtilsTesting = {
+    calculateStringSimilarity,
+    jaccardNGramSimilarity,
+    estimateLineChangeUsingSampling,
+    countLines,
+    sampleLineHashes,
+    hashLine,
+    MAX_BYTES_FOR_DIFF,
+};

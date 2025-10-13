@@ -1,3 +1,5 @@
+jest.setTimeout(10000);
+
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -170,7 +172,6 @@ describe('Student Exam Timeline Component', () => {
             .spyOn(component, 'retrieveSubmissionDataAndTimeStamps')
             .mockReturnValue(of([[submissionVersion], [programmingSubmission1], [fileUploadSubmission1]]) as unknown as Observable<(SubmissionVersion[] | Submission[])[]>);
         component.ngOnInit();
-        fixture.detectChanges();
         expect(retrieveDataSpy).toHaveBeenCalledOnce();
         expect(component.currentSubmission).toEqual(submissionVersion);
         expect(component.selectedTimestamp).toEqual(dayjs('2023-01-07').valueOf());

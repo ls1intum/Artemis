@@ -21,12 +21,19 @@ class MockResizeObserver {
     disconnect() {}
 }
 
+class MockIntersectionObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+}
+
 describe('ProgrammingExerciseGitDiffReport Component', () => {
     let comp: GitDiffReportComponent;
     let fixture: ComponentFixture<GitDiffReportComponent>;
 
     beforeAll(() => {
         global.ResizeObserver = MockResizeObserver;
+        global.IntersectionObserver = MockIntersectionObserver as any;
     });
 
     const mockDiffInformation = {
@@ -289,5 +296,160 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         expect(comp.diffForTemplateAndEmptyRepository()).toBeTrue();
         expect(comp.isRepositoryView()).toBeTrue();
         expect(comp.participationId()).toBe(123);
+    });
+
+    it('should return user override value when panel has been manually toggled', () => {
+        fixture.detectChanges();
+
+        const title = mockDiffInformation.diffInformations[0].title;
+
+        // User manually collapses the panel
+        comp['userCollapsed'].set(title, true);
+
+        expect(comp.isCollapsed(mockDiffInformation.diffInformations[0])).toBeTrue();
+
+        // User manually expands the panel
+        comp['userCollapsed'].set(title, false);
+
+        expect(comp.isCollapsed(mockDiffInformation.diffInformations[0])).toBeFalse();
+    });
+
+    it('should track user collapse/expand actions', () => {
+        fixture.detectChanges();
+
+        const title = mockDiffInformation.diffInformations[0].title;
+        const markContentSpy = jest.spyOn(comp as any, 'markContentAsLoaded');
+
+        // User expands a collapsed panel
+        comp.onToggleClick(title, true);
+
+        expect(comp['userCollapsed'].get(title)).toBeFalse();
+        expect(markContentSpy).toHaveBeenCalledWith(title);
+
+        markContentSpy.mockClear();
+
+        // User collapses an expanded panel
+        comp.onToggleClick(title, false);
+
+        expect(comp['userCollapsed'].get(title)).toBeTrue();
+        expect(markContentSpy).not.toHaveBeenCalled();
+    });
+
+    it('should set initialDiffsReady when all loaded diffs become ready', () => {
+        // Create new diff information with all diffs not ready
+        const freshDiffInformation = {
+            diffInformations: [
+                {
+                    originalFileContent: 'testing line differences',
+                    modifiedFileContent: 'testing line diff\nnew line',
+                    originalPath: 'Example.java',
+                    modifiedPath: 'Example.java',
+                    diffReady: false,
+                    fileStatus: 'unchanged',
+                    lineChange: {
+                        addedLineCount: 2,
+                        removedLineCount: 1,
+                    },
+                    title: 'Example.java',
+                },
+            ],
+            totalLineChange: {
+                addedLineCount: 2,
+                removedLineCount: 1,
+            },
+        } as unknown as RepositoryDiffInformation;
+
+        fixture.componentRef.setInput('repositoryDiffInformation', freshDiffInformation);
+        fixture.detectChanges();
+
+        expect(comp.initialDiffsReady()).toBeFalse();
+
+        // Mark the diff as ready
+        comp.onDiffReady('Example.java', true);
+
+        expect(comp.initialDiffsReady()).toBeTrue();
+        expect(comp.allDiffsReady()).toBeTrue();
+    });
+
+    it('should mark content as loaded and update allDiffsReady', () => {
+        const moreDiffInformation = {
+            diffInformations: [
+                ...mockDiffInformation.diffInformations,
+                {
+                    originalFileContent: 'fourth file',
+                    modifiedFileContent: 'fourth file modified',
+                    originalPath: 'Fourth.java',
+                    modifiedPath: 'Fourth.java',
+                    diffReady: false,
+                    fileStatus: 'unchanged',
+                    lineChange: {
+                        addedLineCount: 1,
+                        removedLineCount: 0,
+                    },
+                    title: 'Fourth.java',
+                },
+                {
+                    originalFileContent: 'fifth file',
+                    modifiedFileContent: 'fifth file modified',
+                    originalPath: 'Fifth.java',
+                    modifiedPath: 'Fifth.java',
+                    diffReady: false,
+                    fileStatus: 'unchanged',
+                    lineChange: {
+                        addedLineCount: 1,
+                        removedLineCount: 0,
+                    },
+                    title: 'Fifth.java',
+                },
+                {
+                    originalFileContent: 'sixth file',
+                    modifiedFileContent: 'sixth file modified',
+                    originalPath: 'Sixth.java',
+                    modifiedPath: 'Sixth.java',
+                    diffReady: false,
+                    fileStatus: 'unchanged',
+                    lineChange: {
+                        addedLineCount: 1,
+                        removedLineCount: 0,
+                    },
+                    title: 'Sixth.java',
+                },
+            ],
+            totalLineChange: {
+                addedLineCount: 11,
+                removedLineCount: 1,
+            },
+        } as unknown as RepositoryDiffInformation;
+
+        fixture.componentRef.setInput('repositoryDiffInformation', moreDiffInformation);
+        fixture.detectChanges();
+
+        const sixthFile = 'Sixth.java';
+
+        // Initially not loaded (sixth file is at index 5, beyond the initial load count of 5 which loads indices 0-4)
+        expect(comp.shouldLoadContent(sixthFile)).toBeFalse();
+
+        comp['markContentAsLoaded'](sixthFile);
+
+        expect(comp.shouldLoadContent(sixthFile)).toBeTrue();
+    });
+
+    it('should not mark content as loaded twice', () => {
+        fixture.detectChanges();
+
+        const title = mockDiffInformation.diffInformations[0].title;
+        const updateSpy = jest.spyOn(comp as any, 'updateAllDiffsReady');
+
+        // Reset spy to start fresh
+        updateSpy.mockClear();
+
+        // First call should trigger update
+        comp['markContentAsLoaded'](title);
+        const firstCallCount = updateSpy.mock.calls.length;
+
+        // Second call with same title should return early (no additional calls)
+        comp['markContentAsLoaded'](title);
+
+        expect(updateSpy).toHaveBeenCalledTimes(firstCallCount); // No additional calls
     });
 });

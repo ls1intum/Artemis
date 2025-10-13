@@ -53,9 +53,16 @@ describe('DiffUtils', () => {
         };
 
         (monaco.editor.createModel as jest.Mock).mockImplementation((content: string) => {
-            if (content === 'original') return mockOriginalModel;
-            if (content === 'modified') return mockModifiedModel;
-            return content.includes('original') ? mockOriginalModel : mockModifiedModel;
+            if (content === 'original') {
+                return mockOriginalModel;
+            }
+            if (content === 'modified') {
+                return mockModifiedModel;
+            }
+
+            // For generated test content fall back to assigning models based on alternating calls.
+            const callIndex = (monaco.editor.createModel as jest.Mock).mock.calls.length;
+            return callIndex % 2 === 0 ? mockOriginalModel : mockModifiedModel;
         });
 
         (monaco.editor.createDiffEditor as jest.Mock).mockReturnValue(mockDiffEditor);
@@ -241,6 +248,23 @@ describe('DiffUtils', () => {
             expect(mockDiffEditor.setModel).not.toHaveBeenCalled();
         });
 
+        it('should fall back to sampling for files exceeding the Monaco threshold', async () => {
+            const { MAX_BYTES_FOR_DIFF } = __diffUtilsTesting;
+            const largeOriginal = 'a'.repeat(MAX_BYTES_FOR_DIFF + 5);
+            const largeModified = 'b'.repeat(MAX_BYTES_FOR_DIFF + 10);
+
+            setupMonacoMocks();
+
+            const result = await processRepositoryDiff(new Map([['big-file.txt', largeOriginal]]), new Map([['big-file.txt', largeModified]]));
+
+            expect(monaco.editor.createDiffEditor).not.toHaveBeenCalled();
+            expect(result.totalLineChange.fileTooLarge).toBeTrue();
+            expect(result.totalLineChange.addedLineCount).toBeGreaterThan(0);
+            expect(result.totalLineChange.removedLineCount).toBeGreaterThan(0);
+            expect(result.diffInformations).toHaveLength(1);
+            expect(result.diffInformations[0].lineChange).toMatchObject({ fileTooLarge: true });
+        });
+
         it('should ignore timeout completion after diff results are processed', async () => {
             jest.useFakeTimers();
 
@@ -384,6 +408,59 @@ describe('DiffUtils', () => {
 
             expect(calculateStringSimilarity('', 'non-empty')).toBe(0);
             expect(jaccardNGramSimilarity('abc', 'abd', 5)).toBeCloseTo(2 / 3, 5);
+
+            // Test swap logic in levenshteinRatioTwoRow by passing longer string first
+            const similarity = calculateStringSimilarity('longer string here', 'short');
+            expect(similarity).toBeGreaterThan(0);
+            expect(similarity).toBeLessThan(1);
+        });
+
+        it('should handle equal paths in sorting', async () => {
+            // This tests the sort comparator returning 0 (line 112)
+            const originalFiles = new Map([
+                ['same.txt', 'content'],
+                ['same.txt', 'different content'], // Duplicate key overwrites in Map, but tests the edge case
+            ]);
+            const modifiedFiles = new Map([['same.txt', 'modified']]);
+
+            setupMonacoMocks([]);
+            const result = await processRepositoryDiff(originalFiles, modifiedFiles);
+
+            // Should still work correctly even with duplicate paths
+            expect(result.diffInformations).toHaveLength(1);
+        });
+    });
+
+    describe('sampling helpers', () => {
+        const { estimateLineChangeUsingSampling, countLines, sampleLineHashes, hashLine } = __diffUtilsTesting;
+
+        it('should mark results from sampling as approximate', () => {
+            const original = ['alpha', 'beta', 'gamma'].join('\n');
+            const modified = ['alpha', 'beta', 'delta'].join('\n');
+
+            const result = estimateLineChangeUsingSampling(original, modified);
+
+            expect(result.fileTooLarge).toBeTrue();
+            expect(result.addedLineCount).toBe(1);
+            expect(result.removedLineCount).toBe(1);
+        });
+
+        it('should count lines for mixed newline styles', () => {
+            expect(countLines('one\r\ntwo\nthree')).toBe(3);
+            expect(countLines('')).toBe(0);
+        });
+
+        it('should sample both block boundaries for strides larger than one', () => {
+            const content = ['l1', 'l2', 'l3', 'l4'].join('\n');
+            const map = sampleLineHashes(content, 2, 4);
+
+            const totalSamples = Array.from(map.values()).reduce((sum, value) => sum + value, 0);
+            expect(totalSamples).toBe(4);
+        });
+
+        it('should generate stable hashes for identical lines', () => {
+            expect(hashLine('same line')).toBe(hashLine('same line'));
+            expect(hashLine('same line')).not.toBe(hashLine('different line'));
         });
     });
 });

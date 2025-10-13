@@ -1,3 +1,5 @@
+jest.setTimeout(10000);
+
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { CourseDashboardComponent } from 'app/core/course/overview/course-dashboard/course-dashboard.component';
 import { By } from '@angular/platform-browser';

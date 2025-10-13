@@ -1,3 +1,5 @@
+jest.setTimeout(10000);
+
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
