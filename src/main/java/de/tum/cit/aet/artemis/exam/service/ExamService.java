@@ -900,7 +900,19 @@ public class ExamService {
             if (latestSubmission != null) {
                 relevantResult = latestSubmission.getLatestCompletedResult();
             }
-            double resultScore = (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
+
+            // derive achieved percentage safely, even when Result.score is null or 0 (e.g. in test runs)
+            double resultScore = 0.0;
+            if (relevantResult != null && relevantResult.getScore() != null && relevantResult.getScore() > 0.0) {
+                resultScore = relevantResult.getScore();
+            }
+            else if (exercise.getMaxPoints() > 0.0 && achievedPoints > 0.0) {
+                resultScore = (achievedPoints / exercise.getMaxPoints()) * 100.0;
+            }
+
+            exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
+                    new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
+
             exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                     new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
         }
