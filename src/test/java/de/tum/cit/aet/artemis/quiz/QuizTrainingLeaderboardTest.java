@@ -123,7 +123,6 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         Course course = courseUtilService.createCourse();
         userTestRepository.save(user);
         courseTestRepository.save(course);
-        LeaderboardSettingDTO settingDTO = new LeaderboardSettingDTO(true);
         request.get("/api/quiz/courses/" + course.getId() + "/training/leaderboard", OK, LeaderboardWithCurrentUserEntryDTO.class);
         QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
         assertThat(leaderboardEntry.getScore()).isEqualTo(0);
