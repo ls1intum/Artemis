@@ -235,7 +235,7 @@ describe('Faq Service', () => {
             expect(filteredFaq).toIncludeAllMembers([faq1, faq11]);
         });
 
-        it('should convert String into FAQ categories correctly', async () => {
+        it('should convert stringified categories from server into FaqCategory objects', () => {
             const convertedCategory = service.convertFaqCategoriesAsStringFromServer(['{"category":"category1", "color":"red"}']);
             expect(convertedCategory[0].category).toBe('category1');
             expect(convertedCategory[0].color).toBe('red');
@@ -286,8 +286,11 @@ describe('Faq Service', () => {
 
     it('should stringify categories without mutating the original updateFaqDTO', () => {
         const original = updateFaqDTODefault;
+        const originalRef = original.categories;
+
         const copy = FaqService.convertUpdateFaqFromClient(original);
 
+        expect(original.categories).toBe(originalRef);
         expect(typeof (copy.categories?.[0] as unknown as string)).toBe('string');
         expect(JSON.parse(copy.categories?.[0] as unknown as string)).toEqual({ category: 'category1', color: '#6ae8ac' });
         expect((original.categories?.[0] as any).category).toBe('category1');
