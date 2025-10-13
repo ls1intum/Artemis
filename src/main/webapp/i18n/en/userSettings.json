@@ -144,7 +144,8 @@
                 "VCS_TOKEN_SETTINGS": "VCS Token Settings",
                 "PASSKEYS": "Passkey Settings",
                 "IDE_PREFERENCES": "IDE Preferences",
-                "GLOBAL_NOTIFICATIONS": "Notifications"
+                "GLOBAL_NOTIFICATIONS": "Notifications",
+                "QUIZ_TRAINING_SETTINGS": "Quiz Training Settings"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",
