@@ -11,6 +11,8 @@ jobs:
       - name: Check for stale PRs
         uses: actions/stale@v10
         with:
+          operations-per-run: 300
+          ascending: true
           days-before-stale: 7
           days-before-close: 14
           remove-stale-when-updated: true
