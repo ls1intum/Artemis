@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import jakarta.validation.Valid;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
+import de.tum.cit.aet.artemis.quiz.repository.QuizTrainingLeaderboardRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
@@ -63,14 +65,18 @@ public class QuizTrainingResource {
 
     private final QuizTrainingService quizTrainingService;
 
+    private final QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository;
+
     public QuizTrainingResource(QuizTrainingLeaderboardService quizTrainingLeaderboardService, UserRepository userRepository, CourseRepository courseRepository,
-            AuthorizationCheckService authCheckService, QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService) {
+            AuthorizationCheckService authCheckService, QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService,
+            QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository) {
         this.quizTrainingLeaderboardService = quizTrainingLeaderboardService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.quizQuestionProgressService = quizQuestionProgressService;
         this.quizTrainingService = quizTrainingService;
+        this.quizTrainingLeaderboardRepository = quizTrainingLeaderboardRepository;
     }
 
     /**
@@ -157,7 +163,7 @@ public class QuizTrainingResource {
         log.debug("Rest request to set leaderboard settings: {}", leaderboardSettingDTO);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Boolean shownInLeaderboard = leaderboardSettingDTO.shownInLeaderboard();
+        Boolean shownInLeaderboard = leaderboardSettingDTO.showInLeaderboard();
         if (shownInLeaderboard != null) {
             quizTrainingLeaderboardService.updateShownInLeaderboard(user.getId(), shownInLeaderboard);
         }
@@ -182,8 +188,19 @@ public class QuizTrainingResource {
         log.debug("REST request to initialize or update leaderboard entry: {}", leaderboardEntryDTO);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        boolean shownInLeaderboard = leaderboardEntryDTO.shownInLeaderboard() != null ? leaderboardEntryDTO.shownInLeaderboard() : false;
+        boolean shownInLeaderboard = leaderboardEntryDTO.showInLeaderboard() != null ? leaderboardEntryDTO.showInLeaderboard() : false;
         quizTrainingLeaderboardService.setInitialLeaderboardEntry(user.getId(), courseId, shownInLeaderboard);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("leaderboard-settings")
+    @EnforceAtLeastStudent
+    public ResponseEntity<LeaderboardSettingDTO> getLeaderboardSettings() {
+        log.debug("REST request to get leaderboard settings");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Optional<Boolean> showInLeaderboardOptional = quizTrainingLeaderboardRepository.getShowInLeaderboard(user.getId());
+        Boolean showInLeaderboard = showInLeaderboardOptional.orElse(null);
+        LeaderboardSettingDTO leaderboardSettingDTO = new LeaderboardSettingDTO(showInLeaderboard);
+        return ResponseEntity.ok().body(leaderboardSettingDTO);
     }
 }
