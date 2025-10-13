@@ -165,7 +165,7 @@ describe('CourseTrainingComponent', () => {
 
     it('should handle due date less than 60 seconds in future', () => {
         component.currentTime.set(new Date(Date.now()).toISOString());
-        const almostDueDate = dayjs('2023-06-15T12:00:00').add(30, 'second').toISOString();
+        const almostDueDate = dayjs(component.currentTime()).add(30, 'second').toISOString();
 
         component.currentUserEntry.set({
             ...mockLeaderboardEntry,
@@ -200,7 +200,7 @@ describe('CourseTrainingComponent', () => {
     it('should handle error when saving leaderboard settings', () => {
         jest.spyOn(leaderboardService, 'initializeLeaderboardEntry').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
-        component.isLoading.set(false);
+        component.isLoading.set(true);
         component.onSaveDialog();
 
         expect(component.isLoading()).toBeFalse();
