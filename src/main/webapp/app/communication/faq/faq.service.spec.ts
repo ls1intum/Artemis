@@ -270,4 +270,32 @@ describe('Faq Service', () => {
         service.enable(1).subscribe((resp) => expect(resp).toEqual(of(EMPTY)));
         httpMock.expectOne({ method: 'PUT', url: `api/communication/courses/1/faqs/enable` });
     });
+
+    it('should stringify categories without mutating the original createFaqDTO', () => {
+        const original = createFaqDTODefault;
+        const originalRef = original.categories;
+
+        const copy = FaqService.convertCreateFaqFromClient(original);
+
+        expect(original.categories).toBe(originalRef);
+        expect((original.categories?.[0] as any).category).toBe('category1');
+        expect(typeof (copy.categories?.[0] as unknown as string)).toBe('string');
+        const parsed = JSON.parse(copy.categories?.[0] as unknown as string);
+        expect(parsed).toEqual({ category: 'category1', color: '#6ae8ac' });
+    });
+
+    it('should stringify categories without mutating the original updateFaqDTO', () => {
+        const original = updateFaqDTODefault;
+        const copy = FaqService.convertUpdateFaqFromClient(original);
+
+        expect(typeof (copy.categories?.[0] as unknown as string)).toBe('string');
+        expect(JSON.parse(copy.categories?.[0] as unknown as string)).toEqual({ category: 'category1', color: '#6ae8ac' });
+        expect((original.categories?.[0] as any).category).toBe('category1');
+    });
+
+    it('should return undefined when DTO has no categories', () => {
+        const noCats = new CreateFaqDTO(createFaqDTODefault.faqState, createFaqDTODefault.questionTitle, courseId, undefined, createFaqDTODefault.questionAnswer);
+        const res = FaqService.stringifyFaqCategories(noCats);
+        expect(res).toBeUndefined();
+    });
 });

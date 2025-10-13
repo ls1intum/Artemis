@@ -31,7 +31,7 @@ export class CreateFaqDTO {
             throw new Error('The state should be present to create FAQ');
         }
 
-        return new CreateFaqDTO(faq.faqState, (faq.questionTitle ?? '').trim(), faq.course?.id, faq.categories, faq.questionAnswer);
+        return new CreateFaqDTO(faq.faqState, faq.questionTitle ?? '', faq.course?.id, faq.categories, faq.questionAnswer);
     }
 }
 
@@ -53,6 +53,6 @@ export class UpdateFaqDTO {
             throw new Error('The state should be present to update FAQ');
         }
 
-        return new UpdateFaqDTO(faq.id, faq.faqState, (faq.questionTitle ?? '').trim(), faq.course?.id, faq.categories, faq.questionAnswer);
+        return new UpdateFaqDTO(faq.id, faq.faqState, faq.questionTitle ?? '', faq.course?.id, faq.categories, faq.questionAnswer);
     }
 }
