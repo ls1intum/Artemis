@@ -152,7 +152,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
             String sessionTitle = statusUpdate.sessionTitle().length() > 255 ? statusUpdate.sessionTitle().substring(0, 255) : statusUpdate.sessionTitle();
             session.setTitle(sessionTitle);
             irisSessionRepository.save(session);
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), sessionTitle, null, statusUpdate.tokens());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), sessionTitle, null, null);
         }
         if (statusUpdate.result() != null) {
             var message = session.newMessage();

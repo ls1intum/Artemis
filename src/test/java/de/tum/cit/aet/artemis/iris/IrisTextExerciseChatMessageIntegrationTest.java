@@ -349,6 +349,6 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/text-exercise-chat/runs/" + jobId + "/status",
-                new PyrisTextExerciseChatStatusUpdateDTO(result, stages, sessionTitle, null, null, null), HttpStatus.OK, headers);
+                new PyrisTextExerciseChatStatusUpdateDTO(result, stages, sessionTitle), HttpStatus.OK, headers);
     }
 }
