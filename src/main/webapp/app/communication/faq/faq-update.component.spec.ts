@@ -22,7 +22,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FaqConsistencyComponent } from './faq-consistency.component';
-import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from '../../shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
