@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
-import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserIdDTO;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserEntryDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizTrainingLeaderboardRepository;
@@ -59,7 +59,7 @@ public class QuizTrainingLeaderboardService {
      * @param courseId the id of the course
      * @return a list of leaderboard entry DTOs
      */
-    public LeaderboardWithCurrentUserIdDTO getLeaderboard(long userId, long courseId) {
+    public LeaderboardWithCurrentUserEntryDTO getLeaderboard(long userId, long courseId) {
         long totalQuestions = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
         int league;
         league = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).map(QuizTrainingLeaderboard::getLeague).orElse(BRONZE_LEAGUE);
@@ -90,7 +90,7 @@ public class QuizTrainingLeaderboardService {
         List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdAndShowInLeaderboardTrueOrderByScoreDescUserAscId(league,
                 courseId);
         List<LeaderboardEntryDTO> leaderboardEntryDTOs = getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
-        return new LeaderboardWithCurrentUserIdDTO(leaderboardEntryDTOs, hasUserSetSettings, LeaderboardEntryDTO.of(currentUserEntry, 0, league, totalQuestions), currentTime);
+        return new LeaderboardWithCurrentUserEntryDTO(leaderboardEntryDTOs, hasUserSetSettings, LeaderboardEntryDTO.of(currentUserEntry, 0, league, totalQuestions), currentTime);
     }
 
     /**
@@ -198,17 +198,17 @@ public class QuizTrainingLeaderboardService {
             }
         }
 
-        double questionDelta = 2 * lastScore + box * lastScore + 34 * lastScore; // 34 will be removed and is just for testing purposes
+        double questionDelta = 2 * lastScore + box * lastScore;
 
         if (hadFailedAttemptToday && lastScore == 1.0) {
-            questionDelta = lastScore;
+            questionDelta = 0;
         }
 
         delta += (int) Math.round(questionDelta);
         return delta;
     }
 
-    public void updateShownInLeaderboard(long userId, boolean showInLeaderboard) {
-        quizTrainingLeaderboardRepository.updateShownInLeaderboard(userId, showInLeaderboard);
+    public void updateShowInLeaderboard(long userId, boolean showInLeaderboard) {
+        quizTrainingLeaderboardRepository.updateShowInLeaderboard(userId, showInLeaderboard);
     }
 }

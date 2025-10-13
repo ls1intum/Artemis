@@ -146,7 +146,7 @@ export class CourseTrainingComponent {
         this.isLoading.set(true);
         this.leaderboardService.getQuizTrainingLeaderboard(courseId).subscribe({
             next: (leaderboard) => {
-                this.leaderboardEntries.set(leaderboard.leaderboardEntryDTO);
+                this.leaderboardEntries.set(leaderboard.leaderboardEntries);
                 this.currentUserEntry.set(leaderboard.currentUserEntry);
                 this.currentTime.set(leaderboard.currentTime);
                 this.isLoading.set(false);

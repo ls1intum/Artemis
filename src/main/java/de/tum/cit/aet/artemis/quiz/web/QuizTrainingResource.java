@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
-import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserIdDTO;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
@@ -133,10 +133,10 @@ public class QuizTrainingResource {
      */
     @GetMapping("courses/{courseId}/training/leaderboard")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<LeaderboardWithCurrentUserIdDTO> getQuizTrainingLeaderboard(@PathVariable long courseId) {
+    public ResponseEntity<LeaderboardWithCurrentUserEntryDTO> getQuizTrainingLeaderboard(@PathVariable long courseId) {
         log.info("REST request to get leaderboard for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        LeaderboardWithCurrentUserIdDTO leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
+        LeaderboardWithCurrentUserEntryDTO leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
         return ResponseEntity.ok(leaderboard);
     }
 
@@ -159,7 +159,7 @@ public class QuizTrainingResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Boolean shownInLeaderboard = leaderboardSettingDTO.showInLeaderboard();
         if (shownInLeaderboard != null) {
-            quizTrainingLeaderboardService.updateShownInLeaderboard(user.getId(), shownInLeaderboard);
+            quizTrainingLeaderboardService.updateShowInLeaderboard(user.getId(), shownInLeaderboard);
         }
         return ResponseEntity.ok().build();
     }

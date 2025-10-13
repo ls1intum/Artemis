@@ -1,10 +1,10 @@
-import { Component, input } from '@angular/core';
+import { Component, effect, input, signal } from '@angular/core';
 
 @Component({
     selector: 'app-league-diamond-icon',
     template: `
         @if (league() === 'Diamond') {
-            <svg [class]="class()" [attr.width]="getSize()" [attr.height]="getSize()" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg [class]="class()" [attr.width]="size()" [attr.height]="size()" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                     fill-rule="evenodd"
                     clip-rule="evenodd"
@@ -24,8 +24,11 @@ import { Component, input } from '@angular/core';
 export class LeagueDiamondIconComponent {
     class = input<string>('');
     league = input<string>('');
+    size = signal('50');
 
-    getSize(): string {
-        return this.class().includes('small-icon') ? '30' : '50';
+    constructor() {
+        effect(() => {
+            this.size.set(this.class().includes('small-icon') ? '30' : '50');
+        });
     }
 }

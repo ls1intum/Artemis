@@ -1,5 +1,5 @@
 export class LeaderboardDTO {
-    public leaderboardEntryDTO: LeaderboardEntry[];
+    public leaderboardEntries: LeaderboardEntry[];
     public hasUserSetSettings: boolean;
     public currentUserEntry: LeaderboardEntry;
     public currentTime: string;

@@ -32,6 +32,8 @@ export class LeagueBadgeComponent {
     pointsDiamondLeague = input<number>(400);
     faStar = faStar;
 
+    leagueLower = computed(() => this.league().toLowerCase());
+
     progressWidth = computed(() => {
         const leagueValue = this.league();
         const pointsValue = this.points();
