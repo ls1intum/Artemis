@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, QueryList, ViewChildren, computed, effect, input, signal } from '@angular/core';
 import { faAngleDown, faAngleUp, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
@@ -10,6 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DiffInformation, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-git-diff-report',
@@ -28,7 +29,7 @@ import { DiffInformation, RepositoryDiffInformation } from 'app/programming/shar
         NgbCollapse,
     ],
 })
-export class GitDiffReportComponent {
+export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     protected readonly faSpinner = faSpinner;
     protected readonly faTableColumns = faTableColumns;
     protected readonly faAngleUp = faAngleUp;
@@ -47,17 +48,73 @@ export class GitDiffReportComponent {
     readonly rightCommitHash = input<string>();
     readonly participationId = input<number>();
     readonly allDiffsReady = signal<boolean>(false);
+    readonly initialDiffsReady = signal<boolean>(false); // Track if initial diffs are ready to show container
     readonly allowSplitView = signal<boolean>(true);
+    private readonly initialLoadCount = 5;
+    private readonly loadedTitles = signal<Set<string>>(new Set());
+    private lastDiffInformation?: RepositoryDiffInformation;
+    private intersectionObserver?: IntersectionObserver;
+    private diffPanelsChangesSub?: Subscription;
 
     readonly leftCommit = computed(() => this.leftCommitHash()?.substring(0, 10));
     readonly rightCommit = computed(() => this.rightCommitHash()?.substring(0, 10));
     readonly addedLineCount = computed(() => this.repositoryDiffInformation().totalLineChange.addedLineCount);
     readonly removedLineCount = computed(() => this.repositoryDiffInformation().totalLineChange.removedLineCount);
 
-    // Threshold for auto-collapsing diffs. Diffs with more changed lines will be collapsed by default because it is computationally expensive to render them.
-    readonly collapseThreshold = 200;
-
     private readonly userCollapsed = new Map<string, boolean>();
+
+    @ViewChildren('diffPanelContainer')
+    private diffPanelContainers?: QueryList<ElementRef<HTMLElement>>;
+
+    constructor() {
+        effect(() => {
+            const info = this.repositoryDiffInformation();
+            if (info === this.lastDiffInformation) {
+                return;
+            }
+            this.lastDiffInformation = info;
+
+            const current = this.loadedTitles();
+            const updated = new Set<string>();
+            info.diffInformations.forEach((diff, index) => {
+                if (index < this.initialLoadCount || current.has(diff.title)) {
+                    updated.add(diff.title);
+                }
+            });
+            this.loadedTitles.set(updated);
+            this.updateAllDiffsReady();
+            this.observeDiffPanels();
+        });
+    }
+
+    ngAfterViewInit(): void {
+        this.intersectionObserver = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    if (entry.isIntersecting) {
+                        const title = (entry.target as HTMLElement).dataset['title'];
+                        if (title) {
+                            this.markContentAsLoaded(title);
+                        }
+                        this.intersectionObserver?.unobserve(entry.target);
+                    }
+                }
+            },
+            {
+                // Load content when element is within 200px of viewport
+                rootMargin: '200px 0px',
+                threshold: 0,
+            },
+        );
+
+        this.observeDiffPanels();
+        this.diffPanelsChangesSub = this.diffPanelContainers?.changes.subscribe(() => this.observeDiffPanels());
+    }
+
+    ngOnDestroy(): void {
+        this.diffPanelsChangesSub?.unsubscribe();
+        this.intersectionObserver?.disconnect();
+    }
 
     /**
      * Records that the diff editor for a file has changed its "ready" state.
@@ -75,7 +132,7 @@ export class GitDiffReportComponent {
             captureException(`Received diff ready event for unknown title: ${title}`);
         }
 
-        this.allDiffsReady.set(diffInformation.every((info) => info.diffReady));
+        this.updateAllDiffsReady();
     }
 
     /**
@@ -87,19 +144,68 @@ export class GitDiffReportComponent {
         this.onDiffReady(title, ready);
     }
 
+    shouldLoadContent(title: string): boolean {
+        return this.loadedTitles().has(title);
+    }
+
+    markContentAsLoaded(title: string) {
+        const current = this.loadedTitles();
+        if (current.has(title)) {
+            return;
+        }
+
+        const updated = new Set(current);
+        updated.add(title);
+        this.loadedTitles.set(updated);
+        this.updateAllDiffsReady();
+    }
+
+    private updateAllDiffsReady() {
+        const loaded = this.loadedTitles();
+        const diffInformation = this.repositoryDiffInformation().diffInformations;
+
+        // Check if all LOADED diffs are ready (don't consider unloaded ones)
+        const loadedDiffs = diffInformation.filter((info) => loaded.has(info.title));
+        const allLoadedReady = loadedDiffs.length > 0 && loadedDiffs.every((info) => info.diffReady);
+        this.allDiffsReady.set(allLoadedReady);
+
+        // Set initialDiffsReady once the first batch is ready (never set back to false)
+        if (allLoadedReady && !this.initialDiffsReady()) {
+            this.initialDiffsReady.set(true);
+        }
+    }
+
+    private observeDiffPanels() {
+        if (!this.intersectionObserver || !this.diffPanelContainers) {
+            return;
+        }
+
+        this.diffPanelContainers.forEach((panel) => {
+            const element = panel.nativeElement;
+            if (!element.dataset['title']) {
+                return;
+            }
+            this.intersectionObserver!.observe(element);
+        });
+    }
+
     isCollapsed(diffInformation: DiffInformation): boolean {
         const override = this.userCollapsed.get(diffInformation.title);
         if (override !== undefined) {
             return override;
         }
 
-        const added = diffInformation.lineChange?.addedLineCount ?? 0;
-        const removed = diffInformation.lineChange?.removedLineCount ?? 0;
-        return added + removed > this.collapseThreshold;
+        // Default to not collapsed - lazy loading handles performance
+        return false;
     }
 
     onToggleClick(title: string, wasCollapsed: boolean) {
         // NgB will flip it after this click, so remember the new state.
         this.userCollapsed.set(title, !wasCollapsed);
+
+        // If expanding (wasCollapsed = true), load content before expansion to prevent scroll jumps
+        if (wasCollapsed) {
+            this.markContentAsLoaded(title);
+        }
     }
 }
