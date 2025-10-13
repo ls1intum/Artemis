@@ -72,7 +72,7 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
     void updateShownInLeaderboard(@Param("userId") long userId, @Param("showInLeaderboard") boolean showInLeaderboard);
 
     @Query("""
-                SELECT distinct qtl.showInLeaderboard
+                SELECT DISTINCT qtl.showInLeaderboard
                 FROM QuizTrainingLeaderboard qtl
                 WHERE qtl.user.id = :userId
             """)
