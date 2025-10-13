@@ -193,6 +193,17 @@ public class QuizTrainingResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * Retrieves the leaderboard visibility settings for the current user.
+     *
+     * <p>
+     * This endpoint returns the user's preference regarding their visibility in the quiz training leaderboard.
+     * It fetches the current setting from the repository and returns it wrapped in a LeaderboardSettingDTO.
+     * If no setting is found for the user, the value will be null.
+     * </p>
+     *
+     * @return a ResponseEntity containing a LeaderboardSettingDTO with the user's leaderboard visibility preference
+     */
     @GetMapping("leaderboard-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<LeaderboardSettingDTO> getLeaderboardSettings() {
