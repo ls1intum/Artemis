@@ -42,20 +42,6 @@ a:not(.btn):hover {
 
 .jh-navbar,
 .server-administration {
-    .nav-link {
-        color: var(--navbar-dark-color);
-
-        &:hover {
-            color: var(--link-color);
-        }
-    }
-
-    a.nav-link {
-        font-weight: 400;
-    }
-}
-
-.jh-navbar {
     background-color: var(--artemis-dark);
     white-space: nowrap;
     padding: 0.2em 1rem;
@@ -88,6 +74,18 @@ a:not(.btn):hover {
         &.vertical {
             flex-direction: column;
         }
+    }
+
+    .nav-link {
+        color: var(--navbar-dark-color);
+
+        &:hover {
+            color: var(--link-color);
+        }
+    }
+
+    a.nav-link {
+        font-weight: 400;
     }
 
     @media screen and (min-width: 480px) {
