@@ -53,6 +53,7 @@
     <ng-template #assessment>
         @if (!loadingParticipation && !participationCouldNotBeFetched) {
             <jhi-code-editor-container
+                [isProblemStatementVisible]="false"
                 [editable]="false"
                 [participation]="participation"
                 [feedbackSuggestions]="feedbackSuggestions"

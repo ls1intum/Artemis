@@ -10,7 +10,13 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 export enum FileType {
     FILE = 'FILE',
     FOLDER = 'FOLDER',
+    PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
 }
+
+/**
+ * Constant identifier for the Problem Statement pseudo-file
+ */
+export const PROBLEM_STATEMENT_IDENTIFIER = '__problem_statement__';
 
 export abstract class FileChange {}
 

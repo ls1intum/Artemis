@@ -5,6 +5,8 @@ import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,11 +21,12 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
+import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -42,17 +46,21 @@ import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupImportErrors;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
@@ -61,11 +69,11 @@ import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGr
 @Service
 public class TutorialGroupService {
 
+    private static final Logger log = LoggerFactory.getLogger(TutorialGroupService.class);
+
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
     private final UserRepository userRepository;
-
-    private final AuthorizationCheckService authorizationCheckService;
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
@@ -77,18 +85,20 @@ public class TutorialGroupService {
 
     private final CourseNotificationService courseNotificationService;
 
+    private final OneToOneChatRepository oneToOneChatRepository;
+
     public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
-            UserRepository userRepository, AuthorizationCheckService authorizationCheckService, TutorialGroupSessionRepository tutorialGroupSessionRepository,
+            UserRepository userRepository, TutorialGroupSessionRepository tutorialGroupSessionRepository,
             TutorialGroupChannelManagementService tutorialGroupChannelManagementService, ConversationDTOService conversationDTOService,
-            CourseNotificationService courseNotificationService) {
+            CourseNotificationService courseNotificationService, OneToOneChatRepository oneToOneChatRepository) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
         this.courseNotificationService = courseNotificationService;
+        this.oneToOneChatRepository = oneToOneChatRepository;
     }
 
     /**
@@ -322,16 +332,6 @@ public class TutorialGroupService {
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType, responsibleUser, true);
         return notFoundStudentDTOs;
-    }
-
-    /**
-     * Find all tutorial groups for which the given user should be able to receive notifications.
-     *
-     * @param user The user for which to find the tutorial groups.
-     * @return A list of tutorial groups for which the user should receive notifications.
-     */
-    public Set<Long> findAllForNotifications(User user) {
-        return tutorialGroupRepository.findAllActiveTutorialGroupIdsWhereUserIsRegisteredOrTutor(ZonedDateTime.now(), user.getId());
     }
 
     /**
@@ -571,33 +571,27 @@ public class TutorialGroupService {
         }
 
         // ToDo: Discuss if we should allow to register course members who are not students
-        var result = findUsersByRegistrationNumbers(registrationNumbersToSearchFor, course.getStudentGroupName());
-        result.addAll(findUsersByLogins(loginsToSearchFor, course.getStudentGroupName()));
+        var result = new HashSet<>(
+                userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(course.getStudentGroupName(), registrationNumbersToSearchFor));
+        result.addAll(new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(course.getStudentGroupName(), loginsToSearchFor)));
         return result;
-    }
-
-    private Set<User> findUsersByRegistrationNumbers(Set<String> registrationNumbers, String groupName) {
-        return new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName, registrationNumbers));
-    }
-
-    private Set<User> findUsersByLogins(Set<String> logins, String groupName) {
-        return new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, logins));
     }
 
     /**
      * Get all tutorial groups for a course, including setting the transient properties for the given user
      *
-     * @param course The course for which the tutorial groups should be retrieved.
-     * @param user   The user for whom to set the transient properties of the tutorial groups.
+     * @param course              The course for which the tutorial groups should be retrieved.
+     * @param user                The user for whom to set the transient properties of the tutorial groups.
+     * @param isAdminOrInstructor whether the instructor of the course or is admin
      * @return A list of tutorial groups for the given course with the transient properties set for the given user.
      */
-    public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user) {
+    public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user, boolean isAdminOrInstructor) {
         // do not load all sessions here as they are not needed for the overview page and would slow down the request
         Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(course.getId());
         // TODO: this is some overkill, we calculate way too many information with way too many database calls, we must reduce this
         tutorialGroups.forEach(tutorialGroup -> this.setTransientPropertiesForUser(user, tutorialGroup));
         tutorialGroups.forEach(tutorialGroup -> {
-            if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+            if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
                 tutorialGroup.hidePrivacySensitiveInformation();
             }
         });
@@ -608,79 +602,120 @@ public class TutorialGroupService {
     /**
      * Get one tutorial group of a course, including setting the transient properties for the given user
      *
-     * @param tutorialGroupId The id of the tutorial group to retrieve.
-     * @param user            The user for whom to set the transient properties of the tutorial group.
-     * @param course          The course for which the tutorial group should be retrieved.
+     * @param course              The course for which the tutorial group should be retrieved.
+     * @param tutorialGroupId     The id of the tutorial group to retrieve.
+     * @param user                The user for whom to set the transient properties of the tutorial group.
+     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
      * @return The tutorial group of the course with the transient properties set for the given user.
      */
-    public TutorialGroup getOneOfCourse(@NotNull Course course, @NotNull User user, @NotNull Long tutorialGroupId) {
+    public TutorialGroup getOneOfCourse(@NotNull Course course, long tutorialGroupId, @NotNull User user, boolean isAdminOrInstructor) {
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
         if (!course.equals(tutorialGroup.getCourse())) {
             throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
         }
         this.setTransientPropertiesForUser(user, tutorialGroup);
-        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
             tutorialGroup.hidePrivacySensitiveInformation();
         }
         return TutorialGroup.preventCircularJsonConversion(tutorialGroup);
     }
 
     /**
-     * Determines if a user is allowed to see private information about a tutorial group such as the list of registered students
+     * Retrieves the required data and uses them to assembles a DTO needed to display the information in the course-tutorial-group-detail.component.ts.
      *
-     * @param tutorialGroup the tutorial group for which to check permission
-     * @param user          the user for which to check permission
+     * @param tutorialGroupId the ID of the tutorial group to fetch
+     * @param courseId        the ID of the course of the tutorial group
+     * @param courseTimeZone  the time zone of the course, used for session status evaluation
+     * @return a {@link TutorialGroupDetailGroupDTO}
+     * @throws EntityNotFoundException if no tutorial group exists with the given ID
+     */
+    public TutorialGroupDetailGroupDTO getTutorialGroupDetailGroupDTO(long tutorialGroupId, long courseId, ZoneId courseTimeZone) {
+        RawTutorialGroupDetailGroupDTO rawGroupDTOs = tutorialGroupRepository.getTutorialGroupDetailData(tutorialGroupId, courseId)
+                .orElseThrow(() -> new EntityNotFoundException("No tutorial group found with id " + tutorialGroupId + " found for course with id " + courseId + "."));
+
+        String tutorLogin = rawGroupDTOs.teachingAssistantLogin();
+        String currentUserLogin = userRepository.getCurrentUserLogin();
+        Long tutorChatId = null;
+        if (!tutorLogin.equals(currentUserLogin)) {
+            tutorChatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(courseId, tutorLogin, currentUserLogin);
+        }
+
+        List<RawTutorialGroupDetailSessionDTO> rawSessionDTOs = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
+        List<TutorialGroupDetailSessionDTO> sessionDTOs;
+        // the schedule related properties are null if and only if there is no schedule for the tutorial group
+        if (rawGroupDTOs.scheduleDayOfWeek() != null) {
+            int scheduleDayOfWeek = rawGroupDTOs.scheduleDayOfWeek();
+            LocalTime scheduleStart = LocalTime.parse(rawGroupDTOs.scheduleStartTime());
+            LocalTime scheduleEnd = LocalTime.parse(rawGroupDTOs.scheduleEndTime());
+            String scheduleLocation = rawGroupDTOs.scheduleLocation();
+            sessionDTOs = rawSessionDTOs.stream()
+                    .map(data -> TutorialGroupDetailSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone)).toList();
+        }
+        else {
+            sessionDTOs = rawSessionDTOs.stream().map(TutorialGroupDetailSessionDTO::from).toList();
+        }
+
+        return TutorialGroupDetailGroupDTO.from(rawGroupDTOs, sessionDTOs, tutorChatId);
+    }
+
+    /**
+     * Determines if a user has managing rights for the tutorial group (e.g. see private information about a tutorial group such as the list of registered students)
+     *
+     * @param tutorialGroup       the tutorial group for which to check permission
+     * @param user                the user for which to check permission
+     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
      * @return true if the user is allowed, false otherwise
      */
-    public boolean isAllowedToSeePrivateTutorialGroupInformation(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
-        var userToCheck = user;
-        var persistenceUtil = getPersistenceUtil();
-        if (userToCheck == null || !persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "groups") || userToCheck.getGroups() == null
-                || userToCheck.getAuthorities() == null) {
-            userToCheck = userRepository.getUserWithGroupsAndAuthorities();
-        }
-        if (authorizationCheckService.isAdmin(userToCheck)) {
+    public boolean userHasManagingRightsForTutorialGroup(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
+        if (isAdminOrInstructor) {
             return true;
         }
-
+        var persistenceUtil = getPersistenceUtil();
         var tutorialGroupToCheck = tutorialGroup;
-
-        var courseInitialized = persistenceUtil.isLoaded(tutorialGroupToCheck, "course");
-        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroupToCheck, "teachingAssistant");
-
-        if (!courseInitialized || !teachingAssistantInitialized || tutorialGroupToCheck.getCourse() == null || tutorialGroupToCheck.getTeachingAssistant() == null) {
+        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroup, "teachingAssistant");
+        if (!teachingAssistantInitialized || tutorialGroupToCheck.getTeachingAssistant() == null) {
             tutorialGroupToCheck = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroupToCheck.getId());
         }
-
-        Course course = tutorialGroupToCheck.getCourse();
-        if (authorizationCheckService.isAtLeastInstructorInCourse(course, userToCheck)) {
-            return true;
-        }
-        return (tutorialGroupToCheck.getTeachingAssistant() != null && tutorialGroupToCheck.getTeachingAssistant().equals(userToCheck));
+        return (tutorialGroupToCheck.getTeachingAssistant() != null && tutorialGroupToCheck.getTeachingAssistant().equals(user));
     }
 
     /**
      * Checks if a user is allowed to change the registrations of a tutorial group
      *
-     * @param tutorialGroup the tutorial group for which to check permission
-     * @param user          the user for which to check permission
+     * @param tutorialGroup       the tutorial group for which to check permission
+     * @param user                the user for which to check permission
+     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
      */
-    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+    public void checkIfUserIsAllowedToChangeRegistrationsOfTutorialGroupElseThrow(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
         // ToDo: Clarify if this is the correct permission check
-        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
+        }
+    }
+
+    /**
+     * Checks if a user is allowed to delete the passed tutorial group. This is the case if the user is admin, or instructor of the group's course, or tutor of thr group.
+     *
+     * @param tutorialGroup       the tutorial group for which to check permission
+     * @param user                the user for which to check permission
+     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
+     */
+    public void checkIfUserIsAllowedToDeleteTutorialGroupElseThrow(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
+        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
+            throw new AccessForbiddenException("The user is not allowed to delete the tutorial group: " + tutorialGroup.getId());
         }
     }
 
     /**
      * Checks if a user is allowed to modify the sessions of a tutorial group
      *
-     * @param tutorialGroup the tutorial group for which to check permission
-     * @param user          the user for which to check permission
+     * @param tutorialGroup       the tutorial group for which to check permission
+     * @param user                the user for which to check permission
+     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
      */
-    public void isAllowedToModifySessionsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+    public void checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
         // ToDo: Clarify if this is the correct permission check
-        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());
         }
     }
@@ -694,14 +729,15 @@ public class TutorialGroupService {
     /**
      * Exports tutorial groups for a specific course to a CSV file.
      *
-     * @param course the course for which the tutorial groups should be exported
-     * @param user   the user performing the export operation
-     * @param fields the list of fields to include in the CSV export
+     * @param course              the course for which the tutorial groups should be exported
+     * @param user                the user performing the export operation
+     * @param isAdminOrInstructor whether the instructor of the course or is admin
+     * @param fields              the list of fields to include in the CSV export
      * @return a String containing the CSV data
      * @throws IOException if an I/O error occurs
      */
-    public String exportTutorialGroupsToCSV(Course course, User user, List<String> fields) throws IOException {
-        Set<TutorialGroup> tutorialGroups = findAllForCourse(course, user);
+    public String exportTutorialGroupsToCSV(Course course, User user, boolean isAdminOrInstructor, List<String> fields) throws IOException {
+        Set<TutorialGroup> tutorialGroups = findAllForCourse(course, user, isAdminOrInstructor);
 
         StringWriter out = new StringWriter();
 
@@ -774,7 +810,7 @@ public class TutorialGroupService {
      * This method retrieves tutorial groups for the specified course ID and maps each one
      * to a {@link TutorialGroupExportDTO}. Only the fields explicitly listed in {@code selectedFields}
      * are populated; all others remain {@code null}. Field names must match exactly with those
-     * defined in the corresponding frontend component (e.g., {@code tutorial-groups-export-button.component.ts}).
+     * defined in the corresponding client component (e.g., {@code tutorial-groups-export-button.component.ts}).
      * <p>
      * If the "Students" field is selected, the list of registered students is included using
      * {@link StudentExportDTO}.
@@ -892,12 +928,10 @@ public class TutorialGroupService {
         return "";
     }
 
-    // Enum to represent the different fields of the schedule
     private enum ScheduleField {
         START_TIME, END_TIME, LOCATION
     }
 
-    // Enum to represent the different fields of the student
     private enum StudentField {
         REGISTRATION_NUMBER, FIRST_NAME, LAST_NAME
     }
