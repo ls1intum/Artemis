@@ -789,16 +789,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     async handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined, runId: number): Promise<void> {
+        if (runId !== this.diffRunId) {
+            return;
+        }
+
+        if (!templateFiles || !solutionFiles) {
+            return;
+        }
+
         this.templateFileContentByPath = templateFiles;
         this.solutionFileContentByPath = solutionFiles;
 
         this.diffReady = false;
         this.repositoryDiffInformation = undefined;
         this.diffDetailData.repositoryDiffInformation = undefined;
-
-        if (!templateFiles || !solutionFiles) {
-            return;
-        }
 
         this.lineChangesLoading = true;
         this.diffDetailData.templateFileContentByPath = templateFiles;
