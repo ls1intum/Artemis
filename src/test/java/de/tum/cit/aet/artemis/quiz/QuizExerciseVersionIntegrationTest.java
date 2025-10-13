@@ -50,10 +50,18 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateQuizExercise_createsExerciseVersion() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-        quizExercise.setDuration(3600);
+        QuizExercise createdExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
 
-        QuizExercise createdExercise = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, false);
+        assertThat(createdExercise).isNotNull();
+
+        exerciseVersionUtilService.verifyExerciseVersionCreated(createdExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.QUIZ);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuizExerciseForExam_createsExerciseVersion() throws Exception {
+        QuizExercise createdExercise = createQuizOnServerForExam();
+
         assertThat(createdExercise).isNotNull();
 
         exerciseVersionUtilService.verifyExerciseVersionCreated(createdExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.QUIZ);
