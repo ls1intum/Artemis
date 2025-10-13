@@ -301,4 +301,24 @@ describe('Faq Service', () => {
         const res = FaqService.stringifyFaqCategories(noCats);
         expect(res).toBeUndefined();
     });
+
+    it('should throw if faqState is missing when converting to CreateFaqDto', () => {
+        const f = new Faq();
+        f.questionTitle = 'Title';
+        expect(() => CreateFaqDTO.toCreateFaqDto(f)).toThrow('The state should be present to create FAQ');
+    });
+
+    it('should throw if id is missing when converting to upDateFaqDto', () => {
+        const f = new Faq();
+        f.faqState = FaqState.ACCEPTED;
+        f.questionTitle = 'Title';
+        expect(() => UpdateFaqDTO.toUpdateDto(f)).toThrow('The id should be present to update FAQ');
+    });
+
+    it('should throw if faqState is missing when converting to upDateFaqDto', () => {
+        const f = new Faq();
+        f.id = 99;
+        f.questionTitle = 'Title';
+        expect(() => UpdateFaqDTO.toUpdateDto(f)).toThrow('The state should be present to update FAQ');
+    });
 });
