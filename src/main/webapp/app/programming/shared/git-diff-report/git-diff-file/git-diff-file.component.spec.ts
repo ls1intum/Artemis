@@ -132,6 +132,7 @@ describe('GitDiffFileComponent', () => {
 
     it('should display an informative message when a diff is too large', () => {
         const diffInfo = mockDiffInformations.find((info) => info.lineChange?.fileTooLarge) as DiffInformation;
+        expect(diffInfo).toBeDefined();
         const setFileContentsStub = jest.fn();
         jest.spyOn(comp, 'monacoDiffEditor').mockReturnValue({ setFileContents: setFileContentsStub } as unknown as MonacoDiffEditorComponent);
 

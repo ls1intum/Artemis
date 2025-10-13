@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from '../../../../shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
@@ -22,9 +22,35 @@ class MockResizeObserver {
 }
 
 class MockIntersectionObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
+    static instances: MockIntersectionObserver[] = [];
+    private readonly callback: IntersectionObserverCallback;
+
+    constructor(callback: IntersectionObserverCallback) {
+        this.callback = callback;
+        MockIntersectionObserver.instances.push(this);
+    }
+
+    observe = jest.fn((_element: Element) => {});
+
+    unobserve = jest.fn((_element: Element) => {});
+
+    disconnect = jest.fn(() => {});
+
+    trigger(entries: Array<{ target: Element; isIntersecting: boolean }>) {
+        const normalized = entries.map(
+            ({ target, isIntersecting }) =>
+                ({
+                    boundingClientRect: target.getBoundingClientRect(),
+                    intersectionRatio: isIntersecting ? 1 : 0,
+                    intersectionRect: target.getBoundingClientRect(),
+                    isIntersecting,
+                    rootBounds: null,
+                    target,
+                    time: Date.now(),
+                }) as IntersectionObserverEntry,
+        );
+        this.callback(normalized, this as unknown as IntersectionObserver);
+    }
 }
 
 describe('ProgrammingExerciseGitDiffReport Component', () => {
@@ -34,6 +60,24 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
     beforeAll(() => {
         global.ResizeObserver = MockResizeObserver;
         global.IntersectionObserver = MockIntersectionObserver as any;
+    });
+
+    const createDiffInformationEntry = (
+        title: string,
+        overrides: Partial<RepositoryDiffInformation['diffInformations'][number]> = {},
+    ): RepositoryDiffInformation['diffInformations'][number] => ({
+        originalFileContent: `${title} original`,
+        modifiedFileContent: `${title} modified`,
+        originalPath: title,
+        modifiedPath: title,
+        diffReady: false,
+        fileStatus: FileStatus.UNCHANGED,
+        lineChange: {
+            addedLineCount: 1,
+            removedLineCount: 0,
+        },
+        title,
+        ...overrides,
     });
 
     const mockDiffInformation = {
@@ -85,6 +129,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
     } as unknown as RepositoryDiffInformation;
 
     beforeEach(() => {
+        MockIntersectionObserver.instances.length = 0;
         TestBed.configureTestingModule({
             declarations: [GitDiffReportComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
@@ -95,6 +140,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
     });
 
     afterEach(() => {
+        jest.useRealTimers();
         jest.restoreAllMocks();
     });
 
@@ -374,6 +420,73 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         expect(comp.allDiffsReady()).toBeTrue();
     });
 
+    it('should observe panels and load content when intersection occurs', fakeAsync(() => {
+        const extendedDiffInformation = {
+            diffInformations: [
+                ...mockDiffInformation.diffInformations,
+                createDiffInformationEntry('Fourth.java'),
+                createDiffInformationEntry('Fifth.java'),
+                createDiffInformationEntry('Sixth.java'),
+                createDiffInformationEntry('Seventh.java'),
+            ],
+            totalLineChange: {
+                addedLineCount: 12,
+                removedLineCount: 1,
+            },
+        } as unknown as RepositoryDiffInformation;
+
+        fixture.componentRef.setInput('repositoryDiffInformation', extendedDiffInformation);
+        fixture.detectChanges();
+
+        tick(1000);
+        fixture.detectChanges();
+
+        expect(MockIntersectionObserver.instances).toHaveLength(1);
+        const observerInstance = MockIntersectionObserver.instances[0];
+        const observedElements = observerInstance.observe.mock.calls.map((call) => call[0]);
+        const panelElements = Array.from(fixture.nativeElement.querySelectorAll('[data-title]'));
+        const sixthElement = panelElements.find((element) => element.getAttribute('data-title') === 'Sixth.java');
+        expect(sixthElement).toBeDefined();
+        expect(observedElements).toContain(sixthElement);
+
+        const targetDiff = extendedDiffInformation.diffInformations.find((diff) => diff.title === 'Sixth.java');
+        expect(targetDiff?.loadContent).toBeFalsy();
+
+        observerInstance.trigger([{ target: sixthElement as Element, isIntersecting: true }]);
+
+        expect(observerInstance.unobserve).toHaveBeenCalledWith(sixthElement);
+        expect(targetDiff?.loadContent).toBeTrue();
+    }));
+
+    it('should skip observing panels without data titles', fakeAsync(() => {
+        const diffInformationWithEmptyTitle = {
+            diffInformations: [
+                ...mockDiffInformation.diffInformations,
+                createDiffInformationEntry('Fourth.java'),
+                createDiffInformationEntry('Fifth.java'),
+                createDiffInformationEntry('', { title: '', modifiedPath: '', originalPath: '' }),
+            ],
+            totalLineChange: {
+                addedLineCount: 10,
+                removedLineCount: 1,
+            },
+        } as unknown as RepositoryDiffInformation;
+
+        fixture.componentRef.setInput('repositoryDiffInformation', diffInformationWithEmptyTitle);
+        fixture.detectChanges();
+
+        tick(1000);
+        fixture.detectChanges();
+
+        expect(MockIntersectionObserver.instances).toHaveLength(1);
+        const observerInstance = MockIntersectionObserver.instances[0];
+        const blankElement = Array.from(fixture.nativeElement.querySelectorAll('[data-title]')).find((element) => element.getAttribute('data-title') === '');
+        expect(blankElement).toBeDefined();
+
+        const observedElements = observerInstance.observe.mock.calls.map((call) => call[0]);
+        expect(observedElements).not.toContain(blankElement);
+    }));
+
     it('should mark content as loaded and update allDiffsReady', () => {
         const moreDiffInformation = {
             diffInformations: [
@@ -428,7 +541,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         fixture.detectChanges();
 
         const sixthFile = 'Sixth.java';
-        const sixthDiffInfo = mockDiffInformation.diffInformations.find((diff) => diff.title === sixthFile);
+        const sixthDiffInfo = moreDiffInformation.diffInformations.find((diff) => diff.title === sixthFile);
 
         // Initially not loaded (sixth file is at index 5, beyond the initial load count of 5 which loads indices 0-4)
         expect(sixthDiffInfo?.loadContent).toBeFalsy();

@@ -194,6 +194,14 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
         const updated = new Set(current);
         updated.add(title);
         this.loadedTitles.set(updated);
+
+        const diffInfo = this.repositoryDiffInformation().diffInformations.find((info) => info.title === title);
+        if (diffInfo) {
+            diffInfo.loadContent = true;
+            const override = this.userCollapsed.get(title);
+            diffInfo.isCollapsed = override !== undefined ? override : false;
+        }
+
         this.updateAllDiffsReady();
 
         this.changeDetectorRef.markForCheck();

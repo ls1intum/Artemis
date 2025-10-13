@@ -7,7 +7,7 @@ jest.mock('monaco-editor', () => ({
 }));
 
 import * as monaco from 'monaco-editor';
-import { FileStatus, __diffUtilsTesting, processRepositoryDiff } from './diff.utils';
+import { DiffInformation, FileStatus, __diffUtilsTesting, processRepositoryDiff } from './diff.utils';
 
 describe('DiffUtils', () => {
     let mockOriginalModel: monaco.editor.ITextModel;
@@ -285,9 +285,48 @@ describe('DiffUtils', () => {
                 jest.useRealTimers();
             }
         });
-    });
 
-    describe('Edge Cases and Error Handling', () => {
+        it('should guard against repeated diff updates', async () => {
+            const originalFiles = new Map([['double-update.txt', 'original content']]);
+            const modifiedFiles = new Map([['double-update.txt', 'modified content']]);
+
+            setupMonacoMocks([createLineChange(1, 1, 1, 1)]);
+            mockDiffEditor.onDidUpdateDiff.mockImplementation((callback: () => void) => {
+                callback();
+                callback();
+                return mockDiffListener;
+            });
+
+            const result = await processRepositoryDiff(originalFiles, modifiedFiles);
+
+            expect(result.totalLineChange).toEqual({ addedLineCount: 1, removedLineCount: 1 });
+            expect(mockDiffListener.dispose).toHaveBeenCalledOnce();
+            expect(mockDiffEditor.dispose).toHaveBeenCalledOnce();
+        });
+
+        it('should resolve using the safety timeout when Monaco never updates', async () => {
+            jest.useFakeTimers();
+
+            const originalFiles = new Map([['timeout.txt', 'original content']]);
+            const modifiedFiles = new Map([['timeout.txt', 'modified content']]);
+
+            setupMonacoMocks();
+            mockDiffEditor.onDidUpdateDiff.mockImplementation(() => mockDiffListener);
+
+            try {
+                const promise = processRepositoryDiff(originalFiles, modifiedFiles);
+                jest.advanceTimersByTime(10000);
+                const result = await promise;
+
+                expect(result.totalLineChange.addedLineCount).toBeGreaterThanOrEqual(0);
+                expect(result.totalLineChange.removedLineCount).toBeGreaterThanOrEqual(0);
+                expect(mockDiffListener.dispose).toHaveBeenCalledOnce();
+                expect(mockDiffEditor.dispose).toHaveBeenCalledOnce();
+            } finally {
+                jest.useRealTimers();
+            }
+        });
+
         it('should handle empty line changes', async () => {
             const originalFiles = new Map([['test.txt', 'content']]);
             const modifiedFiles = new Map([['test.txt', 'different content']]);
@@ -350,8 +389,8 @@ describe('DiffUtils', () => {
             const result = await processRepositoryDiff(originalFiles, modifiedFiles);
 
             expect(result.diffInformations).toHaveLength(2);
-            expect(result.diffInformations[0].fileStatus).toBe(FileStatus.UNCHANGED);
-            expect(result.diffInformations[1].fileStatus).toBe(FileStatus.UNCHANGED);
+            expect(result.diffInformations[0].fileStatus).toBe(FileStatus.DELETED);
+            expect(result.diffInformations[1].fileStatus).toBe(FileStatus.CREATED);
         });
 
         it('should handle very large similarity calculations', async () => {
@@ -407,6 +446,8 @@ describe('DiffUtils', () => {
             const { calculateStringSimilarity, jaccardNGramSimilarity } = __diffUtilsTesting;
 
             expect(calculateStringSimilarity('', 'non-empty')).toBe(0);
+            expect(calculateStringSimilarity(undefined, 'value')).toBe(0);
+            expect(calculateStringSimilarity('value', undefined)).toBe(0);
             expect(jaccardNGramSimilarity('abc', 'abd', 5)).toBeCloseTo(2 / 3, 5);
 
             // Test swap logic in levenshteinRatioTwoRow by passing longer string first
@@ -428,6 +469,116 @@ describe('DiffUtils', () => {
 
             // Should still work correctly even with duplicate paths
             expect(result.diffInformations).toHaveLength(1);
+        });
+    });
+
+    describe('mergeRenamedFiles', () => {
+        const { mergeRenamedFiles } = __diffUtilsTesting;
+
+        it('should skip merges when contents are unavailable', () => {
+            const diffInformation: DiffInformation[] = [
+                {
+                    title: 'created-no-content',
+                    modifiedPath: 'created-no-content',
+                    originalPath: '',
+                    diffReady: false,
+                    fileStatus: FileStatus.CREATED,
+                },
+                {
+                    title: 'created-with-content',
+                    modifiedPath: 'created-with-content',
+                    originalPath: '',
+                    modifiedFileContent: 'short content',
+                    diffReady: false,
+                    fileStatus: FileStatus.CREATED,
+                },
+                {
+                    title: 'deleted-no-content',
+                    modifiedPath: '',
+                    originalPath: 'deleted-no-content',
+                    diffReady: false,
+                    fileStatus: FileStatus.DELETED,
+                },
+                {
+                    title: 'deleted-different-length',
+                    modifiedPath: '',
+                    originalPath: 'deleted-different-length',
+                    originalFileContent: 'content with a very different length from the created file',
+                    diffReady: false,
+                    fileStatus: FileStatus.DELETED,
+                },
+            ];
+
+            mergeRenamedFiles(diffInformation);
+
+            expect(diffInformation.some((info) => info.fileStatus === FileStatus.RENAMED)).toBeFalse();
+        });
+
+        it('should skip merge when quick similarity check fails for large files', () => {
+            const createdContent = 'A' + 'x'.repeat(2500) + 'B';
+            const deletedContent = 'Z' + 'x'.repeat(2500) + 'Y';
+
+            const diffInformation: DiffInformation[] = [
+                {
+                    title: 'created-large',
+                    modifiedPath: 'created-large',
+                    originalPath: '',
+                    modifiedFileContent: createdContent,
+                    diffReady: false,
+                    fileStatus: FileStatus.CREATED,
+                },
+                {
+                    title: 'deleted-large',
+                    modifiedPath: '',
+                    originalPath: 'deleted-large',
+                    originalFileContent: deletedContent,
+                    diffReady: false,
+                    fileStatus: FileStatus.DELETED,
+                },
+            ];
+
+            const result = mergeRenamedFiles(diffInformation, ['created-large'], ['deleted-large']);
+
+            expect(result[0].fileStatus).toBe(FileStatus.CREATED);
+            expect(result[1].fileStatus).toBe(FileStatus.DELETED);
+        });
+
+        it('should guard against missing deleted entries during merge application', () => {
+            const sharedContent = 'identical content for rename detection';
+            const diffInformation: DiffInformation[] = [
+                {
+                    title: 'created-one',
+                    modifiedPath: 'created-one',
+                    originalPath: '',
+                    modifiedFileContent: sharedContent,
+                    diffReady: false,
+                    fileStatus: FileStatus.CREATED,
+                },
+                {
+                    title: 'created-two',
+                    modifiedPath: 'created-two',
+                    originalPath: '',
+                    modifiedFileContent: sharedContent,
+                    diffReady: false,
+                    fileStatus: FileStatus.CREATED,
+                },
+                {
+                    title: 'deleted-original',
+                    modifiedPath: '',
+                    originalPath: 'deleted-original',
+                    originalFileContent: sharedContent,
+                    diffReady: false,
+                    fileStatus: FileStatus.DELETED,
+                },
+            ];
+
+            const result = mergeRenamedFiles(diffInformation);
+
+            expect(result).toHaveLength(2);
+            const renamedEntry = result.find((info) => info.fileStatus === FileStatus.RENAMED);
+            const remainingCreated = result.find((info) => info.fileStatus === FileStatus.CREATED);
+            expect(renamedEntry).toBeDefined();
+            expect(remainingCreated?.title).toBe('created-two');
         });
     });
 
@@ -456,6 +607,11 @@ describe('DiffUtils', () => {
 
             const totalSamples = Array.from(map.values()).reduce((sum, value) => sum + value, 0);
             expect(totalSamples).toBe(4);
+        });
+
+        it('should return an empty map for non-positive stride or empty content', () => {
+            expect(sampleLineHashes('content', 0, 10).size).toBe(0);
+            expect(sampleLineHashes('', 5, 0).size).toBe(0);
         });
 
         it('should generate stable hashes for identical lines', () => {

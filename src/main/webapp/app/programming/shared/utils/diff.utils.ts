@@ -271,8 +271,8 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
  * @param secondString The second string to compare
  * @returns Similarity ratio between 0 and 1
  */
-function calculateStringSimilarity(firstString: string, secondString: string): number {
-    if (!firstString || !secondString) {
+function calculateStringSimilarity(firstString?: string, secondString?: string): number {
+    if (firstString === undefined || secondString === undefined) {
         return 0;
     }
     if (firstString === secondString) {
@@ -626,4 +626,5 @@ export const __diffUtilsTesting = {
     sampleLineHashes,
     hashLine,
     MAX_BYTES_FOR_DIFF,
+    mergeRenamedFiles,
 };
