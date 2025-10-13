@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ChatHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
-import de.tum.cit.aet.artemis.atlas.service.AtlasAgentToolsService;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 
 /**
@@ -68,39 +67,26 @@ public class AtlasAgentResource {
         log.debug("Received chat message for course {}: {}", courseId, request.message().substring(0, Math.min(request.message().length(), 50)));
 
         try {
-            // Reset competencies modified flag at start of request
-            AtlasAgentToolsService.resetCompetenciesModified();
-
             final var future = atlasAgentService.processChatMessage(request.message(), courseId, request.sessionId());
-            final String response = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            final var result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-            // Check if competencies were modified via ThreadLocal flag
-            boolean competenciesModified = AtlasAgentToolsService.wereCompetenciesModified();
-
-            return ResponseEntity.ok(new AtlasAgentChatResponseDTO(response, request.sessionId(), ZonedDateTime.now(), true, competenciesModified));
+            return ResponseEntity.ok(new AtlasAgentChatResponseDTO(result.message(), request.sessionId(), ZonedDateTime.now(), true, result.competenciesModified()));
         }
         catch (TimeoutException te) {
             log.warn("Chat timed out for course {}: {}", courseId, te.getMessage());
-            boolean competenciesModified = AtlasAgentToolsService.wereCompetenciesModified();
             return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
-                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", request.sessionId(), ZonedDateTime.now(), false, competenciesModified));
+                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", request.sessionId(), ZonedDateTime.now(), false, false));
         }
         catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             log.warn("Chat interrupted for course {}: {}", courseId, ie.getMessage());
-            boolean competenciesModified = AtlasAgentToolsService.wereCompetenciesModified();
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(new AtlasAgentChatResponseDTO("The request was interrupted. Please try again.", request.sessionId(), ZonedDateTime.now(), false, competenciesModified));
+                    .body(new AtlasAgentChatResponseDTO("The request was interrupted. Please try again.", request.sessionId(), ZonedDateTime.now(), false, false));
         }
         catch (ExecutionException ee) {
             log.error("Upstream error processing chat for course {}: {}", courseId, ee.getMessage(), ee);
-            boolean competenciesModified = AtlasAgentToolsService.wereCompetenciesModified();
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(new AtlasAgentChatResponseDTO("Upstream error while processing your request.", request.sessionId(), ZonedDateTime.now(), false, competenciesModified));
-        }
-        finally {
-            // Cleanup ThreadLocal to prevent memory leaks
-            AtlasAgentToolsService.cleanup();
+                    .body(new AtlasAgentChatResponseDTO("Upstream error while processing your request.", request.sessionId(), ZonedDateTime.now(), false, false));
         }
     }
 

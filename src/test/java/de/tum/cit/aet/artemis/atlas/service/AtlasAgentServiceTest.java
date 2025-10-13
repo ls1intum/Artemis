@@ -49,14 +49,16 @@ class AtlasAgentServiceTest {
         String expectedResponse = "I can help you create competencies for Java programming. Here are my suggestions:\n1. Object-Oriented Programming (APPLY)\n2. Data Structures (UNDERSTAND)\n3. Algorithms (ANALYZE)";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
 
         // When
-        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.get()).isEqualTo(expectedResponse);
+        AgentChatResult chatResult = result.get();
+        assertThat(chatResult.message()).isEqualTo(expectedResponse);
+        assertThat(chatResult.competenciesModified()).isFalse(); // No ChatMemory in test, so should be false
     }
 
     @Test
@@ -68,14 +70,16 @@ class AtlasAgentServiceTest {
         String emptyResponse = "";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(emptyResponse)))));
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(emptyResponse)))));
 
         // When
-        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.get()).isEqualTo("I apologize, but I couldn't generate a response.");
+        AgentChatResult chatResult = result.get();
+        assertThat(chatResult.message()).isEqualTo("I apologize, but I couldn't generate a response.");
+        assertThat(chatResult.competenciesModified()).isFalse();
     }
 
     @Test
@@ -86,14 +90,16 @@ class AtlasAgentServiceTest {
         String sessionId = "course_789";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
 
         // When
-        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.get()).isEqualTo("I apologize, but I couldn't generate a response.");
+        AgentChatResult chatResult = result.get();
+        assertThat(chatResult.message()).isEqualTo("I apologize, but I couldn't generate a response.");
+        assertThat(chatResult.competenciesModified()).isFalse();
     }
 
     @Test
@@ -105,14 +111,16 @@ class AtlasAgentServiceTest {
         String whitespaceResponse = "   \n\t  ";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(whitespaceResponse)))));
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(whitespaceResponse)))));
 
         // When
-        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.get()).isEqualTo("I apologize, but I couldn't generate a response.");
+        AgentChatResult chatResult = result.get();
+        assertThat(chatResult.message()).isEqualTo("I apologize, but I couldn't generate a response.");
+        assertThat(chatResult.competenciesModified()).isFalse();
     }
 
     @Test
@@ -127,11 +135,13 @@ class AtlasAgentServiceTest {
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("ChatModel error"));
 
         // When
-        CompletableFuture<String> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.get()).isEqualTo("I apologize, but I'm having trouble processing your request right now. Please try again later.");
+        AgentChatResult chatResult = result.get();
+        assertThat(chatResult.message()).isEqualTo("I apologize, but I'm having trouble processing your request right now. Please try again later.");
+        assertThat(chatResult.competenciesModified()).isFalse();
     }
 
     @Test

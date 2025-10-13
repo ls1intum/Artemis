@@ -20,7 +20,7 @@ public record AtlasAgentChatResponseDTO(
 
         @NotNull ZonedDateTime timestamp,
 
-        boolean success,
+        Boolean success,
 
         Boolean competenciesModified
 

@@ -47,15 +47,16 @@ public class AtlasAgentService {
     }
 
     /**
-     * Process a chat message for the given course and return AI response.
+     * Process a chat message for the given course and return AI response with modification status.
      * Uses session-based memory to maintain conversation context across popup close/reopen events.
+     * Detects competency modifications by checking if the response contains specific keywords .
      *
      * @param message   The user's message
      * @param courseId  The course ID for context
      * @param sessionId The session ID for maintaining conversation memory
-     * @return AI response
+     * @return Result containing the AI response and competency modification flag
      */
-    public CompletableFuture<String> processChatMessage(String message, Long courseId, String sessionId) {
+    public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
         try {
             log.debug("Processing chat message for course {} with session {} (messageLength={} chars)", courseId, sessionId, message.length());
 
@@ -74,21 +75,25 @@ public class AtlasAgentService {
                 promptSpec = promptSpec.advisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
             }
 
-            // Add tools if available
-            // Note: Use toolCallbacks() for ToolCallbackProvider, not tools() which expects tool objects
+            // Add tools
             if (toolCallbackProvider != null) {
                 promptSpec = promptSpec.toolCallbacks(toolCallbackProvider);
             }
 
             String response = promptSpec.call().content();
 
-            log.info("Successfully processed chat message for course {} with session {}", courseId, sessionId);
-            return CompletableFuture.completedFuture(response != null && !response.trim().isEmpty() ? response : "I apologize, but I couldn't generate a response.");
+            // if response mentions creation/modification, set flag
+            boolean competenciesModified = response != null && (response.toLowerCase().contains("created") || response.toLowerCase().contains("successfully created")
+                    || response.toLowerCase().contains("competency titled"));
+
+            log.info("Successfully processed chat message for course {} with session {} (competenciesModified={})", courseId, sessionId, competenciesModified);
+            String finalResponse = response != null && !response.trim().isEmpty() ? response : "I apologize, but I couldn't generate a response.";
+            return CompletableFuture.completedFuture(new AgentChatResult(finalResponse, competenciesModified));
 
         }
         catch (Exception e) {
             log.error("Error processing chat message for course {} with session {}: {}", courseId, sessionId, e.getMessage(), e);
-            return CompletableFuture.completedFuture("I apologize, but I'm having trouble processing your request right now. Please try again later.");
+            return CompletableFuture.completedFuture(new AgentChatResult("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
         }
     }
 

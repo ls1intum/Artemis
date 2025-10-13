@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -10,6 +12,9 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -30,42 +35,19 @@ public class AtlasAgentToolsService {
 
     private static final Logger log = LoggerFactory.getLogger(AtlasAgentToolsService.class);
 
+    private final ObjectMapper objectMapper;
+
     private final CompetencyRepository competencyRepository;
 
     private final CourseRepository courseRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    // Thread-safe flag to track if competencies were modified in current request
-    private static final ThreadLocal<Boolean> competenciesModified = ThreadLocal.withInitial(() -> false);
-
-    public AtlasAgentToolsService(CompetencyRepository competencyRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
+    public AtlasAgentToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
+        this.objectMapper = objectMapper;
         this.competencyRepository = competencyRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
-    }
-
-    /**
-     * Check if competencies were modified in the current request.
-     *
-     * @return true if competencies were created/modified
-     */
-    public static boolean wereCompetenciesModified() {
-        return competenciesModified.get();
-    }
-
-    /**
-     * Reset the competencies modified flag. Should be called at the start of each request.
-     */
-    public static void resetCompetenciesModified() {
-        competenciesModified.set(false);
-    }
-
-    /**
-     * Clean up ThreadLocal to prevent memory leaks.
-     */
-    public static void cleanup() {
-        competenciesModified.remove();
     }
 
     /**
@@ -81,28 +63,30 @@ public class AtlasAgentToolsService {
 
             Optional<Course> courseOpt = courseRepository.findById(courseId);
             if (courseOpt.isEmpty()) {
-                return "{\"error\": \"Course not found with ID: " + courseId + "\"}";
+                return toJson(Map.of("error", "Course not found with ID: " + courseId));
             }
 
             Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
 
-            StringBuilder result = new StringBuilder();
-            result.append("{\"courseId\": ").append(courseId).append(", \"competencies\": [");
+            // Build competency list using Jackson
+            var competencyList = competencies.stream().map(competency -> {
+                Map<String, Object> compData = new LinkedHashMap<>();
+                compData.put("id", competency.getId());
+                compData.put("title", competency.getTitle());
+                compData.put("description", competency.getDescription());
+                compData.put("taxonomy", competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : "");
+                return compData;
+            }).toList();
 
-            competencies.forEach(competency -> result.append("{").append("\"id\": ").append(competency.getId()).append(", ").append("\"title\": \"")
-                    .append(escapeJson(competency.getTitle())).append("\", ").append("\"description\": \"").append(escapeJson(competency.getDescription())).append("\", ")
-                    .append("\"taxonomy\": \"").append(competency.getTaxonomy() != null ? competency.getTaxonomy() : "").append("\"").append("}, "));
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("courseId", courseId);
+            response.put("competencies", competencyList);
 
-            if (!competencies.isEmpty()) {
-                result.setLength(result.length() - 2); // Remove last comma
-            }
-
-            result.append("]}");
-            return result.toString();
+            return toJson(response);
         }
         catch (Exception e) {
             log.error("Error getting course competencies for course {}: {}", courseId, e.getMessage(), e);
-            return "{\"error\": \"Failed to retrieve competencies: " + e.getMessage() + "\"}";
+            return toJson(Map.of("error", "Failed to retrieve competencies: " + e.getMessage()));
         }
     }
 
@@ -124,7 +108,7 @@ public class AtlasAgentToolsService {
 
             Optional<Course> courseOpt = courseRepository.findById(courseId);
             if (courseOpt.isEmpty()) {
-                return "{\"error\": \"Course not found with ID: " + courseId + "\"}";
+                return toJson(Map.of("error", "Course not found with ID: " + courseId));
             }
 
             Course course = courseOpt.get();
@@ -145,26 +129,23 @@ public class AtlasAgentToolsService {
 
             Competency savedCompetency = competencyRepository.save(competency);
 
-            // Mark that competencies were modified in this request
-            competenciesModified.set(true);
+            // Build response using Jackson
+            Map<String, Object> competencyData = new LinkedHashMap<>();
+            competencyData.put("id", savedCompetency.getId());
+            competencyData.put("title", savedCompetency.getTitle());
+            competencyData.put("description", savedCompetency.getDescription());
+            competencyData.put("taxonomy", savedCompetency.getTaxonomy() != null ? savedCompetency.getTaxonomy().toString() : "");
+            competencyData.put("courseId", courseId);
 
-            return String.format("""
-                    {
-                        "success": true,
-                        "competency": {
-                            "id": %d,
-                            "title": "%s",
-                            "description": "%s",
-                            "taxonomy": "%s",
-                            "courseId": %d
-                        }
-                    }
-                    """, savedCompetency.getId(), escapeJson(savedCompetency.getTitle()), escapeJson(savedCompetency.getDescription()),
-                    savedCompetency.getTaxonomy() != null ? savedCompetency.getTaxonomy() : "", courseId);
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("success", true);
+            response.put("competency", competencyData);
+
+            return toJson(response);
         }
         catch (Exception e) {
             log.error("Error creating competency for course {}: {}", courseId, e.getMessage(), e);
-            return "{\"error\": \"Failed to create competency: " + e.getMessage() + "\"}";
+            return toJson(Map.of("error", "Failed to create competency: " + e.getMessage()));
         }
     }
 
@@ -207,38 +188,49 @@ public class AtlasAgentToolsService {
 
             Optional<Course> courseOpt = courseRepository.findById(courseId);
             if (courseOpt.isEmpty()) {
-                return "{\"error\": \"Course not found with ID: " + courseId + "\"}";
+                return toJson(Map.of("error", "Course not found with ID: " + courseId));
             }
 
             // NOTE: adapt to your ExerciseRepository method
             Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
 
-            StringBuilder result = new StringBuilder();
-            result.append("{\"courseId\": ").append(courseId).append(", \"exercises\": [");
+            // Build exercise list using Jackson
+            var exerciseList = exercises.stream().map(exercise -> {
+                Map<String, Object> exerciseData = new LinkedHashMap<>();
+                exerciseData.put("id", exercise.getId());
+                exerciseData.put("title", exercise.getTitle());
+                exerciseData.put("type", exercise.getClass().getSimpleName());
+                exerciseData.put("maxPoints", exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0);
+                exerciseData.put("releaseDate", exercise.getReleaseDate() != null ? exercise.getReleaseDate().toString() : "");
+                exerciseData.put("dueDate", exercise.getDueDate() != null ? exercise.getDueDate().toString() : "");
+                return exerciseData;
+            }).toList();
 
-            exercises.forEach(exercise -> result.append("{").append("\"id\": ").append(exercise.getId()).append(", ").append("\"title\": \"")
-                    .append(escapeJson(exercise.getTitle())).append("\", ").append("\"type\": \"").append(exercise.getClass().getSimpleName()).append("\", ")
-                    .append("\"maxPoints\": ").append(exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0).append(", ").append("\"releaseDate\": \"")
-                    .append(exercise.getReleaseDate() != null ? exercise.getReleaseDate().toString() : "").append("\", ").append("\"dueDate\": \"")
-                    .append(exercise.getDueDate() != null ? exercise.getDueDate().toString() : "").append("\"").append("}, "));
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("courseId", courseId);
+            response.put("exercises", exerciseList);
 
-            if (!exercises.isEmpty()) {
-                result.setLength(result.length() - 2);
-            }
-
-            result.append("]}");
-            return result.toString();
+            return toJson(response);
         }
         catch (Exception e) {
             log.error("Error getting exercises for course {}: {}", courseId, e.getMessage(), e);
-            return "{\"error\": \"Failed to retrieve exercises: " + e.getMessage() + "\"}";
+            return toJson(Map.of("error", "Failed to retrieve exercises: " + e.getMessage()));
         }
     }
 
-    private String escapeJson(String input) {
-        if (input == null) {
-            return "";
+    /**
+     * Convert object to JSON using Jackson ObjectMapper.
+     *
+     * @param object the object to serialize
+     * @return JSON string representation
+     */
+    private String toJson(Object object) {
+        try {
+            return objectMapper.writeValueAsString(object);
         }
-        return input.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
+        catch (JsonProcessingException e) {
+            log.error("Failed to serialize object to JSON: {}", e.getMessage(), e);
+            return "{\"error\": \"Failed to serialize response\"}";
+        }
     }
 }
