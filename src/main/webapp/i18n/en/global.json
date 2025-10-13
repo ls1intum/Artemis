@@ -119,6 +119,7 @@
             },
             "admin": {
                 "main": "Server Administration",
+                "loginWithPasskey": "Sign in with a passkey to use admin features",
                 "upcomingExamsAndExercises": "Upcoming exams & exercises",
                 "userManagement": "User management",
                 "organizationManagement": "Organization management",

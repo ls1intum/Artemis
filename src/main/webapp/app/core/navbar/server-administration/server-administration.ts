@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -10,6 +10,7 @@ import {
     faFlag,
     faGears,
     faHeart,
+    faKey,
     faList,
     faLock,
     faPuzzlePiece,
@@ -26,6 +27,7 @@ import {
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { IsLoggedInWithPasskeyGuard } from 'app/core/auth/is-logged-in-with-passkey/is-logged-in-with-passkey.guard';
 
 @Component({
     selector: 'jhi-server-administration',
@@ -63,6 +65,9 @@ export class ServerAdministration {
     protected readonly faEye = faEye;
     protected readonly faUser = faUser;
     protected readonly faUserPlus = faUserPlus;
+    protected readonly faKey = faKey;
+
+    private readonly isLoggedInWithPasskeyGuard = inject(IsLoggedInWithPasskeyGuard);
 
     isExamActive = input<boolean>(false);
     isExamStarted = input<boolean>(false);
@@ -74,6 +79,12 @@ export class ServerAdministration {
     examEnabled = input<boolean>(false);
 
     collapseNavbarListener = output<void>();
+
+    protected isLoggedInWIthPasskey: boolean = false;
+
+    constructor() {
+        this.isLoggedInWIthPasskey = this.isLoggedInWithPasskeyGuard.isLoggedInWithPasskey();
+    }
 
     protected collapseNavbar() {
         this.collapseNavbarListener.emit();
