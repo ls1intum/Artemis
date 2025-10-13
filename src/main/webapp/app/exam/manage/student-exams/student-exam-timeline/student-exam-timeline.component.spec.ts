@@ -1,5 +1,3 @@
-jest.setTimeout(10000);
-
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
