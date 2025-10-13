@@ -214,9 +214,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     }
 
     private IrisCourseChatSession createSessionInternal(Course course, User user, boolean sendInitialMessage) {
-        var s = new IrisCourseChatSession(course, user);
-        s.setTitle("New chat");
-        var session = irisCourseChatSessionRepository.save(s);
+        var courseChat = new IrisCourseChatSession(course, user);
+        courseChat.setTitle("New chat");
+        var session = irisCourseChatSessionRepository.save(courseChat);
 
         if (sendInitialMessage) {
             // Run async to allow the session to be returned immediately

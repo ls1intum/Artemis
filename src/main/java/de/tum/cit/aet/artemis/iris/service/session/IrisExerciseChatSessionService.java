@@ -356,9 +356,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     private IrisProgrammingExerciseChatSession createSessionInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
         checkIfExamExercise(exercise);
 
-        var s = new IrisProgrammingExerciseChatSession(exercise, user);
-        s.setTitle("New chat");
-        var session = irisExerciseChatSessionRepository.save(s);
+        var exerciseChat = new IrisProgrammingExerciseChatSession(exercise, user);
+        exerciseChat.setTitle("New chat");
+        var session = irisExerciseChatSessionRepository.save(exerciseChat);
 
         if (sendInitialMessage) {
             // Run async to allow the session to be returned immediately
