@@ -171,7 +171,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * This method is used to load the build jobs from the backend when the component is initialized.
+     * This method is used to load the build jobs from the server when the component is initialized.
      * This ensures that the table is filled with data when the page is loaded or refreshed otherwise the user needs to
      * wait until the websocket subscription receives the data.
      */
