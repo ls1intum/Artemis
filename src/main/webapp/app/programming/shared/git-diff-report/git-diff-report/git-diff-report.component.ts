@@ -101,8 +101,8 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
                 }
             },
             {
-                // Load content when element is within 200px of viewport
-                rootMargin: '200px 0px',
+                // Load content when element is within 400px of viewport
+                rootMargin: '400px 0px',
                 threshold: 0,
             },
         );
