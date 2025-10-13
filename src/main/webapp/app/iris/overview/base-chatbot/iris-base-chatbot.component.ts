@@ -16,7 +16,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, computed, inject, input, signal } from '@angular/core';
-import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
+import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -254,6 +254,11 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
                     console.log('Created memories found in message:', message.createdMemories);
                 }
             });
+            for (const message of messages) {
+                if (this.isIrisUserMessage(message) && (message as IrisUserMessage).sender === IrisSender.USER) {
+                    this.isCloudEnabled = message.isCloudEnabled;
+                }
+            }
         });
         this.chatSessionsSubscription = this.chatService.availableChatSessions().subscribe((sessions) => {
             this.chatSessions = sessions;
@@ -300,6 +305,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         if (this.numNewMessages > 0) {
             this.scrollToBottom('smooth');
         }
+    }
+
+    isIrisUserMessage(msg: unknown): msg is IrisUserMessage {
+        return typeof msg === 'object' && msg !== null && 'isCloudEnabled' in (msg as any) && typeof (msg as any).isCloudEnabled === 'boolean';
     }
 
     ngOnDestroy() {

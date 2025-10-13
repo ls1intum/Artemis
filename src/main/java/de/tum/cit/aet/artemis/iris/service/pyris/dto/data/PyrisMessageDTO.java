@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisMessageDTO(@Nullable Long id, Instant sentAt, IrisMessageSender sender, List<PyrisMessageContentBaseDTO> contents) {
+public record PyrisMessageDTO(@Nullable Long id, Instant sentAt, IrisMessageSender sender, List<PyrisMessageContentBaseDTO> contents, boolean isCloudEnabled) {
 
     /**
      * Convert an IrisMessage to a PyrisMessageDTO.
@@ -35,6 +35,6 @@ public record PyrisMessageDTO(@Nullable Long id, Instant sentAt, IrisMessageSend
             }
             return result;
         }).filter(Objects::nonNull).toList();
-        return new PyrisMessageDTO(message.getId(), toInstant(message.getSentAt()), message.getSender(), content);
+        return new PyrisMessageDTO(message.getId(), toInstant(message.getSentAt()), message.getSender(), content, message.getIsCloudEnabled());
     }
 }
