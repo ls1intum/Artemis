@@ -69,6 +69,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     courseId = input<number | undefined>(undefined);
     onSearch = output<ConversationGlobalSearchConfig>();
     onSelectionChange = output<ConversationGlobalSearchConfig>();
+    onClearSearch = output<void>();
 
     readonly searchElement = viewChild<ElementRef>('searchInput');
 
@@ -111,6 +112,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
         this.selectedConversations = [];
         this.selectedAuthors = [];
         this.emitSelectionChange();
+        this.onClearSearch.emit();
     }
 
     filterItems(event: Event): void {

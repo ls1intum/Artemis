@@ -783,5 +783,110 @@ examples.forEach((activeConversation) => {
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(444);
             });
         });
+
+        describe('Search Clear and Conversation Restoration', () => {
+            beforeEach(() => {
+                fixture.detectChanges();
+            });
+
+            it('should restore previous conversation when cleared after search', () => {
+                const previousConversation = { id: 42, type: 'channel' } as ConversationDTO;
+                component.activeConversation = previousConversation;
+                component.lastKnownConversationId = 42;
+
+                // Start search (this should save the conversation)
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [previousConversation],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toEqual(previousConversation);
+
+                // Clear search - should restore previous conversation
+                component.onClearSearchAndRestorePrevious();
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(42);
+                expect(component.previousConversationBeforeSearch).toBeUndefined();
+            });
+
+            it('should restore last known conversation when no previous conversation before search', () => {
+                component.previousConversationBeforeSearch = undefined;
+                component.lastKnownConversationId = 99;
+
+                component.onClearSearchAndRestorePrevious();
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(99);
+            });
+
+            it('should set active conversation to undefined when no previous or last known conversation', () => {
+                component.previousConversationBeforeSearch = undefined;
+                component.lastKnownConversationId = undefined;
+
+                component.onClearSearchAndRestorePrevious();
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(undefined);
+            });
+
+            it('should track last known conversation ID when active conversation changes', fakeAsync(() => {
+                const newConversation = { id: 123, type: 'channel' } as ConversationDTO;
+                jest.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(newConversation));
+
+                component.ngOnInit();
+                tick();
+
+                expect(component.lastKnownConversationId).toBe(123);
+            }));
+
+            it('should save active conversation only once when search starts', () => {
+                const conversation = { id: 50, type: 'channel' } as ConversationDTO;
+                component.activeConversation = conversation;
+                component.previousConversationBeforeSearch = undefined;
+
+                // First selection - should save
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [conversation],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toEqual(conversation);
+
+                // Second selection - should NOT overwrite
+                const anotherConversation = { id: 60, type: 'channel' } as ConversationDTO;
+                component.activeConversation = anotherConversation;
+
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [anotherConversation],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toEqual(conversation); // Still the first one
+            });
+
+            it('should not save conversation when no filters are active', () => {
+                const conversation = { id: 70, type: 'channel' } as ConversationDTO;
+                component.activeConversation = conversation;
+                component.previousConversationBeforeSearch = undefined;
+
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toBeUndefined();
+            });
+
+            it('should call closeSidebarOnMobile when clearing search', () => {
+                const closeSidebarSpy = jest.spyOn(component, 'closeSidebarOnMobile');
+                component.lastKnownConversationId = 1;
+
+                component.onClearSearchAndRestorePrevious();
+
+                expect(closeSidebarSpy).toHaveBeenCalled();
+            });
+        });
     });
 });
