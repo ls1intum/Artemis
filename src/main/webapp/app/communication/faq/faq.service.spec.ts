@@ -38,8 +38,8 @@ describe('Faq Service', () => {
         elemDefault.categories = [new FaqCategory('category1', '#6ae8ac')];
         courseId = 1;
 
-        createFaqDTODefault = new CreateFaqDTO(FaqState.ACCEPTED, 'Title', courseId, [new FaqCategory('category1', '#6ae8ac')], 'Answer');
-        updateFaqDTODefault = new UpdateFaqDTO(1, FaqState.ACCEPTED, 'Title', courseId, [new FaqCategory('category1', '#6ae8ac')], 'Answer');
+        createFaqDTODefault = CreateFaqDTO.toCreateFaqDto(elemDefault);
+        updateFaqDTODefault = UpdateFaqDTO.toUpdateDto(elemDefault);
     });
 
     afterEach(() => {
@@ -235,7 +235,7 @@ describe('Faq Service', () => {
             expect(filteredFaq).toIncludeAllMembers([faq1, faq11]);
         });
 
-        it('should convert String into FAQ categories   correctly', async () => {
+        it('should convert String into FAQ categories correctly', async () => {
             const convertedCategory = service.convertFaqCategoriesAsStringFromServer(['{"category":"category1", "color":"red"}']);
             expect(convertedCategory[0].category).toBe('category1');
             expect(convertedCategory[0].color).toBe('red');
