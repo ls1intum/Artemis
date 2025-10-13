@@ -32,6 +32,7 @@
         [disableActions]="!editable"
         [displayOnly]="forRepositoryView"
         [showEditorInstructions]="showEditorInstructions"
+        [isProblemStatementVisible]="isProblemStatementVisible()"
         [unsavedFiles]="unsavedFiles | keys"
         [errorFiles]="errorFiles"
         [editorState]="editorState"
@@ -46,7 +47,7 @@
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
     />
     <ng-container editorCenter>
-        @if (selectedFile === problemStatementIdentifier && showEditorInstructions && !forRepositoryView) {
+        @if (selectedFile === problemStatementIdentifier && showEditorInstructions && isProblemStatementVisible()) {
             <jhi-code-editor-instructions
                 (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
                 (onError)="onError($event)"
