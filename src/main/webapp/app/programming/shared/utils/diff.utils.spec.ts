@@ -292,8 +292,9 @@ describe('DiffUtils', () => {
 
             setupMonacoMocks([createLineChange(1, 1, 1, 1)]);
             mockDiffEditor.onDidUpdateDiff.mockImplementation((callback: () => void) => {
-                callback();
-                callback();
+                // Call the callback twice asynchronously to simulate repeated updates
+                setTimeout(() => callback(), 0);
+                setTimeout(() => callback(), 0);
                 return mockDiffListener;
             });
 
@@ -574,11 +575,15 @@ describe('DiffUtils', () => {
 
             const result = mergeRenamedFiles(diffInformation);
 
+            // When multiple created files match a single deleted file with identical content,
+            // only the first match is merged into a rename, and the remaining created file stays as-is
             expect(result).toHaveLength(2);
             const renamedEntry = result.find((info) => info.fileStatus === FileStatus.RENAMED);
             const remainingCreated = result.find((info) => info.fileStatus === FileStatus.CREATED);
             expect(renamedEntry).toBeDefined();
-            expect(remainingCreated?.title).toBe('created-two');
+            expect(renamedEntry?.title).toBe('deleted-original → created-one');
+            expect(remainingCreated).toBeDefined();
+            expect(remainingCreated?.modifiedPath).toBe('created-two');
         });
     });
 

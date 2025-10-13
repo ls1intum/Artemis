@@ -448,6 +448,7 @@ function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[
 
     // Track merges to apply after scanning
     const merges: Array<{ createdPath: string; deletedPath: string }> = [];
+    const usedDeletedPaths = new Set<string>();
 
     for (const createdPath of created) {
         const createdInfo = getByModifiedPath(createdPath);
@@ -460,6 +461,11 @@ function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[
         const maxLength = Math.ceil(createdContent.length * (1 + LENGTH_TOLERANCE));
 
         for (const deletedPath of deleted) {
+            // Skip deleted files that have already been matched
+            if (usedDeletedPaths.has(deletedPath)) {
+                continue;
+            }
+
             const deletedInfo = getByOriginalPath(deletedPath);
             const deletedContent = deletedInfo?.originalFileContent;
             if (!deletedContent) {
@@ -480,6 +486,7 @@ function mergeRenamedFiles(diffInformation: DiffInformation[], created?: string[
             const similarity = calculateStringSimilarity(createdContent, deletedContent);
             if (similarity >= SIMILARITY_THRESHOLD) {
                 merges.push({ createdPath, deletedPath });
+                usedDeletedPaths.add(deletedPath);
                 break; // One deleted partner is enough for this created
             }
         }

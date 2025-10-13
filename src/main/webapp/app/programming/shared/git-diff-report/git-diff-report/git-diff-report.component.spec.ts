@@ -444,7 +444,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         expect(MockIntersectionObserver.instances).toHaveLength(1);
         const observerInstance = MockIntersectionObserver.instances[0];
         const observedElements = observerInstance.observe.mock.calls.map((call) => call[0]);
-        const panelElements = Array.from(fixture.nativeElement.querySelectorAll('[data-title]'));
+        const panelElements = Array.from(fixture.nativeElement.querySelectorAll('[data-title]')) as Element[];
         const sixthElement = panelElements.find((element) => element.getAttribute('data-title') === 'Sixth.java');
         expect(sixthElement).toBeDefined();
         expect(observedElements).toContain(sixthElement);
@@ -480,7 +480,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
 
         expect(MockIntersectionObserver.instances).toHaveLength(1);
         const observerInstance = MockIntersectionObserver.instances[0];
-        const blankElement = Array.from(fixture.nativeElement.querySelectorAll('[data-title]')).find((element) => element.getAttribute('data-title') === '');
+        const blankElement = (Array.from(fixture.nativeElement.querySelectorAll('[data-title]')) as Element[]).find((element) => element.getAttribute('data-title') === '');
         expect(blankElement).toBeDefined();
 
         const observedElements = observerInstance.observe.mock.calls.map((call) => call[0]);
