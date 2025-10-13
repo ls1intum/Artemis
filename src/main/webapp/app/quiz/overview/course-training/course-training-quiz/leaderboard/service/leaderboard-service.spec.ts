@@ -52,7 +52,7 @@ describe('LeaderboardService', () => {
             ];
 
             const mockLeaderboardData: LeaderboardDTO = {
-                leaderboardEntryDTO: mockEntries,
+                leaderboardEntries: mockEntries,
                 hasUserSetSettings: true,
                 currentUserEntry: mockEntries[0],
                 currentTime: '2023-06-15 12:00:00',

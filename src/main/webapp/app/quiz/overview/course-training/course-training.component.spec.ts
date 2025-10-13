@@ -31,7 +31,7 @@ describe('CourseTrainingComponent', () => {
     };
 
     const mockLeaderboardDTO: LeaderboardDTO = {
-        leaderboardEntryDTO: [mockLeaderboardEntry],
+        leaderboardEntries: [mockLeaderboardEntry],
         hasUserSetSettings: true,
         currentUserEntry: mockLeaderboardEntry,
         currentTime: new Date(Date.now()).toISOString(),
