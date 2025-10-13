@@ -122,6 +122,12 @@ describe('TextEditorComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        // Ensure ngOnDestroy does not attempt to persist when tests leave unsaved changes
+        if (comp) {
+            // remove submission so canDeactivate() short-circuits to true
+            // @ts-ignore
+            comp.submission = undefined;
+        }
     });
 
     it('should use inputValues if present instead of loading new details', fakeAsync(() => {
@@ -470,6 +476,79 @@ describe('TextEditorComponent', () => {
         comp.ngOnDestroy();
         expect(textSubmissionService.update).toHaveBeenCalled();
     });
+
+    it('isAutomaticResult reflects automatic Athena result', () => {
+        comp.result = { assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result;
+        expect(comp.isAutomaticResult).toBeTrue();
+        comp.result = { assessmentType: AssessmentType.MANUAL } as Result;
+        expect(comp.isAutomaticResult).toBeFalse();
+    });
+
+    it('submitButtonTooltip covers all branches', () => {
+        comp.textExercise = {} as TextExercise;
+        // Due date missed allowed
+        comp.isAllowedToSubmitAfterDueDate = true;
+        expect(comp.submitButtonTooltip).toBe('entity.action.submitDueDateMissedTooltip');
+
+        // Active without due date
+        comp.isAllowedToSubmitAfterDueDate = false;
+        comp['isAlwaysActive'] = true as any;
+        comp.result = undefined as any;
+        comp.textExercise = { dueDate: undefined } as any;
+        expect(comp.submitButtonTooltip).toBe('entity.action.submitNoDueDateTooltip');
+
+        // Active with due date
+        comp.textExercise = { dueDate: dayjs() } as any;
+        expect(comp.submitButtonTooltip).toBe('entity.action.submitTooltip');
+
+        // Not active
+        comp['isAlwaysActive'] = false as any;
+        comp.result = { assessmentType: AssessmentType.MANUAL } as any;
+        expect(comp.submitButtonTooltip).toBe('entity.action.dueDateMissedTooltip');
+    });
+
+    it('canDeactivate true when no submission or unchanged; false when changed', () => {
+        // no submission
+        // @ts-ignore
+        delete comp.submission;
+        expect(comp.canDeactivate()).toBeTrue();
+        // unchanged
+        comp.submission = { text: 'same' } as TextSubmission;
+        comp.answer = 'same';
+        expect(comp.canDeactivate()).toBeTrue();
+        // changed
+        comp.answer = 'different';
+        expect(comp.canDeactivate()).toBeFalse();
+        // cleanup to avoid ngOnDestroy side-effects
+        comp.submission = undefined as any;
+    });
+
+    it('unloadNotification returns translation key when there are unsaved changes', () => {
+        const translate = TestBed.inject(TranslateService) as any;
+        jest.spyOn(translate, 'instant');
+        comp.submission = { text: 'before' } as TextSubmission;
+        comp.answer = 'after';
+        const event = new Event('beforeunload') as unknown as BeforeUnloadEvent;
+        const res = comp.unloadNotification(event);
+        expect(translate.instant).toHaveBeenCalledWith('pendingChanges');
+        expect(res).toBe('pendingChanges');
+        // cleanup to avoid ngOnDestroy side-effects
+        comp.submission = undefined as any;
+    });
+
+    it('submissionObservable emits after debounce on text input', fakeAsync(() => {
+        comp.submission = { text: '' } as TextSubmission;
+        comp.textExercise = { id: 1 } as TextExercise;
+        let emitted: any;
+        const sub = comp.submissionObservable.subscribe((s) => (emitted = s));
+        const textarea = document.createElement('textarea');
+        textarea.value = 'hello';
+        comp.onTextEditorInput({ target: textarea } as any as Event);
+        tick(2000);
+        expect(emitted?.text).toBe('hello');
+        sub.unsubscribe();
+        flush();
+    }));
 
     it('should load Iris settings when Iris profile is active and not in exam mode', fakeAsync(() => {
         const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
