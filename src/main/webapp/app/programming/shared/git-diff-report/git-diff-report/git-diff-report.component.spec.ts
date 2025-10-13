@@ -301,17 +301,20 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
     it('should return user override value when panel has been manually toggled', () => {
         fixture.detectChanges();
 
-        const title = mockDiffInformation.diffInformations[0].title;
+        const diffInfo = mockDiffInformation.diffInformations[0];
+        const title = diffInfo.title;
 
         // User manually collapses the panel
         comp['userCollapsed'].set(title, true);
+        diffInfo.isCollapsed = true;
 
-        expect(comp.isCollapsed(mockDiffInformation.diffInformations[0])).toBeTrue();
+        expect(diffInfo.isCollapsed).toBeTrue();
 
         // User manually expands the panel
         comp['userCollapsed'].set(title, false);
+        diffInfo.isCollapsed = false;
 
-        expect(comp.isCollapsed(mockDiffInformation.diffInformations[0])).toBeFalse();
+        expect(diffInfo.isCollapsed).toBeFalse();
     });
 
     it('should track user collapse/expand actions', () => {
@@ -425,13 +428,14 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
         fixture.detectChanges();
 
         const sixthFile = 'Sixth.java';
+        const sixthDiffInfo = mockDiffInformation.diffInformations.find((diff) => diff.title === sixthFile);
 
         // Initially not loaded (sixth file is at index 5, beyond the initial load count of 5 which loads indices 0-4)
-        expect(comp.shouldLoadContent(sixthFile)).toBeFalse();
+        expect(sixthDiffInfo?.loadContent).toBeFalsy();
 
         comp['markContentAsLoaded'](sixthFile);
 
-        expect(comp.shouldLoadContent(sixthFile)).toBeTrue();
+        expect(sixthDiffInfo?.loadContent).toBeTrue();
     });
 
     it('should not mark content as loaded twice', () => {

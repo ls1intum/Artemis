@@ -333,6 +333,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 error: () => {
+                    if (runId !== this.diffRunId) {
+                        return;
+                    }
                     this.lineChangesLoading = false;
                     this.diffDetailData.lineChangesLoading = false;
                 },

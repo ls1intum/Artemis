@@ -21,6 +21,8 @@ export interface DiffInformation {
     diffReady: boolean;
     fileStatus: FileStatus;
     lineChange?: LineChange;
+    isCollapsed?: boolean;
+    loadContent?: boolean;
 }
 
 export interface RepositoryDiffInformation {
@@ -118,7 +120,7 @@ function getDiffInformation(originalFileContentByPath: Map<string, string>, modi
             const inlineOriginal = typeof original === 'string' && original.length <= MAX_INLINE_BYTES ? original : undefined;
             const inlineModified = typeof modified === 'string' && modified.length <= MAX_INLINE_BYTES ? modified : undefined;
 
-            if (!modified && original) {
+            if (modified === undefined && original !== undefined) {
                 // DELETED
                 deleted.push(path);
                 return {
@@ -130,7 +132,7 @@ function getDiffInformation(originalFileContentByPath: Map<string, string>, modi
                     diffReady: false,
                     fileStatus: FileStatus.DELETED,
                 };
-            } else if (modified && !original) {
+            } else if (modified !== undefined && original === undefined) {
                 // CREATED
                 created.push(path);
                 return {
@@ -148,7 +150,7 @@ function getDiffInformation(originalFileContentByPath: Map<string, string>, modi
                     title: path,
                     modifiedPath: path,
                     originalPath: path,
-                    modifiedFileContent: inlineModified, // was missing before -> UI showed “No changes…”
+                    modifiedFileContent: inlineModified,
                     originalFileContent: inlineOriginal,
                     diffReady: false,
                     fileStatus: FileStatus.UNCHANGED, // path unchanged; content differs
@@ -210,6 +212,7 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
                 return;
             }
             finished = true;
+            clearTimeout(safetyTimeout);
             diffContainer.parentElement?.removeChild(diffContainer);
             diffListener?.dispose();
             diffEditor?.dispose();
@@ -217,6 +220,11 @@ function computeDiffsMonaco(originalFileContent: string, modifiedFileContent: st
             originalModel?.dispose();
             resolve(res);
         };
+
+        // Safety timeout to ensure the promise always resolves even if Monaco never emits
+        const safetyTimeout = setTimeout(() => {
+            finish(estimateLineChangeUsingSampling(originalFileContent, modifiedFileContent));
+        }, 10000); // 10 second timeout
 
         let originalModel: monaco.editor.ITextModel | undefined;
         let modifiedModel: monaco.editor.ITextModel | undefined;

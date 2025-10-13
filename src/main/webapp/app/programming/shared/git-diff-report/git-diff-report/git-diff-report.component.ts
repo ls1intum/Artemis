@@ -1,4 +1,18 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, QueryList, ViewChildren, computed, effect, input, signal } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    OnDestroy,
+    QueryList,
+    ViewChildren,
+    computed,
+    effect,
+    inject,
+    input,
+    signal,
+} from '@angular/core';
 import { faAngleDown, faAngleUp, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
@@ -9,7 +23,7 @@ import { captureException } from '@sentry/angular';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DiffInformation, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -66,6 +80,9 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     @ViewChildren('diffPanelContainer')
     private diffPanelContainers?: QueryList<ElementRef<HTMLElement>>;
 
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    private readonly hostElementRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
     constructor() {
         effect(() => {
             const info = this.repositoryDiffInformation();
@@ -85,30 +102,54 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
             this.updateAllDiffsReady();
             this.observeDiffPanels();
         });
+
+        // Update isCollapsed and loadContent properties when loadedTitles changes
+        effect(() => {
+            const loaded = this.loadedTitles();
+            const info = this.repositoryDiffInformation();
+
+            info.diffInformations.forEach((diff) => {
+                const isLoaded = loaded.has(diff.title);
+
+                diff.loadContent = isLoaded;
+
+                // Update isCollapsed based on user override or default
+                // Default: collapsed if not loaded, expanded if loaded
+                const override = this.userCollapsed.get(diff.title);
+                diff.isCollapsed = override !== undefined ? override : !isLoaded;
+            });
+
+            this.changeDetectorRef.markForCheck();
+        });
     }
 
     ngAfterViewInit(): void {
-        this.intersectionObserver = new IntersectionObserver(
-            (entries) => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) {
+        // Delay observer setup by 1 second to let initial 5 files load faster
+        setTimeout(() => {
+            const scrollRoot = this.findScrollRoot();
+            this.intersectionObserver = new IntersectionObserver(
+                (entries) => {
+                    for (const entry of entries) {
                         const title = (entry.target as HTMLElement).dataset['title'];
-                        if (title) {
-                            this.markContentAsLoaded(title);
-                        }
-                        this.intersectionObserver?.unobserve(entry.target);
-                    }
-                }
-            },
-            {
-                // Load content when element is within 400px of viewport
-                rootMargin: '400px 0px',
-                threshold: 0,
-            },
-        );
 
-        this.observeDiffPanels();
-        this.diffPanelsChangesSub = this.diffPanelContainers?.changes.subscribe(() => this.observeDiffPanels());
+                        if (entry.isIntersecting) {
+                            if (title) {
+                                this.markContentAsLoaded(title);
+                            }
+                            this.intersectionObserver?.unobserve(entry.target);
+                        }
+                    }
+                },
+                {
+                    // Load content when element is within 400px of the scroll root bottom (eg. git-diff-modal)
+                    root: scrollRoot ?? undefined,
+                    rootMargin: '0px 0px 400px 0px',
+                    threshold: 0,
+                },
+            );
+            this.observeDiffPanels();
+            this.diffPanelsChangesSub = this.diffPanelContainers?.changes.subscribe(() => this.observeDiffPanels());
+        }, 1000);
     }
 
     ngOnDestroy(): void {
@@ -144,10 +185,6 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
         this.onDiffReady(title, ready);
     }
 
-    shouldLoadContent(title: string): boolean {
-        return this.loadedTitles().has(title);
-    }
-
     markContentAsLoaded(title: string) {
         const current = this.loadedTitles();
         if (current.has(title)) {
@@ -158,6 +195,8 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
         updated.add(title);
         this.loadedTitles.set(updated);
         this.updateAllDiffsReady();
+
+        this.changeDetectorRef.markForCheck();
     }
 
     private updateAllDiffsReady() {
@@ -189,23 +228,26 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
         });
     }
 
-    isCollapsed(diffInformation: DiffInformation): boolean {
-        const override = this.userCollapsed.get(diffInformation.title);
-        if (override !== undefined) {
-            return override;
-        }
-
-        // Default to not collapsed - lazy loading handles performance
-        return false;
-    }
-
     onToggleClick(title: string, wasCollapsed: boolean) {
         // NgB will flip it after this click, so remember the new state.
-        this.userCollapsed.set(title, !wasCollapsed);
+        const newCollapsedState = !wasCollapsed;
+        this.userCollapsed.set(title, newCollapsedState);
+
+        const diffInfo = this.repositoryDiffInformation().diffInformations.find((diff) => diff.title === title);
+        if (diffInfo) {
+            diffInfo.isCollapsed = newCollapsedState;
+        }
+
+        this.changeDetectorRef.markForCheck();
 
         // If expanding (wasCollapsed = true), load content before expansion to prevent scroll jumps
         if (wasCollapsed) {
             this.markContentAsLoaded(title);
         }
+    }
+
+    private findScrollRoot(): HTMLElement | null {
+        const hostElement = this.hostElementRef.nativeElement;
+        return (hostElement.closest('.modal-body') as HTMLElement | null) ?? null;
     }
 }

@@ -69,7 +69,7 @@
     @for (diffInformation of repositoryDiffInformation().diffInformations; track diffInformation) {
         <div class="mt-2" #diffPanelContainer [attr.data-title]="diffInformation.title">
             <div ngbAccordion [destroyOnHide]="false" class="git-diff-file-panel">
-                <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="isCollapsed(diffInformation)" (shown)="markContentAsLoaded(diffInformation.title)">
+                <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="diffInformation.isCollapsed ?? false">
                     <div ngbAccordionHeader class="d-flex align-items-center justify-content-between">
                         <jhi-git-diff-file-panel-title [diffInformation]="diffInformation" />
                         <div>
@@ -93,7 +93,7 @@
                             <jhi-git-diff-file
                                 [allowSplitView]="allowSplitView()"
                                 [diffInformation]="diffInformation"
-                                [loadContent]="shouldLoadContent(diffInformation.title)"
+                                [loadContent]="diffInformation.loadContent ?? false"
                                 (onDiffReady)="handleDiffReady(diffInformation.title, $event)"
                             />
                         </div>
