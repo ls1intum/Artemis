@@ -124,8 +124,8 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
      * Replaces the build plan with the current text from the editor window.
      * @param event The text inside the editor window.
      */
-    onTextChanged(event: any) {
-        this.buildPlan!.buildPlan = event as string;
+    onTextChanged(event: { text: string; fileName: string }) {
+        this.buildPlan!.buildPlan = event.text;
     }
 
     /**

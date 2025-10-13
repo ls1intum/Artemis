@@ -99,7 +99,7 @@ describe('Build Plan Editor', () => {
             buildPlan: 'empty text',
         } as BuildPlan;
 
-        comp.onTextChanged('new text');
+        comp.onTextChanged({ text: 'new text', fileName: 'ignored' });
 
         expect(comp.buildPlan.buildPlan).toBe('new text');
     });
