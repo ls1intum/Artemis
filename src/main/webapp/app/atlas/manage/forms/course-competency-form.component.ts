@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, InputSignal, inject, input, output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
@@ -51,21 +51,21 @@ export interface CourseCompetencyFormData {
     template: '',
 })
 export abstract class CourseCompetencyFormComponent {
-    abstract formData: CourseCompetencyFormData;
+    abstract formData: InputSignal<CourseCompetencyFormData>;
 
     private fb = inject(FormBuilder);
     private courseCompetencyService = inject(CourseCompetencyService);
 
-    @Input() isEditMode = false;
-    @Input() isInConnectMode = false;
-    @Input() isInSingleLectureMode = false;
-    @Input() courseId: number;
-    @Input() lecturesOfCourseWithLectureUnits: Lecture[] = [];
-    @Input() averageStudentScore?: number;
-    @Input() hasCancelButton: boolean;
+    isEditMode = input<boolean>(false);
+    isInConnectMode = input<boolean>(false);
+    isInSingleLectureMode = input<boolean>(false);
+    courseId = input<number>(0);
+    lecturesOfCourseWithLectureUnits = input<Lecture[]>([]);
+    averageStudentScore = input<number>();
+    hasCancelButton = input<boolean>(false);
 
-    @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
-    @Output() formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
+    onCancel = output<void>();
+    formSubmitted = output<CourseCompetencyFormData>();
 
     form: FormGroup;
 
@@ -103,14 +103,14 @@ export abstract class CourseCompetencyFormComponent {
             return;
         }
         let initialTitle: string | undefined = undefined;
-        if (this.isEditMode && this.formData && this.formData.title) {
-            initialTitle = this.formData.title;
+        if (this.isEditMode() && this.formData() && this.formData().title) {
+            initialTitle = this.formData().title;
         }
         this.form = this.fb.nonNullable.group({
             title: [
                 undefined as string | undefined,
                 [Validators.required, Validators.maxLength(255)],
-                [titleUniqueValidator(this.courseCompetencyService, this.courseId, initialTitle)],
+                [titleUniqueValidator(this.courseCompetencyService, this.courseId(), initialTitle)],
             ],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             softDueDate: [undefined],

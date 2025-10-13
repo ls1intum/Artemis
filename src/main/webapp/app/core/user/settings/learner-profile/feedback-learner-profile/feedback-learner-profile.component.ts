@@ -98,7 +98,7 @@ export class FeedbackLearnerProfileComponent implements OnInit {
 
     /**
      * Handles toggle change events for profile settings.
-     * Updates the profile in the backend when any setting is changed.
+     * Updates the profile in the server when any setting is changed.
      */
     async onToggleChange(): Promise<void> {
         const profile = this.learnerProfile();
