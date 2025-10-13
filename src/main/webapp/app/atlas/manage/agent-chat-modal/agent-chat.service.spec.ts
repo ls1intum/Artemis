@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
 
 import { AgentChatService } from './agent-chat.service';
 
@@ -13,6 +14,10 @@ describe('AgentChatService', () => {
         instant: jest.fn(),
     };
 
+    const mockAccountService = {
+        userIdentity: { id: 42, login: 'testuser' },
+    };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -21,6 +26,10 @@ describe('AgentChatService', () => {
                 {
                     provide: TranslateService,
                     useValue: mockTranslateService,
+                },
+                {
+                    provide: AccountService,
+                    useValue: mockAccountService,
                 },
             ],
         });
@@ -39,18 +48,19 @@ describe('AgentChatService', () => {
 
     describe('sendMessage', () => {
         const courseId = 123;
+        const userId = 42;
         const message = 'Test message';
         const expectedUrl = `api/atlas/agent/courses/${courseId}/chat`;
         const expectedRequestBody = {
             message,
-            sessionId: `course_${courseId}`,
+            sessionId: `course_${courseId}_user_${userId}`,
         };
 
         it('should return AgentChatResponse from successful HTTP response', () => {
             // Arrange
             const mockResponse = {
                 message: 'Agent response message',
-                sessionId: 'course_123',
+                sessionId: `course_${courseId}_user_${userId}`,
                 timestamp: '2024-01-01T00:00:00Z',
                 success: true,
                 competenciesModified: false,

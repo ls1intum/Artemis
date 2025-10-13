@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ChatHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 
 /**
@@ -49,8 +50,11 @@ public class AtlasAgentResource {
 
     private final AtlasAgentService atlasAgentService;
 
-    public AtlasAgentResource(AtlasAgentService atlasAgentService) {
+    private final UserRepository userRepository;
+
+    public AtlasAgentResource(AtlasAgentService atlasAgentService, UserRepository userRepository) {
         this.atlasAgentService = atlasAgentService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -91,23 +95,24 @@ public class AtlasAgentResource {
     }
 
     /**
-     * GET /courses/{courseId}/history : Retrieve conversation history for a course
+     * GET /courses/{courseId}/history : Retrieve conversation history for the current user in a course
      *
      * @param courseId the course ID to retrieve history for
-     * @return list of historical messages
+     * @return list of historical messages for the current user
      */
     @GetMapping("courses/{courseId}/history")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<ChatHistoryMessageDTO>> getConversationHistory(@PathVariable Long courseId) {
-        log.debug("Retrieving conversation history for course {}", courseId);
+        var currentUser = userRepository.getUser();
+        log.debug("Retrieving conversation history for course {} and user {}", courseId, currentUser.getId());
 
-        String sessionId = "course_" + courseId;
+        String sessionId = "course_" + courseId + "_user_" + currentUser.getId();
         List<Message> messages = atlasAgentService.getConversationHistory(sessionId);
 
         // Convert Spring AI Message objects to DTOs, filtering out system messages
         List<ChatHistoryMessageDTO> history = messages.stream().filter(msg -> !(msg instanceof SystemMessage)).map(this::convertToDTO)
                 .collect(Collectors.toCollection(ArrayList::new));
-        log.debug("Returning {} historical messages for course {}", history.size(), courseId);
+        log.debug("Returning {} historical messages for course {} and user {}", history.size(), courseId, currentUser.getId());
         return ResponseEntity.ok(history);
     }
 

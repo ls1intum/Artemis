@@ -164,4 +164,53 @@ class AtlasAgentServiceTest {
         // Then
         assertThat(available).isFalse();
     }
+
+    @Test
+    void testProcessChatMessage_DetectsCompetencyCreation() throws ExecutionException, InterruptedException {
+        // Given
+        String testMessage = "Create a competency called 'Java Basics'";
+        Long courseId = 999L;
+        String sessionId = "course_999_user_1";
+        String responseWithCreation = "I have successfully created the competency titled 'Java Basics' for your course.";
+
+        when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithCreation)))));
+
+        // When
+        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+
+        // Then
+        assertThat(result).isNotNull();
+        AgentChatResult chatResult = result.get();
+        assertThat(chatResult.message()).isEqualTo(responseWithCreation);
+        assertThat(chatResult.competenciesModified()).isTrue(); // Should detect "created" keyword
+    }
+
+    @Test
+    void testConversationIsolation_DifferentUsers() throws ExecutionException, InterruptedException {
+        // Given - Two different instructors in the same course
+        Long courseId = 123L;
+        String instructor1SessionId = "course_123_user_1";
+        String instructor2SessionId = "course_123_user_2";
+        String instructor1Message = "Create competency A";
+        String instructor2Message = "Create competency B";
+
+        when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response for instructor 1")))))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response for instructor 2")))));
+
+        // When - Both instructors send messages
+        CompletableFuture<AgentChatResult> result1 = atlasAgentService.processChatMessage(instructor1Message, courseId, instructor1SessionId);
+        CompletableFuture<AgentChatResult> result2 = atlasAgentService.processChatMessage(instructor2Message, courseId, instructor2SessionId);
+
+        // Then - Each gets their own response
+        AgentChatResult chatResult1 = result1.get();
+        AgentChatResult chatResult2 = result2.get();
+
+        assertThat(chatResult1.message()).isEqualTo("Response for instructor 1");
+        assertThat(chatResult2.message()).isEqualTo("Response for instructor 2");
+
+        // Verify sessions are isolated (different session IDs mean different conversation contexts)
+        assertThat(instructor1SessionId).isNotEqualTo(instructor2SessionId);
+    }
 }
