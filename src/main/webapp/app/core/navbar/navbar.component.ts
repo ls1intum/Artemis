@@ -15,38 +15,11 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import {
-    faBars,
-    faBell,
-    faBook,
-    faBookOpen,
-    faBroom,
-    faChevronRight,
-    faCog,
-    faEye,
-    faFlag,
-    faGears,
-    faHeart,
-    faList,
-    faLock,
-    faPuzzlePiece,
-    faRobot,
-    faSignOutAlt,
-    faStamp,
-    faTachometerAlt,
-    faTasks,
-    faThLarge,
-    faThList,
-    faToggleOn,
-    faUniversity,
-    faUser,
-    faUserPlus,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBars, faBook, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faThLarge, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -64,6 +37,7 @@ import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/con
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { ServerAdministration } from 'app/core/navbar/server-administration/server-administration';
 
 @Component({
     selector: 'jhi-navbar',
@@ -91,6 +65,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
         FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
+        ServerAdministration,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -98,28 +73,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faThLarge = faThLarge;
     protected readonly faThList = faThList;
     protected readonly faUser = faUser;
-    protected readonly faBell = faBell;
-    protected readonly faUniversity = faUniversity;
-    protected readonly faEye = faEye;
     protected readonly faCog = faCog;
     protected readonly faWrench = faWrench;
     protected readonly faLock = faLock;
-    protected readonly faStamp = faStamp;
     protected readonly faFlag = faFlag;
     protected readonly faBook = faBook;
-    protected readonly faTasks = faTasks;
-    protected readonly faList = faList;
-    protected readonly faRobot = faRobot;
-    protected readonly faHeart = faHeart;
-    protected readonly faTachometerAlt = faTachometerAlt;
-    protected readonly faToggleOn = faToggleOn;
-    protected readonly faBookOpen = faBookOpen;
-    protected readonly faUserPlus = faUserPlus;
     protected readonly faSignOutAlt = faSignOutAlt;
-    protected readonly faGears = faGears;
-    protected readonly faPuzzlePiece = faPuzzlePiece;
     protected readonly faChevronRight = faChevronRight;
-    protected readonly faBroom = faBroom;
 
     private accountService = inject(AccountService);
     private loginService = inject(LoginService);
@@ -199,8 +159,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             neededWidthForIconOptionsToBeInMainNavBar = 580 + nameLength;
             neededWidthToNotRequireCollapse = 700 + nameLength;
 
-            const hasServerAdminOption = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
-            const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
+            const hasServerAdminOption = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN]);
+            const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect([Authority.TA, Authority.INSTRUCTOR, Authority.EDITOR, Authority.ADMIN]);
             if (hasCourseManageOption) {
                 neededWidthToNotRequireCollapse += 200;
                 neededWidthToDisplayCollapsedOptionsHorizontally += 200;
