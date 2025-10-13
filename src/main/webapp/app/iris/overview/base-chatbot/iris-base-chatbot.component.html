@@ -30,12 +30,27 @@
                     <fa-icon [icon]="faCircleInfo" class="info-button" />
                 </a>
             }
-            <label class="switch">
-                <fa-icon [icon]="faDownload" class="icon-left" [title]="'artemisApp.exerciseActions.useLocalLLM' | translate" />
-                <input type="checkbox" [(ngModel)]="isCloudEnabled" (change)="onChange()" />
-                <span class="slider round"></span>
-                <fa-icon [icon]="faCloud" class="icon-right" [title]="'artemisApp.exerciseActions.useCloudLLM' | translate" />
-            </label>
+            <div class="toggle-wrapper">
+                <div class="slider-background" [style.transform]="isCloudEnabled ? 'translateX(100%)' : 'translateX(0%)'"></div>
+
+                <p-selectbutton
+                    [(ngModel)]="isCloudEnabled"
+                    (onChange)="onChange()"
+                    [options]="[
+                        { label: ' ', value: false },
+                        { label: ' ', value: true },
+                    ]"
+                    optionValue="value"
+                    class="slider-select"
+                >
+                    <ng-template let-option pTemplate="item">
+                        <fa-icon
+                            [icon]="option.value ? faCloud : faDownload"
+                            [title]="option.value ? ('artemisApp.exerciseActions.useCloudLLM' | translate) : ('artemisApp.exerciseActions.useLocalLLM' | translate)"
+                        />
+                    </ng-template>
+                </p-selectbutton>
+            </div>
         </div>
         <div class="d-flex gap-2">
             @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {

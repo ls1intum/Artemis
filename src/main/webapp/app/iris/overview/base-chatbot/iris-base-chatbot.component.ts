@@ -46,6 +46,7 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
 import { faCloud, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { CloudSettingsService } from 'app/iris/overview/services/cloud-settings.service';
 import { TranslatePipe } from '@ngx-translate/core';
+import { SelectButtonModule } from 'primeng/selectbutton';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -116,6 +117,7 @@ import { TranslatePipe } from '@ngx-translate/core';
         HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
         NgClass,
+        SelectButtonModule,
     ],
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
