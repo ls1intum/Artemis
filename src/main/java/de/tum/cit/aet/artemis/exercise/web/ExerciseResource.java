@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
@@ -102,6 +103,8 @@ public class ExerciseResource {
 
     private final ParticipationRepository participationRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     private final Optional<ExamAccessApi> examAccessApi;
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
@@ -112,8 +115,8 @@ public class ExerciseResource {
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
-            ParticipationRepository participationRepository, Optional<ExamAccessApi> examAccessApi, Optional<IrisSettingsApi> irisSettingsApi,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi) {
+            ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService, Optional<ExamAccessApi> examAccessApi,
+            Optional<IrisSettingsApi> irisSettingsApi, Optional<PlagiarismCaseApi> plagiarismCaseApi) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -127,6 +130,7 @@ public class ExerciseResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizBatchService = quizBatchService;
         this.participationRepository = participationRepository;
+        this.exerciseVersionService = exerciseVersionService;
         this.examAccessApi = examAccessApi;
         this.irisSettingsApi = irisSettingsApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
@@ -369,7 +373,9 @@ public class ExerciseResource {
         log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        return ResponseEntity.ok(exerciseRepository.toggleSecondCorrection(exercise));
+        boolean updatedExercise = exerciseRepository.toggleSecondCorrection(exercise);
+        exerciseVersionService.createExerciseVersion(exercise);
+        return ResponseEntity.ok(updatedExercise);
     }
 
     /**

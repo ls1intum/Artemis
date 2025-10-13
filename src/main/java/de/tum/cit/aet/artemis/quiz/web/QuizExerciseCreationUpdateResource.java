@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -67,14 +68,18 @@ public class QuizExerciseCreationUpdateResource {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            AuthorizationCheckService authCheckService, ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi) {
+            AuthorizationCheckService authCheckService, ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi,
+            ExerciseVersionService exerciseVersionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -115,7 +120,7 @@ public class QuizExerciseCreationUpdateResource {
         channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
 
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
-
+        exerciseVersionService.createExerciseVersion(result);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -143,6 +148,7 @@ public class QuizExerciseCreationUpdateResource {
 
         quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO);
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files, notificationText);
+        exerciseVersionService.createExerciseVersion(result);
         return ResponseEntity.ok(result);
     }
 }

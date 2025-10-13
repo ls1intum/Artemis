@@ -53,6 +53,17 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     Set<FileUploadExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
 
     /**
+     * Finds a FileUploadExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or example submissions.
+     * Basic FileUploadExercise fields (exampleSolution, filePattern) are already included in the entity.
+     *
+     * @param exerciseId the id of the exercise to find
+     * @return the exercise with minimal data necessary for exercise versioning
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    Optional<FileUploadExercise> findForVersioningById(long exerciseId);
+
+    /**
      * Finds a file upload exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
      *
      * @param title    the title of the exercise

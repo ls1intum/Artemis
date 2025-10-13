@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -80,9 +81,11 @@ public class QuizExerciseImportDeletionResource {
 
     private final UserRepository userRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public QuizExerciseImportDeletionResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, UserRepository userRepository,
             ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, QuizExerciseImportService quizExerciseImportService, CourseService courseService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, ExerciseVersionService exerciseVersionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
@@ -91,6 +94,7 @@ public class QuizExerciseImportDeletionResource {
         this.quizExerciseImportService = quizExerciseImportService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -179,6 +183,7 @@ public class QuizExerciseImportDeletionResource {
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
         QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
 
+        exerciseVersionService.createExerciseVersion(newQuizExercise);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }

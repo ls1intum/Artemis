@@ -92,6 +92,17 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     Set<TextExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
 
     /**
+     * Finds a TextExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or example submissions.
+     * Basic TextExercise fields (exampleSolution) are already included in the entity.
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return {@link TextExercise}
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    Optional<TextExercise> findForVersioningById(long exerciseId);
+
+    /**
      * Finds a text exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
      *
      * @param title    the title of the exercise
