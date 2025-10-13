@@ -20,8 +20,6 @@ export class IsLoggedInWithPasskeyGuard implements CanActivate {
 
         this.router.navigate(['/']); // TODO redirect to a page that explains to login with passkey
 
-        // TODO prompt with modal to login with passkey instead of redirecting
-
         return false;
     }
 }
