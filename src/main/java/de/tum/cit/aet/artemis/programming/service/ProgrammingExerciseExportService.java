@@ -446,7 +446,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 .orElseThrow();
 
         Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 10);
-        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
+        var exportErrors = new ArrayList<String>();
+        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, exportErrors);
+
+        // Fail hard if anonymization was requested and any export error occurred (e.g., anonymization failure)
+        if (repositoryExportOptions.anonymizeRepository() && !exportErrors.isEmpty()) {
+            log.error("Aborting export for programming exercise {} because anonymization failed for one or more repositories.", programmingExercise.getId());
+            return null;
+        }
 
         try {
             // Create a zip folder containing the directories with the repositories.
@@ -609,6 +616,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
             if (repositoryExportOptions.anonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
+                // On failure, anonymize method now throws GitException; outer catch will handle and mark export as failed
                 gitService.anonymizeStudentCommits(repository, programmingExercise);
             }
             else {

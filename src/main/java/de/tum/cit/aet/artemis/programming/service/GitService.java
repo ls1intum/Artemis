@@ -759,9 +759,20 @@ public class GitService extends AbstractGitService {
             // Delete FETCH_HEAD containing the url of the last fetch
             Path fetchHeadPath = Path.of(repository.getDirectory().getPath(), "FETCH_HEAD");
             Files.deleteIfExists(fetchHeadPath);
+
+            // Validate anonymization end-state: no remotes, no logs, no FETCH_HEAD
+            boolean remotesCleared = studentGit.remoteList().call().isEmpty();
+            boolean logsDeleted = !Files.exists(logsPath);
+            boolean fetchHeadDeleted = !Files.exists(fetchHeadPath);
+            if (!remotesCleared || !logsDeleted || !fetchHeadDeleted) {
+                throw new GitException("Anonymization end-state validation failed (remotesCleared=" + remotesCleared + ", logsDeleted=" + logsDeleted + ", fetchHeadDeleted="
+                        + fetchHeadDeleted + ")");
+            }
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
+            // escalate so callers can decide on fallback behavior (e.g. delete .git)
             log.warn("Cannot anonymize the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+            throw new GitException("Cannot anonymize repository at " + repository.getLocalPath(), ex);
         }
         finally {
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
