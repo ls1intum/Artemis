@@ -913,8 +913,6 @@ public class ExamService {
             exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                     new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
 
-            exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
-                    new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
         }
         // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)
         overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
