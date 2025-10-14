@@ -75,4 +75,21 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
     Optional<OneToOneChat> findWithParticipantsAndUserGroupsInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
 
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
+
+    @Query("""
+            SELECT chat.id
+            FROM OneToOneChat chat
+            WHERE chat.course.id = :courseId
+                  AND EXISTS (
+                        SELECT 1
+                        FROM ConversationParticipant participantA
+                        WHERE participantA.conversation = chat AND participantA.user.login = :loginA
+                  )
+                  AND EXISTS (
+                        SELECT 1
+                        FROM ConversationParticipant participantB
+                        WHERE participantB.conversation = chat AND participantB.user.login = :loginB
+                  )
+            """)
+    Long findIdOfChatInCourseBetweenUsers(@Param("courseId") long courseId, @Param("loginA") String loginA, @Param("loginB") String loginB);
 }

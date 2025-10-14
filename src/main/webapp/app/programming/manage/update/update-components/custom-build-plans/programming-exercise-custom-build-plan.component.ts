@@ -128,7 +128,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     faQuestionCircle = faQuestionCircle;
 
-    codeChanged(code: string): void {
+    codeChanged(codeOrEvent: string | { text: string; fileName: string }): void {
+        const code = typeof codeOrEvent === 'string' ? codeOrEvent : codeOrEvent.text;
         this.code = code;
         this.editor?.setText(code);
         this.programmingExercise.buildConfig!.buildScript = code;

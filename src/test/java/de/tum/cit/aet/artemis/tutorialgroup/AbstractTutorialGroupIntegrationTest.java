@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -41,6 +43,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
@@ -161,6 +164,8 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     static final LocalDateTime FOURTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 22, 0, 0);
 
+    static final LocalDateTime FIFTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 29, 0, 0);
+
     static final LocalDateTime FIRST_SEPTEMBER_MONDAY_00_00 = LocalDateTime.of(2022, 9, 5, 0, 0);
 
     @BeforeEach
@@ -257,6 +262,8 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         tutorialGroup.setCourse(course);
         tutorialGroup.setTitle(generateRandomTitle());
         tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow());
+        tutorialGroup.setCapacity(15);
+        tutorialGroup.setCampus("Garching");
         return tutorialGroup;
     }
 
@@ -302,6 +309,38 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     ZonedDateTime getDateTimeInBerlinTimeZone(LocalDate date, int hour) {
         return ZonedDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), hour, 0, 0, 0, ZoneId.of("Europe/Berlin"));
+    }
+
+    public List<TutorialGroupSession> createAndSaveSessionsForTutorialGroupDetailGroupDTOTest(Course course, TutorialGroup tutorialGroup, TutorialGroupSchedule schedule) {
+        List<TutorialGroupSession> sessions = new ArrayList<>();
+        ZonedDateTime firstSessionStart = ZonedDateTime.of(LocalDate.parse(schedule.getValidFromInclusive()), LocalTime.parse(schedule.getStartTime()),
+                ZoneId.of(course.getTimeZone()));
+        ZonedDateTime firstSessionEnd = ZonedDateTime.of(LocalDate.parse(schedule.getValidFromInclusive()), LocalTime.parse(schedule.getEndTime()),
+                ZoneId.of(course.getTimeZone()));
+
+        TutorialGroupSession cancelledSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart, firstSessionEnd, schedule.getLocation(), null,
+                TutorialGroupSessionStatus.CANCELLED, tutorialGroup, schedule);
+        sessions.add(cancelledSession);
+
+        TutorialGroupSession relocatedSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(1), firstSessionEnd.plusWeeks(1), "new room", null,
+                TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
+        sessions.add(relocatedSession);
+
+        TutorialGroupSession changedTimeSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(2).plusHours(2),
+                firstSessionEnd.plusWeeks(2).plusHours(2), schedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
+        sessions.add(changedTimeSession);
+
+        TutorialGroupSession changedDateSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(3).plusDays(1),
+                firstSessionEnd.plusWeeks(3).plusDays(1), schedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
+        sessions.add(changedDateSession);
+
+        TutorialGroupSession attendanceCountSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(4), firstSessionEnd.plusWeeks(4),
+                schedule.getLocation(), 10, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
+        sessions.add(attendanceCountSession);
+
+        tutorialGroupSessionRepository.saveAll(sessions);
+
+        return sessions;
     }
 
     // === ASSERTIONS ===
@@ -416,4 +455,18 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         }
     }
 
+    void assertGroupDTOHasCorrectFields(TutorialGroupDetailSessionDTO dto, TutorialGroupSession session) {
+        assertThat(dto.start().toInstant()).isEqualTo(session.getStart().toInstant());
+        assertThat(dto.end().toInstant()).isEqualTo(session.getEnd().toInstant());
+        assertThat(dto.location()).isEqualTo(session.getLocation());
+        assertThat(dto.attendanceCount()).isEqualTo(session.getAttendanceCount());
+    }
+
+    void assertGroupDTOHasCorrectFlags(TutorialGroupDetailSessionDTO dto, boolean expectIsCancelled, boolean expectLocationChanged, boolean expectTimeChanged,
+            boolean expectDateChanged) {
+        assertThat(dto.isCancelled()).isEqualTo(expectIsCancelled);
+        assertThat(dto.locationChanged()).isEqualTo(expectLocationChanged);
+        assertThat(dto.timeChanged()).isEqualTo(expectTimeChanged);
+        assertThat(dto.dateChanged()).isEqualTo(expectDateChanged);
+    }
 }

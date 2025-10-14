@@ -280,4 +280,11 @@ public class ExamDeletionService {
 
         return new ExamDeletionSummaryDTO(numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts, numberRegisteredStudents, notStartedExams, startedExams, submittedExams);
     }
+
+    public void deleteByCourseId(long courseId) {
+        var examIds = examRepository.findExamIdsByCourseId(courseId);
+        for (var examId : examIds) {
+            delete(examId);
+        }
+    }
 }

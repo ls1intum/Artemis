@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
-import { clearTextField, drag } from '../../../utils';
-import { QUIZ_EXERCISE_BASE } from '../../../constants';
+import { clearTextField } from '../../../utils';
+import { QUIZ_EXERCISE_BASE, QUIZ_EXERCISE_BASE_CREATION } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
 import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
@@ -63,15 +63,32 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         const boundingBox = await element?.boundingBox();
 
         expect(boundingBox, { message: 'Could not get bounding box of element' }).not.toBeNull();
-        await this.page.mouse.move(boundingBox!.x + 800, boundingBox!.y + 10);
+        await this.page.mouse.move(boundingBox!.x + 600, boundingBox!.y + 10);
         await this.page.mouse.down();
-        await this.page.mouse.move(boundingBox!.x + 1000, boundingBox!.y + 150);
+        await this.page.mouse.move(boundingBox!.x + 1000, boundingBox!.y + 250);
         await this.page.mouse.up();
 
         await this.createDragAndDropItem('Rick Astley');
         const dragLocator = this.page.locator('#drag-item-0');
         const dropLocator = this.page.locator('#drop-location');
-        await drag(this.page, dragLocator, dropLocator);
+
+        await dropLocator.scrollIntoViewIfNeeded();
+
+        const targetBox = await dropLocator.boundingBox();
+        const sourceBox = await dragLocator.boundingBox();
+        if (!targetBox || !sourceBox) {
+            throw new Error('Could not determine element bounding boxes for drag operation.');
+        }
+
+        const targetX = targetBox.x + targetBox.width / 2;
+        const targetY = targetBox.y + targetBox.height / 2;
+
+        // Move mouse to center of dragLocator
+        await dragLocator.hover();
+        await this.page.mouse.down();
+        // Move to center of dropLocator
+        await this.page.mouse.move(targetX, targetY, { steps: 8 });
+        await this.page.mouse.up();
 
         const fileContent = await Fixtures.get('exercise/quiz/drag_and_drop/question.txt');
         const textInputField = this.page.locator('.monaco-editor');
@@ -94,8 +111,10 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async saveQuiz() {
-        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE);
-        await this.page.locator('#quiz-save').click();
+        const saveButton = this.page.locator('#quiz-save');
+        await saveButton.scrollIntoViewIfNeeded();
+        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION);
+        await saveButton.click();
         return await responsePromise;
     }
 

@@ -100,7 +100,7 @@ public class SubmissionFilterService {
          * Sometimes we cannot show the last submission because the assessment due date has not yet passed,
          * but we should still show the student the latest automatically determined score.
          */
-        List<Result> automaticResults = programmingSubmission.getResults().stream().filter(Result::isAutomatic).toList();
+        List<Result> automaticResults = programmingSubmission.getAutomaticResults();
         if (!automaticResults.isEmpty()) {
             programmingSubmission.setResults(List.of(automaticResults.getLast()));
             return true;
