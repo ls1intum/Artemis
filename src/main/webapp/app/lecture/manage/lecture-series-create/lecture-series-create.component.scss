@@ -2,6 +2,8 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    container-type: inline-size;
+    container-name: frame;
 
     p:first-of-type {
         margin-top: 1.5rem;
@@ -11,24 +13,57 @@
         margin-bottom: 0;
     }
 
+    .enumerator {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 1.3rem;
+        height: 1.3rem;
+        border-radius: 0.3rem;
+
+        &.primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        &.secondary {
+            background-color: var(--body-bg);
+        }
+
+        &.edited {
+            background-color: var(--warning);
+            color: black;
+        }
+    }
+
     .input-row {
         display: flex;
         gap: 1rem;
         align-items: center;
 
-        .first-lecture-enumerator {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 1.3rem;
-            height: 1.3rem;
-            border-radius: 0.25rem;
-            color: var(--primary);
-            background-color: var(--body-bg);
+        @container frame (max-width: 810px) {
+            flex-wrap: wrap;
         }
 
-        .first-lecture-delete-button:hover {
-            color: var(--danger);
+        .initial-lecture-delete-button {
+            flex-shrink: 0;
+
+            &:hover {
+                color: var(--danger);
+            }
+        }
+
+        .long-lecture-warning {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--warning);
+
+            .warning-text {
+                font-size: 0.75rem;
+            }
         }
     }
 
@@ -44,22 +79,6 @@
         background-color: var(--body-bg);
         border-radius: 0.5rem;
 
-        .card-number {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 1.3rem;
-            height: 1.3rem;
-            border-radius: 0.3rem;
-            background-color: var(--primary);
-            color: white;
-
-            &.edited {
-                background-color: var(--warning);
-                color: black;
-            }
-        }
-
         .draft-title {
             flex: 1;
             min-width: 0;
@@ -72,10 +91,6 @@
             background: none;
             border: none;
             cursor: pointer;
-        }
-
-        .card-button:hover {
-            color: var(--primary);
         }
     }
 
@@ -94,6 +109,10 @@
         align-items: center;
         animation: delayLoading 0s 0.5s forwards;
         opacity: 0;
+    }
+
+    .primary-on-hover:hover {
+        color: var(--primary);
     }
 }
 

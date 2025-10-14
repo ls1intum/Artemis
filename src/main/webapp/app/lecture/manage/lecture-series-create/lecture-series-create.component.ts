@@ -1,7 +1,7 @@
 import { Component, Signal, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faPenToSquare, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faPlus, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
 import { FloatLabelModule } from 'primeng/floatlabel';
@@ -25,6 +25,7 @@ interface InitialLecture {
     endDate: WritableSignal<Date | undefined>;
     isStartDateInvalid: Signal<boolean>;
     isEndDateInvalid: Signal<boolean>;
+    isLongerThanRecommended: Signal<boolean>;
 }
 
 interface ExistingLecture {
@@ -99,6 +100,8 @@ export class LectureSeriesCreateComponent {
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faXmark = faXmark;
     protected readonly faTrash = faTrash;
+    protected readonly faPlus = faPlus;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly LectureDraftState = LectureDraftState;
 
     rawExistingLectures = input<Lecture[]>();
@@ -111,7 +114,7 @@ export class LectureSeriesCreateComponent {
     isLoading = signal(false);
 
     constructor() {
-        effect(() => this.updateLectureDraftsAndExistingLecturesBasedOnSeriesEndDateAndInitialLectures());
+        effect(() => this.updateLectureDraftsAndExistingLecturesBasedOnInitialLecturesAndSeriesEndDate());
     }
 
     addInitialLecture() {
@@ -174,7 +177,7 @@ export class LectureSeriesCreateComponent {
         });
     }
 
-    private updateLectureDraftsAndExistingLecturesBasedOnSeriesEndDateAndInitialLectures() {
+    private updateLectureDraftsAndExistingLecturesBasedOnInitialLecturesAndSeriesEndDate() {
         const lectureDrafts = this.computeLectureDraftsBasedOnSeriesEndDateAndInitialLectures();
 
         const sortedLectureDrafts = this.sort(lectureDrafts, (draft) => this.getSortingKeyFor(draft.dto));
@@ -342,7 +345,14 @@ export class LectureSeriesCreateComponent {
         const endDate = signal<Date | undefined>(undefined);
         const isStartDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(startDate(), endDate()) || isFirstDateAfterOrEqualSecond(startDate(), this.seriesEndDate()));
         const isEndDateInvalid = computed(() => isFirstDateAfterOrEqualSecond(startDate(), endDate()) || isFirstDateAfterOrEqualSecond(endDate(), this.seriesEndDate()));
-        return { id, startDate, endDate, isStartDateInvalid, isEndDateInvalid };
+        const isLongerThanRecommended = computed(() => {
+            const start = startDate();
+            const end = endDate();
+            const differenceInHours = start && end ? Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60) : undefined;
+            const MAX_RECOMMENDED_LENGTH_IN_HOURS = 8;
+            return differenceInHours ? differenceInHours > MAX_RECOMMENDED_LENGTH_IN_HOURS : false;
+        });
+        return { id, startDate, endDate, isStartDateInvalid, isEndDateInvalid, isLongerThanRecommended };
     }
 
     private computeIsSeriesEndDateInvalid(): boolean {

@@ -1,29 +1,17 @@
 <div class="frame">
-    <p jhiTranslate="artemisApp.lecture.createSeries.explanationText"></p>
-    <p-floatlabel variant="on">
-        <p-datepicker
-            inputId="series-end-date"
-            [ngModel]="seriesEndDate() ?? null"
-            (ngModelChange)="seriesEndDate.set($event ?? undefined)"
-            [firstDayOfWeek]="1"
-            [invalid]="isSeriesEndDateInvalid()"
-            [appendTo]="'body'"
-        />
-        <label for="series-end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
-    </p-floatlabel>
     <p jhiTranslate="artemisApp.lecture.createSeries.startAndEndDateExplanation"></p>
-    @for (weeklyLecture of initialLectures(); track weeklyLecture.id; let index = $index) {
+    @for (initialLecture of initialLectures(); track initialLecture.id; let index = $index) {
         <div class="input-row">
-            <div class="first-lecture-enumerator">
+            <div class="enumerator secondary">
                 {{ index + 1 }}
             </div>
             <p-floatlabel variant="on">
                 <p-datepicker
                     [inputId]="'start-date-' + (index + 1)"
-                    [ngModel]="weeklyLecture.startDate() ?? null"
-                    (ngModelChange)="weeklyLecture.startDate.set($event ?? undefined)"
+                    [ngModel]="initialLecture.startDate() ?? null"
+                    (ngModelChange)="initialLecture.startDate.set($event ?? undefined)"
                     [firstDayOfWeek]="1"
-                    [invalid]="weeklyLecture.isStartDateInvalid()"
+                    [invalid]="initialLecture.isStartDateInvalid()"
                     [showTime]="true"
                     hourFormat="24"
                     [appendTo]="'body'"
@@ -34,10 +22,10 @@
             <p-floatlabel variant="on">
                 <p-datepicker
                     [inputId]="'end-date-' + (index + 1)"
-                    [ngModel]="weeklyLecture.endDate() ?? null"
-                    (ngModelChange)="weeklyLecture.endDate.set($event ?? undefined)"
+                    [ngModel]="initialLecture.endDate() ?? null"
+                    (ngModelChange)="initialLecture.endDate.set($event ?? undefined)"
                     [firstDayOfWeek]="1"
-                    [invalid]="weeklyLecture.isEndDateInvalid()"
+                    [invalid]="initialLecture.isEndDateInvalid()"
                     [showTime]="true"
                     hourFormat="24"
                     [appendTo]="'body'"
@@ -51,18 +39,53 @@
                     outlined
                     severity="secondary"
                     size="small"
-                    class="first-lecture-delete-button"
-                    (click)="removeInitialLecture(weeklyLecture)"
+                    class="initial-lecture-delete-button"
+                    (click)="removeInitialLecture(initialLecture)"
                     [attr.aria-label]="'Remove Initial Lecture ' + (index + 1)"
                 >
                     <fa-icon [icon]="faTrash" />
                 </button>
             }
+            @if (initialLecture.isLongerThanRecommended()) {
+                <div class="long-lecture-warning">
+                    <fa-icon [icon]="faTriangleExclamation" />
+                    <span class="warning-text" jhiTranslate="artemisApp.lecture.longLectureWarning"></span>
+                </div>
+            }
         </div>
+        @if ($last) {
+            <div class="input-row">
+                <div class="enumerator secondary">
+                    {{ index + 2 }}
+                </div>
+                <div>
+                    <button
+                        pButton
+                        outlined
+                        severity="secondary"
+                        size="small"
+                        class="primary-on-hover"
+                        (click)="addInitialLecture()"
+                        [attr.aria-label]="'Remove Initial Lecture ' + (index + 1)"
+                    >
+                        <fa-icon [icon]="faPlus" />
+                    </button>
+                </div>
+            </div>
+        }
     }
-    <div>
-        <button pButton severity="secondary" size="small" (click)="addInitialLecture()" jhiTranslate="artemisApp.lecture.createSeries.addInitialLectureButtonLabel"></button>
-    </div>
+    <p jhiTranslate="artemisApp.lecture.createSeries.seriesEndDateExplanation"></p>
+    <p-floatlabel variant="on">
+        <p-datepicker
+            inputId="series-end-date"
+            [ngModel]="seriesEndDate() ?? null"
+            (ngModelChange)="seriesEndDate.set($event ?? undefined)"
+            [firstDayOfWeek]="1"
+            [invalid]="isSeriesEndDateInvalid()"
+            [appendTo]="'body'"
+        />
+        <label for="series-end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
+    </p-floatlabel>
     @let drafts = lectureDrafts();
     @if (drafts.length > 0) {
         <h3 jhiTranslate="artemisApp.lecture.createSeries.generatedLecturesHeading"></h3>
@@ -71,14 +94,14 @@
                 @for (draft of drafts; track draft.id; let index = $index) {
                     <div class="col">
                         <div class="draft-card">
-                            <span class="card-number" [ngClass]="{ edited: draft.state === LectureDraftState.EDITED }">
+                            <span class="enumerator primary" [ngClass]="{ edited: draft.state === LectureDraftState.EDITED }">
                                 {{ index + 1 }}
                             </span>
                             <span class="draft-title">{{ draft.dto.title }}</span>
-                            <button type="button" class="card-button" (click)="draftEditModal.open(draft)" [attr.aria-label]="'Edit ' + draft.dto.title">
+                            <button type="button" class="card-button primary-on-hover" (click)="draftEditModal.open(draft)" [attr.aria-label]="'Edit ' + draft.dto.title">
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
-                            <button type="button" class="card-button" (click)="deleteLectureDraft(draft)" [attr.aria-label]="'Delete ' + draft.dto.title">
+                            <button type="button" class="card-button primary-on-hover" (click)="deleteLectureDraft(draft)" [attr.aria-label]="'Delete ' + draft.dto.title">
                                 <fa-icon [icon]="faXmark" />
                             </button>
                         </div>

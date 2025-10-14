@@ -91,9 +91,10 @@
                 "singleLectureLabel": "Single Lecture",
                 "lectureSeriesLabel": "Lecture Series"
             },
+            "longLectureWarning": "Avoid lectures that take more than a couple of hours. They quickly overcrowd the calendar.",
             "createSeries": {
-                "explanationText": "Create one or multiple lecture series by defining the timing of one or several initial lectures. The initial lectures will be repeated weekly until the specified series end date. You can add lecture content later. This allows you to inform users early about lectures taking place during the semester.",
-                "startAndEndDateExplanation": "The start and end dates should inform users when they need to attend. Avoid lectures lasting more than a few hours, as Artemis displays them as a single calendar event. For multi-day lectures, please create one lecture per day.",
+                "startAndEndDateExplanation": "Quickly create a lecture series by only defining titles and timing. Add lecture contents later. Start by specifying start and end of at least one lectures that you would like to repeat weekly:",
+                "seriesEndDateExplanation": "Now define a date on which you would like the repeated lectures to end:",
                 "inputLabel": {
                     "startDate": "Start",
                     "endDate": "End",
