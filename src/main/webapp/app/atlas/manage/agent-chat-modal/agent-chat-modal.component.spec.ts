@@ -34,7 +34,6 @@ describe('AgentChatModalComponent', () => {
 
         mockAgentChatService = {
             sendMessage: jest.fn(),
-            getHistory: jest.fn().mockReturnValue(of([])),
         } as any;
 
         mockTranslateService = {
@@ -519,81 +518,6 @@ describe('AgentChatModalComponent', () => {
 
             // Assert
             expect(closeModalSpy).toHaveBeenCalled();
-        });
-    });
-
-    describe('History loading', () => {
-        it('should load conversation history on init', () => {
-            // Arrange
-            const mockHistory = [
-                {
-                    role: 'user',
-                    content: 'Course ID: 123\n\nWhat competencies should I create?',
-                },
-                {
-                    role: 'assistant',
-                    content: 'Here are some suggested competencies...',
-                },
-            ];
-            mockAgentChatService.getHistory.mockReturnValue(of(mockHistory));
-            mockTranslateService.instant.mockReturnValue('Welcome!');
-
-            // Act
-            component.ngOnInit();
-
-            // Assert
-            expect(mockAgentChatService.getHistory).toHaveBeenCalledOnce();
-            expect(mockAgentChatService.getHistory).toHaveBeenCalledWith(123);
-            expect(component.messages).toHaveLength(3); // Welcome + 2 history messages
-            expect(component.messages[1].content).toBe('What competencies should I create?'); // Prefix removed
-            expect(component.messages[1].isUser).toBeTrue();
-            expect(component.messages[2].content).toBe('Here are some suggested competencies...');
-            expect(component.messages[2].isUser).toBeFalse();
-        });
-
-        it('should not modify assistant messages in history', () => {
-            // Arrange
-            const assistantContent = 'Assistant response with Course ID: 999 text';
-            const mockHistory = [
-                {
-                    role: 'assistant',
-                    content: assistantContent,
-                },
-            ];
-            mockAgentChatService.getHistory.mockReturnValue(of(mockHistory));
-            mockTranslateService.instant.mockReturnValue('Welcome!');
-
-            // Act
-            component.ngOnInit();
-
-            // Assert
-            expect(component.messages[1].content).toBe(assistantContent);
-        });
-
-        it('should handle empty history gracefully', () => {
-            // Arrange
-            mockAgentChatService.getHistory.mockReturnValue(of([]));
-            mockTranslateService.instant.mockReturnValue('Welcome!');
-
-            // Act
-            component.ngOnInit();
-
-            // Assert
-            expect(component.messages).toHaveLength(1); // Only welcome message
-            expect(component.messages[0].content).toBe('Welcome!');
-        });
-
-        it('should handle history loading error gracefully', () => {
-            // Arrange
-            mockAgentChatService.getHistory.mockReturnValue(throwError(() => new Error('History load failed')));
-            mockTranslateService.instant.mockReturnValue('Welcome!');
-
-            // Act
-            component.ngOnInit();
-
-            // Assert
-            expect(component.messages).toHaveLength(1); // Only welcome message
-            expect(component.messages[0].content).toBe('Welcome!');
         });
     });
 

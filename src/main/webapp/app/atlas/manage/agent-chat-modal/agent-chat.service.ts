@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
 
 interface AgentChatRequest {
     message: string;
@@ -23,8 +24,12 @@ interface AgentChatResponse {
 export class AgentChatService {
     private http = inject(HttpClient);
     private translateService = inject(TranslateService);
+    private accountService = inject(AccountService);
 
-    sendMessage(message: string, courseId: number, sessionId?: string): Observable<AgentChatResponse> {
+    sendMessage(message: string, courseId: number): Observable<AgentChatResponse> {
+        const userId = this.accountService.userIdentity?.id!;
+        const sessionId = `course_${courseId}_user_${userId}`;
+
         const request: AgentChatRequest = {
             message,
             sessionId,
