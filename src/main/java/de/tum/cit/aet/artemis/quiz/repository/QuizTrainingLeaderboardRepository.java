@@ -34,11 +34,11 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
      * We use a custom query here to perform an atomic update of the leaderboard entry.
      * The leagues are determined based on the score after applying the scoreDelta.
      * Each league corresponds to a score range:
-     * - Bronze (5): 0-99
-     * - Silver (4): 100-199
-     * - Gold (3): 200-299
-     * - Diamond (2): 300-399
-     * - Master (1): 400 and above
+     * - Bronze (5): 0-49
+     * - Silver (4): 50-149
+     * - Gold (3): 150-349
+     * - Diamond (2): 350-699
+     * - Master (1): 700 and above
      */
     @Transactional
     @Modifying
@@ -46,10 +46,10 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
                 UPDATE QuizTrainingLeaderboard qtl
                 SET qtl.league =
                             CASE
-                                WHEN (qtl.score + :scoreDelta) < 100 THEN 5
-                                WHEN (qtl.score + :scoreDelta) >= 100 AND (qtl.score + :scoreDelta) < 200 THEN 4
-                                WHEN (qtl.score + :scoreDelta) >= 200 AND (qtl.score + :scoreDelta) < 300 THEN 3
-                                WHEN (qtl.score + :scoreDelta) >= 300 AND (qtl.score + :scoreDelta)< 400 THEN 2
+                                WHEN (qtl.score + :scoreDelta) < 50 THEN 5
+                                WHEN (qtl.score + :scoreDelta) >= 50 AND (qtl.score + :scoreDelta) < 150 THEN 4
+                                WHEN (qtl.score + :scoreDelta) >= 150 AND (qtl.score + :scoreDelta) < 350 THEN 3
+                                WHEN (qtl.score + :scoreDelta) >= 350 AND (qtl.score + :scoreDelta)< 700 THEN 2
                                 ELSE 1
                             END,
                        qtl.score = qtl.score + :scoreDelta,

@@ -23,19 +23,19 @@ import dayjs from 'dayjs/esm';
     styleUrl: './course-training.component.scss',
 })
 export class CourseTrainingComponent {
-    private router = inject(Router);
-    private route = inject(ActivatedRoute);
-    private leaderboardService = inject(LeaderboardService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly leaderboardService = inject(LeaderboardService);
 
-    faClock = faClock;
-    faQuestion = faQuestion;
-    faXmark = faXmark;
-    faCheck = faCheck;
+    protected readonly faClock = faClock;
+    protected readonly faQuestion = faQuestion;
+    protected readonly faXmark = faXmark;
+    protected readonly faCheck = faCheck;
 
-    readonly pointsBronzeLeague = 100;
-    readonly pointsSilverLeague = 200;
-    readonly pointsGoldLeague = 300;
-    readonly pointsDiamondLeague = 400;
+    protected readonly pointsBronzeLeague = 50;
+    protected readonly pointsSilverLeague = 150;
+    protected readonly pointsGoldLeague = 350;
+    protected readonly pointsDiamondLeague = 700;
 
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);

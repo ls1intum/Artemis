@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -43,6 +44,8 @@ public class QuizTrainingLeaderboardService {
 
     private static final int BRONZE_LEAGUE = 5;
 
+    private static final int DEFAULT_LEAGUE = 0; // Default league value used for the current user entry that is just used for the scorecard not the leaderboard itself
+
     public QuizTrainingLeaderboardService(QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository, CourseRepository courseRepository, UserRepository userRepository,
             QuizQuestionRepository quizQuestionRepository, QuizQuestionProgressRepository quizQuestionProgressRepository) {
         this.quizTrainingLeaderboardRepository = quizTrainingLeaderboardRepository;
@@ -67,6 +70,20 @@ public class QuizTrainingLeaderboardService {
         var userLeaderboardEntryForCurrentCourse = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId);
         boolean hasUserSetSettings = quizTrainingLeaderboardRepository.existsQuizTrainingLeaderboardByUser_Id(userId);
 
+        userLeaderboardEntryForCurrentCourse = initializeLeaderboardEntry(userId, courseId, userLeaderboardEntryForCurrentCourse, hasUserSetSettings);
+
+        QuizTrainingLeaderboard currentUserEntry = userLeaderboardEntryForCurrentCourse.orElseThrow();
+        ZonedDateTime currentTime = ZonedDateTime.now();
+
+        List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdAndShowInLeaderboardTrueOrderByScoreDescUserAscId(league,
+                courseId);
+        List<LeaderboardEntryDTO> leaderboardEntryDTOs = getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
+        return new LeaderboardWithCurrentUserEntryDTO(leaderboardEntryDTOs, hasUserSetSettings, LeaderboardEntryDTO.of(currentUserEntry, DEFAULT_LEAGUE, league, totalQuestions),
+                currentTime);
+    }
+
+    private Optional<QuizTrainingLeaderboard> initializeLeaderboardEntry(long userId, long courseId, Optional<QuizTrainingLeaderboard> userLeaderboardEntryForCurrentCourse,
+            boolean hasUserSetSettings) {
         try {
             if (userLeaderboardEntryForCurrentCourse.isEmpty()) {
                 if (hasUserSetSettings) {
@@ -83,14 +100,7 @@ public class QuizTrainingLeaderboardService {
         catch (DataIntegrityViolationException e) {
             userLeaderboardEntryForCurrentCourse = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId);
         }
-
-        QuizTrainingLeaderboard currentUserEntry = userLeaderboardEntryForCurrentCourse.orElseThrow();
-        ZonedDateTime currentTime = ZonedDateTime.now();
-
-        List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdAndShowInLeaderboardTrueOrderByScoreDescUserAscId(league,
-                courseId);
-        List<LeaderboardEntryDTO> leaderboardEntryDTOs = getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
-        return new LeaderboardWithCurrentUserEntryDTO(leaderboardEntryDTOs, hasUserSetSettings, LeaderboardEntryDTO.of(currentUserEntry, 0, league, totalQuestions), currentTime);
+        return userLeaderboardEntryForCurrentCourse;
     }
 
     /**
@@ -165,13 +175,13 @@ public class QuizTrainingLeaderboardService {
     private ZonedDateTime findEarliestDueDate(long userId, long courseId) {
         long totalQuestionCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
         long progressCount = quizQuestionProgressRepository.countByUserIdAndCourseId(userId, courseId);
-        if (totalQuestionCount > progressCount) {
+
+        boolean hasUnansweredNewQuestions = totalQuestionCount > progressCount;
+        if (hasUnansweredNewQuestions) {
             return ZonedDateTime.now().minusDays(1);
         }
-        else {
-            return quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId).stream().map(QuizQuestionProgress::getProgressJson)
-                    .map(QuizQuestionProgressData::getDueDate).filter(Objects::nonNull).min(ZonedDateTime::compareTo).orElse(ZonedDateTime.now());
-        }
+        return quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId).stream().map(QuizQuestionProgress::getProgressJson)
+                .map(QuizQuestionProgressData::getDueDate).filter(Objects::nonNull).min(ZonedDateTime::compareTo).orElse(ZonedDateTime.now());
     }
 
     /**
@@ -185,6 +195,20 @@ public class QuizTrainingLeaderboardService {
         double lastScore = answeredQuestion.getLastScore();
         int box = answeredQuestion.getBox();
 
+        boolean hadFailedAttemptToday = getHadFailedAttemptToday(answeredQuestion);
+
+        double questionDelta = 2 * lastScore + box * lastScore;
+
+        boolean hasAnsweredCorrect = lastScore == 1.0;
+        if (hadFailedAttemptToday && hasAnsweredCorrect) {
+            questionDelta = 0;
+        }
+
+        delta += (int) Math.round(questionDelta);
+        return delta;
+    }
+
+    private boolean getHadFailedAttemptToday(QuizQuestionProgressData answeredQuestion) {
         boolean hadFailedAttemptToday = false;
         List<QuizQuestionProgressData.Attempt> attempts = answeredQuestion.getAttempts();
 
@@ -197,15 +221,7 @@ public class QuizTrainingLeaderboardService {
                 hadFailedAttemptToday = true;
             }
         }
-
-        double questionDelta = 2 * lastScore + box * lastScore;
-
-        if (hadFailedAttemptToday && lastScore == 1.0) {
-            questionDelta = 0;
-        }
-
-        delta += (int) Math.round(questionDelta);
-        return delta;
+        return hadFailedAttemptToday;
     }
 
     public void updateShowInLeaderboard(long userId, boolean showInLeaderboard) {

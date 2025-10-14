@@ -4,7 +4,7 @@
             <div class="highlight-content">
                 <div class="highlight-item">
                     <span class="highlight-label" jhiTranslate="artemisApp.quizTraining.rank"></span>
-                    <span class="highlight-value">#{{ currentUserRank }}</span>
+                    <span class="highlight-value">#{{ currentUserRank() }}</span>
                 </div>
                 <div class="highlight-item">
                     <span class="highlight-label" jhiTranslate="artemisApp.quizTraining.student"></span>
@@ -13,14 +13,14 @@
                             class="picture"
                             [authorName]="leaderboardName()"
                             [authorId]="currentUserId()"
-                            [imageUrl]="addPublicFilePrefix(currentUserPictureUrl)"
+                            [imageUrl]="addPublicFilePrefix(currentUserPictureUrl())"
                         />
                         {{ leaderboardName() }}
                     </span>
                 </div>
                 <div class="highlight-item">
                     <span class="highlight-label" jhiTranslate="artemisApp.quizTraining.score"></span>
-                    <span class="highlight-value">{{ currentUserScore }}</span>
+                    <span class="highlight-value">{{ currentUserScore() }}</span>
                 </div>
             </div>
         </div>

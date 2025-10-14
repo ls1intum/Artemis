@@ -2,27 +2,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LeagueBadgeComponent } from './league-badge.component';
 import { MockBuilder } from 'ng-mocks';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { LeagueBronzeIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/bronze-icon.component';
-import { LeagueSilverIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/silver-icon.component';
-import { LeagueGoldIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/gold-icon.component';
-import { LeagueDiamondIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/diamond-icon.component';
-import { LeagueMasterIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/master-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LeagueIconComponent } from '../course-training-quiz/leaderboard/league/league-icon.component';
 
 describe('LeagueBadgeComponent', () => {
     let fixture: ComponentFixture<LeagueBadgeComponent>;
     let component: LeagueBadgeComponent;
 
     beforeEach(async () => {
-        await MockBuilder(LeagueBadgeComponent)
-            .keep(LeagueBadgeComponent)
-            .keep(FontAwesomeModule)
-            .mock(LeagueBronzeIconComponent)
-            .mock(LeagueSilverIconComponent)
-            .mock(LeagueGoldIconComponent)
-            .mock(LeagueDiamondIconComponent)
-            .mock(LeagueMasterIconComponent)
-            .mock(TranslateDirective);
+        await MockBuilder(LeagueBadgeComponent).keep(LeagueBadgeComponent).keep(FontAwesomeModule).mock(LeagueIconComponent).mock(TranslateDirective);
 
         fixture = TestBed.createComponent(LeagueBadgeComponent);
         component = fixture.componentInstance;

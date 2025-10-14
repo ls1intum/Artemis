@@ -30,17 +30,20 @@ export class LeaderboardComponent {
     });
 
     // Computed properties for the highlight box
-    get currentUserRank(): number {
-        return this.currentUser()?.rank || 0;
-    }
+    currentUserRank = computed(() => {
+        const user = this.currentUser();
+        return user?.rank || 0;
+    });
 
-    get currentUserScore(): number {
-        return this.currentUser()?.score || 0;
-    }
+    currentUserScore = computed(() => {
+        const user = this.currentUser();
+        return user?.score || 0;
+    });
 
-    get currentUserPictureUrl(): string {
-        return this.currentUser()?.imageURL || '';
-    }
+    currentUserPictureUrl = computed(() => {
+        const user = this.currentUser();
+        return user?.imageURL || '';
+    });
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

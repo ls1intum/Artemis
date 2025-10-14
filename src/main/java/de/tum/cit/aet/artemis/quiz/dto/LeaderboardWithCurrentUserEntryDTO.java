@@ -8,6 +8,6 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LeaderboardWithCurrentUserEntryDTO(@NotNull List<LeaderboardEntryDTO> leaderboardEntries, boolean hasUserSetSettings, LeaderboardEntryDTO currentUserEntry,
-        ZonedDateTime currentTime) {
+public record LeaderboardWithCurrentUserEntryDTO(@NotNull List<LeaderboardEntryDTO> leaderboardEntries, boolean hasUserSetSettings, @NotNull LeaderboardEntryDTO currentUserEntry,
+        @NotNull ZonedDateTime currentTime) {
 }

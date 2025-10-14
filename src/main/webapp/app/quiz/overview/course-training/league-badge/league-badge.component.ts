@@ -1,25 +1,13 @@
 import { Component, computed, input } from '@angular/core';
-import { LeagueBronzeIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/bronze-icon.component';
-import { LeagueSilverIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/silver-icon.component';
-import { LeagueGoldIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/gold-icon.component';
-import { LeagueDiamondIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/diamond-icon.component';
-import { LeagueMasterIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/master-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { LeagueIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/league-icon.component';
 
 @Component({
     selector: 'jhi-league-badge',
     standalone: true,
-    imports: [
-        LeagueBronzeIconComponent,
-        LeagueSilverIconComponent,
-        LeagueGoldIconComponent,
-        LeagueDiamondIconComponent,
-        LeagueMasterIconComponent,
-        TranslateDirective,
-        FontAwesomeModule,
-    ],
+    imports: [TranslateDirective, FontAwesomeModule, LeagueIconComponent],
     templateUrl: './league-badge.component.html',
     styleUrl: './league-badge.component.scss',
 })
@@ -30,7 +18,8 @@ export class LeagueBadgeComponent {
     pointsSilverLeague = input<number>(200);
     pointsGoldLeague = input<number>(300);
     pointsDiamondLeague = input<number>(400);
-    faStar = faStar;
+
+    protected readonly faStar = faStar;
 
     leagueLower = computed(() => this.league().toLowerCase());
 
