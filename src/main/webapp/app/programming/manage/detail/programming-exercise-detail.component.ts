@@ -794,6 +794,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
 
         if (!templateFiles || !solutionFiles) {
+            if (runId === this.diffRunId) {
+                this.templateFileContentByPath = new Map<string, string>();
+                this.solutionFileContentByPath = new Map<string, string>();
+                this.repositoryDiffInformation = undefined;
+                this.diffDetailData.templateFileContentByPath = new Map<string, string>();
+                this.diffDetailData.solutionFileContentByPath = new Map<string, string>();
+                this.diffDetailData.repositoryDiffInformation = undefined;
+                this.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading = false;
+            }
             return;
         }
 

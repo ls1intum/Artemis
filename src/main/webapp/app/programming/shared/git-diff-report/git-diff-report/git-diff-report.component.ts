@@ -69,6 +69,7 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
     private lastDiffInformation?: RepositoryDiffInformation;
     private intersectionObserver?: IntersectionObserver;
     private diffPanelsChangesSub?: Subscription;
+    private lazyObserverInitTimeoutId?: number;
 
     readonly leftCommit = computed(() => this.leftCommitHash()?.substring(0, 10));
     readonly rightCommit = computed(() => this.rightCommitHash()?.substring(0, 10));
@@ -125,7 +126,7 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
 
     ngAfterViewInit(): void {
         // Delay observer setup by 1 second to let initial 5 files load faster
-        setTimeout(() => {
+        this.lazyObserverInitTimeoutId = window.setTimeout(() => {
             const scrollRoot = this.findScrollRoot();
             this.intersectionObserver = new IntersectionObserver(
                 (entries) => {
@@ -149,12 +150,17 @@ export class GitDiffReportComponent implements AfterViewInit, OnDestroy {
             );
             this.observeDiffPanels();
             this.diffPanelsChangesSub = this.diffPanelContainers?.changes.subscribe(() => this.observeDiffPanels());
+            this.lazyObserverInitTimeoutId = undefined;
         }, 1000);
     }
 
     ngOnDestroy(): void {
         this.diffPanelsChangesSub?.unsubscribe();
         this.intersectionObserver?.disconnect();
+        if (this.lazyObserverInitTimeoutId !== undefined) {
+            clearTimeout(this.lazyObserverInitTimeoutId);
+            this.lazyObserverInitTimeoutId = undefined;
+        }
     }
 
     /**
