@@ -50,6 +50,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     currentMessage = signal('');
     isAgentTyping = signal(false);
     private shouldScrollToBottom = false;
+    private sessionId!: string;
 
     // Event emitted when agent likely created/modified competencies
     @Output() competencyChanged = new EventEmitter<void>();
@@ -63,6 +64,13 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         const message = this.currentMessage().trim();
         return !!(message && !this.isAgentTyping() && !this.isMessageTooLong());
     });
+
+    ngOnInit(): void {
+        this.sessionId = `course_${this.courseId}_session_${Date.now()}`;
+
+        // Add a welcome message
+        this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
+    }
 
     ngAfterViewInit(): void {
         // Auto-focus on textarea when modal opens
@@ -94,7 +102,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.isAgentTyping.set(true);
 
         // Send message - backend will use courseId as conversationId for memory
-        this.agentChatService.sendMessage(message, this.courseId).subscribe({
+        this.agentChatService.sendMessage(message, this.courseId, this.sessionId).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
                 this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false);

@@ -26,9 +26,9 @@ export class AgentChatService {
     private translateService = inject(TranslateService);
     private accountService = inject(AccountService);
 
-    sendMessage(message: string, courseId: number): Observable<AgentChatResponse> {
+    sendMessage(message: string, courseId: number, sessionId?: string): Observable<AgentChatResponse> {
         const userId = this.accountService.userIdentity?.id!;
-        const sessionId = `course_${courseId}_user_${userId}`;
+        sessionId = `course_${courseId}_user_${userId}`;
 
         const request: AgentChatRequest = {
             message,
