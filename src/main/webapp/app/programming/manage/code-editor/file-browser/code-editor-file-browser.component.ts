@@ -114,7 +114,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             }
         });
 
-        // React to showEditorInstructions signal changes
+        // React to showEditorInstructions and isProblemStatementVisible signal changes
         effect(() => {
             this.showEditorInstructions();
             if (this.participation()) {
@@ -153,6 +153,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     fileBadges: { [path: string]: FileBadge[] } = {};
     @Input()
     allowHiddenFiles = false;
+
+    isProblemStatementVisible = input<boolean>(true);
 
     @Output()
     onToggleCollapse = new EventEmitter<InteractableEvent>();
@@ -237,8 +239,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.repositoryFiles = {};
         }
 
-        // Add Problem Statement as a first-class file type (not in display-only/repository-view mode)
-        if (!this.displayOnly && this.showEditorInstructions()) {
+        // Add Problem Statement as a first-class file type
+        if (this.isProblemStatementVisible() && this.showEditorInstructions()) {
             const existing = this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
             if (!existing || existing === FileType.PROBLEM_STATEMENT) {
                 this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
@@ -274,15 +276,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.renamingFile = undefined;
             this.setupTreeview();
         }
-
-        // Handle displayOnly changes - add/remove Problem Statement from repositoryFiles
-        if (changes.displayOnly) {
-            this.handleProblemStatementVisibility();
-        }
     }
 
     /**
-     * Handle displayOnly mode changes by adding/removing Problem Statement from repositoryFiles
+     * Handle isProblemStatementVisible changes by adding/removing Problem Statement from repositoryFiles
      */
     private handleProblemStatementVisibility(): void {
         // Ensure the map exists before we mutate / render
@@ -290,7 +287,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.repositoryFiles = {};
         }
 
-        if (this.displayOnly || !this.showEditorInstructions()) {
+        if (!this.isProblemStatementVisible() || !this.showEditorInstructions()) {
             delete this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
             if (this.isProblemStatementSelected()) {
                 this.selectedFile = undefined;
