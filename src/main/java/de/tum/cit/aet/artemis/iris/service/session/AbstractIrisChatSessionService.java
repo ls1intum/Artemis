@@ -81,6 +81,26 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
     }
 
     /**
+     * Sets and saves the session title if provided.
+     * Truncates the title to 255 characters if necessary.
+     * This is a utility method that can be used by services that don't extend this class.
+     *
+     * @param session           The session to update
+     * @param sessionTitle      The title to set (can be null or blank)
+     * @param sessionRepository The repository to save the session
+     * @return The truncated session title if it was set, null otherwise
+     */
+    public static <T extends IrisChatSession> String setSessionTitle(T session, String sessionTitle, IrisSessionRepository sessionRepository) {
+        if (sessionTitle != null && !sessionTitle.isBlank()) {
+            String truncatedTitle = sessionTitle.length() > 255 ? sessionTitle.substring(0, 255) : sessionTitle;
+            session.setTitle(truncatedTitle);
+            sessionRepository.save(session);
+            return truncatedTitle;
+        }
+        return null;
+    }
+
+    /**
      * Handles the status update of a ExerciseChatJob by sending the result to the student via the Websocket.
      *
      * @param job          The job that was executed
@@ -92,11 +112,11 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         var session = (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);
         IrisMessage savedMessage;
+        String sessionTitle;
         boolean statusSent = false;
-        if (statusUpdate.sessionTitle() != null && !statusUpdate.sessionTitle().isBlank()) {
-            String sessionTitle = statusUpdate.sessionTitle().length() > 255 ? statusUpdate.sessionTitle().substring(0, 255) : statusUpdate.sessionTitle();
-            session.setTitle(sessionTitle);
-            irisSessionRepository.save(session);
+
+        sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
+        if (sessionTitle != null) {
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), sessionTitle, statusUpdate.suggestions(), statusUpdate.tokens());
             statusSent = true;
         }

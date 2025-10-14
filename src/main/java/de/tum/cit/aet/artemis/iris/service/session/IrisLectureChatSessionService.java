@@ -148,10 +148,8 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
     public LectureChatJob handleStatusUpdate(LectureChatJob job, PyrisLectureChatStatusUpdateDTO statusUpdate) {
         // TODO: LLM Token Tracking - or better, make this class a subclass of AbstractIrisChatSessionService
         var session = (IrisLectureChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());
-        if (statusUpdate.sessionTitle() != null && !statusUpdate.sessionTitle().isBlank()) {
-            String sessionTitle = statusUpdate.sessionTitle().length() > 255 ? statusUpdate.sessionTitle().substring(0, 255) : statusUpdate.sessionTitle();
-            session.setTitle(sessionTitle);
-            irisSessionRepository.save(session);
+        String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
+        if (sessionTitle != null) {
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), sessionTitle, null, null);
         }
         if (statusUpdate.result() != null) {
