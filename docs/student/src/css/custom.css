@@ -1,0 +1,47 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* Colors taken from the TUM color guidelines https://portal.mytum.de/corporatedesign/index_html/vorlagen/index_farben */
+:root {
+    --ifm-color-primary: var(--tum-color-blue);
+    --ifm-color-primary-dark: var(--tum-color-blue-dark);
+    --ifm-color-primary-darker: var(--tum-color-blue-darker);
+    --ifm-color-primary-light: var(--tum-accent-light-blue);
+    --ifm-color-primary-lighter: var(--tum-accent-blue);
+    --ifm-color-primary-lightest: var(--tum-accent-beige);
+    --ifm-code-font-size: 95%;
+    --docusaurus-highlighted-code-line-bg: var(--tum-gray-20);
+
+    /* TUM Primary Colors */
+    --tum-color-blue: #0065BD;
+    --tum-color-black: #000000;
+    --tum-color-white: #ffffff;
+
+    /* TUM Secondary Colors */
+    --tum-color-blue-dark: #005293;
+    --tum-color-blue-darker: #003359;
+    --tum-gray-80: #333333;
+    --tum-gray-50: #808080;
+    --tum-gray-20: #CCCCCC;
+
+    /* TUM Accent Colors */
+    --tum-accent-beige: #DAD7CB;
+    --tum-accent-orange: #E37222;
+    --tum-accent-green: #A2AD00;
+    --tum-accent-light-blue: #98C6EA;
+    --tum-accent-blue: #64A0C8;
+}
+
+/* Dark mode: use lighter blues for accessibility */
+[data-theme='dark'] {
+    --ifm-color-primary: var(--tum-accent-light-blue);
+    --ifm-color-primary-dark: var(--tum-accent-blue);
+    --ifm-color-primary-darker: var(--tum-color-blue);
+    --ifm-color-primary-light: var(--tum-accent-beige);
+    --ifm-color-primary-lighter: var(--tum-accent-orange);
+    --ifm-color-primary-lightest: var(--tum-accent-green);
+    --docusaurus-highlighted-code-line-bg: var(--tum-gray-80);
+}
