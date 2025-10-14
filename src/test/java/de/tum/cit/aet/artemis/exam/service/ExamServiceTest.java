@@ -274,6 +274,118 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
     }
 
+    @Nested
+    class AchievedScoreFallbackTests {
+
+        private static final String LOCAL_PREFIX = TEST_PREFIX + "fallback_";
+
+        private User student;
+
+        @BeforeEach
+        void setupUser() {
+            userUtilService.addUsers(LOCAL_PREFIX, 1, 0, 0, 0);
+            student = userUtilService.getUserByLogin(LOCAL_PREFIX + "student1");
+        }
+
+        /**
+         * In Test Runs Result.score is missing for some exercises, even though points are calculated correctly.
+         * The fallback must then derive the percentage value from achievedPoints / maxPoints * 100
+         */
+        @Test
+        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+        void achievedScore_isDerivedFromPoints_whenResultScoreIsNull() {
+            // Arrange: Kurs + Exam + ExerciseGroup
+            Course course = courseUtilService.addEmptyCourse();
+            Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+            exam.setExamMaxPoints(5);
+            ExerciseGroup group = exam.getExerciseGroups().getFirst();
+
+            // a simple quiz exercise with 5 points
+            QuizExercise quiz = new QuizExercise();
+            quiz.setTitle("Q1");
+            quiz.setMaxPoints(5.0);
+            quiz.setExerciseGroup(group);
+            exerciseRepository.save(quiz);
+
+            StudentExam se = new StudentExam();
+            se.setExam(exam);
+            se.setUser(student);
+            se.setSubmitted(true);
+            se.setExercises(List.of(quiz));
+
+            // Participation + Submission + Result(score == null)
+            var participation = new StudentParticipation();
+            participation.setExercise(quiz);
+            participation.setParticipant(student);
+            var submission = new de.tum.cit.aet.artemis.quiz.domain.QuizSubmission();
+            var result = new de.tum.cit.aet.artemis.assessment.domain.Result();
+            result.setScore(null); // <- score is missing in exam test run
+            submission.setResults(List.of(result));
+            participation.setSubmissions(Set.of(submission));
+            studentParticipationRepository.save(participation);
+
+            // ExamGradeScoreDTO: 100 % of 5 points -> achievedPoints = 5.0
+            var grade = new de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO(participation.getId(), student.getId(), quiz.getId(), 100.0, 5.0,
+                    IncludedInOverallScore.INCLUDED_COMPLETELY);
+            var grades = Set.of(grade);
+
+            var dto = examService.calculateStudentResultWithGradeAndPoints(se, grades);
+
+            var er = dto.studentResult().exerciseGroupIdToExerciseResult().get(group.getId());
+            assertThat(er).as("ExerciseResult exists").isNotNull();
+            assertThat(er.maxScore()).isEqualTo(5.0);
+            assertThat(er.achievedPoints()).isEqualTo(5.0);
+            assertThat(er.achievedScore()).isEqualTo(100.0);
+        }
+
+        /**
+         * Defensive Programming when maxPoints == 0 (e.g. faulty configuration):
+         * No division, percentage remains 0.
+         */
+        @Test
+        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+        void achievedScore_zero_whenMaxPointsZero() {
+            Course course = courseUtilService.addEmptyCourse();
+            Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+            exam.setExamMaxPoints(0);
+            ExerciseGroup group = exam.getExerciseGroups().getFirst();
+
+            QuizExercise quiz = new QuizExercise();
+            quiz.setTitle("Q3");
+            quiz.setMaxPoints(0.0); // <- Edge Case
+            quiz.setExerciseGroup(group);
+            exerciseRepository.save(quiz);
+
+            StudentExam se = new StudentExam();
+            se.setExam(exam);
+            se.setUser(student);
+            se.setSubmitted(true);
+            se.setExercises(List.of(quiz));
+
+            var participation = new StudentParticipation();
+            participation.setExercise(quiz);
+            participation.setParticipant(student);
+            var submission = new de.tum.cit.aet.artemis.quiz.domain.QuizSubmission();
+            var result = new de.tum.cit.aet.artemis.assessment.domain.Result();
+            result.setScore(null);
+            submission.setResults(List.of(result));
+            participation.setSubmissions(Set.of(submission));
+            studentParticipationRepository.save(participation);
+
+            // Score im Grade egal; maxPoints=0 verhindert Prozentberechnung
+            var grade = new de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO(participation.getId(), student.getId(), quiz.getId(), 100.0, 0.0,
+                    IncludedInOverallScore.INCLUDED_COMPLETELY);
+            var grades = Set.of(grade);
+
+            var dto = examService.calculateStudentResultWithGradeAndPoints(se, grades);
+
+            var er = dto.studentResult().exerciseGroupIdToExerciseResult().get(group.getId());
+            assertThat(er.maxScore()).isEqualTo(0.0);
+            assertThat(er.achievedPoints()).isEqualTo(0.0);
+            assertThat(er.achievedScore()).isEqualTo(0.0);
+        }
+    }
+
     private Exam createExam(int numberOfExercisesInExam, Long id, Integer maxPoints) {
         Exam exam = new Exam();
         exam.setExamMaxPoints(maxPoints);
