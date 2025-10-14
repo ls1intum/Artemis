@@ -294,7 +294,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
         void achievedScore_isDerivedFromPoints_whenResultScoreIsNull() {
-            // Arrange: Kurs + Exam + ExerciseGroup
             Course course = courseUtilService.addEmptyCourse();
             Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
             exam.setExamMaxPoints(5);
@@ -319,7 +318,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
             participation.setParticipant(student);
             var submission = new de.tum.cit.aet.artemis.quiz.domain.QuizSubmission();
             var result = new de.tum.cit.aet.artemis.assessment.domain.Result();
-            result.setScore(null); // <- score is missing in exam test run
+            result.setScore(null); // score is missing in exam test run
             submission.setResults(List.of(result));
             participation.setSubmissions(Set.of(submission));
             studentParticipationRepository.save(participation);
@@ -339,7 +338,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         /**
-         * Defensive Programming when maxPoints == 0 (e.g. faulty configuration):
+         * Defensive Programming when maxPoints == 0:
          * No division, percentage remains 0.
          */
         @Test
@@ -372,7 +371,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
             participation.setSubmissions(Set.of(submission));
             studentParticipationRepository.save(participation);
 
-            // Score im Grade egal; maxPoints=0 verhindert Prozentberechnung
+            // Score in grade irrelevant; maxPoints=0 prevents percentage calculation
             var grade = new de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO(participation.getId(), student.getId(), quiz.getId(), 100.0, 0.0,
                     IncludedInOverallScore.INCLUDED_COMPLETELY);
             var grades = Set.of(grade);
