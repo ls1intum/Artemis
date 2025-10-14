@@ -54,9 +54,6 @@ public class AtlasAgentResource {
     @PostMapping("courses/{courseId}/chat")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<AtlasAgentChatResponseDTO> sendChatMessage(@PathVariable Long courseId, @Valid @RequestBody AtlasAgentChatRequestDTO request) {
-
-        log.debug("Received chat message for course {}: {}", courseId, request.message().substring(0, Math.min(request.message().length(), 50)));
-
         try {
             final var future = atlasAgentService.processChatMessage(request.message(), courseId, request.sessionId());
             final var result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);

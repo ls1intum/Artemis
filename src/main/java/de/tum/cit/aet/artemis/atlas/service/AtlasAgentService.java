@@ -45,13 +45,11 @@ public class AtlasAgentService {
      *
      * @param message   The user's message
      * @param courseId  The course ID for context
-     * @param sessionId The session ID (will be used with DB-backed memory)
+     * @param sessionId The session ID (TODO: will be used for another PR for Memory implementation including db migration)
      * @return Result containing the AI response and competency modification flag
      */
     public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
         try {
-            log.debug("Processing chat message for course {} with session {} (messageLength={} chars)", courseId, sessionId, message.length());
-
             // Load system prompt from external template
             String resourcePath = "/prompts/atlas/agent_system_prompt.st";
             Map<String, String> variables = Map.of(); // No variables needed for this template

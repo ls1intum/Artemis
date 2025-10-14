@@ -59,8 +59,6 @@ public class AtlasAgentToolsService {
     @Tool(description = "Get all competencies for a course")
     public String getCourseCompetencies(@ToolParam(description = "the ID of the course") Long courseId) {
         try {
-            log.debug("Agent tool: Getting competencies for course {}", courseId);
-
             Optional<Course> courseOpt = courseRepository.findById(courseId);
             if (courseOpt.isEmpty()) {
                 return toJson(Map.of("error", "Course not found with ID: " + courseId));
@@ -104,8 +102,6 @@ public class AtlasAgentToolsService {
             @ToolParam(description = "the description of the competency") String description,
             @ToolParam(description = "the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)") String taxonomyLevel) {
         try {
-            log.debug("Agent tool: Creating competency '{}' for course {}", title, courseId);
-
             Optional<Course> courseOpt = courseRepository.findById(courseId);
             if (courseOpt.isEmpty()) {
                 return toJson(Map.of("error", "Course not found with ID: " + courseId));
@@ -158,8 +154,6 @@ public class AtlasAgentToolsService {
     @Tool(description = "Get the description of a course")
     public String getCourseDescription(@ToolParam(description = "the ID of the course") Long courseId) {
         try {
-            log.debug("Agent tool: Getting course description for course {}", courseId);
-
             Optional<Course> courseOpt = courseRepository.findById(courseId);
             if (courseOpt.isEmpty()) {
                 return "";
@@ -184,8 +178,6 @@ public class AtlasAgentToolsService {
     @Tool(description = "List exercises for a course")
     public String getExercisesListed(@ToolParam(description = "the ID of the course") Long courseId) {
         try {
-            log.debug("Agent tool: Getting exercises for course {}", courseId);
-
             Optional<Course> courseOpt = courseRepository.findById(courseId);
             if (courseOpt.isEmpty()) {
                 return toJson(Map.of("error", "Course not found with ID: " + courseId));

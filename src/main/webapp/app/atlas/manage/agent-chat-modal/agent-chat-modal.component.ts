@@ -64,11 +64,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         return !!(message && !this.isAgentTyping() && !this.isMessageTooLong());
     });
 
-    ngOnInit(): void {
-        // Load conversation history from backend ChatMemory
-        this.loadHistory();
-    }
-
     ngAfterViewInit(): void {
         // Auto-focus on textarea when modal opens
         setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
@@ -136,38 +131,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         const textarea = this.messageInput().nativeElement;
         textarea.style.height = 'auto';
         textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-    }
-
-    private loadHistory(): void {
-        // Always start with welcome message
-        this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
-
-        this.agentChatService.getHistory(this.courseId).subscribe({
-            next: (history) => {
-                if (history && history.length > 0) {
-                    // Convert history messages to ChatMessage format
-                    const historyMessages = history.map((msg) => {
-                        let content = msg.content;
-                        if (msg.role === 'user') {
-                            // Remove "Course ID: X\n\n" prefix from user messages
-                            content = content.replace(/^Course ID: \d+\n\n/, '');
-                        }
-                        return {
-                            id: this.generateMessageId(),
-                            content: content,
-                            isUser: msg.role === 'user',
-                            timestamp: new Date(),
-                        };
-                    });
-                    this.messages = [...this.messages, ...historyMessages];
-                    this.shouldScrollToBottom = true;
-                    this.cdr.markForCheck();
-                }
-            },
-            error: () => {
-                // History load failed, but welcome message is already shown
-            },
-        });
     }
 
     private addMessage(content: string, isUser: boolean): void {
