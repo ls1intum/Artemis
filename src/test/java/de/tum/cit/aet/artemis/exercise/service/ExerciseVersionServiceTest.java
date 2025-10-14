@@ -10,7 +10,7 @@ import java.util.ArrayList;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.Logger;
@@ -104,16 +104,16 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     @ParameterizedTest
     @EnumSource(ExerciseType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExerciseVersion(ExerciseType exerciseType) {
+    void testCreateExerciseVersion_OnCreate(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
         exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
     }
 
-    @Disabled
+    @ParameterizedTest
     @EnumSource(ExerciseType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExerciseVersionOnUpdate(ExerciseType exerciseType) {
+    void testCreateExerciseVersion_OnUpdate(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
         ExerciseVersion previousVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
@@ -141,7 +141,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     @ParameterizedTest
     @EnumSource(ExerciseType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExerciseVersionOnInvalidUpdate(ExerciseType exerciseType) {
+    void testCreateExerciseVersion_OnInvalidUpdate(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
         ExerciseVersion previousVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
@@ -164,6 +164,38 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         Exercise fetchedExercise = fetchExerciseForComparison(exercise);
         ExerciseSnapshotDTO expectedSnapshot = ExerciseSnapshotDTO.of(fetchedExercise, gitService);
         assertThat(snapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(expectedSnapshot);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExerciseVersion_OnNullExericise() {
+        var previousCount = exerciseVersionRepository.count();
+        exerciseVersionService.createExerciseVersion(null);
+        var afterCount = exerciseVersionRepository.count();
+        assertThat(afterCount).isEqualTo(previousCount);
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExerciseVersion_OnNullExericiseId() {
+        Exercise exercise = createExerciseByType(ExerciseType.TEXT);
+        exercise.setId(null);
+        var previousCount = exerciseVersionRepository.count();
+        exerciseVersionService.createExerciseVersion(exercise);
+        var afterCount = exerciseVersionRepository.count();
+        assertThat(afterCount).isEqualTo(previousCount);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExerciseVersion_OnNullUser() {
+        Exercise exercise = createExerciseByType(ExerciseType.TEXT);
+        exercise.setId(null);
+        var previousCount = exerciseVersionRepository.count();
+        exerciseVersionService.createExerciseVersion(exercise, null);
+        var afterCount = exerciseVersionRepository.count();
+        assertThat(afterCount).isEqualTo(previousCount);
     }
 
     private Exercise createExerciseByType(ExerciseType exerciseType) {
