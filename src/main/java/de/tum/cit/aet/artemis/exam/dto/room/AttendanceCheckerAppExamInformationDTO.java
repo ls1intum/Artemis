@@ -136,6 +136,13 @@ public record AttendanceCheckerAppExamInformationDTO(
     @NotNull Set<ExamRoomForAttendanceCheckerDTO> examRoomsUsedInExam,  // might be empty
     @NotEmpty Set<ExamUserWithExamRoomAndSeatDTO> examUsersWithExamRoomAndSeat
 ) {
+    /**
+     * Create an AttendanceCheckerAppExamInformationDTO from the given exam and its rooms
+     *
+     * @param exam the exam
+     * @param examRooms the rooms used in the exam
+     * @return information for the attendance checker app
+     */
     public static AttendanceCheckerAppExamInformationDTO from(Exam exam, Set<ExamRoom> examRooms) {
         return new AttendanceCheckerAppExamInformationDTO(
             exam.getId(),
