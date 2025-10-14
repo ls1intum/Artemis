@@ -101,12 +101,42 @@ public class GitRepositoryExportService {
         sanitizedRepoName = participation.addPracticePrefixIfTestRun(sanitizedRepoName);
 
         if (zipOutput) {
-            return zipFiles(repo.getLocalPath(), sanitizedRepoName, repositoryDir, null);
+            // Defense-in-depth: if anonymized export, exclude leak-prone entries even if anonymization already removed them
+            Predicate<Path> contentFilter = null;
+            if (hideStudentName) {
+                contentFilter = path -> {
+                    String s = path.toString().replace('\\', '/');
+                    if (s.contains("/.git/logs")) {
+                        return false;
+                    }
+                    if (s.endsWith("/FETCH_HEAD")) {
+                        return false;
+                    }
+                    return true;
+                };
+            }
+            return zipFiles(repo.getLocalPath(), sanitizedRepoName, repositoryDir, contentFilter);
         }
         else {
             Path targetDir = Path.of(repositoryDir, sanitizedRepoName);
 
             FileUtils.copyDirectory(repo.getLocalPath().toFile(), targetDir.toFile());
+            if (hideStudentName) {
+                // Defense-in-depth: ensure no reflogs or fetch metadata remain in copied directory
+                try {
+                    Path logsPath = targetDir.resolve(".git").resolve("logs");
+                    FileUtils.deleteDirectory(logsPath.toFile());
+                }
+                catch (IOException ex) {
+                    log.warn("Could not delete reflogs from exported repository at {}: {}", targetDir, ex.getMessage());
+                }
+                try {
+                    Files.deleteIfExists(targetDir.resolve(".git").resolve("FETCH_HEAD"));
+                }
+                catch (IOException ex) {
+                    log.warn("Could not delete FETCH_HEAD from exported repository at {}: {}", targetDir, ex.getMessage());
+                }
+            }
             return targetDir;
         }
     }

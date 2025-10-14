@@ -731,7 +731,7 @@ public class GitService extends AbstractGitService {
 
             // Get list of all student commits, that is all commits up to the last template commit
             Iterable<RevCommit> commits = studentGit.log().add(copyBranch.getObjectId()).call();
-            List<RevCommit> commitList = StreamSupport.stream(commits.spliterator(), false).takeWhile(ref -> !ref.equals(latestHash))
+            List<RevCommit> commitList = StreamSupport.stream(commits.spliterator(), false).takeWhile(commit -> !commit.getId().equals(latestHash))
                     .collect(Collectors.toCollection(ArrayList::new));
             // Sort them oldest to newest
             Collections.reverse(commitList);
