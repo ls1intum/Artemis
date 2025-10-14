@@ -78,37 +78,37 @@ describe('Leaderboard', () => {
 
     describe('currentUserRank', () => {
         it('should return the rank of the current user', () => {
-            expect(component.currentUserRank).toBe(1);
+            expect(component.currentUserRank()).toBe(1);
         });
 
         it('should return 0 if user is not in leaderboard', () => {
             fixture.componentRef.setInput('currentUserId', 999);
             fixture.detectChanges();
-            expect(component.currentUserRank).toBe(0);
+            expect(component.currentUserRank()).toBe(0);
         });
     });
 
     describe('currentUserScore', () => {
         it('should return the score of the current user', () => {
-            expect(component.currentUserScore).toBe(100);
+            expect(component.currentUserScore()).toBe(100);
         });
 
         it('should return 0 if user is not in leaderboard', () => {
             fixture.componentRef.setInput('currentUserId', 999);
             fixture.detectChanges();
-            expect(component.currentUserScore).toBe(0);
+            expect(component.currentUserScore()).toBe(0);
         });
     });
 
     describe('currentUserPictureUrl', () => {
         it('should return the image URL of the current user', () => {
-            expect(component.currentUserPictureUrl).toBe('user1.jpg');
+            expect(component.currentUserPictureUrl()).toBe('user1.jpg');
         });
 
         it('should return empty string if user is not in leaderboard', () => {
             fixture.componentRef.setInput('currentUserId', 999);
             fixture.detectChanges();
-            expect(component.currentUserPictureUrl).toBe('');
+            expect(component.currentUserPictureUrl()).toBe('');
         });
     });
 });
