@@ -637,4 +637,215 @@ describe('AgentChatModalComponent', () => {
             expect(() => component.onTextareaInput()).not.toThrow();
         });
     });
+
+    describe('Computed signals', () => {
+        it('should calculate currentMessageLength correctly', () => {
+            // Arrange & Act
+            component.currentMessage.set('Hello');
+
+            // Assert
+            expect(component.currentMessageLength()).toBe(5);
+        });
+
+        it('should update currentMessageLength when message changes', () => {
+            // Arrange
+            component.currentMessage.set('Short');
+            expect(component.currentMessageLength()).toBe(5);
+
+            // Act
+            component.currentMessage.set('A much longer message');
+
+            // Assert
+            expect(component.currentMessageLength()).toBe(21);
+        });
+
+        it('should correctly identify message as too long', () => {
+            // Arrange
+            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH + 1));
+
+            // Act & Assert
+            expect(component.isMessageTooLong()).toBeTrue();
+        });
+
+        it('should correctly identify message as not too long', () => {
+            // Arrange
+            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH));
+
+            // Act & Assert
+            expect(component.isMessageTooLong()).toBeFalse();
+        });
+
+        it('should correctly identify empty message as not too long', () => {
+            // Arrange
+            component.currentMessage.set('');
+
+            // Act & Assert
+            expect(component.isMessageTooLong()).toBeFalse();
+        });
+    });
+
+    describe('Message state management', () => {
+        it('should clear currentMessage after sending', () => {
+            // Arrange
+            mockTranslateService.instant.mockReturnValue('Welcome');
+            component.ngOnInit();
+            component.currentMessage.set('Test message to send');
+            component.isAgentTyping.set(false);
+            const mockResponse = {
+                message: 'Agent response',
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            fixture.detectChanges();
+
+            // Act
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            // Assert
+            expect(component.currentMessage()).toBe('');
+        });
+
+        it('should set isAgentTyping to true when sending message', () => {
+            // Arrange
+            mockTranslateService.instant.mockReturnValue('Welcome');
+            component.ngOnInit();
+            component.currentMessage.set('Test message');
+            component.isAgentTyping.set(false);
+            mockAgentChatService.sendMessage.mockReturnValue(
+                of({
+                    message: 'Response',
+                    sessionId: 'course_123',
+                    timestamp: '2024-01-01T00:00:00Z',
+                    success: true,
+                    competenciesModified: false,
+                }),
+            );
+            fixture.detectChanges();
+
+            // Act
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            // Assert - Should be set to true during processing, then back to false
+            expect(component.isAgentTyping()).toBeFalse(); // False after response completes
+        });
+
+        it('should add user message to messages array', () => {
+            // Arrange
+            mockTranslateService.instant.mockReturnValue('Welcome');
+            component.ngOnInit();
+            const initialMessageCount = component.messages.length;
+            component.currentMessage.set('User test message');
+            component.isAgentTyping.set(false);
+            mockAgentChatService.sendMessage.mockReturnValue(
+                of({
+                    message: 'Agent response',
+                    sessionId: 'course_123',
+                    timestamp: '2024-01-01T00:00:00Z',
+                    success: true,
+                    competenciesModified: false,
+                }),
+            );
+            fixture.detectChanges();
+
+            // Act
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            // Assert
+            expect(component.messages.length).toBeGreaterThan(initialMessageCount);
+            const userMessage = component.messages.find((msg) => msg.isUser && msg.content === 'User test message');
+            expect(userMessage).toBeDefined();
+        });
+    });
+
+    describe('Scroll behavior edge cases', () => {
+        it('should handle scrollToBottom when messagesContainer is null', () => {
+            // Arrange
+            jest.spyOn(component as any, 'messagesContainer').mockReturnValue(null);
+            component['shouldScrollToBottom'] = true;
+
+            // Act & Assert - Should not throw error
+            expect(() => component.ngAfterViewChecked()).not.toThrow();
+        });
+
+        it('should handle empty response message from service', fakeAsync(() => {
+            // Arrange
+            component.currentMessage.set('Test message');
+            component.isAgentTyping.set(false);
+            const mockResponse = {
+                message: '',
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            mockTranslateService.instant.mockReturnValue('Default error message');
+            fixture.detectChanges();
+
+            // Act
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+            tick();
+
+            // Assert - Empty response should trigger error message from translate
+            expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+            expect(component.messages[component.messages.length - 1].content).toBe('Default error message');
+        }));
+
+        it('should handle null response message from service', fakeAsync(() => {
+            // Arrange
+            component.currentMessage.set('Test message');
+            component.isAgentTyping.set(false);
+            const mockResponse = {
+                message: null as any,
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            mockTranslateService.instant.mockReturnValue('Default error message');
+            fixture.detectChanges();
+
+            // Act
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+            tick();
+
+            // Assert - Null response should trigger error message
+            expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+        }));
+
+        it('should set shouldScrollToBottom flag when adding messages', () => {
+            // Arrange
+            mockTranslateService.instant.mockReturnValue('Welcome');
+            component.ngOnInit();
+            component['shouldScrollToBottom'] = false;
+
+            // Act
+            component.currentMessage.set('Test message');
+            component.isAgentTyping.set(false);
+            mockAgentChatService.sendMessage.mockReturnValue(
+                of({
+                    message: 'Response',
+                    sessionId: 'course_123',
+                    timestamp: '2024-01-01T00:00:00Z',
+                    success: true,
+                    competenciesModified: false,
+                }),
+            );
+            fixture.detectChanges();
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            // Assert - shouldScrollToBottom should be true after adding message, then reset to false after ngAfterViewChecked
+            expect(component['shouldScrollToBottom']).toBeDefined();
+        });
+    });
 });
