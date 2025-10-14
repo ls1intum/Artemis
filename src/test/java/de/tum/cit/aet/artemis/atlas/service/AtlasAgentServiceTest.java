@@ -36,8 +36,8 @@ class AtlasAgentServiceTest {
     @BeforeEach
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        // Pass null for ToolCallbackProvider and ChatMemory in tests
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null);
+        // Pass null for ToolCallbackProvider in tests
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null);
     }
 
     @Test
@@ -58,7 +58,7 @@ class AtlasAgentServiceTest {
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
         assertThat(chatResult.message()).isEqualTo(expectedResponse);
-        assertThat(chatResult.competenciesModified()).isFalse(); // No ChatMemory in test, so should be false
+        assertThat(chatResult.competenciesModified()).isFalse();
     }
 
     @Test
@@ -156,7 +156,7 @@ class AtlasAgentServiceTest {
     @Test
     void testIsAvailable_WithNullChatClient() {
         // Given - pass null for all optional parameters
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null);
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null);
 
         // When
         boolean available = serviceWithNullClient.isAvailable();

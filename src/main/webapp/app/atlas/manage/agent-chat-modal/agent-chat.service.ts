@@ -18,11 +18,6 @@ interface AgentChatResponse {
     competenciesModified?: boolean;
 }
 
-interface ChatHistoryMessage {
-    role: string;
-    content: string;
-}
-
 @Injectable({
     providedIn: 'root',
 })
@@ -52,15 +47,6 @@ export class AgentChatService {
                     success: false,
                     competenciesModified: false,
                 });
-            }),
-        );
-    }
-
-    getHistory(courseId: number): Observable<ChatHistoryMessage[]> {
-        return this.http.get<ChatHistoryMessage[]>(`api/atlas/agent/courses/${courseId}/history`).pipe(
-            catchError(() => {
-                // Return empty array on failure
-                return of([]);
             }),
         );
     }
