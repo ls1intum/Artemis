@@ -79,24 +79,24 @@
             WHERE r.exercise_id IS NULL;
 
             DELETE f
-        FROM feedback f
-        JOIN result r ON r.id = f.result_id
-        WHERE r.exercise_id IS NULL;
+            FROM feedback f
+            JOIN result r ON r.id = f.result_id
+            WHERE r.exercise_id IS NULL;
 
-        DELETE a
-        FROM assessment_note a
-        JOIN result r ON r.id = a.result_id
-        WHERE r.exercise_id IS NULL;
+            DELETE a
+            FROM assessment_note a
+            JOIN result r ON r.id = a.result_id
+            WHERE r.exercise_id IS NULL;
 
-        DELETE rr
-        FROM result_rating rr
-        JOIN result r ON r.id = rr.result_id
-        WHERE r.exercise_id IS NULL;
+            DELETE rr
+            FROM result_rating rr
+            JOIN result r ON r.id = rr.result_id
+            WHERE r.exercise_id IS NULL;
 
-        DELETE c
-        FROM complaint c
-        JOIN result r ON r.id = c.result_id
-        WHERE r.exercise_id IS NULL;
+            DELETE c
+            FROM complaint c
+            JOIN result r ON r.id = c.result_id
+            WHERE r.exercise_id IS NULL;
         </sql>
 
 
