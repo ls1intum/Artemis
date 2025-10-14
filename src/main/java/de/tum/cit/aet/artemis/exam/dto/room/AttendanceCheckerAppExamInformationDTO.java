@@ -121,6 +121,9 @@ record ExamUserWithExamRoomAndSeatDTO (
     }
 }
 
+/**
+ * DTO containing all relevant information for the attendance checker app
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AttendanceCheckerAppExamInformationDTO(
     @NotNull long examId,
