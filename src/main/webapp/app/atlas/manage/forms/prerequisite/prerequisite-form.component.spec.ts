@@ -49,6 +49,7 @@ describe('PrerequisiteFormComponent', () => {
 
         prerequisiteFormComponentFixture = TestBed.createComponent(PrerequisiteFormComponent);
         prerequisiteFormComponent = prerequisiteFormComponentFixture.componentInstance;
+        prerequisiteFormComponentFixture.componentRef.setInput('prerequisite', new Prerequisite());
         translateService = TestBed.inject(TranslateService);
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
@@ -110,7 +111,7 @@ describe('PrerequisiteFormComponent', () => {
     }));
 
     it('should correctly set form values in edit mode', () => {
-        prerequisiteFormComponent.isEditMode = true;
+        prerequisiteFormComponentFixture.componentRef.setInput('isEditMode', true);
         const textUnit = new TextUnit();
         textUnit.id = 1;
         const formData: CourseCompetencyFormData = {
@@ -121,9 +122,8 @@ describe('PrerequisiteFormComponent', () => {
             taxonomy: CompetencyTaxonomy.ANALYZE,
             optional: true,
         };
+        prerequisiteFormComponentFixture.componentRef.setInput('formData', formData);
         prerequisiteFormComponentFixture.detectChanges();
-        prerequisiteFormComponent.formData = formData;
-        prerequisiteFormComponent.ngOnChanges();
 
         expect(prerequisiteFormComponent.titleControl?.value).toEqual(formData.title);
         expect(prerequisiteFormComponent.descriptionControl?.value).toEqual(formData.description);
@@ -177,9 +177,8 @@ describe('PrerequisiteFormComponent', () => {
                 }),
             ),
         );
-        prerequisiteFormComponent.isEditMode = true;
-        prerequisiteFormComponent.formData.title = 'initialName';
-
+        prerequisiteFormComponentFixture.componentRef.setInput('isEditMode', true);
+        prerequisiteFormComponentFixture.componentRef.setInput('formData', { title: 'initialName' } as CourseCompetencyFormData);
         prerequisiteFormComponentFixture.detectChanges();
 
         const titleControl = prerequisiteFormComponent.titleControl!;
