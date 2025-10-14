@@ -25,6 +25,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { StudentsRoomDistributionButtonComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-button.component';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -40,6 +41,7 @@ const cssClasses = {
         TranslateDirective,
         UsersImportButtonComponent,
         StudentsUploadImagesButtonComponent,
+        StudentsRoomDistributionButtonComponent,
         FaIconComponent,
         RouterLink,
         DeleteButtonDirective,

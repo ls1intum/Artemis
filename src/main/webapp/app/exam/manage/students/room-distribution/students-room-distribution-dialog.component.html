@@ -1,0 +1,63 @@
+<form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate>
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
+        </h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <p jhiTranslate="artemisApp.exam.examUsers.rooms.introText" class="intro-text"></p>
+        </div>
+        <input
+            type="text"
+            class="form-control"
+            placeholder="{{ 'artemisApp.exam.examUsers.rooms.searchPlaceholder' | artemisTranslate }}"
+            [ngbTypeahead]="search"
+            [resultFormatter]="formatter"
+            [inputFormatter]="formatter"
+            (selectItem)="onRoomSelected($event)"
+        />
+    </div>
+    @if (hasSelectedRooms()) {
+        <div class="modal-body">
+            <table class="table table-bordered w-auto">
+                <thead>
+                    <tr>
+                        <th jhiTranslate="artemisApp.exam.examUsers.rooms.number"></th>
+                        <th jhiTranslate="artemisApp.exam.examUsers.rooms.alternativeNumber"></th>
+                        <th jhiTranslate="artemisApp.exam.examUsers.rooms.name"></th>
+                        <th jhiTranslate="artemisApp.exam.examUsers.rooms.alternativeName"></th>
+                        <th jhiTranslate="artemisApp.exam.examUsers.rooms.building"></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (examRoom of selectedRooms(); track examRoom.id) {
+                        <tr>
+                            <td>{{ examRoom.number }}</td>
+                            <td>{{ examRoom.alternativeNumber }}</td>
+                            <td>{{ examRoom.name }}</td>
+                            <td>{{ examRoom.alternativeName }}</td>
+                            <td>{{ examRoom.building }}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeSelectedRoom(examRoom)">
+                                    <fa-icon [icon]="faBan" />
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary cancel me-2" data-dismiss="modal" (click)="clear()">
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button class="btn btn-success" id="finish-button" (click)="onFinish()">
+            <fa-icon [icon]="faCheck" class="me-2" />
+            <span jhiTranslate="entity.action.finish"></span>
+        </button>
+    </div>
+</form>

@@ -22,6 +22,9 @@
                 <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (uploadDone)="reloadExamWithRegisteredUsers()" />
             }
             @if (!isTestExam) {
+                <jhi-students-room-distribution-button [courseId]="courseId" [exam]="exam" (distributionDone)="reloadExamWithRegisteredUsers()" />
+            }
+            @if (!isTestExam) {
                 <button
                     class="btn btn btn-primary ms-auto"
                     id="register-course-students"

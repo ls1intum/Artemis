@@ -30,7 +30,15 @@
                 "attendanceStatusTitle": "Exam Attendance Status",
                 "attendanceCheckFailed": "Attendance check failed",
                 "attendanceCheckPassed": "Attendance check passed",
-                "didNotAttend": "Did not attend"
+                "didNotAttend": "Did not attend",
+                "roomDistribute": "Distribute",
+                "rooms": {
+                    "number": "Number",
+                    "alternativeNumber": "Number 2",
+                    "name": "Name",
+                    "alternativeName": "Name 2",
+                    "building": "Building"
+                }
             },
             "overview": {
                 "start": "Start: {{start}}",

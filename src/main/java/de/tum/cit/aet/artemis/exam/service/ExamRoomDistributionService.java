@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomExamAssignmentRepository;
@@ -117,5 +118,9 @@ public class ExamRoomDistributionService {
                 exam.addExamUser(nextExamUser);
             }
         }
+    }
+
+    public Set<ExamRoomForDistributionDTO> getRoomDataForDistribution() {
+        return examRoomRepository.findAllCurrentExamRoomsForDistribution();
     }
 }

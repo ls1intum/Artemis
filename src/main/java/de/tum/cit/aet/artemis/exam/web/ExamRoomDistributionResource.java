@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
@@ -75,5 +77,20 @@ public class ExamRoomDistributionResource {
         examRoomDistributionService.distributeRegisteredStudents(examId, examRoomIds);
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET /rooms/distribution-data : Retrieves basic room data of all available rooms, required for the instructors to be
+     * able to select the rooms for distribution
+     *
+     * @return Basic room data of all available rooms
+     */
+    @GetMapping("rooms/distribution-data")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Set<ExamRoomForDistributionDTO>> getRoomDataForDistribution() {
+        log.debug("REST request to get room data for a distribution");
+
+        Set<ExamRoomForDistributionDTO> roomData = examRoomDistributionService.getRoomDataForDistribution();
+        return ResponseEntity.ok(roomData);
     }
 }
