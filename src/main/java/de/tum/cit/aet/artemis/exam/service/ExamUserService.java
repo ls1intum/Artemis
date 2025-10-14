@@ -222,14 +222,14 @@ public class ExamUserService {
 
             Optional<ExamRoom> matchingRoom = examRoomsUsedInExam.stream().filter(room -> room.getRoomNumber().equalsIgnoreCase(roomNumber)).findFirst();
             if (matchingRoom.isEmpty()) {
-                throw new BadRequestAlertException("Room of exam user cannot be mapped to an actual room", ENTITY_NAME, "examUser.service.roomNotFound",
-                        Map.of("userName", examUser.getUser().getLogin(), "roomNumber", roomNumber));
+                throw new BadRequestAlertException("Room of exam user cannot be mapped to an actual room, userName=" + examUser.getUser().getLogin() + ", roomNumber=" + roomNumber,
+                        ENTITY_NAME, "examUser.service.roomNotFound", Map.of("userName", examUser.getUser().getLogin(), "roomNumber", roomNumber));
             }
 
             Optional<ExamSeatDTO> matchingSeat = matchingRoom.get().getSeats().stream().filter(seat -> seat.name().equalsIgnoreCase(seatName)).findFirst();
             if (matchingSeat.isEmpty()) {
-                throw new BadRequestAlertException("Seat of exam user cannot be mapped to an actual seat", ENTITY_NAME, "examUser.service.seatNotFound",
-                        Map.of("userName", examUser.getUser().getLogin(), "seatName", seatName));
+                throw new BadRequestAlertException("Seat of exam user cannot be mapped to an actual seat, userName=" + examUser.getUser().getLogin() + ", seatName=" + seatName,
+                        ENTITY_NAME, "examUser.service.seatNotFound", Map.of("userName", examUser.getUser().getLogin(), "seatName", seatName));
             }
 
             roomAndSeatSetter.accept(examUser, matchingRoom.get(), matchingSeat.get());
