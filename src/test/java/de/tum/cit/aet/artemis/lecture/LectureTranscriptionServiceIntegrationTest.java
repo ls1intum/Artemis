@@ -152,7 +152,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
         var dto = new LectureTranscriptionDTO(null, "en", java.util.List.of());
 
-        lectureTranscriptionService.saveFinalTranscriptionResult(jobId, dto);
+        ReflectionTestUtils.invokeMethod(lectureTranscriptionService, "saveFinalTranscriptionResult", jobId, dto);
 
         var saved = transcriptionRepository.findByJobId(jobId);
         assertThat(saved).isPresent();
@@ -166,7 +166,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         var t = createTranscription("job-x", TranscriptionStatus.PENDING);
         t = transcriptionRepository.save(t);
 
-        lectureTranscriptionService.markTranscriptionAsFailed(t, "nope");
+        ReflectionTestUtils.invokeMethod(lectureTranscriptionService, "markTranscriptionAsFailed", t, "nope");
 
         assertThat(t.getTranscriptionStatus()).isEqualTo(TranscriptionStatus.FAILED);
         var saved = transcriptionRepository.findByJobId("job-x");
@@ -192,7 +192,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         existing = transcriptionRepository.save(existing);
         Long existingId = existing.getId();
 
-        lectureTranscriptionService.createEmptyTranscription(lectureId, unitId, "job-new");
+        ReflectionTestUtils.invokeMethod(lectureTranscriptionService, "createEmptyTranscription", lectureId, unitId, "job-new");
 
         assertThat(transcriptionRepository.findById(existingId)).isEmpty();
 
@@ -220,7 +220,8 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         unit = lectureUnitRepository.save(unit);
         Long unitId = unit.getId();
 
-        assertThatThrownBy(() -> lectureTranscriptionService.createEmptyTranscription(lectureId, unitId, "job-z")).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(lectureTranscriptionService, "createEmptyTranscription", lectureId, unitId, "job-z"))
+                .isInstanceOf(ResponseStatusException.class);
 
         var transcriptions = transcriptionRepository.findByLectureUnit_Id(unitId);
         assertThat(transcriptions).isEmpty();
