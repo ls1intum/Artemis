@@ -213,4 +213,25 @@ class AtlasAgentServiceTest {
         // Verify sessions are isolated (different session IDs mean different conversation contexts)
         assertThat(instructor1SessionId).isNotEqualTo(instructor2SessionId);
     }
+
+    @Test
+    void testProcessChatMessage_DetectsMultipleCreationKeywords() throws ExecutionException, InterruptedException {
+        // Given - Test different keyword variations for competency modification detection
+        String testMessage = "Create multiple competencies";
+        Long courseId = 888L;
+        String sessionId = "multi_create_session";
+        String responseWithMultipleKeywords = "I successfully created three new competencies for you.";
+
+        when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithMultipleKeywords)))));
+
+        // When
+        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+
+        // Then
+        assertThat(result).isNotNull();
+        AgentChatResult chatResult = result.get();
+        assertThat(chatResult.message()).isEqualTo(responseWithMultipleKeywords);
+        assertThat(chatResult.competenciesModified()).isTrue(); // Should detect "created" keyword
+    }
 }

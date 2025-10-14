@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.atlas.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -15,12 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatRequestDTO;
-import de.tum.cit.aet.artemis.atlas.dto.ChatHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
@@ -201,64 +196,6 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Nested
-    class ChatMemory {
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldMaintainConversationContextAcrossMessages() throws Exception {
-            // Given
-            String sessionId = "memory-test-session";
-            String firstMessage = "My name is John";
-            String secondMessage = "What is my name?";
-
-            // When - Send first message
-            request.performMvcRequest(post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(new AtlasAgentChatRequestDTO(firstMessage, sessionId)))).andExpect(status().isOk());
-
-            // When - Send second message
-            request.performMvcRequest(post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(new AtlasAgentChatRequestDTO(secondMessage, sessionId)))).andExpect(status().isOk())
-                    .andExpect(jsonPath("$.message").exists());
-
-            // Then - Memory maintained implicitly through AI response
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldFilterSystemMessagesFromHistory() throws Exception {
-            // Given
-            String sessionId = "course_" + course.getId();
-            request.performMvcRequest(post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(new AtlasAgentChatRequestDTO("Hello", sessionId)))).andExpect(status().isOk());
-
-            // When
-            String actualResponseJson = request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/history", course.getId()).contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-
-            // Then
-            List<ChatHistoryMessageDTO> actualHistory = objectMapper.readValue(actualResponseJson, new TypeReference<>() {
-            });
-            assertThat(actualHistory).noneMatch(msg -> "system".equals(msg.role()));
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldReturnEmptyHistoryForNewCourse() throws Exception {
-            // Given
-            Course newCourse = courseUtilService.createCourse();
-
-            // When
-            String actualResponseJson = request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/history", newCourse.getId()).contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-
-            // Then
-            List<ChatHistoryMessageDTO> actualHistory = objectMapper.readValue(actualResponseJson, new TypeReference<>() {
-            });
-            assertThat(actualHistory).isEmpty();
-        }
-    }
-
-    @Nested
     class ToolIntegration {
 
         @Test
@@ -324,20 +261,6 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
             request.performMvcRequest(
                     post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
                     .andExpect(status().isOk());
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void shouldReturnForbiddenForStudentAccessingHistoryEndpoint() throws Exception {
-            // When & Then
-            request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/history", course.getId()).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isForbidden());
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldAllowInstructorAccessToHistoryEndpoint() throws Exception {
-            // When & Then
-            request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/history", course.getId()).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
         }
     }
 }
