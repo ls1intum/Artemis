@@ -76,12 +76,6 @@ artemis:
         destination: http://localhost:8081
     plagiarism-checks:
         plagiarism-results-limit: 100
-    nebula:
-        url: http://localhost:9090
-        secret: abcdef
-        enabled: true
-    tum-live:
-        api-base-url: https://mocke.tum.live/api/v2
 
 info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service

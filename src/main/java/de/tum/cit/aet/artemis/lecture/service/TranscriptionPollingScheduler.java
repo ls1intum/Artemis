@@ -38,11 +38,6 @@ public class TranscriptionPollingScheduler {
      */
     @Scheduled(fixedRate = 30000)
     public void pollPendingTranscriptions() {
-        // Only process transcriptions if Nebula transcription service is available (only injected when Nebula is enabled)
-        if (transcriptionService == null) {
-            return;
-        }
-
         List<LectureTranscription> pendingTranscriptions = transcriptionRepository.findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus.PENDING);
 
         for (LectureTranscription transcription : pendingTranscriptions) {

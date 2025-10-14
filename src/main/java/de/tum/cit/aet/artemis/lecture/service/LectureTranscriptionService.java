@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
@@ -116,7 +118,8 @@ public class LectureTranscriptionService {
      * @param jobId The Nebula job ID
      * @param dto   The completed transcription result returned from Nebula
      */
-    public void saveFinalTranscriptionResult(String jobId, LectureTranscriptionDTO dto) {
+    @VisibleForTesting
+    void saveFinalTranscriptionResult(String jobId, LectureTranscriptionDTO dto) {
         LectureTranscription transcription = lectureTranscriptionRepository.findByJobId(jobId)
                 .orElseThrow(() -> new IllegalStateException("No transcription found for jobId: " + jobId));
 
@@ -133,7 +136,8 @@ public class LectureTranscriptionService {
      * @param transcription The transcription entity to update
      * @param errorMessage  The error message returned by Nebula
      */
-    public void markTranscriptionAsFailed(LectureTranscription transcription, String errorMessage) {
+    @VisibleForTesting
+    void markTranscriptionAsFailed(LectureTranscription transcription, String errorMessage) {
         transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
         lectureTranscriptionRepository.save(transcription);
         log.warn("Transcription failed for jobId={}, reason: {}", transcription.getJobId(), errorMessage);
@@ -147,7 +151,8 @@ public class LectureTranscriptionService {
      * @param lectureUnitId ID of the lecture unit
      * @param jobId         The Nebula job ID for this transcription
      */
-    public void createEmptyTranscription(Long lectureId, Long lectureUnitId, String jobId) {
+    @VisibleForTesting
+    void createEmptyTranscription(Long lectureId, Long lectureUnitId, String jobId) {
         LectureUnit lectureUnit = validateAndCleanup(lectureId, lectureUnitId);
 
         LectureTranscription t = new LectureTranscription();
@@ -213,20 +218,16 @@ public class LectureTranscriptionService {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nebula did not return a response body");
             }
 
-            if (response.transcriptionId() == null) {
+            if (response.jobId() == null) {
                 log.error("Nebula returned null or missing transcription ID for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nebula did not return a valid transcription ID");
             }
 
             // Create placeholder transcription for async processing
-            createEmptyTranscription(lectureId, lectureUnitId, response.transcriptionId());
+            createEmptyTranscription(lectureId, lectureUnitId, response.jobId());
 
-            log.info("Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, response.transcriptionId());
-            return response.transcriptionId();
-        }
-        catch (ResponseStatusException e) {
-            // Re-throw our own exceptions
-            throw e;
+            log.info("Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, response.jobId());
+            return response.jobId();
         }
         catch (Exception e) {
             log.error("Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
