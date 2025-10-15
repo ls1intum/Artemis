@@ -62,10 +62,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         effect(() => {
             this.setIsLanguageSupported();
         });
-        // when the network changes, update flags
-        effect(() => {
-            this.parseDockerFlagsToString();
-        });
+        // Note: we intentionally avoid auto-serializing docker flags here to prevent
+        // writing incomplete flags before defaults are initialized in ngOnInit.
     }
 
     ngOnInit() {
@@ -128,6 +126,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     onNetworkChange(value: any) {
         this.network.set(value);
+        this.parseDockerFlagsToString();
     }
 
     onCpuCountChange(event: any) {
