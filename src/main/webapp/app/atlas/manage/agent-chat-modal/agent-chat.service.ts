@@ -15,7 +15,7 @@ interface AgentChatResponse {
     sessionId?: string;
     timestamp: string;
     success: boolean;
-    competenciesModified?: boolean;
+    competenciesModified: boolean;
 }
 
 @Injectable({

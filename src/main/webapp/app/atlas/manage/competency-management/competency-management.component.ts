@@ -219,9 +219,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         });
         modalRef.componentInstance.courseId = this.courseId();
 
-        // Subscribe to competency change events from the modal
         modalRef.componentInstance.competencyChanged.subscribe(() => {
-            // Refresh competencies immediately when agent creates/modifies them
             this.loadCourseCompetencies(this.courseId());
         });
     }

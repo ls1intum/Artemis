@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
 import java.time.ZonedDateTime;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatResponseDTO;
+import de.tum.cit.aet.artemis.atlas.service.AgentChatResult;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 
@@ -55,8 +57,8 @@ public class AtlasAgentResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<AtlasAgentChatResponseDTO> sendChatMessage(@PathVariable Long courseId, @Valid @RequestBody AtlasAgentChatRequestDTO request) {
         try {
-            final var future = atlasAgentService.processChatMessage(request.message(), courseId, request.sessionId());
-            final var result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            final CompletableFuture<AgentChatResult> future = atlasAgentService.processChatMessage(request.message(), courseId, request.sessionId());
+            final AgentChatResult result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             return ResponseEntity.ok(new AtlasAgentChatResponseDTO(result.message(), request.sessionId(), ZonedDateTime.now(), true, result.competenciesModified()));
         }

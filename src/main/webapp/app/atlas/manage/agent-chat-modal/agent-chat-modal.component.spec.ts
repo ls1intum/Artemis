@@ -572,28 +572,6 @@ describe('AgentChatModalComponent', () => {
             // Assert
             expect(emitSpy).not.toHaveBeenCalled();
         });
-
-        it('should not emit competencyChanged event when competenciesModified is undefined', () => {
-            // Arrange
-            component.currentMessage.set('Test message');
-            component.isAgentTyping.set(false);
-            const mockResponse = {
-                message: 'Response without competenciesModified flag',
-                sessionId: 'course_123',
-                timestamp: '2024-01-01T00:00:00Z',
-                success: true,
-            };
-            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
-            const emitSpy = jest.spyOn(component.competencyChanged, 'emit');
-            fixture.detectChanges();
-
-            // Act
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
-            sendButton.click();
-
-            // Assert
-            expect(emitSpy).not.toHaveBeenCalled();
-        });
     });
 
     describe('Textarea auto-resize behavior', () => {

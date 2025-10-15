@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
@@ -55,10 +56,10 @@ public class AtlasAgentService {
             Map<String, String> variables = Map.of(); // No variables needed for this template
             String systemPrompt = templateService.render(resourcePath, variables);
 
-            var options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
+            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
             log.info("Atlas Agent using deployment name: {} for course {} with session {}", options.getDeploymentName(), courseId, sessionId);
 
-            var promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message)).options(options);
+            ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message)).options(options);
 
             // Add tools
             if (toolCallbackProvider != null) {

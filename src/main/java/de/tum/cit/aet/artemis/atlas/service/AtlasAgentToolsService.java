@@ -66,7 +66,6 @@ public class AtlasAgentToolsService {
 
             Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
 
-            // Build competency list using Jackson
             var competencyList = competencies.stream().map(competency -> {
                 Map<String, Object> compData = new LinkedHashMap<>();
                 compData.put("id", competency.getId());
@@ -125,7 +124,6 @@ public class AtlasAgentToolsService {
 
             Competency savedCompetency = competencyRepository.save(competency);
 
-            // Build response using Jackson
             Map<String, Object> competencyData = new LinkedHashMap<>();
             competencyData.put("id", savedCompetency.getId());
             competencyData.put("title", savedCompetency.getTitle());
@@ -183,10 +181,8 @@ public class AtlasAgentToolsService {
                 return toJson(Map.of("error", "Course not found with ID: " + courseId));
             }
 
-            // NOTE: adapt to your ExerciseRepository method
             Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
 
-            // Build exercise list using Jackson
             var exerciseList = exercises.stream().map(exercise -> {
                 Map<String, Object> exerciseData = new LinkedHashMap<>();
                 exerciseData.put("id", exercise.getId());

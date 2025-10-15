@@ -5,11 +5,10 @@ import {
     ChangeDetectorRef,
     Component,
     ElementRef,
-    EventEmitter,
     OnInit,
-    Output,
     computed,
     inject,
+    output,
     signal,
     viewChild,
 } from '@angular/core';
@@ -52,7 +51,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     private shouldScrollToBottom = false;
 
     // Event emitted when agent likely created/modified competencies
-    @Output() competencyChanged = new EventEmitter<void>();
+    competencyChanged = output<void>();
 
     // Message validation
     readonly MAX_MESSAGE_LENGTH = 8000;
