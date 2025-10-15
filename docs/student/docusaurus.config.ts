@@ -45,12 +45,13 @@ const config: Config = {
         [
             'classic',
             {
-                docs: {
-                    sidebarPath: './sidebars.ts',
-                    // Remove this to remove the "edit this page" links.
-                    editUrl: GUIDELINES_REPOSITORY_URL,
-                    exclude: ['**/README.md'],
-                },
+                docs: false,
+                // docs: {
+                //     sidebarPath: './sidebars.ts',
+                //     // Remove this to remove the "edit this page" links.
+                //     editUrl: GUIDELINES_REPOSITORY_URL,
+                //     exclude: ['**/README.md'],
+                // },
                 theme: {
                     customCss: './src/css/custom.css',
                 },
@@ -64,6 +65,30 @@ const config: Config = {
             {
                 hashed: true,
                 language: ['en'],
+            },
+        ],
+    ],
+
+    plugins: [
+        [
+            '@docusaurus/plugin-content-docs',
+            {
+                // id: 'guidelines', // Unique id for this instance
+                path: 'guidelines', // Source directory
+                routeBasePath: 'guidelines', // URL base path
+                sidebarPath: './sidebarsGuidelines.ts', // Path to the sidebar file for this instance
+                editUrl: GUIDELINES_REPOSITORY_URL,
+                exclude: ['**/README.md'],
+            },
+        ],
+        [
+            '@docusaurus/plugin-content-docs',
+            {
+                id: 'user-manual', // Unique id for this instance
+                path: 'user-manual', // Source directory
+                routeBasePath: 'user-manual', // URL base path
+                sidebarPath: './sidebarsUserManual.ts', // A separate sidebar file
+                editUrl: GUIDELINES_REPOSITORY_URL,
             },
         ],
     ],
@@ -82,10 +107,18 @@ const config: Config = {
             },
             items: [
                 {
-                    type: 'docSidebar',
-                    sidebarId: 'tutorialSidebar',
+                    type: 'doc',
+                    // docsPluginId: 'guidelines', // Corresponds to the id of the plugin instance
+                    docId: 'intro', // The ID of the doc to link to (e.g., guidelines/intro.md)
                     position: 'left',
                     label: 'Guidelines',
+                },
+                {
+                    type: 'doc',
+                    docsPluginId: 'user-manual', // Corresponds to the id of the plugin instance
+                    docId: 'intro', // The ID of the doc to link to (e.g., user-manual/intro.md)
+                    position: 'left',
+                    label: 'User Manual',
                 },
                 {
                     href: GUIDELINES_REPOSITORY_URL,
