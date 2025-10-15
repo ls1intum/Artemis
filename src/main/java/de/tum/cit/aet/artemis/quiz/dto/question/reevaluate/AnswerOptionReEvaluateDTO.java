@@ -5,6 +5,5 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AnswerOptionReEvaluateDTO(@NotNull Long id, @NotNull String text, String hint, String explanation, @NotNull Boolean isCorrect, @NotNull Boolean invalid)
-        implements QuizQuestionReEvaluateDTO {
+public record AnswerOptionReEvaluateDTO(@NotNull Long id, @NotNull String text, String hint, String explanation, @NotNull Boolean isCorrect, @NotNull Boolean invalid) {
 }

@@ -7,5 +7,5 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionReEvaluateDTO.class, name = "multiple-choice"),
         @JsonSubTypes.Type(value = DragAndDropQuestionReEvaluateDTO.class, name = "drag-and-drop"),
         @JsonSubTypes.Type(value = ShortAnswerQuestionReEvaluateDTO.class, name = "short-answer") })
-public sealed interface QuizQuestionReEvaluateDTO permits AnswerOptionReEvaluateDTO, DragAndDropQuestionReEvaluateDTO, ShortAnswerQuestionReEvaluateDTO {
+public sealed interface QuizQuestionReEvaluateDTO permits DragAndDropQuestionReEvaluateDTO, MultipleChoiceQuestionReEvaluateDTO, ShortAnswerQuestionReEvaluateDTO {
 }

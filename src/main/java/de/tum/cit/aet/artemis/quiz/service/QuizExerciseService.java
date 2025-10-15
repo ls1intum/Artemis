@@ -77,6 +77,12 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropQuestionReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragItemReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DropLocationReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.MultipleChoiceQuestionReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -141,6 +147,142 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+    }
+
+    /**
+     * Apply the base data of a QuizExerciseReEvaluateDTO to a QuizExercise. This includes title, includedInOverallScore and randomizeQuestionOrder.
+     *
+     * @param reEvaluateDTO        the DTO containing the new data
+     * @param originalQuizExercise the original quiz exercise to apply the data to
+     */
+    public static void applyBaseQuizQuestionData(QuizExerciseReEvaluateDTO reEvaluateDTO, QuizExercise originalQuizExercise) {
+        originalQuizExercise.setTitle(reEvaluateDTO.title());
+        originalQuizExercise.setIncludedInOverallScore(reEvaluateDTO.includedInOverallScore());
+        originalQuizExercise.setRandomizeQuestionOrder(reEvaluateDTO.randomizeQuestionOrder());
+    }
+
+    private static boolean applyDropLocationsFromDTO(List<DropLocationReEvaluateDTO> dropLocationDTOs, List<DropLocation> originalDropLocations) {
+        boolean recalculationNecessary = false;
+        List<DropLocation> dropLocationsToRemove = new ArrayList<>();
+        Map<Long, DropLocationReEvaluateDTO> dropLocationReEvaluateDTOMap = dropLocationDTOs.stream().collect(Collectors.toMap(DropLocationReEvaluateDTO::id, Function.identity()));
+        for (DropLocation originalDropLocation : originalDropLocations) {
+            DropLocationReEvaluateDTO dropLocationDTO = dropLocationReEvaluateDTOMap.get(originalDropLocation.getId());
+            if (dropLocationDTO == null) {
+                dropLocationsToRemove.add(originalDropLocation);
+                recalculationNecessary = true;
+            }
+            else {
+                if (originalDropLocation.isInvalid() && !dropLocationDTO.invalid()) {
+                    throw new BadRequestAlertException("The drop location with id " + dropLocationDTO.id() + " is marked as invalid and cannot be set to valid again", ENTITY_NAME,
+                            "dropLocationInvalid");
+                }
+                if (!originalDropLocation.isInvalid() && dropLocationDTO.invalid()) {
+                    recalculationNecessary = true;
+                    originalDropLocation.setInvalid(true);
+                }
+            }
+        }
+        originalDropLocations.removeAll(dropLocationsToRemove);
+        return recalculationNecessary;
+    }
+
+    private static boolean applyDragItemsFromDTO(List<DragItemReEvaluateDTO> dragItemDTOs, List<DragItem> originalDragItems) {
+        boolean recalculationNecessary = false;
+        List<DragItem> dragItemsToRemove = new ArrayList<>();
+        Map<Long, DragItemReEvaluateDTO> dragItemReEvaluateDTOMap = dragItemDTOs.stream().collect(Collectors.toMap(DragItemReEvaluateDTO::id, Function.identity()));
+        for (DragItem originalDragItem : originalDragItems) {
+            DragItemReEvaluateDTO dragItemDTO = dragItemReEvaluateDTOMap.get(originalDragItem.getId());
+            if (dragItemDTO == null) {
+                dragItemsToRemove.add(originalDragItem);
+                recalculationNecessary = true;
+            }
+            else {
+                if (originalDragItem.isInvalid() && !dragItemDTO.invalid()) {
+                    throw new BadRequestAlertException("The drag item with id " + dragItemDTO.id() + " is marked as invalid and cannot be set to valid again", ENTITY_NAME,
+                            "dragItemInvalid");
+                }
+                if (!originalDragItem.isInvalid() && dragItemDTO.invalid()) {
+                    recalculationNecessary = true;
+                    originalDragItem.setInvalid(true);
+                }
+            }
+        }
+        originalDragItems.removeAll(dragItemsToRemove);
+        return recalculationNecessary;
+    }
+
+    private static boolean updateDragAndDropMappingsFromDTO(DragAndDropQuestionReEvaluateDTO dndDTO, DragAndDropQuestion originalQuestion) {
+        boolean recalculationNecessary = false;
+        List<DragAndDropMapping> mappingsToRemove = new ArrayList<>();
+        for (DragAndDropMapping originalMapping : originalQuestion.getCorrectMappings()) {
+            boolean mappingExistsInDTO = dndDTO.correctMappings().stream()
+                    .anyMatch(dto -> dto.dragItemId().equals(originalMapping.getDragItem().getId()) && dto.dropLocationId().equals(originalMapping.getDropLocation().getId()));
+            if (!mappingExistsInDTO) {
+                mappingsToRemove.add(originalMapping);
+                recalculationNecessary = true;
+            }
+        }
+        originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
+        Set<DragAndDropMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
+        for (var mappingDTO : dndDTO.correctMappings()) {
+            boolean mappingExists = existingMappings.stream()
+                    .anyMatch(mapping -> mapping.getDragItem().getId().equals(mappingDTO.dragItemId()) && mapping.getDropLocation().getId().equals(mappingDTO.dropLocationId()));
+            if (!mappingExists) {
+                DragItem dragItem = originalQuestion.getDragItems().stream().filter(item -> item.getId().equals(mappingDTO.dragItemId())).findFirst()
+                        .orElseThrow(() -> new BadRequestAlertException("The drag item with id " + mappingDTO.dragItemId() + " does not exist", ENTITY_NAME, "dragItemNotFound"));
+                DropLocation dropLocation = originalQuestion.getDropLocations().stream().filter(location -> location.getId().equals(mappingDTO.dropLocationId())).findFirst()
+                        .orElseThrow(() -> new BadRequestAlertException("The drop location with id " + mappingDTO.dropLocationId() + " does not exist", ENTITY_NAME,
+                                "dropLocationNotFound"));
+                DragAndDropMapping newMapping = new DragAndDropMapping();
+                newMapping.setDragItem(dragItem);
+                newMapping.setDropLocation(dropLocation);
+                originalQuestion.getCorrectMappings().add(newMapping);
+                recalculationNecessary = true;
+            }
+        }
+        return recalculationNecessary;
+    }
+
+    private static boolean applyDragAndDropQuestionFromDTO(DragAndDropQuestionReEvaluateDTO dndDTO, DragAndDropQuestion originalQuestion) {
+        boolean recalculationNecessary = false;
+        originalQuestion.setTitle(dndDTO.title());
+        originalQuestion.setText(dndDTO.text());
+        originalQuestion.setHint(dndDTO.hint());
+        originalQuestion.setExplanation(dndDTO.explanation());
+        originalQuestion.setScoringType(dndDTO.scoringType());
+        originalQuestion.setRandomizeOrder(dndDTO.randomizeOrder());
+        if (originalQuestion.isInvalid() && !dndDTO.invalid()) {
+            throw new BadRequestAlertException("The drag and drop question with id " + dndDTO.id() + " is marked as invalid and cannot be set to valid again", ENTITY_NAME,
+                    "questionInvalid");
+        }
+        if (!originalQuestion.isInvalid() && dndDTO.invalid()) {
+            originalQuestion.setInvalid(true);
+            recalculationNecessary = true;
+        }
+
+        return recalculationNecessary;
+    }
+
+    private static void applyQuizQuestionsFromDTO(QuizExerciseReEvaluateDTO reEvaluateDTO, QuizExercise originalQuizExercise) {
+        // Need to create a new list to correctly handle removed questions and reordering
+        List<QuizQuestion> newQuestions = new ArrayList<>();
+        boolean questionsChanged = false;
+        for (var questionDTO : reEvaluateDTO.quizQuestions()) {
+            switch (questionDTO) {
+                case DragAndDropQuestionReEvaluateDTO dragAndDropQuestionReEvaluateDTO -> {
+                    // Get original question, else throw error
+                    DragAndDropQuestion originalQuestion = (DragAndDropQuestion) originalQuizExercise.getQuizQuestions().stream()
+                            .filter(q -> q.getId().equals(dragAndDropQuestionReEvaluateDTO.id())).findFirst()
+                            .orElseThrow(() -> new BadRequestAlertException("The drag and drop question with id " + dragAndDropQuestionReEvaluateDTO.id() + " does not exist",
+                                    ENTITY_NAME, "questionNotFound"));
+                    questionsChanged = applyDragAndDropQuestionFromDTO(dragAndDropQuestionReEvaluateDTO, originalQuestion) || questionsChanged;
+                }
+                case ShortAnswerQuestionReEvaluateDTO shortAnswerQuestionReEvaluateDTO -> {
+                }
+                case MultipleChoiceQuestionReEvaluateDTO multipleChoiceQuestionReEvaluateDTO -> {
+                }
+            }
+        }
     }
 
     /**
@@ -212,6 +354,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
         // fetch the quiz exercise again to make sure the latest changes are included
         return quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
+    }
+
+    public QuizExercise reEvaluateWithDTO(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NotNull List<MultipartFile> files) {
+        applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
     }
 
     /**
