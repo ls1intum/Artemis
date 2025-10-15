@@ -20,7 +20,7 @@
             }
         </div>
         @if (isLectureSeriesCreationMode() && currentCourseId) {
-            <jhi-lecture-series-create [rawExistingLectures]="existingLectures()" [courseId]="currentCourseId" />
+            <jhi-lecture-series-create [existingLectures]="existingLectures()" [courseId]="currentCourseId" />
         } @else {
             <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
                 <jhi-form-status-bar [formStatusSections]="formStatusSections" />

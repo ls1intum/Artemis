@@ -32,10 +32,3 @@ export class LectureSeriesCreateLectureDTO {
         public endDate?: Dayjs,
     ) {}
 }
-
-export class LectureNameUpdateDTO {
-    constructor(
-        public id: number,
-        public title: string,
-    ) {}
-}

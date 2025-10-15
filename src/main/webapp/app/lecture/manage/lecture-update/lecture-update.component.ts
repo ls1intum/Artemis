@@ -89,7 +89,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     courseId = signal<number | undefined>(undefined);
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit: Lecture;
-    existingLectures = signal<Lecture[] | undefined>(undefined);
+    existingLectures = signal<Lecture[]>([]);
     isEditMode = signal<boolean>(false);
     isSaving: boolean;
     isProcessing: boolean;

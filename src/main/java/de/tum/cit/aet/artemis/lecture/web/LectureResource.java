@@ -13,13 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +64,6 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.dto.LectureNameUpdateDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -153,10 +152,35 @@ public class LectureResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> createLectureSeries(@PathVariable long courseId, @RequestBody @NotEmpty List<@Valid LectureSeriesCreateLectureDTO> lectureDTOs) {
         log.debug("REST request to save Lecture series for courseId {} with lectures: {}", courseId, lectureDTOs);
+        User user = userRepository.getUser();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        List<Lecture> lectures = lectureDTOs.stream().map(lectureDTO -> createLectureUsing(lectureDTO, course)).toList();
-        List<Lecture> savedLectures = lectureRepository.saveAll(lectures);
-        savedLectures.forEach(lecture -> channelService.createLectureChannel(lecture, Optional.empty()));
+        List<Lecture> newLectures = lectureDTOs.stream().map(lectureDTO -> createLectureUsing(lectureDTO, course)).toList();
+        List<Lecture> savedLectures = lectureRepository.saveAll(newLectures);
+        channelService.createChannelsForLectures(savedLectures, course, user);
+
+        Set<Channel> existingLectureChannels = channelRepository.findLectureChannelsByCourseId(courseId);
+        Map<Long, Channel> lectureToChannelMap = existingLectureChannels.stream().collect(Collectors.toMap(channel -> channel.getLecture().getId(), Function.identity()));
+        Comparator<Lecture> lectureComparator = Comparator
+                .comparing((Lecture lecture) -> lecture.getStartDate() != null ? lecture.getStartDate() : lecture.getEndDate(), Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Lecture::getId);
+        List<Lecture> existingLectures = existingLectureChannels.stream().map(Channel::getLecture).sorted(lectureComparator).toList();
+
+        Pattern defaultLectureNamePattern = Pattern.compile("^Lecture (\\d+)$");
+        Pattern defaultChannelnamePattern = Pattern.compile("^lecture-lecture-(\\d+)$");
+        for (int index = 0; index < existingLectures.size(); index++) {
+            Lecture lecture = existingLectures.get(index);
+            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches()) {
+                lecture.setTitle("Lecture " + (index + 1));
+            }
+            Channel channel = lectureToChannelMap.get(lecture.getId());
+            String channelName = channel.getName();
+            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches()) {
+                channel.setName("lecture-lecture-" + (index + 1));
+            }
+        }
+        lectureRepository.saveAll(existingLectures);
+        channelRepository.saveAll(existingLectureChannels);
+
         return ResponseEntity.noContent().build();
     }
 
@@ -195,58 +219,6 @@ public class LectureResource {
 
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.ok().body(result);
-    }
-
-    /**
-     * PUT /courses/{courseId}/lectures/lecture-names : Update the titles of multiple lectures in a course. Assumes that the new lecture names follow the format
-     * 'Lecture ${index}' where ${index} is a positive integer.
-     *
-     * @param courseId              the ID of the course containing the lectures
-     * @param lectureNameUpdateDTOs a list of DTOs, each containing a lecture ID and its new title
-     * @return 204 (No Content) if the update was successful
-     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user is not at least editor in the course or the course does not exist
-     * @throws BadRequestException      {@code 400 (Bad Request)} if duplicate lecture IDs are provided or some lectures do not belong to the course or the new names do not follow
-     *                                      the correct format.
-     */
-    @PutMapping("courses/{courseId}/lectures/lecture-names")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Void> updateLectureNames(@PathVariable long courseId, @RequestBody @NotEmpty List<@Valid LectureNameUpdateDTO> lectureNameUpdateDTOs) {
-        log.debug("REST request to update lecture names with: {}", lectureNameUpdateDTOs);
-        boolean newNamesFollowExpectedFormat = lectureNameUpdateDTOs.stream().map(LectureNameUpdateDTO::title).allMatch(title -> title.matches("^Lecture \\d+$"));
-        if (!newNamesFollowExpectedFormat) {
-            throw new BadRequestException("At least one new name does not follow the expected format.");
-        }
-
-        List<Long> ids = lectureNameUpdateDTOs.stream().map(LectureNameUpdateDTO::id).toList();
-        Set<Long> uniqueIds = new HashSet<>(ids);
-        if (uniqueIds.size() != ids.size()) {
-            throw new BadRequestException("Request payload contains duplicate lecture IDs.");
-        }
-
-        Set<Channel> channelsWithLectures = channelRepository.findChannelsByCourseIdWithLectureIdIn(courseId, uniqueIds);
-        Set<Long> idsOfLecturesWithChannels = channelsWithLectures.stream().map(Channel::getLecture).map(Lecture::getId).collect(Collectors.toSet());
-        Set<Long> remainingIds = new HashSet<>(uniqueIds);
-        remainingIds.removeAll(idsOfLecturesWithChannels);
-        Set<Lecture> lecturesWithoutChannels = lectureRepository.findAllByCourseIdWithIdIn(courseId, remainingIds);
-        if (idsOfLecturesWithChannels.size() + lecturesWithoutChannels.size() != uniqueIds.size()) {
-            throw new BadRequestException("Some lectures do not exist or do not belong to the course.");
-        }
-
-        Map<Long, String> idToTitle = lectureNameUpdateDTOs.stream().collect(Collectors.toMap(LectureNameUpdateDTO::id, LectureNameUpdateDTO::title));
-        for (Channel channel : channelsWithLectures) {
-            Lecture lecture = channel.getLecture();
-            String newLectureName = idToTitle.get(lecture.getId());
-            lecture.setTitle(newLectureName);
-            String newChannelName = newLectureName.toLowerCase().replace(' ', '-');
-            channel.setName(newChannelName);
-        }
-        channelRepository.saveAll(channelsWithLectures);
-        for (Lecture lecture : lecturesWithoutChannels) {
-            lecture.setTitle(idToTitle.get(lecture.getId()));
-        }
-        Set<Lecture> lectures = Stream.concat(lecturesWithoutChannels.stream(), channelsWithLectures.stream().map(Channel::getLecture)).collect(Collectors.toSet());
-        lectureRepository.saveAll(lectures);
-        return ResponseEntity.noContent().build();
     }
 
     /**

@@ -248,6 +248,27 @@ public class ChannelService {
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
     }
 
+    public void createChannelsForLectures(List<Lecture> lectures, Course course, User creator) {
+        Set<Channel> channelsToCreate = new HashSet<>();
+        Set<ConversationParticipant> conversationParticipants = new HashSet<>();
+        for (Lecture lecture : lectures) {
+            Channel channelToCreate = createDefaultChannel(Optional.empty(), "lecture-", lecture.getTitle());
+            channelToCreate.setLecture(lecture);
+            channelToCreate.setCreator(creator);
+            channelToCreate.setCourse(course);
+            channelToCreate.setIsArchived(false);
+            channelsToCreate.add(channelToCreate);
+
+            ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(creator, channelToCreate);
+            conversationParticipant.setIsModerator(true);
+            conversationParticipants.add(conversationParticipant);
+            channelToCreate.getConversationParticipants().add(conversationParticipant);
+        }
+        channelRepository.saveAll(channelsToCreate);
+        conversationParticipantRepository.saveAll(conversationParticipants);
+        channelsToCreate.forEach(channel -> conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, channel, Set.of(creator)));
+    }
+
     /**
      * Creates a channel for a lecture and sets the channel name of the lecture accordingly.
      *
