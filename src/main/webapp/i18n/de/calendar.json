@@ -24,7 +24,7 @@
                 "tutorials": "Tutorien",
                 "exams": "Klausuren"
             },
-            "filterButtonLabel": "Filter",
+            "filterComponentPlaceholder": "Wähle Event-Typen",
             "subscribeButtonLabel": "Abonnieren",
             "todayButtonLabel": "Heute",
             "weekButtonLabel": "Woche",

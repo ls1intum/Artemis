@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedProgrammingExerciseChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -81,14 +82,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final UserRepository userRepository;
 
-    public IrisExerciseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
-            IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, SubmissionRepository submissionRepository,
-            ExerciseRepository exerciseRepository, UserRepository userRepository) {
-        super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisChatWebsocketService,
-                llmTokenUsageService);
+    public IrisExerciseChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
+            IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
+            IrisSessionRepository irisSessionRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository,
+            SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, UserRepository userRepository) {
+        super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
+                irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;

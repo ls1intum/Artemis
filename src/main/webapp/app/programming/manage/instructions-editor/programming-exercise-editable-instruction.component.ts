@@ -16,7 +16,6 @@ import {
     signal,
 } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
@@ -54,16 +53,7 @@ import { Annotation } from 'app/programming/shared/code-editor/monaco/code-edito
     templateUrl: './programming-exercise-editable-instruction.component.html',
     styleUrls: ['./programming-exercise-editable-instruction.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [
-        MarkdownEditorMonacoComponent,
-        ProgrammingExerciseInstructionComponent,
-        NgClass,
-        FaIconComponent,
-        TranslateDirective,
-        NgbTooltip,
-        ProgrammingExerciseInstructionAnalysisComponent,
-        ArtemisTranslatePipe,
-    ],
+    imports: [MarkdownEditorMonacoComponent, NgClass, FaIconComponent, TranslateDirective, NgbTooltip, ProgrammingExerciseInstructionAnalysisComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
     private activatedRoute = inject(ActivatedRoute);

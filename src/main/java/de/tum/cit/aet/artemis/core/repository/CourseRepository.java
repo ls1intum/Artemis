@@ -539,4 +539,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
                OR :isAdmin = TRUE
             """)
     List<Course> findCoursesForAtLeastTutorWithGroups(@Param("userGroups") Set<String> userGroups, @Param("isAdmin") boolean isAdmin);
+
+    @Query("""
+                SELECT course.timeZone
+                FROM Course course
+                WHERE course.id = :courseId
+            """)
+    Optional<String> getTimeZoneOfCourseById(@Param("courseId") long courseId);
 }

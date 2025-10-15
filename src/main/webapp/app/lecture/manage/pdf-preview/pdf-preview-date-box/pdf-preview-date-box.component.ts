@@ -135,7 +135,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
 
     /**
      * Group and sort exercises by type
-     * The backend already filters for exercises with future due dates
+     * The server already filters for exercises with future due dates
      */
     private processExercises(exercises: Exercise[]): CategorizedExercise[] {
         const groupedExercises = new Map<ExerciseType, Exercise[]>();

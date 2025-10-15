@@ -8,7 +8,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 
 /**
  * Condition to check if the Nebula module is enabled.
- * Based on this condition, Spring components concerning atlas functionality can be enabled or disabled.
+ * Based on this condition, Spring components concerning nebula functionality can be enabled or disabled.
  */
 public class NebulaEnabled implements Condition {
 

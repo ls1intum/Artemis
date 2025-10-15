@@ -25,10 +25,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
-import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponseDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponseDTO;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaException;
 
 @Component

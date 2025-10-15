@@ -16,7 +16,7 @@ type Week = { days: Day[]; id: string };
     styleUrl: './calendar-mobile-month-presentation.component.scss',
 })
 export class CalendarMobileMonthPresentationComponent {
-    private dateToEventsMao = inject(CalendarService).eventMap;
+    private dateToEventsMap = inject(CalendarService).eventMap;
 
     readonly CalendarEventType = CalendarEventType;
 
@@ -33,7 +33,7 @@ export class CalendarMobileMonthPresentationComponent {
             const days: Day[] = [];
             for (let i = 0; i < 7; i++) {
                 const id = date.format('YYYY-MM-DD');
-                const events = this.dateToEventsMao().get(id) ?? [];
+                const events = this.dateToEventsMap().get(id) ?? [];
                 const firstTwoEvents = utils.limitToLengthTwo(events);
                 const isInDisplayedMonth = utils.areDatesInSameMonth(date, firstDateOfMonth);
                 days.push({ date: date, events, firstTwoEvents, isInDisplayedMonth, id });

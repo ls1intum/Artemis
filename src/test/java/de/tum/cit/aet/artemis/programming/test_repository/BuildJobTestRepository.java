@@ -18,4 +18,6 @@ public interface BuildJobTestRepository extends BuildJobRepository {
     Optional<BuildJob> findBuildJobByResult(Result result);
 
     Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
+
+    Optional<BuildJob> findFirstByParticipationIdOrderByBuildJobIdDesc(Long participationId);
 }

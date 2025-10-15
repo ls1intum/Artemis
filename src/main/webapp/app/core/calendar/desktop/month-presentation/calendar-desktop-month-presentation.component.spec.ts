@@ -9,7 +9,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarDesktopMonthPresentationComponent } from './calendar-desktop-month-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 describe('CalendarDesktopMonthPresentationComponent', () => {
     let fixture: ComponentFixture<CalendarDesktopMonthPresentationComponent>;
@@ -61,6 +62,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
                     provide: CalendarService,
                     useFactory: () => new MockCalendarService(mockMap),
                 },
+                provideNoopAnimations(),
             ],
         }).compileComponents();
 
@@ -105,66 +107,47 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         expect(lecture3EventCell).toBeFalsy();
     });
 
-    it('should open popover', () => {
-        const eventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
-        expect(eventCell).toBeTruthy();
+    it('should open popover', async () => {
+        const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
+        const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
 
+        const eventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         eventCell.nativeElement.click();
         fixture.detectChanges();
+        await fixture.whenStable();
 
-        expect(component.selectedEvent()?.id).toBe(events[0].id);
-
-        const popoverContent = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
-        expect(popoverContent).toBeTruthy();
+        expect(popoverComponent.isOpen()).toBeTrue();
     });
 
-    it('should close popover only when close button used', () => {
+    it('should close popover only when close button used', async () => {
+        const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
+        const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
+        const closeSpy = jest.spyOn(popoverComponent, 'close');
+
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         expect(examEventCell).toBeTruthy();
-
         examEventCell.nativeElement.click();
         fixture.detectChanges();
-
-        let popoverComponent = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
-        expect(component.selectedEvent()?.id).toBe(events[0].id);
-        expect(popoverComponent).toBeTruthy();
+        await fixture.whenStable();
+        expect(popoverComponent.isOpen()).toBeTrue();
 
         const emptyDayCell = fixture.debugElement.queryAll(By.css('.day-cell')).find((cell) => cell.queryAll(By.css('.event-cell')).length === 0);
         expect(emptyDayCell).toBeTruthy();
-
         emptyDayCell!.nativeElement.click();
         fixture.detectChanges();
+        await fixture.whenStable();
+        expect(popoverComponent.isOpen()).toBeFalse();
 
-        expect(component.selectedEvent()?.id).toBe(events[0].id);
-        popoverComponent = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
-        expect(popoverComponent).toBeTruthy();
+        examEventCell.nativeElement.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(popoverComponent.isOpen()).toBeTrue();
 
-        const closeButton = popoverComponent.query(By.css('.close-button'));
+        const closeButton = document.querySelector('.close-button') as HTMLElement;
         expect(closeButton).toBeTruthy();
-
-        closeButton.nativeElement.click();
+        closeButton.click();
         fixture.detectChanges();
-
-        expect(component.selectedEvent()).toBeUndefined();
-        popoverComponent = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
-        expect(popoverComponent).toBeFalsy();
-    });
-
-    it('should replace popover when other event selected', () => {
-        const firstEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
-        firstEventCell.nativeElement.click();
-        fixture.detectChanges();
-
-        let popoverComponent = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
-        expect(component.selectedEvent()?.id).toBe(events[0].id);
-        expect(popoverComponent).toBeTruthy();
-
-        const secondEventCell = fixture.debugElement.query(By.css('[data-testid="Object Design"]'));
-        secondEventCell.nativeElement.click();
-        fixture.detectChanges();
-
-        popoverComponent = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
-        expect(popoverComponent).toBeTruthy();
-        expect(component.selectedEvent()?.id).toBe(events[1].id);
+        await fixture.whenStable();
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 });

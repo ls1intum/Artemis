@@ -18,8 +18,8 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -95,15 +95,14 @@ public class AuxiliaryRepositoryService {
 
     private void validateAuxiliaryRepositoryId(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getId() != null) {
-            throw new BadRequestAlertException("Auxiliary repositories must not have an id.", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_ID);
+            throw new BadRequestAlertException("Auxiliary repositories must not have an id.", AUX_REPO_ENTITY_NAME, ProgrammingExerciseErrorKeys.INVALID_AUXILIARY_REPOSITORY_ID);
         }
     }
 
     private void validateAuxiliaryRepositoryNameExists(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getName() == null || auxiliaryRepository.getName().isEmpty()) {
             throw new BadRequestAlertException("Cannot set empty name for auxiliary repositories!", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+                    ProgrammingExerciseErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
         }
         auxiliaryRepository.setName(auxiliaryRepository.getName().toLowerCase());
     }
@@ -111,7 +110,7 @@ public class AuxiliaryRepositoryService {
     private void validateAuxiliaryRepositoryNameLength(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getName().length() > AuxiliaryRepository.MAX_NAME_LENGTH) {
             throw new BadRequestAlertException("The name of an auxiliary repository must not be longer than 100 characters!", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+                    ProgrammingExerciseErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
         }
     }
 
@@ -119,7 +118,7 @@ public class AuxiliaryRepositoryService {
         for (AuxiliaryRepository existingRepository : otherRepositories) {
             if (existingRepository.getName().equals(auxiliaryRepository.getName())) {
                 throw new BadRequestAlertException("The name '" + auxiliaryRepository.getName() + "' is not allowed for auxiliary repositories!", AUX_REPO_ENTITY_NAME,
-                        ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+                        ProgrammingExerciseErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
             }
         }
     }
@@ -129,7 +128,7 @@ public class AuxiliaryRepositoryService {
             String repositoryName = repositoryType.getName();
             if (auxiliaryRepository.getName().equals(repositoryName)) {
                 throw new BadRequestAlertException("The name '" + repositoryName + "' is not allowed for auxiliary repositories!", AUX_REPO_ENTITY_NAME,
-                        ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
+                        ProgrammingExerciseErrorKeys.INVALID_AUXILIARY_REPOSITORY_NAME);
             }
         }
     }
@@ -139,14 +138,14 @@ public class AuxiliaryRepositoryService {
         String assignmentCheckoutPath = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         if (!ciCheckoutDirectoryMatcher.matches() || auxiliaryRepository.getCheckoutDirectory().equals(assignmentCheckoutPath)) {
             throw new BadRequestAlertException("The checkout directory '" + auxiliaryRepository.getCheckoutDirectory() + "' is invalid!", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+                    ProgrammingExerciseErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
         }
     }
 
     private void validateAuxiliaryRepositoryCheckoutDirectoryLength(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getCheckoutDirectory().length() > AuxiliaryRepository.MAX_CHECKOUT_DIRECTORY_LENGTH) {
             throw new BadRequestAlertException("The checkout directory path '" + auxiliaryRepository.getCheckoutDirectory() + "' is too long!", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+                    ProgrammingExerciseErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
         }
     }
 
@@ -154,15 +153,15 @@ public class AuxiliaryRepositoryService {
         for (AuxiliaryRepository repo : otherRepositories) {
             if (repo.getCheckoutDirectory() != null && repo.getCheckoutDirectory().equals(auxiliaryRepository.getCheckoutDirectory())) {
                 throw new BadRequestAlertException("The checkout directory path is already defined for another additional repository!", AUX_REPO_ENTITY_NAME,
-                        ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
+                        ProgrammingExerciseErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);
             }
         }
     }
 
     private void validateAuxiliaryRepositoryDescriptionLength(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getDescription() != null && auxiliaryRepository.getDescription().length() > AuxiliaryRepository.MAX_DESCRIPTION_LENGTH) {
-            throw new BadRequestAlertException("The provided description is too long!", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_DESCRIPTION, Map.of("maxLength", AuxiliaryRepository.MAX_DESCRIPTION_LENGTH));
+            throw new BadRequestAlertException("The provided description is too long!", AUX_REPO_ENTITY_NAME, ProgrammingExerciseErrorKeys.INVALID_AUXILIARY_REPOSITORY_DESCRIPTION,
+                    Map.of("maxLength", AuxiliaryRepository.MAX_DESCRIPTION_LENGTH));
         }
     }
 

@@ -95,6 +95,16 @@ public class ArtemisConfigHelper {
         return getPropertyOrExitArtemis(Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME, environment);
     }
 
+    /**
+     * Check if the Nebula module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Nebula module is enabled, false otherwise
+     */
+    public boolean isNebulaEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(NEBULA_ENABLED_PROPERTY_NAME, environment);
+    }
+
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {

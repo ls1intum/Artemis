@@ -325,7 +325,7 @@ export class CourseOverviewService {
             id: tutorialGroup.id ?? '',
             size: 'M',
             subtitleLeft: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noUpcomingSession'),
-            subtitleRight: this.getUtilization(tutorialGroup),
+            subtitleRight: undefined,
         };
     }
 

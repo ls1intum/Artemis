@@ -10,7 +10,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * This job is used to reference the details of a exercise chat session when Pyris sends a status update.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseChatJob(String jobId, long courseId, long exerciseId, long sessionId, Long traceId) implements TrackedSessionBasedPyrisJob {
+public record ExerciseChatJob(String jobId, long courseId, long exerciseId, long sessionId, Long traceId, Long userMessageId, Long assistantMessageId)
+        implements TrackedSessionBasedPyrisJob {
 
     @Override
     public boolean canAccess(Course course) {
@@ -23,7 +24,17 @@ public record ExerciseChatJob(String jobId, long courseId, long exerciseId, long
     }
 
     @Override
+    public TrackedSessionBasedPyrisJob withUserMessageId(long messageId) {
+        return new ExerciseChatJob(jobId, courseId, exerciseId, sessionId, traceId, messageId, assistantMessageId);
+    }
+
+    @Override
+    public TrackedSessionBasedPyrisJob withAssistantMessageId(long messageId) {
+        return new ExerciseChatJob(jobId, courseId, exerciseId, sessionId, traceId, userMessageId, messageId);
+    }
+
+    @Override
     public TrackedSessionBasedPyrisJob withTraceId(long traceId) {
-        return new ExerciseChatJob(jobId, courseId, exerciseId, sessionId, traceId);
+        return new ExerciseChatJob(jobId, courseId, exerciseId, sessionId, traceId, userMessageId, assistantMessageId);
     }
 }

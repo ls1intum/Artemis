@@ -33,6 +33,7 @@ artemis:
     version: #project.version#
     file-upload-path: uploads
     submission-export-path: exports
+    temp-path: ./tmp                                # a folder in which temporary files are stored, e.g. for the programming exercise import from file
     bcrypt-salt-rounds: 11 #default value, see application-artemis.yml for more information how to override and customize this value
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
@@ -128,6 +129,12 @@ artemis:
       ios:
         min: "2.0.0"
         recommended: "2.2.0"
+
+    # Nebula configuration for AI-powered features
+    nebula:
+        enabled: false
+        url: # Set this in production environment (e.g., https://nebula.example.com)
+        secret: # Set this in production environment
 
 
 

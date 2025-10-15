@@ -6,8 +6,8 @@ import de.tum.cit.aet.artemis.core.api.AbstractApi;
 import de.tum.cit.aet.artemis.core.exception.ApiConditionNotPresentException;
 
 /**
- * Exception that an optionally autowired API is not present.
- * This is caused by a Spring property not being present.
+ * Exception that the optional Nebula API is not present.
+ * This is caused by excluding artemis.nebula.enabled or setting it to false
  */
 public class NebulaNotPresentException extends ApiConditionNotPresentException {
 
