@@ -268,7 +268,7 @@ public class ChannelService {
             channelToCreate.setCourse(course);
             channelToCreate.setIsArchived(false);
             if (!channelToCreate.getName().matches(CHANNEL_NAME_REGEX)) {
-                throw new IllegalArgumentException("A channel name that was derived from a lecture title did not satisfy the channel name format requirements");
+                throw new IllegalArgumentException("A channel name that was derived from a lecture title did not satisfy the channel name format");
             }
             channelsToCreate.add(channelToCreate);
 
