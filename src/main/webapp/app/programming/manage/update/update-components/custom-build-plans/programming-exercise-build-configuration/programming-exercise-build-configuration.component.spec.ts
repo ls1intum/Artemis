@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
@@ -39,6 +39,7 @@ describe('ProgrammingExercise Docker Image', () => {
         fixture.componentRef.setInput('dockerImage', 'testImage');
         fixture.componentRef.setInput('timeout', 10);
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.componentRef.setInput('isAeolus', false);
     });
 
     afterEach(() => {
@@ -147,12 +148,25 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.envVars).toEqual([['key', 'value']]);
     });
 
-    it('should show warning when network none is selected', () => {
-        comp.network.set('none');
+    it('should show warning when network none is selected', fakeAsync(() => {
+        programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
+        comp.setIsLanguageSupported();
+        comp.onNetworkChange('none');
         fixture.detectChanges();
+
         const warning = fixture.nativeElement.querySelector('.alert-warning');
         expect(warning).not.toBeNull();
-    });
+    }));
+
+    it('should show no warning when a network other than none is selected', fakeAsync(() => {
+        programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
+        comp.setIsLanguageSupported();
+        comp.onNetworkChange('default');
+        fixture.detectChanges();
+
+        const warning = fixture.nativeElement.querySelector('.alert-warning');
+        expect(warning).toBeNull();
+    }));
 
     it('should set supported languages', () => {
         programmingExercise.programmingLanguage = ProgrammingLanguage.EMPTY;
