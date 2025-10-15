@@ -1,8 +1,8 @@
-import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
-import { firstValueFrom, map } from 'rxjs';
+import { Subscription, firstValueFrom, map } from 'rxjs';
 import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
@@ -21,15 +21,20 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyExplanationModalComponent } from 'app/atlas/manage/course-competency-explanation-modal/course-competency-explanation-modal.component';
+import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-competency-management',
     templateUrl: './competency-management.component.html',
+    styleUrl: './competency-management.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         CompetencyManagementTableComponent,
         TranslateDirective,
@@ -40,7 +45,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
         CourseTitleBarActionsDirective,
     ],
 })
-export class CompetencyManagementComponent implements OnInit {
+export class CompetencyManagementComponent implements OnInit, OnDestroy {
     protected readonly faEdit = faEdit;
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
@@ -61,6 +66,7 @@ export class CompetencyManagementComponent implements OnInit {
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly sessionStorageService = inject(SessionStorageService);
+    private readonly accountService = inject(AccountService);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly isLoading = signal<boolean>(false);
@@ -71,6 +77,9 @@ export class CompetencyManagementComponent implements OnInit {
 
     irisCompetencyGenerationEnabled = signal<boolean>(false);
     standardizedCompetenciesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies), { requireSync: true });
+    agentChatEnabled = signal<boolean>(false);
+
+    private agentChatSubscription?: Subscription;
 
     constructor() {
         effect(() => {
@@ -93,6 +102,15 @@ export class CompetencyManagementComponent implements OnInit {
             this.openCourseCompetencyExplanation();
         }
         this.sessionStorageService.store('alreadyVisitedCompetencyManagement', true);
+
+        this.agentChatSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent).subscribe((isFeatureEnabled) => {
+            const hasAuthority = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
+            this.agentChatEnabled.set(hasAuthority && isFeatureEnabled);
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.agentChatSubscription?.unsubscribe();
     }
 
     private async loadIrisEnabled() {
@@ -173,11 +191,31 @@ export class CompetencyManagementComponent implements OnInit {
         this.courseCompetencies.update((courseCompetencies) => courseCompetencies.filter((cc) => cc.id !== competencyId));
     }
 
+    onCompetenciesAdded(added: CourseCompetency[]) {
+        // Merge added items into parent-owned list, avoiding duplicates
+        const current = this.courseCompetencies();
+        const newOnes = added.filter((c) => !current.some((e) => e?.id === c?.id));
+        if (newOnes.length) {
+            this.courseCompetencies.update((list) => list.concat(newOnes));
+        }
+    }
+
     openCourseCompetencyExplanation(): void {
         this.modalService.open(CourseCompetencyExplanationModalComponent, {
             size: 'xl',
             backdrop: 'static',
             windowClass: 'course-competency-explanation-modal',
         });
+    }
+
+    /**
+     * Opens the Agent Chat Modal for AI-powered competency assistance.
+     */
+    protected openAgentChatModal(): void {
+        const modalRef = this.modalService.open(AgentChatModalComponent, {
+            size: 'lg',
+            backdrop: true,
+        });
+        modalRef.componentInstance.courseId = this.courseId();
     }
 }
