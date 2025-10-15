@@ -737,7 +737,7 @@ public class GitService extends AbstractGitService {
             // Reset main branch back to template
             studentGit.reset().setMode(ResetCommand.ResetType.HARD).setRef(ObjectId.toString(latestHash)).call();
 
-            // Also anonymize the template HEAD commit itself to avoid leaking identity from initial import commits
+            // Also anonymize the template HEAD commit itself to avoid leaking identity
             ObjectId currentHead = studentGit.getRepository().resolve(headName);
             try (org.eclipse.jgit.revwalk.RevWalk walk = new org.eclipse.jgit.revwalk.RevWalk(studentGit.getRepository())) {
                 RevCommit headCommit = walk.parseCommit(currentHead);
@@ -779,7 +779,7 @@ public class GitService extends AbstractGitService {
             Path fetchHeadPath = Path.of(repository.getDirectory().getPath(), "FETCH_HEAD");
             Files.deleteIfExists(fetchHeadPath);
 
-            // Validate anonymization end-state: no remotes, no logs, no FETCH_HEAD, no user identity and no branch remote config
+            // Validate end-state: no remotes, no logs, no FETCH_HEAD, no user/branch config
             boolean remotesCleared = studentGit.remoteList().call().isEmpty();
             boolean logsDeleted = !Files.exists(logsPath);
             boolean fetchHeadDeleted = !Files.exists(fetchHeadPath);
@@ -797,13 +797,10 @@ public class GitService extends AbstractGitService {
             }
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
-            // escalate so callers can decide on fallback behavior (e.g. delete .git)
             log.warn("Cannot anonymize the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
             throw new GitException("Cannot anonymize repository at " + repository.getLocalPath(), ex);
         }
         finally {
-            // if repo is not closed, it causes weird IO issues when trying to delete the repo again
-            // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
             repository.close();
         }
     }
@@ -830,17 +827,14 @@ public class GitService extends AbstractGitService {
             }
         }
 
-        // Sanitize branch sections and user identity from config to prevent leaking information
+        // Sanitize branch sections and user identity in config
         var jgitRepo = repository.getRepository();
         var cfg = jgitRepo.getConfig();
-        // Remove per-branch remote/merge configuration
         for (String branch : cfg.getSubsections("branch")) {
-            // Remove branch-specific remote/merge entries and drop the entire branch section for cleanliness
             cfg.unset("branch", branch, "remote");
             cfg.unset("branch", branch, "merge");
             cfg.unsetSection("branch", branch);
         }
-        // Remove user identity from config
         cfg.unset("user", null, "name");
         cfg.unset("user", null, "email");
         cfg.save();

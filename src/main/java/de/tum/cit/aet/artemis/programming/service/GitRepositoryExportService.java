@@ -101,7 +101,6 @@ public class GitRepositoryExportService {
         sanitizedRepoName = participation.addPracticePrefixIfTestRun(sanitizedRepoName);
 
         if (zipOutput) {
-            // Defense-in-depth: if anonymized export, exclude leak-prone entries even if anonymization already removed them
             Predicate<Path> contentFilter = null;
             if (hideStudentName) {
                 contentFilter = path -> {
@@ -122,7 +121,6 @@ public class GitRepositoryExportService {
 
             FileUtils.copyDirectory(repo.getLocalPath().toFile(), targetDir.toFile());
             if (hideStudentName) {
-                // Defense-in-depth: ensure no reflogs or fetch metadata remain in copied directory
                 try {
                     Path logsPath = targetDir.resolve(".git").resolve("logs");
                     FileUtils.deleteDirectory(logsPath.toFile());

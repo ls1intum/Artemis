@@ -620,25 +620,18 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                     gitService.anonymizeStudentCommits(repository, programmingExercise);
                 }
                 catch (GitException ex) {
-                    // Option B fallback: create a single anonymized snapshot commit by reinitializing the repository
+                    // Fallback: create a single anonymized snapshot commit by reinitializing the repository
                     log.warn("Anonymization failed for participation {}. Falling back to orphan anonymized snapshot: {}", participation.getId(), ex.getMessage());
                     try {
-                        // Close current repo to avoid file locks on .git
                         repository.close();
-                        // Delete existing .git directory
                         var gitDir = tempRepositoryPath.resolve(".git");
                         org.apache.commons.io.FileUtils.deleteDirectory(gitDir.toFile());
-                        // Initialize a new git repository
                         try (org.eclipse.jgit.api.Git git = org.eclipse.jgit.api.Git.init().setDirectory(tempRepositoryPath.toFile()).call()) {
-                            // Stage all files
                             git.add().addFilepattern(".").call();
-                            // Create anonymized identity and a single commit
                             var fake = new org.eclipse.jgit.lib.PersonIdent("student", "", java.time.Instant.now(), java.time.ZoneId.systemDefault());
                             GitService.commit(git).setAuthor(fake).setCommitter(fake).setMessage("All student changes in one commit").call();
-                            // Remove reflogs if created
                             var logsPath = git.getRepository().getDirectory().toPath().resolve("logs");
                             org.apache.commons.io.FileUtils.deleteQuietly(logsPath.toFile());
-                            // Sanitize config: remove user, branch, remotes
                             var cfg = git.getRepository().getConfig();
                             for (String remote : cfg.getSubsections("remote")) {
                                 cfg.unsetSection("remote", remote);
@@ -650,7 +643,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                             cfg.unset("user", null, "email");
                             cfg.save();
                         }
-                        // Reopen repository handle for downstream export
                         repository = gitService.getOrCheckoutRepository(participation, tempRepositoryPath, false);
                         if (repository == null) {
                             log.error("Fallback anonymized snapshot succeeded but reopening repository failed for participation {}", participation.getId());
