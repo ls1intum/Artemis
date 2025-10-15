@@ -43,13 +43,6 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
     Channel findChannelByLectureId(@Param("lectureId") Long lectureId);
 
     @Query("""
-            SELECT channel
-            FROM Channel channel
-            WHERE channel.course.id = :courseId AND channel.lecture.id in :lectureIds
-            """)
-    Set<Channel> findChannelsByCourseIdWithLectureIdIn(@Param("courseId") long courseId, @Param("lectureIds") Set<Long> lectureIds);
-
-    @Query("""
             SELECT DISTINCT channel
             FROM Channel channel
             WHERE channel.exam.id = :examId
