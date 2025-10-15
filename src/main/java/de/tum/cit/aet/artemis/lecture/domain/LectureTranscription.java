@@ -37,6 +37,10 @@ public class LectureTranscription extends DomainObject {
     @JoinColumn(name = "lecture_unit_id", unique = true)
     private LectureUnit lectureUnit;
 
+    /**
+     * The external transcription job ID from the transcription service (e.g., Nebula).
+     * Used to track and poll the status of the asynchronous transcription process.
+     */
     @Column(name = "job_id", unique = true)
     private String jobId;
 

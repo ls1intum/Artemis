@@ -45,8 +45,16 @@ public class TumLiveService {
      * @return an optional playlist URL if found from the TUM Live API, or empty if not found or the URL is invalid
      */
     public Optional<String> getTumLivePlaylistLink(String videoUrl) {
-        if (!videoUrl.contains("tum.live") && !videoUrl.contains("rbg.tum.de")) {
-            log.debug("Not a TUM Live link: {}", videoUrl);
+        try {
+            String host = new URI(videoUrl).getHost();
+            boolean allowed = host != null && (host.equals("tum.live") || host.endsWith(".tum.live") || host.equals("rbg.tum.de") || host.endsWith(".rbg.tum.de"));
+            if (!allowed) {
+                log.debug("Not a TUM Live link: {}", videoUrl);
+                return Optional.empty();
+            }
+        }
+        catch (URISyntaxException e) {
+            log.warn("Malformed TUM Live URL: {}", videoUrl, e);
             return Optional.empty();
         }
 
