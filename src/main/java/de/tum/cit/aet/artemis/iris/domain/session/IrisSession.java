@@ -83,9 +83,10 @@ public abstract class IrisSession extends DomainObject {
     }
 
     public boolean getIsLastCloudEnabled() {
-        if (!Hibernate.isInitialized(messages))
+        if (!Hibernate.isInitialized(messages) || messages == null || messages.isEmpty()) {
             return false;
-        return messages != null && !messages.isEmpty() ? messages.getLast().getIsCloudEnabled() : false;
+        }
+        return Boolean.TRUE.equals(messages.get(messages.size() - 1).getIsCloudEnabled());
     }
 
     public void setMessages(List<IrisMessage> messages) {
