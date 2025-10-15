@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
-import de.tum.cit.aet.artemis.lecture.domain.NebulaTranscriptionStatus;
 
 /**
  * DTO for the response from Nebula's transcription status endpoint.

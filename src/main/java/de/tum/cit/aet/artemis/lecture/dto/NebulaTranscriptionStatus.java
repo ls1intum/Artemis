@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.lecture.domain;
+package de.tum.cit.aet.artemis.lecture.dto;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
