@@ -10,7 +10,7 @@ from utils import login_as_admin, get_user_details_by_index, get_student_details
 
 # Load configuration
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(['../config.ini', 'config.ini'])
 
 # Constants from config file
 CLIENT_URL: str = config.get('Settings', 'client_url')

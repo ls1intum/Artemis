@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import jakarta.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -33,10 +34,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.common.collect.ImmutableSet;
 
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -44,7 +50,10 @@ import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
@@ -70,6 +79,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
+
+    @Autowired
+    private OneToOneChatTestRepository oneToOneChatRepository;
 
     @BeforeEach
     @Override
@@ -172,7 +184,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @ValueSource(booleans = { true, false })
     void getAllForCourse_asStudent_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
-        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(loadFromService, TEST_PREFIX + "student1");
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "student1");
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
         for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
             verifyPrivateInformationIsHidden(tutorialGroup);
@@ -183,7 +195,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     @ValueSource(booleans = { true, false })
     void getAllForCourse_asEditor_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
-        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(loadFromService, TEST_PREFIX + "editor1");
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "editor1");
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
         for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
             verifyPrivateInformationIsHidden(tutorialGroup);
@@ -194,7 +206,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup(boolean loadFromService) throws Exception {
-        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(loadFromService, TEST_PREFIX + "tutor1");
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "tutor1");
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
         var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleOneTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsShown(groupWhereTutor);
@@ -207,7 +219,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllForCourse_asInstructorOfCourse_shouldShowPrivateInformation(boolean loadFromService) throws Exception {
-        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(loadFromService, TEST_PREFIX + "instructor1");
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(true, loadFromService, TEST_PREFIX + "instructor1");
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
@@ -221,35 +233,35 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getOneOfCourse_asStudent_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
-        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "student1");
+        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "student1", false);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getOneOfCourse_asEditor_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
-        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "editor1");
+        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "editor1", false);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getOneOfCourse_asTutorOfGroup_shouldShowPrivateInformation(boolean loadFromService) throws Exception {
-        oneOfCoursePrivateInfoShownTest(loadFromService, TEST_PREFIX + "tutor1");
+        oneOfCoursePrivateInfoShownTest(loadFromService, TEST_PREFIX + "tutor1", false);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getOneOfCourse_asInstructor_shouldShowPrivateInformation(boolean loadFromService) throws Exception {
-        oneOfCoursePrivateInfoShownTest(loadFromService, TEST_PREFIX + "instructor1");
+        oneOfCoursePrivateInfoShownTest(loadFromService, TEST_PREFIX + "instructor1", true);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void getOneOfCourse_asNotTutorOfGroup_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
-        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "tutor2");
+        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "tutor2", false);
     }
 
     @Test
@@ -294,7 +306,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, null }, 69, useSingleEndpoint);
         this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, null }, 69, useSingleEndpoint);
         this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, 8 }, 69, useSingleEndpoint);
-
     }
 
     @ParameterizedTest
@@ -923,34 +934,34 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(tutorialGroup.getCourse()).isNotNull();
     }
 
-    private void oneOfCoursePrivateInfoHiddenTest(boolean loadFromService, String userLogin) throws Exception {
-        var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin);
+    private void oneOfCoursePrivateInfoHiddenTest(boolean loadFromService, String userLogin, boolean isAdminOrInstructor) throws Exception {
+        var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin, isAdminOrInstructor);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsHidden(tutorialGroup);
     }
 
-    private void oneOfCoursePrivateInfoShownTest(boolean loadFromService, String userLogin) throws Exception {
-        var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin);
+    private void oneOfCoursePrivateInfoShownTest(boolean loadFromService, String userLogin, boolean isAdminOrInstructor) throws Exception {
+        var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin, isAdminOrInstructor);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsShown(tutorialGroup);
     }
 
-    private TutorialGroup getTutorialGroupOfExampleCourse(boolean loadFromService, String userLogin) throws Exception {
+    private TutorialGroup getTutorialGroupOfExampleCourse(boolean loadFromService, String userLogin, boolean isAdminOrInstructor) throws Exception {
         if (loadFromService) {
             var user = userRepository.findOneByLogin(userLogin).orElseThrow();
             var course = courseRepository.findById(exampleCourseId).orElseThrow();
-            return tutorialGroupService.getOneOfCourse(course, user, exampleOneTutorialGroupId);
+            return tutorialGroupService.getOneOfCourse(course, exampleOneTutorialGroupId, user, isAdminOrInstructor);
         }
         else {
             return request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
         }
     }
 
-    private List<TutorialGroup> getTutorialGroupsOfExampleCourse(boolean loadFromService, String userLogin) throws Exception {
+    private List<TutorialGroup> getTutorialGroupsOfExampleCourse(boolean isAdminOrInstructor, boolean loadFromService, String userLogin) throws Exception {
         if (loadFromService) {
             var user = userRepository.findOneByLogin(userLogin).orElseThrow();
             var course = courseRepository.findById(exampleCourseId).orElseThrow();
-            return tutorialGroupService.findAllForCourse(course, user).stream().toList();
+            return tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor).stream().toList();
         }
         else {
             return request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
@@ -1272,5 +1283,131 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
             assertThat(hasTutorialGroupDeletedNotification).isTrue();
         });
+    }
+
+    @Nested
+    class TutorialGroupDetailGroupDTOTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnForbiddenIfCourseDoesNotExist() throws Exception {
+            String nonExistentCourseId = "-1";
+            String url = "/api/tutorialgroup/courses/" + nonExistentCourseId + "/tutorial-group-detail/" + exampleOneTutorialGroupId;
+            request.get(url, HttpStatus.FORBIDDEN, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+        void shouldReturnForbiddenIfUserNotInCourse() throws Exception {
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + exampleOneTutorialGroupId;
+            request.get(url, HttpStatus.FORBIDDEN, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnInternalServerErrorIfCourseHasNoTimezone() throws Exception {
+            Course course = courseRepository.findById(exampleCourseId).orElseThrow();
+            course.setTimeZone(null);
+            courseRepository.save(course);
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + exampleOneTutorialGroupId;
+            request.get(url, HttpStatus.INTERNAL_SERVER_ERROR, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnNotFoundIfTutorialGroupDoesNotExist() throws Exception {
+            String nonExistentTutorialGroupId = "-1";
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + nonExistentTutorialGroupId;
+            request.get(url, HttpStatus.NOT_FOUND, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnCorrectGroupWithCorrectSessions() throws Exception {
+            Course course = courseRepository.findById(exampleCourseId).orElseThrow();
+            TutorialGroup group = tutorialGroupUtilService.createAndSaveTutorialGroup(course, "TG 1 Mo 13", tutor1, 15, "Garching");
+            TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(1, "10:00:00", "12:00:00",
+                    FIRST_AUGUST_MONDAY_00_00.toLocalDate().toString(), FIFTH_AUGUST_MONDAY_00_00.toLocalDate().toString(), "01.05.13", 1, group);
+            List<TutorialGroupSession> sessions = createAndSaveSessionsForTutorialGroupDetailGroupDTOTest(course, group, schedule);
+            TutorialGroupSession cancelledSession = sessions.getFirst();
+            TutorialGroupSession relocatedSession = sessions.get(1);
+            TutorialGroupSession changedTimeSession = sessions.get(2);
+            TutorialGroupSession changedDateSession = sessions.get(3);
+            TutorialGroupSession attendanceCountSession = sessions.get(4);
+
+            Channel channel = tutorialGroupChannelManagementService.createChannelForTutorialGroup(group);
+
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + group.getId();
+            TutorialGroupDetailGroupDTO groupDTO = request.get(url, HttpStatus.OK, TutorialGroupDetailGroupDTO.class);
+            assertThat(groupDTO.id()).isEqualTo(group.getId());
+            assertThat(groupDTO.title()).isEqualTo(group.getTitle());
+            assertThat(groupDTO.language()).isEqualTo(group.getLanguage());
+            assertThat(groupDTO.isOnline()).isEqualTo(group.getIsOnline());
+            assertThat(groupDTO.teachingAssistantName()).isEqualTo(tutor1.getName());
+            assertThat(groupDTO.teachingAssistantLogin()).isEqualTo(tutor1.getLogin());
+            assertThat(groupDTO.capacity()).isEqualTo(group.getCapacity());
+            assertThat(groupDTO.campus()).isEqualTo(group.getCampus());
+            assertThat(groupDTO.groupChannelId()).isEqualTo(channel.getId());
+
+            List<TutorialGroupDetailSessionDTO> sessionDTOs = groupDTO.sessions();
+            assertThat(sessionDTOs).hasSize(5);
+            TutorialGroupDetailSessionDTO firstSessionDTO = sessionDTOs.getFirst();
+            assertGroupDTOHasCorrectFields(firstSessionDTO, cancelledSession);
+            assertGroupDTOHasCorrectFlags(firstSessionDTO, true, false, false, false);
+
+            TutorialGroupDetailSessionDTO secondSessionDTO = sessionDTOs.get(1);
+            assertGroupDTOHasCorrectFields(secondSessionDTO, relocatedSession);
+            assertGroupDTOHasCorrectFlags(secondSessionDTO, false, true, false, false);
+
+            TutorialGroupDetailSessionDTO thirdSessionDTO = sessionDTOs.get(2);
+            assertGroupDTOHasCorrectFields(thirdSessionDTO, changedTimeSession);
+            assertGroupDTOHasCorrectFlags(thirdSessionDTO, false, false, true, false);
+
+            TutorialGroupDetailSessionDTO fourthSessionDTO = sessionDTOs.get(3);
+            assertGroupDTOHasCorrectFields(fourthSessionDTO, changedDateSession);
+            assertGroupDTOHasCorrectFlags(fourthSessionDTO, false, false, false, true);
+
+            TutorialGroupDetailSessionDTO fifthSessionDTO = sessionDTOs.get(4);
+            assertGroupDTOHasCorrectFields(fifthSessionDTO, attendanceCountSession);
+            assertGroupDTOHasCorrectFlags(fifthSessionDTO, false, false, false, false);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnResponseWithoutTutorChatIdIfNoChatExists() throws Exception {
+            TutorialGroup group = buildTutorialGroupWithoutSchedule("tutor1");
+            tutorialGroupTestRepository.save(group);
+            TutorialGroupSchedule schedule = buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
+            schedule.setTutorialGroup(group);
+            tutorialGroupScheduleTestRepository.save(schedule);
+
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + group.getId();
+            TutorialGroupDetailGroupDTO response = request.get(url, HttpStatus.OK, TutorialGroupDetailGroupDTO.class);
+            assertThat(response.tutorChatId()).isNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnResponseWithTutorChatIdIfChatExists() throws Exception {
+            TutorialGroup group = buildTutorialGroupWithoutSchedule("tutor1");
+            tutorialGroupTestRepository.save(group);
+            TutorialGroupSchedule schedule = buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
+            schedule.setTutorialGroup(group);
+            tutorialGroupScheduleTestRepository.save(schedule);
+
+            Course course = courseRepository.findById(exampleCourseId).orElseThrow();
+            var oneToOneChat = new OneToOneChat();
+            oneToOneChat.setCourse(course);
+            oneToOneChat.setCreator(student1);
+            oneToOneChatRepository.save(oneToOneChat);
+
+            ConversationParticipant participationOfUserA = ConversationParticipant.createWithDefaultValues(student1, oneToOneChat);
+            ConversationParticipant participationOfUserB = ConversationParticipant.createWithDefaultValues(tutor1, oneToOneChat);
+            conversationParticipantRepository.saveAll(List.of(participationOfUserA, participationOfUserB));
+
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + group.getId();
+            TutorialGroupDetailGroupDTO response = request.get(url, HttpStatus.OK, TutorialGroupDetailGroupDTO.class);
+            assertThat(response.tutorChatId()).isEqualTo(oneToOneChat.getId());
+        }
     }
 }

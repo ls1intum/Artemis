@@ -151,7 +151,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     /**
      * on changing the sort direction via icon, the metis service is invoked to deliver the posts for the currently set context,
-     * sorted on the backend
+     * sorted on the server
      */
     onChangeSortDir(): void {
         this.currentSortDirection = this.currentSortDirection === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;

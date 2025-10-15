@@ -76,6 +76,7 @@ describe('CourseCompetencies', () => {
             .then(() => {
                 courseCompetenciesComponentFixture = TestBed.createComponent(CourseCompetenciesComponent);
                 courseCompetenciesComponent = courseCompetenciesComponentFixture.componentInstance;
+                courseCompetenciesComponentFixture.componentRef.setInput('courseId', 1);
                 courseCompetencyService = TestBed.inject(CourseCompetencyService);
                 const accountService = TestBed.inject(AccountService);
                 const user = new User();
@@ -91,7 +92,7 @@ describe('CourseCompetencies', () => {
     it('should initialize', () => {
         courseCompetenciesComponentFixture.detectChanges();
         expect(courseCompetenciesComponent).toBeDefined();
-        expect(courseCompetenciesComponent.courseId).toBe(1);
+        // Input is now a signal; route param is used directly for logging only
     });
 
     it('should load prerequisites and competencies (with associated progress) and display a card for each of them', () => {
