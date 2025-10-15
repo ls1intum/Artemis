@@ -345,7 +345,7 @@ describe('CodeEditorMonacoComponent', () => {
         expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased, `feedback-new-${feedbackLineZeroBased}`, element);
     }));
 
-    it('should open feedback widget using keybind viewing a tutor assessment', () => {
+    const shouldOpenFeedbackUsingKeybindHelper = (isTutorAssessment: boolean, readOnlyManualFeedback: boolean): [any, any, any] => {
         const feedbackLineOneBased = 4;
         const addNewFeedbackSpy = jest.spyOn(comp, 'addNewFeedback');
         let capturedOnKeyDown: ((e: IKeyboardEvent) => void) | undefined;
@@ -356,8 +356,8 @@ describe('CodeEditorMonacoComponent', () => {
         });
         jest.spyOn(comp.editor(), 'getPosition').mockReturnValue({ lineNumber: feedbackLineOneBased, column: 0 });
 
-        fixture.componentRef.setInput('isTutorAssessment', true);
-        fixture.componentRef.setInput('readOnlyManualFeedback', false);
+        fixture.componentRef.setInput('isTutorAssessment', isTutorAssessment);
+        fixture.componentRef.setInput('readOnlyManualFeedback', readOnlyManualFeedback);
         fixture.detectChanges();
 
         (comp as any).setupAddFeedbackShortcut();
@@ -367,10 +367,26 @@ describe('CodeEditorMonacoComponent', () => {
         expect(capturedOnKeyDown).toBeDefined();
         capturedOnKeyDown!({ browserEvent, preventDefault: preventDefaultMock } as unknown as IKeyboardEvent);
 
+        (comp as any).disposeAddFeedbackShortcut();
+        return [feedbackLineOneBased, preventDefaultMock, addNewFeedbackSpy];
+    };
+
+    it('should open feedback widget using keybind viewing a tutor assessment', () => {
+        const [feedbackLineOneBased, preventDefaultMock, addNewFeedbackSpy] = shouldOpenFeedbackUsingKeybindHelper(true, false);
         expect(preventDefaultMock).toHaveBeenCalled();
         expect(addNewFeedbackSpy).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased);
+    });
 
-        (comp as any).disposeAddFeedbackShortcut();
+    it('should not open feedback widget using keybind because tutor assessment is disabled', () => {
+        const [_, preventDefaultMock, addNewFeedbackSpy] = shouldOpenFeedbackUsingKeybindHelper(false, false);
+        expect(preventDefaultMock).not.toHaveBeenCalled();
+        expect(addNewFeedbackSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not open feedback widget using keybind because read only manual feedback is disabled', () => {
+        const [_, preventDefaultMock, addNewFeedbackSpy] = shouldOpenFeedbackUsingKeybindHelper(true, true);
+        expect(preventDefaultMock).not.toHaveBeenCalled();
+        expect(addNewFeedbackSpy).not.toHaveBeenCalled();
     });
 
     it('should delete feedbacks and notify', () => {
