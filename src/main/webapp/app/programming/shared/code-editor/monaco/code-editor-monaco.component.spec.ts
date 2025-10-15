@@ -208,13 +208,16 @@ describe('CodeEditorMonacoComponent', () => {
     ])('should emit the correct error and update the file session when loading a file fails', async (error: Error, errorCode: string) => {
         const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code that will not be loaded' };
         const errorCallbackStub = jest.fn();
-        const loadFileSubject = new BehaviorSubject(fileToLoad);
+        const loadFileSubject = new Subject<typeof fileToLoad>();
         loadFileFromRepositoryStub.mockReturnValue(loadFileSubject);
-        loadFileSubject.error(error);
         comp.fileSession.set({});
         fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
         comp.onError.subscribe(errorCallbackStub);
         fixture.detectChanges();
+        // Emit the error after the component has subscribed to the observable.
+        // Otherwise, the error only surfaces on the next macrotask in the console.
+        // This would break new tests, that await the next macrotask.
+        loadFileSubject.error(error);
         await new Promise(process.nextTick);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
         expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith(errorCode);
