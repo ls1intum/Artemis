@@ -76,14 +76,19 @@ const config: Config = {
             ({
                 hashed: true,
                 language: ['en'],
-                // --- START OF CHANGES ---
-                // Tell the plugin to index documentation pages.
                 indexDocs: true,
-                // Point to the base path of each documentation instance.
                 docsRouteBasePath: ['guidelines', 'user-manual'],
-                // Enable contextual search to limit results to the current section.
                 // searchContextByPath: true,
-                // --- END OF CHANGES ---
+                searchContextByPaths: [
+                    {
+                        label: 'Guidelines',
+                        path: 'guidelines'
+                    },
+                    {
+                        label: 'User Manual',
+                        path: 'user-manual'
+                    }
+                ],
             }),
         ],
     ],
