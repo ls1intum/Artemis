@@ -70,11 +70,4 @@
             }
         </div>
     }
-    @if (showConsistencyCheck()) {
-        <div class="alert alert-warning alert-dismissible text-start fade show mt-4" role="alert">
-            <button type="button" class="btn-close" (click)="dismissConsistencyCheck()" aria-label="Close"></button>
-            <h4 class="alert-heading" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.title"></h4>
-            <div [innerHtml]="renderedConsistencyCheckResultMarkdown()"></div>
-        </div>
-    }
 </div>

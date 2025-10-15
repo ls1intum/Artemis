@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -21,12 +21,6 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
-import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
-import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 
 /**
  * Enumeration specifying the loading state
@@ -55,10 +49,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private alertService = inject(AlertService);
     /** Raw markdown changes from the center editor for debounce logic */
     private problemStatementChanges$ = new Subject<string>();
-    private modalService = inject(NgbModal);
-    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
-    private consistencyIssues = signal<ConsistencyIssue[]>([]);
-    private consistencyCheckService = inject(ConsistencyCheckService);
 
     ButtonSize = ButtonSize;
     LOADING_STATE = LOADING_STATE;
@@ -87,17 +77,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
 
     // State variables
     loadingState = LOADING_STATE.CLEAR;
-
-    constructor() {
-        effect(() => {
-            const issues = this.consistencyIssues();
-            for (const issue of issues) {
-                for (const loc of issue.relatedLocations) {
-                    this.codeEditorContainer.monacoEditor.addCommentBox(loc.endLine, issue.description);
-                }
-            }
-        });
-    }
 
     protected isCreateAssignmentRepoDisabled: boolean;
     /** Debounced tick stream consumed by the sidebar preview */
@@ -390,31 +369,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .subscribe({
                 error: (err: Error) => this.onError(err.message),
             });
-    }
-
-    /**
-     * Opens modal and executes a consistency check for the given programming exercise
-     * @param exercise the programming exercise to check
-     */
-    checkConsistencies(exercise: ProgrammingExercise) {
-        this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe({
-            next: (inconsistencies) => {
-                if (inconsistencies?.length) {
-                    // only show modal if inconsistencies found
-                    const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
-                    modalRef.componentInstance.exercisesToCheck = [exercise];
-                    return;
-                }
-
-                const action = new ConsistencyCheckAction(this.artemisIntelligenceService, exercise.id!, this.codeEditorContainer.monacoEditor.consistencyIssuesInternal);
-                this.codeEditorContainer.monacoEditor.editor().registerAction(action);
-                action.executeInCurrentEditor();
-            },
-            error: (err) => {
-                const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
-                modalRef.componentInstance.exercisesToCheck = [exercise];
-            },
-        });
     }
 
     /**

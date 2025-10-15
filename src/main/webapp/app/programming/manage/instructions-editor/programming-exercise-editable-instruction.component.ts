@@ -95,9 +95,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     savingInstructions = false;
     unsavedChangesValue = false;
 
-    renderedConsistencyCheckResultMarkdown = signal<string>('');
-    showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown());
-
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
 
@@ -226,10 +223,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.unsavedChanges = true;
         }
         this.instructionChange.emit(problemStatement);
-    }
-
-    dismissConsistencyCheck() {
-        this.renderedConsistencyCheckResultMarkdown.set('');
     }
 
     /**
