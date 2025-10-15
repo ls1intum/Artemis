@@ -449,9 +449,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         var exportErrors = new ArrayList<String>();
         var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, exportErrors);
 
-        // Fail hard if anonymization was requested and any export error occurred (e.g., anonymization failure)
-        if (repositoryExportOptions.anonymizeRepository() && !exportErrors.isEmpty()) {
-            log.error("Aborting export for programming exercise {} because anonymization failed for one or more repositories.", programmingExercise.getId());
+        // If anonymization is requested but nothing could be exported (even after fallbacks), abort
+        if (repositoryExportOptions.anonymizeRepository() && (zippedRepos == null || zippedRepos.isEmpty())) {
+            log.error("Aborting export for programming exercise {} because no repositories could be exported after anonymization attempts.", programmingExercise.getId());
             return null;
         }
 
@@ -616,8 +616,52 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
             if (repositoryExportOptions.anonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
-                // On failure, anonymize method throws GitException; let it bubble up so callers can record an error and abort if needed
-                gitService.anonymizeStudentCommits(repository, programmingExercise);
+                try {
+                    gitService.anonymizeStudentCommits(repository, programmingExercise);
+                }
+                catch (GitException ex) {
+                    // Option B fallback: create a single anonymized snapshot commit by reinitializing the repository
+                    log.warn("Anonymization failed for participation {}. Falling back to orphan anonymized snapshot: {}", participation.getId(), ex.getMessage());
+                    try {
+                        // Close current repo to avoid file locks on .git
+                        repository.close();
+                        // Delete existing .git directory
+                        var gitDir = tempRepositoryPath.resolve(".git");
+                        org.apache.commons.io.FileUtils.deleteDirectory(gitDir.toFile());
+                        // Initialize a new git repository
+                        try (org.eclipse.jgit.api.Git git = org.eclipse.jgit.api.Git.init().setDirectory(tempRepositoryPath.toFile()).call()) {
+                            // Stage all files
+                            git.add().addFilepattern(".").call();
+                            // Create anonymized identity and a single commit
+                            var fake = new org.eclipse.jgit.lib.PersonIdent("student", "", java.time.Instant.now(), java.time.ZoneId.systemDefault());
+                            GitService.commit(git).setAuthor(fake).setCommitter(fake).setMessage("All student changes in one commit").call();
+                            // Remove reflogs if created
+                            var logsPath = git.getRepository().getDirectory().toPath().resolve("logs");
+                            org.apache.commons.io.FileUtils.deleteQuietly(logsPath.toFile());
+                            // Sanitize config: remove user, branch, remotes
+                            var cfg = git.getRepository().getConfig();
+                            for (String remote : cfg.getSubsections("remote")) {
+                                cfg.unsetSection("remote", remote);
+                            }
+                            for (String branch : cfg.getSubsections("branch")) {
+                                cfg.unsetSection("branch", branch);
+                            }
+                            cfg.unset("user", null, "name");
+                            cfg.unset("user", null, "email");
+                            cfg.save();
+                        }
+                        // Reopen repository handle for downstream export
+                        repository = gitService.getOrCheckoutRepository(participation, tempRepositoryPath, false);
+                        if (repository == null) {
+                            log.error("Fallback anonymized snapshot succeeded but reopening repository failed for participation {}", participation.getId());
+                            return null;
+                        }
+                    }
+                    catch (Exception fallbackEx) {
+                        log.error("Fallback anonymized snapshot failed for participation {}: {}", participation.getId(), fallbackEx.getMessage(), fallbackEx);
+                        return null;
+                    }
+                }
             }
             else {
                 gitService.removeRemotesFromRepository(repository);
@@ -637,17 +681,10 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
             return gitRepositoryExportService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository(), zipOutput);
         }
-        catch (GitAPIException | GitException ex) {
-            // Propagate as GitException so exportStudentRepositories can record the failure and abort anonymized exports instead of silently skipping
-            String msg = "Failed to prepare repository for participation id " + participation.getId() + " in exercise id " + participation.getProgrammingExercise().getId() + ": "
-                    + ex.getMessage();
-            log.error(msg, ex);
-            if (ex instanceof GitException ge) {
-                throw ge;
-            }
-            else {
-                throw new GitException(msg, ex);
-            }
+        catch (GitAPIException ex) {
+            log.error("Failed to prepare repository for participation id {} in exercise id {}: {}", participation.getId(), participation.getProgrammingExercise().getId(),
+                    ex.getMessage(), ex);
+            return null;
         }
     }
 
