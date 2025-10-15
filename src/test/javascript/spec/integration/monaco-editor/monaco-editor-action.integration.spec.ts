@@ -25,10 +25,22 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
+import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { signal, WritableSignal } from '@angular/core';
+import { of } from 'rxjs';
+import { ConsistencyCheckResult, RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence-results';
+import { FaqConsistencyAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/FaqConsistencyAction';
 
 describe('MonacoEditorActionIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
+    let mockArtemisService = {
+        rewrite: jest.fn(),
+        faqConsistencyCheck: jest.fn(),
+        consistencyCheck: jest.fn(),
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -36,6 +48,7 @@ describe('MonacoEditorActionIntegration', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
+                { provide: ArtemisIntelligenceService, useValue: mockArtemisService as unknown as ArtemisIntelligenceService },
             ],
         }).compileComponents();
 
@@ -383,4 +396,80 @@ describe('MonacoEditorActionIntegration', () => {
         expect(comp.getText()).toBe(textWithDelimiters);
         expect(runSpy).toHaveBeenCalledTimes(3);
     }
+
+    it('should rewrite editor content via ArtemisIntelligenceService (FAQ variant)', async () => {
+        const courseId = 42;
+        const originalText = 'Original text to be rewritten';
+        const rewrittenText = 'Rewritten text from service';
+
+        const rewriteResult: RewriteResult = {
+            result: rewrittenText,
+            inconsistencies: undefined,
+            suggestions: undefined,
+            improvement: 'Text was improved',
+        };
+
+        mockArtemisService.rewrite.mockReturnValue(of(rewriteResult));
+
+        comp.setText(originalText);
+        const action = new RewriteAction(TestBed.inject(ArtemisIntelligenceService), RewritingVariant.FAQ, courseId);
+
+        comp.registerAction(action);
+        action.executeInCurrentEditor();
+
+        expect(mockArtemisService.rewrite).toHaveBeenCalledTimes(1);
+        expect(mockArtemisService.rewrite).toHaveBeenCalledWith(originalText, RewritingVariant.FAQ, courseId);
+        expect(comp.getText()).toBe(rewrittenText);
+    });
+
+    it('should pass through non-FAQ variant to ArtemisIntelligenceService.rewrite', async () => {
+        const courseId = 7;
+        const originalText = 'PS to improve';
+        const rewrittenText = 'Improved problem statement';
+
+        const rewriteResult: RewriteResult = {
+            result: rewrittenText,
+            inconsistencies: undefined,
+            suggestions: undefined,
+            improvement: 'Text was improved',
+        };
+
+        mockArtemisService.rewrite.mockReturnValue(of(rewriteResult));
+
+        comp.setText(originalText);
+        const variant = (Object.values(RewritingVariant).find((v) => v !== RewritingVariant.FAQ) ?? RewritingVariant.FAQ) as RewritingVariant;
+
+        const action = new RewriteAction(TestBed.inject(ArtemisIntelligenceService), variant, courseId);
+        comp.registerAction(action);
+        action.executeInCurrentEditor();
+
+        expect(mockArtemisService.rewrite).toHaveBeenCalledTimes(2);
+        expect(mockArtemisService.rewrite).toHaveBeenCalledWith(originalText, variant, courseId);
+        expect(comp.getText()).toBe(rewriteResult.result);
+    });
+
+    it('should run FAQ consistency check and update provided signal', async () => {
+        const courseId = 99;
+        const faqText = 'Is this consistent with course FAQ?';
+        const result: ConsistencyCheckResult = {
+            consistent: true,
+            issues: [],
+            suggestions: [],
+        } as unknown as ConsistencyCheckResult;
+
+        mockArtemisService.faqConsistencyCheck.mockReturnValue(of(result));
+
+        comp.setText(faqText);
+
+        const resultSignal: WritableSignal<ConsistencyCheckResult> = signal<ConsistencyCheckResult>(undefined as unknown as ConsistencyCheckResult);
+        const action = new FaqConsistencyAction(TestBed.inject(ArtemisIntelligenceService), courseId, resultSignal);
+
+        comp.registerAction(action);
+        action.executeInCurrentEditor();
+
+        expect(mockArtemisService.faqConsistencyCheck).toHaveBeenCalledTimes(1);
+        expect(mockArtemisService.faqConsistencyCheck).toHaveBeenCalledWith(courseId, faqText);
+        expect(resultSignal()).toEqual(result);
+        expect(comp.getText()).toBe(faqText);
+    });
 });
