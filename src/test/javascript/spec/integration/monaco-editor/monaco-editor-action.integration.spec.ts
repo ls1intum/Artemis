@@ -63,11 +63,11 @@ describe('MonacoEditorActionIntegration', () => {
                 read: jest.fn(),
             },
         });
-
         fixture.detectChanges();
     });
 
     afterEach(() => {
+        jest.clearAllMocks();
         jest.restoreAllMocks();
     });
 
@@ -443,7 +443,7 @@ describe('MonacoEditorActionIntegration', () => {
         comp.registerAction(action);
         action.executeInCurrentEditor();
 
-        expect(mockArtemisService.rewrite).toHaveBeenCalledTimes(2);
+        expect(mockArtemisService.rewrite).toHaveBeenCalledTimes(1);
         expect(mockArtemisService.rewrite).toHaveBeenCalledWith(originalText, variant, courseId);
         expect(comp.getText()).toBe(rewriteResult.result);
     });
