@@ -248,6 +248,13 @@ public class ChannelService {
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
     }
 
+    /**
+     * Creates and persists default channels for the given lectures within a course, assigning the specified user as the creator and moderator.
+     *
+     * @param lectures the list of lectures for which channels should be created
+     * @param course   the course to which the lectures (and channels) belong
+     * @param creator  the user who will be set as the creator and moderator of each channel
+     */
     public void createChannelsForLectures(List<Lecture> lectures, Course course, User creator) {
         Set<Channel> channelsToCreate = new HashSet<>();
         Set<ConversationParticipant> conversationParticipants = new HashSet<>();

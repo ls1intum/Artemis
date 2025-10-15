@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.web.LectureResource;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -357,6 +358,22 @@ public class LectureService {
                 .of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
     }
 
+    /**
+     * Corrects the default names of lectures and their corresponding channels for a given course after a lecture series has been created.
+     * <p>
+     * When {@link LectureResource#createLectureSeries} is called, Artemis generates new lectures, assigns them default titles,
+     * and creates channels with corresponding default names. A default lecture title follows the pattern {@code "Lecture ${index}"},
+     * while a default channel name uses the pattern {@code "lecture-lecture-${index}"}. Here, {@code ${index}} represents the lecture’s
+     * position within the sequence of all lectures in the course ordered like this:
+     * <p>
+     * Lectures are ordered according to the first non-null value of {@code startDate} or {@code endDate}. Lectures with neither of these
+     * are placed at the end of the sequence and ordered by their ID to ensure a stable sorting.
+     * <p>
+     * When {@code createLectureSeries()} is called multiple times, the existing numbering may become inconsistent due to the newly
+     * inserted lectures. This method corrects such inconsistencies by reapplying the proper numbering.
+     *
+     * @param courseId the ID of the course whose lecture and channel names should be corrected
+     */
     public void correctDefaultLectureAndChannelNames(long courseId) {
         Set<Channel> existingLectureChannels = channelRepository.findLectureChannelsByCourseId(courseId);
         Map<Long, Channel> lectureToChannelMap = existingLectureChannels.stream().collect(Collectors.toMap(channel -> channel.getLecture().getId(), Function.identity()));
