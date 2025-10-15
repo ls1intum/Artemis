@@ -125,7 +125,11 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
         for (const issue of this.consistencyIssuesInternal()) {
             for (const loc of issue.relatedLocations) {
-                if (loc.filePath === this.selectedFile()) {
+                // We want to remove the first part of e.g. template_repository/src/TEST/BubbleSort.java
+                // The same information is stored in loc.type
+                const repoPath = loc.filePath.split('/').slice(1).join('/');
+
+                if (repoPath === this.selectedFile()) {
                     result.push({ line: loc.endLine, text: issue.description });
                 }
             }
@@ -433,16 +437,15 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     addCommentBox(lineNumber: number, text: string) {
-        // Monaco is 1-based
-        const oneBasedLine = lineNumber + 1;
+        const line = lineNumber - 1;
 
         const node = document.createElement('div');
         node.className = 'my-comment-widget';
         node.innerText = text;
 
         // Place box beneath the line
-        this.editor().addLineWidget(oneBasedLine, `comment-${oneBasedLine}`, node);
-        this.highlightLines(oneBasedLine, oneBasedLine);
+        this.editor().addLineWidget(line, `comment-${line}`, node);
+        this.highlightLines(line, line);
     }
 
     /**
