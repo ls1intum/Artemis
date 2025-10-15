@@ -724,7 +724,7 @@ public class GitService extends AbstractGitService {
                 return;
             }
 
-            // Ensure template commit exists in the student's repo; otherwise anonymization via reset/cherry-pick cannot work
+            // Ensure template commit exists in the student's repo
             try (org.eclipse.jgit.revwalk.RevWalk walk = new org.eclipse.jgit.revwalk.RevWalk(studentGit.getRepository())) {
                 walk.parseCommit(latestHash);
             }
@@ -732,12 +732,10 @@ public class GitService extends AbstractGitService {
                 throw new GitException("Template commit " + latestHash.getName() + " not present in student repository " + repository.getLocalPath(), e);
             }
 
-            // Create copy branch
             Ref copyBranch = studentGit.branchCreate().setName(copyBranchName).call();
-            // Reset main branch back to template
             studentGit.reset().setMode(ResetCommand.ResetType.HARD).setRef(ObjectId.toString(latestHash)).call();
 
-            // Also anonymize the template HEAD commit itself to avoid leaking identity
+            // Anonymize the template HEAD commit to avoid leaking identity
             ObjectId currentHead = studentGit.getRepository().resolve(headName);
             try (org.eclipse.jgit.revwalk.RevWalk walk = new org.eclipse.jgit.revwalk.RevWalk(studentGit.getRepository())) {
                 RevCommit headCommit = walk.parseCommit(currentHead);
@@ -746,7 +744,7 @@ public class GitService extends AbstractGitService {
                 GitService.commit(studentGit).setAmend(true).setAuthor(fake).setCommitter(fake).setMessage(headCommit.getFullMessage()).call();
             }
 
-            // Get list of all student commits, that is all commits up to the last template commit
+            // Get list of all student commits (all commits up to the last template commit)
             Iterable<RevCommit> commits = studentGit.log().add(copyBranch.getObjectId()).call();
             List<RevCommit> commitList = StreamSupport.stream(commits.spliterator(), false).takeWhile(commit -> !commit.getId().equals(latestHash))
                     .collect(Collectors.toCollection(ArrayList::new));
@@ -763,13 +761,11 @@ public class GitService extends AbstractGitService {
                     GitService.commit(studentGit).setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
                 }
             }
-            // Delete copy branch
+            
             studentGit.branchDelete().setBranchNames(copyBranchName).setForce(true).call();
-
-            // Delete all remotes
             this.removeRemotes(studentGit);
 
-            // Delete .git/logs/ folder to delete git reflogs (tolerate if it does not exist)
+            // Delete .git/logs/ folder to delete git reflogs
             Path logsPath = Path.of(repository.getDirectory().getPath(), "logs");
             if (Files.exists(logsPath)) {
                 FileUtils.deleteDirectory(logsPath.toFile());
@@ -817,7 +813,7 @@ public class GitService extends AbstractGitService {
         // Delete all remotes
         for (RemoteConfig remote : repository.remoteList().call()) {
             repository.remoteRemove().setRemoteName(remote.getName()).call();
-            // Manually delete remote tracking branches since JGit apparently fails to do so
+            // Manually delete remote tracking branches
             for (Ref ref : repository.getRepository().getRefDatabase().getRefs()) {
                 if (ref.getName().startsWith("refs/remotes/" + remote.getName())) {
                     RefUpdate update = repository.getRepository().updateRef(ref.getName());
