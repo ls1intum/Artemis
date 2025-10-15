@@ -401,9 +401,46 @@ Default values have already been set, and modifying these values is not required
         artemis:
             continuous-integration:
                 container-flags-limit:
+                    # Optional: restrict which custom Docker networks instructors can select
+                    # Comma-separated list. Use 'none' to allow "no network" option
+                    # This list must match networks available on the build agent host(s)
+                    # Example: none, artemis-restricted
+                    allowed-custom-networks: <network1>, <network2>
                     max-cpu-count: <value>
                     max-memory: <value>
                     max-memory-swap: <value>
+
+Custom Docker Networks
+^^^^^^^^^^^^^^^^^^^^^^
+
+This setting is relevant only when using :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
+
+Artemis allows instructors to select a custom Docker network for build containers per programming exercise. This can be used to
+isolate containers (e.g., disable all outbound traffic) or to place them into a restricted network that only allows access to
+approved services such as artifact caches.
+
+- Configure the list of networks that instructors are allowed to choose from using the ``allowed-custom-networks`` property.
+- Provide a comma-separated list of Docker network names. Use ``none`` to offer the "no network" option.
+- The selected network must exist on the build agent host(s) where containers are created (e.g., create with ``docker network create ...``).
+- If no network is selected in the UI, Docker’s default network mode is used.
+
+Configuration (server/core node):
+
+.. code-block:: yaml
+
+   artemis:
+       continuous-integration:
+           container-flags-limit:
+               # Example: offer a fully isolated option and a restricted bridge network
+               allowed-custom-networks: none, artemis-restricted
+
+Notes
+"""""
+
+- In distributed deployments, configure the same list on all core nodes. The build agent uses the network passed from the core
+  and expects the network to be present on the Docker host.
+- Selecting ``none`` disables network access for the container. Ensure all dependencies are available in the image or are cached,
+  and configure builds to run offline where applicable (e.g., Maven ``--offline``), otherwise builds may fail.
 
 Pause Grace Period
 ^^^^^^^^^^^^^^^^^^^^^^
