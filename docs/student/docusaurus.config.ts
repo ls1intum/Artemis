@@ -77,7 +77,7 @@ const config: Config = {
                 hashed: true,
                 language: ['en'],
                 indexDocs: true,
-                docsRouteBasePath: ['student', 'instructor'],
+                docsRouteBasePath: ['student', 'instructor', 'staff', 'admin'],
                 // searchContextByPath: true,
                 searchContextByPaths: [
                     {
@@ -87,6 +87,14 @@ const config: Config = {
                     {
                         label: 'Instructor Guide',
                         path: 'instructor'
+                    },
+                    {
+                        label: 'Staff',
+                        path: 'staff'
+                    },
+                    {
+                        label: 'Admin',
+                        path: 'admin'
                     }
                 ],
             }),
@@ -112,6 +120,26 @@ const config: Config = {
                 id: 'instructor', // Unique id for this instance
                 path: 'instructor', // Source directory
                 routeBasePath: 'instructor', // URL base path
+                sidebarPath: './sidebarsUserManual.ts', // A separate sidebar file
+                editUrl: GUIDELINES_REPOSITORY_URL,
+            },
+        ],
+        [
+            '@docusaurus/plugin-content-docs',
+            {
+                id: 'staff', // Unique id for this instance
+                path: 'staff', // Source directory
+                routeBasePath: 'staff', // URL base path
+                sidebarPath: './sidebarsUserManual.ts', // A separate sidebar file
+                editUrl: GUIDELINES_REPOSITORY_URL,
+            },
+        ],
+        [
+            '@docusaurus/plugin-content-docs',
+            {
+                id: 'admin', // Unique id for this instance
+                path: 'admin', // Source directory
+                routeBasePath: 'admin', // URL base path
                 sidebarPath: './sidebarsUserManual.ts', // A separate sidebar file
                 editUrl: GUIDELINES_REPOSITORY_URL,
             },
@@ -144,6 +172,20 @@ const config: Config = {
                     docId: 'intro', // The ID of the doc to link to (e.g., user-manual/intro.md)
                     position: 'left',
                     label: 'Instructor Guide',
+                },
+                {
+                    type: 'doc',
+                    docsPluginId: 'staff', // Corresponds to the id of the plugin instance
+                    docId: 'intro', // The ID of the doc to link to (e.g., user-manual/intro.md)
+                    position: 'left',
+                    label: 'Staff',
+                },
+                {
+                    type: 'doc',
+                    docsPluginId: 'admin', // Corresponds to the id of the plugin instance
+                    docId: 'intro', // The ID of the doc to link to (e.g., user-manual/intro.md)
+                    position: 'left',
+                    label: 'Admin',
                 },
                 {
                     href: GUIDELINES_REPOSITORY_URL,
