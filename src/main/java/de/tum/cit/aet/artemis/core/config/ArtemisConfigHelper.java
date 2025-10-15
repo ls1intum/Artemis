@@ -46,16 +46,6 @@ public class ArtemisConfigHelper {
     }
 
     /**
-     * Check if the Nebula module is enabled.
-     *
-     * @param environment the Spring environment
-     * @return true if the Atlas module is enabled, false otherwise
-     */
-    public boolean isNebulaEnabled(Environment environment) {
-        return getPropertyOrExitArtemis(NEBULA_ENABLED_PROPERTY_NAME, environment);
-    }
-
-    /**
      * Check if the exam module is enabled.
      *
      * @param environment the Spring environment
