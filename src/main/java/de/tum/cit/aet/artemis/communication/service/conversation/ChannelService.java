@@ -249,7 +249,9 @@ public class ChannelService {
     }
 
     /**
-     * Creates and persists default channels for the given lectures within a course, assigning the specified user as the creator and moderator.
+     * Creates and persists channels for the given lectures within a course.
+     * Assumes that unique channel names can be derived from the lectures titles.
+     * Assigns the specified user as the creator and moderator.
      *
      * @param lectures the list of lectures for which channels should be created
      * @param course   the course to which the lectures (and channels) belong
