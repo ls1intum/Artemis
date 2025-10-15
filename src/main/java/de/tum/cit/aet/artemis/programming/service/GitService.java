@@ -737,17 +737,26 @@ public class GitService extends AbstractGitService {
             // Reset main branch back to template
             studentGit.reset().setMode(ResetCommand.ResetType.HARD).setRef(ObjectId.toString(latestHash)).call();
 
+            // Also anonymize the template HEAD commit itself to avoid leaking identity from initial import commits
+            ObjectId currentHead = studentGit.getRepository().resolve(headName);
+            try (org.eclipse.jgit.revwalk.RevWalk walk = new org.eclipse.jgit.revwalk.RevWalk(studentGit.getRepository())) {
+                RevCommit headCommit = walk.parseCommit(currentHead);
+                PersonIdent orig = headCommit.getAuthorIdent();
+                PersonIdent fake = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, orig.getWhenAsInstant(), orig.getZoneId());
+                GitService.commit(studentGit).setAmend(true).setAuthor(fake).setCommitter(fake).setMessage(headCommit.getFullMessage()).call();
+            }
+
             // Get list of all student commits, that is all commits up to the last template commit
             Iterable<RevCommit> commits = studentGit.log().add(copyBranch.getObjectId()).call();
             List<RevCommit> commitList = StreamSupport.stream(commits.spliterator(), false).takeWhile(commit -> !commit.getId().equals(latestHash))
                     .collect(Collectors.toCollection(ArrayList::new));
-            // Sort them oldest to newest
+
             Collections.reverse(commitList);
-            // Cherry-Pick all commits back into the main branch and immediately commit amend anonymized author information
+
             for (RevCommit commit : commitList) {
                 ObjectId head = studentGit.getRepository().resolve(headName);
                 studentGit.cherryPick().include(commit).call();
-                // Only commit amend if head changed; cherry-picking empty commits does nothing
+
                 if (!head.equals(studentGit.getRepository().resolve(headName))) {
                     PersonIdent authorIdent = commit.getAuthorIdent();
                     PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhenAsInstant(), authorIdent.getZoneId());
