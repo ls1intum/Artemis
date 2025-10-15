@@ -41,6 +41,7 @@ public class AtlasMLRestTemplateConfiguration {
      * @return a RestTemplate configured for AtlasML communication
      */
     @Bean
+    @Lazy
     public RestTemplate atlasmlRestTemplate() {
         return createRestTemplate(ATLASML_READ_TIMEOUT, ATLASML_CONNECTION_TIMEOUT);
     }
@@ -51,6 +52,7 @@ public class AtlasMLRestTemplateConfiguration {
      * @return a RestTemplate with short timeouts for AtlasML health checks
      */
     @Bean
+    @Lazy
     public RestTemplate shortTimeoutAtlasmlRestTemplate() {
         return createRestTemplate(ATLASML_SHORT_READ_TIMEOUT, ATLASML_SHORT_CONNECTION_TIMEOUT);
     }
