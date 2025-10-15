@@ -835,8 +835,10 @@ public class GitService extends AbstractGitService {
         var cfg = jgitRepo.getConfig();
         // Remove per-branch remote/merge configuration
         for (String branch : cfg.getSubsections("branch")) {
+            // Remove branch-specific remote/merge entries and drop the entire branch section for cleanliness
             cfg.unset("branch", branch, "remote");
             cfg.unset("branch", branch, "merge");
+            cfg.unsetSection("branch", branch);
         }
         // Remove user identity from config
         cfg.unset("user", null, "name");
