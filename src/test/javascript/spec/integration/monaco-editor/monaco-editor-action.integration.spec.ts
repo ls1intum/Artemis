@@ -453,8 +453,8 @@ describe('MonacoEditorActionIntegration', () => {
         const faqText = 'Is this consistent with course FAQ?';
         const result: ConsistencyCheckResult = {
             consistent: true,
-            issues: [],
-            suggestions: [],
+            improvement: [],
+            faqIds: [],
         } as unknown as ConsistencyCheckResult;
 
         mockArtemisService.faqConsistencyCheck.mockReturnValue(of(result));
