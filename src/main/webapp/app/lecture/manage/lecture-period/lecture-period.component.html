@@ -1,6 +1,6 @@
-<div>
-    <h3 id="artemisApp.lecture.sections.period"><span jhiTranslate="artemisApp.lecture.sections.period"></span></h3>
-    <p><span jhiTranslate="artemisApp.lecture.sections.periodDescription"></span></p>
+<div class="frame">
+    <h3 id="artemisApp.lecture.sections.period" jhiTranslate="artemisApp.lecture.sections.period"></h3>
+    <p jhiTranslate="artemisApp.lecture.sections.periodDescription"></p>
     <div class="d-flex gap-3">
         <!-- Lecture.visibleDate is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal -->
         <!-- TODO: #11479 - remove the commented out code OR comment back in -->
@@ -19,7 +19,7 @@
             <jhi-date-time-picker
                 labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
                 [(ngModel)]="lecture().startDate"
-                (valueChange)="validateDatesFunction()"
+                (valueChange)="onDateChange()"
                 name="startDate"
                 id="start-date"
             />
@@ -28,10 +28,16 @@
             <jhi-date-time-picker
                 labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
                 [(ngModel)]="lecture().endDate"
-                (valueChange)="validateDatesFunction()"
+                (valueChange)="onDateChange()"
                 name="endDate"
                 id="end-date"
             />
         </div>
     </div>
+    @if (isLectureLongerThanRecommended()) {
+        <div class="long-lecture-warning">
+            <fa-icon [icon]="faTriangleExclamation" />
+            <span jhiTranslate="artemisApp.lecture.longLectureWarning"></span>
+        </div>
+    }
 </div>
