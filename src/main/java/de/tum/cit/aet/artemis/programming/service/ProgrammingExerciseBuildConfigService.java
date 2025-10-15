@@ -70,7 +70,7 @@ public class ProgrammingExerciseBuildConfigService {
         int memory = 0;
         int memorySwap = 0;
         if (dockerFlagsDTO != null) {
-            network = dockerFlagsDTO.network();
+            network = StringUtils.trimToNull(dockerFlagsDTO.network());
             exerciseEnvironment = dockerFlagsDTO.env();
             cpuCount = dockerFlagsDTO.cpuCount();
             memory = dockerFlagsDTO.memory();

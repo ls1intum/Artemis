@@ -176,7 +176,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                 newEnv![key] = value;
             }
         });
-        this.dockerFlags = { env: newEnv, network: this.network(), cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
+        const network = this.network() == '' ? undefined : this.network();
+        this.dockerFlags = { env: newEnv, network: network, cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
         this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(this.dockerFlags);
     }
 

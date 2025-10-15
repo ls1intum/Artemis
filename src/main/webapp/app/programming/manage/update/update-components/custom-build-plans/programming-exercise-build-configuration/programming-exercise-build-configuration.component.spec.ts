@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync } from '@angular/core/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
@@ -132,7 +132,7 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toContain('"network":"someNet"');
 
-        comp.onNetworkChange(undefined);
+        comp.onNetworkChange('');
         comp.envVars = [];
         comp.cpuCount = undefined;
         comp.memory = undefined;

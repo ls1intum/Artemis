@@ -1248,10 +1248,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         void testDockerDefaultNetworkWorks() {
             var buildConfig = createBuildConfig("");
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-            localCITriggerService.triggerBuild(studentParticipation, false);
-            // Does not throw.
+            localCITriggerService.triggerBuild(studentParticipation, false); // Does not throw.
 
-            assertNetworkName(studentParticipation, "");
+            assertNetworkName(studentParticipation, null);
             assertThat(programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig).network()).isEqualTo(null);
         }
 
