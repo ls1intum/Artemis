@@ -15,7 +15,7 @@ import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
     styleUrl: './lecture-period.component.scss',
 })
 export class LectureUpdatePeriodComponent {
-    private static readonly MAX_RECOMMENDED_LECTURE_LENGTH_IN_HOURS = 8;
+    private static readonly MAX_RECOMMENDED_LECTURE_LENGTH_IN_MINUTES = 8 * 60;
     protected readonly faTriangleExclamation = faTriangleExclamation;
 
     @Input() validateDatesFunction: () => void;
@@ -36,8 +36,8 @@ export class LectureUpdatePeriodComponent {
         if (!start || !end) {
             return false;
         }
-        const differenceInHours = dayjs(end).diff(dayjs(start), 'hour');
-        return differenceInHours > LectureUpdatePeriodComponent.MAX_RECOMMENDED_LECTURE_LENGTH_IN_HOURS;
+        const differenceInHours = dayjs(end).diff(dayjs(start), 'minutes');
+        return differenceInHours > LectureUpdatePeriodComponent.MAX_RECOMMENDED_LECTURE_LENGTH_IN_MINUTES;
     }
 
     private computeIsPeriodSectionValid(): boolean {
