@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Conditional;
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 /**
  * Health indicator for the AtlasML microservice.
  * Reports the health status of the AtlasML service to Spring Boot Actuator.
+ * Uses ObjectProvider to defer AtlasMLService instantiation until the health check is actually called.
  */
 @Profile(PROFILE_CORE)
 @Conditional(AtlasEnabled.class)
@@ -25,15 +27,21 @@ public class AtlasMLHealthIndicator implements HealthIndicator {
 
     private static final Logger log = LoggerFactory.getLogger(AtlasMLHealthIndicator.class);
 
-    private final AtlasMLService atlasMLService;
+    private final ObjectProvider<AtlasMLService> atlasMLServiceProvider;
 
-    public AtlasMLHealthIndicator(AtlasMLService atlasMLService) {
-        this.atlasMLService = atlasMLService;
+    public AtlasMLHealthIndicator(ObjectProvider<AtlasMLService> atlasMLServiceProvider) {
+        this.atlasMLServiceProvider = atlasMLServiceProvider;
     }
 
     @Override
     public Health health() {
         try {
+            AtlasMLService atlasMLService = atlasMLServiceProvider.getIfAvailable();
+            if (atlasMLService == null) {
+                log.warn("AtlasML service is not available");
+                return Health.down().withDetail("service", "AtlasML").withDetail("status", "UNAVAILABLE").build();
+            }
+
             boolean isHealthy = atlasMLService.isHealthy();
 
             if (isHealthy) {
