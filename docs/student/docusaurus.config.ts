@@ -3,12 +3,12 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-const GUIDELINES_REPOSITORY_URL = 'https://github.com/ls1intum/ui-ux-guidelines';
-const PAGE_TITLE = 'UI-UX Guidelines @ AET';
+const GUIDELINES_REPOSITORY_URL = 'https://github.com/ls1intum/Artemis';
+const PAGE_TITLE = 'Artemis Documentation';
 
 const config: Config = {
     title: `Welcome to the ${PAGE_TITLE}`,
-    tagline: 'Guidelines and best practices for UI/UX design at Applied Education Technologies (AET)',
+    tagline: 'Documentation for the Artemis Learning Management System',
     favicon: 'img/tum-logo-blue.svg',
 
     customFields: {
@@ -24,12 +24,12 @@ const config: Config = {
     url: 'https://ls1intum.github.io/',
     // Set the /<baseUrl>/ pathname under which your site is served
     // For GitHub pages deployment, it is often '/<projectName>/'
-    baseUrl: '/ui-ux-guidelines/',
+    baseUrl: '/Artemis/',
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
     organizationName: 'ls1intum', // Usually your GitHub org/username.
-    projectName: 'ui-ux-guidelines', // Usually your repo name.
+    projectName: 'Artemis', // Usually your repo name.
 
     onBrokenLinks: 'throw',
 
