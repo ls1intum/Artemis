@@ -779,13 +779,21 @@ public class GitService extends AbstractGitService {
             Path fetchHeadPath = Path.of(repository.getDirectory().getPath(), "FETCH_HEAD");
             Files.deleteIfExists(fetchHeadPath);
 
-            // Validate anonymization end-state: no remotes, no logs, no FETCH_HEAD
+            // Validate anonymization end-state: no remotes, no logs, no FETCH_HEAD, no user identity and no branch remote config
             boolean remotesCleared = studentGit.remoteList().call().isEmpty();
             boolean logsDeleted = !Files.exists(logsPath);
             boolean fetchHeadDeleted = !Files.exists(fetchHeadPath);
-            if (!remotesCleared || !logsDeleted || !fetchHeadDeleted) {
+
+            var cfg = studentGit.getRepository().getConfig();
+            boolean hasRemoteSections = !cfg.getSubsections("remote").isEmpty();
+            boolean hasUserName = cfg.getString("user", null, "name") != null;
+            boolean hasUserEmail = cfg.getString("user", null, "email") != null;
+            boolean hasBranchRemote = cfg.getSubsections("branch").stream().anyMatch(b -> cfg.getString("branch", b, "remote") != null);
+
+            if (!remotesCleared || !logsDeleted || !fetchHeadDeleted || hasRemoteSections || hasUserName || hasUserEmail || hasBranchRemote) {
                 throw new GitException("Anonymization end-state validation failed (remotesCleared=" + remotesCleared + ", logsDeleted=" + logsDeleted + ", fetchHeadDeleted="
-                        + fetchHeadDeleted + ")");
+                        + fetchHeadDeleted + ", hasRemoteSections=" + hasRemoteSections + ", hasUserName=" + hasUserName + ", hasUserEmail=" + hasUserEmail + ", hasBranchRemote="
+                        + hasBranchRemote + ")");
             }
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
@@ -821,6 +829,19 @@ public class GitService extends AbstractGitService {
                 }
             }
         }
+
+        // Sanitize branch sections and user identity from config to prevent leaking information
+        var jgitRepo = repository.getRepository();
+        var cfg = jgitRepo.getConfig();
+        // Remove per-branch remote/merge configuration
+        for (String branch : cfg.getSubsections("branch")) {
+            cfg.unset("branch", branch, "remote");
+            cfg.unset("branch", branch, "merge");
+        }
+        // Remove user identity from config
+        cfg.unset("user", null, "name");
+        cfg.unset("user", null, "email");
+        cfg.save();
     }
 
     /**
