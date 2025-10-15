@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-
+import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
 import * as monaco from 'monaco-editor';
 
-import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
 export type MonacoEditorDiffText = { original: string; modified: string };
+
 @Component({
     selector: 'jhi-monaco-diff-editor',
     template: '',
