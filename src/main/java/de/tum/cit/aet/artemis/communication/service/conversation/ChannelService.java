@@ -250,12 +250,13 @@ public class ChannelService {
 
     /**
      * Creates and persists channels for the given lectures within a course.
-     * Assumes that unique channel names can be derived from the lectures titles.
+     * Assumes that unique channel names can be derived from the lectures titles. Will produce duplicate channel names otherwise that need to be corrected.
      * Assigns the specified user as the creator and moderator.
      *
      * @param lectures the list of lectures for which channels should be created
      * @param course   the course to which the lectures (and channels) belong
      * @param creator  the user who will be set as the creator and moderator of each channel
+     * @throws IllegalArgumentException if for any lecture a channel name is derived that does not follow the required format
      */
     public void createChannelsForLectures(List<Lecture> lectures, Course course, User creator) {
         Set<Channel> channelsToCreate = new HashSet<>();
@@ -266,6 +267,9 @@ public class ChannelService {
             channelToCreate.setCreator(creator);
             channelToCreate.setCourse(course);
             channelToCreate.setIsArchived(false);
+            if (channelToCreate.getName().matches(CHANNEL_NAME_REGEX)) {
+                throw new IllegalArgumentException("A channel name that was derived from a lecture title did not satisfy the channel name format requirements");
+            }
             channelsToCreate.add(channelToCreate);
 
             ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(creator, channelToCreate);
