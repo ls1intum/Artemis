@@ -236,4 +236,29 @@ describe('CompetencyManagementComponent', () => {
 
         expect(component.competencies()).toHaveLength(existingCompetencies + 3);
     });
+
+    it('should open agent chat modal and set courseId', () => {
+        // Arrange
+        sessionStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
+        const modalRef = {
+            componentInstance: {
+                courseId: undefined,
+                competencyChanged: {
+                    subscribe: jest.fn(),
+                },
+            },
+        } as any;
+        const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        fixture.detectChanges();
+
+        // Act
+        component['openAgentChatModal']();
+
+        // Assert
+        expect(openModalSpy).toHaveBeenCalledWith(expect.anything(), {
+            size: 'lg',
+            backdrop: true,
+        });
+        expect(modalRef.componentInstance.courseId).toBe(1);
+    });
 });

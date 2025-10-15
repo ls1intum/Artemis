@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Internal result object for Atlas Agent chat processing.
