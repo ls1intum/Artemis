@@ -616,7 +616,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
             if (repositoryExportOptions.anonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
-                // On failure, anonymize method now throws GitException; outer catch will handle and mark export as failed
+                // On failure, anonymize method throws GitException; let it bubble up so callers can record an error and abort if needed
                 gitService.anonymizeStudentCommits(repository, programmingExercise);
             }
             else {
@@ -638,9 +638,16 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return gitRepositoryExportService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository(), zipOutput);
         }
         catch (GitAPIException | GitException ex) {
-            log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),
-                    participation.getProgrammingExercise().getId(), ex);
-            return null;
+            // Propagate as GitException so exportStudentRepositories can record the failure and abort anonymized exports instead of silently skipping
+            String msg = "Failed to prepare repository for participation id " + participation.getId() + " in exercise id " + participation.getProgrammingExercise().getId() + ": "
+                    + ex.getMessage();
+            log.error(msg, ex);
+            if (ex instanceof GitException ge) {
+                throw ge;
+            }
+            else {
+                throw new GitException(msg, ex);
+            }
         }
     }
 
