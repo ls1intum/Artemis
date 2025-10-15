@@ -15,7 +15,7 @@ describe('AgentChatService', () => {
         instant: jest.fn(),
     };
 
-    const mockAccountService = {
+    const mockAccountService: { userIdentity: { id?: number; login: string } | null } = {
         userIdentity: { id: 42, login: 'testuser' },
     };
 
