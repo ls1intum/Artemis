@@ -11,15 +11,6 @@
             "online": "Online",
             "german": "German",
             "english": "English",
-            "weekdays": {
-                "monday": "Monday",
-                "tuesday": "Tuesday",
-                "wednesday": "Wednesday",
-                "thursday": "Thursday",
-                "friday": "Friday",
-                "saturday": "Saturday",
-                "sunday": "Sunday"
-            },
             "repetitions": {
                 "everyWeek": "Every week",
                 "everyNWeeks": "Every {{ n }} weeks"
@@ -52,7 +43,7 @@
                 "utilizationHelp": "Average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
                 "utilizationHelpDetail": "Average attendance divided by capacity",
                 "averageAttendance": "Average attendance: {{ averageAttendance }}",
-                "averageAttendanceDetail": "Average Attendance",
+                "averageAttendanceDetail": "Average number of attendees",
                 "averageAttendanceHelpDetail": "Average attendance in the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
                 "profilePicture": "Tutor Profile Picture",
                 "profilePictureAlt": "Profile picture of {{ user }}",
@@ -219,9 +210,9 @@
             },
             "configurationForm": {
                 "timeZoneInput": {
-                    "label": "Timezone",
+                    "label": "Tutorial Group Time Zone",
                     "beta": "The time zone is currently only used in conjunction with the tutorial group feature. It currently has no influence on other areas of Artemis",
-                    "changeWarning": "You have changed the timezone. All individually created sessions and tutorial free days will be deleted. Only schedules sessions will be recreated in the new time zone. Are you absolutely sure you want to do this?",
+                    "changeWarning": "You have changed the time zone. All individually created sessions and tutorial free days will be deleted. Only scheduled sessions will be recreated in the new time zone. Are you absolutely sure you want to do this?",
                     "placeholder": "Select a time zone",
                     "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field.",
                     "requiredValidationError": "You need to select a time zone!"
@@ -274,13 +265,52 @@
                 "title": "Edit Tutorial Group"
             },
             "tutorialGroupDetail": {
+                "cardTitles": {
+                    "tutorCardTitle": "Tutor",
+                    "generalInfoCardTitle": "General Information",
+                    "averageAttendanceCardTitle": "Attendance",
+                    "nextSessionCardTitle": "Next Session"
+                },
+                "language": "Language:",
+                "capacity": "Capacity:",
+                "mode": "Mode:",
+                "campus": "Campus:",
+                "status": "Status:",
+                "statusChipLabel": {
+                    "regular": "Regular",
+                    "cancelled": "Cancelled",
+                    "rescheduled": "Rescheduled",
+                    "relocated": "Relocated"
+                },
+                "date": "Date:",
+                "time": "Time:",
+                "location": "Location:",
                 "title": "Tutorial Group Detail",
                 "teachingAssistantNotSet": "Tutor not set",
                 "capacityNotSet": "Capacity not set",
                 "campusNotSet": "Campus not set",
                 "additionalInformationNotSet": "No additional Information set",
                 "scheduleNotSet": "No schedule set",
-                "sessionsNotFound": "No sessions found"
+                "sessionsNotFound": "No sessions found",
+                "sessionsListTitle": "Sessions",
+                "sessionListOptionLabel": {
+                    "allSessions": "All",
+                    "futureSessions": "Future"
+                },
+                "tutorChatLinkLabel": "Tutor Chat",
+                "groupChannelLinkLabel": "Group Channel",
+                "sessionTableColumnTitle": {
+                    "date": "Date",
+                    "time": "Time",
+                    "location": "Location",
+                    "attendance": "Attendance",
+                    "status": "Status"
+                },
+                "disclaimerText": {
+                    "noAttendanceDataAvailable": "No data available",
+                    "noUpcomingSession": "No upcoming session"
+                },
+                "createOneToOneChatError": "Error while creating tutor chat. Please try again."
             },
             "tutorialFreePeriodsManagement": {
                 "explanation": "Define course wide days on which no tutorial groups should take place. This can be used to define holidays or other days on which no tutorial groups should take place.",

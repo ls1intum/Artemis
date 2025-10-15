@@ -102,7 +102,6 @@ The Artemis development team prioritizes the following areas in the future. We w
 * **Medium term**: Add automatic generation of hints for programming exercises
 * **Medium term**: Add GenAI support for reviewing exercises for instructors
 * **Medium term**: Add GenAI support for learning analytics (partly done)
-* **Long term**: Explore the possibilities of microservices, Kubernetes based deployment, and micro frontends
 * **Long term**: Allow students to take notes on lecture slides and support the automatic updates of lecture slides
 * **Long term**: Develop an exchange platform for exercises
 
@@ -204,7 +203,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.4.0.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.4.2.war
 ```
 
 ## Architecture

@@ -11,6 +11,8 @@ import { downloadFile, downloadZipFromFilePromises } from 'app/shared/util/downl
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import JSZip from 'jszip';
 import { FileService } from 'app/shared/service/file.service';
+import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-update-dto.model';
+import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -21,6 +23,7 @@ export class QuizExerciseService {
     private exerciseService = inject(ExerciseService);
     private fileService = inject(FileService);
     private resourceUrl = 'api/quiz/quiz-exercises';
+    private quizBaseURL = 'api/quiz';
 
     /**
      * Create the given quiz exercise
@@ -31,15 +34,27 @@ export class QuizExerciseService {
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
 
+        const exerciseDTO = convertQuizExerciseToCreationDTO(copy);
+
         const formData = new FormData();
-        formData.append('exercise', objectToJsonBlob(copy));
+        formData.append('exercise', objectToJsonBlob(exerciseDTO));
         files.forEach((file, fileName) => {
             formData.append('files', file, fileName);
         });
 
-        return this.http
-            .post<QuizExercise>(this.resourceUrl, formData, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+        const hasExerciseGroup = quizExercise.exerciseGroup?.id;
+        const hasCourse = quizExercise.course?.id;
+
+        let url: string;
+        if (hasExerciseGroup) {
+            url = `${this.quizBaseURL}/exercise-groups/${quizExercise.exerciseGroup!.id}/quiz-exercises`;
+        } else if (hasCourse) {
+            url = `${this.quizBaseURL}/courses/${quizExercise.course!.id}/quiz-exercises`;
+        } else {
+            throw new Error('Quiz exercise must belong to a course or an exercise group');
+        }
+
+        return this.http.post<QuizExercise>(url, formData, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
@@ -78,14 +93,15 @@ export class QuizExerciseService {
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
 
+        const exerciseDTO = toQuizExerciseUpdateDTO(copy);
         const formData = new FormData();
-        formData.append('exercise', objectToJsonBlob(copy));
+        formData.append('exercise', objectToJsonBlob(exerciseDTO));
         files.forEach((file, fileName) => {
             formData.append('files', file, fileName);
         });
 
         return this.http
-            .put<QuizExercise>(this.resourceUrl + '/' + id, formData, { params: options, observe: 'response' })
+            .patch<QuizExercise>(this.resourceUrl + '/' + id, formData, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

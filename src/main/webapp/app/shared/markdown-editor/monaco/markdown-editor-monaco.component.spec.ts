@@ -79,7 +79,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         const text = 'test';
         const textChangeSpy = jest.spyOn(comp.markdownChange, 'emit');
         fixture.detectChanges();
-        comp.onTextChanged(text);
+        comp.onTextChanged({ text: text, fileName: 'test-file.md' });
         expect(textChangeSpy).toHaveBeenCalledWith(text);
         expect(comp._markdown).toBe(text);
     });

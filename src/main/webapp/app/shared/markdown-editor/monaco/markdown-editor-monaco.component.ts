@@ -445,9 +445,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.resizeObserver?.disconnect();
     }
 
-    onTextChanged(text: string): void {
-        this.markdown = text;
-        this.markdownChange.emit(text);
+    onTextChanged(event: { text: string; fileName: string }): void {
+        this.markdown = event.text;
+        this.markdownChange.emit(event.text);
     }
 
     /**

@@ -31,7 +31,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -121,11 +120,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @BeforeAll
     void setupAll() {
         CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
-    }
-
-    @AfterAll
-    void cleanupAll() {
-        this.gitService.init();
     }
 
     @BeforeEach

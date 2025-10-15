@@ -33,7 +33,8 @@
             "hideSampleSolution": "Hide Sample Solution",
             "allOptions": "Please choose all correct answer options",
             "singleOption": "Please choose the correct answer option",
-            "noQuestionDue": "There are no questions due, come back tomorrow."
+            "unratedConfirmation": "There are no questions due. Do you still want to train in the unrated mode?",
+            "unratedConfirmationTitle": "No questions due"
         }
     }
 }
