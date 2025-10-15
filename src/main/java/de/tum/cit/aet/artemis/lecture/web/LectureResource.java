@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -141,7 +139,7 @@ public class LectureResource {
     }
 
     /**
-     * POST /courses/{courseId}/lectures : Creates a series of lectures for the given course.
+     * POST /courses/{courseId}/lectures : Creates a series of lectures for the given course. Adjusts default lecture and channel names to new lecture order.
      *
      * @param courseId    the ID of the course for which to create the lectures
      * @param lectureDTOs a list of DTOs defining the individual lectures to create
@@ -152,34 +150,14 @@ public class LectureResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> createLectureSeries(@PathVariable long courseId, @RequestBody @NotEmpty List<@Valid LectureSeriesCreateLectureDTO> lectureDTOs) {
         log.debug("REST request to save Lecture series for courseId {} with lectures: {}", courseId, lectureDTOs);
-        User user = userRepository.getUser();
         Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUser();
+
         List<Lecture> newLectures = lectureDTOs.stream().map(lectureDTO -> createLectureUsing(lectureDTO, course)).toList();
         List<Lecture> savedLectures = lectureRepository.saveAll(newLectures);
         channelService.createChannelsForLectures(savedLectures, course, user);
 
-        Set<Channel> existingLectureChannels = channelRepository.findLectureChannelsByCourseId(courseId);
-        Map<Long, Channel> lectureToChannelMap = existingLectureChannels.stream().collect(Collectors.toMap(channel -> channel.getLecture().getId(), Function.identity()));
-        Comparator<Lecture> lectureComparator = Comparator
-                .comparing((Lecture lecture) -> lecture.getStartDate() != null ? lecture.getStartDate() : lecture.getEndDate(), Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(Lecture::getId);
-        List<Lecture> existingLectures = existingLectureChannels.stream().map(Channel::getLecture).sorted(lectureComparator).toList();
-
-        Pattern defaultLectureNamePattern = Pattern.compile("^Lecture (\\d+)$");
-        Pattern defaultChannelnamePattern = Pattern.compile("^lecture-lecture-(\\d+)$");
-        for (int index = 0; index < existingLectures.size(); index++) {
-            Lecture lecture = existingLectures.get(index);
-            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches()) {
-                lecture.setTitle("Lecture " + (index + 1));
-            }
-            Channel channel = lectureToChannelMap.get(lecture.getId());
-            String channelName = channel.getName();
-            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches()) {
-                channel.setName("lecture-lecture-" + (index + 1));
-            }
-        }
-        lectureRepository.saveAll(existingLectures);
-        channelRepository.saveAll(existingLectureChannels);
+        lectureService.correctDefaultLectureAndChannelNames(courseId);
 
         return ResponseEntity.noContent().build();
     }

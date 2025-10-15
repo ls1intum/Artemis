@@ -5,6 +5,7 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -353,5 +355,31 @@ public class LectureService {
         }
         return Optional
                 .of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
+    }
+
+    public void correctDefaultLectureAndChannelNames(long courseId) {
+        Set<Channel> existingLectureChannels = channelRepository.findLectureChannelsByCourseId(courseId);
+        Map<Long, Channel> lectureToChannelMap = existingLectureChannels.stream().collect(Collectors.toMap(channel -> channel.getLecture().getId(), Function.identity()));
+        Comparator<Lecture> lectureComparator = Comparator
+                .comparing((Lecture lecture) -> lecture.getStartDate() != null ? lecture.getStartDate() : lecture.getEndDate(), Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Lecture::getId);
+        List<Lecture> existingLectures = existingLectureChannels.stream().map(Channel::getLecture).sorted(lectureComparator).toList();
+
+        Pattern defaultLectureNamePattern = Pattern.compile("^Lecture (\\d+)$");
+        Pattern defaultChannelnamePattern = Pattern.compile("^lecture-lecture-(\\d+)$");
+        for (int index = 0; index < existingLectures.size(); index++) {
+            Lecture lecture = existingLectures.get(index);
+            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches()) {
+                lecture.setTitle("Lecture " + (index + 1));
+            }
+            Channel channel = lectureToChannelMap.get(lecture.getId());
+            String channelName = channel.getName();
+            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches()) {
+                channel.setName("lecture-lecture-" + (index + 1));
+            }
+        }
+
+        lectureRepository.saveAll(existingLectures);
+        channelRepository.saveAll(existingLectureChannels);
     }
 }
