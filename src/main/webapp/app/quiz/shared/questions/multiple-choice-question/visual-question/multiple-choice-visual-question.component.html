@@ -51,9 +51,11 @@
                 <div id="answer-option-{{ i }}-delete" class="visual-answer-delete-container" (click)="deleteAnswer(i)">
                     <fa-icon [icon]="faTrash" />
                 </div>
-                <div id="answer-option-{{ i }}-reset" class="btn btn-outline-secondary visual-answer-reset-container" (click)="deleteAnswer(i)">
-                    <fa-icon [icon]="faUndo" />
-                </div>
+                @if (reEvaluationInProgress()) {
+                    <div id="answer-option-{{ i }}-reset" class="btn btn-outline-secondary visual-answer-reset-container" (click)="resetAnswer(i)">
+                        <fa-icon [icon]="faUndo" />
+                    </div>
+                }
             </div>
             <div class="form-group-narrow visual-question-hint">
                 <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1" ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}" />

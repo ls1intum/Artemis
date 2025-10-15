@@ -287,5 +287,16 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         this.question().title = this.backupQuestion.title;
     }
 
-    resetQuestion() {}
+    resetQuestion() {
+        this.question().title = this.backupQuestion.title;
+        this.question().text = this.backupQuestion.text;
+        this.question().explanation = this.backupQuestion.explanation;
+        this.question().hint = this.backupQuestion.hint;
+        this.question().scoringType = this.backupQuestion.scoringType;
+        this.question().randomizeOrder = this.backupQuestion.randomizeOrder;
+        this.question().singleChoice = this.backupQuestion.singleChoice;
+        this.question().invalid = this.backupQuestion.invalid;
+        this.question().answerOptions = cloneDeep(this.backupQuestion.answerOptions);
+        this.changeDetector.detectChanges();
+    }
 }

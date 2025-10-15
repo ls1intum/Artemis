@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, input, output } from '@angular/core';
+import { Component, ViewEncapsulation, effect, input, output } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash, faUndo, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
@@ -9,6 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { cloneDeep } from 'lodash-es';
 
 @Component({
     selector: 'jhi-multiple-choice-visual-question',
@@ -20,6 +21,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class MultipleChoiceVisualQuestionComponent {
     question = input.required<MultipleChoiceQuestion>();
     reEvaluationInProgress = input<boolean>(false);
+
+    backupQuestion: MultipleChoiceQuestion;
 
     questionChanged = output();
 
@@ -33,6 +36,12 @@ export class MultipleChoiceVisualQuestionComponent {
     faTrash = faTrash;
     faXmark = faXmark;
     faUndo = faUndo;
+
+    constructor() {
+        effect(() => {
+            this.backupQuestion = cloneDeep(this.question());
+        });
+    }
 
     parseQuestion() {
         let markdown = this.question().text ?? '';
@@ -64,6 +73,12 @@ export class MultipleChoiceVisualQuestionComponent {
 
     deleteAnswer(index: number) {
         this.question().answerOptions?.splice(index, 1);
+
+        this.questionChanged.emit();
+    }
+
+    resetAnswer(index: number) {
+        this.question().answerOptions![index] = cloneDeep(this.backupQuestion.answerOptions![index]);
 
         this.questionChanged.emit();
     }
