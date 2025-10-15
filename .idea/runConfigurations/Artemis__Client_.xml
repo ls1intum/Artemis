@@ -2,7 +2,7 @@
   <configuration default="false" name="Artemis (Client)" type="js.build_tools.npm">
     <package-json value="$PROJECT_DIR$/package.json" />
     <command value="start" />
-    <node-interpreter value="$USER_HOME$/.nvm/versions/node/v22.17.1/bin/node" />
+    <node-interpreter value="project" />
     <package-manager value="npm" />
     <envs />
     <method v="2">
