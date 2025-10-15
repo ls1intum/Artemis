@@ -724,6 +724,14 @@ public class GitService extends AbstractGitService {
                 return;
             }
 
+            // Ensure template commit exists in the student's repo; otherwise anonymization via reset/cherry-pick cannot work
+            try (org.eclipse.jgit.revwalk.RevWalk walk = new org.eclipse.jgit.revwalk.RevWalk(studentGit.getRepository())) {
+                walk.parseCommit(latestHash);
+            }
+            catch (org.eclipse.jgit.errors.MissingObjectException e) {
+                throw new GitException("Template commit " + latestHash.getName() + " not present in student repository " + repository.getLocalPath(), e);
+            }
+
             // Create copy branch
             Ref copyBranch = studentGit.branchCreate().setName(copyBranchName).call();
             // Reset main branch back to template
@@ -752,9 +760,11 @@ public class GitService extends AbstractGitService {
             // Delete all remotes
             this.removeRemotes(studentGit);
 
-            // Delete .git/logs/ folder to delete git reflogs
+            // Delete .git/logs/ folder to delete git reflogs (tolerate if it does not exist)
             Path logsPath = Path.of(repository.getDirectory().getPath(), "logs");
-            FileUtils.deleteDirectory(logsPath.toFile());
+            if (Files.exists(logsPath)) {
+                FileUtils.deleteDirectory(logsPath.toFile());
+            }
 
             // Delete FETCH_HEAD containing the url of the last fetch
             Path fetchHeadPath = Path.of(repository.getDirectory().getPath(), "FETCH_HEAD");
