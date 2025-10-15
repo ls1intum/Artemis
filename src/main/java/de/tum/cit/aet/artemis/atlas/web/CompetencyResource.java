@@ -82,7 +82,7 @@ public class CompetencyResource {
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencyService courseCompetencyService, AtlasMLApi atlasMLApi) {
+            CourseCompetencyService courseCompetencyService, @Lazy AtlasMLApi atlasMLApi) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;

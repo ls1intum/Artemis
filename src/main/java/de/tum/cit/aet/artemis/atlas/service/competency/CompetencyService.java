@@ -54,7 +54,7 @@ public class CompetencyService extends CourseCompetencyService {
             Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, StandardizedCompetencyRepository standardizedCompetencyRepository,
             CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService, LearningObjectImportService learningObjectImportService,
             CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository,
-            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, AtlasMLService atlasMLService) {
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, @Lazy AtlasMLService atlasMLService) {
         super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, learningPathService,
                 authCheckService, standardizedCompetencyRepository, lectureUnitRepositoryApi, learningObjectImportService, courseRepository, competencyLectureUnitLinkRepository,
                 atlasMLService);

@@ -95,7 +95,7 @@ public class CourseCompetencyService {
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LearningPathService learningPathService, AuthorizationCheckService authCheckService, StandardizedCompetencyRepository standardizedCompetencyRepository,
             Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, LearningObjectImportService learningObjectImportService, CourseRepository courseRepository,
-            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository, AtlasMLService atlasMLService) {
+            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository, @Lazy AtlasMLService atlasMLService) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
