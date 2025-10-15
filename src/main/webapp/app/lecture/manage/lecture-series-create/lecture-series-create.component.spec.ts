@@ -7,17 +7,16 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { Router } from '@angular/router';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { Confirmation, ConfirmationService } from 'primeng/api';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
-import { Lecture, LectureNameUpdateDTO, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 describe('LectureSeriesCreateComponent', () => {
     let fixture: ComponentFixture<LectureSeriesCreateComponent>;
     let component: LectureSeriesCreateComponent;
 
-    let lectureServiceMock: jest.Mocked<Pick<LectureService, 'updateNames' | 'createSeries'>>;
+    let lectureServiceMock: jest.Mocked<Pick<LectureService, 'createSeries'>>;
     let alertServiceMock: jest.Mocked<Pick<AlertService, 'addErrorAlert'>>;
     let routerMock: jest.Mocked<Pick<Router, 'navigate'>>;
     let navigationUtilServiceMock: jest.Mocked<Pick<ArtemisNavigationUtilService, 'navigateBack'>>;
@@ -26,7 +25,6 @@ describe('LectureSeriesCreateComponent', () => {
 
     beforeEach(async () => {
         lectureServiceMock = {
-            updateNames: jest.fn(),
             createSeries: jest.fn(),
         };
         alertServiceMock = {
@@ -49,7 +47,10 @@ describe('LectureSeriesCreateComponent', () => {
 
         fixture = TestBed.createComponent(LectureSeriesCreateComponent);
         component = fixture.componentInstance;
+
+        fixture.componentRef.setInput('existingLectures', []);
         fixture.detectChanges();
+        await fixture.whenStable();
     });
 
     afterEach(() => {
@@ -308,15 +309,9 @@ describe('LectureSeriesCreateComponent', () => {
             new LectureSeriesCreateLectureDTO('Lecture 5', dayjs(secondInitialLectureStartDate).add(1, 'week'), dayjs(secondInitialLectureEndDate).add(1, 'week')),
         ];
 
-        const expectedNameUpdateDTOs = [new LectureNameUpdateDTO(1, 'Lecture 2'), new LectureNameUpdateDTO(2, 'Lecture 6')];
-
         let isLoadingSpy: jest.SpyInstance<void, [boolean]>;
-        let confirmationServiceSpy: jest.SpyInstance<ConfirmationService, [confirmation: Confirmation], any>;
 
         beforeEach(async () => {
-            const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-            confirmationServiceSpy = jest.spyOn(confirmationService, 'confirm');
-
             isLoadingSpy = jest.spyOn(component.isLoading, 'set');
             fixture.componentRef.setInput('courseId', testCourseId);
             component.addInitialLecture();
@@ -335,14 +330,13 @@ describe('LectureSeriesCreateComponent', () => {
             await fixture.whenStable();
         });
 
-        it('should save new lectures without asking to update names of existing lectures when no existing lectures available', async () => {
+        it('should save new lectures', async () => {
             lectureServiceMock.createSeries.mockReturnValue(of(void 0));
 
             component.save();
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(confirmationServiceSpy).not.toHaveBeenCalled();
             expect(lectureServiceMock.createSeries).toHaveBeenCalledOnce();
             const [passedLectureSeriesCreateDTOs, passedCourseId] = lectureServiceMock.createSeries.mock.calls[0];
             expect(passedCourseId).toBe(testCourseId);
@@ -353,119 +347,17 @@ describe('LectureSeriesCreateComponent', () => {
             expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
         });
 
-        it('should not update names and save new lectures if existing lectures available but user rejects renaming', async () => {
-            fixture.componentRef.setInput('rawExistingLectures', existingLectures);
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            lectureServiceMock.createSeries.mockReturnValue(of(void 0));
-
-            component.save();
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const userInputCallbacks = confirmationServiceSpy.mock.calls[0][0];
-            userInputCallbacks.reject?.();
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            expect(confirmationServiceSpy).toHaveBeenCalled();
-            expect(lectureServiceMock.updateNames).not.toHaveBeenCalled();
-            expect(lectureServiceMock.createSeries).toHaveBeenCalledOnce();
-            const [passedLectureSeriesCreateDTOs, passedCourseId] = lectureServiceMock.createSeries.mock.calls[0];
-            expect(passedCourseId).toBe(testCourseId);
-            expect(passedLectureSeriesCreateDTOs).toEqual(expectedLectureDTOsWithExistingLectures);
-
-            expect(isLoadingSpy).toHaveBeenCalledTimes(2);
-            expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
-            expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
-        });
-
-        it('should update names and save new lectures if existing lectures available and user accepts renaming', async () => {
-            fixture.componentRef.setInput('rawExistingLectures', existingLectures);
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            lectureServiceMock.updateNames.mockReturnValue(of(void 0));
-            lectureServiceMock.createSeries.mockReturnValue(of(void 0));
-
-            component.save();
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const userInputCallbacks = confirmationServiceSpy.mock.calls[0][0];
-            userInputCallbacks.accept?.();
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            expect(confirmationServiceSpy).toHaveBeenCalled();
-            expect(lectureServiceMock.updateNames).toHaveBeenCalledOnce();
-            const [passedLectureNameUpdateDTOs, passedNameUpdateCourseId] = lectureServiceMock.updateNames.mock.calls[0];
-            expect(passedNameUpdateCourseId).toBe(testCourseId);
-            expect(passedLectureNameUpdateDTOs).toEqual(expectedNameUpdateDTOs);
-            expect(lectureServiceMock.createSeries).toHaveBeenCalledOnce();
-            const [passedLectureSeriesCreateDTOs, passedLectureCreateCourseId] = lectureServiceMock.createSeries.mock.calls[0];
-            expect(passedLectureCreateCourseId).toBe(testCourseId);
-            expect(passedLectureSeriesCreateDTOs).toEqual(expectedLectureDTOsWithExistingLectures);
-
-            expect(isLoadingSpy).toHaveBeenCalledTimes(2);
-            expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
-            expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
-        });
-
-        it('should add correct alert if updating names fails', async () => {
-            fixture.componentRef.setInput('rawExistingLectures', existingLectures);
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            lectureServiceMock.updateNames.mockReturnValue(throwError(() => new Error('Update failed')));
-
-            component.save();
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const userInputCallbacks = confirmationServiceSpy.mock.calls[0][0];
-            userInputCallbacks.accept?.();
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            expect(confirmationServiceSpy).toHaveBeenCalled();
-            expect(lectureServiceMock.updateNames).toHaveBeenCalledOnce();
-            const [passedLectureNameUpdateDTOs, passedNameUpdateCourseId] = lectureServiceMock.updateNames.mock.calls[0];
-            expect(passedNameUpdateCourseId).toBe(testCourseId);
-            expect(alertServiceMock.addErrorAlert).toHaveBeenCalledOnce();
-            const alertStringKey = alertServiceMock.addErrorAlert.mock.calls[0][0];
-            expect(alertStringKey).toBe('artemisApp.lecture.createSeries.updateNameError');
-            expect(passedLectureNameUpdateDTOs).toEqual(expectedNameUpdateDTOs);
-            expect(lectureServiceMock.createSeries).not.toHaveBeenCalledOnce();
-
-            expect(isLoadingSpy).toHaveBeenCalledTimes(2);
-            expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
-            expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
-        });
-
         it('should add correct alert if creating lectures fails', async () => {
-            fixture.componentRef.setInput('rawExistingLectures', existingLectures);
+            fixture.componentRef.setInput('existingLectures', existingLectures);
             fixture.detectChanges();
             await fixture.whenStable();
 
-            lectureServiceMock.updateNames.mockReturnValue(of(void 0));
             lectureServiceMock.createSeries.mockReturnValue(throwError(() => new Error('Creation failed')));
 
             component.save();
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const userInputCallbacks = confirmationServiceSpy.mock.calls[0][0];
-            userInputCallbacks.accept?.();
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            expect(confirmationServiceSpy).toHaveBeenCalled();
-            expect(lectureServiceMock.updateNames).toHaveBeenCalledOnce();
-            const [passedLectureNameUpdateDTOs, passedNameUpdateCourseId] = lectureServiceMock.updateNames.mock.calls[0];
-            expect(passedNameUpdateCourseId).toBe(testCourseId);
-            expect(passedLectureNameUpdateDTOs).toEqual(expectedNameUpdateDTOs);
             expect(lectureServiceMock.createSeries).toHaveBeenCalledOnce();
             const [passedLectureSeriesCreateDTOs, passedLectureCreateCourseId] = lectureServiceMock.createSeries.mock.calls[0];
             expect(passedLectureCreateCourseId).toBe(testCourseId);
