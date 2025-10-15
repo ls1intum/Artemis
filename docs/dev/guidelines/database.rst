@@ -73,7 +73,6 @@ In this section, we depict common entity relationships we use in Artemis and sho
     @OrderColumn
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private List<Feedback> feedbacks = new ArrayList<>();
 
 
@@ -134,7 +133,6 @@ Entity relationships often depend on the existence of another entity — for exa
     @OrderColumn
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private List<Feedback> feedbacks = new ArrayList<>();
 
 
@@ -340,7 +338,6 @@ Best Practices
         @OrderColumn
         @JsonIgnoreProperties(value = "result", allowSetters = true)
         @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-        @JsonView(QuizView.Before.class)
         private List<Feedback> feedbacks = new ArrayList<>();
 
 
@@ -404,7 +401,6 @@ Solutions for known issues
     @OrderColumn
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private List<Feedback> feedbacks = new ArrayList<>();
 
 
