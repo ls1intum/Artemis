@@ -103,7 +103,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void initTestCase() throws Exception {
-        lectureRepository.deleteAll();
+        attachmentRepository.deleteAllInBatch();
+        lectureUnitRepository.deleteAllInBatch();
+        lectureRepository.deleteAllInBatch();
 
         int numberOfTutors = 2;
         userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
