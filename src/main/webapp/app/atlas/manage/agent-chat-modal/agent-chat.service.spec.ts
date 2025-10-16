@@ -190,6 +190,7 @@ describe('AgentChatService', () => {
             const message = 'Test message';
 
             it('should make POST request to correct URL', () => {
+                mockAccountService.userIdentity = { id: 42, login: 'testuser' };
                 const expectedUrl = `api/atlas/agent/courses/${courseId}/chat`;
 
                 service.sendMessage(message, courseId).subscribe();

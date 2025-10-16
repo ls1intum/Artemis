@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * Request-scoped to track tool calls per HTTP request.
  */
 @RequestScope
+@Lazy
 @Service
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentToolsService {
