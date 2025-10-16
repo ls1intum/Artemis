@@ -11,16 +11,16 @@ describe('CompetencyRings', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
-            declarations: [CompetencyRingsComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [MockModule(NgbTooltipModule), CompetencyRingsComponent],
+            declarations: [MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CompetencyRingsComponent);
                 component = fixture.componentInstance;
 
-                component.progress = 110;
-                component.mastery = -10;
+                fixture.componentRef.setInput('progress', 110);
+                fixture.componentRef.setInput('mastery', -10);
             });
     });
 

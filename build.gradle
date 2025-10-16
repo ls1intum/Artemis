@@ -32,12 +32,12 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.4.2"
+version = "8.4.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 

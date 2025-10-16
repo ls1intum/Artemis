@@ -37,7 +37,6 @@ describe('CodeEditorFileBrowserComponent', () => {
     const createFileRoot = '#create_file_root';
     const createFolderRoot = '#create_folder_root';
     const compressTree = '#compress_tree';
-    const problemStatementSelector = '#file-browser-problem-statement, jhi-code-editor-file-browser-problem-statement';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -98,8 +97,8 @@ describe('CodeEditorFileBrowserComponent', () => {
     });
 
     it('should NOT open a delete modal for Problem Statement (PS is not deletable)', () => {
-        // PS present in non-repository view
-        comp.displayOnly = false;
+        // PS present
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
         comp.repositoryFiles = { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT };
         comp.setupTreeview();
         fixture.detectChanges();
@@ -137,7 +136,7 @@ describe('CodeEditorFileBrowserComponent', () => {
     }));
 
     it('places Problem Statement at the top of the tree', () => {
-        comp.displayOnly = false;
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
         comp.ngOnInit();
 
         comp.repositoryFiles = {
@@ -153,10 +152,10 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(values.slice(1)).toEqual(['a.txt', 'b.txt']);
     });
 
-    it('adds the Problem Statement entry when not in displayOnly mode', () => {
+    it('adds the Problem Statement entry when isProblemStatementVisible is true', () => {
         // ensure fresh state
         (comp as any).repositoryFiles = undefined;
-        comp.displayOnly = false;
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
 
         comp.ngOnInit();
         comp.setupTreeview();
@@ -165,75 +164,21 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(comp.filesTreeViewItem.map((i) => i.value)).toContain(PROBLEM_STATEMENT_IDENTIFIER);
     });
 
-    it('removes the Problem Statement entry when displayOnly toggles to true', () => {
+    it('removes the Problem Statement entry when isProblemStatementVisible toggles to false', () => {
         // start with PS present
-        comp.displayOnly = false;
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
         comp.ngOnInit();
         (comp as any).handleProblemStatementVisibility?.();
 
-        // toggle to repository view (no PS)
-        comp.displayOnly = true;
+        // toggle isProblemStatementVisible to false (no PS)
+        fixture.componentRef.setInput('isProblemStatementVisible', false);
         (comp as any).handleProblemStatementVisibility?.();
 
         expect(comp.repositoryFiles?.[PROBLEM_STATEMENT_IDENTIFIER]).toBeUndefined();
     });
 
-    it('should NOT render Problem Statement in repository view (displayOnly=true)', () => {
-        comp.repositoryFiles = {};
-        comp.displayOnly = true;
-        triggerChanges(comp, { property: 'displayOnly', currentValue: true });
-
-        comp.repositoryFiles = { 'a.txt': FileType.FILE, folder: FileType.FOLDER };
-        comp.setupTreeview();
-        fixture.detectChanges();
-
-        expect(Object.keys(comp.repositoryFiles)).not.toContain(PROBLEM_STATEMENT_IDENTIFIER);
-        expect(comp.filesTreeViewItem.find((i) => i.value === PROBLEM_STATEMENT_IDENTIFIER)).toBeUndefined();
-
-        const psNode = debugElement.query(By.css(problemStatementSelector));
-        expect(psNode).toBeNull();
-    });
-
-    it('should NOT add Problem Statement on error in repository view (displayOnly=true)', () => {
-        comp.repositoryFiles = {};
-        comp.displayOnly = true;
-        triggerChanges(comp, { property: 'displayOnly', currentValue: true });
-
-        const status$ = new Subject<any>();
-        getStatusStub.mockReturnValue(status$);
-
-        comp.commitState = CommitState.UNDEFINED;
-        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
-        fixture.detectChanges();
-
-        status$.error('fatal');
-        fixture.detectChanges();
-
-        expect(comp.filesTreeViewItem).toEqual([]);
-        const psNode = debugElement.query(By.css(problemStatementSelector));
-        expect(psNode).toBeNull();
-    });
-
-    it('should render Problem Statement when not in repository view (displayOnly=false)', () => {
-        comp.displayOnly = false;
-        triggerChanges(comp, { property: 'displayOnly', currentValue: false });
-
-        comp.repositoryFiles = {};
-        // even with empty repo ensure PS is added, then build tree
-        (comp as any).initializeRepositoryFiles();
-        comp.setupTreeview();
-        fixture.detectChanges();
-
-        expect(Object.keys(comp.repositoryFiles)).toContain(PROBLEM_STATEMENT_IDENTIFIER);
-        const psItem = comp.filesTreeViewItem.find((i) => i.value === PROBLEM_STATEMENT_IDENTIFIER);
-        expect(psItem).toBeDefined();
-
-        const psNode = debugElement.query(By.css(problemStatementSelector));
-        expect(psNode).not.toBeNull();
-    });
-
     it('removes Problem Statement when showEditorInstructions toggles to false', () => {
-        comp.displayOnly = false;
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
         comp.ngOnInit();
         expect(comp.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.PROBLEM_STATEMENT);
         // flip instructions visibility (signal input)
@@ -244,7 +189,7 @@ describe('CodeEditorFileBrowserComponent', () => {
     });
 
     it('re-adds Problem Statement when showEditorInstructions toggles back to true', () => {
-        comp.displayOnly = false;
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
         fixture.componentRef.setInput('participation', { id: 1 });
         comp.ngOnInit();
         fixture.componentRef.setInput('showEditorInstructions', false);
