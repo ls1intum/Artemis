@@ -2,7 +2,6 @@ import { Component, OnInit, ViewEncapsulation, inject, input } from '@angular/co
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
@@ -21,7 +20,6 @@ import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/p
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
-import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -75,8 +73,6 @@ export class DetailOverviewListComponent implements OnInit {
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
-    protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
-    protected readonly CHAT = IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT;
 
     private readonly modelingExerciseService = inject(ModelingExerciseService);
     private readonly alertService = inject(AlertService);
