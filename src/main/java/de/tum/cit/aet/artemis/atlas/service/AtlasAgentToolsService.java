@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
@@ -35,8 +33,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 @Service
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentToolsService {
-
-    private static final Logger log = LoggerFactory.getLogger(AtlasAgentToolsService.class);
 
     private final ObjectMapper objectMapper;
 
@@ -99,12 +95,8 @@ public class AtlasAgentToolsService {
     @Tool(description = "Create a new competency for a course")
     public String createCompetency(@ToolParam(description = "the ID of the course") Long courseId, @ToolParam(description = "the title of the competency") String title,
             @ToolParam(description = "the description of the competency") String description,
-            @ToolParam(description = "the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)") String taxonomyLevel) {
+            @ToolParam(description = "the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)") CompetencyTaxonomy taxonomyLevel) {
         try {
-            log.debug("Agent tool: Creating competency '{}' for course {}", title, courseId);
-
-            // SET THE FLAG
-            this.competencyCreated = true;
 
             Optional<Course> courseOptional = courseRepository.findById(courseId);
             if (courseOptional.isEmpty()) {
@@ -116,19 +108,11 @@ public class AtlasAgentToolsService {
             competency.setTitle(title);
             competency.setDescription(description);
             competency.setCourse(course);
-
-            if (taxonomyLevel != null && !taxonomyLevel.isEmpty()) {
-                try {
-                    CompetencyTaxonomy taxonomy = CompetencyTaxonomy.valueOf(taxonomyLevel.toUpperCase());
-                    competency.setTaxonomy(taxonomy);
-                }
-                catch (IllegalArgumentException e) {
-                    // Invalid taxonomy level - leave taxonomy as null (agent provided invalid value)
-                }
-            }
+            competency.setTaxonomy(taxonomyLevel);
 
             Competency savedCompetency = competencyRepository.save(competency);
 
+            this.competencyCreated = true;
             Map<String, Object> competencyData = new LinkedHashMap<>();
             competencyData.put("id", savedCompetency.getId());
             competencyData.put("title", savedCompetency.getTitle());
@@ -143,7 +127,6 @@ public class AtlasAgentToolsService {
             return toJson(response);
         }
         catch (Exception e) {
-            log.error("Error creating competency for course {}: {}", courseId, e.getMessage(), e);
             return toJson(Map.of("error", "Failed to create competency: " + e.getMessage()));
         }
     }
