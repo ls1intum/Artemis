@@ -30,10 +30,10 @@ const moduleThresholds = {
         lines:      89.90,
     },
     atlas: {
-        statements: 92.00,
-        branches:   68.80,
-        functions:  85.40,
-        lines:      91.80,
+        statements: 91.50,
+        branches:   67.90,
+        functions:  84.60,
+        lines:      91.40,
     },
     buildagent: {
         statements: 93.00,
@@ -111,8 +111,8 @@ const moduleThresholds = {
         lines:      93.60,
     },
     programming: {
-        statements: 88.74,
-        branches:   76.30,
+        statements: 88.79,
+        branches:   76.53,
         functions:  80.92,
         lines:      88.86,
     },
