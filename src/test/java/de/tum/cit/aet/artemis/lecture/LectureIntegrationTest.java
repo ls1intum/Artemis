@@ -24,6 +24,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -101,11 +103,19 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private Competency competency;
 
+    @Autowired
+    private PlatformTransactionManager txManager;
+
     @BeforeEach
     void initTestCase() throws Exception {
-        attachmentRepository.deleteAllInBatch();
-        lectureUnitRepository.deleteAllInBatch();
-        lectureRepository.deleteAllInBatch();
+        String title = "Lecture 1";
+        new TransactionTemplate(txManager).execute(status -> {
+            lectureRepository.deleteAttachmentsByLectureTitle(title);
+            lectureRepository.deleteLectureLevelAttachments(title);
+            lectureRepository.deleteLectureUnitsByLectureTitle(title);
+            lectureRepository.deleteLecturesByTitle(title);
+            return null;
+        });
 
         int numberOfTutors = 2;
         userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
