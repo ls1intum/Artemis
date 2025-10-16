@@ -1,0 +1,61 @@
+---
+id: setup
+title: Developer Setup Guide
+sidebar_label: Developer Setup
+---
+
+import Callout from "../src/components/callout/callout";
+import {CalloutVariant} from "../src/components/callout/callout.types";
+
+# Setup Guide
+
+This guide explains how to set up Artemis in your development or demo environment.
+
+---
+
+## Development Environment Setup
+
+Install the following prerequisites:
+
+1. **Java JDK 25**
+2. **Database Server** (MySQL or PostgreSQL)
+3. **Node.js (LTS ≥ 24.7.0)** and **npm ≥ 11.5.1**
+4. *(Optional)* **Graphviz** — used for generating diagrams in exercises.
+
+<Callout variant={CalloutVariant.warning}>
+<p>Missing Graphviz in production may cause rendering errors for exercise descriptions.</p>
+</Callout>
+
+---
+
+## IDE Setup
+
+We recommend **IntelliJ IDEA Ultimate** for full Spring Boot support.  
+The Community Edition lacks advanced Spring features.
+
+👉 [Compare Editions](https://www.jetbrains.com/idea/features/editions_comparison_matrix.html)
+
+---
+
+## Setting Up Artemis
+
+After dependencies are installed:
+
+1. Configure the Artemis **server** (see `Server Setup` guide).
+2. Configure the **client** using the `Client Setup` guide.
+3. Optionally enable integrated **programming exercises**.
+
+<Callout variant={CalloutVariant.success}>
+<p>When using local development, the integrated code lifecycle allows you to create programming exercises without external Jenkins or GitLab.</p>
+</Callout>
+
+---
+
+## Production Setup and Extensions
+
+For production environments, apply security best practices and consider optional extensions like:
+
+- **Hermes:** mobile notifications
+- **Athena/Iris:** AI-based feedback generation
+
+See *Extension Services Setup* for more details.
