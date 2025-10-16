@@ -37,12 +37,11 @@ class AtlasAgentServiceTest {
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
         // Pass null for ToolCallbackProvider in tests
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null);
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null);
     }
 
     @Test
     void testProcessChatMessage_Success() throws ExecutionException, InterruptedException {
-        // Given
         String testMessage = "Help me create competencies for Java programming";
         Long courseId = 123L;
         String sessionId = "course_123";
@@ -51,10 +50,8 @@ class AtlasAgentServiceTest {
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
 
-        // When
         CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
-        // Then
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
         assertThat(chatResult.message()).isEqualTo(expectedResponse);
@@ -63,7 +60,6 @@ class AtlasAgentServiceTest {
 
     @Test
     void testProcessChatMessage_EmptyResponse() throws ExecutionException, InterruptedException {
-        // Given
         String testMessage = "Test message";
         Long courseId = 456L;
         String sessionId = "course_456";
@@ -72,10 +68,8 @@ class AtlasAgentServiceTest {
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(emptyResponse)))));
 
-        // When
         CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
-        // Then
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
         assertThat(chatResult.message()).isEqualTo("I apologize, but I couldn't generate a response.");
@@ -84,7 +78,6 @@ class AtlasAgentServiceTest {
 
     @Test
     void testProcessChatMessage_NullResponse() throws ExecutionException, InterruptedException {
-        // Given
         String testMessage = "Test message";
         Long courseId = 789L;
         String sessionId = "course_789";
@@ -92,10 +85,8 @@ class AtlasAgentServiceTest {
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
 
-        // When
         CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
-        // Then
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
         assertThat(chatResult.message()).isEqualTo("I apologize, but I couldn't generate a response.");
@@ -104,7 +95,6 @@ class AtlasAgentServiceTest {
 
     @Test
     void testProcessChatMessage_WhitespaceOnlyResponse() throws ExecutionException, InterruptedException {
-        // Given
         String testMessage = "Test message";
         Long courseId = 321L;
         String sessionId = "course_321";
@@ -113,10 +103,8 @@ class AtlasAgentServiceTest {
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(whitespaceResponse)))));
 
-        // When
         CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
-        // Then
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
         assertThat(chatResult.message()).isEqualTo("I apologize, but I couldn't generate a response.");
@@ -125,19 +113,15 @@ class AtlasAgentServiceTest {
 
     @Test
     void testProcessChatMessage_ExceptionHandling() throws ExecutionException, InterruptedException {
-        // Given
         String testMessage = "Test message";
         Long courseId = 654L;
         String sessionId = "course_654";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-        // Mock the ChatModel to throw an exception
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("ChatModel error"));
 
-        // When
         CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
-        // Then
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
         assertThat(chatResult.message()).isEqualTo("I apologize, but I'm having trouble processing your request right now. Please try again later.");
@@ -146,49 +130,22 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithValidChatClient() {
-        // When
         boolean available = atlasAgentService.isAvailable();
 
-        // Then
         assertThat(available).isTrue();
     }
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        // Given - pass null for all optional parameters
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null);
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null);
 
-        // When
         boolean available = serviceWithNullClient.isAvailable();
 
-        // Then
         assertThat(available).isFalse();
     }
 
     @Test
-    void testProcessChatMessage_DetectsCompetencyCreation() throws ExecutionException, InterruptedException {
-        // Given
-        String testMessage = "Create a competency called 'Java Basics'";
-        Long courseId = 999L;
-        String sessionId = "course_999_user_1";
-        String responseWithCreation = "I have successfully created the competency titled 'Java Basics' for your course.";
-
-        when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithCreation)))));
-
-        // When
-        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
-
-        // Then
-        assertThat(result).isNotNull();
-        AgentChatResult chatResult = result.get();
-        assertThat(chatResult.message()).isEqualTo(responseWithCreation);
-        assertThat(chatResult.competenciesModified()).isTrue(); // Should detect "created" keyword
-    }
-
-    @Test
     void testConversationIsolation_DifferentUsers() throws ExecutionException, InterruptedException {
-        // Given - Two different instructors in the same course
         Long courseId = 123L;
         String instructor1SessionId = "course_123_user_1";
         String instructor2SessionId = "course_123_user_2";
@@ -199,39 +156,16 @@ class AtlasAgentServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response for instructor 1")))))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response for instructor 2")))));
 
-        // When - Both instructors send messages
         CompletableFuture<AgentChatResult> result1 = atlasAgentService.processChatMessage(instructor1Message, courseId, instructor1SessionId);
         CompletableFuture<AgentChatResult> result2 = atlasAgentService.processChatMessage(instructor2Message, courseId, instructor2SessionId);
 
-        // Then - Each gets their own response
         AgentChatResult chatResult1 = result1.get();
         AgentChatResult chatResult2 = result2.get();
 
         assertThat(chatResult1.message()).isEqualTo("Response for instructor 1");
         assertThat(chatResult2.message()).isEqualTo("Response for instructor 2");
 
-        // Verify sessions are isolated (different session IDs mean different conversation contexts)
         assertThat(instructor1SessionId).isNotEqualTo(instructor2SessionId);
     }
 
-    @Test
-    void testProcessChatMessage_DetectsMultipleCreationKeywords() throws ExecutionException, InterruptedException {
-        // Given - Test different keyword variations for competency modification detection
-        String testMessage = "Create multiple competencies";
-        Long courseId = 888L;
-        String sessionId = "multi_create_session";
-        String responseWithMultipleKeywords = "I successfully created three new competencies for you.";
-
-        when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithMultipleKeywords)))));
-
-        // When
-        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
-
-        // Then
-        assertThat(result).isNotNull();
-        AgentChatResult chatResult = result.get();
-        assertThat(chatResult.message()).isEqualTo(responseWithMultipleKeywords);
-        assertThat(chatResult.competenciesModified()).isTrue(); // Should detect "created" keyword
-    }
 }

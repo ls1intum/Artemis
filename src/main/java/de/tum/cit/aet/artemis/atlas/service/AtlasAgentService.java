@@ -3,11 +3,10 @@ package de.tum.cit.aet.artemis.atlas.service;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
@@ -25,60 +24,69 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentService {
 
-    private static final Logger log = LoggerFactory.getLogger(AtlasAgentService.class);
-
     private final ChatClient chatClient;
 
     private final AtlasPromptTemplateService templateService;
 
     private final ToolCallbackProvider toolCallbackProvider;
 
+    private final ChatMemory chatMemory;
+
+    private final AtlasAgentToolsService atlasAgentToolsService;
+
     public AtlasAgentService(@Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
-            @Autowired(required = false) ToolCallbackProvider toolCallbackProvider) {
+            @Autowired(required = false) ToolCallbackProvider toolCallbackProvider, @Autowired(required = false) ChatMemory chatMemory,
+            @Autowired(required = false) AtlasAgentToolsService atlasAgentToolsService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.toolCallbackProvider = toolCallbackProvider;
+        this.chatMemory = chatMemory;
+        this.atlasAgentToolsService = atlasAgentToolsService;
     }
 
     /**
      * Process a chat message for the given course and return AI response with modification status.
-     * Detects competency modifications by checking if the response contains specific keywords.
+     * Uses request-scoped state tracking to detect competency modifications.
      *
      * @param message   The user's message
      * @param courseId  The course ID for context
-     * @param sessionId The session ID (TODO: will be used for another PR for Memory implementation including db migration)
+     * @param sessionId The session ID for chat memory
      * @return Result containing the AI response and competency modification flag
      */
     public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
         try {
+
             // Load system prompt from external template
             String resourcePath = "/prompts/atlas/agent_system_prompt.st";
             Map<String, String> variables = Map.of(); // No variables needed for this template
             String systemPrompt = templateService.render(resourcePath, variables);
 
-            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
-            log.info("Atlas Agent using deployment name: {} for course {} with session {}", options.getDeploymentName(), courseId, sessionId);
+            var options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
 
-            ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message)).options(options);
+            var promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message)).options(options);
+
+            // Add chat memory advisor
+            if (chatMemory != null) {
+                promptSpec = promptSpec.advisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+            }
 
             // Add tools
             if (toolCallbackProvider != null) {
                 promptSpec = promptSpec.toolCallbacks(toolCallbackProvider);
             }
 
+            // Execute the chat (tools are executed internally by Spring AI)
             String response = promptSpec.call().content();
 
-            // if response mentions creation/modification, set flag
-            boolean competenciesModified = response != null && (response.toLowerCase().contains("created") || response.toLowerCase().contains("successfully created")
-                    || response.toLowerCase().contains("competency titled"));
+            // Check if createCompetency was called by examining the service state
+            boolean competenciesModified = atlasAgentToolsService != null && atlasAgentToolsService.wasCompetencyCreated();
 
-            log.info("Successfully processed chat message for course {} with session {} (competenciesModified={})", courseId, sessionId, competenciesModified);
             String finalResponse = response != null && !response.trim().isEmpty() ? response : "I apologize, but I couldn't generate a response.";
+
             return CompletableFuture.completedFuture(new AgentChatResult(finalResponse, competenciesModified));
 
         }
         catch (Exception e) {
-            log.error("Error processing chat message for course {} with session {}: {}", courseId, sessionId, e.getMessage(), e);
             return CompletableFuture.completedFuture(new AgentChatResult("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
         }
     }
@@ -93,7 +101,6 @@ public class AtlasAgentService {
             return chatClient != null;
         }
         catch (Exception e) {
-            log.warn("Atlas Agent service availability check failed: {}", e.getMessage());
             return false;
         }
     }

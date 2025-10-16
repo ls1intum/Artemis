@@ -59,7 +59,6 @@ describe('AgentChatService', () => {
         };
 
         it('should return AgentChatResponse from successful HTTP response', () => {
-            // Arrange
             const mockResponse = {
                 message: 'Agent response message',
                 sessionId: `course_${courseId}_user_${userId}`,
@@ -69,12 +68,10 @@ describe('AgentChatService', () => {
             };
             let result: any;
 
-            // Act
             service.sendMessage(message, courseId).subscribe((response) => {
                 result = response;
             });
 
-            // Assert
             const req = httpMock.expectOne(expectedUrl);
             expect(req.request.method).toBe('POST');
             expect(req.request.body).toEqual(expectedRequestBody);
@@ -85,17 +82,14 @@ describe('AgentChatService', () => {
         });
 
         it('should return fallback error response on HTTP error', () => {
-            // Arrange
             const fallbackMessage = 'Connection error';
             translateService.instant.mockReturnValue(fallbackMessage);
             let result: any;
 
-            // Act
             service.sendMessage(message, courseId).subscribe((response) => {
                 result = response;
             });
 
-            // Assert
             const req = httpMock.expectOne(expectedUrl);
             req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
 
@@ -105,13 +99,11 @@ describe('AgentChatService', () => {
         });
 
         it('should use catchError operator properly on network failure', () => {
-            // Arrange
             const fallbackMessage = 'Network failure handled';
             translateService.instant.mockReturnValue(fallbackMessage);
             let result: any;
             let errorOccurred = false;
 
-            // Act
             service.sendMessage(message, courseId).subscribe({
                 next: (response) => {
                     result = response;
@@ -121,7 +113,6 @@ describe('AgentChatService', () => {
                 },
             });
 
-            // Assert
             const req = httpMock.expectOne(expectedUrl);
             req.error(new ProgressEvent('Network error'));
 
@@ -137,11 +128,9 @@ describe('AgentChatService', () => {
             const message = 'Test message';
 
             it('should handle timeout after 30 seconds', fakeAsync(() => {
-                // Arrange
                 const expectedUrl = `api/atlas/agent/courses/${courseId}/chat`;
                 let result: any;
 
-                // Act
                 service.sendMessage(message, courseId).subscribe({
                     next: (response) => {
                         result = response;
@@ -166,16 +155,13 @@ describe('AgentChatService', () => {
             const message = 'Test';
 
             it('should generate sessionId with valid userId', () => {
-                // Arrange
                 mockAccountService.userIdentity = { id: 42, login: 'testuser' };
                 const expectedSessionId = 'course_456_user_42';
 
-                // Act
                 service.sendMessage(message, courseId).subscribe();
 
                 const req = httpMock.expectOne(`api/atlas/agent/courses/${courseId}/chat`);
 
-                // Assert
                 expect(req.request.body.sessionId).toBe(expectedSessionId);
                 req.flush({
                     message: 'response',
@@ -186,46 +172,16 @@ describe('AgentChatService', () => {
                 });
             });
 
-            it('should use 0 as fallback when userIdentity is null', () => {
-                // Arrange
+            it('should throw error when userIdentity is null', () => {
                 mockAccountService.userIdentity = null;
-                const expectedSessionId = 'course_456_user_0';
 
-                // Act
-                service.sendMessage(message, courseId).subscribe();
-
-                const req = httpMock.expectOne(`api/atlas/agent/courses/${courseId}/chat`);
-
-                // Assert
-                expect(req.request.body.sessionId).toBe(expectedSessionId);
-                req.flush({
-                    message: 'response',
-                    sessionId: expectedSessionId,
-                    timestamp: '2024-01-01T00:00:00Z',
-                    success: true,
-                    competenciesModified: false,
-                });
+                expect(() => service.sendMessage(message, courseId)).toThrow('User must be authenticated to use agent chat');
             });
 
-            it('should use 0 as fallback when userIdentity.id is undefined', () => {
-                // Arrange
+            it('should throw error when userIdentity.id is undefined', () => {
                 mockAccountService.userIdentity = { id: undefined, login: 'testuser' };
-                const expectedSessionId = 'course_456_user_0';
 
-                // Act
-                service.sendMessage(message, courseId).subscribe();
-
-                const req = httpMock.expectOne(`api/atlas/agent/courses/${courseId}/chat`);
-
-                // Assert
-                expect(req.request.body.sessionId).toBe(expectedSessionId);
-                req.flush({
-                    message: 'response',
-                    sessionId: expectedSessionId,
-                    timestamp: '2024-01-01T00:00:00Z',
-                    success: true,
-                    competenciesModified: false,
-                });
+                expect(() => service.sendMessage(message, courseId)).toThrow('User must be authenticated to use agent chat');
             });
         });
 
@@ -234,13 +190,10 @@ describe('AgentChatService', () => {
             const message = 'Test message';
 
             it('should make POST request to correct URL', () => {
-                // Arrange
                 const expectedUrl = `api/atlas/agent/courses/${courseId}/chat`;
 
-                // Act
                 service.sendMessage(message, courseId).subscribe();
 
-                // Assert
                 const req = httpMock.expectOne(expectedUrl);
                 expect(req.request.method).toBe('POST');
                 req.flush({
@@ -253,15 +206,12 @@ describe('AgentChatService', () => {
             });
 
             it('should send request with correct body structure', () => {
-                // Arrange
                 mockAccountService.userIdentity = { id: 99, login: 'user99' };
 
-                // Act
                 service.sendMessage(message, courseId).subscribe();
 
                 const req = httpMock.expectOne(`api/atlas/agent/courses/${courseId}/chat`);
 
-                // Assert
                 expect(req.request.body).toEqual({
                     message: 'Test message',
                     sessionId: 'course_789_user_99',
@@ -282,12 +232,10 @@ describe('AgentChatService', () => {
             const message = 'Test';
 
             it('should return error response object on catchError', () => {
-                // Arrange
                 mockAccountService.userIdentity = { id: 55, login: 'testuser' };
                 mockTranslateService.instant.mockReturnValue('Translated error message');
                 let result: any;
 
-                // Act
                 service.sendMessage(message, courseId).subscribe({
                     next: (response) => {
                         result = response;
@@ -297,7 +245,6 @@ describe('AgentChatService', () => {
                 const req = httpMock.expectOne(`api/atlas/agent/courses/${courseId}/chat`);
                 req.error(new ProgressEvent('error'));
 
-                // Assert
                 expect(result).toBeDefined();
                 expect(result.message).toBe('Translated error message');
                 expect(result.success).toBeFalse();
@@ -307,11 +254,9 @@ describe('AgentChatService', () => {
             });
 
             it('should include timestamp in error response', () => {
-                // Arrange
                 const beforeTime = new Date().toISOString();
                 let result: any;
 
-                // Act
                 service.sendMessage(message, courseId).subscribe({
                     next: (response) => {
                         result = response;
@@ -323,7 +268,6 @@ describe('AgentChatService', () => {
 
                 const afterTime = new Date().toISOString();
 
-                // Assert
                 expect(result.timestamp).toBeDefined();
                 expect(result.timestamp >= beforeTime).toBeTruthy();
                 expect(result.timestamp <= afterTime).toBeTruthy();

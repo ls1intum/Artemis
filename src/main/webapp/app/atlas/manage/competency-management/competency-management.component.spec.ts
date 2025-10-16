@@ -4,6 +4,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { Competency, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
+import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
@@ -238,7 +239,6 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should open agent chat modal and set courseId', () => {
-        // Arrange
         sessionStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
         const modalRef = {
             componentInstance: {
@@ -251,11 +251,9 @@ describe('CompetencyManagementComponent', () => {
         const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
         fixture.detectChanges();
 
-        // Act
         component['openAgentChatModal']();
 
-        // Assert
-        expect(openModalSpy).toHaveBeenCalledWith(expect.anything(), {
+        expect(openModalSpy).toHaveBeenCalledWith(AgentChatModalComponent, {
             size: 'lg',
             backdrop: true,
         });

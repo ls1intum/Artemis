@@ -27,7 +27,11 @@ export class AgentChatService {
     private accountService = inject(AccountService);
 
     sendMessage(message: string, courseId: number): Observable<AgentChatResponse> {
-        const userId = this.accountService.userIdentity?.id ?? 0;
+        const userId = this.accountService.userIdentity?.id;
+        if (!userId) {
+            throw new Error('User must be authenticated to use agent chat');
+        }
+
         const sessionId = `course_${courseId}_user_${userId}`;
 
         const request: AgentChatRequest = {
@@ -38,7 +42,6 @@ export class AgentChatService {
         return this.http.post<AgentChatResponse>(`api/atlas/agent/courses/${courseId}/chat`, request).pipe(
             timeout(30000),
             catchError(() => {
-                // Return error response on failure
                 return of({
                     message: this.translateService.instant('artemisApp.agent.chat.error'),
                     sessionId,

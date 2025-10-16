@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.annotation.RequestScope;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,8 +27,9 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 /**
  * Service providing tools for the Atlas Agent using Spring AI's @Tool annotation.
+ * Request-scoped to track tool calls per HTTP request.
  */
-@Lazy
+@RequestScope
 @Service
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentToolsService {
@@ -42,6 +43,9 @@ public class AtlasAgentToolsService {
     private final CourseRepository courseRepository;
 
     private final ExerciseRepository exerciseRepository;
+
+    // Track which modification tools were called during this request
+    private boolean competencyCreated = false;
 
     public AtlasAgentToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
         this.objectMapper = objectMapper;
@@ -58,33 +62,27 @@ public class AtlasAgentToolsService {
      */
     @Tool(description = "Get all competencies for a course")
     public String getCourseCompetencies(@ToolParam(description = "the ID of the course") Long courseId) {
-        try {
-            Optional<Course> courseOpt = courseRepository.findById(courseId);
-            if (courseOpt.isEmpty()) {
-                return toJson(Map.of("error", "Course not found with ID: " + courseId));
-            }
-
-            Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
-
-            var competencyList = competencies.stream().map(competency -> {
-                Map<String, Object> compData = new LinkedHashMap<>();
-                compData.put("id", competency.getId());
-                compData.put("title", competency.getTitle());
-                compData.put("description", competency.getDescription());
-                compData.put("taxonomy", competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : "");
-                return compData;
-            }).toList();
-
-            Map<String, Object> response = new LinkedHashMap<>();
-            response.put("courseId", courseId);
-            response.put("competencies", competencyList);
-
-            return toJson(response);
+        Optional<Course> courseOptional = courseRepository.findById(courseId);
+        if (courseOptional.isEmpty()) {
+            return toJson(Map.of("error", "Course not found with ID: " + courseId));
         }
-        catch (Exception e) {
-            log.error("Error getting course competencies for course {}: {}", courseId, e.getMessage(), e);
-            return toJson(Map.of("error", "Failed to retrieve competencies: " + e.getMessage()));
-        }
+
+        Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
+
+        var competencyList = competencies.stream().map(competency -> {
+            Map<String, Object> competencyData = new LinkedHashMap<>();
+            competencyData.put("id", competency.getId());
+            competencyData.put("title", competency.getTitle());
+            competencyData.put("description", competency.getDescription());
+            competencyData.put("taxonomy", competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : "");
+            return competencyData;
+        }).toList();
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("courseId", courseId);
+        response.put("competencies", competencyList);
+
+        return toJson(response);
     }
 
     /**
@@ -101,12 +99,17 @@ public class AtlasAgentToolsService {
             @ToolParam(description = "the description of the competency") String description,
             @ToolParam(description = "the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)") String taxonomyLevel) {
         try {
-            Optional<Course> courseOpt = courseRepository.findById(courseId);
-            if (courseOpt.isEmpty()) {
+            log.debug("Agent tool: Creating competency '{}' for course {}", title, courseId);
+
+            // SET THE FLAG
+            this.competencyCreated = true;
+
+            Optional<Course> courseOptional = courseRepository.findById(courseId);
+            if (courseOptional.isEmpty()) {
                 return toJson(Map.of("error", "Course not found with ID: " + courseId));
             }
 
-            Course course = courseOpt.get();
+            Course course = courseOptional.get();
             Competency competency = new Competency();
             competency.setTitle(title);
             competency.setDescription(description);
@@ -118,7 +121,7 @@ public class AtlasAgentToolsService {
                     competency.setTaxonomy(taxonomy);
                 }
                 catch (IllegalArgumentException e) {
-                    log.warn("Invalid taxonomy level '{}', using default", taxonomyLevel);
+                    // Invalid taxonomy level - leave taxonomy as null (agent provided invalid value)
                 }
             }
 
@@ -151,20 +154,7 @@ public class AtlasAgentToolsService {
      */
     @Tool(description = "Get the description of a course")
     public String getCourseDescription(@ToolParam(description = "the ID of the course") Long courseId) {
-        try {
-            Optional<Course> courseOpt = courseRepository.findById(courseId);
-            if (courseOpt.isEmpty()) {
-                return "";
-            }
-
-            Course course = courseOpt.get();
-            String description = course.getDescription();
-            return description != null ? description : "";
-        }
-        catch (Exception e) {
-            log.error("Error getting course description for course {}: {}", courseId, e.getMessage(), e);
-            return "";
-        }
+        return courseRepository.findById(courseId).map(Course::getDescription).orElse("");
     }
 
     /**
@@ -175,35 +165,38 @@ public class AtlasAgentToolsService {
      */
     @Tool(description = "List exercises for a course")
     public String getExercisesListed(@ToolParam(description = "the ID of the course") Long courseId) {
-        try {
-            Optional<Course> courseOpt = courseRepository.findById(courseId);
-            if (courseOpt.isEmpty()) {
-                return toJson(Map.of("error", "Course not found with ID: " + courseId));
-            }
-
-            Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
-
-            var exerciseList = exercises.stream().map(exercise -> {
-                Map<String, Object> exerciseData = new LinkedHashMap<>();
-                exerciseData.put("id", exercise.getId());
-                exerciseData.put("title", exercise.getTitle());
-                exerciseData.put("type", exercise.getClass().getSimpleName());
-                exerciseData.put("maxPoints", exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0);
-                exerciseData.put("releaseDate", exercise.getReleaseDate() != null ? exercise.getReleaseDate().toString() : "");
-                exerciseData.put("dueDate", exercise.getDueDate() != null ? exercise.getDueDate().toString() : "");
-                return exerciseData;
-            }).toList();
-
-            Map<String, Object> response = new LinkedHashMap<>();
-            response.put("courseId", courseId);
-            response.put("exercises", exerciseList);
-
-            return toJson(response);
+        Optional<Course> courseOptional = courseRepository.findById(courseId);
+        if (courseOptional.isEmpty()) {
+            return toJson(Map.of("error", "Course not found with ID: " + courseId));
         }
-        catch (Exception e) {
-            log.error("Error getting exercises for course {}: {}", courseId, e.getMessage(), e);
-            return toJson(Map.of("error", "Failed to retrieve exercises: " + e.getMessage()));
-        }
+
+        Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
+
+        var exerciseList = exercises.stream().map(exercise -> {
+            Map<String, Object> exerciseData = new LinkedHashMap<>();
+            exerciseData.put("id", exercise.getId());
+            exerciseData.put("title", exercise.getTitle());
+            exerciseData.put("type", exercise.getClass().getSimpleName());
+            exerciseData.put("maxPoints", exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0);
+            exerciseData.put("releaseDate", exercise.getReleaseDate() != null ? exercise.getReleaseDate().toString() : "");
+            exerciseData.put("dueDate", exercise.getDueDate() != null ? exercise.getDueDate().toString() : "");
+            return exerciseData;
+        }).toList();
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("courseId", courseId);
+        response.put("exercises", exerciseList);
+
+        return toJson(response);
+    }
+
+    /**
+     * Check if any competency was created during this request.
+     *
+     * @return true if createCompetency was called during this request
+     */
+    public boolean wasCompetencyCreated() {
+        return this.competencyCreated;
     }
 
     /**
@@ -217,7 +210,6 @@ public class AtlasAgentToolsService {
             return objectMapper.writeValueAsString(object);
         }
         catch (JsonProcessingException e) {
-            log.error("Failed to serialize object to JSON: {}", e.getMessage(), e);
             return "{\"error\": \"Failed to serialize response\"}";
         }
     }

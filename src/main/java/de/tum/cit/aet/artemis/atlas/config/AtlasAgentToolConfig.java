@@ -9,11 +9,6 @@ import org.springframework.context.annotation.Lazy;
 
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentToolsService;
 
-/**
- * Configuration for Atlas Agent tools integration with Spring AI.
- * This class registers the @Tool-annotated methods from AtlasAgentToolsService
- * so that Spring AI can discover and use them for function calling.
- */
 @Lazy
 @Configuration
 @Conditional(AtlasEnabled.class)
@@ -29,7 +24,6 @@ public class AtlasAgentToolConfig {
      */
     @Bean
     public ToolCallbackProvider atlasToolCallbackProvider(AtlasAgentToolsService toolsService) {
-        // MethodToolCallbackProvider discovers @Tool-annotated methods on the provided instances
         return MethodToolCallbackProvider.builder().toolObjects(toolsService).build();
     }
 }
