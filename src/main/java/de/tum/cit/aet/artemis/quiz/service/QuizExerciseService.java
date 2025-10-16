@@ -210,6 +210,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     recalculationNecessary = true;
                     originalDragItem.setInvalid(true);
                 }
+                if (dragItemDTO.text() == null && dragItemDTO.pictureFilePath() == null) {
+                    throw new BadRequestAlertException("The drag item with id " + dragItemDTO.id() + " has no text or picture", ENTITY_NAME, "dragItemNoTextOrPicture");
+                }
+                if (dragItemDTO.text() != null && dragItemDTO.pictureFilePath() != null) {
+                    throw new BadRequestAlertException("The drag item with id " + dragItemDTO.id() + " has both text and picture", ENTITY_NAME, "dragItemTextAndPicture");
+                }
+                originalDragItem.setText(dragItemDTO.text());
+                originalDragItem.setPictureFilePath(dragItemDTO.pictureFilePath());
             }
         }
         originalDragItems.removeAll(dragItemsToRemove);
@@ -549,10 +557,32 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
     }
 
-    public QuizExercise reEvaluateWithDTO(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NotNull List<MultipartFile> files) {
+    public QuizExercise reEvaluateWithDTO(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NotNull List<MultipartFile> files) throws IOException {
+        Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalQuizExercise);
         applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
         boolean questionsChanged = applyQuizQuestionsFromDTOAndCheckIfChanged(quizExerciseDTO, originalQuizExercise);
-        return null;
+        validateQuizExerciseFiles(originalQuizExercise, files, false);
+        Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
+        Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));
+        for (var question : originalQuizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+                handleDndQuestionUpdate(dragAndDropQuestion, oldPaths, filesToRemove, fileMap, dragAndDropQuestion);
+            }
+        }
+        var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
+                .toList();
+        FileUtil.deleteFiles(allFilesToRemoveMerged);
+        originalQuizExercise.setMaxPoints(originalQuizExercise.getOverallQuizPoints());
+        originalQuizExercise.reconnectJSONIgnoreAttributes();
+        updateResultsOnQuizChanges(originalQuizExercise);
+        QuizExercise savedQuizExercise = save(originalQuizExercise);
+
+        if (questionsChanged) {
+            savedQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
+            quizStatisticService.recalculateStatistics(savedQuizExercise);
+        }
+        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
     }
 
     /**
