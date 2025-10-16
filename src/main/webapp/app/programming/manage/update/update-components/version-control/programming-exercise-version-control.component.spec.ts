@@ -65,4 +65,11 @@ describe('ProgrammingExerciseVersionControlComponent', () => {
         const textInput = fixture.debugElement.query(By.css('#field_branchRegex'));
         expect(textInput).toBeNull();
     });
+
+    it('should not render branching configuration when edit field flag is disabled', () => {
+        componentRef.setInput('isEditFieldDisplayedRecord', { allowBranching: false });
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('#field_allowBranching'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('#field_branchRegex'))).toBeNull();
+    });
 });
