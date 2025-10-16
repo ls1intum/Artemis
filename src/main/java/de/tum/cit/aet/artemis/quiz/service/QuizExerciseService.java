@@ -61,10 +61,12 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
+import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -78,11 +80,14 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.AnswerOptionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragItemReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DropLocationReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.MultipleChoiceQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerQuestionReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerSolutionReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerSpotReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -211,7 +216,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return recalculationNecessary;
     }
 
-    private static boolean updateDragAndDropMappingsFromDTO(DragAndDropQuestionReEvaluateDTO dndDTO, DragAndDropQuestion originalQuestion) {
+    private static boolean applyDragAndDropMappingsFromDTO(DragAndDropQuestionReEvaluateDTO dndDTO, DragAndDropQuestion originalQuestion) {
         boolean recalculationNecessary = false;
         List<DragAndDropMapping> mappingsToRemove = new ArrayList<>();
         for (DragAndDropMapping originalMapping : originalQuestion.getCorrectMappings()) {
@@ -249,40 +254,228 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         originalQuestion.setText(dndDTO.text());
         originalQuestion.setHint(dndDTO.hint());
         originalQuestion.setExplanation(dndDTO.explanation());
-        originalQuestion.setScoringType(dndDTO.scoringType());
+        if (!dndDTO.scoringType().equals(originalQuestion.getScoringType())) {
+            recalculationNecessary = true;
+            originalQuestion.setScoringType(dndDTO.scoringType());
+        }
         originalQuestion.setRandomizeOrder(dndDTO.randomizeOrder());
         if (originalQuestion.isInvalid() && !dndDTO.invalid()) {
             throw new BadRequestAlertException("The drag and drop question with id " + dndDTO.id() + " is marked as invalid and cannot be set to valid again", ENTITY_NAME,
                     "questionInvalid");
         }
         if (!originalQuestion.isInvalid() && dndDTO.invalid()) {
-            originalQuestion.setInvalid(true);
+            originalQuestion.setInvalid(Boolean.TRUE);
             recalculationNecessary = true;
         }
+        recalculationNecessary = applyDropLocationsFromDTO(dndDTO.dropLocations(), originalQuestion.getDropLocations()) || recalculationNecessary;
+        recalculationNecessary = applyDragItemsFromDTO(dndDTO.dragItems(), originalQuestion.getDragItems()) || recalculationNecessary;
+        recalculationNecessary = applyDragAndDropMappingsFromDTO(dndDTO, originalQuestion) || recalculationNecessary;
+        return recalculationNecessary;
+    }
+
+    private static boolean applyAnswerOptionsFromDTO(List<AnswerOptionReEvaluateDTO> answerOptionDTO, List<AnswerOption> originalAnswerOption) {
+        boolean recalculationNecessary = false;
+        List<AnswerOption> answerOptionsToRemove = new ArrayList<>();
+        Map<Long, AnswerOptionReEvaluateDTO> answerOptionReEvaluateDTOMap = answerOptionDTO.stream().collect(Collectors.toMap(AnswerOptionReEvaluateDTO::id, Function.identity()));
+        for (AnswerOption originalAnswerOptionItem : originalAnswerOption) {
+            AnswerOptionReEvaluateDTO answerOptionDTOItem = answerOptionReEvaluateDTOMap.get(originalAnswerOptionItem.getId());
+            if (answerOptionDTOItem == null) {
+                answerOptionsToRemove.add(originalAnswerOptionItem);
+                recalculationNecessary = true;
+            }
+            else {
+                if (originalAnswerOptionItem.isInvalid() && !answerOptionDTOItem.invalid()) {
+                    throw new BadRequestAlertException("The answer option with id " + answerOptionDTOItem.id() + " is marked as invalid and cannot be set to valid again",
+                            ENTITY_NAME, "answerOptionInvalid");
+                }
+                if (!originalAnswerOptionItem.isInvalid() && answerOptionDTOItem.invalid()) {
+                    recalculationNecessary = true;
+                    originalAnswerOptionItem.setInvalid(Boolean.TRUE);
+                }
+            }
+        }
+        originalAnswerOption.removeAll(answerOptionsToRemove);
+        return recalculationNecessary;
+    }
+
+    private static boolean applyMultipleChoiceQuestionFromDTO(MultipleChoiceQuestionReEvaluateDTO mcDTO, MultipleChoiceQuestion originalQuestion) {
+        boolean recalculationNecessary = false;
+        originalQuestion.setTitle(mcDTO.title());
+        if (!mcDTO.scoringType().equals(originalQuestion.getScoringType())) {
+            recalculationNecessary = true;
+            originalQuestion.setScoringType(mcDTO.scoringType());
+        }
+        originalQuestion.setRandomizeOrder(mcDTO.randomizeOrder());
+        if (originalQuestion.isInvalid() && !mcDTO.invalid()) {
+            throw new BadRequestAlertException("The multiple choice question with id " + mcDTO.id() + " is marked as invalid and cannot be set to valid again", ENTITY_NAME,
+                    "questionInvalid");
+        }
+        if (!originalQuestion.isInvalid() && mcDTO.invalid()) {
+            originalQuestion.setInvalid(Boolean.TRUE);
+            recalculationNecessary = true;
+        }
+        originalQuestion.setText(mcDTO.text());
+        originalQuestion.setHint(mcDTO.hint());
+        originalQuestion.setExplanation(mcDTO.explanation());
+        recalculationNecessary = applyAnswerOptionsFromDTO(mcDTO.answerOptions(), originalQuestion.getAnswerOptions()) || recalculationNecessary;
+        return recalculationNecessary;
+    }
+
+    private static boolean applyShortAnswerSolutionsFromDTOs(List<ShortAnswerSolutionReEvaluateDTO> solutionDTOs, List<ShortAnswerSolution> originalSolution) {
+        boolean recalculationNecessary = false;
+        List<ShortAnswerSolution> solutionsToRemove = new ArrayList<>();
+        Map<Long, ShortAnswerSolutionReEvaluateDTO> solutionReEvaluateDTOMap = solutionDTOs.stream()
+                .collect(Collectors.toMap(ShortAnswerSolutionReEvaluateDTO::id, Function.identity()));
+        for (ShortAnswerSolution originalSolutionItem : originalSolution) {
+            ShortAnswerSolutionReEvaluateDTO solutionDTOItem = solutionReEvaluateDTOMap.get(originalSolutionItem.getId());
+            if (solutionDTOItem == null) {
+                solutionsToRemove.add(originalSolutionItem);
+                recalculationNecessary = true;
+            }
+            else {
+                if (originalSolutionItem.isInvalid() && !solutionDTOItem.invalid()) {
+                    throw new BadRequestAlertException("The short answer solution with id " + solutionDTOItem.id() + " is marked as invalid and cannot be set to valid again",
+                            ENTITY_NAME, "solutionInvalid");
+                }
+                if (!originalSolutionItem.isInvalid() && solutionDTOItem.invalid()) {
+                    recalculationNecessary = true;
+                    originalSolutionItem.setInvalid(Boolean.TRUE);
+                }
+            }
+        }
+        originalSolution.removeAll(solutionsToRemove);
+        return recalculationNecessary;
+    }
+
+    private static boolean applyShortAnswerSpotsFromDTOs(List<ShortAnswerSpotReEvaluateDTO> spotDTOs, List<ShortAnswerSpot> originalSpots) {
+        boolean recalculationNecessary = false;
+        List<ShortAnswerSpot> spotsToRemove = new ArrayList<>();
+        Map<Long, ShortAnswerSpotReEvaluateDTO> spotReEvaluateDTOMap = spotDTOs.stream().collect(Collectors.toMap(ShortAnswerSpotReEvaluateDTO::id, Function.identity()));
+        for (ShortAnswerSpot originalSpot : originalSpots) {
+            ShortAnswerSpotReEvaluateDTO spotDTO = spotReEvaluateDTOMap.get(originalSpot.getId());
+            if (spotDTO == null) {
+                spotsToRemove.add(originalSpot);
+                recalculationNecessary = true;
+            }
+            else {
+                if (originalSpot.isInvalid() && !spotDTO.invalid()) {
+                    throw new BadRequestAlertException("The short answer spot with id " + spotDTO.id() + " is marked as invalid and cannot be set to valid again", ENTITY_NAME,
+                            "spotInvalid");
+                }
+                if (!originalSpot.isInvalid() && spotDTO.invalid()) {
+                    recalculationNecessary = true;
+                    originalSpot.setInvalid(Boolean.TRUE);
+                }
+            }
+        }
+        originalSpots.removeAll(spotsToRemove);
+        return recalculationNecessary;
+    }
+
+    private static boolean applyShortAnswerMappingFromDTOs(ShortAnswerQuestionReEvaluateDTO saDTO, ShortAnswerQuestion originalQuestion) {
+        boolean recalculationNecessary = false;
+        List<ShortAnswerMapping> mappingsToRemove = new ArrayList<>();
+        for (ShortAnswerMapping originalMapping : originalQuestion.getCorrectMappings()) {
+            boolean mappingExistsInDTO = saDTO.correctMappings().stream()
+                    .anyMatch(dto -> dto.spotId().equals(originalMapping.getSpot().getId()) && dto.solutionId().equals(originalMapping.getSolution().getId()));
+            if (!mappingExistsInDTO) {
+                mappingsToRemove.add(originalMapping);
+                recalculationNecessary = true;
+            }
+        }
+        originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
+        Set<ShortAnswerMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
+        for (var mappingDTO : saDTO.correctMappings()) {
+            boolean mappingExists = existingMappings.stream()
+                    .anyMatch(mapping -> mapping.getSpot().getId().equals(mappingDTO.spotId()) && mapping.getSolution().getId().equals(mappingDTO.solutionId()));
+            if (!mappingExists) {
+                ShortAnswerSpot spot = originalQuestion.getSpots().stream().filter(item -> item.getId().equals(mappingDTO.spotId())).findFirst()
+                        .orElseThrow(() -> new BadRequestAlertException("The short answer spot with id " + mappingDTO.spotId() + " does not exist", ENTITY_NAME, "spotNotFound"));
+                ShortAnswerSolution solution = originalQuestion.getSolutions().stream().filter(item -> item.getId().equals(mappingDTO.solutionId())).findFirst().orElseThrow(
+                        () -> new BadRequestAlertException("The short answer solution with id " + mappingDTO.solutionId() + " does not exist", ENTITY_NAME, "solutionNotFound"));
+                ShortAnswerMapping newMapping = new ShortAnswerMapping();
+                newMapping.setSpot(spot);
+                newMapping.setSolution(solution);
+                originalQuestion.getCorrectMappings().add(newMapping);
+                recalculationNecessary = true;
+            }
+        }
+        return recalculationNecessary;
+    }
+
+    private static boolean applyShortAnswerQuestionFromDTO(ShortAnswerQuestionReEvaluateDTO shortAnswerQuestionDTO, ShortAnswerQuestion originalQuestion) {
+        boolean recalculationNecessary = false;
+        originalQuestion.setTitle(shortAnswerQuestionDTO.title());
+        originalQuestion.setText(shortAnswerQuestionDTO.text());
+        if (!shortAnswerQuestionDTO.scoringType().equals(originalQuestion.getScoringType())) {
+            recalculationNecessary = true;
+            originalQuestion.setScoringType(shortAnswerQuestionDTO.scoringType());
+        }
+        originalQuestion.setRandomizeOrder(shortAnswerQuestionDTO.randomizeOrder());
+        if (originalQuestion.isInvalid() && !shortAnswerQuestionDTO.invalid()) {
+            throw new BadRequestAlertException("The short answer question with id " + shortAnswerQuestionDTO.id() + " is marked as invalid and cannot be set to valid again",
+                    ENTITY_NAME, "questionInvalid");
+        }
+        if (!originalQuestion.isInvalid() && shortAnswerQuestionDTO.invalid()) {
+            originalQuestion.setInvalid(Boolean.TRUE);
+            recalculationNecessary = true;
+        }
+        if (!originalQuestion.getSimilarityValue().equals(shortAnswerQuestionDTO.similarityValue())) {
+            recalculationNecessary = true;
+            originalQuestion.setSimilarityValue(shortAnswerQuestionDTO.similarityValue());
+        }
+        if (!originalQuestion.getMatchLetterCase().equals(shortAnswerQuestionDTO.matchLetterCase())) {
+            recalculationNecessary = true;
+            originalQuestion.setMatchLetterCase(shortAnswerQuestionDTO.matchLetterCase());
+        }
+
+        recalculationNecessary = applyShortAnswerSpotsFromDTOs(shortAnswerQuestionDTO.spots(), originalQuestion.getSpots()) || recalculationNecessary;
+        recalculationNecessary = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion.getSolutions()) || recalculationNecessary;
+        recalculationNecessary = applyShortAnswerMappingFromDTOs(shortAnswerQuestionDTO, originalQuestion) || recalculationNecessary;
 
         return recalculationNecessary;
     }
 
-    private static void applyQuizQuestionsFromDTO(QuizExerciseReEvaluateDTO reEvaluateDTO, QuizExercise originalQuizExercise) {
+    private static boolean applyQuizQuestionsFromDTOAndCheckIfChanged(QuizExerciseReEvaluateDTO reEvaluateDTO, QuizExercise originalQuizExercise) {
         // Need to create a new list to correctly handle removed questions and reordering
         List<QuizQuestion> newQuestions = new ArrayList<>();
         boolean questionsChanged = false;
         for (var questionDTO : reEvaluateDTO.quizQuestions()) {
             switch (questionDTO) {
                 case DragAndDropQuestionReEvaluateDTO dragAndDropQuestionReEvaluateDTO -> {
-                    // Get original question, else throw error
                     DragAndDropQuestion originalQuestion = (DragAndDropQuestion) originalQuizExercise.getQuizQuestions().stream()
                             .filter(q -> q.getId().equals(dragAndDropQuestionReEvaluateDTO.id())).findFirst()
                             .orElseThrow(() -> new BadRequestAlertException("The drag and drop question with id " + dragAndDropQuestionReEvaluateDTO.id() + " does not exist",
                                     ENTITY_NAME, "questionNotFound"));
                     questionsChanged = applyDragAndDropQuestionFromDTO(dragAndDropQuestionReEvaluateDTO, originalQuestion) || questionsChanged;
+                    newQuestions.add(originalQuestion);
                 }
                 case ShortAnswerQuestionReEvaluateDTO shortAnswerQuestionReEvaluateDTO -> {
+                    ShortAnswerQuestion originalQuestion = (ShortAnswerQuestion) originalQuizExercise.getQuizQuestions().stream()
+                            .filter(q -> q.getId().equals(shortAnswerQuestionReEvaluateDTO.id())).findFirst()
+                            .orElseThrow(() -> new BadRequestAlertException("The short answer question with id " + shortAnswerQuestionReEvaluateDTO.id() + " does not exist",
+                                    ENTITY_NAME, "questionNotFound"));
+                    questionsChanged = applyShortAnswerQuestionFromDTO(shortAnswerQuestionReEvaluateDTO, originalQuestion) || questionsChanged;
+                    newQuestions.add(originalQuestion);
                 }
                 case MultipleChoiceQuestionReEvaluateDTO multipleChoiceQuestionReEvaluateDTO -> {
+                    MultipleChoiceQuestion originalQuestion = (MultipleChoiceQuestion) originalQuizExercise.getQuizQuestions().stream()
+                            .filter(q -> q.getId().equals(multipleChoiceQuestionReEvaluateDTO.id())).findFirst()
+                            .orElseThrow(() -> new BadRequestAlertException("The multiple choice question with id " + multipleChoiceQuestionReEvaluateDTO.id() + " does not exist",
+                                    ENTITY_NAME, "questionNotFound"));
+                    questionsChanged = applyMultipleChoiceQuestionFromDTO(multipleChoiceQuestionReEvaluateDTO, originalQuestion) || questionsChanged;
+                    newQuestions.add(originalQuestion);
                 }
             }
         }
+        if (originalQuizExercise.getQuizQuestions().size() != newQuestions.size()) {
+            questionsChanged = true;
+        }
+        if (questionsChanged) {
+            originalQuizExercise.setQuizQuestions(newQuestions);
+        }
+        originalQuizExercise.setQuizQuestions(newQuestions);
+        return questionsChanged;
     }
 
     /**
@@ -358,6 +551,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     public QuizExercise reEvaluateWithDTO(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NotNull List<MultipartFile> files) {
         applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
+        boolean questionsChanged = applyQuizQuestionsFromDTOAndCheckIfChanged(quizExerciseDTO, originalQuizExercise);
+        return null;
     }
 
     /**
