@@ -6,10 +6,10 @@ sidebar_label: General Information
 
 import Callout from "../../src/components/callout/callout";
 import {CalloutVariant} from "../../src/components/callout/callout.types";
-import menuImg from './general/general-menu-exercise.png';
-import sidebarImg from './general/sidebar-collapse-exercise.png';
-import exerciseOverviewCurrentImg from './general/exercise-overview-current.png';
-import exerciseOverviewPastImg from './general/exercise-overview-past.png';
+import menuImg from './assets/general/general-menu-exercise.png';
+import sidebarImg from './assets/general/sidebar-collapse-exercise.png';
+import exerciseOverviewCurrentImg from './assets/general/exercise-overview-current.png';
+import exerciseOverviewPastImg from './assets/general/exercise-overview-past.png';
 
 # General Information
 
@@ -45,5 +45,5 @@ When sections (like *No Date*) contain more than 5 exercises, Artemis may group 
 | <img src={exerciseOverviewCurrentImg} width="250" alt="Exercise Overview Current" /> | <img src={exerciseOverviewPastImg} width="250" alt="Exercise Overview Past" /> |
 
 <Callout variant={CalloutVariant.info}>
-<p>Tip: Use the sidebar filters to quickly locate upcoming or overdue exercises.</p>
+    <p>Tip: Use the sidebar filters to quickly locate upcoming or overdue exercises.</p>
 </Callout>

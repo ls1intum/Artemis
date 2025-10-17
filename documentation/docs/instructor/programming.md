@@ -20,7 +20,7 @@ Conducting a programming exercise involves several steps shared between the **in
 7. **Student reviews results** and improves code if needed.
 8. **Instructor reviews overall results** to detect common issues.
 
-![Exercise Workflow](./programming/ExerciseWorkflow.png)
+![Exercise Workflow](./assets/programming/ExerciseWorkflow.png)
 
 ---
 
@@ -42,10 +42,10 @@ The online code editor includes dynamic instructions and visual feedback:
 - UML elements and task blocks automatically update their colors after submission.
 - Hidden files like `.gitignore` are not displayed.
 
-![Online Editor](./programming/CodeEditor.png)
+![Online Editor](./assets/programming/CodeEditor.png)
 
 <Callout variant={CalloutVariant.warning}>
-<p>Hidden configuration files (e.g., <code>.swiftlint.yml</code>) are not visible in the online editor. Access them in your IDE if needed.</p>
+    <p>Hidden configuration files (e.g., <code>.swiftlint.yml</code>) are not visible in the online editor. Access them in your IDE if needed.</p>
 </Callout>
 
 ---
@@ -54,7 +54,7 @@ The online code editor includes dynamic instructions and visual feedback:
 
 Instructors and tutors can assess programming submissions directly in the browser.
 
-![Manual Assessment](./programming/online-editor-assessment.png)
+![Manual Assessment](./assets/programming/online-editor-assessment.png)
 
 **Assessment features:**
 - File browser with highlights for changed files.
@@ -64,7 +64,7 @@ Instructors and tutors can assess programming submissions directly in the browse
 
 Feedback can be added inline or as general feedback at the bottom.
 
-![Feedback Example](./programming/online-editor-feedback.png)
+![Feedback Example](./assets/programming/online-editor-feedback.png)
 
 <Callout variant={CalloutVariant.success}>
 <p>You can save and reopen partial assessments before final submission. Once submitted, only instructors can edit them.</p>
