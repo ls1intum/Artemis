@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -314,14 +315,17 @@ public class LectureService {
      */
     public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent, Language language) {
         Set<LectureCalendarEventDTO> dtos = lectureRepository.getLectureCalendarEventDTOsForCourseId(courseId);
-        return dtos.stream().map(dto -> deriveCalendarEventDTO(dto, userIsStudent, language)).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
     }
 
     /**
-     * Derives an event for a given {@link LectureCalendarEventDTO} that represents either startDate if exclusively available, or endDate
-     * if exclusively available or both startDate and endDate if both are available.
+     * Derives calendar events from the given {@link LectureCalendarEventDTO}.
      * <p>
-     * The event is only derived given that either the lecture represented by a DTO is visible to students or the logged-in user is a course
+     * If only the start date or only the end date is available, a single event is created for that date.
+     * If both dates are available and the time span between them does not exceed 12 hours, a single event covering the entire period is created.
+     * Otherwise, two separate events are generated — one for the start date and one for the end date.
+     * <p>
+     * The events are only derived given that either the lecture represented by a DTO is visible to students or the logged-in user is a course
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
      *
      * @param dto           the dao from which to derive the event
@@ -329,25 +333,36 @@ public class LectureService {
      * @param language      the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
      * @return the derived event
      */
-    private Optional<CalendarEventDTO> deriveCalendarEventDTO(LectureCalendarEventDTO dto, boolean userIsStudent, Language language) {
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(LectureCalendarEventDTO dto, boolean userIsStudent, Language language) {
         if (userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate())) {
-            return Optional.empty();
+            return Set.of();
         }
-        String titlePrefix;
-        if (dto.startDate() == null && dto.endDate() != null) {
-            titlePrefix = switch (language) {
+        ZonedDateTime startDate = dto.startDate();
+        ZonedDateTime endDate = dto.endDate();
+        if (startDate == null && endDate != null) {
+            String titlePrefix = switch (language) {
                 case ENGLISH -> "End: ";
                 case GERMAN -> "Ende: ";
             };
-            return Optional
-                    .of(new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.endDate(), null, null, null));
+            return Set.of(new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.endDate(), null, null, null));
         }
-        if (dto.startDate() != null && dto.endDate() == null) {
-            titlePrefix = "Start: ";
-            return Optional
+        if (startDate != null && endDate == null) {
+            String titlePrefix = "Start: ";
+            return Set
                     .of(new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.startDate(), null, null, null));
         }
-        return Optional
-                .of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
+        if (Duration.between(startDate, endDate).abs().toHours() > 12) {
+            String startTitlePrefix = "Start: ";
+            CalendarEventDTO startDto = new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, startTitlePrefix + dto.title(),
+                    dto.startDate(), null, null, null);
+            String endTitlePrefix = switch (language) {
+                case ENGLISH -> "End: ";
+                case GERMAN -> "Ende: ";
+            };
+            CalendarEventDTO endDto = new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, endTitlePrefix + dto.title(), dto.endDate(), null,
+                    null, null);
+            return Set.of(startDto, endDto);
+        }
+        return Set.of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
     }
 }
