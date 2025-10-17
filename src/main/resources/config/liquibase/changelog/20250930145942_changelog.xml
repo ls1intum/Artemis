@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20250930145942" author="MoritzSpengler">
+        <createTable tableName="quiz_training_leaderboard">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="league" type="tinyint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="score" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="answered_correctly" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="answered_wrong" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="due_date" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="streak" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="show_in_leaderboard" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="quiz_training_leaderboard"
+                baseColumnNames="user_id"
+                referencedTableName="jhi_user"
+                referencedColumnNames="id"
+                constraintName="fk_quiz_training_leaderboard_user"
+                onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="quiz_training_leaderboard"
+                baseColumnNames="course_id"
+                referencedTableName="course"
+                referencedColumnNames="id"
+                constraintName="fk_quiz_training_leaderboard_course"
+                onDelete="CASCADE"/>
+
+        <addUniqueConstraint
+                tableName="quiz_training_leaderboard"
+                columnNames="user_id, course_id"
+                constraintName="uc_quiz_training_leaderboard_user_course"/>
+
+        <createIndex indexName="idx_quiz_training_league_course_show" tableName="quiz_training_leaderboard">
+            <column name="league"/>
+            <column name="course_id"/>
+            <column name="show_in_leaderboard"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

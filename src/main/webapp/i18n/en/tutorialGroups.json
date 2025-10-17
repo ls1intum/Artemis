@@ -11,15 +11,6 @@
             "online": "Online",
             "german": "German",
             "english": "English",
-            "weekdays": {
-                "monday": "Monday",
-                "tuesday": "Tuesday",
-                "wednesday": "Wednesday",
-                "thursday": "Thursday",
-                "friday": "Friday",
-                "saturday": "Saturday",
-                "sunday": "Sunday"
-            },
             "repetitions": {
                 "everyWeek": "Every week",
                 "everyNWeeks": "Every {{ n }} weeks"
@@ -52,7 +43,7 @@
                 "utilizationHelp": "Average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
                 "utilizationHelpDetail": "Average attendance divided by capacity",
                 "averageAttendance": "Average attendance: {{ averageAttendance }}",
-                "averageAttendanceDetail": "Average Attendance",
+                "averageAttendanceDetail": "Average number of attendees",
                 "averageAttendanceHelpDetail": "Average attendance in the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
                 "profilePicture": "Tutor Profile Picture",
                 "profilePictureAlt": "Profile picture of {{ user }}",
@@ -274,13 +265,52 @@
                 "title": "Edit Tutorial Group"
             },
             "tutorialGroupDetail": {
+                "cardTitles": {
+                    "tutorCardTitle": "Tutor",
+                    "generalInfoCardTitle": "General Information",
+                    "averageAttendanceCardTitle": "Attendance",
+                    "nextSessionCardTitle": "Next Session"
+                },
+                "language": "Language:",
+                "capacity": "Capacity:",
+                "mode": "Mode:",
+                "campus": "Campus:",
+                "status": "Status:",
+                "statusChipLabel": {
+                    "regular": "Regular",
+                    "cancelled": "Cancelled",
+                    "rescheduled": "Rescheduled",
+                    "relocated": "Relocated"
+                },
+                "date": "Date:",
+                "time": "Time:",
+                "location": "Location:",
                 "title": "Tutorial Group Detail",
                 "teachingAssistantNotSet": "Tutor not set",
                 "capacityNotSet": "Capacity not set",
                 "campusNotSet": "Campus not set",
                 "additionalInformationNotSet": "No additional Information set",
                 "scheduleNotSet": "No schedule set",
-                "sessionsNotFound": "No sessions found"
+                "sessionsNotFound": "No sessions found",
+                "sessionsListTitle": "Sessions",
+                "sessionListOptionLabel": {
+                    "allSessions": "All",
+                    "futureSessions": "Future"
+                },
+                "tutorChatLinkLabel": "Tutor Chat",
+                "groupChannelLinkLabel": "Group Channel",
+                "sessionTableColumnTitle": {
+                    "date": "Date",
+                    "time": "Time",
+                    "location": "Location",
+                    "attendance": "Attendance",
+                    "status": "Status"
+                },
+                "disclaimerText": {
+                    "noAttendanceDataAvailable": "No data available",
+                    "noUpcomingSession": "No upcoming session"
+                },
+                "createOneToOneChatError": "Error while creating tutor chat. Please try again."
             },
             "tutorialFreePeriodsManagement": {
                 "explanation": "Define course wide days on which no tutorial groups should take place. This can be used to define holidays or other days on which no tutorial groups should take place.",

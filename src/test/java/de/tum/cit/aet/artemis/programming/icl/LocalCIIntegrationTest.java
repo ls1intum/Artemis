@@ -145,7 +145,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @AfterAll
     void cleanupAll() {
-        gitService.init();
         buildJobRepository.deleteAll();
     }
 

@@ -4,7 +4,7 @@
             <jhi-calendar-day-badge [date]="day.date" [minimalTodayIndication]="true" [isSelectedDay]="day.isSelected" />
         }
     </div>
-    <div class="scroll-container" #scrollContainer [class.no-scroll]="isEventSelected()">
-        <jhi-calendar-events-per-day-section [dates]="[date()]" (isEventSelected)="isEventSelected.set($event)" />
+    <div class="scroll-container" #scrollContainer>
+        <jhi-calendar-events-per-day-section [dates]="[date()]" />
     </div>
 </div>

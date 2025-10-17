@@ -7,7 +7,7 @@ from utils import login_as_admin, get_user_details_by_index, add_user_to_course,
 
 # Load configuration
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(['../config.ini', 'config.ini'])
 
 # Constants from config file
 COURSE_ID: str = config.get('CourseSettings', 'course_id')

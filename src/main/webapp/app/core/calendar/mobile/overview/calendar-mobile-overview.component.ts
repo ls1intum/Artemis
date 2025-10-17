@@ -5,10 +5,14 @@ import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobi
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { CalendarEventFilterComponent } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
+import { faArrowUpFromBracket, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarOverviewComponent } from 'app/core/calendar/shared/calendar-overview/calendar-overview-component.directive';
+import { PopoverModule } from 'primeng/popover';
+import { CheckboxModule } from 'primeng/checkbox';
+import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-calendar-mobile-overview',
@@ -17,19 +21,36 @@ import { CalendarOverviewComponent } from 'app/core/calendar/shared/calendar-ove
         CalendarMobileDayPresentationComponent,
         TranslateDirective,
         FaIconComponent,
-        CalendarEventFilterComponent,
         CalendarSubscriptionPopoverComponent,
+        PopoverModule,
+        CheckboxModule,
+        FormsModule,
+        ButtonModule,
     ],
     templateUrl: './calendar-mobile-overview.component.html',
     styleUrl: './calendar-mobile-overview.component.scss',
 })
 export class CalendarMobileOverviewComponent extends CalendarOverviewComponent {
-    readonly faXmark = faXmark;
+    readonly faArrowUpFromBracket = faArrowUpFromBracket;
+    readonly faFilter = faFilter;
+    readonly CalendarEventFilterOption = CalendarEventFilterOption;
 
     firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     selectedDate = signal<Dayjs | undefined>(undefined);
     weekdayNameKeys = utils.getWeekDayNameKeys();
     monthDescription = computed<string>(() => this.firstDateOfCurrentMonth().locale(this.locale()).format('MMMM YYYY'));
+    lectureFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.LectureEvents));
+    exerciseFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.ExerciseEvents));
+    tutorialFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.TutorialEvents));
+    examFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.ExamEvents));
+
+    toggleFilterOption(option: CalendarEventFilterOption) {
+        if (this.calendarService.includedEventFilterOptions().includes(option)) {
+            this.calendarService.includedEventFilterOptions.update((oldOptions) => oldOptions.filter((otherOption) => otherOption !== option));
+        } else {
+            this.calendarService.includedEventFilterOptions.update((oldOptions) => [...oldOptions, option]);
+        }
+    }
 
     selectDate(date: Dayjs): void {
         this.selectedDate.set(date);

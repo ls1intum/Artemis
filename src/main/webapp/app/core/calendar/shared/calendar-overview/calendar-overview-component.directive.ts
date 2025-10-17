@@ -6,20 +6,19 @@ import { TranslateService } from '@ngx-translate/core';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { ActivatedRoute } from '@angular/router';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
+import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 @Directive()
 export abstract class CalendarOverviewComponent implements OnInit {
-    private calendarService = inject(CalendarService);
-    private translateService = inject(TranslateService);
     private activatedRoute = inject(ActivatedRoute);
 
-    protected readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
+    protected calendarService = inject(CalendarService);
+    protected translateService = inject(TranslateService);
+    protected locale = getCurrentLocaleSignal(this.translateService);
+
+    readonly faXmark = faXmark;
     protected readonly faChevronRight = faChevronRight;
     protected readonly faChevronLeft = faChevronLeft;
-
-    protected locale = getCurrentLocaleSignal(this.translateService);
 
     abstract firstDateOfCurrentMonth: Signal<Dayjs>;
     abstract monthDescription: Signal<string>;

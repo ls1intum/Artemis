@@ -10,7 +10,7 @@
             </div>
         }
     </div>
-    <div class="scroll-container" #scrollContainer [class.no-scroll]="isEventSelected()">
-        <jhi-calendar-events-per-day-section [dates]="dates()" (isEventSelected)="isEventSelected.set($event)" />
+    <div class="scroll-container" #scrollContainer>
+        <jhi-calendar-events-per-day-section [dates]="dates()" />
     </div>
 </div>

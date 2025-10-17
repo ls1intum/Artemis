@@ -15,6 +15,22 @@
             "copied": "Copied",
             "new": "New"
         },
+        "weekdays": {
+            "monday": "Monday",
+            "tuesday": "Tuesday",
+            "wednesday": "Wednesday",
+            "thursday": "Thursday",
+            "friday": "Friday",
+            "saturday": "Saturday",
+            "sunday": "Sunday",
+            "mondayShort": "Mon",
+            "tuesdayShort": "Tue",
+            "wednesdayShort": "Wed",
+            "thursdayShort": "Thu",
+            "fridayShort": "Fri",
+            "saturdayShort": "Sat",
+            "sundayShort": "Sun"
+        },
         "importTable": {
             "searchPlaceholder": "Search"
         },

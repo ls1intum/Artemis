@@ -154,13 +154,24 @@
                 }
             </div>
             <jhi-programming-exercise-editable-instructions
-                editorSidebar
+                editorCenter
                 [(exercise)]="exercise"
                 [(participation)]="selectedParticipation!"
                 [templateParticipation]="exercise.templateParticipation!"
                 [initialEditorHeight]="'external'"
                 [enableResize]="false"
                 class="instructions-wrapper__content card-body p-0"
+                (instructionChange)="onInstructionChanged($event)"
+            />
+            <!-- Preview-only component for right sidebar -->
+            <jhi-programming-exercise-instructions
+                editorSidebar
+                id="previewMonaco"
+                class="editable-instruction-container__instructions"
+                [exercise]="exercise"
+                [participation]="selectedParticipation!"
+                [personalParticipation]="false"
+                [generateHtmlEvents]="previewEvents$"
             />
         </jhi-code-editor-container>
     </div>

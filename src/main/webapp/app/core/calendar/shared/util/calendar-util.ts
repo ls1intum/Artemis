@@ -24,13 +24,13 @@ export function getIconForEvent(event: CalendarEvent): IconProp {
 
 export function getWeekDayNameKeys(): string[] {
     return [
-        'artemisApp.calendar.mondayShort',
-        'artemisApp.calendar.tuesdayShort',
-        'artemisApp.calendar.wednesdayShort',
-        'artemisApp.calendar.thursdayShort',
-        'artemisApp.calendar.fridayShort',
-        'artemisApp.calendar.saturdayShort',
-        'artemisApp.calendar.sundayShort',
+        'global.weekdays.mondayShort',
+        'global.weekdays.tuesdayShort',
+        'global.weekdays.wednesdayShort',
+        'global.weekdays.thursdayShort',
+        'global.weekdays.fridayShort',
+        'global.weekdays.saturdayShort',
+        'global.weekdays.sundayShort',
     ];
 }
 

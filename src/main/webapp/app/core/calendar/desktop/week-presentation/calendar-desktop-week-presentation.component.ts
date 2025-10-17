@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, computed, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, computed, input, viewChild } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
@@ -19,7 +19,6 @@ export class CalendarDesktopWeekPresentationComponent implements AfterViewInit {
         CalendarDesktopWeekPresentationComponent.INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT * CalendarEventsPerDaySectionComponent.HOUR_HEIGHT_IN_PIXEL;
 
     firstDayOfCurrentWeek = input.required<Dayjs>();
-    isEventSelected = signal<boolean>(false);
     scrollContainer = viewChild<ElementRef>('scrollContainer');
     weekdays = computed<Day[]>(() => this.computeWeekDaysFrom(this.firstDayOfCurrentWeek()));
     dates = computed<Dayjs[]>(() => this.weekdays().map((day) => day.date));

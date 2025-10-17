@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, computed, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, computed, input, viewChild } from '@angular/core';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { Dayjs } from 'dayjs/esm';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
@@ -18,7 +18,6 @@ export class CalendarMobileDayPresentationComponent implements AfterViewInit {
     private scrollContainer = viewChild<ElementRef>('scrollContainer');
 
     date = input.required<Dayjs>();
-    isEventSelected = signal<boolean>(false);
     weekdays = computed<Day[]>(() => this.computeWeekdaysFor(this.date()));
 
     ngAfterViewInit(): void {
