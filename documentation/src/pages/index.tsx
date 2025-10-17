@@ -20,8 +20,29 @@ function HomepageHeader() {
                 <div className={styles.buttons}>
                     <Link
                         className="button button--secondary button--lg"
-                        to="/student/general">
-                        To the documentation →
+                        to="/student/intro">
+                        Student Guide
+                    </Link>
+                </div>
+                <div className={styles.buttons}>
+                    <Link
+                        className="button button--secondary button--lg"
+                        to="/instructor/intro">
+                        Instructor Guide
+                    </Link>
+                </div>
+                <div className={styles.buttons}>
+                    <Link
+                        className="button button--secondary button--lg"
+                        to="/staff/intro">
+                        Staff Documentation
+                    </Link>
+                </div>
+                <div className={styles.buttons}>
+                    <Link
+                        className="button button--secondary button--lg"
+                        to="/admin/intro">
+                        Admin Documentation
                     </Link>
                 </div>
             </div>
