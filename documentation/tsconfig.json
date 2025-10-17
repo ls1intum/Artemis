@@ -4,5 +4,6 @@
   "compilerOptions": {
     "baseUrl": "/Artemis/"
   },
-  "exclude": [".docusaurus", "build"]
+  "exclude": [
+    ".docusaurus", "build"]
 }

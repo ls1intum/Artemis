@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docs/**'
+      - 'documentation/**'
   workflow_dispatch:
 
 permissions:
@@ -27,17 +27,17 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        working-directory: docs
+        working-directory: documentation
         run: npm install
 
       - name: Build Docusaurus site
-        working-directory: docs
+        working-directory: documentation
         run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: docs/build
+          path: documentation/build
 
   deploy:
     needs: build
