@@ -16,4 +16,4 @@ Here, you’ll learn how to:
 - Submit your work and review automated feedback
 - Track your scores and progress in your courses
 
-If you’re new to Artemis, start with the **[General Information](./general.md)** page to understand how exercises are organized.
+If you’re new to Artemis, start with the **[General Information](./general.mdx)** page to understand how exercises are organized.

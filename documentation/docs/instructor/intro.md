@@ -16,4 +16,4 @@ As an instructor, you can:
 - Provide manual feedback and grading
 - Integrate CI/CD pipelines for programming exercises
 
-Start with the **[Programming Exercises](./programming.md)** guide to learn how to create and configure automated programming tasks for your students.
+Start with the **[Programming Exercises](./programming.mdx)** guide to learn how to create and configure automated programming tasks for your students.

@@ -16,4 +16,4 @@ You’ll find information on:
 - Database and build configuration
 - Integration with version control and CI/CD systems
 
-Start with the **[Setup Guide](./setup.md)** to install and run Artemis on your local machine.
+Start with the **[Setup Guide](./setup.mdx)** to install and run Artemis on your local machine.

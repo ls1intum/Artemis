@@ -16,4 +16,4 @@ This documentation covers:
 - Managing SSH access and network routing
 - Monitoring, scaling, and integrating external services
 
-Begin with the **[Security Configuration](./security.md)** section to ensure your deployment follows secure setup practices.
+Begin with the **[Security Configuration](./security.mdx)** section to ensure your deployment follows secure setup practices.
