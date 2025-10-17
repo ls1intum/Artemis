@@ -9,7 +9,7 @@ import {CalloutVariant} from "../../src/components/callout/callout.types";
 
 # Security
 
-Artemis uses configuration files that contain **default passwords and secrets**.  
+Artemis uses configuration files that contain **default passwords and secrets**.
 These **must** be overridden in your own configuration or via environment variables.
 
 ```yaml
@@ -30,8 +30,8 @@ jhipster:
         password: "change-me"
    ```
 
-<Callout variant={CalloutVariant.danger}>
-    <p>⚠️ Always replace default credentials before deploying. Failing to do so exposes your system to serious security risks.</p>
+<Callout variant={CalloutVariant.warning}>
+    Always replace default credentials before deploying. Failing to do so exposes your system to serious security risks.
 </Callout>
 
 ## SSH Access
@@ -78,6 +78,5 @@ sudo systemctl restart nginx
 ```
 
 <Callout variant={CalloutVariant.info}>
-    <p>Ensure all nodes use the same SSH key set and restrict access to configuration files for system users only.</p>
+    Ensure all nodes use the same SSH key set and restrict access to configuration files for system users only.
 </Callout>
-```
