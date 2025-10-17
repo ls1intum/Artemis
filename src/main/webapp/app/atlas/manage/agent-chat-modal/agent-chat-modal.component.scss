@@ -100,7 +100,7 @@
                 text-align: left;
 
                 .message-content {
-                    background-color: var(--iris-client-chat-background);
+                    background-color: var(--link-item-bg);
                     color: var(--bs-body-color);
                     margin-right: 20%;
                     border-radius: var(--bs-border-radius-xl) var(--bs-border-radius-xl) var(--bs-border-radius-xl) var(--bs-border-radius-sm);
@@ -153,7 +153,7 @@
                 resize: none;
                 min-height: 38px;
                 max-height: 120px;
-                border-radius: var(--bs-border-radius-pill);
+                border-radius: var(--bs-border-radius);
                 padding: 8px 16px;
                 border: 1px solid var(--bs-border-color);
                 background-color: var(--bs-body-bg);
