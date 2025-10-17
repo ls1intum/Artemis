@@ -63,11 +63,12 @@ public class ExamRoomDistributionService {
      * @param examRoomIds The ids of the rooms to distribute to
      * @implNote Currently only the "default" layout strategy is used.
      */
-    public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds) {
+    public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds, double reserveFactor) {
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 
-        final int numberOfUsableSeats = examRoomsForExam.stream().mapToInt(examRoom -> examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity()).sum();
+        final int numberOfUsableSeats = examRoomsForExam.stream()
+                .mapToInt(examRoom -> (int) (examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity() * (1 - reserveFactor))).sum();
         final int numberOfExamUsers = exam.getExamUsers().size();
 
         if (numberOfUsableSeats < numberOfExamUsers) {
