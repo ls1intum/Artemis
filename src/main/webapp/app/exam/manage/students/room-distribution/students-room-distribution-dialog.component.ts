@@ -1,8 +1,8 @@
-import { Component, OnDestroy, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Observable, Subject, debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -20,7 +20,7 @@ import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distributi
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, TranslateDirective, FaIconComponent, NgClass, NgbTypeaheadModule, ArtemisTranslatePipe],
 })
-export class StudentsRoomDistributionDialogComponent implements OnDestroy {
+export class StudentsRoomDistributionDialogComponent {
     private activeModal = inject(NgbActiveModal);
     private translateService: TranslateService = inject(TranslateService);
     private alertService = inject(AlertService);
@@ -35,9 +35,6 @@ export class StudentsRoomDistributionDialogComponent implements OnDestroy {
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
 
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
-
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
     faBan = faBan;
@@ -58,10 +55,6 @@ export class StudentsRoomDistributionDialogComponent implements OnDestroy {
             },
         });
     });
-
-    ngOnDestroy(): void {
-        this.dialogErrorSource.unsubscribe();
-    }
 
     clear() {
         this.activeModal.dismiss('cancel');

@@ -3,7 +3,7 @@
         <h4 class="modal-title">
             <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
         </h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+        <button id="close-cross" type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
         <div class="form-group">
@@ -52,10 +52,10 @@
         </div>
     }
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary cancel me-2" data-dismiss="modal" (click)="clear()">
+        <button id="cancel-button" type="button" class="btn btn-secondary cancel me-2" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button class="btn btn-success" id="finish-button" (click)="onFinish()">
+        <button class="btn btn-success" id="finish-button" (click)="onFinish()" [hidden]="!hasSelectedRooms()">
             <fa-icon [icon]="faCheck" class="me-2" />
             <span jhiTranslate="entity.action.finish"></span>
         </button>
