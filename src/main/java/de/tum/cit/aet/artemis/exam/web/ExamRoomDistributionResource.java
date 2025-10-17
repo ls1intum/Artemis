@@ -55,19 +55,25 @@ public class ExamRoomDistributionResource {
      * POST /courses/{courseId}/exams/{examId}/distribute-registered-students : Distribute all students registered to
      * an exam across a selection of rooms.
      * <p>
+     * If {@code useOnlyDefaultLayouts} is {@code false}, the rooms are picked dynamically if the default capacity of
+     * all rooms combined doesn't suffice. If the default capacity doesn't suffice and this is {@code true}, then an
+     * error is thrown.
+     * <p>
      * Leaving a certain amount of seats unassigned is usually recommended, as it allows students who accidentally went
      * to the wrong room to still have a seat and participate in the exam.
      *
-     * @param courseId      the id of the course
-     * @param examId        the id of the exam
-     * @param reserveFactor how much percent of seats should remain unassigned
-     * @param examRoomIds   the ids of all the exam rooms we want to distribute the students to
+     * @param courseId              the id of the course
+     * @param examId                the id of the exam
+     * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
+     * @param reserveFactor         how much percent of seats should remain unassigned
+     * @param examRoomIds           the ids of all the exam rooms we want to distribute the students to
+     *
      * @return 200 (OK) if the distribution was successful
      */
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId, @RequestParam(defaultValue = "0.0") double reserveFactor,
-            @RequestBody Set<Long> examRoomIds) {
+    public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId,
+            @RequestParam(defaultValue = "false") boolean useOnlyDefaultLayouts, @RequestParam(defaultValue = "0.0") double reserveFactor, @RequestBody Set<Long> examRoomIds) {
         log.debug("REST request to distribute students across rooms for exam : {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
@@ -79,7 +85,7 @@ public class ExamRoomDistributionResource {
             throw new BadRequestAlertException("You have invalid room IDs", ENTITY_NAME, "invalidRoomIDs");
         }
 
-        examRoomDistributionService.distributeRegisteredStudents(examId, examRoomIds, reserveFactor);
+        examRoomDistributionService.distributeRegisteredStudents(examId, examRoomIds, useOnlyDefaultLayouts, reserveFactor);
 
         return ResponseEntity.ok().build();
     }
