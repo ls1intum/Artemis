@@ -615,7 +615,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return null;
         }
 
-        // TODO: this operation is only necessary if the repo was not newly cloned
         gitService.resetToOriginHead(repository);
 
         if (repositoryExportOptions.filterLateSubmissions()) {
