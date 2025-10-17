@@ -1,11 +1,11 @@
-package de.tum.cit.aet.artemis.lecture.dto;
+package de.tum.cit.aet.artemis.lecture.domain;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * Enum representing the possible status values returned by the Nebula transcription service.
  */
-public enum NebulaTranscriptionStatusDTO {
+public enum NebulaTranscriptionStatus {
 
     /**
      * The transcription job is still being processed.
@@ -34,7 +34,7 @@ public enum NebulaTranscriptionStatusDTO {
 
     private final String value;
 
-    NebulaTranscriptionStatusDTO(String value) {
+    NebulaTranscriptionStatus(String value) {
         this.value = value;
     }
 
@@ -55,8 +55,8 @@ public enum NebulaTranscriptionStatusDTO {
      * @return the corresponding enum constant
      * @throws IllegalArgumentException if the value doesn't match any enum constant
      */
-    public static NebulaTranscriptionStatusDTO fromValue(String value) {
-        for (NebulaTranscriptionStatusDTO status : values()) {
+    public static NebulaTranscriptionStatus fromValue(String value) {
+        for (NebulaTranscriptionStatus status : values()) {
             if (status.value.equals(value)) {
                 return status;
             }

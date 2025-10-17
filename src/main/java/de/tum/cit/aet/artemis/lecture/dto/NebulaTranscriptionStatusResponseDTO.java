@@ -7,13 +7,14 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
+import de.tum.cit.aet.artemis.lecture.domain.NebulaTranscriptionStatus;
 
 /**
  * DTO for the response from Nebula's transcription status endpoint.
  * Contains the current status of a transcription job and the result data when completed.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NebulaTranscriptionStatusResponseDTO(@NotNull NebulaTranscriptionStatusDTO status, String error, String language, List<LectureTranscriptionSegment> segments) {
+public record NebulaTranscriptionStatusResponseDTO(@NotNull NebulaTranscriptionStatus status, String error, String language, List<LectureTranscriptionSegment> segments) {
 
     /**
      * Converts this status response to a LectureTranscriptionDTO when the transcription is completed.
