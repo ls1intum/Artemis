@@ -588,96 +588,189 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return null;
         }
 
-        try {
-            var tempRepositoryPath = fileService.getTemporaryUniquePathWithoutPathCreation(workingDir, 5);
-            // Checkout the repository
-            Repository repository = gitService.getOrCheckoutRepository(participation, tempRepositoryPath, false);
-            if (repository == null) {
-                log.warn("Cannot checkout repository for participation id: {}", participation.getId());
-                return null;
+        var tempRepositoryPath = fileService.getTemporaryUniquePathWithoutPathCreation(workingDir, 5);
+        // Checkout the repository with retries
+        Repository repository = null;
+        Exception lastCheckoutEx = null;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                repository = gitService.getOrCheckoutRepository(participation, tempRepositoryPath, false);
+                if (repository != null) {
+                    break;
+                }
             }
-
-            // TODO: this operation is only necessary if the repo was not newly cloned
-            gitService.resetToOriginHead(repository);
-
-            if (repositoryExportOptions.filterLateSubmissions()) {
-                filterLateSubmissions(repositoryExportOptions, participation, repository);
-            }
-
-            if (repositoryExportOptions.addParticipantName()) {
-                log.debug("Adding student or team name to participation {}", participation);
-                addParticipantIdentifierToProjectName(repository, programmingExercise, participation);
-            }
-
-            if (repositoryExportOptions.combineStudentCommits()) {
-                log.debug("Combining commits for participation {}", participation);
-                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.anonymizeRepository());
-            }
-
-            if (repositoryExportOptions.anonymizeRepository()) {
-                log.debug("Anonymizing commits for participation {}", participation);
+            catch (Exception ex) {
+                lastCheckoutEx = ex;
+                log.warn("Checkout attempt {}/3 failed for participation {}: {}", attempt, participation.getId(), ex.getMessage());
                 try {
-                    gitService.anonymizeStudentCommits(repository, programmingExercise);
+                    Thread.sleep(200L * attempt);
                 }
-                catch (GitException ex) {
-                    // Fallback: create a single anonymized snapshot commit by reinitializing the repository
-                    log.warn("Anonymization failed for participation {}. Falling back to orphan anonymized snapshot: {}", participation.getId(), ex.getMessage());
-                    try {
-                        repository.close();
-                        var gitDir = tempRepositoryPath.resolve(".git");
-                        org.apache.commons.io.FileUtils.deleteDirectory(gitDir.toFile());
-                        try (org.eclipse.jgit.api.Git git = org.eclipse.jgit.api.Git.init().setDirectory(tempRepositoryPath.toFile()).call()) {
-                            git.add().addFilepattern(".").call();
-                            var fake = new org.eclipse.jgit.lib.PersonIdent("student", "", java.time.Instant.now(), java.time.ZoneId.systemDefault());
-                            GitService.commit(git).setAuthor(fake).setCommitter(fake).setMessage("All student changes in one commit").call();
-                            var logsPath = git.getRepository().getDirectory().toPath().resolve("logs");
-                            org.apache.commons.io.FileUtils.deleteQuietly(logsPath.toFile());
-                            var cfg = git.getRepository().getConfig();
-                            for (String remote : cfg.getSubsections("remote")) {
-                                cfg.unsetSection("remote", remote);
-                            }
-                            for (String branch : cfg.getSubsections("branch")) {
-                                cfg.unsetSection("branch", branch);
-                            }
-                            cfg.unset("user", null, "name");
-                            cfg.unset("user", null, "email");
-                            cfg.save();
-                        }
-                        repository = gitService.getOrCheckoutRepository(participation, tempRepositoryPath, false);
-                        if (repository == null) {
-                            log.error("Fallback anonymized snapshot succeeded but reopening repository failed for participation {}", participation.getId());
-                            return null;
-                        }
-                    }
-                    catch (Exception fallbackEx) {
-                        log.error("Fallback anonymized snapshot failed for participation {}: {}", participation.getId(), fallbackEx.getMessage(), fallbackEx);
-                        return null;
-                    }
+                catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
                 }
             }
-            else {
-                gitService.removeRemotesFromRepository(repository);
-            }
-
-            if (repositoryExportOptions.normalizeCodeStyle()) {
-                try {
-                    log.debug("Normalizing code style for participation {}", participation);
-                    FileUtil.normalizeLineEndingsDirectory(repository.getLocalPath());
-                    FileUtil.convertFilesInDirectoryToUtf8(repository.getLocalPath());
-                }
-                catch (IOException ex) {
-                    log.warn("Cannot normalize code style in the repository {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
-                }
-            }
-
-            log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
-            return gitRepositoryExportService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository(), zipOutput);
         }
-        catch (GitAPIException ex) {
-            log.error("Failed to prepare repository for participation id {} in exercise id {}: {}", participation.getId(), participation.getProgrammingExercise().getId(),
-                    ex.getMessage(), ex);
+        if (repository == null) {
+            log.warn("Cannot checkout repository for participation id: {}{}", participation.getId(), lastCheckoutEx != null ? ": " + lastCheckoutEx.getMessage() : "");
             return null;
         }
+
+        // TODO: this operation is only necessary if the repo was not newly cloned
+        gitService.resetToOriginHead(repository);
+
+        if (repositoryExportOptions.filterLateSubmissions()) {
+            filterLateSubmissions(repositoryExportOptions, participation, repository);
+        }
+
+        if (repositoryExportOptions.addParticipantName()) {
+            log.debug("Adding student or team name to participation {}", participation);
+            addParticipantIdentifierToProjectName(repository, programmingExercise, participation);
+        }
+
+        if (repositoryExportOptions.combineStudentCommits()) {
+            log.debug("Combining commits for participation {}", participation);
+            gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.anonymizeRepository());
+        }
+
+        if (repositoryExportOptions.anonymizeRepository()) {
+            log.debug("Anonymizing commits for participation {}", participation);
+            // Try anonymization up to 2 times before fallback
+            GitException anonymizeEx = null;
+            for (int attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    gitService.anonymizeStudentCommits(repository, programmingExercise);
+                    anonymizeEx = null;
+                    break;
+                }
+                catch (GitException ex) {
+                    anonymizeEx = ex;
+                    log.warn("Anonymization attempt {}/2 failed for participation {}: {}", attempt, participation.getId(), ex.getMessage());
+                    try {
+                        Thread.sleep(150L * attempt);
+                    }
+                    catch (InterruptedException ignored) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+            if (anonymizeEx != null) {
+                // Fallback: create a single anonymized snapshot commit by reinitializing the repository
+                log.warn("Anonymization failed for participation {}. Falling back to orphan anonymized snapshot: {}", participation.getId(), anonymizeEx.getMessage());
+                try {
+                    repository.close();
+                    var gitDir = tempRepositoryPath.resolve(".git");
+                    boolean deleted = false;
+                    for (int attempt = 1; attempt <= 3; attempt++) {
+                        try {
+                            FileUtils.deleteDirectory(gitDir.toFile());
+                        }
+                        catch (IOException ioe) {
+                            log.warn("Deleting .git attempt {}/3 failed for participation {}: {}", attempt, participation.getId(), ioe.getMessage());
+                        }
+                        if (!Files.exists(gitDir)) {
+                            deleted = true;
+                            break;
+                        }
+                        try {
+                            Thread.sleep(100L * attempt);
+                        }
+                        catch (InterruptedException ignored) {
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                    if (!deleted) {
+                        log.error("Could not delete .git for participation {} after retries", participation.getId());
+                        return null;
+                    }
+
+                    try (org.eclipse.jgit.api.Git git = org.eclipse.jgit.api.Git.init().setDirectory(tempRepositoryPath.toFile()).call()) {
+                        git.add().addFilepattern(".").call();
+                        var fake = new org.eclipse.jgit.lib.PersonIdent("student", "", java.time.Instant.now(), java.time.ZoneId.systemDefault());
+                        GitService.commit(git).setAuthor(fake).setCommitter(fake).setMessage("All student changes in one commit").call();
+                        var logsPath = git.getRepository().getDirectory().toPath().resolve("logs");
+                        FileUtils.deleteQuietly(logsPath.toFile());
+                        var cfg = git.getRepository().getConfig();
+                        for (String remote : cfg.getSubsections("remote")) {
+                            cfg.unsetSection("remote", remote);
+                        }
+                        for (String branch : cfg.getSubsections("branch")) {
+                            cfg.unsetSection("branch", branch);
+                        }
+                        cfg.unset("user", null, "name");
+                        cfg.unset("user", null, "email");
+                        cfg.save();
+                    }
+                    // Reopen repository with retries
+                    Repository reopened = null;
+                    Exception lastOpenEx = null;
+                    for (int attempt = 1; attempt <= 3; attempt++) {
+                        try {
+                            reopened = gitService.getOrCheckoutRepository(participation, tempRepositoryPath, false);
+                            if (reopened != null) {
+                                break;
+                            }
+                        }
+                        catch (Exception ex) {
+                            lastOpenEx = ex;
+                            log.warn("Reopen repo attempt {}/3 failed for participation {}: {}", attempt, participation.getId(), ex.getMessage());
+                            try {
+                                Thread.sleep(100L * attempt);
+                            }
+                            catch (InterruptedException ignored) {
+                                Thread.currentThread().interrupt();
+                            }
+                        }
+                    }
+                    if (reopened == null) {
+                        log.error("Fallback anonymized snapshot succeeded but reopening repository failed for participation {}{}", participation.getId(),
+                                lastOpenEx != null ? ": " + lastOpenEx.getMessage() : "");
+                        return null;
+                    }
+                    repository = reopened;
+                }
+                catch (Exception fallbackEx) {
+                    log.error("Fallback anonymized snapshot failed for participation {}: {}", participation.getId(), fallbackEx.getMessage(), fallbackEx);
+                    return null;
+                }
+            }
+        }
+        else {
+            gitService.removeRemotesFromRepository(repository);
+        }
+
+        if (repositoryExportOptions.normalizeCodeStyle()) {
+            try {
+                log.debug("Normalizing code style for participation {}", participation);
+                FileUtil.normalizeLineEndingsDirectory(repository.getLocalPath());
+                FileUtil.convertFilesInDirectoryToUtf8(repository.getLocalPath());
+            }
+            catch (IOException ex) {
+                log.warn("Cannot normalize code style in the repository {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+            }
+        }
+
+        log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
+        // Retry zipping/copying output in case of transient IO
+        IOException lastZipEx = null;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                return gitRepositoryExportService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository(), zipOutput);
+            }
+            catch (IOException ioEx) {
+                lastZipEx = ioEx;
+                log.warn("Packaging attempt {}/3 failed for participation {}: {}", attempt, participation.getId(), ioEx.getMessage());
+                try {
+                    Thread.sleep(150L * attempt);
+                }
+                catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+        if (lastZipEx != null) {
+            throw lastZipEx;
+        }
+        return null;
     }
 
     /**
