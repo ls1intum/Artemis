@@ -18,8 +18,8 @@ export class KnowledgeAreaTreeComponent {
     dataSource = input(new MatTreeNestedDataSource<KnowledgeAreaForTree>());
     treeControl = input(new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children));
 
-    readonly knowledgeAreaTemplate = contentChild(TemplateRef<{ knowledgeArea: KnowledgeAreaForTree }>);
-    readonly competencyTemplate = contentChild(TemplateRef<{ competency: StandardizedCompetencyForTree; knowledgeArea: KnowledgeAreaForTree }>);
+    readonly knowledgeAreaTemplate = contentChild<TemplateRef<{ knowledgeArea: KnowledgeAreaForTree }>>('knowledgeAreaTemplate');
+    readonly competencyTemplate = contentChild<TemplateRef<{ competency: StandardizedCompetencyForTree; knowledgeArea: KnowledgeAreaForTree }>>('competencyTemplate');
 
     //Icons
     protected readonly faChevronRight = faChevronRight;
