@@ -4,8 +4,8 @@ title: General Information
 sidebar_label: General Information
 ---
 
-import Callout from "../src/components/callout/callout";
-import {CalloutVariant} from "../src/components/callout/callout.types";
+import Callout from "../../src/components/callout/callout";
+import {CalloutVariant} from "../../src/components/callout/callout.types";
 import menuImg from './general/general-menu-exercise.png';
 import sidebarImg from './general/sidebar-collapse-exercise.png';
 import exerciseOverviewCurrentImg from './general/exercise-overview-current.png';

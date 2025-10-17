@@ -4,8 +4,8 @@ title: Programming Exercise
 sidebar_label: Programming Exercise
 ---
 
-import Callout from "../src/components/callout/callout";
-import {CalloutVariant} from "../src/components/callout/callout.types";
+import Callout from "../../src/components/callout/callout";
+import {CalloutVariant} from "../../src/components/callout/callout.types";
 
 # Programming Exercise
 

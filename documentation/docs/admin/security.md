@@ -4,8 +4,8 @@ title: Security Configuration
 sidebar_label: Security
 ---
 
-import Callout from "../src/components/callout/callout";
-import {CalloutVariant} from "../src/components/callout/callout.types";
+import Callout from "../../src/components/callout/callout";
+import {CalloutVariant} from "../../src/components/callout/callout.types";
 
 # Security
 
