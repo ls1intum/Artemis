@@ -1,8 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { QuizTrainingSettingsService } from 'app/core/user/settings/quiz-training-settings/quiz-training-settings-service';
 import { LeaderboardSettingsDTO } from 'app/core/user/settings/quiz-training-settings/leaderboard-settings-dto';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -11,8 +9,7 @@ import { onError } from 'app/shared/util/global.utils';
 @Component({
     selector: 'jhi-quiz-training-settings',
     templateUrl: './quiz-training-settings.component.html',
-    standalone: true,
-    imports: [TranslateDirective, FormsModule, NgbTooltipModule, FontAwesomeModule],
+    imports: [TranslateDirective, FormsModule],
 })
 export class QuizTrainingSettingsComponent implements OnInit {
     quizService = inject(QuizTrainingSettingsService);
