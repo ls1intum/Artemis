@@ -160,34 +160,6 @@ const config: Config = {
             },
             items: [
                 {
-                    type: 'doc',
-                    // docsPluginId: 'guidelines', // Corresponds to the id of the plugin instance
-                    docId: 'intro', // The ID of the doc to link to (e.g., guidelines/intro.md)
-                    position: 'left',
-                    label: 'Student Guide',
-                },
-                {
-                    type: 'doc',
-                    docsPluginId: 'instructor', // Corresponds to the id of the plugin instance
-                    docId: 'intro', // The ID of the doc to link to (e.g., user-manual/intro.md)
-                    position: 'left',
-                    label: 'Instructor Guide',
-                },
-                {
-                    type: 'doc',
-                    docsPluginId: 'staff', // Corresponds to the id of the plugin instance
-                    docId: 'intro', // The ID of the doc to link to (e.g., user-manual/intro.md)
-                    position: 'left',
-                    label: 'Staff',
-                },
-                {
-                    type: 'doc',
-                    docsPluginId: 'admin', // Corresponds to the id of the plugin instance
-                    docId: 'intro', // The ID of the doc to link to (e.g., user-manual/intro.md)
-                    position: 'left',
-                    label: 'Admin',
-                },
-                {
                     href: GUIDELINES_REPOSITORY_URL,
                     label: 'GitHub',
                     position: 'right',
