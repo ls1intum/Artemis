@@ -77,24 +77,24 @@ const config: Config = {
                 hashed: true,
                 language: ['en'],
                 indexDocs: true,
-                docsRouteBasePath: ['student', 'instructor', 'staff', 'admin'],
+                docsRouteBasePath: ['docs/student', 'docs/instructor', 'docs/staff', 'docs/admin'],
                 // searchContextByPath: true,
                 searchContextByPaths: [
                     {
                         label: 'Student Guide',
-                        path: 'student'
+                        path: 'docs/student'
                     },
                     {
                         label: 'Instructor Guide',
-                        path: 'instructor'
+                        path: 'docs/instructor'
                     },
                     {
                         label: 'Staff',
-                        path: 'staff'
+                        path: 'docs/staff'
                     },
                     {
                         label: 'Admin',
-                        path: 'admin'
+                        path: 'docs/admin'
                     }
                 ],
             }),
@@ -107,7 +107,7 @@ const config: Config = {
             '@docusaurus/plugin-content-docs',
             {
                 // id: 'guidelines', // Unique id for this instance
-                path: 'student', // Source directory
+                path: 'docs/student', // Source directory
                 routeBasePath: 'student', // URL base path
                 sidebarPath: './sidebarsGuidelines.ts', // Path to the sidebar file for this instance
                 editUrl: GUIDELINES_REPOSITORY_URL,
@@ -118,7 +118,7 @@ const config: Config = {
             '@docusaurus/plugin-content-docs',
             {
                 id: 'instructor', // Unique id for this instance
-                path: 'instructor', // Source directory
+                path: 'docs/instructor', // Source directory
                 routeBasePath: 'instructor', // URL base path
                 sidebarPath: './sidebarsUserManual.ts', // A separate sidebar file
                 editUrl: GUIDELINES_REPOSITORY_URL,
@@ -128,7 +128,7 @@ const config: Config = {
             '@docusaurus/plugin-content-docs',
             {
                 id: 'staff', // Unique id for this instance
-                path: 'staff', // Source directory
+                path: 'docs/staff', // Source directory
                 routeBasePath: 'staff', // URL base path
                 sidebarPath: './sidebarsUserManual.ts', // A separate sidebar file
                 editUrl: GUIDELINES_REPOSITORY_URL,
@@ -138,7 +138,7 @@ const config: Config = {
             '@docusaurus/plugin-content-docs',
             {
                 id: 'admin', // Unique id for this instance
-                path: 'admin', // Source directory
+                path: 'docs/admin', // Source directory
                 routeBasePath: 'admin', // URL base path
                 sidebarPath: './sidebarsUserManual.ts', // A separate sidebar file
                 editUrl: GUIDELINES_REPOSITORY_URL,
