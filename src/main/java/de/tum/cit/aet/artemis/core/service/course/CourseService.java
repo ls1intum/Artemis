@@ -183,19 +183,19 @@ public class CourseService {
     public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
-        course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
+        course.setExercises(exerciseRepository.findByCourseIdWithCategories(courseId));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user, true));
         exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
-        examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(course.getId(), user.getId(), user.getGroups(), ZonedDateTime.now())));
+        examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(courseId, user.getId(), user.getGroups(), ZonedDateTime.now())));
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
         lectureApi.ifPresent(api -> course.setLectures(api.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user)));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
-        competencyProgressApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourse(course)));
+        competencyProgressApi.ifPresent(api -> course.setNumberOfCompetencies(api.countByCourseId(courseId)));
         // NOTE: in this call we only want to know if prerequisites exist in the course, we will load them when the user navigates into them
-        prerequisitesApi.ifPresent(api -> course.setNumberOfPrerequisites(api.countByCourse(course)));
+        prerequisitesApi.ifPresent(api -> course.setNumberOfPrerequisites(api.countByCourseId(courseId)));
         // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
         if (tutorialGroupApi.isPresent()) {
-            course.setNumberOfTutorialGroups(tutorialGroupApi.get().countByCourse(course));
+            course.setNumberOfTutorialGroups(tutorialGroupApi.get().countByCourseId(courseId));
         }
         else {
             course.setNumberOfTutorialGroups(0L);

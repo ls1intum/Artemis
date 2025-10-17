@@ -418,6 +418,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
             }
             this.storeAnnotations([fileChange.newFileName]);
         } else if (fileChange instanceof DeleteFileChange) {
+            // Skip DeleteFileChange for PROBLEM_STATEMENT files
+            if (fileChange.fileType === FileType.PROBLEM_STATEMENT) {
+                return;
+            }
             this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
