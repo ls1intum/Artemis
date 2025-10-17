@@ -199,7 +199,8 @@ public class QuizTrainingResource {
      * <p>
      * This endpoint returns the user's preference regarding their visibility in the quiz training leaderboard.
      * It fetches the current setting from the repository and returns it wrapped in a LeaderboardSettingDTO.
-     * If no setting is found for the user, the value will be null.
+     * If no setting is found, the user has not yet set an initial preference in the quiz training mode after reading the instructions.
+     * Therefore, we return null to indicate that the setting is not explicitly set.
      * </p>
      *
      * @return a ResponseEntity containing a LeaderboardSettingDTO with the user's leaderboard visibility preference
