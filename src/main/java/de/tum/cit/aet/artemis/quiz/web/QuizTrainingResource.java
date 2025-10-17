@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import jakarta.validation.Valid;
@@ -210,9 +209,7 @@ public class QuizTrainingResource {
     public ResponseEntity<LeaderboardSettingDTO> getLeaderboardSettings() {
         log.debug("REST request to get leaderboard settings");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Optional<Boolean> showInLeaderboardOptional = quizTrainingLeaderboardRepository.getShowInLeaderboard(user.getId());
-        Boolean showInLeaderboard = showInLeaderboardOptional.orElse(null);
-        LeaderboardSettingDTO leaderboardSettingDTO = new LeaderboardSettingDTO(showInLeaderboard);
+        LeaderboardSettingDTO leaderboardSettingDTO = quizTrainingService.getLeaderboardSettings(user.getId());
         return ResponseEntity.ok().body(leaderboardSettingDTO);
     }
 }

@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { QuizTrainingSettingsComponent } from './quiz-training-settings.component';
-import { QuizTrainingSettingsService } from 'app/core/user/settings/quiz-training-settings/quiz-training-settings-service';
+import { QuizTrainingSettingsService } from 'app/core/user/settings/quiz-training-settings/quiz-training-settings.service';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';

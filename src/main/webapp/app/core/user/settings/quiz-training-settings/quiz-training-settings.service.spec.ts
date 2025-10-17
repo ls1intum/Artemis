@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { QuizTrainingSettingsService } from './quiz-training-settings-service';
+import { QuizTrainingSettingsService } from './quiz-training-settings.service';
 import { LeaderboardSettingsDTO } from './leaderboard-settings-dto';
 import { provideHttpClient } from '@angular/common/http';
 
