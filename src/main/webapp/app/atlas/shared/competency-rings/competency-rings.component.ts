@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -8,33 +8,34 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-competency-rings',
     templateUrl: './competency-rings.component.html',
     styleUrls: ['./competency-rings.component.scss'],
+    standalone: true,
     imports: [NgbTooltip, FaIconComponent, ArtemisTranslatePipe],
 })
 export class CompetencyRingsComponent {
-    @Input() progress = 0;
-    @Input() mastery = 0;
-    @Input() playAnimation = true;
-    @Input() hideTooltip = false;
-    @Input() hideProgress = false;
+    progress = input(0);
+    mastery = input(0);
+    playAnimation = input(true);
+    hideTooltip = input(false);
+    hideProgress = input(false);
 
     protected readonly faQuestion = faQuestion;
 
     get progressPercentage(): number {
-        if (this.hideProgress) {
+        if (this.hideProgress()) {
             return 0;
         }
-        return this.percentageRange(this.progress);
+        return this.percentageRange(this.progress());
     }
 
     get masteryPercentage(): number {
-        if (this.hideProgress) {
+        if (this.hideProgress()) {
             return 0;
         }
-        return this.percentageRange(this.mastery);
+        return this.percentageRange(this.mastery());
     }
 
     get tooltipText() {
-        if (this.hideProgress) {
+        if (this.hideProgress()) {
             return 'artemisApp.competency.competencyCard.ringsTooltipHideProgress';
         } else {
             return 'artemisApp.competency.competencyCard.ringsTooltip';

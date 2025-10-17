@@ -1,20 +1,20 @@
 <div>
     <button
-        [id]="'competency-accordion-' + competency.id"
+        [id]="'competency-accordion-' + competency().id"
         class="competency-accordion-header d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-between gap-2 px-4"
         [class.closed]="!open"
         (click)="toggle()"
     >
         <h4 class="fw-medium mb-0 py-2 col-sm-6 d-flex gap-2">
-            @if (competency.taxonomy) {
+            @if (competency().taxonomy) {
                 <fa-icon
-                    [icon]="getIcon(competency.taxonomy)"
+                    [icon]="getIcon(competency().taxonomy)"
                     [fixedWidth]="true"
-                    [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + competency.taxonomy | artemisTranslate"
+                    [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + competency().taxonomy | artemisTranslate"
                     container="body"
                 />
             }
-            {{ competency.title }}
+            {{ competency().title }}
         </h4>
         <div class="w-100 d-flex align-items-center gap-4">
             <div class="w-100 d-flex flex-column gap-2">
@@ -47,10 +47,10 @@
             </div>
             <div class="competency-rings-container py-2">
                 <jhi-competency-rings
-                    [class.muted-competency-rings]="promptForRating && this.jolRating === undefined"
-                    [progress]="this.progress"
-                    [mastery]="this.mastery"
-                    [hideProgress]="promptForRating && this.jolRating === undefined"
+                    [class.muted-competency-rings]="promptForRating && jolRating === undefined"
+                    [progress]="progress"
+                    [mastery]="mastery"
+                    [hideProgress]="promptForRating && jolRating === undefined"
                     [playAnimation]="false"
                 />
             </div>
@@ -58,29 +58,31 @@
     </button>
     <div [class.competency-accordion-body-open]="open" [class.competency-accordion-body-closed]="!open" class="competency-accordion-body">
         @if (promptForRating) {
-            <div [class.pb-1]="course && (nextExercises.length > 0 || nextLectureUnits.length > 0)">
-                <jhi-judgement-of-learning-rating
-                    [competencyId]="competency.id"
-                    [courseId]="course?.id"
-                    [mastery]="mastery"
-                    [rating]="jolRating"
-                    (ratingChange)="onRatingChange($event)"
-                />
+            <div [class.pb-1]="course() && (nextExercises.length > 0 || nextLectureUnits.length > 0)">
+                @if (course()) {
+                    <jhi-judgement-of-learning-rating
+                        [competencyId]="competency().id"
+                        [courseId]="course()!.id!"
+                        [mastery]="mastery"
+                        [(rating)]="jolRating"
+                        (ratingChange)="onRatingChange($event!)"
+                    />
+                }
             </div>
         }
-        @if (course) {
+        @if (course()) {
             @if (nextLectureUnits.length > 0 || nextExercises.length > 0) {
                 <h5 class="fw-medium fs-5 mt-1" jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.nextActivities"></h5>
             }
             @if (nextExercises.length > 0) {
                 @for (exercise of nextExercises; track exercise) {
-                    <jhi-course-exercise-row [course]="course" [exercise]="exercise" />
+                    <jhi-course-exercise-row [course]="course()!" [exercise]="exercise" />
                 }
             }
             @if (nextLectureUnits.length > 0) {
                 @for (lectureUnit of nextLectureUnits; track lectureUnit) {
                     <div class="lecture-unit-container d-flex align-items-center my-2 px-2 position-relative">
-                        <a class="stretched-link" [routerLink]="['/courses', course.id, 'lectures', lectureUnit.lectureId]"></a>
+                        <a class="stretched-link" [routerLink]="['/courses', course()!.id, 'lectures', lectureUnit.lectureId]"></a>
                         <div class="m-0 fs-5 fw-medium px-2">
                             <fa-icon
                                 class="me-2"
