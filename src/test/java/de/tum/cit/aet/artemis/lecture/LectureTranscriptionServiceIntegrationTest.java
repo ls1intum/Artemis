@@ -22,7 +22,8 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
-import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
+import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionInitResponseDTO;
+import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionStatusResponseDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -145,37 +146,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    void saveFinalTranscriptionResult_setsFieldsAndSaves() {
-        var jobId = "job-done-1";
-        var existing = createTranscription(jobId, TranscriptionStatus.PENDING);
-        existing = transcriptionRepository.save(existing);
-
-        var dto = new LectureTranscriptionDTO(null, "en", java.util.List.of());
-
-        ReflectionTestUtils.invokeMethod(lectureTranscriptionService, "saveFinalTranscriptionResult", jobId, dto);
-
-        var saved = transcriptionRepository.findByJobId(jobId);
-        assertThat(saved).isPresent();
-        assertThat(saved.get().getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
-        assertThat(saved.get().getLanguage()).isEqualTo("en");
-        assertThat(saved.get().getSegments()).isNotNull();
-    }
-
-    @Test
-    void markTranscriptionAsFailed_setsStatusAndSaves() {
-        var t = createTranscription("job-x", TranscriptionStatus.PENDING);
-        t = transcriptionRepository.save(t);
-
-        ReflectionTestUtils.invokeMethod(lectureTranscriptionService, "markTranscriptionAsFailed", t, "nope");
-
-        assertThat(t.getTranscriptionStatus()).isEqualTo(TranscriptionStatus.FAILED);
-        var saved = transcriptionRepository.findByJobId("job-x");
-        assertThat(saved).isPresent();
-        assertThat(saved.get().getTranscriptionStatus()).isEqualTo(TranscriptionStatus.FAILED);
-    }
-
-    @Test
-    void createEmptyTranscription_deletesExistingAndCreatesPending() {
+    void startNebulaTranscription_deletesExistingAndCreatesPending() {
         var lecture = new Lecture();
         lecture.setTitle("Test Lecture");
         lecture = lectureRepository.save(lecture);
@@ -187,13 +158,23 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         unit = lectureUnitRepository.save(unit);
         Long unitId = unit.getId();
 
+        // Create existing transcription that should be deleted
         var existing = createTranscription("old-job", TranscriptionStatus.PENDING);
         existing.setLectureUnit(unit);
         existing = transcriptionRepository.save(existing);
         Long existingId = existing.getId();
 
-        ReflectionTestUtils.invokeMethod(lectureTranscriptionService, "createEmptyTranscription", lectureId, unitId, "job-new");
+        // Mock Nebula start response
+        var nebulaResponse = new NebulaTranscriptionInitResponseDTO("job-new", "pending");
+        when(nebulaRestTemplate.exchange(eq("http://localhost:8080/transcribe/start"), eq(HttpMethod.POST), any(HttpEntity.class), eq(NebulaTranscriptionInitResponseDTO.class)))
+                .thenReturn(new ResponseEntity<>(nebulaResponse, HttpStatus.OK));
 
+        // Start transcription through public API
+        var request = new NebulaTranscriptionRequestDTO("http://example.com/video.mp4", lectureId, unitId);
+        var jobId = lectureTranscriptionService.startNebulaTranscription(lectureId, unitId, request);
+
+        // Verify old transcription was deleted and new one created
+        assertThat(jobId).isEqualTo("job-new");
         assertThat(transcriptionRepository.findById(existingId)).isEmpty();
 
         var newTranscription = transcriptionRepository.findByLectureUnit_Id(unitId);
@@ -204,7 +185,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    void createEmptyTranscription_wrongLecture_throws() {
+    void startNebulaTranscription_wrongLecture_throws() {
         var lecture1 = new Lecture();
         lecture1.setTitle("Lecture 1");
         lecture1 = lectureRepository.save(lecture1);
@@ -220,8 +201,16 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         unit = lectureUnitRepository.save(unit);
         Long unitId = unit.getId();
 
-        assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(lectureTranscriptionService, "createEmptyTranscription", lectureId, unitId, "job-z"))
-                .isInstanceOf(ResponseStatusException.class);
+        // Mock Nebula start response (even though we won't reach it)
+        var nebulaResponse = new NebulaTranscriptionInitResponseDTO("job-z", "pending");
+        when(nebulaRestTemplate.exchange(eq("http://localhost:8080/transcribe/start"), eq(HttpMethod.POST), any(HttpEntity.class), eq(NebulaTranscriptionInitResponseDTO.class)))
+                .thenReturn(new ResponseEntity<>(nebulaResponse, HttpStatus.OK));
+
+        var request = new NebulaTranscriptionRequestDTO("http://example.com/video.mp4", lectureId, unitId);
+
+        // Should throw because unit doesn't belong to lecture1
+        assertThatThrownBy(() -> lectureTranscriptionService.startNebulaTranscription(lectureId, unitId, request)).isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Lecture Unit does not belong to the Lecture");
 
         var transcriptions = transcriptionRepository.findByLectureUnit_Id(unitId);
         assertThat(transcriptions).isEmpty();
