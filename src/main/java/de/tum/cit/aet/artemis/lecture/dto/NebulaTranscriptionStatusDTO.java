@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * Enum representing the possible status values returned by the Nebula transcription service.
  */
-public enum NebulaTranscriptionStatus {
+public enum NebulaTranscriptionStatusDTO {
 
     /**
      * The transcription job is still being processed.
@@ -34,7 +34,7 @@ public enum NebulaTranscriptionStatus {
 
     private final String value;
 
-    NebulaTranscriptionStatus(String value) {
+    NebulaTranscriptionStatusDTO(String value) {
         this.value = value;
     }
 
@@ -55,8 +55,8 @@ public enum NebulaTranscriptionStatus {
      * @return the corresponding enum constant
      * @throws IllegalArgumentException if the value doesn't match any enum constant
      */
-    public static NebulaTranscriptionStatus fromValue(String value) {
-        for (NebulaTranscriptionStatus status : values()) {
+    public static NebulaTranscriptionStatusDTO fromValue(String value) {
+        for (NebulaTranscriptionStatusDTO status : values()) {
             if (status.value.equals(value)) {
                 return status;
             }
