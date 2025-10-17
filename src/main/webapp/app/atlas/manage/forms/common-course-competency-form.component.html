@@ -1,22 +1,22 @@
-<form [formGroup]="form">
-    @if (!isInConnectMode) {
+<form [formGroup]="form()">
+    @if (!isInConnectMode()) {
         <div class="form-group">
-            <label for="title" [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.title'"></label>
+            <label for="title" [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.title'"></label>
             <input
                 type="text"
                 class="form-control"
                 id="title"
                 formControlName="title"
-                [placeholder]="'artemisApp.' + courseCompetency?.type + '.create.titlePlaceholder' | artemisTranslate"
+                [placeholder]="'artemisApp.' + courseCompetency()?.type + '.create.titlePlaceholder' | artemisTranslate"
             />
             @if (titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)) {
                 <div class="alert alert-danger">
                     @if (titleControl?.errors?.required) {
-                        <div [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.create.titleRequiredValidationError'"></div>
+                        <div [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.titleRequiredValidationError'"></div>
                     }
                     @if (titleControl?.errors?.maxlength) {
                         <div
-                            [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.create.titleMaxLengthValidationError'"
+                            [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.titleMaxLengthValidationError'"
                             [translateValues]="{ max: competencyValidators.TITLE_MAX }"
                         ></div>
                     }
@@ -27,7 +27,7 @@
             }
         </div>
     }
-    @if (!isInConnectMode) {
+    @if (!isInConnectMode()) {
         <div class="form-group">
             <label for="description" jhiTranslate="artemisApp.courseCompetency.description"></label>
             <jhi-markdown-editor-monaco
@@ -41,7 +41,7 @@
                 <div class="alert alert-danger">
                     @if (descriptionControl?.errors?.maxlength) {
                         <div
-                            [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.create.descriptionMaxLengthValidationError'"
+                            [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.create.descriptionMaxLengthValidationError'"
                             [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
                         ></div>
                     }
@@ -52,13 +52,13 @@
     <div class="form-group">
         <jhi-date-time-picker
             id="softDueDate"
-            labelName="{{ 'artemisApp.' + courseCompetency?.type + '.create.softDueDate' | artemisTranslate }}"
-            labelTooltip="{{ 'artemisApp.' + courseCompetency?.type + '.create.softDueDateHint' | artemisTranslate }}"
+            [labelName]="'artemisApp.' + courseCompetency()?.type + '.create.softDueDate' | artemisTranslate"
+            [labelTooltip]="'artemisApp.' + courseCompetency()?.type + '.create.softDueDateHint' | artemisTranslate"
             formControlName="softDueDate"
             [pickerType]="DateTimePickerType.CALENDAR"
         />
     </div>
-    @if (!isInConnectMode) {
+    @if (!isInConnectMode()) {
         <div class="form-group">
             <label for="taxonomy">
                 {{ 'artemisApp.courseCompetency.taxonomy' | artemisTranslate }}
@@ -66,15 +66,15 @@
                     <small> ({{ 'artemisApp.courseCompetency.create.suggestedTaxonomy' | artemisTranslate }}: {{ suggestedTaxonomies.join(', ') }}) </small>
                 }
             </label>
-            <jhi-taxonomy-select selectId="taxonomy" [form]="taxonomyControl" />
+            <jhi-taxonomy-select [selectId]="'taxonomy'" [form]="taxonomyControl" />
         </div>
     }
-    @if (!isInConnectMode) {
+    @if (!isInConnectMode()) {
         <div class="form-group">
             <label for="masteryThreshold">
                 {{ 'artemisApp.courseCompetency.masteryThreshold' | artemisTranslate }}: {{ masteryThresholdControl!.value ?? DEFAULT_MASTERY_THRESHOLD }}%
-                @if (averageStudentScore) {
-                    <small> ({{ 'artemisApp.courseCompetency.create.averageMastery' | artemisTranslate }}: {{ averageStudentScore }}%) </small>
+                @if (averageStudentScore() !== null && averageStudentScore() !== undefined) {
+                    <small> ({{ 'artemisApp.courseCompetency.create.averageMastery' | artemisTranslate }}: {{ averageStudentScore() }}%) </small>
                 }
             </label>
             <input required type="number" class="form-control" name="masteryThreshold" id="masteryThreshold" min="1" max="100" formControlName="masteryThreshold" />
@@ -82,7 +82,7 @@
     }
     <div class="form-group">
         <input type="checkbox" class="form-check-input" id="optional" formControlName="optional" />
-        <label class="form-control-label" [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.optional'" for="optional"></label>
-        <jhi-help-icon [text]="'artemisApp.' + courseCompetency?.type + '.optionalDescription'" />
+        <label class="form-control-label" [jhiTranslate]="'artemisApp.' + courseCompetency()?.type + '.optional'" for="optional"></label>
+        <jhi-help-icon [text]="'artemisApp.' + courseCompetency()?.type + '.optionalDescription'" />
     </div>
 </form>
