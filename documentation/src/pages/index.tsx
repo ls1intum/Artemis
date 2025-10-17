@@ -1,13 +1,11 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
-import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
+import LinkButton from '../components/LinkButton/LinkButton';
 
 import styles from './index.module.css';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 
 function HomepageHeader() {
     const { siteConfig } = useDocusaurusContext();
@@ -19,37 +17,24 @@ function HomepageHeader() {
                 </Heading>
                 <p className="hero__subtitle">{siteConfig.tagline}</p>
                 <div className={styles.buttons}>
-                    <Link
-                        className="button button--secondary button--lg"
-                        to="/student/intro">
+                    <LinkButton to="/student/intro">
                         Student Guide
-                        <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-                    </Link>
-
+                    </LinkButton>
                 </div>
                 <div className={styles.buttons}>
-                    <Link
-                        className="button button--secondary button--lg"
-                        to="/instructor/intro">
+                    <LinkButton to="/instructor/intro">
                         Instructor Guide
-                        <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-                    </Link>
+                    </LinkButton>
                 </div>
                 <div className={styles.buttons}>
-                    <Link
-                        className="button button--secondary button--lg"
-                        to="/staff/intro">
+                    <LinkButton to="/staff/intro">
                         Staff Documentation
-                        <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-                    </Link>
+                    </LinkButton>
                 </div>
                 <div className={styles.buttons}>
-                    <Link
-                        className="button button--secondary button--lg"
-                        to="/admin/intro">
+                    <LinkButton to="/admin/intro">
                         Admin Documentation
-                        <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
-                    </Link>
+                    </LinkButton>
                 </div>
             </div>
         </header>
