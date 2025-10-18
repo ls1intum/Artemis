@@ -4,7 +4,6 @@ import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/st
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { MockRatingService } from 'test/helpers/mocks/service/mock-rating.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
