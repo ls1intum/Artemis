@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20251017200800" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="spring_ai_chat_memory"/>
+            </not>
+        </preConditions>
+        <createTable tableName="spring_ai_chat_memory">
+            <column name="conversation_id" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timestamp" type="timestamp(3)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex indexName="idx_chat_memory_conversation_id" tableName="spring_ai_chat_memory">
+            <column name="conversation_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_chat_memory_timestamp" tableName="spring_ai_chat_memory">
+            <column name="timestamp"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
