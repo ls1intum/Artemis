@@ -69,9 +69,12 @@ public class AtlasAgentService {
             Map<String, String> variables = Map.of();
             String systemPrompt = templateService.render(resourcePath, variables);
 
+            // Add course ID to system prompt instead of user message to avoid storing it in chat history
+            String enhancedSystemPrompt = String.format("%s\n\nContext: You are assisting with Course ID: %d", systemPrompt, courseId);
+
             AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
 
-            ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(message).options(options);
+            ChatClientRequestSpec promptSpec = chatClient.prompt().system(enhancedSystemPrompt).user(message).options(options);
 
             // Add chat memory advisor using persistent JDBC-based memory
             if (chatMemory != null) {
