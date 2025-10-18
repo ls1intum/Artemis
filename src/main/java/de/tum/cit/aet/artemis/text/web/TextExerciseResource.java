@@ -253,7 +253,7 @@ public class TextExerciseResource {
                 // set reference to participation to null, since we are already inside a participation
                 textSubmission.setParticipation(null);
 
-                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
                     // We want to have the preliminary feedback before the assessment due date too
                     List<Result> athenaResults = submission.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
                     textSubmission.setResults(athenaResults);

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -6,6 +6,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-rating',
@@ -22,6 +23,7 @@ export class RatingComponent implements OnInit, OnChanges {
     private previousResultId?: number;
 
     @Input() result?: Result;
+    participation = input.required<Participation>();
 
     ngOnInit(): void {
         this.loadRating();
@@ -35,11 +37,7 @@ export class RatingComponent implements OnInit, OnChanges {
     }
 
     loadRating() {
-        if (
-            !this.result?.id ||
-            !this.result.submission?.participation ||
-            !this.accountService.isOwnerOfParticipation(this.result.submission.participation as StudentParticipation)
-        ) {
+        if (!this.result?.id || !this.participation() || !this.accountService.isOwnerOfParticipation(this.participation() as StudentParticipation)) {
             return;
         }
         this.ratingService.getRating(this.result.id).subscribe((rating) => {
