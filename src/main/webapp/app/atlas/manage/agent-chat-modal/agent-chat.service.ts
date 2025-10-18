@@ -18,6 +18,11 @@ interface AgentChatResponse {
     competenciesModified: boolean;
 }
 
+export interface AgentHistoryMessage {
+    content: string;
+    isUser: boolean;
+}
+
 @Injectable({
     providedIn: 'root',
 })
@@ -26,14 +31,20 @@ export class AgentChatService {
     private translateService = inject(TranslateService);
     private accountService = inject(AccountService);
 
-    sendMessage(message: string, courseId: number): Observable<AgentChatResponse> {
+    /**
+     * Generates a unique session ID for the user's conversation in a specific course.
+     * Format: course_{courseId}_user_{userId}
+     */
+    getSessionId(courseId: number): string {
         const userId = this.accountService.userIdentity?.id;
         if (!userId) {
             throw new Error('User must be authenticated to use agent chat');
         }
+        return `course_${courseId}_user_${userId}`;
+    }
 
-        const sessionId = `course_${courseId}_user_${userId}`;
-
+    sendMessage(message: string, courseId: number): Observable<AgentChatResponse> {
+        const sessionId = this.getSessionId(courseId);
         const request: AgentChatRequest = {
             message,
             sessionId,
@@ -49,6 +60,17 @@ export class AgentChatService {
                     success: false,
                     competenciesModified: false,
                 });
+            }),
+        );
+    }
+
+    /**
+     * Fetches conversation history for the current user in the specified course
+     */
+    getConversationHistory(courseId: number): Observable<AgentHistoryMessage[]> {
+        return this.http.get<AgentHistoryMessage[]>(`api/atlas/agent/courses/${courseId}/chat/history`).pipe(
+            catchError(() => {
+                return of([]);
             }),
         );
     }

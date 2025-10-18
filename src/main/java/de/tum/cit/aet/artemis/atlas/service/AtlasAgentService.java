@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -8,14 +9,16 @@ import jakarta.annotation.Nullable;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
 
 /**
  * Service for Atlas Agent functionality with Azure OpenAI integration.
@@ -48,6 +51,7 @@ public class AtlasAgentService {
     /**
      * Process a chat message for the given course and return AI response with modification status.
      * Uses request-scoped state tracking to detect competency modifications.
+     * Supports conversation context through sessionId with persistent memory.
      *
      * @param message   The user's message
      * @param courseId  The course ID for context
@@ -55,20 +59,23 @@ public class AtlasAgentService {
      * @return Result containing the AI response and competency modification flag
      */
     public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
-        try {
+        if (chatClient == null) {
+            return CompletableFuture.completedFuture(new AgentChatResult("Atlas Agent is not available. Please contact your administrator.", false));
+        }
 
+        try {
             // Load system prompt from external template
             String resourcePath = "/prompts/atlas/agent_system_prompt.st";
-            Map<String, String> variables = Map.of(); // No variables needed for this template
+            Map<String, String> variables = Map.of();
             String systemPrompt = templateService.render(resourcePath, variables);
 
             AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
 
-            ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message)).options(options);
+            ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(message).options(options);
 
-            // Add chat memory advisor
+            // Add chat memory advisor using persistent JDBC-based memory
             if (chatMemory != null) {
-                promptSpec = promptSpec.advisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+                promptSpec = promptSpec.advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, sessionId));
             }
 
             // Add tools
@@ -93,13 +100,36 @@ public class AtlasAgentService {
     }
 
     /**
+     * Retrieves the conversation history for a given session as DTOs.
+     *
+     * @param sessionId The session/conversation ID
+     * @return List of conversation history messages as DTOs
+     */
+    public List<AtlasAgentHistoryMessageDTO> getConversationHistoryAsDTO(String sessionId) {
+        try {
+            if (chatMemory == null) {
+                return List.of();
+            }
+            List<Message> messages = chatMemory.get(sessionId);
+
+            return messages.stream().map(message -> {
+                boolean isUser = message.getMessageType() == MessageType.USER;
+                return new AtlasAgentHistoryMessageDTO(message.getText(), isUser);
+            }).toList();
+        }
+        catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    /**
      * Check if the Atlas Agent service is available and properly configured.
      *
      * @return true if the service is ready, false otherwise
      */
     public boolean isAvailable() {
         try {
-            return chatClient != null;
+            return chatClient != null && chatMemory != null;
         }
         catch (Exception e) {
             return false;

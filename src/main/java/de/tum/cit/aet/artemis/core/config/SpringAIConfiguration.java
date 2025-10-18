@@ -1,9 +1,18 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import javax.sql.DataSource;
+
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
+import org.springframework.ai.chat.memory.repository.jdbc.MysqlChatMemoryRepositoryDialect;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
@@ -11,6 +20,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.type.AnnotatedTypeMetadata;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Configuration for Spring AI chat clients.
@@ -22,20 +32,60 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 @Lazy
 public class SpringAIConfiguration {
 
+    @Value("${spring.ai.chat.memory.max-messages:20}")
+    private int maxMessages;
+
+    /**
+     * Creates a JDBC-based chat memory repository for persistent storage.
+     * Uses MySQL dialect for database-specific operations.
+     *
+     * @param dataSource the datasource to use for JDBC operations
+     * @return configured ChatMemoryRepository
+     */
+    @Bean
+    @Lazy
+    public ChatMemoryRepository chatMemoryRepository(DataSource dataSource) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return JdbcChatMemoryRepository.builder().jdbcTemplate(jdbcTemplate).dialect(new MysqlChatMemoryRepositoryDialect()).build();
+    }
+
+    /**
+     * Creates a message window-based chat memory that retains the last N messages.
+     * This provides context-aware conversations while limiting memory usage.
+     *
+     * @param chatMemoryRepository the repository for storing conversation history
+     * @return configured ChatMemory with windowed message retention
+     */
+    @Bean
+    @Lazy
+    public ChatMemory chatMemory(ChatMemoryRepository chatMemoryRepository) {
+        return MessageWindowChatMemory.builder().chatMemoryRepository(chatMemoryRepository).maxMessages(maxMessages).build();
+    }
+
     /**
      * Default Chat Client for AI features.
      * Uses the manually configured Azure OpenAI model if available.
+     * Includes memory advisor for conversation context retention.
      *
      * @param azureOpenAiChatModel the Azure OpenAI chat model to use (optional)
+     * @param chatMemory           the chat memory for conversation history (optional)
      * @return a configured ChatClient with default options, or null if model is not available
      */
     @Bean
     @Lazy
-    public ChatClient chatClient(@Autowired(required = false) AzureOpenAiChatModel azureOpenAiChatModel) {
+    public ChatClient chatClient(@Autowired(required = false) AzureOpenAiChatModel azureOpenAiChatModel, @Autowired(required = false) ChatMemory chatMemory) {
         if (azureOpenAiChatModel == null) {
             return null;
         }
-        return ChatClient.builder(azureOpenAiChatModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName("gpt-5-mini").temperature(1.0).build()).build();
+        ChatClient.Builder builder = ChatClient.builder(azureOpenAiChatModel)
+                .defaultOptions(AzureOpenAiChatOptions.builder().deploymentName("gpt-5-mini").temperature(1.0).build());
+
+        // Add memory advisor if available
+        if (chatMemory != null) {
+            builder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build());
+        }
+
+        return builder.build();
     }
 
     /**
