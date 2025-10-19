@@ -354,12 +354,13 @@ public class ExamRoomService {
     /**
      * Calculates the exam seats that are usable for an exam, according to the default layout
      *
-     * @param examRoom The exam room, containing seats and default layout
+     * @param examRoom      The exam room, containing seats and default layout
+     * @param reserveFactor Percentage of seats that should not be included. Defaults to 0%
      * @return All seats that can be used for the exam, in ascending order
      */
-    public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom) {
+    public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom, double reserveFactor) {
         LayoutStrategy defaultLayoutStrategy = getDefaultLayoutStrategyOrElseThrow(examRoom);
-        return getUsableSeatsForLayout(examRoom, defaultLayoutStrategy);
+        return getUsableSeatsForLayout(examRoom, defaultLayoutStrategy, reserveFactor);
     }
 
     /**
@@ -367,19 +368,26 @@ public class ExamRoomService {
      *
      * @param examRoom       The exam room, containing seats and default layout
      * @param layoutStrategy The layout strategy we want to apply. Must be a layout strategy of the given exam room
-     *
+     * @param reserveFactor  Percentage of seats that should not be included
      * @return All seats that can be used for the exam, in ascending order
      */
-    public List<ExamSeatDTO> getUsableSeatsForLayout(ExamRoom examRoom, LayoutStrategy layoutStrategy) {
+    public List<ExamSeatDTO> getUsableSeatsForLayout(ExamRoom examRoom, LayoutStrategy layoutStrategy, double reserveFactor) {
         if (!examRoom.getLayoutStrategies().contains(layoutStrategy)) {
             throw new BadRequestAlertException("Could not find specified layout", ENTITY_NAME, "room.missingSpecifiedLayout",
                     Map.of("roomNumber", examRoom.getRoomNumber(), "layoutName", layoutStrategy.getName()));
         }
 
-        return switch (layoutStrategy.getType()) {
+        List<ExamSeatDTO> pickedSeats = switch (layoutStrategy.getType()) {
             case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, layoutStrategy);
             case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, layoutStrategy);
         };
+
+        return applyReserveFactorToList(pickedSeats, reserveFactor);
+    }
+
+    private <T> List<T> applyReserveFactorToList(List<T> list, double reserveFactor) {
+        int numberOfIncludedElements = (int) (list.size() * (1 - reserveFactor));
+        return list.subList(0, numberOfIncludedElements);
     }
 
     private record FixedSelectionSeatInput(@JsonProperty("row_index") int rowIndex, @JsonProperty("seat_index") int seatIndex,

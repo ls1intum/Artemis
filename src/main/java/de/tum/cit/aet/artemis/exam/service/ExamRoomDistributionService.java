@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamDistributionCapacityDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -62,48 +64,74 @@ public class ExamRoomDistributionService {
     }
 
     /**
+     * Calculates the usable seats of all rooms, both for the default, and the largest layouts, while respecting the reserve factor
+     *
+     * @param examRoomIds   The ids of the rooms to distribute to
+     * @param reserveFactor Percentage of seats that should not be included
+     * @return Information regarding the combined default and maximum room capacities
+     */
+    public ExamDistributionCapacityDTO getDistributionCapacitiesByIds(@NotNull Set<Long> examRoomIds, double reserveFactor) {
+        final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
+
+        return getDistributionCapacities(examRoomsForExam, reserveFactor);
+    }
+
+    private ExamDistributionCapacityDTO getDistributionCapacities(@NotNull Set<ExamRoom> examRooms, double reserveFactor) {
+        final int numberOfDefaultUsableSeats = examRooms.stream()
+                .mapToInt(examRoom -> (int) (examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity() * (1 - reserveFactor))).sum();
+
+        final int numberOfMaximumUsableSeats = examRooms.stream().map(examRoom -> examRoom.getLayoutStrategies().stream().max(Comparator.comparingInt(LayoutStrategy::getCapacity)))
+                .mapToInt(layoutStrategy -> layoutStrategy.map(strategy -> (int) (strategy.getCapacity() * (1 - reserveFactor))).orElse(0)).sum();
+
+        return new ExamDistributionCapacityDTO(numberOfDefaultUsableSeats, numberOfMaximumUsableSeats);
+    }
+
+    /**
      * Distribute all students who are registered for a given exam across a selection of rooms.
      * Existing planned seats and room assignments are replaced.
      *
      * @param examId                The exam
      * @param examRoomIds           The ids of the rooms to distribute to
      * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
+     * @param reserveFactor         Percentage of seats that should not be included
      * @throws BadRequestAlertException if the capacity doesn't suffice to seat the students
      */
     public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds, boolean useOnlyDefaultLayouts, double reserveFactor) {
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 
-        final int numberOfDefaultUsableSeats = examRoomsForExam.stream()
-                .mapToInt(examRoom -> (int) (examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity() * (1 - reserveFactor))).sum();
+        ExamDistributionCapacityDTO capacities = getDistributionCapacities(examRoomsForExam, reserveFactor);
+
+        boolean defaultLayoutsSuffice = verifyLayoutSizesSufficeOrElseThrowAndReturnIfDefaultLayoutsSuffice(useOnlyDefaultLayouts, exam, capacities);
+
+        assignExamRoomsToExam(exam, examRoomsForExam);
+        if (defaultLayoutsSuffice) {
+            distributeExamUsersToDefaultUsableSeatsInRooms(exam, examRoomsForExam, reserveFactor);
+        }
+        else {
+            distributeExamUsersToAnyUsableSeatsInRooms(exam, examRoomsForExam, reserveFactor);
+        }
+    }
+
+    private static boolean verifyLayoutSizesSufficeOrElseThrowAndReturnIfDefaultLayoutsSuffice(boolean useOnlyDefaultLayouts, Exam exam, ExamDistributionCapacityDTO capacities) {
         final int numberOfExamUsers = exam.getExamUsers().size();
         boolean defaultLayoutsSuffice = true;
 
-        if (numberOfDefaultUsableSeats < numberOfExamUsers) {
+        if (capacities.combinedDefaultCapacity() < numberOfExamUsers) {
             if (useOnlyDefaultLayouts) {
                 throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
-                        Map.of("numberOfUsableSeats", numberOfDefaultUsableSeats, "numberOfExamUsers", numberOfExamUsers));
+                        Map.of("numberOfUsableSeats", capacities.combinedDefaultCapacity(), "numberOfExamUsers", numberOfExamUsers));
             }
 
             defaultLayoutsSuffice = false;
 
-            final int numberOfMaximumUsableSeats = examRoomsForExam.stream()
-                    .map(examRoom -> examRoom.getLayoutStrategies().stream().max(Comparator.comparingInt(LayoutStrategy::getCapacity)))
-                    .mapToInt(layoutStrategy -> layoutStrategy.isPresent() ? layoutStrategy.get().getCapacity() : 0).sum();
-
-            if (numberOfMaximumUsableSeats < numberOfExamUsers) {
+            if (capacities.combinedMaximumCapacity() < numberOfExamUsers) {
                 throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
-                        Map.of("numberOfUsableSeats", numberOfMaximumUsableSeats, "numberOfExamUsers", numberOfExamUsers));
+                        Map.of("numberOfUsableSeats", capacities.combinedMaximumCapacity(), "numberOfExamUsers", numberOfExamUsers));
             }
         }
 
-        assignExamRoomsToExam(exam, examRoomsForExam);
-        if (defaultLayoutsSuffice) {
-            distributeExamUsersToDefaultUsableSeatsInRooms(exam, examRoomsForExam);
-        }
-        else {
-            distributeExamUsersToAnyUsableSeatsInRooms(exam, examRoomsForExam);
-        }
+        return defaultLayoutsSuffice;
     }
 
     /**
@@ -130,11 +158,12 @@ public class ExamRoomDistributionService {
      *
      * @param exam             the exam
      * @param examRoomsForExam all exam rooms that students of this exam can be distributed to
+     * @param reserveFactor    Percentage of seats that should not be included
      */
-    private void distributeExamUsersToDefaultUsableSeatsInRooms(Exam exam, Set<ExamRoom> examRoomsForExam) {
+    private void distributeExamUsersToDefaultUsableSeatsInRooms(Exam exam, Set<ExamRoom> examRoomsForExam, double reserveFactor) {
         Map<String, List<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();
         for (ExamRoom examRoom : examRoomsForExam) {
-            roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom));
+            roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom, reserveFactor));
         }
 
         setPlannedRoomAndPlannedSeatForExamUsersRandomly(exam, roomNumberToUsableSeatsDefaultLayout);
@@ -148,8 +177,9 @@ public class ExamRoomDistributionService {
      *
      * @param exam             the exam
      * @param examRoomsForExam all exam rooms that students of this exam can be distributed to
+     * @param reserveFactor    Percentage of seats that should not be included
      */
-    private void distributeExamUsersToAnyUsableSeatsInRooms(Exam exam, Set<ExamRoom> examRoomsForExam) {
+    private void distributeExamUsersToAnyUsableSeatsInRooms(Exam exam, Set<ExamRoom> examRoomsForExam, double reserveFactor) {
         final int numberOfExamUsers = exam.getExamUsers().size();
 
         Map<Long, LayoutStrategy> layoutStrategyToBeUsedByRoomId = getBestLayoutPerRoomCombination(examRoomsForExam, numberOfExamUsers);
@@ -157,7 +187,7 @@ public class ExamRoomDistributionService {
         Map<String, List<ExamSeatDTO>> roomNumberToUsableSeats = new HashMap<>();
         for (ExamRoom examRoom : examRoomsForExam) {
             LayoutStrategy layoutStrategyForThisRoom = layoutStrategyToBeUsedByRoomId.get(examRoom.getId());
-            List<ExamSeatDTO> seatsForThisStrategy = examRoomService.getUsableSeatsForLayout(examRoom, layoutStrategyForThisRoom);
+            List<ExamSeatDTO> seatsForThisStrategy = examRoomService.getUsableSeatsForLayout(examRoom, layoutStrategyForThisRoom, reserveFactor);
 
             roomNumberToUsableSeats.put(examRoom.getRoomNumber(), seatsForThisStrategy);
         }

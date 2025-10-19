@@ -33,6 +33,11 @@
                 "didNotAttend": "Did not attend",
                 "roomDistribute": "Distribute",
                 "rooms": {
+                    "dialogTitle": "Distribute students",
+                    "introText": "Here you can select rooms for distribution",
+                    "reserveFactor": "Reserved Seats %",
+                    "allowNarrowLayouts": "Allow narrower layouts?",
+                    "searchPlaceholder": "Search by room number, name, and/or building",
                     "number": "Number",
                     "alternativeNumber": "Number 2",
                     "name": "Name",

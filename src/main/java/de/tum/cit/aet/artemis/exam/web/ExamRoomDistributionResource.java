@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamDistributionCapacityDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
@@ -65,9 +66,8 @@ public class ExamRoomDistributionResource {
      * @param courseId              the id of the course
      * @param examId                the id of the exam
      * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
-     * @param reserveFactor         how much percent of seats should remain unassigned
+     * @param reserveFactor         how much percent of seats should remain unassigned. Defaults to 0%
      * @param examRoomIds           the ids of all the exam rooms we want to distribute the students to
-     *
      * @return 200 (OK) if the distribution was successful
      */
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
@@ -94,7 +94,7 @@ public class ExamRoomDistributionResource {
      * GET /rooms/distribution-data : Retrieves basic room data of all available rooms, required for the instructors to be
      * able to select the rooms for distribution
      *
-     * @return Basic room data of all available rooms
+     * @return 200 (OK) Basic room data of all available rooms
      */
     @GetMapping("rooms/distribution-data")
     @EnforceAtLeastInstructor
@@ -103,5 +103,22 @@ public class ExamRoomDistributionResource {
 
         Set<ExamRoomForDistributionDTO> roomData = examRoomDistributionService.getRoomDataForDistribution();
         return ResponseEntity.ok(roomData);
+    }
+
+    /**
+     * GET /rooms/distribution-capacities : Retrieves information about the combined default and maximum capacities of
+     * all selected rooms, respecting the given reserve factor
+     *
+     * @param reserveFactor how much percent of seats should remain unassigned. Defaults to 0%
+     * @param examRoomIds   the ids of all the exam rooms we want to distribute the students to
+     * @return 200 (OK) Capacity information
+     */
+    @PostMapping("rooms/distribution-capacities")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<ExamDistributionCapacityDTO> getDistributionCapacities(@RequestParam double reserveFactor, @RequestBody Set<Long> examRoomIds) {
+        log.debug("REST request to get capacity data for a distribution to room ids '{}' with reserve factor {}", examRoomIds, reserveFactor);
+
+        ExamDistributionCapacityDTO capacityInformation = examRoomDistributionService.getDistributionCapacitiesByIds(examRoomIds, reserveFactor);
+        return ResponseEntity.ok(capacityInformation);
     }
 }
