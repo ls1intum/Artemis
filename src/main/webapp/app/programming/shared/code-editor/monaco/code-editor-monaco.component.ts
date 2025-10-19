@@ -83,6 +83,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     readonly selectedRepository = input<RepositoryType>();
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
 
     readonly onError = output<string>();
     readonly onFileContentChange = output<{ fileName: string; text: string }>();
@@ -115,8 +116,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
     );
 
-    readonly consistencyIssuesInternal = signal<ConsistencyIssue[]>([]);
-
     /**
      * Attaches the line number & reference to a feedback item, or -1 if no line is available. This is used to disambiguate feedback items in the template, avoiding warnings.
      * @param feedback The feedback item to attach the line to.
@@ -143,7 +142,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         });
 
         effect(() => {
-            this.consistencyIssuesInternal();
+            this.consistencyIssues();
             this.renderFeedbackWidgets();
         });
     }
@@ -366,9 +365,11 @@ export class CodeEditorMonacoComponent implements OnChanges {
             }
 
             // Readd inconsistency issue comments, because all widgets got removed
-            for (const issue of ConsistencyCheck.issuesForSelectedFile(this.selectedFile(), this.selectedRepository(), this.consistencyIssuesInternal())) {
+            for (const issue of ConsistencyCheck.issuesForSelectedFile(this.selectedFile(), this.selectedRepository(), this.consistencyIssues())) {
                 ConsistencyCheck.addCommentBox(this.editor(), issue);
             }
+
+            ConsistencyCheck.test(this.editor(), 0, this.consistencyIssues().length);
         }, 0);
     }
 

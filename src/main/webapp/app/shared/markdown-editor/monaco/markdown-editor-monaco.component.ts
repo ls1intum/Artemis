@@ -154,8 +154,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
 
-    readonly consistencyIssuesInternal = signal<ConsistencyIssue[]>([]);
-
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
@@ -248,6 +246,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
+
+    private readonly consistencyIssuesInternal = signal<ConsistencyIssue[]>([]);
+    @Input() set consistencyIssues(value: ConsistencyIssue[]) {
+        this.consistencyIssuesInternal.set(value ?? []);
+    }
 
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);

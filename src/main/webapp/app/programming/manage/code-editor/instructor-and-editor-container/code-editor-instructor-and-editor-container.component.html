@@ -18,7 +18,13 @@
 }
 @if (exercise) {
     <div class="module-bg p-3 pt-1">
-        <jhi-code-editor-container [participation]="selectedParticipation!" [buildable]="selectedRepository !== RepositoryType.TESTS" [course]="course" [allowHiddenFiles]="true">
+        <jhi-code-editor-container
+            [participation]="selectedParticipation!"
+            [buildable]="selectedRepository !== RepositoryType.TESTS"
+            [course]="course"
+            [allowHiddenFiles]="true"
+            [consistencyIssues]="consistencyIssues()"
+        >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
                 <span
@@ -164,6 +170,7 @@
                 [templateParticipation]="exercise.templateParticipation!"
                 [initialEditorHeight]="'external'"
                 [enableResize]="false"
+                [consistencyIssues]="consistencyIssues()"
                 class="instructions-wrapper__content card-body p-0"
                 (instructionChange)="onInstructionChanged($event)"
             />

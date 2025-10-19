@@ -13,6 +13,7 @@ import {
     ViewEncapsulation,
     computed,
     inject,
+    input,
     signal,
 } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -47,6 +48,7 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { ActivatedRoute } from '@angular/router';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -108,6 +110,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() showSaveButton = false;
     @Input() templateParticipation: Participation;
     @Input() forceRender: Observable<void>;
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+
     @Input()
     get exercise() {
         return this.programmingExercise;

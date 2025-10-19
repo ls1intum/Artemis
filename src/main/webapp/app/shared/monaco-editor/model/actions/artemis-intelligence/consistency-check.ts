@@ -41,6 +41,18 @@ export class ConsistencyCheck {
         editor.addLineWidget(issue.endLine, `comment-${issue.endLine}`, node);
     }
 
+    static test(editor: MonacoEditorComponent, line: number, i: number) {
+        const node = document.createElement('div');
+        node.className = 'alert alert-warning alert-dismissible text-start fade show';
+        node.innerHTML = `
+          <h5 class="alert-heading">Consistency Issue Found</h5>
+          <div>Number: ${i}</div>
+        `;
+
+        // Place box beneath the line
+        editor.addLineWidget(line, `test-comment`, node);
+    }
+
     static issuesForSelectedFile(
         selectedFile: string | undefined,
         selectedRepo: RepositoryType | 'PROBLEM_STATEMENT' | undefined,

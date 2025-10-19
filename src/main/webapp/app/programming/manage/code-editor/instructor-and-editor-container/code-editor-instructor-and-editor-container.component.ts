@@ -1,4 +1,4 @@
-import { Component, ViewChild, inject } from '@angular/core';
+import { Component, ViewChild, inject, signal } from '@angular/core';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -23,6 +23,7 @@ import { ConsistencyCheckService } from 'app/programming/manage/consistency-chec
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheck } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -66,6 +67,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private consistencyCheckService = inject(ConsistencyCheckService);
     private modalService = inject(NgbModal);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
 
     checkConsistencies(exercise: ProgrammingExercise) {
         this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe({
@@ -78,10 +80,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
 
                 const consistencyCheck = new ConsistencyCheck();
-                consistencyCheck.run(this.artemisIntelligenceService, exercise.id!, [
-                    this.codeEditorContainer.monacoEditor.consistencyIssuesInternal,
-                    this.editableInstructions.markdownEditorMonaco?.consistencyIssuesInternal!,
-                ]);
+                consistencyCheck.run(this.artemisIntelligenceService, exercise.id!, [this.consistencyIssues]);
             },
             error: (err) => {
                 const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
