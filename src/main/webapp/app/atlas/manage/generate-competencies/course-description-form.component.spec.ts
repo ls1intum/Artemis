@@ -72,7 +72,7 @@ describe('CourseDescriptionFormComponent', () => {
     it('should update the description', () => {
         courseDescriptionComponentFixture.detectChanges();
 
-        expect(courseDescriptionComponent.courseDescriptionControl.value).toEqual(courseDescriptionComponent.placeholder);
+        expect(courseDescriptionComponent.courseDescriptionControl.value).toEqual(courseDescriptionComponent.placeholder());
 
         const description = 'I'.repeat(courseDescriptionComponent['DESCRIPTION_MIN'] + 1);
         courseDescriptionComponent.setCourseDescription(description);
