@@ -57,6 +57,7 @@ public class ExamRoomDistributionResource {
      * @param courseId    the id of the course
      * @param examId      the id of the exam
      * @param examRoomIds the ids of all the exam rooms we want to distribute the students to
+     *
      * @return 200 (OK) if the distribution was successful
      */
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
