@@ -61,23 +61,23 @@ const config: Config = {
                 hashed: true,
                 language: ['en'],
                 indexDocs: true,
-                docsRouteBasePath: ['docs/student', 'docs/instructor', 'docs/staff', 'docs/admin'],
+                docsRouteBasePath: ['student', 'instructor', 'staff', 'admin'],
                 searchContextByPaths: [
                     {
                         label: 'Student Guide',
-                        path: 'docs/student'
+                        path: 'student'
                     },
                     {
                         label: 'Instructor Guide',
-                        path: 'docs/instructor'
+                        path: 'instructor'
                     },
                     {
                         label: 'Staff',
-                        path: 'docs/staff'
+                        path: 'staff'
                     },
                     {
                         label: 'Admin',
-                        path: 'docs/admin'
+                        path: 'admin'
                     }
                 ],
                 hideSearchBarWithNoSearchContext: true,
