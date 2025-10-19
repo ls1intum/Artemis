@@ -20,7 +20,9 @@ export class CalendarMonthPresentationComponent {
     private dateToEventsMap = inject(CalendarService).eventMap;
 
     firstDateOfCurrentMonth = input.required<Dayjs>();
-    weeks = computed<CalendarMonthPresentationWeek[]>(() => {
+    weeks = computed<CalendarMonthPresentationWeek[]>(() => this.computeWeeks());
+
+    private computeWeeks(): CalendarMonthPresentationWeek[] {
         const monthStart = this.firstDateOfCurrentMonth();
         const start = monthStart.startOf('month').startOf('isoWeek');
         const end = monthStart.endOf('month').endOf('isoWeek');
@@ -47,5 +49,5 @@ export class CalendarMonthPresentationComponent {
             weeks.push({ days, id });
         }
         return weeks;
-    });
+    }
 }

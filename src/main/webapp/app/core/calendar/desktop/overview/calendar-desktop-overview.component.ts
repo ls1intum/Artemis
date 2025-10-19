@@ -41,10 +41,6 @@ interface CalendarEventFilterOptionAndMetadata {
     styleUrl: './calendar-desktop-overview.component.scss',
 })
 export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent {
-    presentation = signal<Presentation>('month');
-    firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
-    firstDateOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
-    monthDescription = computed<string>(() => this.computeMonthDescription(this.locale(), this.presentation(), this.firstDateOfCurrentMonth(), this.firstDateOfCurrentWeek()));
     private static readonly FILTER_OPTION_NAME_KEY_MAP: Record<CalendarEventFilterOption, string> = {
         exerciseEvents: 'artemisApp.calendar.filterOption.exercises',
         lectureEvents: 'artemisApp.calendar.filterOption.lectures',
@@ -58,23 +54,20 @@ export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent 
         examEvents: 'exam-chip',
     };
 
+    presentation = signal<Presentation>('month');
+    firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
+    firstDateOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
+    monthDescription = computed<string>(() => this.computeMonthDescription(this.locale(), this.presentation(), this.firstDateOfCurrentMonth(), this.firstDateOfCurrentWeek()));
+
     presentationOptions = computed<{ label: string; value: Presentation }[]>(() => {
         this.locale();
         return this.buildPresentationOptions();
     });
-    filterComponentPlaceholder = computed(() => {
-        this.locale();
-        return this.translateService.instant('artemisApp.calendar.filterComponentPlaceholder');
-    });
-    selectedFilterOptions = computed<CalendarEventFilterOptionAndMetadata[]>(() => {
-        this.locale();
-        return this.computeSelectedFilterOptions(this.calendarService.includedEventFilterOptions());
-    });
+    filterComponentPlaceholder = computed(() => this.computeFilterComponentPlaceholder());
+    selectedFilterOptions = computed<CalendarEventFilterOptionAndMetadata[]>(() => this.computeSelectedFilterOptions(this.calendarService.includedEventFilterOptions()));
 
-    filterOptions = computed<CalendarEventFilterOptionAndMetadata[]>(() => {
-        this.locale();
-        return this.buildFilterOptions();
-    });
+    filterOptions = computed<CalendarEventFilterOptionAndMetadata[]>(() => this.buildFilterOptions());
+
     goToPrevious(): void {
         if (this.presentation() === 'week') {
             this.firstDateOfCurrentWeek.update((current) => current.subtract(1, 'week'));
@@ -156,15 +149,22 @@ export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent 
     }
 
     private computeSelectedFilterOptions(includedOptions: CalendarEventFilterOption[]): CalendarEventFilterOptionAndMetadata[] {
+        this.locale();
         return includedOptions.map((option) => this.addMetadataTo(option));
     }
 
     private buildFilterOptions(): CalendarEventFilterOptionAndMetadata[] {
+        this.locale();
         return [
             this.addMetadataTo(CalendarEventFilterOption.LectureEvents),
             this.addMetadataTo(CalendarEventFilterOption.ExamEvents),
             this.addMetadataTo(CalendarEventFilterOption.ExerciseEvents),
             this.addMetadataTo(CalendarEventFilterOption.TutorialEvents),
         ];
+    }
+
+    private computeFilterComponentPlaceholder(): string {
+        this.locale();
+        return this.translateService.instant('artemisApp.calendar.filterComponentPlaceholder');
     }
 }
