@@ -9,7 +9,7 @@ const PAGE_TITLE = 'Artemis Documentation';
 const config: Config = {
     title: `Welcome to the ${PAGE_TITLE}`,
     tagline: 'Documentation for the Artemis Learning Management System',
-    favicon: 'img/tum-logo-blue.svg',
+    favicon: 'img/artemis-favicon.svg',
 
     customFields: {
         pageTitle: PAGE_TITLE,
@@ -131,7 +131,7 @@ const config: Config = {
 
     themeConfig: {
         // Replace with your project's social card
-        image: 'img/tum-logo-blue.svg',
+        image: 'img/artemis-favicon.svg',
         colorMode: {
             respectPrefersColorScheme: true,
         },
@@ -139,7 +139,7 @@ const config: Config = {
             title: PAGE_TITLE,
             logo: {
                 alt: 'TUM Logo',
-                src: 'img/tum-logo-blue.svg',
+                src: 'img/artemis-favicon.svg',
             },
             items: [
                 {
