@@ -1,0 +1,48 @@
+{
+    "artemisApp": {
+        "examRooms": {
+            "adminOverview": {
+                "pageTitle": "Admin Exam Room Management",
+                "title": "Exam Room Management",
+                "uploadRoomData": "Upload Exam Room Data",
+                "invalidFile": "Something is wrong with the file you selected",
+                "fileSizeTooBig": "File size cannot exceed {{ MAX_FILE_SIZE }} MB",
+                "noZipFile": "Only .zip files are accepted",
+                "deleteExamRoomsSafe": "Delete outdated and unused exam room versions",
+                "uploadError": "An error occurred while processing the rooms",
+                "deleting": "Deleting...",
+                "deletionError": "An error occurred while deleting the rooms",
+                "uploadSummary": {
+                    "title": "Upload Summary",
+                    "file": "Filename:",
+                    "roomsUploaded": "Uploaded Rooms:",
+                    "seatsUploaded": "Uploaded Seats:"
+                },
+                "deletionSummary": {
+                    "title": "Deletion Summary",
+                    "roomsDeleted": "Deleted Rooms:"
+                },
+                "examRoomOverview": {
+                    "loadError": "Error while trying to obtain the exam room overview",
+                    "missing": "Overview currently unavailable",
+                    "title": "Exam Room Overview",
+                    "totalExamRooms": "Total exam rooms:",
+                    "totalSeats": "Total seats:",
+                    "totalLayoutStrategies": "Total layout strategies:",
+                    "uniqueExamRooms": "Unique exam rooms:",
+                    "uniqueSeats": "Unique seats:",
+                    "uniqueLayoutStrategies": "Unique layout strategies:",
+                    "distinctLayoutStrategyNames": "All available layout strategies:",
+                    "examRoomsTitle": "All available exam rooms",
+                    "id": "ID",
+                    "roomNumber": "Room Number",
+                    "roomName": "Room Name",
+                    "building": "Building",
+                    "defaultCapacity": "Default Capacity",
+                    "maxCapacity": "Maximum Capacity",
+                    "layoutStrategies": "Layout Strategies"
+                }
+            }
+        }
+    }
+}

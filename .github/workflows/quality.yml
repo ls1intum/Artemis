@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
 
@@ -36,7 +36,7 @@ jobs:
 
           # TODO these values should become zero in the future
           max_large_classes=9
-          max_complex_beans=14
+          max_complex_beans=9
 
           echo "=========================================="
           echo "CODE QUALITY ANALYSIS SUMMARY"

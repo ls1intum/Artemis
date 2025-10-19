@@ -291,6 +291,22 @@ public class DistributedDataAccessService {
     }
 
     /**
+     * @param memberAddress the build agent to retrieve job IDs for
+     * @return a list of the processing job IDs on a specific build agent
+     */
+    public List<BuildJobQueueItem> getProcessingJobsForAgent(String memberAddress) {
+        return getProcessingJobs().stream().filter(job -> job.buildAgent().memberAddress().equals(memberAddress)).toList();
+    }
+
+    /**
+     * @param memberAddress the build agent to retrieve job IDs for
+     * @return a list of the processing job IDs on a specific build agent
+     */
+    public List<String> getProcessingJobIdsForAgent(String memberAddress) {
+        return getProcessingJobsForAgent(memberAddress).stream().map(BuildJobQueueItem::id).toList();
+    }
+
+    /**
      * @param participationId the participation id
      * @return a list of the queued jobs for a specific participation
      */

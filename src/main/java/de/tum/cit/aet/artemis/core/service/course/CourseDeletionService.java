@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.service.course;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -20,13 +19,14 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository;
+import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
@@ -82,12 +82,18 @@ public class CourseDeletionService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository;
+
+    private final UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository;
+
     public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, UserService userService, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
             GradingScaleRepository gradingScaleRepository, Optional<CompetencyRelationApi> competencyRelationApi, Optional<PrerequisitesApi> prerequisitesApi,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
             CourseNotificationRepository courseNotificationRepository, ConversationRepository conversationRepository, FaqRepository faqRepository,
-            CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi) {
+            CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
+            UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
+            UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.userService = userService;
         this.lectureApi = lectureApi;
@@ -105,6 +111,8 @@ public class CourseDeletionService {
         this.faqRepository = faqRepository;
         this.courseRepository = courseRepository;
         this.competencyProgressApi = competencyProgressApi;
+        this.userCourseNotificationSettingPresetRepository = userCourseNotificationSettingPresetRepository;
+        this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
     }
 
     /**
@@ -115,7 +123,7 @@ public class CourseDeletionService {
      * submissions, participations, results, repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
      * <li>All Lectures and their Attachments, see {@link de.tum.cit.aet.artemis.lecture.service.LectureService#delete}</li>
      * <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
-     * <li>All Exams, see {@link ExamDeletionApi#delete}</li>
+     * <li>All Exams, see {@link ExamDeletionApi#deleteByCourseId(long)}</li>
      * <li>The Grading Scale if such exists, see {@link GradingScaleRepository#delete}</li>
      * </ul>
      *
@@ -123,15 +131,19 @@ public class CourseDeletionService {
      */
     public void delete(Course course) {
         log.debug("Request to delete Course : {}", course.getTitle());
+        long courseId = course.getId();
 
+        // TODO: we should try to delete objects based on their id without fetching them completely first
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
         deleteCompetenciesOfCourse(course);
         deleteTutorialGroupsOfCourse(course);
         deleteConversationsOfCourse(course);
-        deleteNotificationsOfCourse(course);
+        deleteNotificationsOfCourse(courseId);
+        deleteNotificationsPresetsOfCourse(courseId);
+        userCourseNotificationSettingSpecificationRepository.deleteAllByCourseId(courseId);
         deleteDefaultGroups(course);
-        deleteExamsOfCourse(course);
+        deleteExamsOfCourse(courseId);
         deleteGradingScaleOfCourse(course);
         deleteFaqsOfCourse(course);
         learnerProfileApi.ifPresent(api -> api.deleteAllForCourse(course));
@@ -163,17 +175,11 @@ public class CourseDeletionService {
         gradingScale.ifPresent(gradingScaleRepository::delete);
     }
 
-    private void deleteExamsOfCourse(Course course) {
+    private void deleteExamsOfCourse(long courseId) {
         if (examDeletionApi.isEmpty() || examRepositoryApi.isEmpty()) {
             return;
         }
-        var deletionApi = examDeletionApi.get();
-        ExamRepositoryApi api = examRepositoryApi.get();
-        // delete the Exams
-        List<Exam> exams = api.findByCourseId(course.getId());
-        for (Exam exam : exams) {
-            deletionApi.delete(exam.getId());
-        }
+        this.examDeletionApi.get().deleteByCourseId(courseId);
     }
 
     private void deleteDefaultGroups(Course course) {
@@ -192,10 +198,12 @@ public class CourseDeletionService {
         }
     }
 
-    private void deleteNotificationsOfCourse(Course course) {
-        var courseNotifications = courseNotificationRepository.findAllByCourseId(course.getId());
+    private void deleteNotificationsOfCourse(long courseId) {
+        courseNotificationRepository.deleteAllByCourseId(courseId);
+    }
 
-        courseNotificationRepository.deleteAll(courseNotifications);
+    private void deleteNotificationsPresetsOfCourse(long courseId) {
+        userCourseNotificationSettingPresetRepository.deleteAllByCourseId(courseId);
     }
 
     private void deleteLecturesOfCourse(Course course) {
@@ -217,8 +225,8 @@ public class CourseDeletionService {
 
     private void deleteCompetenciesOfCourse(Course course) {
         competencyRelationApi.ifPresent(api -> api.deleteAllByCourseId(course.getId()));
-        prerequisitesApi.ifPresent(api -> api.deleteAll(course.getPrerequisites()));
-        competencyProgressApi.ifPresent(api -> api.deleteAll(course.getCompetencies()));
+        prerequisitesApi.ifPresent(api -> api.deleteAllByCourseId(course.getId()));
+        competencyProgressApi.ifPresent(api -> api.deleteAllByCourseId(course.getId()));
     }
 
     private void deleteFaqsOfCourse(Course course) {

@@ -24,12 +24,15 @@
     .draganddropcolor-question {
         background-color: var(--quiz-participation-footer-dnd-background) !important;
     }
+
     .multiplechoicecolor-question {
         background-color: var(--quiz-participation-footer-mc-background) !important;
     }
+
     .shortanswercolor-question {
         background-color: var(--quiz-participation-footer-sa-background) !important;
     }
+
     .changed-question {
         background-color: var(--quiz-participation-footer-changed-background) !important;
     }
@@ -78,11 +81,11 @@
     }
 }
 
-.in-parentheses:before {
+.in-parentheses::before {
     content: '(';
 }
 
-.in-parentheses:after {
+.in-parentheses::after {
     content: ')';
 }
 
@@ -96,6 +99,7 @@
         display: none;
     }
 }
+
 .show-mobile {
     @media (min-width: 700px) {
         display: none;
@@ -135,8 +139,9 @@
     border-radius: 15px;
     border-spacing: 5px;
     padding: 6px 0;
+
     &.btn-light {
-        border-color: #ffffff;
+        border-color: #fff;
     }
 
     @media (max-width: 990px) {
@@ -145,6 +150,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+
         .fa {
             font-size: 10px;
         }
@@ -156,6 +162,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+
         .fa {
             font-size: 6px;
         }
@@ -169,6 +176,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+
         .fa {
             font-size: 10px;
         }

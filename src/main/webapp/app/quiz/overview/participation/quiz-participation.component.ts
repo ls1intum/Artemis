@@ -1,8 +1,9 @@
-import { Component, OnDestroy, OnInit, inject, viewChildren } from '@angular/core';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { Component, ElementRef, OnDestroy, OnInit, effect, inject, viewChild, viewChildren } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import dayjs from 'dayjs/esm';
-import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription, combineLatest, of, take } from 'rxjs';
+import { Subscription, combineLatest, map, of, take } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -11,7 +12,6 @@ import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multi
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { TranslateService } from '@ngx-translate/core';
-import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -26,7 +26,7 @@ import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
-import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
@@ -46,6 +46,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
 @Component({
     selector: 'jhi-quiz',
@@ -79,7 +80,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private quizService = inject(ArtemisQuizService);
     private serverDateService = inject(ArtemisServerDateService);
+    private breakpointObserver = inject(BreakpointObserver);
 
+    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -95,6 +98,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly dndQuestionComponents = viewChildren(DragAndDropQuestionComponent);
 
     readonly shortAnswerQuestionComponents = viewChildren(ShortAnswerQuestionComponent);
+
+    quizHeader = viewChild<ElementRef>('quizHeader');
+    stepWizard = viewChild<ElementRef>('stepWizard');
 
     private routeAndDataSubscription: Subscription;
 
@@ -136,7 +142,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     endDate: dayjs.Dayjs | undefined;
     password = '';
     previousRunning = false;
-    isMobile = false;
     isManagementView = false;
 
     /**
@@ -155,15 +160,19 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }, 2000);
 
     // Icons
-    faSync = faSync;
-    faCircleNotch = faCircleNotch;
+    protected readonly faSync = faSync;
+    protected readonly faCircleNotch = faCircleNotch;
 
     constructor() {
-        smoothscroll.polyfill();
+        effect(() => {
+            if (this.quizHeader() && this.stepWizard()) {
+                const headerHeight = this.quizHeader()!.nativeElement.offsetHeight;
+                this.stepWizard()!.nativeElement.style.top = `${headerHeight}px`;
+            }
+        });
     }
 
     ngOnInit() {
-        this.isMobile = isMobile(window.navigator.userAgent).any;
         // set correct mode
         this.routeAndDataSubscription = combineLatest([this.route.data, this.route.params, this.route.parent?.parent?.params ?? of({ courseId: undefined })]).subscribe(
             ([data, params, parentParams]) => {
@@ -961,6 +970,15 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
     }
 
+    private highlightQuestion(questionIndex: number) {
+        const questionToBeHighlighted: QuizQuestion | undefined = this.quizExercise.quizQuestions ? this.quizExercise.quizQuestions[questionIndex] : undefined;
+        if (!questionToBeHighlighted) {
+            return;
+        }
+
+        addTemporaryHighlightToQuestion(questionToBeHighlighted);
+    }
+
     /**
      * TODO this is duplicated with {@link QuizExamSubmissionComponent#navigateToQuestion}, extract to a shared component
      *
@@ -968,11 +986,18 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @param questionIndex
      */
     navigateToQuestion(questionIndex: number): void {
-        document.getElementById('question' + questionIndex)!.scrollIntoView({
+        const questionElement = document.getElementById('question' + questionIndex);
+        if (!questionElement) {
+            captureException('navigateToQuestion: element not found for index ' + questionIndex);
+            return;
+        }
+        questionElement.scrollIntoView({
             behavior: 'smooth',
-            block: 'nearest',
+            block: 'center',
             inline: 'start',
         });
+
+        this.highlightQuestion(questionIndex);
     }
 
     /**

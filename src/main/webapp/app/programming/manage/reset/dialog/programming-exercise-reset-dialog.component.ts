@@ -51,8 +51,6 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
 
         this.resetInProgress = false;
         this.programmingExerciseResetOptions = {
-            deleteBuildPlans: false,
-            deleteRepositories: false,
             deleteParticipationsSubmissionsAndResults: false,
             recreateBuildPlans: false,
         };
@@ -72,11 +70,6 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     resetProgrammingExercise() {
         if (!this.programmingExercise.id) {
             return;
-        }
-
-        if (this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults) {
-            this.programmingExerciseResetOptions.deleteBuildPlans = true;
-            this.programmingExerciseResetOptions.deleteRepositories = true;
         }
 
         this.resetInProgress = true;

@@ -1,237 +1,238 @@
 {
-    "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-    "version": 1,
-    "newProjectRoot": "projects",
-    "projects": {
-        "artemis": {
-            "projectType": "application",
-            "schematics": {
-                "@schematics/angular:component": {
-                    "style": "scss"
-                },
-                "@schematics/angular:application": {
-                    "strict": true
-                }
-            },
-            "root": "",
-            "sourceRoot": "src/main/webapp",
-            "prefix": "jhi",
-            "architect": {
-                "build": {
-                    "builder": "@angular/build:application",
-                    "options": {
-                        "allowedCommonJsDependencies": [
-                            "@vscode/markdown-it-katex",
-                            "clone-deep",
-                            "crypto-js",
-                            "crypto",
-                            "dagre",
-                            "dayjs/locale/de",
-                            "dompurify",
-                            "emoji-js",
-                            "export-to-csv",
-                            "graphemer",
-                            "hoist-non-react-statics",
-                            "interactjs",
-                            "is-mobile",
-                            "js-video-url-parser",
-                            "jszip",
-                            "localforage",
-                            "markdown-it-highlightjs",
-                            "mobile-drag-drop",
-                            "papaparse",
-                            "pako",
-                            "pepjs",
-                            "prop-types",
-                            "react",
-                            "react-dom",
-                            "react-dom/client",
-                            "react-is",
-                            "rfdc",
-                            "shallowequal",
-                            "markdown-it-class",
-                            "smoothscroll-polyfill",
-                            "use-sync-external-store/shim",
-                            "use-sync-external-store/shim/with-selector",
-                            "webcola",
-                            "webstomp-client"
-                        ],
-                        "outputPath": {
-                            "base": "build/resources/main/static/",
-                            "browser": ""
-                        },
-                        "loader": {
-                            ".ttf": "file"
-                        },
-                        "index": "src/main/webapp/index.html",
-                        "browser": "src/main/webapp/app/app.main.ts",
-                        "polyfills": [
-                            "src/main/webapp/app/polyfills.ts",
-                            "@angular/localize/init"
-                        ],
-                        "tsConfig": "tsconfig.json",
-                        "inlineStyleLanguage": "scss",
-                        "stylePreprocessorOptions": {
-                            "includePaths": [
-                                "."
-                            ]
-                        },
-                        "assets": [
-                            "src/main/webapp/content",
-                            "src/main/webapp/logo/favicon.svg",
-                            "src/main/webapp/manifest.webapp",
-                            "src/main/webapp/robots.txt",
-                            "src/main/webapp/logo/android-chrome-192x192.png",
-                            "src/main/webapp/logo/android-chrome-512x512.png",
-                            "src/main/webapp/logo/apple-touch-icon.png",
-                            "src/main/webapp/browserconfig.xml",
-                            "src/main/webapp/logo/favicon.ico",
-                            "src/main/webapp/logo/favicon-16x16.png",
-                            "src/main/webapp/logo/favicon-32x32.png",
-                            "src/main/webapp/logo/mstile-70x70.png",
-                            "src/main/webapp/logo/mstile-144x144.png",
-                            "src/main/webapp/logo/mstile-150x150.png",
-                            "src/main/webapp/logo/mstile-310x150.png",
-                            "src/main/webapp/logo/mstile-310x310.png",
-                            "src/main/webapp/logo/safari-pinned-tab.svg",
-                            "src/main/webapp/i18n",
-                            {
-                                "glob": "*.{js,css,html,png}",
-                                "input": "./node_modules/swagger-ui-dist",
-                                "output": "swagger-ui",
-                                "ignore": [
-                                    "**/index.html"
-                                ]
-                            },
-                            {
-                                "glob": "axios.min.js",
-                                "input": "./node_modules/axios/dist",
-                                "output": "swagger-ui"
-                            },
-                            {
-                                "glob": "**/*",
-                                "input": "src/main/webapp/swagger-ui/",
-                                "output": "swagger-ui"
-                            },
-                            {
-                                "glob": "**/*",
-                                "input": "./node_modules/monaco-editor/bundles/vs",
-                                "output": "vs"
-                            }
-                        ],
-                        "styles": [
-                            "src/main/webapp/content/scss/themes/theme-default.scss",
-                            {
-                                "bundleName": "theme-dark",
-                                "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
-                                "inject": false
-                            },
-                            "node_modules/monaco-editor/min/vs/editor/editor.main.css",
-                            "node_modules/video.js/dist/video-js.css"
-                        ],
-                        "scripts": []
-                    },
-                    "configurations": {
-                        "production": {
-                            "optimization": {
-                                "scripts": true,
-                                "styles": {
-                                    "minify": true,
-                                    "inlineCritical": true
-                                },
-                                "fonts": true
-                            },
-                            "outputHashing": "all",
-                            "sourceMap": {
-                                "scripts": true,
-                                "styles": false,
-                                "hidden": false,
-                                "vendor": false
-                            },
-                            "namedChunks": true,
-                            "aot": true,
-                            "extractLicenses": false,
-                            "serviceWorker": "src/main/webapp/ngsw-config.json",
-                            "statsJson": false,
-                            "budgets": [
-                                {
-                                    "type": "initial",
-                                    "maximumWarning": "2.5mb",
-                                    "maximumError": "4.8mb"
-                                },
-                                {
-                                    "type": "anyComponentStyle",
-                                    "maximumWarning": "1mb",
-                                    "maximumError": "1.6mb"
-                                }
-                            ],
-                            "fileReplacements": [
-                                {
-                                    "replace": "src/main/webapp/app/core/environments/environment.ts",
-                                    "with": "src/main/webapp/app/core/environments/environment.override.ts"
-                                }
-                            ]
-                        },
-                        "development": {
-                            "optimization": false,
-                            "extractLicenses": false,
-                            "sourceMap": true,
-                            "namedChunks": true,
-                            "fileReplacements": [
-                                {
-                                    "replace": "src/main/webapp/app/core/environments/environment.ts",
-                                    "with": "src/main/webapp/app/core/environments/environment.override.ts"
-                                }
-                            ]
-                        }
-                    },
-                    "defaultConfiguration": "production"
-                },
-                "serve": {
-                    "builder": "@angular/build:dev-server",
-                    "options": {
-                        "buildTarget": "artemis:build:development",
-                        "proxyConfig": "proxy.conf.mjs",
-                        "port": 9000
-                    },
-                    "configurations": {
-                        "production": {
-                            "buildTarget": "artemis:build:production"
-                        },
-                        "development": {
-                            "buildTarget": "artemis:build:development"
-                        }
-                    },
-                    "defaultConfiguration": "development"
-                },
-                "test": {
-                    "builder": "@angular-builders/jest:run",
-                    "options": {
-                        "configPath": "jest.config.js"
-                    }
-                },
-                "lint": {
-                    "builder": "@angular-eslint/builder:lint",
-                    "options": {
-                        "lintFilePatterns": [
-                            "src/main/webapp/**/*.ts",
-                            "src/main/webapp/**/*.html"
-                        ]
-                    }
-                }
-            }
-        }
-    },
-    "cli": {
-        "analytics": false,
-        "packageManager": "npm",
-        "cache": {
-            "enabled": true,
-            "path": "./build/angular/",
-            "environment": "all"
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "artemis": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
         },
-        "schematicCollections": [
-            "@angular-eslint/schematics"
-        ]
+        "@schematics/angular:application": {
+          "strict": true
+        }
+      },
+      "root": "",
+      "sourceRoot": "src/main/webapp",
+      "prefix": "jhi",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+              "allowedCommonJsDependencies": [
+                  "@vscode/markdown-it-katex",
+                  "classnames",
+                  "clone-deep",
+                  "crypto",
+                  "dagre",
+                  "dayjs/locale/de",
+                  "dompurify",
+                  "emoji-js",
+                  "export-to-csv",
+                  "graphemer",
+                  "hoist-non-react-statics",
+                  "interactjs",
+                  "is-mobile",
+                  "js-video-url-parser",
+                  "jszip",
+                  "localforage",
+                  "markdown-it-highlightjs",
+                  "papaparse",
+                  "pako",
+                  "pepjs",
+                  "prop-types",
+                  "react",
+                  "react-dom",
+                  "react-dom/client",
+                  "react-is",
+                  "rfdc",
+                  "shallowequal",
+                  "markdown-it-class",
+                  "use-sync-external-store/shim",
+                  "use-sync-external-store/shim/with-selector",
+                  "webcola",
+                  "webstomp-client"
+            ],
+            "outputPath": {
+                "base": "build/resources/main/static/",
+                "browser": ""
+            },
+            "loader": {
+                ".ttf": "file"
+            },
+            "index": "src/main/webapp/index.html",
+            "browser": "src/main/webapp/app/app.main.ts",
+            "polyfills": [
+                "src/main/webapp/app/polyfills.ts",
+                "@angular/localize/init"
+            ],
+            "tsConfig": "tsconfig.json",
+            "inlineStyleLanguage": "scss",
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "."
+              ],
+              "sass": {
+                "silenceDeprecations": ["mixed-decls", "color-functions", "global-builtin", "import"]
+              }
+            },
+            "assets": [
+              "src/main/webapp/content",
+              "src/main/webapp/logo/favicon.svg",
+              "src/main/webapp/manifest.webapp",
+              "src/main/webapp/robots.txt",
+              "src/main/webapp/logo/android-chrome-192x192.png",
+              "src/main/webapp/logo/android-chrome-512x512.png",
+              "src/main/webapp/logo/apple-touch-icon.png",
+              "src/main/webapp/browserconfig.xml",
+              "src/main/webapp/logo/favicon.ico",
+              "src/main/webapp/logo/favicon-16x16.png",
+              "src/main/webapp/logo/favicon-32x32.png",
+              "src/main/webapp/logo/mstile-70x70.png",
+              "src/main/webapp/logo/mstile-144x144.png",
+              "src/main/webapp/logo/mstile-150x150.png",
+              "src/main/webapp/logo/mstile-310x150.png",
+              "src/main/webapp/logo/mstile-310x310.png",
+              "src/main/webapp/logo/safari-pinned-tab.svg",
+              "src/main/webapp/i18n",
+              {
+                "glob": "*.{js,css,html,png}",
+                "input": "./node_modules/swagger-ui-dist",
+                "output": "swagger-ui",
+                "ignore": [
+                  "**/index.html"
+                ]
+              },
+              {
+                "glob": "axios.min.js",
+                "input": "./node_modules/axios/dist",
+                "output": "swagger-ui"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/main/webapp/swagger-ui/",
+                "output": "swagger-ui"
+              },
+              {
+                "glob": "**/*",
+                "input": "./node_modules/monaco-editor/bundles/vs",
+                "output": "vs"
+              }
+            ],
+            "styles": [
+              "src/main/webapp/content/scss/themes/theme-default.scss",
+              {
+                "bundleName": "theme-dark",
+                "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
+                "inject": false
+              },
+              "node_modules/monaco-editor/min/vs/editor/editor.main.css",
+                "node_modules/video.js/dist/video-js.css"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": true
+                },
+                "fonts": true
+              },
+              "outputHashing": "all",
+              "sourceMap": {
+                "scripts": true,
+                "styles": false,
+                "hidden": false,
+                "vendor": false
+              },
+              "namedChunks": true,
+              "aot": true,
+              "extractLicenses": false,
+              "serviceWorker": "src/main/webapp/ngsw-config.json",
+              "statsJson": false,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2.5mb",
+                  "maximumError": "4.8mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "1mb",
+                  "maximumError": "1.6mb"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/main/webapp/app/core/environments/environment.ts",
+                  "with": "src/main/webapp/app/core/environments/environment.override.ts"
+                }
+              ]
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/main/webapp/app/core/environments/environment.ts",
+                  "with": "src/main/webapp/app/core/environments/environment.override.ts"
+                }
+              ]
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "artemis:build:development",
+            "proxyConfig": "proxy.conf.mjs",
+            "port": 9000
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "artemis:build:production"
+            },
+            "development": {
+              "buildTarget": "artemis:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular-builders/jest:run",
+          "options": {
+            "configPath": "jest.config.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/main/webapp/**/*.ts",
+              "src/main/webapp/**/*.html"
+            ]
+          }
+        }
+      }
     }
+  },
+  "cli": {
+    "analytics": false,
+    "packageManager": "npm",
+    "cache": {
+      "enabled": true,
+      "path": "./build/angular/",
+      "environment": "all"
+    },
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
+  }
 }

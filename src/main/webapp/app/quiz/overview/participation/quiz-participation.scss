@@ -1,3 +1,5 @@
+@use 'src/main/webapp/content/scss/themes/default-variables';
+
 .dnd-question,
 .mc-question,
 .sa-question {
@@ -79,5 +81,26 @@
         @media (max-width: 575.98px) {
             max-width: 200px !important;
         }
+    }
+}
+
+.question-highlight {
+    animation: highlightPulse 1.5s ease-in-out;
+}
+
+@keyframes highlightPulse {
+    0% {
+        background-color: transparent;
+        box-shadow: 0 0 0 0 transparentize(default-variables.$primary, 0.4);
+    }
+
+    50% {
+        background-color: transparentize(default-variables.$primary, 0.8);
+        box-shadow: 0 0 0 4px transparentize(default-variables.$primary, 0.6);
+    }
+
+    100% {
+        background-color: transparent;
+        box-shadow: 0 0 0 4px transparentize(default-variables.$primary, 0.4);
     }
 }

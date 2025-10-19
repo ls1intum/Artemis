@@ -3,12 +3,16 @@ package de.tum.cit.aet.artemis.atlas.dto;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PROFILE_VALUE;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LearnerProfileDTO(long id, int feedbackAlternativeStandard, int feedbackFollowupSummary, int feedbackBriefDetailed) {
+public record LearnerProfileDTO(long id, @Min(MIN_PROFILE_VALUE) @Max(MAX_PROFILE_VALUE) int feedbackDetail, @Min(MIN_PROFILE_VALUE) @Max(MAX_PROFILE_VALUE) int feedbackFormality,
+        boolean hasSetupFeedbackPreferences) {
 
     /**
      * Creates LearnerProfileDTO from given LearnerProfile.
@@ -17,11 +21,11 @@ public record LearnerProfileDTO(long id, int feedbackAlternativeStandard, int fe
      * @return LearnerProfile DTO for transfer
      */
     public static LearnerProfileDTO of(LearnerProfile learnerProfile) {
-        if (learnerProfile == null) {
+        if (learnerProfile == null || learnerProfile.getId() == null) {
             return null;
         }
-        return new LearnerProfileDTO(learnerProfile.getId(), clamp(learnerProfile.getFeedbackAlternativeStandard()), clamp(learnerProfile.getFeedbackFollowupSummary()),
-                clamp(learnerProfile.getFeedbackBriefDetailed()));
+        return new LearnerProfileDTO(learnerProfile.getId(), clamp(learnerProfile.getFeedbackDetail()), clamp(learnerProfile.getFeedbackFormality()),
+                learnerProfile.hasSetupFeedbackPreferences());
     }
 
     /**

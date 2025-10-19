@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/core/user/settings/learner-profile/learner-profile-api.service';
@@ -8,7 +8,8 @@ import { NgClass } from '@angular/common';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { LearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/learner-profile-dto.model';
 import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
-import { ALTERNATIVE_STANDARD_OPTIONS, BRIEF_DETAILED_OPTIONS, FOLLOWUP_SUMMARY_OPTIONS } from 'app/core/user/settings/learner-profile/entities/learner-profile-options.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { FeedbackOnboardingModalComponent } from 'app/core/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-onboarding-modal.component';
 
 @Component({
     selector: 'jhi-feedback-learner-profile',
@@ -19,34 +20,45 @@ import { ALTERNATIVE_STANDARD_OPTIONS, BRIEF_DETAILED_OPTIONS, FOLLOWUP_SUMMARY_
 export class FeedbackLearnerProfileComponent implements OnInit {
     private alertService = inject(AlertService);
     private learnerProfileAPIService = inject(LearnerProfileApiService);
+    private modalService = inject(NgbModal);
     protected translateService = inject(TranslateService);
 
     /** Signal containing the learner profile for the current user */
     public readonly learnerProfile = signal<LearnerProfileDTO | undefined>(undefined);
 
+    /** Computed signal indicating whether the profile is set up */
+    public readonly isProfileSetup = computed(() => {
+        const profile = this.learnerProfile();
+        return !!profile && profile.hasSetupFeedbackPreferences === true;
+    });
+
     /** Flag indicating whether the profile editing is disabled */
     disabled = true;
+
+    openOnboardingModal() {
+        const modalRef = this.modalService.open(FeedbackOnboardingModalComponent, { size: 'lg' });
+        modalRef.result.then(() => {
+            this.loadProfile();
+        });
+    }
 
     /**
      * Options mapped from shared options with translated labels.
      */
-    protected readonly feedbackAlternativeStandardOptions = ALTERNATIVE_STANDARD_OPTIONS.map((option) => ({
-        label: this.translateService.instant(option.translationKey),
-        value: option.level,
-    }));
-    protected readonly feedbackFollowupSummaryOptions = FOLLOWUP_SUMMARY_OPTIONS.map((option) => ({
-        label: this.translateService.instant(option.translationKey),
-        value: option.level,
-    }));
-    protected readonly feedbackBriefDetailedOptions = BRIEF_DETAILED_OPTIONS.map((option) => ({
-        label: this.translateService.instant(option.translationKey),
-        value: option.level,
-    }));
+    protected readonly feedbackDetailOptions = [
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.brief'), value: 1 },
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.neutral'), value: 2 },
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.detailed'), value: 3 },
+    ];
+    protected readonly feedbackFormalityOptions = [
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.formal'), value: 1 },
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.neutral'), value: 2 },
+        { label: this.translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.friendly'), value: 3 },
+    ];
 
     /** Signals for learner profile settings */
-    feedbackAlternativeStandard = signal<number>(LearnerProfileDTO.DEFAULT_VALUE);
-    feedbackFollowupSummary = signal<number>(LearnerProfileDTO.DEFAULT_VALUE);
-    feedbackBriefDetailed = signal<number>(LearnerProfileDTO.DEFAULT_VALUE);
+    feedbackDetail = signal<number | undefined>(undefined);
+    feedbackFormality = signal<number | undefined>(undefined);
 
     /** Icon for save button */
     protected readonly faSave = faSave;
@@ -66,7 +78,12 @@ export class FeedbackLearnerProfileComponent implements OnInit {
             this.disabled = false;
             this.updateProfileValues(profile);
         } catch (error) {
-            this.handleError(error);
+            if (error instanceof HttpErrorResponse && error.status === 404) {
+                this.disabled = true;
+                this.learnerProfile.set(undefined);
+            } else {
+                this.handleError(error);
+            }
         }
     }
 
@@ -75,14 +92,13 @@ export class FeedbackLearnerProfileComponent implements OnInit {
      * @param learnerProfile - The learner profile containing the values to update
      */
     private updateProfileValues(learnerProfile: LearnerProfileDTO): void {
-        this.feedbackAlternativeStandard.set(learnerProfile.feedbackAlternativeStandard);
-        this.feedbackFollowupSummary.set(learnerProfile.feedbackFollowupSummary);
-        this.feedbackBriefDetailed.set(learnerProfile.feedbackBriefDetailed);
+        this.feedbackDetail.set(learnerProfile.feedbackDetail ?? undefined);
+        this.feedbackFormality.set(learnerProfile.feedbackFormality ?? undefined);
     }
 
     /**
      * Handles toggle change events for profile settings.
-     * Updates the profile in the backend when any setting is changed.
+     * Updates the profile in the server when any setting is changed.
      */
     async onToggleChange(): Promise<void> {
         const profile = this.learnerProfile();
@@ -92,9 +108,8 @@ export class FeedbackLearnerProfileComponent implements OnInit {
 
         const updatedProfile = new LearnerProfileDTO({
             id: profile.id,
-            feedbackAlternativeStandard: this.feedbackAlternativeStandard(),
-            feedbackFollowupSummary: this.feedbackFollowupSummary(),
-            feedbackBriefDetailed: this.feedbackBriefDetailed(),
+            feedbackDetail: this.feedbackDetail(),
+            feedbackFormality: this.feedbackFormality(),
         });
 
         try {

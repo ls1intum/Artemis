@@ -1,5 +1,7 @@
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { NgClass } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -32,18 +34,15 @@ import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conv
 import { defaultFirstLayerDialogOptions, defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
-import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { PageType, SortDirection } from 'app/communication/metis.util';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from, take, takeUntil } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
@@ -151,15 +150,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private metisService = inject(MetisService);
     private courseOverviewService = inject(CourseOverviewService);
     private modalService = inject(NgbModal);
-    private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
     private eventManager = inject(EventManager);
+    private breakpointObserver = inject(BreakpointObserver);
+
+    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
+        initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),
+    });
 
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;
     private openSidebarEventSubscription: Subscription;
     private toggleSidebarEventSubscription: Subscription;
-    private breakpointSubscription: Subscription;
     course = signal<Course | undefined>(undefined);
     isLoading = false;
     isServiceSetUp = false;
@@ -173,9 +175,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     accordionConversationGroups: AccordionGroups;
     sidebarConversations: SidebarCardElement[] = [];
     isCollapsed = false;
-    isProduction = true;
-    isTestServer = false;
-    isMobile = false;
     focusPostId: number | undefined = undefined;
     openThreadOnFocus = false;
     selectedSavedPostStatus: undefined | SavedPostStatus = undefined;
@@ -204,9 +203,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     createChannelFn?: (channel: ChannelDTO) => Observable<never>;
     channelActions$ = new EventEmitter<ChannelAction>();
 
-    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
-    private layoutService: LayoutService = inject(LayoutService);
-    private changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
+    private courseSidebarService = inject(CourseSidebarService);
+    private changeDetector = inject(ChangeDetectorRef);
 
     getAsChannel = getAsChannelDTO;
 
@@ -241,11 +239,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.course.set(this.getParentCourse());
         this.isManagementView = this.router.url.includes('course-management');
-        this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
-
-        this.breakpointSubscription = this.layoutService.subscribeToLayoutChanges().subscribe(() => {
-            this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
-        });
 
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
             this.setIsCollapsed(true);
@@ -259,7 +252,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             this.toggleSidebar();
         });
 
-        if (!this.isMobile) {
+        if (!this.isMobile()) {
             if (this.courseOverviewService.getSidebarCollapseStateFromStorage('conversation')) {
                 this.courseSidebarService.openSidebar();
             } else {
@@ -304,9 +297,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
             this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
         });
-
-        this.isProduction = this.profileService.isProduction();
-        this.isTestServer = this.profileService.isTestServer();
     }
 
     performChannelAction(channelAction: ChannelAction) {
@@ -325,7 +315,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     subscribeToQueryParameter() {
-        this.activatedRoute.queryParams.pipe(take(1), takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
+        this.activatedRoute.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
             // NOTE: queryParams.conversationId can either be a number or a string according to SavedPostStatus
             if (queryParams.conversationId) {
                 if (
@@ -383,14 +373,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.openSidebarEventSubscription?.unsubscribe();
         this.closeSidebarEventSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
-        this.breakpointSubscription?.unsubscribe();
     }
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             const previousConversation = this.activeConversation;
             this.activeConversation = conversation;
-            if (this.isMobile && conversation && previousConversation?.id !== conversation.id) {
+            if (this.isMobile() && conversation && previousConversation?.id !== conversation.id) {
                 this.courseSidebarService.closeSidebar();
             }
             this.updateQueryParameters();
@@ -440,7 +429,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onSearch(searchInfo: ConversationGlobalSearchConfig) {
-        if (this.isMobile) {
+        if (this.isMobile()) {
             const isSearchNonEmpty = searchInfo?.searchTerm || searchInfo?.selectedConversations.length > 0 || searchInfo?.selectedAuthors.length > 0;
             if (isSearchNonEmpty) {
                 this.courseSidebarService.closeSidebar();
@@ -532,7 +521,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     closeSidebarOnMobile() {
-        if (this.isMobile) {
+        if (this.isMobile()) {
             this.courseSidebarService.closeSidebar();
         }
     }

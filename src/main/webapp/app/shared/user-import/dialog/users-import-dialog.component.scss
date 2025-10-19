@@ -22,7 +22,7 @@ $error-bg-color: #f8d7da;
 .import-fail {
     position: relative;
 
-    &:nth-child(odd):before {
+    &:nth-child(odd)::before {
         content: '';
         pointer-events: none;
         position: absolute;
@@ -63,8 +63,8 @@ table.table.table-striped .import-fail {
         display: block;
     }
 
-    tbody > tr:after,
-    thead > tr:after {
+    tbody > tr::after,
+    thead > tr::after {
         content: ' ';
         display: block;
         visibility: hidden;

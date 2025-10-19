@@ -9,16 +9,7 @@ import org.eclipse.jgit.transport.PreUploadHook;
 import org.eclipse.jgit.transport.UploadPack;
 import org.springframework.http.HttpHeaders;
 
-public class LocalVCFetchPreUploadHook implements PreUploadHook {
-
-    private final LocalVCServletService localVCServletService;
-
-    private final HttpServletRequest request;
-
-    public LocalVCFetchPreUploadHook(LocalVCServletService localVCServletService, HttpServletRequest request) {
-        this.localVCServletService = localVCServletService;
-        this.request = request;
-    }
+public record LocalVCFetchPreUploadHook(LocalVCServletService localVCServletService, HttpServletRequest request) implements PreUploadHook {
 
     @Override
     public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int clientOffered) {

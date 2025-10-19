@@ -19,9 +19,8 @@ const mockCourseLearnerProfiles: CourseLearnerProfileDTO[] = [
 
 const mockLearnerProfile: LearnerProfileDTO = new LearnerProfileDTO({
     id: 1,
-    feedbackAlternativeStandard: 2,
-    feedbackFollowupSummary: 2,
-    feedbackBriefDetailed: 2,
+    feedbackDetail: 2,
+    feedbackFormality: 2,
 });
 
 describe('LearnerProfileApiService', () => {
@@ -79,9 +78,8 @@ describe('LearnerProfileApiService', () => {
     it('should update learner profile', async () => {
         const updatedProfile = new LearnerProfileDTO({
             id: 1,
-            feedbackAlternativeStandard: 3,
-            feedbackFollowupSummary: 1,
-            feedbackBriefDetailed: 2,
+            feedbackDetail: 3,
+            feedbackFormality: 1,
         });
         const promise = service.putUpdatedLearnerProfile(updatedProfile);
         const req = httpMock.expectOne('api/atlas/learner-profile');

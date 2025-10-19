@@ -6,7 +6,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
-import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
+import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { take } from 'rxjs/operators';
@@ -23,7 +23,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     styleUrl: './build-job-statistics.component.scss',
 })
 export class BuildJobStatisticsComponent implements OnInit {
-    private buildQueueService = inject(BuildQueueService);
+    private buildQueueService = inject(BuildOverviewService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
 

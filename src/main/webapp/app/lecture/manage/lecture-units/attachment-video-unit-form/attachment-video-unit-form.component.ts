@@ -14,7 +14,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { HttpClient } from '@angular/common/http';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 
 export interface AttachmentVideoUnitFormData {
@@ -109,17 +108,7 @@ function validJsonOrEmpty(control: AbstractControl): ValidationErrors | null {
 @Component({
     selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
-    imports: [
-        FormsModule,
-        ReactiveFormsModule,
-        TranslateDirective,
-        FaIconComponent,
-        NgbTooltip,
-        FormDateTimePickerComponent,
-        CompetencySelectionComponent,
-        ArtemisTranslatePipe,
-        ButtonComponent,
-    ],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
 })
 export class AttachmentVideoUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;

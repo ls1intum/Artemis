@@ -113,7 +113,7 @@ class CourseTest {
                 Arguments.of(createCourse(pastTimeStamp1, futureTimeStamp2, futureTimeStamp1, pastTimeStamp2), true),
                 Arguments.of(createCourse(null, null, pastTimeStamp2, futureTimeStamp1), true),
                 Arguments.of(createCourse(futureTimeStamp2, pastTimeStamp1, pastTimeStamp2, futureTimeStamp1), true),
-                Arguments.of(createCourse(pastTimeStamp2, futureTimeStamp2, pastTimeStamp1, futureTimeStamp1), true),
+                Arguments.of(createCourse(pastTimeStamp2, futureTimeStamp2, pastTimeStamp1, futureTimeStamp1), false), // enrollment start can be after course start
                 Arguments.of(createCourse(pastTimeStamp1, futureTimeStamp1, pastTimeStamp2, futureTimeStamp2), true));
     }
 

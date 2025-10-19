@@ -204,7 +204,7 @@ public class GradeStepResource {
             gradeStep.setGradeName(gradingScale.getPlagiarismGradeOrDefault());
         }
         else {
-            gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
+            gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale);
         }
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradingScale.getGradeType());
         return ResponseEntity.ok(gradeDTO);
@@ -236,7 +236,7 @@ public class GradeStepResource {
         else if (!isInstructor && !exam.resultsPublished()) {
             throw new AccessForbiddenException();
         }
-        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get().getId());
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get());
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradeStep.getGradingScale().getGradeType());
         return ResponseEntity.ok(gradeDTO);
     }

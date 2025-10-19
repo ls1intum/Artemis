@@ -82,7 +82,7 @@ concurrency:
 env:
   CI: true
   node: 24
-  java: 21
+  java: 25
 
 jobs:
 
@@ -90,20 +90,20 @@ jobs:
     name: Build .war artifact
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '${{ env.node }}'
           cache: 'npm'
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
           cache: 'gradle'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
       - name: Production Build
         run: ./gradlew -Pprod -Pwar clean bootWar
       - name: Upload Artifact
@@ -125,7 +125,7 @@ jobs:
   docker:
     name: Build and Push Docker Image
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
-    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.0
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.1
     with:
       # Checkout pull request HEAD commit instead of merge commit to include the correct branch and git information inside the build
       # Or use the push event ref name

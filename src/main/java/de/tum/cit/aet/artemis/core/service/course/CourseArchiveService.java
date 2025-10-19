@@ -157,7 +157,7 @@ public class CourseArchiveService {
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
         exercisesToCleanup.forEach(exercise -> {
             if (exercise instanceof ProgrammingExercise) {
-                exerciseDeletionService.cleanup(exercise.getId(), true);
+                exerciseDeletionService.cleanup(exercise.getId());
             }
         });
 

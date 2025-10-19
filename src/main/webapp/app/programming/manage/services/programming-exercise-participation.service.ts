@@ -135,14 +135,6 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
             }),
         );
     }
-    /**
-     * Get the repository files with content for a given participation id at a specific commit hash.
-     * The current user needs to be at least a instructor in the course of the participation.
-     * @param participationId of the participation to get the commit infos for
-     */
-    retrieveCommitsInfoForParticipation(participationId: number): Observable<CommitInfo[]> {
-        return this.http.get<CommitInfo[]>(`${this.resourceUrlParticipations}${participationId}/commits-info`);
-    }
 
     /**
      * Get the vcs access log for a given participation id.
@@ -187,7 +179,6 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     /**
      * Get the commit history for a specific auxiliary repository
      * @param exerciseId                the exercise the repository belongs to
-     * @param repositoryType            the repositories type
      * @param auxiliaryRepositoryId     the id of the repository
      */
     retrieveCommitHistoryForAuxiliaryRepository(exerciseId: number, auxiliaryRepositoryId: number): Observable<CommitInfo[]> {

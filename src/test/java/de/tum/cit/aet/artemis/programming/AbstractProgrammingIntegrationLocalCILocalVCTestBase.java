@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
+import de.tum.cit.aet.artemis.programming.service.localci.LocalCIMissingJobService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIResultService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
@@ -111,6 +112,9 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @Autowired
     protected LocalCITriggerService localCITriggerService;
+
+    @Autowired
+    protected LocalCIMissingJobService localCIMissingJobService;
 
     @Autowired
     protected ParticipationVcsAccessTokenService participationVcsAccessTokenService;

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20250920163252-add-courseid-quiz-question-progress" author="MoritzSpengler">
+        <addColumn tableName="quiz_question_progress">
+            <column name="course_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20250920163252-populate-courseid-quiz-question-progress" author="MoritzSpengler">
+        <comment>Populate course_id for existing entries</comment>
+        <sql>
+            UPDATE quiz_question_progress qqp
+            SET course_id = (
+                SELECT e.course_id
+                FROM quiz_question qq
+                         JOIN exercise e ON qq.exercise_id = e.id
+                WHERE qq.id = qqp.quiz_question_id
+            )
+            WHERE qqp.course_id IS NULL;
+        </sql>
+    </changeSet>
+
+    <changeSet id="20250920163252-set-not-null-courseid-quiz-question-progress-and-foreign-key" author="MoritzSpengler">
+        <addNotNullConstraint tableName="quiz_question_progress"
+                              columnName="course_id"
+                              columnDataType="bigint"/>
+
+        <addForeignKeyConstraint
+                baseTableName="quiz_question_progress"
+                baseColumnNames="course_id"
+                referencedTableName="course"
+                referencedColumnNames="id"
+                constraintName="fk_quiz_question_progress_course"
+                onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>

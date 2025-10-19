@@ -1,12 +1,18 @@
 .gitignore
 api.base.service.ts
+api/hyperionReviewAndRefineApi.service.ts
 api/tutorialGroupApi.service.ts
 api/tutorialGroupFreePeriodApi.service.ts
 api/tutorialGroupSessionApi.service.ts
 configuration.ts
 encoder.ts
+model/artifactLocation.ts
 model/channel.ts
+model/consistencyCheckResponse.ts
+model/consistencyIssue.ts
 model/conversationUser.ts
+model/problemStatementRewriteRequest.ts
+model/problemStatementRewriteResponse.ts
 model/student.ts
 model/studentExport.ts
 model/tutorialGroupExport.ts
@@ -16,4 +22,5 @@ model/tutorialGroupSessionRequest.ts
 model/tutorialGroupStatus.ts
 model/tutorialGroupUpdate.ts
 param.ts
+provide-api.ts
 variables.ts

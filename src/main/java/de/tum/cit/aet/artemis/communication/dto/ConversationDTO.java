@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
     @JsonSubTypes.Type(value = ChannelDTO.class, name = "channel"),
 })
 // @formatter:on
+// TODO: convert to record / interface
 public class ConversationDTO {
 
     /**

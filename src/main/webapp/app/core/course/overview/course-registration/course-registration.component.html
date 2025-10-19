@@ -1,4 +1,4 @@
-<div>
+<div class="p-3 mx-3 module-bg rounded rounded-3">
     <h3 jhiTranslate="artemisApp.studentDashboard.enroll.title"></h3>
     <div class="col-12 mb-3">
         <input type="text" class="form-control" [(ngModel)]="searchTermString" (input)="applySearch()" [placeholder]="'artemisApp.course.searchForCourse' | artemisTranslate" />
@@ -51,7 +51,7 @@
     @if (loading && !coursesToSelect) {
         <div class="col-12 col-sm-auto d-flex justify-content-center">
             <div class="spinner-border" role="status">
-                <span class="sr-only" jhiTranslate="artemisApp.studentDashboard.enroll.coursesLoading"></span>
+                <span class="visually-hidden" jhiTranslate="artemisApp.studentDashboard.enroll.coursesLoading"></span>
             </div>
         </div>
     }

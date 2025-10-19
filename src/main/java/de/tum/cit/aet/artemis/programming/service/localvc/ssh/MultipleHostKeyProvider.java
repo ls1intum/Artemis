@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.apache.sshd.common.NamedResource;
 import org.apache.sshd.common.session.SessionContext;
@@ -46,7 +45,7 @@ public class MultipleHostKeyProvider extends AbstractGeneratorHostKeyProvider {
         var keys = new ArrayList<KeyPair>();
 
         try (var stream = Files.list(path)) {
-            stream.filter(Objects::nonNull).forEach(file -> {
+            stream.forEach(file -> {
                 try {
                     // Read a single key pair in the directory
                     Iterable<KeyPair> ids = readKeyPairs(session, file, IoUtils.EMPTY_OPEN_OPTIONS);

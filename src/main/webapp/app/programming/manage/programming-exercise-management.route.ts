@@ -5,7 +5,10 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
-import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
+import {
+    CodeEditorTutorAssessmentContainerComponent,
+    canLeaveCodeEditorTutorAssessmentContainer,
+} from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
 
 export const routes: Routes = [
     {
@@ -134,5 +137,6 @@ export const routes: Routes = [
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
+        canDeactivate: [canLeaveCodeEditorTutorAssessmentContainer],
     },
 ];

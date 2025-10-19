@@ -46,6 +46,13 @@ public class RoundingUtil {
         return (float) roundToNDecimalPlaces(number, 1);
     }
 
+    /**
+     * Rounds a number to the specified number of decimal places after the decimal symbol
+     *
+     * @param number                The number to round
+     * @param numberOfDecimalPlaces The number of decimal places to round to
+     * @return The rounded number
+     */
     public static double roundToNDecimalPlaces(double number, int numberOfDecimalPlaces) {
         return new BigDecimal(String.valueOf(number)).setScale(numberOfDecimalPlaces, RoundingMode.HALF_UP).doubleValue();
     }

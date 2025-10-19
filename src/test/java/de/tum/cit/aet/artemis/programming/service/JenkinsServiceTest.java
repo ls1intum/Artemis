@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
@@ -42,7 +43,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVCTes
      */
     @BeforeEach
     void initTestCase() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         continuousIntegrationTestService.setup(TEST_PREFIX, this, continuousIntegrationService);
     }
 
@@ -189,21 +190,9 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVCTes
         jenkinsRequestMockProvider.mockDeleteBuildPlanPlain(projectKey, templateJobName);
         jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
         jenkinsRequestMockProvider.mockGetJobPlain(projectKey, templateJobName, dummyJob);
-        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
-        jenkinsRequestMockProvider.mockGetJobConfigPlain(projectKey, templateJobName);
-        jenkinsRequestMockProvider.mockUpdatePlanConfigPlain(projectKey, templateJobName);
-        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
-        jenkinsRequestMockProvider.mockGetFolderConfigPlain(projectKey);
-        jenkinsRequestMockProvider.mockUpdateFolderConfigPlain(projectKey);
         jenkinsRequestMockProvider.mockTriggerBuildPlain(projectKey, templateJobName);
         jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
         jenkinsRequestMockProvider.mockGetJobPlain(projectKey, solutionJobName, dummyJob);
-        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
-        jenkinsRequestMockProvider.mockGetJobConfigPlain(projectKey, solutionJobName);
-        jenkinsRequestMockProvider.mockUpdatePlanConfigPlain(projectKey, solutionJobName);
-        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
-        jenkinsRequestMockProvider.mockGetFolderConfigPlain(projectKey);
-        jenkinsRequestMockProvider.mockUpdateFolderConfigPlain(projectKey);
         jenkinsRequestMockProvider.mockTriggerBuildPlain(projectKey, solutionJobName);
 
         continuousIntegrationService.recreateBuildPlansForExercise(programmingExercise);
@@ -289,9 +278,9 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVCTes
         targetExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(buildConfigTarget));
         targetExercise = programmingExerciseRepository.save(targetExercise);
 
-        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), "");
+        jenkinsRequestMockProvider.mockCopyBuildPlanFromTemplate(sourceExercise.getProjectKey(), targetExercise.getProjectKey(), BuildPlanType.TEMPLATE.getName());
 
-        continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);
+        continuousIntegrationService.copyBuildPlan(sourceExercise, BuildPlanType.TEMPLATE.getName(), targetExercise, "", BuildPlanType.TEMPLATE.getName(), true);
         BuildPlan sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(sourceExercise.getId());
         BuildPlan targetBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(targetExercise.getId());
         assertThat(sourceBuildPlan).isEqualTo(targetBuildPlan);

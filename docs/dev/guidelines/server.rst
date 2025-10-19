@@ -1,16 +1,32 @@
-******
-Server
-******
+******************
+Server Development
+******************
 
-0. Folder structure
-===================
+General Best Practices
+======================
 
-The main application is stored under ``/src/main``. It is separated into modules with the following main folders:
+* Always use the least possible access level; prefer private over public (package-private or protected can be used as well).
+* Avoid using ``@Transactional`` randomly. Transactions can hurt performance, introduce locking/concurrency issues, and add complexity. See: https://codete.com/blog/5-common-spring-transactional-pitfalls/
+* Define a constant if the same value is used more than once. This makes future changes easier.
+* Facilitate code reuse. Move duplicated code to reusable methods. Use Generics where appropriate. IntelliJ can help find and extract duplicates.
+* Always qualify a static class member reference with its class name, not with a reference or expression of that class's type.
+* Prefer primitive types to classes (e.g. ``long`` instead of ``Long``).
+* Use ``./gradlew spotlessCheck`` and ``./gradlew spotlessApply`` to check and fix Java code style.
+* Don't use ``.collect(Collectors.toList())``. Use ``.toList()`` for an unmodifiable list or ``.collect(Collectors.toCollection(ArrayList::new))`` for a new ArrayList.
 
-* resources - script, config files and templates are stored here.
+
+1. Project structure & Naming
+=============================
+
+1.1. Folder structure
+---------------------
+
+The main application is stored under ``/src/main`` and separated into modules:
+
+* resources - scripts, config files and templates.
     * config - different configurations (production, development, etc.) for application.
         * liquibase - contains ``master.xml`` file where all the changelogs from the changelog folder are specified.
-                      When you want to do some changes to the database, you will need to add a new changelog file here.
+                      When you want to do changes to the database, you will need to add a new changelog file here.
                       To understand how to create new changelog file you can check existing changelog files or read documentation: https://www.liquibase.org/documentation/databasechangelog.html.
 * java - Artemis Spring Boot application is located here. It contains the following folders:
     * config - different classes for configuring database, Sentry, Liquibase, etc.
@@ -23,8 +39,8 @@ The main application is stored under ``/src/main``. It is separated into modules
     * **service** - represents the controller of the server application. Add the application logic here. Retrieve and change objects using repositories.
     * **web** - contains REST and websocket controllers that act as the view of the server application. Validate input and security here, but do not include complex application logic. For websockets, use the ``MessagingTemplate`` to push small data to the client or to notify the client about events.
 
-1. Naming convention
-====================
+1.2. Naming convention
+----------------------
 
 All methods and classes should use camelCase style. The only difference: the first letter of any class should be capitalized. Most importantly, use intention-revealing, pronounceable names.
 Variable names should also use camelCase style, where the first letter should be lowercase. For constants, i.e. arguments with the ``static final`` keywords, use all uppercase letters with underscores to separate words: SCREAMING_SNAKE_CASE.
@@ -48,23 +64,27 @@ Example:
         }
     }
 
-2. Single responsibility principle
-==================================
+
+2. Code Organization & Principles
+=================================
+
+2.1. Single responsibility principle
+------------------------------------
 
 One class and one method should be responsible for only one action, it should do it well and do nothing else. Reduce coupling, if the method does two or three different things at a time then we should consider splitting the functionality.
 
-3. Small methods
-================
+2.2. Small methods
+------------------
 
 There is no standard pattern for method length among the developers. Someone can say 5, in some cases even 20 lines of code is okay. Just try to make methods as small as possible.
 
-4. Duplication
-==============
+2.3. Duplication
+----------------
 
 Avoid code duplication. If we cannot reuse a method elsewhere, then the method is probably bad and we should consider a better way to write this method. Use Abstraction to abstract common things in one place.
 
-5. Variables and methods declaration
-====================================
+2.4. Variables and methods declaration
+--------------------------------------
 
 * Encapsulate the code you feel might change in future.
 * Make variables and methods private by default and increase access step by step by changing them from a private to package-private or protected first and not public right away.
@@ -76,8 +96,8 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
     * Types which share similar functionality but require different handling should also be explicitly stated, e.g. Lists and Sets.
     * Variable types which are untypically long and would decrease readability when writing can be shortened with ``var`` (e.g. custom DTOs).
 
-6. Structure your code correctly
-================================
+2.5. Structure your code correctly
+----------------------------------
 
 * Default packages are not allowed. It can cause particular problems for Spring Boot applications that use the ``@ComponentScan``, ``@EntityScan`` or ``@SpringBootApplication`` annotations since every class from every jar is read.
 * All variables in the class should be declared at the top of the class.
@@ -85,8 +105,28 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 * Methods should be declared in the same order as they are used (from top to bottom).
 * More important methods should be declared at the top of a class and minor methods at the end.
 
-7. Database
-===========
+2.6. Comments
+-------------
+
+* Add JavaDoc and inline comments to clarify code and intent.
+* Use AI tools to assist, but always review for accuracy.
+* Comments should be in English and add value.
+
+2.7. Keep it simple and stupid
+------------------------------
+
+* Don't write complex code.
+* Don't write code when you are tired or in a bad mood.
+* Optimization vs Readability: always write code that is simple to read and which will be understandable for developers. Because the time and resources spent on hard-to-read code cost much more than what we gain through optimization.
+* Commit messages should describe both what the commit changes and how it does it.
+* ARCHITECTURE FIRST: writing code without thinking of the system's architecture is useless, in the same way as dreaming about your desires without a plan of achieving them.
+
+
+3. Database & Persistence
+=========================
+
+3.1. Database
+-------------
 
 * Write performant queries that can also deal with more than 1000 objects in a reasonable time.
 * Prefer one query that fetches additional data instead of many small queries, but don't overdo it. A good rule of thumb is to query not more than 3 associations at the same time.
@@ -95,18 +135,117 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 * Simple datatypes: immediately think about whether ``null`` should be supported as additional state or not. In most cases it is preferable to avoid ``null``.
 * Use ``Datetime`` instead of ``Timestamp``. ``Datetime`` occupies more storage space compared to ``Timestamp``, however it covers a greater date range that justifies its use in the long run. Always use ``datetime(3)``
 
-8. Comments
-===========
+For detailed database guidelines, please refer to the :doc:`./database` page.
 
-Always add JavaDoc and inline comments to help other developers better understand the code and the rationale behind it. ChatGPT can be a great help. It can generate comments for you, but you should always check them and adjust them to your needs. Prefer more extensive comments and documentation and avoid useless and non sense documentation. Comments should always be in English.
+3.2. File handling
+------------------
 
-9. Utility
-==========
+* Never use operating system (OS) specific file paths such as "test/test". Always use OS independent paths.
+* Do not deal with File.separator manually. Instead use the Path.of(firstPart, secondPart, ...) method which deals with separators automatically.
+* Existing paths can easily be appended with a new folder using ``existingPath.resolve(subfolder)``
+
+3.3. Proper annotation of SQL query parameters
+----------------------------------------------
+
+Query parameters for SQL must be annotated with ``@Param("variable")``!
+
+Do **not** write
+
+.. code-block:: java
+
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacks(Long resultId);
+
+but instead annotate the parameter with @Param:
+
+.. code-block:: java
+
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
+
+The string name inside must match the name of the variable exactly!
+
+3.4. SQL statement formatting
+-----------------------------
+
+We prefer to write SQL statements all in upper case. Split queries onto multiple lines using the Java Text Blocks notation (triple quotation mark):
+
+.. code-block:: java
+
+    @Query("""
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
+
+3.5. Do NOT use Sub-queries
+---------------------------
+
+SQL statements which do not contain sub-queries are preferable as they are more readable and have a better performance.
+So instead of:
+
+.. code-block:: java
+
+    @Query("""
+            SELECT COUNT (DISTINCT p)
+            FROM StudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND EXISTS (SELECT s
+                    FROM Submission s
+                    WHERE s.participation.id = p.id
+                        AND s.submitted = TRUE
+                    )
+            """)
+    long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
+
+
+you should use:
+
+.. code-block:: java
+
+    @Query("""
+            SELECT COUNT (DISTINCT p)
+            FROM StudentParticipation p
+                JOIN p.submissions s
+            WHERE p.exercise.id = :exerciseId
+                AND s.submitted = TRUE
+            """)
+    long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
+
+Functionally both queries extract the same result set, but the first one is less efficient as the sub-query is calculated for each StudentParticipation.
+
+3.6. Criteria Builder
+---------------------
+
+The Criteria Builder is a powerful feature in JPA/Hibernate that allows you to construct type-safe, dynamic queries in Java code, rather than using string-based JPQL or SQL.
+Use Criteria Builder when you need to build queries dynamically at runtime, require type safety, or want to avoid hardcoding query strings.
+It is especially useful for complex search/filtering scenarios where query structure depends on user input or other runtime conditions.
+
+For more details, please visit the :doc:`./criteria-builder` page.
+
+
+4. Utility & Configuration
+==========================
+
+4.1. Utility
+------------
 
 Utility methods can and should be placed in a class named for specific functionality, not "miscellaneous stuff related to project". Most of the time, our static methods belong in a related class.
 
-10. Auto configuration
-======================
+4.2. Auto configuration
+-----------------------
 
 Spring Boot favors Java-based configuration.
 Although it is possible to use Sprint Boot with XML sources, it is generally not recommended.
@@ -115,8 +254,19 @@ The ``@Import`` annotation can be used to import additional configuration classe
 One of the flagship features of Spring Boot is its use of Auto-configuration. This is the part of Spring Boot that makes your code simply work.
 It gets activated when a particular jar file is detected on the classpath. The simplest way to make use of it is to rely on the Spring Boot Starters.
 
-11. Keep your ``@RestController``’s clean and focused
-=====================================================
+4.3. Dependency injection
+-------------------------
+
+* Some of you may argue with this, but by favoring constructor injection you can keep your business logic free from Spring. Not only is the @Autowired annotation optional on constructors, you also get the benefit of being able to easily instantiate your bean without Spring.
+* Use setter based DI only for optional dependencies.
+* Avoid circular dependencies, try constructor and setter based DI for such cases.
+
+
+5. REST API & Controllers
+=========================
+
+5.1. Keep your ``@RestController``’s clean and focused
+------------------------------------------------------
 
 * RestControllers should be stateless.
 * RestControllers are by default singletons.
@@ -157,16 +307,16 @@ Additional notes on the controller methods:
 
 .. _server-guideline-dto-usage:
 
-12. Use DTOs for Efficient Data Transfer
-========================================
+5.2. Use DTOs for Efficient Data Transfer
+-----------------------------------------
 
 Purpose of DTOs
----------------
+^^^^^^^^^^^^^^^
 
 Data Transfer Objects (DTOs) are pivotal in the efficient transfer of data from the server to the client, specifically for the responses from RestControllers and messages via WebSocket. These objects are designed to streamline the data exchange process by ensuring data is immutable, relevant, and precisely tailored to the needs of the client application.
 
 Guidelines for Implementing DTOs
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1. **Immutable Java Records**: Implement DTOs as Java records to guarantee immutability. While Java records preclude inheritance, resulting in potential duplication, this is considered acceptable in the context of DTOs to ensure data integrity and simplicity.
 
@@ -179,7 +329,7 @@ Guidelines for Implementing DTOs
 5. **Simplicity over complexity**: Refrain from embedding methods or business logic within DTOs. Their role is to serve as straightforward data carriers without additional functionalities that could complicate their structure or purpose.
 
 Implications of Not Using DTOs
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Neglecting the use of DTOs can lead to the transmission of excessive or irrelevant data to clients. This not only imposes unnecessary strain on network and system resources but also heightens the risk of exposing sensitive information leading to data privacy issues. A typical example is a direct message chat application where, in the absence of DTOs, a single message might inadvertently include excessive metadata, user details, or other unintended information:
 
@@ -294,169 +444,8 @@ This is a good example for a DTO, because it only contains very little informati
 
     public record GradeDTO(String gradeName, Boolean isPassingGrade, GradeType gradeType) {}
 
-13. Dependency injection
-========================
-
-* Some of you may argue with this, but by favoring constructor injection you can keep your business logic free from Spring. Not only is the @Autowired annotation optional on constructors, you also get the benefit of being able to easily instantiate your bean without Spring.
-* Use setter based DI only for optional dependencies.
-* Avoid circular dependencies, try constructor and setter based DI for such cases.
-
-14. Keep it simple and stupid
-=============================
-
-* Don't write complex code.
-* Don't write code when you are tired or in a bad mood.
-* Optimization vs Readability: always write code that is simple to read and which will be understandable for developers. Because the time and resources spent on hard-to-read code cost much more than what we gain through optimization
-* Commit messages should describe both what the commit changes and how it does it.
-* ARCHITECTURE FIRST: writing code without thinking of the system's architecture is useless, in the same way as dreaming about your desires without a plan of achieving them.
-
-15. File handling
-=================
-
-* Never use operating system (OS) specific file paths such as "test/test". Always use OS independent paths.
-* Do not deal with File.separator manually. Instead use the Path.of(firstPart, secondPart, ...) method which deals with separators automatically.
-* Existing paths can easily be appended with a new folder using ``existingPath.resolve(subfolder)``
-
-16. General best practices
-==========================
-
-* Always use the least possible access level, prefer using private over public access modifier (package-private or protected can be used as well).
-* Previously we used transactions very randomly, now we want to avoid using ``Transactional``. Transactions can kill performance, introduce locking issues and database concurrency problems, and add complexity to our application. Good read: https://codete.com/blog/5-common-spring-transactional-pitfalls/
-* Define a constant if the same value is used more than once. Constants allow you to change code later a lot easier. Instead of looking for the places where this variable was used, you only need to change it in only one place.
-* Facilitate code reuse. Always move duplicated code to reusable methods. IntelliJ is very good at suggesting duplicated lines and even automatically extracting them. Also don't be shy to use Generics.
-* Always qualify a static class member reference with its class name and not with a reference or expression of that class's type.
-* Prefer using primitive types to classes, e.g. ``long`` instead of ``Long``.
-* Use ``./gradlew spotlessCheck`` and ``./gradlew spotlessApply`` to check Java code style and to automatically fix it.
-* Don't use ``.collect(Collectors.toList())``. Instead use only ``.toList()`` for an unmodifiable list or ``.collect(Collectors.toCollection(ArrayList::new))`` to explicitly create a new ArrayList.
-
-17. Avoid service dependencies
-==============================
-
-In order to achieve low coupling and high cohesion, services should have as few dependencies on other services as possible:
-
-* Avoid cyclic and redirectional dependencies
-* Do not break the dependency cycle manually or by using `@Lazy`
-* Move simple service methods into the repository as ``default`` methods
-
-An example for a simple method is finding a single entity by ID:
-
-.. code-block:: java
-
-    default Course findByIdWithLecturesElseThrow(long courseId) {
-        return getValueElseThrow(findWithEagerLecturesById(courseId), courseId);
-    }
-
-
-This approach has several benefits:
-
-* Repositories don't have further dependencies (they are facades for the database), therefore there are no cycles
-* We don't need to check for an ``EntityNotFoundException`` in the service since we throw in the repository already
-* The "ElseThrow" suffix at the end of the method name makes the behavior clear to outside callers
-
-In general everything changing small database objects can go into the repository. More complex operations have to be done in the service.
-
-Another approach is moving objects into the domain classes, but be aware that you need to add ``@JsonIgnore`` where necessary:
-
-.. code-block:: java
-
-    @JsonIgnore
-    default boolean isLocked() {
-        if (this instanceof ProgrammingExerciseStudentParticipation) {
-            [...]
-        }
-        return false;
-    }
-
-18. Proper annotation of SQL query parameters
-=============================================
-
-Query parameters for SQL must be annotated with ``@Param("variable")``!
-
-Do **not** write
-
-.. code-block:: java
-
-    @Query("""
-            SELECT r
-            FROM Result r
-                LEFT JOIN FETCH r.feedbacks
-            WHERE r.id = :resultId
-            """)
-    Optional<Result> findByIdWithEagerFeedbacks(Long resultId);
-
-but instead annotate the parameter with @Param:
-
-.. code-block:: java
-
-    @Query("""
-            SELECT r
-            FROM Result r
-                LEFT JOIN FETCH r.feedbacks
-            WHERE r.id = :resultId
-            """)
-    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
-
-The string name inside must match the name of the variable exactly!
-
-19. SQL statement formatting
-============================
-
-We prefer to write SQL statements all in upper case. Split queries onto multiple lines using the Java Text Blocks notation (triple quotation mark):
-
-.. code-block:: java
-
-    @Query("""
-            SELECT r
-            FROM Result r
-                LEFT JOIN FETCH r.feedbacks
-            WHERE r.id = :resultId
-            """)
-    Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
-
-20. Do NOT use Sub-queries
-==========================
-
-SQL statements which do not contain sub-queries are preferable as they are more readable and have a better performance.
-So instead of:
-
-.. code-block:: java
-
-    @Query("""
-            SELECT COUNT (DISTINCT p)
-            FROM StudentParticipation p
-            WHERE p.exercise.id = :exerciseId
-                AND EXISTS (SELECT s
-                    FROM Submission s
-                    WHERE s.participation.id = p.id
-                        AND s.submitted = TRUE
-                    )
-            """)
-    long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
-
-
-you should use:
-
-.. code-block:: java
-
-    @Query("""
-            SELECT COUNT (DISTINCT p)
-            FROM StudentParticipation p
-                JOIN p.submissions s
-            WHERE p.exercise.id = :exerciseId
-                AND s.submitted = TRUE
-            """)
-    long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
-
-Functionally both queries extract the same result set, but the first one is less efficient as the sub-query is calculated for each StudentParticipation.
-
-21. Criteria Builder
-==================================================
-
-For more details, please visit the :doc:`./criteria-builder` page.
-
-
-22. REST endpoint best practices for authorization
-==================================================
+5.3. REST endpoint best practices for authorization
+---------------------------------------------------
 
 To reject unauthorized requests as early as possible, Artemis employs two solutions:
 
@@ -495,7 +484,7 @@ The table contains all annotations for the corresponding minimum role including 
 If, for some reason, you need to deviate from these rules, use ``@ManualConfig``. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
 
 Tool-Based Authorization Annotations
-------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 To enforce minimal access for external tools, Artemis provides an additional annotation ``@AllowedTools``.
 This annotation is used to restrict Tool Tokens to certain endpoints.
 A Tool Token is a normal jwt token with the claim ``"tools": "TOOLTYPE"`` specified.
@@ -536,7 +525,7 @@ For example, an endpoint that provides a Scorpio-specific (VSCode Extension) int
 
 
 Implicit pre- and post-authorization annotations
-------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following example makes the call only accessible to ADMIN and INSTRUCTOR users and then checks the access rights to the course in the database:
 
@@ -563,7 +552,7 @@ Instead, use the following annotation:
     }
 
 Explicit authorization checks
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 CAUTION: Be aware that this solution should be used only in those two cases:
     #. when you need to load user **AND** the resource anyway,
@@ -609,7 +598,49 @@ To reduce duplication, do not add explicit checks for authorization or existence
 The course repository call takes care of throwing a ``404 Not Found`` exception if there exists no matching course. The ``AuthorizationCheckService`` throws a ``403 Forbidden`` exception if the user with the given role is unauthorized. Afterwards delegate to a service or repository method. The code becomes much shorter, cleaner and more maintainable.
 
 
-22. JSON serialization and deserialization
-==========================================
+5.4. JSON serialization and deserialization
+-------------------------------------------
 
-Always use ObjectMapper (Jackson) and do not use other libraries. If you find code that relies on gson, please consider to migrate it to use ObjectMapper!
+Always use ObjectMapper (Jackson) and do not use other libraries.
+
+
+6. Service & Dependency Best Practices
+======================================
+
+6.1. Avoid service dependencies
+-------------------------------
+
+In order to achieve low coupling and high cohesion, services should have as few dependencies on other services as possible:
+
+* Avoid cyclic and redirectional dependencies
+* Do not break the dependency cycle manually or by using `@Lazy`
+* Move simple service methods into the repository as ``default`` methods
+
+An example for a simple method is finding a single entity by ID:
+
+.. code-block:: java
+
+    default Course findByIdWithLecturesElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerLecturesById(courseId), courseId);
+    }
+
+
+This approach has several benefits:
+
+* Repositories don't have further dependencies (they are facades for the database), therefore there are no cycles
+* We don't need to check for an ``EntityNotFoundException`` in the service since we throw in the repository already
+* The "ElseThrow" suffix at the end of the method name makes the behavior clear to outside callers
+
+In general everything changing small database objects can go into the repository. More complex operations have to be done in the service.
+
+Another approach is moving objects into the domain classes, but be aware that you need to add ``@JsonIgnore`` where necessary:
+
+.. code-block:: java
+
+    @JsonIgnore
+    default boolean isLocked() {
+        if (this instanceof ProgrammingExerciseStudentParticipation) {
+            [...]
+        }
+        return false;
+    }
