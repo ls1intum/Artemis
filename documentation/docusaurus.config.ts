@@ -3,7 +3,7 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-const GUIDELINES_REPOSITORY_URL = 'https://github.com/ls1intum/Artemis';
+const GUIDELINES_REPOSITORY_URL = 'https://github.com/ls1intum/Artemis/documentation';
 const PAGE_TITLE = 'Artemis Documentation';
 
 const config: Config = {
