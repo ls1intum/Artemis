@@ -196,7 +196,7 @@ const config: Config = {
                     ],
                 },
             ],
-            copyright: `© 2025 Technische Universität München – Built with ❤️ by the UI-UX Cross Project Team at Applied Education Technologies (AET)`,
+            copyright: `© 2025 Technische Universität München – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
         },
         prism: {
             theme: prismThemes.github,
