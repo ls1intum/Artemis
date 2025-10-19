@@ -33,4 +33,4 @@ npm run serve
 
 We are using GitHub pages to host the website.
 
-See [deploy-guidelines.yml](../.github/workflows/deploy-guidelines.yml) for the deployment configuration.
+See [deploy-documentation.yml](../.github/workflows/deploy-documentation.yml) for the deployment configuration.
