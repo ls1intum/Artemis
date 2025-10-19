@@ -264,8 +264,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      * When the content of a file changes, set it as unsaved.
      */
     onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
-        this.monacoEditor.addCommentBox(1, 'HIIIIIII');
-
         this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
         this.onFileChanged.emit();
     }

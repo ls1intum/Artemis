@@ -33,10 +33,10 @@ import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programmin
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ConsistencyCheck } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
-type InlineConsistencyIssue = { line: number; text: string };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
     selector: 'jhi-code-editor-monaco',
@@ -116,28 +116,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     readonly consistencyIssuesInternal = signal<ConsistencyIssue[]>([]);
 
-    readonly consistencyIssuesForSelectedFile = computed<InlineConsistencyIssue[]>(() => {
-        if (!this.selectedFile()) {
-            return [];
-        }
-
-        const result = [];
-
-        for (const issue of this.consistencyIssuesInternal()) {
-            for (const loc of issue.relatedLocations) {
-                // We want to remove the first part of e.g. template_repository/src/TEST/BubbleSort.java
-                // The same information is stored in loc.type
-                const repoPath = loc.filePath.split('/').slice(1).join('/');
-
-                if (repoPath === this.selectedFile()) {
-                    result.push({ line: loc.endLine, text: issue.description });
-                }
-            }
-        }
-
-        return result;
-    });
-
     /**
      * Attaches the line number & reference to a feedback item, or -1 if no line is available. This is used to disambiguate feedback items in the template, avoiding warnings.
      * @param feedback The feedback item to attach the line to.
@@ -164,7 +142,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         });
 
         effect(() => {
-            this.consistencyIssuesForSelectedFile();
+            this.consistencyIssuesInternal();
             this.renderFeedbackWidgets();
         });
     }
@@ -387,8 +365,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
             }
 
             // Readd inconsistency issue comments, because all widgets got removed
-            for (const issue of this.consistencyIssuesForSelectedFile()) {
-                this.addCommentBox(issue.line, issue.text);
+            for (const issue of ConsistencyCheck.issuesForSelectedFile(this.selectedFile(), this.consistencyIssuesInternal())) {
+                ConsistencyCheck.addCommentBox(this.editor(), issue.line, issue.text);
             }
         }, 0);
     }
@@ -434,18 +412,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
             return [];
         }
         return feedbacks.filter((feedback) => feedback.reference && Feedback.getReferenceFilePath(feedback) === this.selectedFile());
-    }
-
-    addCommentBox(lineNumber: number, text: string) {
-        const line = lineNumber - 1;
-
-        const node = document.createElement('div');
-        node.className = 'my-comment-widget';
-        node.innerText = text;
-
-        // Place box beneath the line
-        this.editor().addLineWidget(line, `comment-${line}`, node);
-        this.highlightLines(line, line);
     }
 
     /**

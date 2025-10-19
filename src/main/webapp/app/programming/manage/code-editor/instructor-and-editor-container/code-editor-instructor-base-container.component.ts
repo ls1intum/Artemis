@@ -21,7 +21,6 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
-
 /**
  * Enumeration specifying the loading state
  */

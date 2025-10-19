@@ -78,7 +78,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { ConsistencyCheck } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -114,7 +114,6 @@ const EXTERNAL_HEIGHT = 'external';
  */
 const BORDER_WIDTH_OFFSET = 3;
 const BORDER_HEIGHT_OFFSET = 2;
-type InlineConsistencyIssue = { line: number; text: string };
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
@@ -156,20 +155,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
 
     readonly consistencyIssuesInternal = signal<ConsistencyIssue[]>([]);
-
-    readonly consistencyIssuesForSelectedFile = computed<InlineConsistencyIssue[]>(() => {
-        const result = [];
-
-        for (const issue of this.consistencyIssuesInternal()) {
-            for (const loc of issue.relatedLocations) {
-                if (loc.filePath === 'problem_statement.md' || loc.filePath === '') {
-                    result.push({ line: loc.endLine, text: issue.description });
-                }
-            }
-        }
-
-        return result;
-    });
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
@@ -358,7 +343,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
 
         effect(() => {
-            this.consistencyIssuesForSelectedFile();
+            this.consistencyIssuesInternal();
             this.renderFeedbackWidgets();
         });
     }
@@ -373,8 +358,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.monacoEditor.disposeWidgets();
 
             // Readd inconsistency issue comments, because all widgets got removed
-            for (const issue of this.consistencyIssuesForSelectedFile()) {
-                this.addCommentBox(issue.line, issue.text);
+            for (const issue of ConsistencyCheck.issuesForSelectedFile('problem_statement.md', this.consistencyIssuesInternal())) {
+                ConsistencyCheck.addCommentBox(this.monacoEditor, issue.line, issue.text);
             }
         }, 0);
     }
@@ -715,21 +700,5 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onCloseButtonClick(): void {
         this.closeEditor.emit();
-    }
-
-    addCommentBox(lineNumber: number, text: string) {
-        const line = lineNumber - 1;
-
-        const node = document.createElement('div');
-        node.className = 'my-comment-widget';
-        node.innerText = text;
-
-        // Place box beneath the line
-        this.monacoEditor.addLineWidget(line, `comment-${line}`, node);
-        this.highlightLines(line, line);
-    }
-
-    highlightLines(startLine: number, endLine: number) {
-        this.monacoEditor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT);
     }
 }
