@@ -11,15 +11,17 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO;
+import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 
+@Conditional(NebulaEnabled.class)
 @Service
 @Lazy
 @Profile(PROFILE_CORE)
@@ -43,8 +45,16 @@ public class TumLiveService {
      * @return an optional playlist URL if found from the TUM Live API, or empty if not found or the URL is invalid
      */
     public Optional<String> getTumLivePlaylistLink(String videoUrl) {
-        if (!videoUrl.contains("tum.live") && !videoUrl.contains("rbg.tum.de")) {
-            log.debug("Not a TUM Live link: {}", videoUrl);
+        try {
+            String host = new URI(videoUrl).getHost();
+            boolean allowed = host != null && (host.equals("tum.live") || host.endsWith(".tum.live") || host.equals("rbg.tum.de") || host.endsWith(".rbg.tum.de"));
+            if (!allowed) {
+                log.debug("Not a TUM Live link: {}", videoUrl);
+                return Optional.empty();
+            }
+        }
+        catch (URISyntaxException e) {
+            log.warn("Malformed TUM Live URL: {}", videoUrl, e);
             return Optional.empty();
         }
 
@@ -55,9 +65,7 @@ public class TumLiveService {
         }
 
         try {
-            TumLivePlaylistDTO response = restClient.get().uri("/streams/{courseSlug}/{streamId}", info.courseSlug(), info.streamId()).retrieve()
-                    .body(new ParameterizedTypeReference<>() {
-                    });
+            TumLivePlaylistDTO response = restClient.get().uri("/streams/{courseSlug}/{streamId}", info.courseSlug(), info.streamId()).retrieve().body(TumLivePlaylistDTO.class);
 
             if (response.stream() != null && response.stream().playlistUrl() != null) {
                 return Optional.of(response.stream().playlistUrl());

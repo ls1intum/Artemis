@@ -52,7 +52,7 @@
             />
             <jhi-git-diff-line-stat
                 class="mt-1 fw-bold"
-                [hidden]="!allDiffsReady()"
+                [hidden]="!initialDiffsReady()"
                 [addedLineCount]="repositoryDiffInformation().totalLineChange.addedLineCount"
                 [removedLineCount]="repositoryDiffInformation().totalLineChange.removedLineCount"
                 ngbTooltip="{{
@@ -65,11 +65,11 @@
         </div>
     </div>
 </div>
-<div [hidden]="!allDiffsReady()">
+<div [hidden]="!initialDiffsReady()">
     @for (diffInformation of repositoryDiffInformation().diffInformations; track diffInformation) {
-        <div class="mt-2">
+        <div class="mt-2" #diffPanelContainer [attr.data-title]="diffInformation.title">
             <div ngbAccordion [destroyOnHide]="false" class="git-diff-file-panel">
-                <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="false">
+                <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="diffInformation.isCollapsed ?? false">
                     <div ngbAccordionHeader class="d-flex align-items-center justify-content-between">
                         <jhi-git-diff-file-panel-title [diffInformation]="diffInformation" />
                         <div>
@@ -83,7 +83,7 @@
                                     ) | artemisTranslate
                                 }}"
                             />
-                            <button ngbAccordionToggle class="btn ms-1">
+                            <button ngbAccordionToggle class="btn ms-1" (click)="onToggleClick(diffInformation.title, fileDiffPanel.collapsed)">
                                 <fa-icon [icon]="!fileDiffPanel.collapsed ? faAngleUp : faAngleDown" />
                             </button>
                         </div>
@@ -93,6 +93,7 @@
                             <jhi-git-diff-file
                                 [allowSplitView]="allowSplitView()"
                                 [diffInformation]="diffInformation"
+                                [loadContent]="diffInformation.loadContent ?? false"
                                 (onDiffReady)="handleDiffReady(diffInformation.title, $event)"
                             />
                         </div>
@@ -105,7 +106,7 @@
 <div class="d-flex w-100 justify-content-center align-items-center fs-4">
     @if (nothingToDisplay()) {
         <div class="text-secondary mt-3" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.empty"></div>
-    } @else if (!allDiffsReady()) {
+    } @else if (!initialDiffsReady()) {
         <div>
             <fa-icon [icon]="faSpinner" animation="spin" />
         </div>
