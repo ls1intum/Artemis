@@ -52,7 +52,7 @@ const mockResult: Result = {
     completionDate: dayjs().subtract(2, 'hours'),
     score: 85,
     rated: true,
-    submission: { id: 42, participation: mockParticipation },
+    submission: { id: 42 },
     feedbacks: [
         {
             id: 1,
@@ -206,6 +206,7 @@ describe('ResultComponent', () => {
 
     it('should navigate to text exercise details when exercise type is TEXT', () => {
         comp.exercise = { ...mockExercise, type: ExerciseType.TEXT };
+        comp.participation = mockParticipation;
         const navigateSpy = jest.spyOn(router, 'navigate');
         const courseId = 42;
         comp.showDetails(mockResult);
@@ -217,7 +218,7 @@ describe('ResultComponent', () => {
             'text-exercises',
             comp.exercise.id,
             'participate',
-            mockResult.submission!.participation?.id,
+            mockParticipation.id,
             'submission',
             mockResult.submission?.id,
         ]);

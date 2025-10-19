@@ -110,6 +110,13 @@
                 @if (unreadCount() > 0 && shouldDisplayUnreadCount()) {
                     <span class="unread-count me-n2">{{ formattedUnreadCount }}</span>
                 }
+                @let attendanceText = sidebarItem.attendanceText;
+                @let attendanceChipColor = sidebarItem.attendanceChipColor;
+                @if (attendanceText && attendanceChipColor) {
+                    <div class="attendance-chip" [style.background-color]="attendanceChipColor">
+                        {{ attendanceText }}
+                    </div>
+                }
             </div>
             <div class="d-flex justify-content-between align-items-baseline small" [ngClass]="{ 'mt-1': sidebarItem.subtitleLeft }">
                 <small class="me-2 text-truncate">
