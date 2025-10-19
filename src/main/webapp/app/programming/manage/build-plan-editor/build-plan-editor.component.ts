@@ -42,7 +42,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     buildPlan: BuildPlan | undefined;
 
     /**
-     * @function ngOnInit
      * Sets the exercise and corresponding build plan based on the exerciseId in the current URL.
      */
     ngOnInit(): void {
@@ -53,7 +52,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     }
 
     /**
-     * @function ngAfterViewInit
      * @desc Sets the theme and other editor options
      */
     ngAfterViewInit(): void {
@@ -104,7 +102,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     }
 
     /**
-     * @function submit
      * Replaces the initial build plan with the current content of the editor window, but only if a build plan is
      * currently loaded.
      */
@@ -120,12 +117,11 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     }
 
     /**
-     * @function onTextChanged
      * Replaces the build plan with the current text from the editor window.
      * @param event The text inside the editor window.
      */
-    onTextChanged(event: any) {
-        this.buildPlan!.buildPlan = event as string;
+    onTextChanged(event: { text: string; fileName: string }) {
+        this.buildPlan!.buildPlan = event.text;
     }
 
     /**
