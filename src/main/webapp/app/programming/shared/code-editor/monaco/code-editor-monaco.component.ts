@@ -80,6 +80,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     readonly isTutorAssessment = input<boolean>(false);
     readonly disableActions = input<boolean>(false);
     readonly selectedFile = input<string>();
+    readonly selectedRepository = input<string>();
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
 
@@ -366,7 +367,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
             // Readd inconsistency issue comments, because all widgets got removed
             for (const issue of ConsistencyCheck.issuesForSelectedFile(this.selectedFile(), this.consistencyIssuesInternal())) {
-                ConsistencyCheck.addCommentBox(this.editor(), issue.line, issue.text);
+                ConsistencyCheck.addCommentBox(this.editor(), issue);
             }
         }, 0);
     }
