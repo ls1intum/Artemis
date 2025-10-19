@@ -319,39 +319,47 @@ public class LectureService {
     }
 
     /**
-     * Derives calendar events from the given {@link LectureCalendarEventDTO}.
-     * <p>
-     * If only the start date or only the end date is available, a single event is created for that date.
-     * If both dates are available and the time span between them does not exceed 12 hours, a single event covering the entire period is created.
-     * Otherwise, two separate events are generated — one for the start date and one for the end date.
-     * <p>
-     * The events are only derived given that either the lecture represented by a DTO is visible to students or the logged-in user is a course
-     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     * Derives calendar events from the given {@link LectureCalendarEventDTO}. Expects at least one of startDate and endDate of the LectureCalendarEventDTO to be non-null-
      *
-     * @param dto           the dao from which to derive the event
-     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @param dto           the dto from which to derive the event
+     * @param userIsStudent indicates whether the logged-in user is a student of the course (hence no tutor, editor, instructor)
      * @param language      the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
+     * @throws IllegalArgumentException if both startDate and endDate of the LectureCalendarEventDTO are null
      * @return the derived event
      */
     private Set<CalendarEventDTO> deriveCalendarEventDTOs(LectureCalendarEventDTO dto, boolean userIsStudent, Language language) {
-        if (userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate())) {
-            return Set.of();
-        }
         ZonedDateTime startDate = dto.startDate();
         ZonedDateTime endDate = dto.endDate();
-        if (startDate == null && endDate != null) {
+
+        boolean noDatesAvailable = startDate == null && endDate == null;
+        if (noDatesAvailable) {
+            throw new IllegalArgumentException("Tried to derive CalendarEventDTOs from a LectureCalendarEventDTO without startDate and endDate.");
+        }
+
+        boolean lectureIsInvisible = userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate());
+        if (lectureIsInvisible) {
+            return Set.of();
+        }
+
+        boolean onlyEndDateAvailable = startDate == null && endDate != null;
+        if (onlyEndDateAvailable) {
             String titlePrefix = switch (language) {
                 case ENGLISH -> "End: ";
                 case GERMAN -> "Ende: ";
             };
             return Set.of(new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.endDate(), null, null, null));
         }
-        if (startDate != null && endDate == null) {
+
+        boolean onlyStartDateAvailable = startDate != null && endDate == null;
+        if (onlyStartDateAvailable) {
             String titlePrefix = "Start: ";
             return Set
                     .of(new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.startDate(), null, null, null));
         }
-        if (Duration.between(startDate, endDate).abs().toHours() > 12) {
+
+        final int TWELVE_HOURS_IN_MINUTES = 12 * 60;
+        boolean lectureLengthExceedsTwelveHours = Duration.between(startDate, endDate).abs().toMinutes() > TWELVE_HOURS_IN_MINUTES;
+        if (lectureLengthExceedsTwelveHours) {
             String startTitlePrefix = "Start: ";
             CalendarEventDTO startDto = new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, startTitlePrefix + dto.title(),
                     dto.startDate(), null, null, null);
@@ -363,6 +371,7 @@ public class LectureService {
                     null, null);
             return Set.of(startDto, endDto);
         }
+
         return Set.of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
     }
 }

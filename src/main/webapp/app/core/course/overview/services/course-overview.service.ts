@@ -335,25 +335,25 @@ export class CourseOverviewService {
         };
     }
 
-    private computeAttendanceChipData(tutorialGroup: TutorialGroup): [string?, number?] {
+    private computeAttendanceChipData(tutorialGroup: TutorialGroup): [attendanceText?: string, averageAttendanceRatio?: number] {
         const capacity = tutorialGroup.capacity;
-        if (capacity) {
-            let averageAttendanceRatio: number | undefined = undefined;
-            let attendanceText: string | undefined = undefined;
-            const sessionsWithAttendance =
-                tutorialGroup.tutorialGroupSessions?.filter((session) => session.attendanceCount !== undefined && session.attendanceCount !== null) ?? [];
-            if (sessionsWithAttendance.length !== 0) {
-                const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendanceCount!, 0) / sessionsWithAttendance.length;
-                averageAttendanceRatio = averageAttendance / capacity;
-                attendanceText = `Ø ${(averageAttendanceRatio * 100).toFixed(0)}%`;
+        if (capacity === undefined) {
+            return [undefined, undefined];
+        }
+        let averageAttendanceRatio: number | undefined = undefined;
+        let attendanceText: string | undefined = undefined;
+        const sessionsWithAttendance = tutorialGroup.tutorialGroupSessions?.filter((session) => session.attendanceCount !== undefined && session.attendanceCount !== null) ?? [];
+        if (sessionsWithAttendance.length !== 0) {
+            const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendanceCount!, 0) / sessionsWithAttendance.length;
+            averageAttendanceRatio = averageAttendance / capacity;
+            attendanceText = `Ø ${(averageAttendanceRatio * 100).toFixed(0)}%`;
+            return [attendanceText, averageAttendanceRatio];
+        } else {
+            const numberOfRegisteredUsers = tutorialGroup.numberOfRegisteredUsers;
+            if (numberOfRegisteredUsers) {
+                averageAttendanceRatio = numberOfRegisteredUsers / capacity;
+                attendanceText = numberOfRegisteredUsers + ' / ' + capacity;
                 return [attendanceText, averageAttendanceRatio];
-            } else {
-                const numberOfRegisteredUsers = tutorialGroup.numberOfRegisteredUsers;
-                if (numberOfRegisteredUsers) {
-                    averageAttendanceRatio = numberOfRegisteredUsers / capacity;
-                    attendanceText = numberOfRegisteredUsers + ' / ' + capacity;
-                    return [attendanceText, averageAttendanceRatio];
-                }
             }
         }
         return [undefined, undefined];
