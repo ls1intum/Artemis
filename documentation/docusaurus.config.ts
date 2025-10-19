@@ -80,6 +80,7 @@ const config: Config = {
                         path: 'docs/admin'
                     }
                 ],
+                hideSearchBarWithNoSearchContext: true,
             }),
         ],
     ],
