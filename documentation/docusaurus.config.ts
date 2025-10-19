@@ -190,7 +190,7 @@ const config: Config = {
                     title: 'More',
                     items: [
                         {
-                            label: 'GitHub - UI-UX Guidelines',
+                            label: 'GitHub - Artemis',
                             href: GUIDELINES_REPOSITORY_URL,
                         },
                         {
