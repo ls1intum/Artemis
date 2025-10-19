@@ -360,7 +360,7 @@ export class CourseOverviewService {
     }
 
     private computeAttendanceChipColor(averageAttendanceRatio?: number): string | undefined {
-        if (!averageAttendanceRatio) {
+        if (averageAttendanceRatio === undefined) {
             return undefined;
         }
         if (averageAttendanceRatio >= 0.9) {
