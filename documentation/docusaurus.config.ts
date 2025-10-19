@@ -46,28 +46,12 @@ const config: Config = {
             'classic',
             {
                 docs: false,
-                // docs: {
-                //     sidebarPath: './sidebars.ts',
-                //     // Remove this to remove the "edit this page" links.
-                //     editUrl: GUIDELINES_REPOSITORY_URL,
-                //     exclude: ['**/README.md'],
-                // },
                 theme: {
                     customCss: './src/css/custom.css',
                 },
             } satisfies Preset.Options,
         ],
     ],
-
-    // themes: [
-    //     [
-    //         require.resolve('@easyops-cn/docusaurus-search-local'),
-    //         {
-    //             hashed: true,
-    //             language: ['en'],
-    //         },
-    //     ],
-    // ],
 
     themes: [
         [
@@ -78,7 +62,6 @@ const config: Config = {
                 language: ['en'],
                 indexDocs: true,
                 docsRouteBasePath: ['docs/student', 'docs/instructor', 'docs/staff', 'docs/admin'],
-                // searchContextByPath: true,
                 searchContextByPaths: [
                     {
                         label: 'Student Guide',
@@ -106,10 +89,9 @@ const config: Config = {
         [
             '@docusaurus/plugin-content-docs',
             {
-                // id: 'guidelines', // Unique id for this instance
-                path: 'docs/student', // Source directory
-                routeBasePath: 'student', // URL base path
-                sidebarPath: './sidebarsGuidelines.ts', // Path to the sidebar file for this instance
+                path: 'docs/student',
+                routeBasePath: 'student',
+                sidebarPath: './sidebarsGuidelines.ts',
                 editUrl: GUIDELINES_REPOSITORY_URL,
                 exclude: ['**/README.md'],
             },
@@ -117,30 +99,30 @@ const config: Config = {
         [
             '@docusaurus/plugin-content-docs',
             {
-                id: 'instructor', // Unique id for this instance
-                path: 'docs/instructor', // Source directory
-                routeBasePath: 'instructor', // URL base path
-                sidebarPath: './sidebarsUserManual.ts', // A separate sidebar file
+                id: 'instructor',
+                path: 'docs/instructor',
+                routeBasePath: 'instructor',
+                sidebarPath: './sidebarsUserManual.ts',
                 editUrl: GUIDELINES_REPOSITORY_URL,
             },
         ],
         [
             '@docusaurus/plugin-content-docs',
             {
-                id: 'staff', // Unique id for this instance
-                path: 'docs/staff', // Source directory
-                routeBasePath: 'staff', // URL base path
-                sidebarPath: './sidebarsUserManual.ts', // A separate sidebar file
+                id: 'staff',
+                path: 'docs/staff',
+                routeBasePath: 'staff',
+                sidebarPath: './sidebarsUserManual.ts',
                 editUrl: GUIDELINES_REPOSITORY_URL,
             },
         ],
         [
             '@docusaurus/plugin-content-docs',
             {
-                id: 'admin', // Unique id for this instance
-                path: 'docs/admin', // Source directory
-                routeBasePath: 'admin', // URL base path
-                sidebarPath: './sidebarsUserManual.ts', // A separate sidebar file
+                id: 'admin',
+                path: 'docs/admin',
+                routeBasePath: 'admin',
+                sidebarPath: './sidebarsUserManual.ts',
                 editUrl: GUIDELINES_REPOSITORY_URL,
             },
         ],
