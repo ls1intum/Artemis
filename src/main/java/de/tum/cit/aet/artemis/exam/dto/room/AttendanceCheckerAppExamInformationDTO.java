@@ -46,10 +46,6 @@ record ExamRoomForAttendanceCheckerDTO(
 record ExamUserLocationDTO(
     @Nullable Long roomId,
     @NotBlank String roomNumber,  // examUser.plannedRoom if legacy version
-    @Nullable String roomAlternativeNumber,
-    @Nullable String roomName,
-    @Nullable String roomAlternativeName,
-    @Nullable String roomBuilding,
     @NotBlank String seatName  // examUser.plannedSeat if legacy version
 ) {
     static ExamUserLocationDTO plannedFrom(ExamUser examUser) {
@@ -58,28 +54,20 @@ record ExamUserLocationDTO(
         return new ExamUserLocationDTO(
             isLegacy ? null : examUser.getPlannedRoomTransient().getId(),
             isLegacy ? examUser.getPlannedRoom() : examUser.getPlannedRoomTransient().getRoomNumber(),
-            isLegacy ? null : examUser.getPlannedRoomTransient().getAlternativeRoomNumber(),
-            isLegacy ? null : examUser.getPlannedRoomTransient().getName(),
-            isLegacy ? null : examUser.getPlannedRoomTransient().getAlternativeName(),
-            isLegacy ? null : examUser.getPlannedRoomTransient().getBuilding(),
             isLegacy ? examUser.getPlannedSeat() : examUser.getPlannedSeatTransient().name()
         );
     }
 
     static ExamUserLocationDTO actualFrom(ExamUser examUser) {
-        if (examUser.getActualRoomTransient() == null || examUser.getActualSeatTransient() == null) {
+        final boolean isLegacy = examUser.getPlannedRoomTransient() == null || examUser.getPlannedSeatTransient() == null;
+
+        if (!isLegacy && (examUser.getActualRoomTransient() == null || examUser.getActualSeatTransient() == null)) {
             return null;
         }
-
-        final boolean isLegacy = examUser.getPlannedRoomTransient() == null || examUser.getPlannedSeatTransient() == null;
 
         return new ExamUserLocationDTO(
             isLegacy ? null : examUser.getActualRoomTransient().getId(),
             isLegacy ? examUser.getActualRoom() : examUser.getActualRoomTransient().getRoomNumber(),
-            isLegacy ? null : examUser.getActualRoomTransient().getAlternativeRoomNumber(),
-            isLegacy ? null : examUser.getActualRoomTransient().getName(),
-            isLegacy ? null : examUser.getActualRoomTransient().getAlternativeName(),
-            isLegacy ? null : examUser.getActualRoomTransient().getBuilding(),
             isLegacy ? examUser.getActualSeat() : examUser.getActualSeatTransient().name()
         );
     }
@@ -109,7 +97,7 @@ record ExamUserWithExamRoomAndSeatDTO (
             examUser.getUser().getLastName(),
             examUser.getUser().getRegistrationNumber(),
             examUser.getUser().getEmail(),
-            examUser.getUser().getImageUrl(),
+            examUser.getStudentImagePath(),
             examUser.getDidCheckImage(),
             examUser.getDidCheckName(),
             examUser.getDidCheckRegistrationNumber(),

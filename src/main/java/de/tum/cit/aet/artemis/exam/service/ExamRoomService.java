@@ -53,12 +53,9 @@ public class ExamRoomService {
 
     private final ObjectMapper objectMapper;
 
-    private final ExamUserRepository examUserRepository;
-
     public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper, ExamUserRepository examUserRepository) {
         this.examRoomRepository = examRoomRepository;
         this.objectMapper = objectMapper;
-        this.examUserRepository = examUserRepository;
     }
 
     /* Multiple records that will be used internally for Jackson deserialization */

@@ -225,7 +225,7 @@ export class ExamRoomsComponent {
         );
     }
 
-    private calculateExamRoomData() {
+    private calculateExamRoomData(): ExamRoomDTOExtended[] | undefined {
         return this.overview()?.newestUniqueExamRooms?.map(
             (examRoomDTO) =>
                 ({
