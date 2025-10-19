@@ -30,7 +30,7 @@ import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-ed
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange } from '../model/code-editor.model';
+import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheck } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
@@ -80,7 +80,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     readonly isTutorAssessment = input<boolean>(false);
     readonly disableActions = input<boolean>(false);
     readonly selectedFile = input<string>();
-    readonly selectedRepository = input<string>();
+    readonly selectedRepository = input<RepositoryType>();
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
 
@@ -366,7 +366,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             }
 
             // Readd inconsistency issue comments, because all widgets got removed
-            for (const issue of ConsistencyCheck.issuesForSelectedFile(this.selectedFile(), this.consistencyIssuesInternal())) {
+            for (const issue of ConsistencyCheck.issuesForSelectedFile(this.selectedFile(), this.selectedRepository(), this.consistencyIssuesInternal())) {
                 ConsistencyCheck.addCommentBox(this.editor(), issue);
             }
         }, 0);

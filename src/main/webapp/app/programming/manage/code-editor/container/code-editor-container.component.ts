@@ -14,6 +14,7 @@ import {
     FileType,
     PROBLEM_STATEMENT_IDENTIFIER,
     RenameFileChange,
+    RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -123,6 +124,15 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         this.selectedFileValue = file;
     }
 
+    private selectedRepositoryValue?: RepositoryType;
+    get selectedRepository(): RepositoryType | undefined {
+        return this.selectedRepositoryValue;
+    }
+
+    set selectedRepository(repository: RepositoryType | undefined) {
+        this.selectedRepositoryValue = repository;
+    }
+
     get problemStatementIdentifier(): string {
         return PROBLEM_STATEMENT_IDENTIFIER;
     }
@@ -195,6 +205,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      */
     initializeProperties = () => {
         this.selectedFile = undefined;
+        // I assume we always load into the Template Repo at the beginning
+        this.selectedRepository = RepositoryType.TEMPLATE;
         this.unsavedFiles = {};
         this.fileBadges = {};
         this.editorState = EditorState.CLEAN;

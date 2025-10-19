@@ -358,7 +358,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.monacoEditor.disposeWidgets();
 
             // Readd inconsistency issue comments, because all widgets got removed
-            for (const issue of ConsistencyCheck.issuesForSelectedFile('problem_statement.md', this.consistencyIssuesInternal())) {
+            for (const issue of ConsistencyCheck.issuesForSelectedFile('problem_statement.md', 'PROBLEM_STATEMENT', this.consistencyIssuesInternal())) {
                 ConsistencyCheck.addCommentBox(this.monacoEditor, issue);
             }
         }, 0);

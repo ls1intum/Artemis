@@ -5,6 +5,7 @@ import { WritableSignal } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 type InlineConsistencyIssue = {
     filePath: string;
@@ -40,8 +41,12 @@ export class ConsistencyCheck {
         editor.addLineWidget(issue.endLine, `comment-${issue.endLine}`, node);
     }
 
-    static issuesForSelectedFile(selectedFile: string | undefined, issues: ConsistencyIssue[]): InlineConsistencyIssue[] {
-        if (!selectedFile) {
+    static issuesForSelectedFile(
+        selectedFile: string | undefined,
+        selectedRepo: RepositoryType | 'PROBLEM_STATEMENT' | undefined,
+        issues: ConsistencyIssue[],
+    ): InlineConsistencyIssue[] {
+        if (!selectedFile || !selectedRepo) {
             return [];
         }
 
@@ -49,11 +54,16 @@ export class ConsistencyCheck {
 
         for (const issue of issues) {
             for (const loc of issue.relatedLocations) {
-                // We want to remove the first part of e.g. template_repository/src/TEST/BubbleSort.java
-                // The same information is stored in loc.type
-                const repoPath = loc.filePath.split('/').slice(1).join('/');
+                if (!this.isMatchingRepository(loc.type, selectedRepo!)) {
+                    continue;
+                }
 
-                if (repoPath === selectedFile || (selectedFile === 'problem_statement.md' && repoPath === '')) {
+                // Problem statement filePath is either problem_statement.md or empty
+                const isProblemStatement = loc.filePath === 'problem_statement.md' || loc.filePath === '';
+                // Remove the first part of e.g. template_repository/src/TEST/BubbleSort.java
+                const repoPath = isProblemStatement ? 'problem_statement.md' : loc.filePath.split('/').slice(1).join('/');
+
+                if (repoPath === selectedFile) {
                     result.push({
                         filePath: loc.filePath,
                         type: loc.type,
@@ -69,6 +79,20 @@ export class ConsistencyCheck {
         }
 
         return result;
+    }
+
+    static isMatchingRepository(repo1: ArtifactLocation.TypeEnum, repo2: RepositoryType | 'PROBLEM_STATEMENT') {
+        if (repo1 === ArtifactLocation.TypeEnum.TemplateRepository && repo2 === RepositoryType.TEMPLATE) {
+            return true;
+        } else if (repo1 === ArtifactLocation.TypeEnum.SolutionRepository && repo2 === RepositoryType.SOLUTION) {
+            return true;
+        } else if (repo1 === ArtifactLocation.TypeEnum.TestsRepository && repo2 === RepositoryType.TESTS) {
+            return true;
+        } else if (repo1 === ArtifactLocation.TypeEnum.ProblemStatement && repo2 === 'PROBLEM_STATEMENT') {
+            return true;
+        }
+
+        return false;
     }
 
     /**
