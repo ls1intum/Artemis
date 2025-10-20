@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.service;
 
+import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Map;
@@ -89,83 +90,21 @@ public class RateLimitService {
     }
 
     /**
-     * Resolves the client identifier from the current HTTP request with comprehensive IP cleanup.
+     * Resolves the client identifier from the current HTTP request.
      *
      * <p>
      * IP Resolution Strategy:
      * </p>
      * <ol>
-     * <li>Checks X-Forwarded-For header (for requests through proxies)</li>
+     * <li>Checks headers (for requests through proxies)</li>
      * <li>Falls back to direct remote address</li>
      * <li>Cleans up IP by removing ports and normalizing format</li>
      * </ol>
      *
-     * @return the cleaned client IP address, or "unknown" if unavailable
+     * @return the cleaned client IP address
      */
     public String resolveClientId() {
-        HttpServletRequest req = currentRequest();
-        if (req == null) {
-            log.debug("No HTTP request context available, using 'unknown' as client ID");
-            return "unknown";
-        }
-
-        // Try X-Forwarded-For header first
-        String forwardedFor = req.getHeader("X-Forwarded-For");
-        if (forwardedFor != null && !forwardedFor.trim().isEmpty()) {
-            String firstIp = forwardedFor.split(",")[0].trim();
-            String cleanedIp = cleanupIpAddress(firstIp);
-            log.debug("Resolved client ID from X-Forwarded-For: {} -> {}", firstIp, cleanedIp);
-            return cleanedIp;
-        }
-
-        // Fallback to direct remote address
-        String remoteAddr = req.getRemoteAddr();
-        if (remoteAddr != null) {
-            String cleanedIp = cleanupIpAddress(remoteAddr);
-            log.debug("Resolved client ID from remote address: {} -> {}", remoteAddr, cleanedIp);
-            return cleanedIp;
-        }
-
-        log.debug("No IP address available in request, using 'unknown' as client ID");
-        return "unknown";
-    }
-
-    /**
-     * Cleans up an IP address by removing port numbers and normalizing format.
-     *
-     * <p>
-     * Handles various formats:
-     * </p>
-     * <ul>
-     * <li>IPv4 with port: "192.168.1.1:8080" → "192.168.1.1"</li>
-     * <li>IPv6 with port: "[::1]:8080" → "::1"</li>
-     * </ul>
-     *
-     * @param rawIp the raw IP address that may include port numbers
-     * @return the cleaned IP address without port numbers
-     */
-    private String cleanupIpAddress(String rawIp) {
-        if (rawIp == null || rawIp.trim().isEmpty()) {
-            return "unknown";
-        }
-
-        String trimmed = rawIp.trim();
-
-        // Try IPv4 pattern
-        var ipv4Matcher = IPV4_PATTERN.matcher(trimmed);
-        if (ipv4Matcher.matches()) {
-            return ipv4Matcher.group(1);
-        }
-
-        // Try IPv6 pattern
-        var ipv6Matcher = IPV6_PATTERN.matcher(trimmed);
-        if (ipv6Matcher.matches()) {
-            return ipv6Matcher.group(1);
-        }
-
-        // Return trimmed original if no pattern matches
-        log.debug("Could not parse IP address format: {}, using as-is", trimmed);
-        return trimmed;
+        return getIpStringFromRequest(currentRequest());
     }
 
     private HttpServletRequest currentRequest() {
