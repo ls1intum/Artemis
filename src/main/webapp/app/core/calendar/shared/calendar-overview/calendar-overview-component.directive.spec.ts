@@ -1,6 +1,6 @@
 import { CalendarOverviewComponent } from './calendar-overview-component.directive';
 
-describe('CalendarOverview', () => {
+describe('CalendarOverviewComponent', () => {
     it('should create an instance', () => {
         const directive = new CalendarOverviewComponent();
         expect(directive).toBeTruthy();

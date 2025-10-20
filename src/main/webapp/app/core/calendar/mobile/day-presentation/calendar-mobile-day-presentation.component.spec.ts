@@ -5,7 +5,7 @@ import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/c
 import { MockComponent, ngMocks } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 
-describe('CalendarMobileDayPresentation', () => {
+describe('CalendarMobileDayPresentationComponent', () => {
     let component: CalendarMobileDayPresentationComponent;
     let fixture: ComponentFixture<CalendarMobileDayPresentationComponent>;
 
@@ -35,11 +35,11 @@ describe('CalendarMobileDayPresentation', () => {
     it('should mark only the selected day as selected', () => {
         const dayBadgeComponents = ngMocks.findInstances(CalendarDayBadgeComponent);
 
-        const selectedDayBadge = dayBadgeComponents.find((dayBadgeComponent) => dayBadgeComponent.day().isSame(selectedDay, 'day'));
+        const selectedDayBadge = dayBadgeComponents.find((dayBadgeComponent) => dayBadgeComponent.date().isSame(selectedDay, 'day'));
 
         expect(selectedDayBadge?.isSelectedDay()).toBeTrue();
 
-        const nonSelectedDayBadges = dayBadgeComponents.filter((dayBadgeComponent) => !dayBadgeComponent.day().isSame(selectedDay, 'day'));
+        const nonSelectedDayBadges = dayBadgeComponents.filter((dayBadgeComponent) => !dayBadgeComponent.date().isSame(selectedDay, 'day'));
 
         for (const nonSelectedDayBadge of nonSelectedDayBadges) {
             expect(nonSelectedDayBadge.isSelectedDay()).toBeFalse();

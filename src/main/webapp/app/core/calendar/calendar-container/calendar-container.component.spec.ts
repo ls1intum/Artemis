@@ -6,7 +6,7 @@ import { MockComponent } from 'ng-mocks';
 import { CalendarDesktopOverviewComponent } from 'app/core/calendar/desktop/overview/calendar-desktop-overview.component';
 import { CalendarMobileOverviewComponent } from 'app/core/calendar/mobile/overview/calendar-mobile-overview.component';
 
-describe('CalendarOverview', () => {
+describe('CalendarContainerComponent', () => {
     let component: CalendarContainerComponent;
     let fixture: ComponentFixture<CalendarContainerComponent>;
     let breakpoint$: BehaviorSubject<BreakpointState>;

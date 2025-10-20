@@ -76,7 +76,7 @@ describe('CalendarDesktopOverviewComponent', () => {
         expect(nextButton).toBeTruthy();
         expect(selectButton).toBeTruthy();
 
-        expect(component.selectedPresentation()).toBe('month');
+        expect(component.presentation()).toBe('month');
         expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-month-presentation'))).toBeTruthy();
         expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-week-presentation'))).toBeFalsy();
 
@@ -98,9 +98,9 @@ describe('CalendarDesktopOverviewComponent', () => {
         expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
         expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBeTrue();
 
-        component.selectedPresentation.set('week');
+        component.presentation.set('week');
         fixture.detectChanges();
-        expect(component.selectedPresentation()).toBe('week');
+        expect(component.presentation()).toBe('week');
         expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-week-presentation'))).toBeTruthy();
         expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-month-presentation'))).toBeFalsy();
 
@@ -174,7 +174,7 @@ describe('CalendarDesktopOverviewComponent', () => {
         fixture.detectChanges();
         expect(heading()).toBe('October 2025');
 
-        component.selectedPresentation.set('week');
+        component.presentation.set('week');
         fixture.detectChanges();
 
         expect(heading()).toContain('September | October 2025');

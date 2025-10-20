@@ -9,7 +9,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
 
-describe('CalendarMobileMonthPresentation', () => {
+describe('CalendarMobileMonthPresentationComponent', () => {
     let fixture: ComponentFixture<CalendarMobileMonthPresentationComponent>;
     let component: CalendarMobileMonthPresentationComponent;
     let mockMap: Map<string, CalendarEvent[]>;

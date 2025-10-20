@@ -80,7 +80,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
     it('should compute correct number of weeks and days', () => {
         const weeks = component.weeks();
         expect(weeks).toHaveLength(5);
-        expect(weeks.every((week) => week.length === 7)).toBeTrue();
+        expect(weeks.every((week) => week.days.length === 7)).toBeTrue();
     });
 
     it('should display correct events', async () => {
