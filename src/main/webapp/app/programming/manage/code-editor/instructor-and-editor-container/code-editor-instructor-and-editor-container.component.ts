@@ -18,12 +18,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConsistencyCheck } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
+import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -53,6 +54,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
+
+    private consistencyCheckService = inject(ConsistencyCheckService);
+    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    private profileService = inject(ProfileService);
 
     // Icons
     faPlus = faPlus;
@@ -60,31 +66,48 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
     irisSettings?: IrisSettings;
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCheckDouble = faCheckDouble;
 
-    private consistencyCheckService = inject(ConsistencyCheckService);
-    private modalService = inject(NgbModal);
-    private artemisIntelligenceService = inject(ArtemisIntelligenceService);
-    readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
+    isCheckingConsistency() {
+        return this.artemisIntelligenceService.isLoading();
+    }
 
     checkConsistencies(exercise: ProgrammingExercise) {
+        if (!exercise.id) {
+            this.alertService.error(this.translateService.instant('artemisApp.consistencyCheck.checkFailedAlert'));
+            return;
+        }
+
         this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe({
-            next: (inconsistencies) => {
-                if (inconsistencies?.length) {
-                    // only show modal if inconsistencies found
-                    const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
-                    modalRef.componentInstance.exercisesToCheck = [exercise];
+            // This first consistency check ensures, that the exercise has all repositories set up
+            // This does not yet check the actual content of the exercise
+            next: (inconsistencies: ConsistencyCheckError[]) => {
+                if (inconsistencies.length > 0) {
+                    for (const inconsistency of inconsistencies) {
+                        this.alertService.error(this.translateService.instant(`artemisApp.consistencyCheck.error.${inconsistency.type}`));
+                    }
                     return;
                 }
 
-                const consistencyCheck = new ConsistencyCheck();
-                consistencyCheck.run(this.artemisIntelligenceService, exercise.id!, [this.consistencyIssues]);
+                // Now the content is checked
+                this.artemisIntelligenceService.consistencyCheck(exercise.id!).subscribe({
+                    next: (response: ConsistencyCheckResponse) => {
+                        this.consistencyIssues.set(response.issues ?? []);
+
+                        if (this.consistencyIssues().length == 0) {
+                            this.alertService.success(this.translateService.instant('artemisApp.consistencyCheck.noInconsistencies'));
+                        } else {
+                            this.alertService.warning(this.translateService.instant('artemisApp.consistencyCheck.inconsistenciesFoundAlert'));
+                        }
+                    },
+                });
             },
             error: (err) => {
-                const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
-                modalRef.componentInstance.exercisesToCheck = [exercise];
+                this.alertService.error(this.translateService.instant('artemisApp.consistencyCheck.checkFailedAlert'));
             },
         });
     }

@@ -34,7 +34,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 
@@ -330,7 +329,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         const actions = comp.artemisIntelligenceActions();
         expect(actions).toHaveLength(2);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
-        expect(actions[1]).toBeInstanceOf(ConsistencyCheckAction);
         expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_HYPERION);
     });
 });

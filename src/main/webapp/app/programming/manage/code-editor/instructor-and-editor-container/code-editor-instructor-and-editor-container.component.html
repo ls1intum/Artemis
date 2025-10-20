@@ -135,10 +135,16 @@
                             <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo"></span>
                         </button>
                     }
-                    <button (click)="checkConsistencies(exercise)" class="btn btn-primary me-2">
-                        <fa-icon [icon]="faCheckDouble" class="me-2" />
-                        <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
-                    </button>
+                    @if (exercise.isAtLeastInstructor && hyperionEnabled) {
+                        <button (click)="checkConsistencies(exercise)" class="btn btn-primary me-2" [disabled]="isCheckingConsistency()">
+                            @if (isCheckingConsistency()) {
+                                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
+                            } @else {
+                                <fa-icon [icon]="faCheckDouble" class="me-2" />
+                            }
+                            <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
+                        </button>
+                    }
                 </div>
             </div>
             <div editorToolbar class="ms-auto d-flex align-items-center">

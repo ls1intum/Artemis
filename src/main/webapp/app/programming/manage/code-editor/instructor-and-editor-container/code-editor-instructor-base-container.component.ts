@@ -21,6 +21,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 /**
  * Enumeration specifying the loading state
  */
@@ -45,9 +46,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private location = inject(Location);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
     /** Raw markdown changes from the center editor for debounce logic */
     private problemStatementChanges$ = new Subject<string>();
+    protected alertService = inject(AlertService);
+    protected translateService = inject(TranslateService);
 
     ButtonSize = ButtonSize;
     LOADING_STATE = LOADING_STATE;

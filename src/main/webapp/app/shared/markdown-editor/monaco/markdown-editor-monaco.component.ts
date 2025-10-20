@@ -78,7 +78,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { ConsistencyCheck } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { addCommentBox, issuesForSelectedFile } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -247,10 +247,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
-    private readonly consistencyIssuesInternal = signal<ConsistencyIssue[]>([]);
-    @Input() set consistencyIssues(value: ConsistencyIssue[]) {
-        this.consistencyIssuesInternal.set(value ?? []);
-    }
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
 
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
@@ -346,7 +343,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
 
         effect(() => {
-            this.consistencyIssuesInternal();
+            this.consistencyIssues(); // ensures Angular tracks the signal
             this.renderFeedbackWidgets();
         });
     }
@@ -361,8 +358,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.monacoEditor.disposeWidgets();
 
             // Readd inconsistency issue comments, because all widgets got removed
-            for (const issue of ConsistencyCheck.issuesForSelectedFile('problem_statement.md', 'PROBLEM_STATEMENT', this.consistencyIssuesInternal())) {
-                ConsistencyCheck.addCommentBox(this.monacoEditor, issue);
+            for (const issue of issuesForSelectedFile('problem_statement.md', 'PROBLEM_STATEMENT', this.consistencyIssues())) {
+                addCommentBox(this.monacoEditor, issue);
             }
         }, 0);
     }

@@ -33,7 +33,7 @@ import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programmin
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { ConsistencyCheck } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { addCommentBox, issuesForSelectedFile } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -142,7 +142,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         });
 
         effect(() => {
-            this.consistencyIssues();
+            this.consistencyIssues(); // ensures Angular tracks the signal
             this.renderFeedbackWidgets();
         });
     }
@@ -365,11 +365,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
             }
 
             // Readd inconsistency issue comments, because all widgets got removed
-            for (const issue of ConsistencyCheck.issuesForSelectedFile(this.selectedFile(), this.selectedRepository(), this.consistencyIssues())) {
-                ConsistencyCheck.addCommentBox(this.editor(), issue);
+            for (const issue of issuesForSelectedFile(this.selectedFile(), this.selectedRepository(), this.consistencyIssues())) {
+                addCommentBox(this.editor(), issue);
             }
-
-            ConsistencyCheck.test(this.editor(), 0, this.consistencyIssues().length);
         }, 0);
     }
 
