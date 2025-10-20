@@ -1,0 +1,16 @@
+{
+    "artemisApp": {
+        "agent": {
+            "chat": {
+                "title": "KI-Kompetenz-Assistent",
+                "inputHint": "Enter drücken zum Senden, Shift+Enter für neue Zeile",
+                "typing": "Agent denkt nach...",
+                "welcome": "Hallo! Ich bin Ihr KI-Kompetenz-Assistent. Wie kann ich dir heute bei den Kurskompetenzen helfen?",
+                "error": "Entschuldigung, aber ich habe derzeit Probleme bei der Bearbeitung deiner Anfrage. Bitte versuch es erneut.",
+                "messageTooLong": "Die Nachricht ist zu lang. Bitte kürze deine Nachricht.",
+                "you": "Du",
+                "aiAssistant": "KI-Assistent"
+            }
+        }
+    }
+}

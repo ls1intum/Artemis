@@ -233,7 +233,7 @@ describe('AttachmentVideoUnitsComponent', () => {
 
     it('should get slides to remove', fakeAsync(() => {
         const expectedSlideIndexes = [1, 2, 3];
-        // slide indexes are increased by 1 for display in the frontend
+        // slide indexes are increased by 1 for display in the client
         const expectedSlideNumbers = expectedSlideIndexes.map((n) => n + 1);
         const expectedResponse: HttpResponse<Array<number>> = new HttpResponse({
             body: expectedSlideIndexes,
