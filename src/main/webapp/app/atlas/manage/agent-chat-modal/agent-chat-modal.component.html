@@ -20,7 +20,14 @@
                                 {{ message.isUser ? ('artemisApp.agent.chat.you' | artemisTranslate) : ('artemisApp.agent.chat.aiAssistant' | artemisTranslate) }}
                             </span>
                         </div>
-                        <div class="message-text">{{ message.content }}</div>
+                        @if (message.content) {
+                            <div class="message-text">{{ message.content }}</div>
+                        }
+                        @if (message.competencyPreview) {
+                            <div class="competency-preview-container mt-2">
+                                <jhi-competency-card [courseId]="courseId" [competency]="message.competencyPreview" [noProgressRings]="true" />
+                            </div>
+                        }
                     </div>
                 </div>
             }

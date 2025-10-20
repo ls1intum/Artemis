@@ -83,6 +83,26 @@
                     line-height: 1.4;
                     white-space: pre-wrap;
                 }
+
+                .competency-preview-container {
+                    background-color: var(--bs-body-bg);
+                    border-radius: var(--bs-border-radius);
+                    padding: 8px;
+                    border: 1px solid var(--bs-border-color);
+
+                    // Override competency-card styling to fit in chat
+                    ::ng-deep {
+                        .course-exercise-row {
+                            margin: 0 !important;
+                            padding: 8px;
+
+                            // Remove the stretched link for preview (non-clickable)
+                            .stretched-link {
+                                display: none;
+                            }
+                        }
+                    }
+                }
             }
 
             &.user-message {
@@ -93,6 +113,7 @@
                     color: var(--bs-body-color);
                     margin-left: 20%;
                     border-radius: var(--bs-border-radius-xl) var(--bs-border-radius-xl) var(--bs-border-radius-sm) var(--bs-border-radius-xl);
+                    text-align: left;
                 }
             }
 

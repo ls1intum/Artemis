@@ -16,8 +16,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -36,48 +34,14 @@ public class AtlasAgentToolsService {
 
     private final ObjectMapper objectMapper;
 
-    private final CompetencyRepository competencyRepository;
-
     private final CourseRepository courseRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    public AtlasAgentToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
+    public AtlasAgentToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
         this.objectMapper = objectMapper;
-        this.competencyRepository = competencyRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
-    }
-
-    /**
-     * Tool for getting course competencies.
-     *
-     * @param courseId the course ID
-     * @return JSON representation of competencies
-     */
-    @Tool(description = "Get all competencies for a course")
-    public String getCourseCompetencies(@ToolParam(description = "the ID of the course") Long courseId) {
-        Optional<Course> courseOptional = courseRepository.findById(courseId);
-        if (courseOptional.isEmpty()) {
-            return toJson(Map.of("error", "Course not found with ID: " + courseId));
-        }
-
-        Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
-
-        var competencyList = competencies.stream().map(competency -> {
-            Map<String, Object> competencyData = new LinkedHashMap<>();
-            competencyData.put("id", competency.getId());
-            competencyData.put("title", competency.getTitle());
-            competencyData.put("description", competency.getDescription());
-            competencyData.put("taxonomy", competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : "");
-            return competencyData;
-        }).toList();
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("courseId", courseId);
-        response.put("competencies", competencyList);
-
-        return toJson(response);
     }
 
     /**

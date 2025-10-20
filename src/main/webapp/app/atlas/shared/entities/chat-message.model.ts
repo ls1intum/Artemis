@@ -8,6 +8,7 @@ export interface ChatMessage {
     timestamp: Date;
     canCreateCompetencies?: boolean;
     suggestedCompetencies?: CompetencyDraft[];
+    competencyPreview?: CompetencyPreview;
 }
 
 export interface CompetencyDraft {
@@ -17,4 +18,11 @@ export interface CompetencyDraft {
     masteryThreshold: number;
     optional: boolean;
     softDueDate?: dayjs.Dayjs;
+}
+
+export interface CompetencyPreview {
+    title: string;
+    description: string;
+    taxonomy: CompetencyTaxonomy;
+    icon?: string;
 }
