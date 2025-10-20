@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
@@ -97,7 +98,7 @@ public class PublicAccountResource {
      */
     @PostMapping("register")
     @EnforceNothing
-    @LimitRequestsPerMinute(5)
+    @LimitRequestsPerMinute(type = RateLimitType.PUBLIC)
     public ResponseEntity<Void> registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
 
         if (accountService.isRegistrationDisabled()) {
@@ -218,7 +219,7 @@ public class PublicAccountResource {
      */
     @PostMapping("account/reset-password/init")
     @EnforceNothing
-    @LimitRequestsPerMinute(5)
+    @LimitRequestsPerMinute(type = RateLimitType.PUBLIC)
     public ResponseEntity<Void> requestPasswordReset(@RequestBody String mailUsername) {
         List<User> users = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
         if (!users.isEmpty()) {
@@ -252,7 +253,7 @@ public class PublicAccountResource {
      */
     @PostMapping("account/reset-password/finish")
     @EnforceNothing
-    @LimitRequestsPerMinute(5)
+    @LimitRequestsPerMinute(type = RateLimitType.PUBLIC)
     public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (accountService.isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
             throw new PasswordViolatesRequirementsException();

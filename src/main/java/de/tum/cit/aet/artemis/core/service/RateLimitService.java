@@ -4,6 +4,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -27,24 +28,45 @@ public class RateLimitService {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitService.class);
 
+    /**
+     * Pattern to match and extract IPv4 addresses, removing any port numbers.
+     */
+    private static final Pattern IPV4_PATTERN = Pattern.compile("^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})(:\\d+)?$");
+
+    /**
+     * Pattern to match and extract IPv6 addresses, removing any port numbers.
+     */
+    private static final Pattern IPV6_PATTERN = Pattern.compile("^\\[?([0-9a-fA-F:]+)\\]?(:\\d+)?$");
+
     private final HazelcastProxyManager<String> proxyManager;
 
     private final Map<Integer, BucketConfiguration> perMinuteCfgCache = new ConcurrentHashMap<>();
 
     private final Environment env;
 
-    public RateLimitService(HazelcastProxyManager<String> proxyManager, Environment env) {
+    private final RateLimitConfigurationService configurationService;
+
+    public RateLimitService(HazelcastProxyManager<String> proxyManager, Environment env, RateLimitConfigurationService configurationService) {
         this.proxyManager = proxyManager;
         this.env = env;
+        this.configurationService = configurationService;
     }
 
     /**
-     * Consume 1 token from a per-minute bucket. Throws on limit exceed.
+     * Enforces rate limiting by consuming 1 token from a per-minute bucket.
+     * Throws {@link RateLimitExceededException} if the rate limit is exceeded.
      *
-     * @param clientId identifier for the client that is being rate-limited (e.g. IP address)
-     * @param rpm      requests per minute
+     * @param clientId identifier for the client (typically an IP address)
+     * @param rpm      requests per minute allowed for this client
+     * @throws RateLimitExceededException if the rate limit is exceeded
      */
     public void enforcePerMinute(String clientId, int rpm) {
+        // Skip rate limiting if disabled globally
+        if (!configurationService.isRateLimitingEnabled()) {
+            log.debug("Rate limiting is disabled globally, skipping enforcement for client {} at {} rpm", clientId, rpm);
+            return;
+        }
+
         if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             log.debug("Skipping rate limit enforcement for client {} at {} rpm in test profile", clientId, rpm);
             return;
@@ -57,6 +79,8 @@ public class RateLimitService {
             log.warn("Rate limit exceeded for client {} at {} rpm, retry after {} seconds", clientId, rpm, seconds);
             throw new RateLimitExceededException(seconds);
         }
+
+        log.debug("Rate limit check passed for client {} at {} rpm, remaining tokens: {}", clientId, rpm, probe.getRemainingTokens());
     }
 
     private Bucket getOrCreatePerMinuteBucket(String clientId, int rpm) {
@@ -64,17 +88,84 @@ public class RateLimitService {
         return proxyManager.getProxy("rpm=" + rpm + "#" + clientId, () -> cfg);
     }
 
+    /**
+     * Resolves the client identifier from the current HTTP request with comprehensive IP cleanup.
+     *
+     * <p>
+     * IP Resolution Strategy:
+     * </p>
+     * <ol>
+     * <li>Checks X-Forwarded-For header (for requests through proxies)</li>
+     * <li>Falls back to direct remote address</li>
+     * <li>Cleans up IP by removing ports and normalizing format</li>
+     * </ol>
+     *
+     * @return the cleaned client IP address, or "unknown" if unavailable
+     */
     public String resolveClientId() {
         HttpServletRequest req = currentRequest();
-        if (req == null)
+        if (req == null) {
+            log.debug("No HTTP request context available, using 'unknown' as client ID");
             return "unknown";
-        String headerName = "X-Forwarded-For";
-        String raw = req.getHeader(headerName);
-        if (raw == null || raw.isBlank()) {
-            return req.getRemoteAddr() != null ? req.getRemoteAddr() : "unknown";
         }
-        int comma = raw.indexOf(',');
-        return comma > 0 ? raw.substring(0, comma).trim() : raw.trim();
+
+        // Try X-Forwarded-For header first
+        String forwardedFor = req.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.trim().isEmpty()) {
+            String firstIp = forwardedFor.split(",")[0].trim();
+            String cleanedIp = cleanupIpAddress(firstIp);
+            log.debug("Resolved client ID from X-Forwarded-For: {} -> {}", firstIp, cleanedIp);
+            return cleanedIp;
+        }
+
+        // Fallback to direct remote address
+        String remoteAddr = req.getRemoteAddr();
+        if (remoteAddr != null) {
+            String cleanedIp = cleanupIpAddress(remoteAddr);
+            log.debug("Resolved client ID from remote address: {} -> {}", remoteAddr, cleanedIp);
+            return cleanedIp;
+        }
+
+        log.debug("No IP address available in request, using 'unknown' as client ID");
+        return "unknown";
+    }
+
+    /**
+     * Cleans up an IP address by removing port numbers and normalizing format.
+     *
+     * <p>
+     * Handles various formats:
+     * </p>
+     * <ul>
+     * <li>IPv4 with port: "192.168.1.1:8080" → "192.168.1.1"</li>
+     * <li>IPv6 with port: "[::1]:8080" → "::1"</li>
+     * </ul>
+     *
+     * @param rawIp the raw IP address that may include port numbers
+     * @return the cleaned IP address without port numbers
+     */
+    private String cleanupIpAddress(String rawIp) {
+        if (rawIp == null || rawIp.trim().isEmpty()) {
+            return "unknown";
+        }
+
+        String trimmed = rawIp.trim();
+
+        // Try IPv4 pattern
+        var ipv4Matcher = IPV4_PATTERN.matcher(trimmed);
+        if (ipv4Matcher.matches()) {
+            return ipv4Matcher.group(1);
+        }
+
+        // Try IPv6 pattern
+        var ipv6Matcher = IPV6_PATTERN.matcher(trimmed);
+        if (ipv6Matcher.matches()) {
+            return ipv6Matcher.group(1);
+        }
+
+        // Return trimmed original if no pattern matches
+        log.debug("Could not parse IP address format: {}, using as-is", trimmed);
+        return trimmed;
     }
 
     private HttpServletRequest currentRequest() {
