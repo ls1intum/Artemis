@@ -12,6 +12,8 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import org.springframework.util.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -132,6 +134,10 @@ public record AttendanceCheckerAppExamInformationDTO(
      * @return information for the attendance checker app
      */
     public static AttendanceCheckerAppExamInformationDTO from(Exam exam, Set<ExamRoom> examRooms) {
+        Set<ExamUser> examUsersWhoHaveBeenDistributed = exam.getExamUsers().stream()
+            .filter(examUser -> StringUtils.hasText(examUser.getPlannedRoom()) && StringUtils.hasText(examUser.getPlannedSeat()))
+            .collect(Collectors.toSet());
+
         return new AttendanceCheckerAppExamInformationDTO(
             exam.getId(),
             exam.getTitle(),
@@ -141,7 +147,7 @@ public record AttendanceCheckerAppExamInformationDTO(
             exam.getCourse().getId(),
             exam.getCourse().getTitle(),
             examRooms.stream().map(ExamRoomForAttendanceCheckerDTO::from).collect(Collectors.toSet()),
-            exam.getExamUsers().stream().map(ExamUserWithExamRoomAndSeatDTO::from).collect(Collectors.toSet())
+            examUsersWhoHaveBeenDistributed.stream().map(ExamUserWithExamRoomAndSeatDTO::from).collect(Collectors.toSet())
         );
     }
 }
