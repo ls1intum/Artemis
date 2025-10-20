@@ -1,11 +1,11 @@
 <div class="frame">
     <div class="header">
-        <span class="h3">{{ monthDescription() }}</span>
+        <h3>{{ monthDescription() }}</h3>
         <div class="spacer"></div>
         <p-multiSelect
             [options]="filterOptions()"
             [ngModel]="selectedFilterOptions()"
-            (ngModelChange)="onSelectionOptionsChange($event)"
+            (ngModelChange)="onSelectedFilterOptionsChange($event)"
             optionLabel="name"
             [placeholder]="filterComponentPlaceholder()"
             [showHeader]="false"
@@ -17,7 +17,7 @@
                             <div class="chip" [attr.data-testid]="'chip-' + optionWithMetadata.option">
                                 <div class="legend-circle" [class]="optionWithMetadata.colorClassName"></div>
                                 <span>{{ optionWithMetadata.name }}</span>
-                                <button class="remove-button" (click)="removeOption(optionWithMetadata.option); $event.stopPropagation()">
+                                <button class="remove-button" (click)="removeFilterOption(optionWithMetadata.option); $event.stopPropagation()">
                                     <fa-icon [icon]="faXmark" />
                                 </button>
                             </div>

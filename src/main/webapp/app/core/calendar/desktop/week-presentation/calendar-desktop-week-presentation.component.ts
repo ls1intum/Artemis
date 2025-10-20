@@ -20,7 +20,7 @@ export class CalendarDesktopWeekPresentationComponent implements AfterViewInit {
 
     firstDayOfCurrentWeek = input.required<Dayjs>();
     scrollContainer = viewChild<ElementRef>('scrollContainer');
-    weekdays = computed<Day[]>(() => this.computeWeekDaysFrom(this.firstDayOfCurrentWeek()));
+    weekdays = computed<Day[]>(() => this.computeWeekdaysFrom(this.firstDayOfCurrentWeek()));
     dates = computed<Dayjs[]>(() => this.weekdays().map((day) => day.date));
 
     ngAfterViewInit(): void {
@@ -30,17 +30,17 @@ export class CalendarDesktopWeekPresentationComponent implements AfterViewInit {
         }
     }
 
-    private computeWeekDaysFrom(firstDayOfWeek: Dayjs): Day[] {
+    private computeWeekdaysFrom(firstDayOfWeek: Dayjs): Day[] {
         return Array.from({ length: 7 }, (_, index) => {
             const date = firstDayOfWeek.add(index, 'day');
-            const weekdayNameKey = this.getWeekDayNameKey(date);
+            const weekdayNameKey = this.getWeekdayNameKey(date);
             const id = date.format('YYYY-MM-DD');
             return { date, weekdayNameKey, id };
         });
     }
 
-    private getWeekDayNameKey(day: Dayjs): string {
-        const keys = utils.getWeekDayNameKeys();
+    private getWeekdayNameKey(day: Dayjs): string {
+        const keys = utils.getWeekdayNameKeys();
         return keys[day.isoWeekday() - 1];
     }
 }

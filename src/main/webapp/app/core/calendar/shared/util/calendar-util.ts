@@ -1,11 +1,6 @@
-import { Dayjs } from 'dayjs/esm';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardUser, faCheckDouble, faDiagramProject, faFileArrowUp, faFont, faGraduationCap, faKeyboard, faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
-
-export function getTimeString(timestamp: Dayjs): string {
-    return timestamp.format('HH:mm');
-}
 
 const eventTypeIconMap: Record<CalendarEventType, IconProp> = {
     [CalendarEventType.Lecture]: faChalkboardUser,
@@ -22,7 +17,7 @@ export function getIconForEvent(event: CalendarEvent): IconProp {
     return eventTypeIconMap[event.type];
 }
 
-export function getWeekDayNameKeys(): string[] {
+export function getWeekdayNameKeys(): string[] {
     return [
         'global.weekdays.mondayShort',
         'global.weekdays.tuesdayShort',
@@ -32,21 +27,6 @@ export function getWeekDayNameKeys(): string[] {
         'global.weekdays.saturdayShort',
         'global.weekdays.sundayShort',
     ];
-}
-
-const eventTypeNameKeyMap: Record<CalendarEventType, string> = {
-    [CalendarEventType.Lecture]: 'artemisApp.calendar.eventTypeName.lecture',
-    [CalendarEventType.Tutorial]: 'artemisApp.calendar.eventTypeName.tutorial',
-    [CalendarEventType.Exam]: 'artemisApp.calendar.eventTypeName.exam',
-    [CalendarEventType.QuizExercise]: 'artemisApp.calendar.eventTypeName.quiz',
-    [CalendarEventType.TextExercise]: 'artemisApp.calendar.eventTypeName.text',
-    [CalendarEventType.ModelingExercise]: 'artemisApp.calendar.eventTypeName.modeling',
-    [CalendarEventType.ProgrammingExercise]: 'artemisApp.calendar.eventTypeName.programming',
-    [CalendarEventType.FileUploadExercise]: 'artemisApp.calendar.eventTypeName.fileUpload',
-};
-
-export function getEventTypeNameKey(event: CalendarEvent): string {
-    return eventTypeNameKeyMap[event.type];
 }
 
 export enum CalendarEventFilterOption {

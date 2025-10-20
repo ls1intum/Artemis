@@ -79,7 +79,7 @@ describe('CalendarMobileMonthPresentation', () => {
     });
 
     it('should emit selected day on click', () => {
-        const emitSpy = jest.spyOn(component.selectDate, 'emit');
+        const emitSpy = jest.spyOn(component.onDateSelected, 'emit');
 
         const dayCell = fixture.debugElement.query(By.css('.day'));
         expect(dayCell).toBeTruthy();

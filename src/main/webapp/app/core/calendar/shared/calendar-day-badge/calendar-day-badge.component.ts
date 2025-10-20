@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 
@@ -13,12 +13,6 @@ export class CalendarDayBadgeComponent {
     date = input.required<Dayjs>();
     minimalTodayIndication = input(false);
     isSelectedDay = input(false);
-
-    get dayNumber(): number {
-        return this.date().date();
-    }
-
-    isToday(): boolean {
-        return this.date().isSame(dayjs(), 'day');
-    }
+    dayNumber = computed<number>(() => this.date().date());
+    isToday = computed<boolean>(() => this.date().isSame(dayjs(), 'day'));
 }

@@ -14,5 +14,5 @@ import { CalendarMonthPresentationComponent } from 'app/core/calendar/shared/cal
     styleUrls: ['./calendar-desktop-month-presentation.component.scss'],
 })
 export class CalendarDesktopMonthPresentationComponent extends CalendarMonthPresentationComponent {
-    readonly weekdayNameKeys = utils.getWeekDayNameKeys();
+    readonly weekdayNameKeys = utils.getWeekdayNameKeys();
 }

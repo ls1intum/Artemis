@@ -11,5 +11,5 @@ import { CalendarMonthPresentationComponent } from 'app/core/calendar/shared/cal
     styleUrl: './calendar-mobile-month-presentation.component.scss',
 })
 export class CalendarMobileMonthPresentationComponent extends CalendarMonthPresentationComponent {
-    selectDate = output<Dayjs>();
+    onDateSelected = output<Dayjs>();
 }

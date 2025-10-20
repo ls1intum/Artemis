@@ -31,6 +31,8 @@ export class CalendarService {
     includedEventFilterOptions = signal<CalendarEventFilterOption[]>(this.eventFilterOptions);
 
     constructor() {
+        this.loadSubscriptionToken();
+
         effect(() => {
             this.currentLocale();
             this.reloadEvents();
@@ -43,22 +45,6 @@ export class CalendarService {
         if (currentCourseId && firstDayOfCurrentMonth) {
             this.loadEventsForCurrentMonth(currentCourseId, firstDayOfCurrentMonth).subscribe();
         }
-    }
-
-    loadSubscriptionToken(): Observable<void> {
-        return this.httpClient
-            .get(`${this.resourceUrl}/subscription-token`, {
-                responseType: 'text',
-            })
-            .pipe(
-                map((token: string) => {
-                    this.currentSubscriptionToken.set(token);
-                }),
-                catchError((error) => {
-                    this.alertService.addErrorAlert('artemisApp.calendar.tokenLoadingError');
-                    return throwError(() => error);
-                }),
-            );
     }
 
     loadEventsForCurrentMonth(courseId: number, firstDayOfCurrentMonth: Dayjs): Observable<void> {
@@ -97,6 +83,23 @@ export class CalendarService {
                 return [...currentOptions, option];
             }
         });
+    }
+
+    private loadSubscriptionToken() {
+        this.httpClient
+            .get(`${this.resourceUrl}/subscription-token`, {
+                responseType: 'text',
+            })
+            .pipe(
+                map((token: string) => {
+                    this.currentSubscriptionToken.set(token);
+                }),
+                catchError((error) => {
+                    this.alertService.addErrorAlert('artemisApp.calendar.tokenLoadingError');
+                    return throwError(() => error);
+                }),
+            )
+            .subscribe();
     }
 
     private buildEventFilterOptions(): CalendarEventFilterOption[] {

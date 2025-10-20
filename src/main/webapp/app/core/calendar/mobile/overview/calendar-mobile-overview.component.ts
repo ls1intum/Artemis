@@ -37,7 +37,7 @@ export class CalendarMobileOverviewComponent extends CalendarOverviewComponent {
 
     firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     selectedDate = signal<Dayjs | undefined>(undefined);
-    weekdayNameKeys = utils.getWeekDayNameKeys();
+    weekdayNameKeys = utils.getWeekdayNameKeys();
     monthDescription = computed<string>(() => this.firstDateOfCurrentMonth().locale(this.locale()).format('MMMM YYYY'));
     lectureFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.LectureEvents));
     exerciseFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.ExerciseEvents));
@@ -52,7 +52,7 @@ export class CalendarMobileOverviewComponent extends CalendarOverviewComponent {
         }
     }
 
-    selectDate(date: Dayjs): void {
+    onDateSelected(date: Dayjs): void {
         this.selectedDate.set(date);
     }
 

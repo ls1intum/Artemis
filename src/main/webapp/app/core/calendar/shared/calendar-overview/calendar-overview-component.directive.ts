@@ -1,4 +1,4 @@
-import { Directive, OnInit, Signal, effect, inject, signal } from '@angular/core';
+import { Directive, Signal, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, finalize, map } from 'rxjs/operators';
 import { Dayjs } from 'dayjs/esm';
@@ -9,14 +9,14 @@ import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 @Directive()
-export abstract class CalendarOverviewComponent implements OnInit {
+export abstract class CalendarOverviewComponent {
     private activatedRoute = inject(ActivatedRoute);
 
     protected calendarService = inject(CalendarService);
     protected translateService = inject(TranslateService);
     protected locale = getCurrentLocaleSignal(this.translateService);
 
-    readonly faXmark = faXmark;
+    protected readonly faXmark = faXmark;
     protected readonly faChevronRight = faChevronRight;
     protected readonly faChevronLeft = faChevronLeft;
 
@@ -33,10 +33,6 @@ export abstract class CalendarOverviewComponent implements OnInit {
                 this.loadEventsForCurrentMonth();
             }
         });
-    }
-
-    ngOnInit(): void {
-        this.calendarService.loadSubscriptionToken().subscribe();
     }
 
     abstract goToPrevious(): void;

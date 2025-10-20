@@ -3,7 +3,7 @@
         <div class="week-row">
             @for (day of week.days; track day.id) {
                 @if (day.isInDisplayedMonth) {
-                    <div class="day" (click)="selectDate.emit(day.date)">
+                    <div class="day" (click)="onDateSelected.emit(day.date)">
                         <jhi-calendar-day-badge [date]="day.date" />
                         <div class="event-stack">
                             @if (day.eventsAndMetadata.length > 3) {

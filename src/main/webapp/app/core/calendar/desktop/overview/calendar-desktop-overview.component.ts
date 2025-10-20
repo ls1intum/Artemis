@@ -17,7 +17,7 @@ import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calenda
 
 type Presentation = 'week' | 'month';
 
-interface CalendarEventFilterOptionAndMetadata {
+interface FilterOptionAndMetadata {
     option: CalendarEventFilterOption;
     name: string;
     colorClassName: string;
@@ -54,19 +54,14 @@ export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent 
         examEvents: 'exam-chip',
     };
 
-    presentation = signal<Presentation>('month');
     firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     firstDateOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
     monthDescription = computed<string>(() => this.computeMonthDescription(this.locale(), this.presentation(), this.firstDateOfCurrentMonth(), this.firstDateOfCurrentWeek()));
-
-    presentationOptions = computed<{ label: string; value: Presentation }[]>(() => {
-        this.locale();
-        return this.buildPresentationOptions();
-    });
-    filterComponentPlaceholder = computed(() => this.computeFilterComponentPlaceholder());
-    selectedFilterOptions = computed<CalendarEventFilterOptionAndMetadata[]>(() => this.computeSelectedFilterOptions(this.calendarService.includedEventFilterOptions()));
-
-    filterOptions = computed<CalendarEventFilterOptionAndMetadata[]>(() => this.buildFilterOptions());
+    presentation = signal<Presentation>('month');
+    presentationOptions = computed<{ label: string; value: Presentation }[]>(() => this.computePresentationOptions());
+    filterComponentPlaceholder = computed<string>(() => this.computeFilterComponentPlaceholder());
+    selectedFilterOptions = computed<FilterOptionAndMetadata[]>(() => this.computeSelectedFilterOptions(this.calendarService.includedEventFilterOptions()));
+    filterOptions = computed<FilterOptionAndMetadata[]>(() => this.computeFilterOptions());
 
     goToPrevious(): void {
         if (this.presentation() === 'week') {
@@ -104,6 +99,15 @@ export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent 
         this.loadEventsForCurrentMonth();
     }
 
+    onSelectedFilterOptionsChange(newSelectedOptionsAndMetadata: FilterOptionAndMetadata[]): void {
+        const options = newSelectedOptionsAndMetadata.map((optionAndMetadata) => optionAndMetadata.option);
+        this.calendarService.includedEventFilterOptions.set(options);
+    }
+
+    removeFilterOption(option: CalendarEventFilterOption): void {
+        this.calendarService.includedEventFilterOptions.update((currentOptions) => currentOptions.filter((otherOption) => otherOption !== option));
+    }
+
     private computeMonthDescription(currentLocale: string, presentation: Presentation, firstDayOfCurrentMonth: Dayjs, firstDayOfCurrentWeek: Dayjs): string {
         if (presentation === 'month') {
             return firstDayOfCurrentMonth.locale(currentLocale).format('MMMM YYYY');
@@ -118,24 +122,8 @@ export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent 
         }
     }
 
-    onSelectionOptionsChange(newSelectedOptionsAndMetadata: CalendarEventFilterOptionAndMetadata[]): void {
-        const options = newSelectedOptionsAndMetadata.map((optionAndMetadata) => optionAndMetadata.option);
-        this.calendarService.includedEventFilterOptions.set(options);
-    }
-
-    removeOption(option: CalendarEventFilterOption): void {
-        this.calendarService.includedEventFilterOptions.update((currentOptions) => currentOptions.filter((otherOption) => otherOption !== option));
-    }
-
-    private addMetadataTo(option: CalendarEventFilterOption): CalendarEventFilterOptionAndMetadata {
-        return {
-            option: option,
-            name: this.translateService.instant(CalendarDesktopOverviewComponent.FILTER_OPTION_NAME_KEY_MAP[option]),
-            colorClassName: CalendarDesktopOverviewComponent.FILTER_OPTION_COLOR_CLASS_MAP[option],
-        };
-    }
-
-    private buildPresentationOptions() {
+    private computePresentationOptions() {
+        this.locale();
         return [
             {
                 label: this.translateService.instant('artemisApp.calendar.weekButtonLabel'),
@@ -148,12 +136,17 @@ export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent 
         ];
     }
 
-    private computeSelectedFilterOptions(includedOptions: CalendarEventFilterOption[]): CalendarEventFilterOptionAndMetadata[] {
+    private computeFilterComponentPlaceholder(): string {
+        this.locale();
+        return this.translateService.instant('artemisApp.calendar.filterComponentPlaceholder');
+    }
+
+    private computeSelectedFilterOptions(includedOptions: CalendarEventFilterOption[]): FilterOptionAndMetadata[] {
         this.locale();
         return includedOptions.map((option) => this.addMetadataTo(option));
     }
 
-    private buildFilterOptions(): CalendarEventFilterOptionAndMetadata[] {
+    private computeFilterOptions(): FilterOptionAndMetadata[] {
         this.locale();
         return [
             this.addMetadataTo(CalendarEventFilterOption.LectureEvents),
@@ -163,8 +156,11 @@ export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent 
         ];
     }
 
-    private computeFilterComponentPlaceholder(): string {
-        this.locale();
-        return this.translateService.instant('artemisApp.calendar.filterComponentPlaceholder');
+    private addMetadataTo(option: CalendarEventFilterOption): FilterOptionAndMetadata {
+        return {
+            option: option,
+            name: this.translateService.instant(CalendarDesktopOverviewComponent.FILTER_OPTION_NAME_KEY_MAP[option]),
+            colorClassName: CalendarDesktopOverviewComponent.FILTER_OPTION_COLOR_CLASS_MAP[option],
+        };
     }
 }

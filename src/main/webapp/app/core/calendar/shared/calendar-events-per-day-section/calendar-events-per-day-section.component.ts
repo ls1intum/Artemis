@@ -49,6 +49,7 @@ export class CalendarEventsPerDaySectionComponent {
             this.isEventSelected.emit(this.selectedEvent() !== undefined);
         });
     }
+
     private computeDateToEventAndPositionMap(eventMap: Map<string, CalendarEvent[]>, dates: Dayjs[]): Map<string, CalendarEventAndMetadata[]> {
         const dateKeysToBeIncluded = new Set(dates.map((date) => date.format('YYYY-MM-DD')));
         return new Map(
