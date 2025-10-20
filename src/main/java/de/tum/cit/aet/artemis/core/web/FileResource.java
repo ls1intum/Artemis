@@ -119,8 +119,6 @@ public class FileResource {
 
     private final Optional<SlideApi> slideApi;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final UserRepository userRepository;
 
     private final Optional<ExamUserApi> examUserApi;
@@ -137,16 +135,14 @@ public class FileResource {
 
     public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService,
             ResourceLoaderService resourceLoaderService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi,
-            Optional<LectureAttachmentApi> lectureAttachmentApi, Optional<SlideApi> slideApi, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            Optional<ExamUserApi> examUserApi, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
-            Optional<LectureUnitApi> lectureUnitApi) {
+            Optional<LectureAttachmentApi> lectureAttachmentApi, Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
+            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureAttachmentApi = lectureAttachmentApi;
         this.slideApi = slideApi;
-        this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserApi = examUserApi;

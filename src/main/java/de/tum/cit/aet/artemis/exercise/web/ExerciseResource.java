@@ -94,8 +94,6 @@ public class ExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final QuizBatchService quizBatchService;
@@ -120,7 +118,6 @@ public class ExerciseResource {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examDateApi = examDateApi;
         this.exerciseRepository = exerciseRepository;
@@ -244,7 +241,7 @@ public class ExerciseResource {
             exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         }
 
-        Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
+        Set<ExampleSubmission> exampleSubmissions = exerciseService.findExampleSubmissionsForExercise(exercise);
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getLatestResult() == null);
         exercise.setExampleSubmissions(exampleSubmissions);
