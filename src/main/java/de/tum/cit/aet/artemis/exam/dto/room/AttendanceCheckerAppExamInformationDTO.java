@@ -22,11 +22,11 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record ExamRoomForAttendanceCheckerDTO(
     @NotNull long id,
-    @NotEmpty String roomNumber,
+    @NotBlank String roomNumber,
     @Nullable String alternativeRoomNumber,
-    @NotEmpty String name,
+    @NotBlank String name,
     @Nullable String alternativeName,
-    @NotEmpty String building,
+    @NotBlank String building,
     @NotNull List<ExamSeatDTO> seats
 ) {
     static ExamRoomForAttendanceCheckerDTO from(ExamRoom examRoom) {
@@ -44,7 +44,7 @@ record ExamRoomForAttendanceCheckerDTO(
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record ExamUserLocationDTO(
-    @Nullable Long roomId,
+    @Nullable Long roomId,  // null if legacy version
     @NotBlank String roomNumber,  // examUser.plannedRoom if legacy version
     @NotBlank String seatName  // examUser.plannedSeat if legacy version
 ) {
@@ -121,7 +121,7 @@ public record AttendanceCheckerAppExamInformationDTO(
     @NotNull boolean isTestExam,
     @NotNull long courseId,
     @NotBlank String courseTitle,
-    @NotNull Set<ExamRoomForAttendanceCheckerDTO> examRoomsUsedInExam,  // might be empty
+    @NotNull Set<ExamRoomForAttendanceCheckerDTO> examRoomsUsedInExam,  // empty if legacy version
     @NotEmpty Set<ExamUserWithExamRoomAndSeatDTO> examUsersWithExamRoomAndSeat
 ) {
     /**
