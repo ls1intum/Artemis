@@ -9,7 +9,7 @@ then
   exit 1
 fi
 # Expected 2 of 6 server starts from gradle retry-test plugin when tests fail and are retried up to the configured retry limit
-if [[ $numberOfStarts -gt 7 ]]
+if [[ $numberOfStarts -gt 6 ]]
 then
   echo "The number of Server Starts should be lower than/equals 6! Please adapt this check if the change is intended or try to fix the underlying issue causing a different number of server starts!"
   exit 1
