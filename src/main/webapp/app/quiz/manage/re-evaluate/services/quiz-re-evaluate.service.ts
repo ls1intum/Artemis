@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import { QuizExerciseReEvaluateDTO, convertQuizExerciseToReEvaluateDTO } from 'app/quiz/shared/entities/quiz-exercise-reevaluation/quiz-exercise-reevaluate-dto.model';
 
 @Injectable({ providedIn: 'root' })
 export class QuizReEvaluateService {
@@ -23,9 +24,9 @@ export class QuizReEvaluateService {
     /**
      * Copy the QuizExercise object
      */
-    private convert(quizExercise: QuizExercise): QuizExercise {
+    private convert(quizExercise: QuizExercise): QuizExerciseReEvaluateDTO {
         const copy: QuizExercise = Object.assign({}, quizExercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return copy;
+        return convertQuizExerciseToReEvaluateDTO(copy);
     }
 }
