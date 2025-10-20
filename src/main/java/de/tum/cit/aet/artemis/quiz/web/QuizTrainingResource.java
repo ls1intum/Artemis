@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
-import de.tum.cit.aet.artemis.quiz.repository.QuizTrainingLeaderboardRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
@@ -64,18 +63,14 @@ public class QuizTrainingResource {
 
     private final QuizTrainingService quizTrainingService;
 
-    private final QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository;
-
     public QuizTrainingResource(QuizTrainingLeaderboardService quizTrainingLeaderboardService, UserRepository userRepository, CourseRepository courseRepository,
-            AuthorizationCheckService authCheckService, QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService,
-            QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository) {
+            AuthorizationCheckService authCheckService, QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService) {
         this.quizTrainingLeaderboardService = quizTrainingLeaderboardService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.quizQuestionProgressService = quizQuestionProgressService;
         this.quizTrainingService = quizTrainingService;
-        this.quizTrainingLeaderboardRepository = quizTrainingLeaderboardRepository;
     }
 
     /**
