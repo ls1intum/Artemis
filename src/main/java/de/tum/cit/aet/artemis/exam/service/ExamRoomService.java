@@ -465,8 +465,8 @@ public class ExamRoomService {
      *
      * @param examRoom The exam room
      * @param firstRow Number of the first row (starts at 1, lower values default to 1)
-     * @param xSpace   Minimum required free space between the left and right of seats
-     * @param ySpace   Minimum required free space between rows
+     * @param xSpace   Required spacing between seats (exclusive minimum - distances equal to this value are rejected)
+     * @param ySpace   Required spacing between rows (exclusive minimum - distances equal to this value are rejected)
      * @return Sorted list of this room's seats, respecting the given filters
      */
     private static List<ExamSeatDTO> getSortedSeatsWithRelativeDistanceFilters(ExamRoom examRoom, int firstRow, double xSpace, double ySpace) {
