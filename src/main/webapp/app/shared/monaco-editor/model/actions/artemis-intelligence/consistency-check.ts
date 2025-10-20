@@ -15,11 +15,16 @@ type InlineConsistencyIssue = {
     severity: ConsistencyIssue.SeverityEnum;
 };
 
+/**
+ * Adds a comment box below a code line in Monaco.
+ * @param editor Monaco editor wrapper component.
+ * @param issue  Issue to render.
+ */
 export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsistencyIssue) {
     const node = document.createElement('div');
     node.className = 'alert alert-warning alert-dismissible text-start fade show';
     node.innerHTML = `
-      <h5 class="alert-heading">Consistency Issue Found</h5>
+      <h5 class='alert-heading'>Consistency Issue Found</h5>
       <div>${htmlForMarkdown(formatConsistencyCheckResults(issue))}</div>
     `;
 
@@ -27,6 +32,14 @@ export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsis
     editor.addLineWidget(issue.endLine, `comment-${issue.startLine}-${issue.endLine}-${issue.category}`, node);
 }
 
+/**
+ * Filters raw issues to those matching the currently selected file/repo and
+ * maps them into inline issues consumable by the editor UI.
+ * @param selectedFile  File path (relative to repo root) currently open.
+ * @param selectedRepo  Active repository scope or 'PROBLEM_STATEMENT'.
+ * @param issues        All consistency issues.
+ * @returns Inline issues for the selected file/repo.
+ */
 export function issuesForSelectedFile(
     selectedFile: string | undefined,
     selectedRepo: RepositoryType | 'PROBLEM_STATEMENT' | undefined,
@@ -69,6 +82,12 @@ export function issuesForSelectedFile(
     return inlineIssues;
 }
 
+/**
+ * Checks whether a location's artifact type matches the selected repository scope.
+ * @param repo1 Artifact location type (from issue).
+ * @param repo2 Selected repository scope.
+ * @returns True if both represent the same repo domain.
+ */
 export function isMatchingRepository(repo1: ArtifactLocation.TypeEnum, repo2: RepositoryType | 'PROBLEM_STATEMENT') {
     if (repo1 === ArtifactLocation.TypeEnum.TemplateRepository && repo2 === RepositoryType.TEMPLATE) {
         return true;
@@ -84,7 +103,9 @@ export function isMatchingRepository(repo1: ArtifactLocation.TypeEnum, repo2: Re
 }
 
 /**
- * Formats consistency check issue into well-structured markdown for instructor review.
+ * Formats a single inline issue as Markdown (title, description, fix, and location).
+ * @param issue Inline issue to format.
+ * @returns Markdown string.
  */
 export function formatConsistencyCheckResults(issue: InlineConsistencyIssue): string {
     let md = '';
@@ -114,7 +135,9 @@ export function formatConsistencyCheckResults(issue: InlineConsistencyIssue): st
 }
 
 /**
- * Convert an ENUM_STYLE category (e.g. IDENTIFIER_NAMING_INCONSISTENCY) into Title Case (e.g. Identifier Naming Inconsistency)
+ * Converts ENUM_STYLE text (e.g., IDENTIFIER_NAMING_INCONSISTENCY) to Title Case.
+ * @param category Enum-style category string.
+ * @returns Human-friendly title string.
  */
 export function humanizeCategory(category: string): string {
     return category
@@ -124,6 +147,11 @@ export function humanizeCategory(category: string): string {
         .join(' ');
 }
 
+/**
+ * Maps severity enum to a display string.
+ * @param severity Severity enum.
+ * @returns Display label for severity.
+ */
 export function severityToString(severity: ConsistencyIssue.SeverityEnum) {
     switch (severity) {
         case ConsistencyIssue.SeverityEnum.High:
@@ -137,6 +165,11 @@ export function severityToString(severity: ConsistencyIssue.SeverityEnum) {
     }
 }
 
+/**
+ * Maps artifact type enum to a human-readable label.
+ * @param type Artifact location type.
+ * @returns Display label for artifact domain.
+ */
 export function formatArtifactType(type: ArtifactLocation.TypeEnum): string {
     switch (type) {
         case ArtifactLocation.TypeEnum.ProblemStatement:

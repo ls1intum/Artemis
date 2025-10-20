@@ -344,16 +344,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
         effect(() => {
             this.consistencyIssues(); // ensures Angular tracks the signal
-            this.renderFeedbackWidgets();
+            this.renderConsistencyIssues();
         });
     }
 
     /**
-     * Renders the current state of feedback in the editor.
-     * @param lineOfWidgetToFocus The line number of the widget whose text area should be focused.
-     * @protected
+     * Renders consistency issues inside the editor.
      */
-    protected renderFeedbackWidgets(lineOfWidgetToFocus?: number) {
+    protected renderConsistencyIssues() {
         setTimeout(() => {
             this.monacoEditor.disposeWidgets();
 

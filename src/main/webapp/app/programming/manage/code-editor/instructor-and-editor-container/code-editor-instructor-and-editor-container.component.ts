@@ -72,10 +72,24 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCheckDouble = faCheckDouble;
 
-    isCheckingConsistency() {
+    /**
+     * Checks whether a consistency check operation is currently running.
+     *
+     * @returns {boolean} `true` if either the rewrite or consistency check process is currently loading; otherwise `false`.
+     */
+    isCheckingConsistency(): boolean {
         return this.artemisIntelligenceService.isLoading();
     }
 
+    /**
+     * Runs a consistency check for the given programming exercise.
+     *
+     * First verifies that all required repositories are set up correctly.
+     * If no setup issues are found, performs a full content consistency check.
+     * Displays alerts for errors, warnings, or successful results.
+     *
+     * @param {ProgrammingExercise} exercise - The exercise to check.
+     */
     checkConsistencies(exercise: ProgrammingExercise) {
         if (!exercise.id) {
             this.alertService.error(this.translateService.instant('artemisApp.consistencyCheck.checkFailedAlert'));

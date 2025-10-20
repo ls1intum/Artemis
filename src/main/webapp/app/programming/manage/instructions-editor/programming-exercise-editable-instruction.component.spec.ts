@@ -327,7 +327,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
 
         const actions = comp.artemisIntelligenceActions();
-        expect(actions).toHaveLength(2);
+        expect(actions).toHaveLength(1);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
         expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_HYPERION);
     });
