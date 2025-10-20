@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
@@ -496,5 +497,59 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         var usedRooms = storedExam.getExamUsers().stream().map(ExamUser::getPlannedRoom).collect(Collectors.toSet());
         assertThat(usedRooms).containsExactlyInAnyOrder("5602.EG.001", "0101.02.179");
+    }
+
+    /* Tests for the GET /api/exam/courses/{courseId}/exams/{examId}/attendance-checker-information endpoint */
+
+    @Test
+    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+    void testGetAttendanceCheckerInformationAsStudent() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.FORBIDDEN,
+                AttendanceCheckerAppExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testGetAttendanceCheckerInformationAsTutor() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.FORBIDDEN,
+                AttendanceCheckerAppExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void testGetAttendanceCheckerInformationAsEditor() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.FORBIDDEN,
+                AttendanceCheckerAppExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetAttendanceCheckerInformationAsInstructor() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
+                AttendanceCheckerAppExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetAttendanceCheckerInformationAsAdmin() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
+                AttendanceCheckerAppExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetAttendanceCheckerInformationNoStudentsAssigned() throws Exception {
+        var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
+                AttendanceCheckerAppExamInformationDTO.class);
+
+        assertThat(attendanceCheckerInformation.examId()).isEqualTo(exam1.getId());
+        assertThat(attendanceCheckerInformation.examTitle()).isEqualTo(exam1.getTitle());
+        assertThat(attendanceCheckerInformation.startDate()).isEqualTo(exam1.getStartDate());
+        assertThat(attendanceCheckerInformation.endDate()).isEqualTo(exam1.getEndDate());
+        assertThat(attendanceCheckerInformation.isTestExam()).isFalse();
+        assertThat(attendanceCheckerInformation.courseId()).isEqualTo(course1.getId());
+        assertThat(attendanceCheckerInformation.courseTitle()).isEqualTo(course1.getTitle());
+        assertThat(attendanceCheckerInformation.examRoomsUsedInExam()).isEmpty();
+
     }
 }

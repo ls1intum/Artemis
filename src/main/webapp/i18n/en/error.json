@@ -133,7 +133,6 @@
         "examUser": {
             "service": {
                 "multipleExams": "All exam users must belong to the same exam, but currently they belong to {{ foundExams }} different exams",
-                "missingRoomOrSeat": "User {{ userName }} is missing a room or seat",
                 "roomNotFound": "The room {{ roomNumber }} of user {{ userName }} could not be found",
                 "seatNotFound": "The seat {{ seatName }} of user {{ userName }} could not be found"
             }

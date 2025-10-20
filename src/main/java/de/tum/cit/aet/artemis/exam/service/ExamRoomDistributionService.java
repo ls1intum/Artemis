@@ -133,7 +133,7 @@ public class ExamRoomDistributionService {
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
         Set<ExamUser> examUsers = exam.getExamUsers();
-        examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers, true);  // needs to be true to support the legacy system
+        examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers);
         examUserService.setActualRoomAndSeatTransientForExamUsers(examUsers);
 
         Set<ExamRoom> examRooms = examRoomRepository.findAllByExamId(examId);

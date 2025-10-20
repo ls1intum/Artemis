@@ -188,17 +188,16 @@ public class ExamUserService {
      * Sets the transient room and seat fields for all {@link ExamUser}s.
      * The exam users must all belong to the same exam.
      *
-     * @param examUsers                         All exam users for which the transient fields should be set.
-     * @param ignoreExamUsersWithoutRoomAndSeat If true, exam users without a room or seat will be ignored.
-     *                                              If false, an exception will be thrown when an exam user without a room or seat is encountered.
-     * @param roomGetter                        The getter function to get the room string from the exam user.
-     * @param seatGetter                        The getter function to get the seat string from the exam user.
-     * @param roomAndSeatSetter                 The setter function to set the transient room and seat fields of the exam user.
-     * @throws BadRequestAlertException If ignoreExamUsersWithoutRoomAndSeat is false and the conditions are met as described,
-     *                                      or if the room or seat cannot be mapped to actual entities.
+     * @param examUsers                  All exam users for which the transient fields should be set.
+     * @param roomGetter                 The getter function to get the room string from the exam user.
+     * @param seatGetter                 The getter function to get the seat string from the exam user.
+     * @param transientRoomAndSeatSetter The setter function to set the transient room and seat fields of the exam user.
+     * @param supportLegacy              If set to true ignore room and seat names that can't be mapped to actual entities,
+     *                                       otherwise throw an exception on such an encounter
+     * @throws BadRequestAlertException if {@code supportLegacy} is true and an exam user's room or seat cannot be mapped to actual entities.
      */
-    public void setRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, boolean ignoreExamUsersWithoutRoomAndSeat, Function<ExamUser, String> roomGetter,
-            Function<ExamUser, String> seatGetter, TriConsumer<ExamUser, ExamRoom, ExamSeatDTO> roomAndSeatSetter) {
+    public void setRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, Function<ExamUser, String> roomGetter, Function<ExamUser, String> seatGetter,
+            TriConsumer<ExamUser, ExamRoom, ExamSeatDTO> transientRoomAndSeatSetter, boolean supportLegacy) {
         List<Exam> usedExams = examUsers.stream().map(ExamUser::getExam).distinct().toList();
         if (usedExams.size() != 1) {
             throw new BadRequestAlertException("All exam users must belong to the same exam", ENTITY_NAME, "examUserService.multipleExams", Map.of("foundExams", usedExams.size()));
@@ -211,41 +210,38 @@ public class ExamUserService {
             final String seatName = seatGetter.apply(examUser);
 
             if (!StringUtils.hasText(roomNumber) || !StringUtils.hasText(seatName)) {
-                if (ignoreExamUsersWithoutRoomAndSeat) {
-                    continue;
-                }
-                else {
-                    throw new BadRequestAlertException("Exam user does not have a room or seat", ENTITY_NAME, "examUser.service.missingRoomOrSeat",
-                            Map.of("userName", examUser.getUser().getLogin()));
-                }
+                continue;
             }
 
-            Optional<ExamRoom> matchingRoom = examRoomsUsedInExam.stream().filter(room -> room.getRoomNumber().equalsIgnoreCase(roomNumber)).findFirst();
-            if (matchingRoom.isEmpty()) {
+            Optional<ExamRoom> matchingRoomEntity = examRoomsUsedInExam.stream().filter(room -> room.getRoomNumber().equalsIgnoreCase(roomNumber)).findFirst();
+            if (matchingRoomEntity.isEmpty()) {
+                if (supportLegacy) {
+                    // we can't just return here in order to not break exams where a mix of the modern and legacy system was used.
+                    // while this is discouraged, it would be naive to not account for that possibility.
+                    // if we were to return here, a single legacy-inserted student could steal the modern mode from modern-inserted ones.
+                    continue;
+                }
+
                 throw new BadRequestAlertException("Room of exam user cannot be mapped to an actual room, userName=" + examUser.getUser().getLogin() + ", roomNumber=" + roomNumber,
                         ENTITY_NAME, "examUser.service.roomNotFound", Map.of("userName", examUser.getUser().getLogin(), "roomNumber", roomNumber));
             }
 
-            Optional<ExamSeatDTO> matchingSeat = matchingRoom.get().getSeats().stream().filter(seat -> seat.name().equalsIgnoreCase(seatName)).findFirst();
-            if (matchingSeat.isEmpty()) {
+            Optional<ExamSeatDTO> matchingSeatEntity = matchingRoomEntity.get().getSeats().stream().filter(seat -> seat.name().equalsIgnoreCase(seatName)).findFirst();
+            if (matchingSeatEntity.isEmpty()) {
                 throw new BadRequestAlertException("Seat of exam user cannot be mapped to an actual seat, userName=" + examUser.getUser().getLogin() + ", seatName=" + seatName,
                         ENTITY_NAME, "examUser.service.seatNotFound", Map.of("userName", examUser.getUser().getLogin(), "seatName", seatName));
             }
 
-            roomAndSeatSetter.accept(examUser, matchingRoom.get(), matchingSeat.get());
+            transientRoomAndSeatSetter.accept(examUser, matchingRoomEntity.get(), matchingSeatEntity.get());
         }
     }
 
     /**
-     * @param examUsers                         All exam users for which the transient fields should be set.
-     * @param ignoreExamUsersWithoutRoomAndSeat If true, exam users without a room or seat will be ignored.
-     *                                              If false, an exception will be thrown when an exam user without a room or seat is encountered.
-     * @throws BadRequestAlertException If an exam user does not have a planned room or seat
+     * @param examUsers All exam users for which the transient fields should be set.
      * @see #setRoomAndSeatTransientForExamUsers
      */
-    public void setPlannedRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, boolean ignoreExamUsersWithoutRoomAndSeat) {
-        setRoomAndSeatTransientForExamUsers(examUsers, ignoreExamUsersWithoutRoomAndSeat, ExamUser::getPlannedRoom, ExamUser::getPlannedSeat,
-                ExamUser::setTransientPlannedRoomAndSeat);
+    public void setPlannedRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers) {
+        setRoomAndSeatTransientForExamUsers(examUsers, ExamUser::getPlannedRoom, ExamUser::getPlannedSeat, ExamUser::setTransientPlannedRoomAndSeat, true);
     }
 
     /**
@@ -253,6 +249,6 @@ public class ExamUserService {
      * @see #setRoomAndSeatTransientForExamUsers
      */
     public void setActualRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers) {
-        setRoomAndSeatTransientForExamUsers(examUsers, true, ExamUser::getActualRoom, ExamUser::getActualSeat, ExamUser::setTransientActualRoomAndSeat);
+        setRoomAndSeatTransientForExamUsers(examUsers, ExamUser::getActualRoom, ExamUser::getActualSeat, ExamUser::setTransientActualRoomAndSeat, true);
     }
 }
