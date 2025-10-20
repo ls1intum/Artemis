@@ -445,7 +445,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     private static boolean applyQuizQuestionsFromDTOAndCheckIfChanged(QuizExerciseReEvaluateDTO reEvaluateDTO, QuizExercise originalQuizExercise) {
-        // Need to create a new list to correctly handle removed questions and reordering
         List<QuizQuestion> newQuestions = new ArrayList<>();
         boolean questionsChanged = false;
         for (var questionDTO : reEvaluateDTO.quizQuestions()) {
