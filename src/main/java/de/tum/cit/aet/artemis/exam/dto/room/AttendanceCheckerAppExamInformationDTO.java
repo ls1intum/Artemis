@@ -97,7 +97,7 @@ record ExamUserWithExamRoomAndSeatDTO (
             examUser.getUser().getLastName(),
             examUser.getUser().getRegistrationNumber(),
             examUser.getUser().getEmail(),
-            examUser.getStudentImagePath(),
+            examUser.getUser().getImageUrl(),
             examUser.getDidCheckImage(),
             examUser.getDidCheckName(),
             examUser.getDidCheckRegistrationNumber(),
