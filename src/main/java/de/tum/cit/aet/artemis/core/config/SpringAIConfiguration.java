@@ -10,9 +10,10 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
-import org.springframework.ai.chat.memory.repository.jdbc.MysqlChatMemoryRepositoryDialect;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepositoryDialect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
@@ -38,15 +39,18 @@ public class SpringAIConfiguration {
     /**
      * Creates a JDBC-based chat memory repository for persistent storage.
      * Uses MySQL dialect for database-specific operations.
+     * This bean is only created if no other ChatMemoryRepository bean exists,
+     * allowing Spring AI auto-configuration to take precedence if available.
      *
      * @param dataSource the datasource to use for JDBC operations
      * @return configured ChatMemoryRepository
      */
     @Bean
     @Lazy
+    @ConditionalOnMissingBean
     public ChatMemoryRepository chatMemoryRepository(DataSource dataSource) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return JdbcChatMemoryRepository.builder().jdbcTemplate(jdbcTemplate).dialect(new MysqlChatMemoryRepositoryDialect()).build();
+        return JdbcChatMemoryRepository.builder().jdbcTemplate(jdbcTemplate).dialect(JdbcChatMemoryRepositoryDialect.from(dataSource)).build();
     }
 
     /**
