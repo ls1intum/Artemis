@@ -69,7 +69,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         fixture = TestBed.createComponent(CalendarDesktopMonthPresentationComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('firstDayOfCurrentMonth', dayjs('2025-05-01'));
+        fixture.componentRef.setInput('firstDateOfCurrentMonth', dayjs('2025-05-01'));
         fixture.detectChanges();
     });
 
