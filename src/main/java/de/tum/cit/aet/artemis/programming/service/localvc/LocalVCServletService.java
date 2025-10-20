@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
 import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
 import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.RateLimitService;
@@ -75,6 +77,8 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 
 /**
  * This service is responsible for authenticating and authorizing git requests as well as for retrieving the requested Git repositories from disk.
@@ -232,7 +236,9 @@ public class LocalVCServletService {
             return;
         }
 
-        rateLimitService.enforcePerMinute(request.getRemoteAddr(), 30);
+        String ipString = getIpStringFromRequest(request);
+        final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
+        rateLimitService.enforcePerMinute(ipAddress, RateLimitType.LOGIN_RELATED);
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         log.debug("Parsed repository URI from request: {}", localVCRepositoryUri);

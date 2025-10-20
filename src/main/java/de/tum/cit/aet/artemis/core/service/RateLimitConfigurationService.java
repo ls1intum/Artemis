@@ -36,20 +36,10 @@ public class RateLimitConfigurationService {
      * @return the effective RPM value
      */
     public int getEffectiveRpm(RateLimitType type) {
+        System.out.println(type.name());
         return switch (type) {
             case PUBLIC -> properties.getPublicRpm() != null ? properties.getPublicRpm() : type.getDefaultRpm();
             case LOGIN_RELATED -> properties.getLoginRelatedRpm() != null ? properties.getLoginRelatedRpm() : type.getDefaultRpm();
         };
-    }
-
-    /**
-     * Gets the effective RPM value for a fixed RPM annotation value.
-     * If rate limiting is disabled, returns the provided value (for backward compatibility).
-     *
-     * @param fixedRpm the fixed RPM value from annotation
-     * @return the effective RPM value
-     */
-    public int getEffectiveRpm(int fixedRpm) {
-        return fixedRpm;
     }
 }

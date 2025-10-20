@@ -14,6 +14,7 @@ import org.springframework.util.Assert;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.service.RateLimitService;
 
 /**
@@ -58,7 +59,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         WebAuthnAuthenticationRequestToken webAuthnRequest = (WebAuthnAuthenticationRequestToken) authentication;
-        rateLimitService.enforcePerMinute(rateLimitService.resolveClientId(), 30);
+        rateLimitService.enforcePerMinute(rateLimitService.resolveClientId(), RateLimitType.LOGIN_RELATED);
         try {
             PublicKeyCredentialUserEntity userEntity = this.relyingPartyOperations.authenticate(webAuthnRequest.getWebAuthnRequest());
             String username = userEntity.getName();

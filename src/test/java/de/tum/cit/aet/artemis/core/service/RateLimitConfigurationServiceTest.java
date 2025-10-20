@@ -74,18 +74,4 @@ class RateLimitConfigurationServiceTest {
 
         assertThat(rpm).isEqualTo(RateLimitType.LOGIN_RELATED.getDefaultRpm()); // 30
     }
-
-    @Test
-    void testGetEffectiveRpm_FixedValue_ShouldReturnSameValue() {
-        int rpm = configurationService.getEffectiveRpm(15);
-
-        assertThat(rpm).isEqualTo(15);
-    }
-
-    @Test
-    void testGetEffectiveRpm_FixedValueZero_ShouldReturnZero() {
-        int rpm = configurationService.getEffectiveRpm(0);
-
-        assertThat(rpm).isEqualTo(0);
-    }
 }

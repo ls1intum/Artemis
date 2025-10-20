@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.service.RateLimitConfigurationService;
 import de.tum.cit.aet.artemis.core.service.RateLimitService;
+import inet.ipaddr.IPAddress;
 
 /**
  * Aspect that intercepts methods annotated with {@link LimitRequestsPerMinute} to enforce rate limiting.
@@ -62,32 +63,8 @@ public class LimitRequestsPerMinuteAspect {
             return;
         }
 
-        int effectiveRpm = determineEffectiveRpm(annotation);
-        String clientId = rateLimitService.resolveClientId();
+        IPAddress clientId = rateLimitService.resolveClientId();
 
-        rateLimitService.enforcePerMinute(clientId, effectiveRpm);
-    }
-
-    /**
-     * Determines the effective RPM value based on the annotation configuration.
-     *
-     * <p>
-     * Priority order:
-     * </p>
-     * <ol>
-     * <li>Fixed value from annotation (if >= 0)</li>
-     * <li>Configured value for the rate limit type</li>
-     * <li>Default value for the rate limit type</li>
-     * </ol>
-     *
-     * @param annotation the rate limiting annotation
-     * @return the effective RPM value to use
-     */
-    private int determineEffectiveRpm(LimitRequestsPerMinute annotation) {
-        if (annotation.value() >= 0) {
-            return configurationService.getEffectiveRpm(annotation.value());
-        }
-
-        return configurationService.getEffectiveRpm(annotation.type());
+        rateLimitService.enforcePerMinute(clientId, annotation.type());
     }
 }

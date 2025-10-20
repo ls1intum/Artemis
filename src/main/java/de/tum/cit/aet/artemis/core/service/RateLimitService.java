@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,14 +10,15 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import de.tum.cit.aet.artemis.core.config.RateLimitConfig;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.ConsumptionProbe;
@@ -43,13 +43,10 @@ public class RateLimitService {
 
     private final Map<Integer, BucketConfiguration> perMinuteCfgCache = new ConcurrentHashMap<>();
 
-    private final Environment env;
-
     private final RateLimitConfigurationService configurationService;
 
-    public RateLimitService(HazelcastProxyManager<String> proxyManager, Environment env, RateLimitConfigurationService configurationService) {
+    public RateLimitService(HazelcastProxyManager<String> proxyManager, RateLimitConfigurationService configurationService) {
         this.proxyManager = proxyManager;
-        this.env = env;
         this.configurationService = configurationService;
     }
 
@@ -58,33 +55,28 @@ public class RateLimitService {
      * Throws {@link RateLimitExceededException} if the rate limit is exceeded.
      *
      * @param clientId identifier for the client (typically an IP address)
-     * @param rpm      requests per minute allowed for this client
+     * @param rpmType  the rate limit type to determine the RPM configuration
      * @throws RateLimitExceededException if the rate limit is exceeded
      */
-    public void enforcePerMinute(String clientId, int rpm) {
+    public void enforcePerMinute(IPAddress clientId, RateLimitType rpmType) {
         // Skip rate limiting if disabled globally
         if (!configurationService.isRateLimitingEnabled()) {
-            log.debug("Rate limiting is disabled globally, skipping enforcement for client {} at {} rpm", clientId, rpm);
+            log.debug("Rate limiting is disabled globally, skipping enforcement for client {} at {}", clientId, rpmType.name());
             return;
         }
 
-        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            log.debug("Skipping rate limit enforcement for client {} at {} rpm in test profile", clientId, rpm);
-            return;
-        }
-
-        Bucket bucket = getOrCreatePerMinuteBucket(clientId, rpm);
+        Bucket bucket = getOrCreatePerMinuteBucket(clientId, configurationService.getEffectiveRpm(rpmType));
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             long seconds = Math.max(1, probe.getNanosToWaitForRefill() / 1_000_000_000L);
-            log.warn("Rate limit exceeded for client {} at {} rpm, retry after {} seconds", clientId, rpm, seconds);
+            log.warn("Rate limit exceeded for client {} at {}, retry after {} seconds", clientId, rpmType.name(), seconds);
             throw new RateLimitExceededException(seconds);
         }
 
-        log.debug("Rate limit check passed for client {} at {} rpm, remaining tokens: {}", clientId, rpm, probe.getRemainingTokens());
+        log.debug("Rate limit check passed for client {} at {}, remaining tokens: {}", clientId, rpmType.name(), probe.getRemainingTokens());
     }
 
-    private Bucket getOrCreatePerMinuteBucket(String clientId, int rpm) {
+    private Bucket getOrCreatePerMinuteBucket(IPAddress clientId, int rpm) {
         BucketConfiguration cfg = perMinuteCfgCache.computeIfAbsent(rpm, RateLimitConfig::perMinute);
         return proxyManager.getProxy("rpm=" + rpm + "#" + clientId, () -> cfg);
     }
@@ -103,8 +95,9 @@ public class RateLimitService {
      *
      * @return the cleaned client IP address
      */
-    public String resolveClientId() {
-        return getIpStringFromRequest(currentRequest());
+    public IPAddress resolveClientId() {
+        final String ipString = getIpStringFromRequest(currentRequest());
+        return new IPAddressString(ipString).getAddress();
     }
 
     private HttpServletRequest currentRequest() {

@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
@@ -84,7 +85,7 @@ public class PublicUserJwtResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    @LimitRequestsPerMinute(30)
+    @LimitRequestsPerMinute(type = RateLimitType.LOGIN_RELATED)
     public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader(HttpHeaders.USER_AGENT) String userAgent,
             @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response, HttpServletRequest request) {
 

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
@@ -21,12 +22,15 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 
 @Profile(PROFILE_LOCALVC)
 @Lazy
@@ -84,7 +88,10 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
      */
     private boolean authenticateUser(UserSshPublicKey storedKey, PublicKey providedKey, ServerSession session) {
         try {
-            rateLimitService.enforcePerMinute(session.getRemoteAddress().toString(), 30);
+            String ipString = ((InetSocketAddress) session.getRemoteAddress()).getHostString();
+            final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
+
+            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.LOGIN_RELATED);
         }
         catch (RuntimeException e) {
             log.warn("Rate limit exceeded for SSH authentication from {}", session.getRemoteAddress(), e);

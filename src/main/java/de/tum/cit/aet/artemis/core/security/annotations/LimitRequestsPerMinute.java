@@ -22,14 +22,6 @@ import de.tum.cit.aet.artemis.core.security.RateLimitType;
 public @interface LimitRequestsPerMinute {
 
     /**
-     * Maximum requests per minute per client for the annotated endpoint/controller.
-     * If both value and type are specified, value takes precedence.
-     *
-     * @return the fixed RPM value, or -1 if using type-based configuration
-     */
-    int value() default -1;
-
-    /**
      * Rate limit type that defines the default RPM and allows configuration overrides.
      * If both value and type are specified, value takes precedence.
      *
