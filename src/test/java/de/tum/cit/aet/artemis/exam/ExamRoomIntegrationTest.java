@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -17,10 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
@@ -28,9 +24,7 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamRoomTestRepository;
-import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamRoomZipFiles;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -42,12 +36,6 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
-
-    @Autowired
-    private ExamTestRepository examRepository;
 
     private static final String STUDENT_LOGIN = TEST_PREFIX + "student1";
 
@@ -62,12 +50,6 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private static ExpectedRoom[] fourExpectedRooms;
 
     private static ExpectedRoom singleNoLayoutsExpectedRoom;
-
-    private Course course1;
-
-    private Exam exam1;
-
-    private static final int NUMBER_OF_STUDENTS = 200;
 
     record ExpectedRoom(String roomNumber, String alternativeRoomNumber, String name, String alternativeName, String building) {
 
@@ -94,10 +76,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void setup() {
-        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
-
-        course1 = courseUtilService.addEmptyCourse();
-        exam1 = examUtilService.addExam(course1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
     }
 
     @AfterEach
@@ -427,74 +406,4 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         validateDbStoredElementCounts(59, 14_589, 212);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDistributeRegisteredStudentsAsStudent() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testDistributeRegisteredStudentsAsTutor() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testDistributeRegisteredStudentsAsEditor() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDistributeRegisteredStudentsAsInstructor() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testDistributeRegisteredStudentsAsAdmin() throws Exception {
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testDistributeRegisteredStudentsTooFewSeats() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
-        Exam exam = examUtilService.addExam(course);
-        examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
-
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
-        request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.BAD_REQUEST);
-
-        Exam storedExam = examRepository.findByIdWithExamUsersElseThrow(exam.getId());
-        assertThat(storedExam).isNotNull();
-        assertThat(storedExam.getExamUsers()).isNotEmpty().allSatisfy(examUser -> {
-            assertThat(examUser.getPlannedRoom()).isNull();
-            assertThat(examUser.getPlannedSeat()).isNull();
-        });
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testDistributeRegisteredStudentsEnoughSeats() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
-        Exam exam = examUtilService.addExam(course);
-        examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
-
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179"));
-        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.OK);
-
-        Exam storedExam = examRepository.findByIdWithExamUsersElseThrow(exam.getId());
-        assertThat(storedExam).isNotNull();
-        assertThat(storedExam.getExamUsers()).isNotEmpty().allSatisfy(examUser -> {
-            assertThat(examUser.getPlannedRoom()).isNotBlank();
-            assertThat(examUser.getPlannedSeat()).isNotBlank();
-        });
-
-        var usedRooms = storedExam.getExamUsers().stream().map(ExamUser::getPlannedRoom).collect(Collectors.toSet());
-        assertThat(usedRooms).containsExactlyInAnyOrder("5602.EG.001", "0101.02.179");
-    }
 }

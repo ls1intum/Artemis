@@ -67,7 +67,7 @@ public class ExamRoomDistributionResource {
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId,
-            @RequestParam(defaultValue = "false") boolean useOnlyDefaultLayouts, @RequestBody Set<Long> examRoomIds) {
+            @RequestParam(defaultValue = "true") boolean useOnlyDefaultLayouts, @RequestBody Set<Long> examRoomIds) {
         log.debug("REST request to distribute students across rooms for exam : {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
