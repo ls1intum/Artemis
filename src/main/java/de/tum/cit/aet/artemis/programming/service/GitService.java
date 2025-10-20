@@ -704,8 +704,8 @@ public class GitService extends AbstractGitService {
 
     /**
      * Removes all author information from the commits on the currently active branch.
-     * Also removes all remotes and FETCH_HEAD since they contain data about the student.
-     * Also deletes the .git/logs folder to prevent restoring commits from reflogs
+     * Removes all remotes and FETCH_HEAD since they contain data about the student.
+     * Deletes the .git/logs folder to prevent restoring commits from reflogs
      *
      * @param repository          Local Repository Object.
      * @param programmingExercise ProgrammingExercise associated with this repo.
@@ -790,7 +790,7 @@ public class GitService extends AbstractGitService {
             if (!git.remoteList().call().isEmpty()) {
                 throw new de.tum.cit.aet.artemis.core.exception.GitException("Anonymization verification failed: repository still has remotes configured");
             }
-            // Also ensure no remote tracking refs remain
+            // Ensure no remote tracking refs remain
             try {
                 for (Ref ref : git.getRepository().getRefDatabase().getRefs()) {
                     if (ref.getName().startsWith("refs/remotes/")) {
