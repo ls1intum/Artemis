@@ -260,13 +260,15 @@ public class AthenaResource {
      * @param submissionId the id of the submission to get the repository for
      * @param auth         the auth header value to check
      * @return 200 Ok with the zip file as body if successful
+     * @deprecated Use {@code api/athena/internal/programming-exercises/{exerciseId}/submissions/{submissionId}/repository} instead
      */
+    @Deprecated
     @GetMapping("public/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
     public ResponseEntity<Resource> getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth)
             throws IOException {
-        log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, submissionId);
+        log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}, submission {}", exerciseId, submissionId);
         checkAthenaSecret(auth);
         return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, submissionId, null));
     }
@@ -277,12 +279,14 @@ public class AthenaResource {
      * @param exerciseId the id of the exercise
      * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
+     * @deprecated Use {@code api/athena/internal/programming-exercises/{exerciseId}/repository/template} instead
      */
+    @Deprecated
     @GetMapping("public/programming-exercises/{exerciseId}/repository/template")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
     public ResponseEntity<Resource> getTemplateRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
-        log.debug("REST call to get template repository for exercise {}", exerciseId);
+        log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}", exerciseId);
         checkAthenaSecret(auth);
         return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TEMPLATE));
     }
@@ -293,12 +297,14 @@ public class AthenaResource {
      * @param exerciseId the id of the exercise
      * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
+     * @deprecated Use {@code api/athena/internal/programming-exercises/{exerciseId}/repository/solution} instead
      */
+    @Deprecated
     @GetMapping("public/programming-exercises/{exerciseId}/repository/solution")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
     public ResponseEntity<Resource> getSolutionRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
-        log.debug("REST call to get solution repository for exercise {}", exerciseId);
+        log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}", exerciseId);
         checkAthenaSecret(auth);
         return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.SOLUTION));
     }
@@ -309,12 +315,14 @@ public class AthenaResource {
      * @param exerciseId the id of the exercise
      * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
+     * @deprecated Use {@code api/athena/internal/programming-exercises/{exerciseId}/repository/tests} instead
      */
+    @Deprecated
     @GetMapping("public/programming-exercises/{exerciseId}/repository/tests")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
     public ResponseEntity<Resource> getTestRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
-        log.debug("REST call to get test repository for exercise {}", exerciseId);
+        log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}", exerciseId);
         checkAthenaSecret(auth);
         return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TESTS));
     }
