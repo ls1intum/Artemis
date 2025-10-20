@@ -134,7 +134,7 @@
         "examUser": {
             "service": {
                 "multipleExams": "Alle Klausurteilnehmer müssen zur selben Klausur gehören, aber aktuell gehören sie zu {{ foundExams }} verschiedenen Klausuren",
-                "missingPlannedRoomOrSeat": "Nutzer {{ userName }} hat keinen geplanten Raum und Sitz",
+                "missingPlannedRoomOrSeat": "Nutzer {{ userName }} hat keinen geplanten Raum oder Sitz",
                 "plannedRoomNotFound": "Der geplante Raum {{ plannedRoom }} von Nutzer {{ userName }} konnte nicht gefunden werden",
                 "plannedSeatNotFound": "Der geplante Sitz {{ plannedSeat }} von Nutzer {{ userName }} konnte nicht gefunden werden"
             }

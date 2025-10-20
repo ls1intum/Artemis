@@ -69,7 +69,6 @@ public class ExamRoomDistributionResource {
     public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId,
             @RequestParam(defaultValue = "false") boolean useOnlyDefaultLayouts, @RequestBody Set<Long> examRoomIds) {
         log.debug("REST request to distribute students across rooms for exam : {}", examId);
-        log.error("useOnlyDefaultLayout: {}", useOnlyDefaultLayouts);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         if (examRoomIds == null || examRoomIds.isEmpty()) {
