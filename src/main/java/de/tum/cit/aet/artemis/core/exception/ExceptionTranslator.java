@@ -175,6 +175,19 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         return create(ex, problem, request);
     }
 
+    /**
+     * Handles {@link RateLimitExceededException} exceptions that occur when a client
+     * exceeds the configured rate limit for API requests.
+     *
+     * <p>This method constructs an HTTP response with status code {@code 429 (Too Many Requests)}.
+     * If the thrown exception specifies a retry delay, the response will include a
+     * {@code Retry-After} header indicating the number of seconds the client should wait
+     * before retrying the request.</p>
+     *
+     * @param ex the {@link RateLimitExceededException} thrown when the request rate limit is exceeded
+     * @return a {@link ResponseEntity} containing a descriptive message ("Too Many Requests"),
+     *         optional {@code Retry-After} header, and HTTP status {@code 429 (Too Many Requests)}
+     */
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<String> handle(RateLimitExceededException ex) {
         HttpHeaders headers = new HttpHeaders();

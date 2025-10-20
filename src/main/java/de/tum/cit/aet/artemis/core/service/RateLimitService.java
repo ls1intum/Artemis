@@ -26,20 +26,12 @@ import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.ConsumptionProbe;
 import io.github.bucket4j.grid.hazelcast.HazelcastProxyManager;
 
+@Profile(PROFILE_CORE)
 @Service
+@Lazy
 public class RateLimitService {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitService.class);
-
-    /**
-     * Pattern to match and extract IPv4 addresses, removing any port numbers.
-     */
-    private static final Pattern IPV4_PATTERN = Pattern.compile("^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})(:\\d+)?$");
-
-    /**
-     * Pattern to match and extract IPv6 addresses, removing any port numbers.
-     */
-    private static final Pattern IPV6_PATTERN = Pattern.compile("^\\[?([0-9a-fA-F:]+)\\]?(:\\d+)?$");
 
     private final HazelcastProxyManager<String> proxyManager;
 
@@ -104,8 +96,9 @@ public class RateLimitService {
 
     private HttpServletRequest currentRequest() {
         RequestAttributes attrs = RequestContextHolder.getRequestAttributes();
-        if (attrs == null)
+        if (attrs == null) {
             return null;
+        }
         return (HttpServletRequest) attrs.resolveReference(RequestAttributes.REFERENCE_REQUEST);
     }
 }
