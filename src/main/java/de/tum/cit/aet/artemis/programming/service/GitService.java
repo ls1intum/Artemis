@@ -841,6 +841,9 @@ public class GitService extends AbstractGitService {
         catch (org.eclipse.jgit.api.errors.GitAPIException | org.eclipse.jgit.api.errors.JGitInternalException e) {
             throw new de.tum.cit.aet.artemis.core.exception.GitException("Failed during anonymization verification: " + e.getMessage(), e);
         }
+        catch (de.tum.cit.aet.artemis.core.exception.EntityNotFoundException e) {
+            throw new de.tum.cit.aet.artemis.core.exception.GitException("Failed during anonymization verification: " + e.getMessage(), e);
+        }
     }
 
     /**
