@@ -3,13 +3,14 @@ package de.tum.cit.aet.artemis.atlas.service;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import jakarta.annotation.Nullable;
+
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -35,9 +36,8 @@ public class AtlasAgentService {
 
     private final AtlasAgentToolsService atlasAgentToolsService;
 
-    public AtlasAgentService(@Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService,
-            @Autowired(required = false) ToolCallbackProvider toolCallbackProvider, @Autowired(required = false) ChatMemory chatMemory,
-            @Autowired(required = false) AtlasAgentToolsService atlasAgentToolsService) {
+    public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
+            @Nullable ChatMemory chatMemory, @Nullable AtlasAgentToolsService atlasAgentToolsService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.toolCallbackProvider = toolCallbackProvider;
