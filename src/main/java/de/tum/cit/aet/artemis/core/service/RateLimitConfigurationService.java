@@ -42,7 +42,6 @@ public class RateLimitConfigurationService {
      * @return the effective RPM value
      */
     public int getEffectiveRpm(RateLimitType type) {
-        System.out.println(type.name());
         return switch (type) {
             case PUBLIC -> properties.getPublicRpm() != null ? properties.getPublicRpm() : type.getDefaultRpm();
             case LOGIN_RELATED -> properties.getLoginRelatedRpm() != null ? properties.getLoginRelatedRpm() : type.getDefaultRpm();
