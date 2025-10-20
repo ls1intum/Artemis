@@ -51,7 +51,12 @@ public class SpringAIAutoConfigurationFilter implements AutoConfigurationImportF
                 continue;
             }
 
-            matches[i] = hyperionEnabled || !fullyQualifiedClassName.startsWith("org.springframework.ai");
+            String QUIZ_ENABLED_PROPERTY_NAME = "artemis.ai.quiz-generation.enabled"; // TODO: move to Constants file
+            // and adapt console log
+            boolean quizAiEnabled = env.getProperty(QUIZ_ENABLED_PROPERTY_NAME, Boolean.class, false);
+            log.info("SpringAIAutoConfigurationFilter: quizAiEnabled={}, hyperionEnabled={}", quizAiEnabled, hyperionEnabled);
+            matches[i] = hyperionEnabled || quizAiEnabled || !fullyQualifiedClassName.startsWith("org.springframework.ai");
+
             if (!matches[i]) {
                 log.debug("Excluding auto-configuration: {} because Hyperion is disabled", fullyQualifiedClassName);
             }

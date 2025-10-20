@@ -184,6 +184,12 @@ dependencies {
 
     implementation platform("org.springframework.ai:spring-ai-bom:1.0.3")
     implementation "org.springframework.ai:spring-ai-starter-model-azure-openai" // can also use non-azure models
+    // TEMPORARY: local Azure SDK version pinning for development only – remove before merge
+    implementation("com.azure:azure-ai-openai:1.0.0-beta.11") {
+        version {
+            strictly("1.0.0-beta.11")
+        }
+    }
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -504,6 +510,7 @@ dependencies {
     testImplementation "org.junit.platform:junit-platform-commons:${junit_platform_version}"
     testImplementation "org.junit.platform:junit-platform-engine:${junit_platform_version}"
     testImplementation "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
+
 }
 
 // we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ":mockitoAgent" after it has been resolved
