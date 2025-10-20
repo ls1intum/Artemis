@@ -501,8 +501,14 @@ public class ExamRoomService {
     private static List<ExamSeatDTO> applyXSpaceAndYSpaceFilter(List<ExamSeatDTO> sortedSeatsAfterFirstRowFilter, double xSpace, double ySpace) {
         List<ExamSeatDTO> usableSeats = new ArrayList<>();
         for (ExamSeatDTO examSeatDTO : sortedSeatsAfterFirstRowFilter) {
-            boolean isFarEnough = usableSeats.stream().noneMatch(
-                    existing -> Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate()) <= ySpace && Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate()) <= xSpace);
+            boolean isFarEnough = usableSeats.stream().noneMatch(existing -> {
+                double yDifference = Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate());
+                double xDifference = Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate());
+
+                return (0 < yDifference && yDifference <= ySpace)  // different row, but not enough space between rows
+                        || (yDifference == 0 && xDifference <= xSpace);  // same row, but not enough space between columns
+            });
+
             if (isFarEnough) {
                 usableSeats.add(examSeatDTO);
             }
