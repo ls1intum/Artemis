@@ -31,6 +31,14 @@
         </createTable>
 
         <!-- Create indexes -->
+        <!-- Composite index for efficient querying of latest version per exercise -->
+        <createIndex indexName="idx_exercise_version_exercise_id_created_date"
+            tableName="exercise_version">
+            <column name="exercise_id" />
+            <column name="created_date" descending="true" />
+        </createIndex>
+
+        <!-- Index on created_date for general chronological queries -->
         <createIndex indexName="idx_exercise_version_created_date"
             tableName="exercise_version">
             <column name="created_date" />

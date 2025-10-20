@@ -33,7 +33,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
         Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, ProgrammingLanguage programmingLanguage,
         String packageName, Boolean showTestNamesToStudents, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, String projectKey,
         ParticipationSnapshotDTO templateParticipation, ParticipationSnapshotDTO solutionParticipation, Set<ProgrammingExerciseTestCaseDTO> testCases,
-        List<ProgrammingExerciseTaskSnapshotDTO> tasks, Set<StaticCodeAnalysisCategorySnapshotDTO> staticCodeAnalysisCategories, SubmissionPolicySnapshotDTO submissionPolicy,
+        Set<ProgrammingExerciseTaskSnapshotDTO> tasks, Set<StaticCodeAnalysisCategorySnapshotDTO> staticCodeAnalysisCategories, SubmissionPolicySnapshotDTO submissionPolicy,
         ProjectType projectType, Boolean releaseTestsWithExampleSolution, ProgrammingExerciseBuildConfigSnapshotDTO buildConfig,
         // Derivative fields for versioning
         String testsCommitId) implements Serializable {
@@ -69,7 +69,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
 
         var analysisCategories = CollectionUtil
                 .nullIfEmpty(exercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategorySnapshotDTO::of).collect(Collectors.toSet()));
-        var tasks = CollectionUtil.nullIfEmpty(exercise.getTasks().stream().map(ProgrammingExerciseTaskSnapshotDTO::of).collect(Collectors.toCollection(ArrayList::new)));
+        var tasks = CollectionUtil.nullIfEmpty(exercise.getTasks().stream().map(ProgrammingExerciseTaskSnapshotDTO::of).collect(Collectors.toSet()));
         var testCases = CollectionUtil.nullIfEmpty(exercise.getTestCases().stream().map(ProgrammingExerciseTestCaseDTO::of).collect(Collectors.toSet()));
 
         return new ProgrammingExerciseSnapshotDTO(exercise.getTestRepositoryUri(), auxiliaryRepositoriesDTO, exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
