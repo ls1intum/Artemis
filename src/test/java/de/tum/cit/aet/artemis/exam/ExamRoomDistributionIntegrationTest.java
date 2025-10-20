@@ -36,6 +36,9 @@ public class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     private ExamRoomTestRepository examRoomRepository;
 
+    @Autowired
+    private ExamRoomService examRoomService;
+
     private static final String STUDENT_LOGIN = TEST_PREFIX + "student1";
 
     private static final String TUTOR_LOGIN = TEST_PREFIX + "tutor1";
@@ -49,9 +52,6 @@ public class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrati
     private Course course1;
 
     private Exam exam1;
-
-    @Autowired
-    private ExamRoomService examRoomService;
 
     @BeforeEach
     void setup() {
