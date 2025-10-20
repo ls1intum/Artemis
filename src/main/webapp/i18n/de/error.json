@@ -134,7 +134,7 @@
             "service": {
                 "multipleExams": "Alle Klausurteilnehmer müssen zur selben Klausur gehören, aber aktuell gehören sie zu {{ foundExams }} verschiedenen Klausuren",
                 "roomNotFound": "Der Raum {{ roomNumber }} von Nutzer {{ userName }} konnte nicht gefunden werden",
-                "plannedSeatNotFound": "Der Sitz {{ seatName }} von Nutzer {{ userName }} konnte nicht gefunden werden"
+                "seatNotFound": "Der Sitz {{ seatName }} von Nutzer {{ userName }} konnte nicht gefunden werden"
             }
         },
         "notEnoughExamSeats": "Die ausgewählten Räume haben nur Kapazität für {{ numberOfUsableSeats }} der {{ numberOfExamUsers }} Klausurteilnehmer",
