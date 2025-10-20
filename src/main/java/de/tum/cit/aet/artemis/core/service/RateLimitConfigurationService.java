@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.core.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
@@ -10,7 +14,9 @@ import de.tum.cit.aet.artemis.core.security.RateLimitType;
  * Provides centralized access to rate limiting settings including enable/disable flags
  * and configurable RPM values for different endpoint types.
  */
+@Profile(PROFILE_CORE)
 @Service
+@Lazy
 public class RateLimitConfigurationService {
 
     private final RateLimitingProperties properties;

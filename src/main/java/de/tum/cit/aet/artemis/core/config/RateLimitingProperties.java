@@ -1,7 +1,11 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Configuration properties for rate limiting functionality.
@@ -11,7 +15,9 @@ import org.springframework.stereotype.Component;
  * and provides type-safe access to rate limiting settings.
  * </p>
  */
-@Component
+@Profile(PROFILE_CORE)
+@Configuration
+@Lazy
 @ConfigurationProperties(prefix = "artemis.rate-limiting")
 public class RateLimitingProperties {
 

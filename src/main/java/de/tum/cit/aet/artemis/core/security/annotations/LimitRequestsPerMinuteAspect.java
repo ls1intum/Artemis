@@ -1,11 +1,15 @@
 package de.tum.cit.aet.artemis.core.security.annotations;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.lang.reflect.Method;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.service.RateLimitConfigurationService;
@@ -26,8 +30,10 @@ import inet.ipaddr.IPAddress;
  * allowing for flexible rate limiting strategies across different endpoint categories.
  * </p>
  */
-@Aspect
+@Profile(PROFILE_CORE)
 @Component
+@Aspect
+@Lazy
 public class LimitRequestsPerMinuteAspect {
 
     private final RateLimitService rateLimitService;
