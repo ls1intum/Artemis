@@ -115,19 +115,6 @@ public class AdminExamResource {
     }
 
     /**
-     * DELETE /exam-rooms: Deletes <strong>everything</strong> related to exam rooms.
-     *
-     * @return a response entity with status 204 and empty body.
-     */
-    @DeleteMapping("exam-rooms")
-    public ResponseEntity<Void> deleteAllExamRooms() {
-        log.info("REST request to delete ALL exam rooms");
-
-        examRoomService.deleteAllExamRooms();
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
      * DELETE /exam-rooms/outdated-and-unused: Delete all outdated and unused exam rooms.
      *
      * @return a response entity with status 200 and a summary of the deletion process.

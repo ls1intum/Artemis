@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
+import { Component, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
 import {
     ExamRoomAdminOverviewDTO,
     ExamRoomDTO,
@@ -15,10 +15,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamRoomsService } from 'app/core/admin/exam-rooms/exam-rooms.service';
-import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { Subject } from 'rxjs';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -36,7 +32,6 @@ export class ExamRoomsComponent {
 
     private examRoomsService: ExamRoomsService = inject(ExamRoomsService);
     private sortService: SortService = inject(SortService);
-    private deleteDialogService: DeleteDialogService = inject(DeleteDialogService);
     private translateService: TranslateService = inject(TranslateService);
     private alertService: AlertService = inject(AlertService);
 
@@ -92,24 +87,11 @@ export class ExamRoomsComponent {
             .join(', '),
     );
     hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
-    examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => {
-        return this.overview()?.newestUniqueExamRooms?.map(
-            (examRoomDTO) =>
-                ({
-                    ...examRoomDTO,
-                    maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
-                    layoutStrategyNames: this.getLayoutStrategyNames(examRoomDTO),
-                }) as ExamRoomDTOExtended,
-        );
-    });
+    examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
 
     // Fields for working with SortDirective
-    sortAttribute: 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'roomNumber';
+    sortAttribute: 'id' | 'roomNumber' | 'name' | 'building' | 'defaultCapacity' | 'maxCapacity' = 'id';
     ascending: boolean = true;
-
-    // Fields for working with DeletionDialogService
-    private dialogErrorSource = new Subject<string>();
-    private dialogError = this.dialogErrorSource.asObservable();
 
     initEffect = effect(() => {
         this.loadExamRoomOverview();
@@ -122,6 +104,7 @@ export class ExamRoomsComponent {
         this.examRoomsService.getAdminOverview().subscribe({
             next: (examRoomAdminOverviewResponse: HttpResponse<ExamRoomAdminOverviewDTO>) => {
                 this.overview.set(examRoomAdminOverviewResponse.body as ExamRoomAdminOverviewDTO);
+                this.sortRows();
             },
             error: (errorResponse: HttpErrorResponse) => {
                 this.showErrorNotification('examRoomOverview.loadError', {}, errorResponse.message);
@@ -187,46 +170,6 @@ export class ExamRoomsComponent {
     }
 
     /**
-     * REST request to delete ALL exam room related data.
-     */
-    clearExamRooms(): void {
-        const deleteEmitter = new EventEmitter<{ [key: string]: boolean }>();
-
-        deleteEmitter.subscribe(() => {
-            this.actionStatus.set('deleting');
-            this.examRoomsService.deleteAllExamRooms().subscribe({
-                next: () => {
-                    this.actionStatus.set('deletionSuccess');
-                    this.actionInformation.set(undefined);
-                    this.loadExamRoomOverview();
-                },
-                error: (errorResponse: HttpErrorResponse) => {
-                    this.showErrorNotification('deletionError', {}, errorResponse.message);
-                    this.actionStatus.set(undefined);
-                },
-                complete: () => {
-                    // We need to call this, or else the deleteDialogService can't progress.
-                    // By doing next('') here, we tell the delete dialog service not to call the alert service.
-                    // We don't want the delete dialog service to call the alert service, as we can do that with
-                    // the 'this.showErrorNotification' function ourselves, which then also allows us to specify
-                    // just a translation key, rather than a hardcoded string.
-                    this.dialogErrorSource.next('');
-                },
-            });
-        });
-
-        this.deleteDialogService.openDeleteDialog({
-            deleteQuestion: `${this.baseTranslationPath}.deleteAllExamRoomsQuestion`,
-            buttonType: ButtonType.ERROR,
-            actionType: ActionType.Delete,
-            delete: deleteEmitter,
-            dialogError: this.dialogError,
-            requireConfirmationOnlyForAdditionalChecks: false,
-            translateValues: {},
-        });
-    }
-
-    /**
      * REST request to delete all outdated and unused exam rooms.
      * An exam room is outdated if there exists a newer entry of the same (number, name) combination.
      * An exam room is unused if it isn't connected to any exam.
@@ -261,7 +204,16 @@ export class ExamRoomsComponent {
     }
 
     private getMaxCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
-        return examRoom.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity ?? 0).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
+        return examRoom.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
+    }
+
+    private getDefaultCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
+        return (
+            examRoom.layoutStrategies
+                ?.filter((layoutStrategy) => layoutStrategy.name.toLowerCase() === 'default')
+                .map((layoutStrategy) => layoutStrategy.capacity)
+                .at(0) ?? 0
+        );
     }
 
     private getLayoutStrategyNames(examRoom: ExamRoomDTO): string {
@@ -270,6 +222,18 @@ export class ExamRoomsComponent {
                 ?.map((layoutStrategy) => layoutStrategy.name)
                 .sort()
                 .join(', ') ?? ''
+        );
+    }
+
+    private calculateExamRoomData() {
+        return this.overview()?.newestUniqueExamRooms?.map(
+            (examRoomDTO) =>
+                ({
+                    ...examRoomDTO,
+                    defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
+                    maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
+                    layoutStrategyNames: this.getLayoutStrategyNames(examRoomDTO),
+                }) as ExamRoomDTOExtended,
         );
     }
 }

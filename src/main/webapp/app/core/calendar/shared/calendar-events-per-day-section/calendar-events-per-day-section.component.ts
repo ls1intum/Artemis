@@ -1,18 +1,17 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { NgClass, NgStyle } from '@angular/common';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { Dayjs } from 'dayjs/esm';
 import { CalendarEventAndPosition, PositionInfo } from 'app/core/calendar/shared/entities/calendar-event-and-position.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
 
 type Day = { date: Dayjs; eventsAndPositions: CalendarEventAndPosition[]; id: string };
 
 @Component({
     selector: 'jhi-calendar-events-per-day-section',
-    imports: [NgClass, NgStyle, CalendarEventDetailPopoverComponent, NgbPopover],
+    imports: [NgClass, NgStyle, CalendarEventDetailPopoverComponent],
     templateUrl: './calendar-events-per-day-section.component.html',
     styleUrl: './calendar-events-per-day-section.component.scss',
 })
@@ -34,15 +33,12 @@ export class CalendarEventsPerDaySectionComponent {
         CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_HEIGHT_IN_PIXEL * CalendarEventsPerDaySectionComponent.MINUTES_PER_PIXEL,
     );
 
-    private calendarService = inject(CalendarService);
-    private dateToEventAndPositionMap = computed(() => this.computeDateToEventAndPositionMap(this.calendarService.eventMap(), this.dates()));
-    private popover?: NgbPopover;
+    private eventService = inject(CalendarService);
+    private dateToEventAndPositionMap = computed(() => this.computeDateToEventAndPositionMap(this.eventService.eventMap(), this.dates()));
 
     readonly CalendarEventType = CalendarEventType;
 
     dates = input.required<Dayjs[]>();
-    isEventSelected = output<boolean>();
-    selectedEvent = signal<CalendarEvent | undefined>(undefined);
     hoursOfDay = utils.getHoursOfDay();
     zeroToTwentyFour = utils.range(24);
     days = computed<Day[]>(() => {
@@ -52,29 +48,6 @@ export class CalendarEventsPerDaySectionComponent {
             id: utils.identify(date),
         }));
     });
-
-    constructor() {
-        effect(() => {
-            this.isEventSelected.emit(this.selectedEvent() !== undefined);
-        });
-    }
-
-    openPopover(event: CalendarEvent, popover: NgbPopover) {
-        if (this.selectedEvent() === event) {
-            this.closePopover();
-            return;
-        }
-        this.selectedEvent.set(event);
-        this.popover?.close();
-        this.popover = popover;
-        popover.open();
-    }
-
-    closePopover() {
-        this.popover?.close();
-        this.popover = undefined;
-        this.selectedEvent.set(undefined);
-    }
 
     private getEventsAndPositions(date: Dayjs): CalendarEventAndPosition[] {
         return this.dateToEventAndPositionMap().get(date.format('YYYY-MM-DD')) ?? [];
