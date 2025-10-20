@@ -6,7 +6,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.ChannelSubType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-// TODO: use record in the future
+// TODO: convert to record
 public class ChannelDTO extends ConversationDTO {
 
     private String name;

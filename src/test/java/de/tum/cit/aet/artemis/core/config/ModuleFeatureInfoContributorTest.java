@@ -21,22 +21,26 @@ class ModuleFeatureInfoContributorTest {
     // @formatter:off
     private static final List<String> modulePropertyNames = List.of(
         Constants.ATLAS_ENABLED_PROPERTY_NAME,
+        Constants.HYPERION_ENABLED_PROPERTY_NAME,
         Constants.EXAM_ENABLED_PROPERTY_NAME,
         Constants.PLAGIARISM_ENABLED_PROPERTY_NAME,
         Constants.TEXT_ENABLED_PROPERTY_NAME,
         Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME,
-        Constants.PASSKEY_ENABLED_PROPERTY_NAME
+        Constants.PASSKEY_ENABLED_PROPERTY_NAME,
+        Constants.NEBULA_ENABLED_PROPERTY_NAME
     );
     // @formatter:on
 
     // @formatter:off
     private static final List<String> moduleFeatures = List.of(
         Constants.MODULE_FEATURE_ATLAS,
+        Constants.MODULE_FEATURE_HYPERION,
         Constants.MODULE_FEATURE_EXAM,
         Constants.MODULE_FEATURE_PLAGIARISM,
         Constants.MODULE_FEATURE_TEXT,
         Constants.MODULE_FEATURE_TUTORIALGROUP,
-        Constants.FEATURE_PASSKEY
+        Constants.FEATURE_PASSKEY,
+        Constants.MODULE_FEATURE_NEBULA
     );
     // @formatter:on
 
@@ -64,8 +68,9 @@ class ModuleFeatureInfoContributorTest {
         var activeModuleFeatures = info.get(ACTIVE_MODULE_FEATURES);
         assertThat(activeModuleFeatures).isInstanceOf(List.class);
 
-        var activeModuleFeaturesList = (List<String>) activeModuleFeatures;
-        assertThat(activeModuleFeaturesList).containsExactlyInAnyOrderElementsOf(expectedReportFeatures);
+        var activeModuleFeaturesList = (List<?>) activeModuleFeatures;
+        var actualAsStrings = activeModuleFeaturesList.stream().map(Object::toString).toList();
+        assertThat(actualAsStrings).containsExactlyInAnyOrderElementsOf(expectedReportFeatures);
     }
 
     private void mockProperty(String key, Boolean value) {

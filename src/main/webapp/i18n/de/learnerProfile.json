@@ -32,37 +32,61 @@
             "feedbackLearnerProfile": {
                 "title": "Feedback-Lernprofil",
                 "description": "Hier kannst du dein Feedback-Lernprofil einsehen und aktualisieren. Diese Einstellungen werden verwendet, um deine Feedback-Erfahrung zu personalisieren.",
-                "alternativeStandard": {
-                    "label": "Alternative vs. Standard",
-                    "description": "Wähle, ob du Feedback bevorzugst, das alternative und kreative Lösungen erkundet, oder Feedback, das auf den Standardansätzen und den häufigsten, am weitesten verbreiteten Lösungen basiert.",
-                    "level": {
-                        "alternative": "Alternative",
-                        "balanced": "Balanced",
-                        "standard": "Standard"
-                    }
+                "feedbackDetail": {
+                    "label": "Detailgrad des Feedbacks",
+                    "description": "Wähle, ob du kurzes und direkt auf den Punkt oder detailliertes Feedback mit Erklärungen und Beispielen bevorzugst.",
+                    "brief": "Kurz",
+                    "neutral": "Neutral",
+                    "detailed": "Detailliert"
                 },
-                "followupSummary": {
-                    "label": "Follow-up vs. Zusammenfassung",
-                    "description": "Wähle, ob du Feedback bevorzugst, das mit einer Follow-up-Frage endet (um weitere Gedanken und Reflexionen zu fördern) oder mit einer Zusammenfassung/einem Abschluss (um das Feedback klar abzuschließen).",
-                    "level": {
-                        "followup": "Follow-up",
-                        "balanced": "Balanced",
-                        "summary": "Zusammenfassung"
-                    }
-                },
-                "briefDetailed": {
-                    "label": "Kurz vs. Detailliert",
-                    "description": "Wähle, ob du Feedback bevorzugst, das kurz und direkt ist, oder detaillierter mit Erklärungen und Beispielen.",
-                    "level": {
-                        "brief": "Kurz",
-                        "balanced": "Balanced",
-                        "detailed": "Detailliert"
-                    }
+                "feedbackFormality": {
+                    "label": "Stil des Feedbacks",
+                    "description": "Wähle, ob du formelles und professionelles oder freundliches und zugängliches Feedback bevorzugst.",
+                    "formal": "Formell",
+                    "neutral": "Neutral",
+                    "friendly": "Freundlich"
                 },
                 "profileSaved": "Feedback-Lernprofil gespeichert",
                 "invalidRange": "Werte müssen zwischen 1 und 3 liegen",
-                "error": "Feedback-Lernprofil konnte nicht gespeichert werden"
-            }
+                "error": "Feedback-Lernprofil konnte nicht gespeichert werden",
+                "setPreferencesButton": "Feedback-Präferenzen festlegen",
+                "replayOnboardingButton": "Onboarding wiederholen"
+            },
+            "insightsLearnerProfile": {
+                "title": "Erkenntnisse unseres Systems",
+                "iris": {
+                    "title": "Iris",
+                    "description": "Hier findest du Erkenntnisse, die Iris in Form von Erinnerungen über dich erstellt hat. Diese Erinnerungen basieren auf deinen Interaktionen mit Iris. Iris nutzt diese Erinnerungen, um dir personalisiertes Feedback und individuelle Unterstützung zu bieten.",
+                    "memirisEnabledToggle": "Erstellung und Nutzung von Erinnerungen aktivieren"
+                }
+            },
+            "onboardingModal": {
+                "title": "Welches Feedback gefällt dir besser?",
+                "subtitle": "Schau dir diese beiden Beispiele an und wähle das aus, das du lieber bekommen würdest",
+                "briefFeedback": {
+                    "title": "Kurzes Feedback",
+                    "subtitle": "Kurz und direkt auf den Punkt"
+                },
+                "detailedFeedback": {
+                    "title": "Detailliertes Feedback",
+                    "subtitle": "Ausführlich mit Erklärungen und Beispielen"
+                },
+                "formalToneFeedback": {
+                    "title": "Formelles Feedback",
+                    "subtitle": "Formell und professionell"
+                },
+                "friendlyToneFeedback": {
+                    "title": "Freundliches Feedback",
+                    "subtitle": "Freundlich und zugänglich"
+                },
+                "buttons": {
+                    "back": "Zurück",
+                    "skip": "Überspringen",
+                    "next": "Weiter",
+                    "finish": "Fertig"
+                }
+            },
+            "loadFailed": "Lernprofil konnte nicht geladen werden"
         }
     }
 }

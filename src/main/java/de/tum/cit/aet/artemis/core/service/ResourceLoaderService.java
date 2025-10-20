@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.File;
@@ -32,7 +31,7 @@ import org.springframework.stereotype.Service;
 /**
  * Service class to load resources from the file system (if possible) and the classpath (as fallback).
  */
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class ResourceLoaderService {
@@ -44,6 +43,8 @@ public class ResourceLoaderService {
     @Value("${artemis.template-path:#{null}}")
     private Optional<Path> templateFileSystemPath;
 
+    private final Path tempPath;
+
     private final ResourcePatternResolver resourceLoader;
 
     /**
@@ -51,8 +52,9 @@ public class ResourceLoaderService {
      */
     private static final List<Path> ALLOWED_OVERRIDE_PREFIXES = List.of(Path.of("templates"));
 
-    public ResourceLoaderService(ResourceLoader resourceLoader) {
+    public ResourceLoaderService(ResourceLoader resourceLoader, @Value("${artemis.temp-path}") Path tempPath) {
         this.resourceLoader = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
+        this.tempPath = tempPath;
     }
 
     /**
@@ -221,7 +223,7 @@ public class ResourceLoaderService {
         }
         else if ("jar".equals(resourceUrl.getProtocol())) {
             // Resource is in a jar file.
-            Path resourcePath = Files.createTempFile(UUID.randomUUID().toString(), "");
+            Path resourcePath = Files.createTempFile(tempPath, UUID.randomUUID().toString(), "");
             File file = resourcePath.toFile();
             file.deleteOnExit();
             FileUtils.copyInputStreamToFile(resource.getInputStream(), file);

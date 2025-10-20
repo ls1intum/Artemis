@@ -13,7 +13,7 @@ public class StatsForDashboardDTO {
 
     private DueDateStat numberOfSubmissions;
 
-    private DueDateStat totalNumberOfAssessments;
+    private Long totalNumberOfAssessments;
 
     private Long totalNumberOfAssessmentLocks;
 
@@ -63,11 +63,11 @@ public class StatsForDashboardDTO {
         this.numberOfSubmissions = numberOfSubmissions;
     }
 
-    public DueDateStat getTotalNumberOfAssessments() {
+    public Long getTotalNumberOfAssessments() {
         return totalNumberOfAssessments;
     }
 
-    public void setTotalNumberOfAssessments(DueDateStat totalNumberOfAssessments) {
+    public void setTotalNumberOfAssessments(Long totalNumberOfAssessments) {
         this.totalNumberOfAssessments = totalNumberOfAssessments;
     }
 

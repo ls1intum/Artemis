@@ -173,7 +173,7 @@ describe('FeedbackAnalysisService', () => {
 
             const responsePromise = service.createChannel(courseId, exerciseId, feedbackChannelRequestMock);
 
-            const req = httpMock.expectOne(`api/communication/courses/${courseId}/${exerciseId}/feedback-channel`);
+            const req = httpMock.expectOne(`api/communication/courses/${courseId}/exercises/${exerciseId}/feedback-channel`);
             expect(req.request.method).toBe('POST');
             expect(req.request.body).toEqual(feedbackChannelRequestMock);
 

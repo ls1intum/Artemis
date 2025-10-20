@@ -7,7 +7,7 @@
         }
         dependencies {
             classpath "org.yaml:snakeyaml:${rootProject.property('snakeyaml_version')}"
-            classpath "org.openapitools:openapi-generator-gradle-plugin:7.13.0"
+            classpath "org.openapitools:openapi-generator-gradle-plugin:7.14.0"
         }
     }
 
@@ -19,16 +19,29 @@
         def waitTimeSeconds = 180;
         waitTimeInSeconds.set(waitTimeSeconds)
         customBootRun {
+            def localVcsPath = "${rootDir}/local-vcs-repos"
 
-            jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti," +
-
-                           "dev","-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web", "-Dspringdoc.api-docs.enabled=true" ,"-Dspringdoc.pre-loading-enabled=true",
+            jvmArgs = [
+                "-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti,dev",
+                "-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web",
+                "-Dartemis.hyperion.enabled=true",
+                "-Dspringdoc.api-docs.enabled=true",
+                "-Dspringdoc.pre-loading-enabled=true",
+                "-Dspring.main.lazy-initialization=true"
             ]
 
-// TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
-            args.set(["--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
-                      "--artemis.iris.secret-token=token", "--spring.jpa.database=h2", "--spring.datasource.url=jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE", "--spring.datasource.username=sa", --"spring.datasource.password=", "--aeolus.url=http://aeolus.fake"])
-
+            // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
+            args.set([
+                "--artemis.user-management.use-external=false",
+                "--artemis.iris.url=http://iris.fake",
+                "--artemis.iris.secret-token=token",
+                "--spring.jpa.database=h2",
+                "--spring.datasource.url=jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+                "--spring.datasource.username=sa",
+                "--spring.datasource.password=",
+                "--aeolus.url=http://aeolus.fake",
+                "--artemis.version-control.local-vcs-repo-path=${localVcsPath}"
+            ])
         }
     }
 

@@ -47,8 +47,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     @Input() submitInProgress = false;
     @Input() attendanceChecked = false;
     @Input() testRunStartTime: dayjs.Dayjs | undefined;
-    @Input() isProduction = true;
-    @Input() isTestServer = false;
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();

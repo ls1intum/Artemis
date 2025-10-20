@@ -139,7 +139,7 @@ public class CourseStatsResource {
             var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
             var exerciseStatistics = exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse);
 
-            var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
+            var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
             var endDate = courseStatsService.determineEndDateForActiveStudents(course);
             var timeSpanSize = courseStatsService.determineTimeSpanSizeForActiveStudents(course, endDate, 4);
             var activeStudents = courseStatsService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate);
@@ -165,7 +165,7 @@ public class CourseStatsResource {
             @RequestParam Optional<Integer> periodSize) {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
+        var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
         var chartEndDate = courseStatsService.determineEndDateForActiveStudents(course);
         var spanEndDate = chartEndDate.plusWeeks(periodSize.orElse(17) * periodIndex);
         var returnedSpanSize = courseStatsService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, periodSize.orElse(17));
@@ -182,9 +182,9 @@ public class CourseStatsResource {
     @GetMapping("courses/{courseId}/statistics-lifetime-overview")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseLiveTime(@PathVariable Long courseId) {
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
-        var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
         if (course.getStartDate() == null) {
             throw new IllegalArgumentException("Course does not contain start date");
         }

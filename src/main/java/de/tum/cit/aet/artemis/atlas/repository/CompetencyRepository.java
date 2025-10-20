@@ -7,13 +7,14 @@ import java.util.Set;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -72,7 +73,7 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
         return getValueElseThrow(findByIdWithLectureUnits(competencyId), competencyId);
     }
 
-    long countByCourse(Course course);
+    long countByCourseId(long courseId);
 
     List<Competency> findByCourseIdOrderById(long courseId);
 
@@ -95,4 +96,8 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             WHERE lp.id = :learningPathId
             """)
     Set<Competency> findByLearningPathIdWithLectureUnitsAndExercises(@Param("learningPathId") long learningPathId);
+
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteAllByCourseId(long courseId);
 }

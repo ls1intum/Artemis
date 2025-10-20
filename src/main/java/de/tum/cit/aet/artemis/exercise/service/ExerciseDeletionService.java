@@ -98,12 +98,11 @@ public class ExerciseDeletionService {
     }
 
     /**
-     * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
+     * Delete student build plans (except BASE/SOLUTION) and git repositories of all exercise student participations.
      *
-     * @param exerciseId         programming exercise for which build plans in respective student participations are deleted
-     * @param deleteRepositories if true, the repositories gets deleted
+     * @param exerciseId programming exercise for which build plans in respective student participations are deleted
      */
-    public void cleanup(Long exerciseId, boolean deleteRepositories) {
+    public void cleanup(Long exerciseId) {
         log.info("Cleanup all participations for exercise {} in parallel", exerciseId);
         Exercise exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
         if (!(exercise instanceof ProgrammingExercise)) {
@@ -116,9 +115,6 @@ public class ExerciseDeletionService {
             var futures = exercise.getStudentParticipations().stream().map(participation -> CompletableFuture.runAsync(() -> {
                 try {
                     participationDeletionService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
-                    if (!deleteRepositories) {
-                        return; // in this case, we are done with the participation
-                    }
                     participationDeletionService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
                 }
                 catch (Exception exception) {
@@ -145,7 +141,7 @@ public class ExerciseDeletionService {
         long start = System.nanoTime();
         Channel exerciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
         channelService.deleteChannel(exerciseChannel);
-        log.info("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
 
         if (exercise instanceof TextExercise) {
             log.info("Cancel scheduled operations of exercise {}", exercise.getId());
@@ -155,9 +151,8 @@ public class ExerciseDeletionService {
         // delete all exercise units linking to the exercise
         lectureUnitApi.ifPresent(api -> api.removeLectureUnitFromExercise(exerciseId));
 
-        if (irisSettingsApi.isPresent()) {
-            irisSettingsApi.get().deleteSettingsFor(exercise);
-        }
+        // delete all iris settings for this exercise
+        irisSettingsApi.ifPresent(api -> api.deleteSettingsForExercise(exerciseId));
 
         // delete all plagiarism results belonging to this exercise
         plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exerciseId));

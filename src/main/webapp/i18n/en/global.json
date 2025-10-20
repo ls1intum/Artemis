@@ -15,6 +15,22 @@
             "copied": "Copied",
             "new": "New"
         },
+        "weekdays": {
+            "monday": "Monday",
+            "tuesday": "Tuesday",
+            "wednesday": "Wednesday",
+            "thursday": "Thursday",
+            "friday": "Friday",
+            "saturday": "Saturday",
+            "sunday": "Sunday",
+            "mondayShort": "Mon",
+            "tuesdayShort": "Tue",
+            "wednesdayShort": "Wed",
+            "thursdayShort": "Thu",
+            "fridayShort": "Fri",
+            "saturdayShort": "Sat",
+            "sundayShort": "Sun"
+        },
         "importTable": {
             "searchPlaceholder": "Search"
         },
@@ -122,7 +138,8 @@
                 "lti": "LTI Configuration",
                 "standardizedCompetencies": "Standardized Competencies",
                 "cleanupService": "Cleanup Service",
-                "lectureTranscription": "Lecture Transcription"
+                "lectureTranscription": "Lecture Transcription",
+                "examRooms": "Exam Rooms"
             },
             "language": "Language",
             "settings": "Settings"

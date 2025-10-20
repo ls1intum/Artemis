@@ -10,7 +10,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
-import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -18,16 +17,25 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FormsModule } from '@angular/forms';
+import dayjs from 'dayjs/esm';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { faArrowDown, faArrowUp, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 /**
  * Component to display the tutor suggestion in the chat
  * It fetches the messages from the chat service and displays the suggestion
  */
 @Component({
+    standalone: true,
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
-    styleUrl: './tutor-suggestion.component.scss',
-    imports: [IrisLogoComponent, AsPipe, ChatStatusBarComponent, TranslateDirective],
+    styleUrls: ['./tutor-suggestion.component.scss'],
+    imports: [IrisLogoComponent, AsPipe, FormsModule, TranslateDirective, IrisBaseChatbotComponent, ButtonComponent, ArtemisDatePipe, ArtemisTimeAgoPipe, NgbTooltip],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -54,6 +62,13 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
 
     messages: IrisMessage[];
     suggestion: IrisMessage | undefined;
+    suggestions: IrisMessage[] = [];
+
+    faArrowUp = faArrowUp;
+    upDisabled = true;
+    faArrowDown = faArrowDown;
+    downDisabled = true;
+    faArrowsRotate = faArrowsRotate;
 
     stages?: IrisStageDTO[] = [];
     error?: IrisErrorMessageKey;
@@ -67,8 +82,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit(): void {
         this.featureToggleSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorSuggestions).subscribe((active) => {
             if (active) {
-                this.subscribeToIrisActivation();
-
                 if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
                     return;
                 }
@@ -83,6 +96,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
                         this.irisEnabled = !!settings?.irisTutorSuggestionSettings?.enabled;
                         if (this.irisEnabled) {
                             this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
+                            this.subscribeToIrisActivation();
                             this.fetchMessages();
                         }
                     });
@@ -143,7 +157,9 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
 
         this.tutorSuggestionSubscription = waitForSessionAndMessages$.subscribe((messages) => {
             const lastMessage = messages[messages.length - 1];
-            const shouldRequest = messages.length === 0 || !(lastMessage?.sender === IrisSender.LLM || lastMessage?.sender === IrisSender.ARTIFACT);
+            const lastThreadMessageAfterLastSuggestion = this.checkForNewAnswerAndRequestSuggestion();
+            const shouldRequest =
+                lastThreadMessageAfterLastSuggestion || messages.length === 0 || !(lastMessage?.sender === IrisSender.LLM || lastMessage?.sender === IrisSender.ARTIFACT);
             if (shouldRequest) {
                 this.chatService
                     .requestTutorSuggestion()
@@ -159,12 +175,32 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
+     * Handles the user request for a new suggestion
+     * This method is called when the user clicks the "New Suggestion" button
+     */
+    userRequestedNewSuggestion(): void {
+        this.chatService
+            .requestTutorSuggestion()
+            .pipe(
+                catchError((err) => {
+                    this.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
+                    return of(undefined);
+                }),
+            )
+            .subscribe();
+    }
+
+    /**
      * Fetches the messages from the chat service and updates the suggestion if necessary
      */
     private fetchMessages(): void {
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
-                this.suggestion = messages.findLast((m) => m.sender === IrisSender.ARTIFACT);
+                this.suggestions = messages.filter((message) => message.sender === IrisSender.ARTIFACT);
+                this.suggestion = this.suggestions.last();
+                if (this.suggestions.length > 0) {
+                    this.updateArrowDisabled(this.suggestions.length - 1);
+                }
             }
             this.messages = messages;
         });
@@ -174,6 +210,10 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
         this.errorSubscription = this.chatService.currentError().subscribe((error) => (this.error = error));
     }
 
+    /**
+     * Subscribes to the Iris activation status and requests a suggestion when Iris is activated
+     * This method ensures that the suggestion is requested only when Iris is active and the session ID is available
+     */
     private subscribeToIrisActivation(): void {
         this.irisActivationSubscription?.unsubscribe();
         this.irisActivationSubscription = this.irisActive$
@@ -192,5 +232,61 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
                 filter((id): id is number => !!id),
             )
             .subscribe(() => this.requestSuggestion());
+    }
+
+    /**
+     * Switches between suggestions based on the provided direction.
+     * If `up` is true, it switches to the next suggestion; if false,
+     * it switches to the previous suggestion.
+     * @param up
+     */
+    switchSuggestion(up: boolean) {
+        if (!this.suggestion || !this.suggestions) {
+            return;
+        }
+
+        const currentIndex = this.suggestions.findIndex((message) => message.id === this.suggestion?.id);
+        if (currentIndex === -1) {
+            return;
+        }
+
+        const newIndex = up ? currentIndex + 1 : currentIndex - 1;
+
+        if (newIndex < 0 || newIndex >= this.suggestions.length) {
+            this.updateArrowDisabled(currentIndex);
+            return;
+        }
+
+        this.suggestion = this.suggestions[newIndex];
+        this.updateArrowDisabled(newIndex);
+    }
+
+    private updateArrowDisabled(currentIndex: number) {
+        this.downDisabled = currentIndex === 0;
+        this.upDisabled = currentIndex === this.suggestions.length - 1;
+    }
+
+    /**
+     * Checks if a new answer was added to the post after the last suggestion,
+     * and requests a new suggestion if needed.
+     */
+    private checkForNewAnswerAndRequestSuggestion(): boolean {
+        const post = this.post();
+        if (!post || !post.answers || post.answers.length === 0 || this.suggestions.length === 0) {
+            return false;
+        }
+
+        // Get latest answer
+        const latestAnswer = post.answers.reduce((latest, current) => {
+            return dayjs(current.creationDate).isAfter(dayjs(latest.creationDate)) ? current : latest;
+        });
+
+        // Get latest suggestion
+        const lastSuggestion = this.suggestions[this.suggestions.length - 1];
+        if (!lastSuggestion || !lastSuggestion.sentAt) {
+            return false;
+        }
+
+        return !!dayjs(latestAnswer.creationDate).isAfter(dayjs(lastSuggestion.sentAt));
     }
 }

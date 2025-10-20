@@ -21,14 +21,12 @@
     display: flex;
     justify-content: center;
     align-items: center;
-
     opacity: 0;
     pointer-events: none;
     transition: 0.05s ease-out opacity;
 
     &.active {
         background-color: var(--data-table-transitioning-container-active-background-color);
-
         opacity: 1;
         pointer-events: auto;
         transition: 0.15s ease-in opacity;
@@ -51,7 +49,6 @@
     padding: 0 0.75rem;
     font-size: 18px;
     pointer-events: none;
-
     opacity: 0;
     transition: 0.1s ease-out opacity;
 

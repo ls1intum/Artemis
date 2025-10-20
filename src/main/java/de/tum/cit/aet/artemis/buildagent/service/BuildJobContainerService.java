@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.Repo
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
  * It is closely related to the {@link BuildJobExecutionService} which contains the methods that are used to execute the build jobs.
  */
-@Lazy
+@Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildJobContainerService {
@@ -524,9 +524,18 @@ public class BuildJobContainerService {
 
                     @Override
                     public void onNext(Frame item) {
-                        String text = new String(item.getPayload());
-                        BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), text);
-                        if (buildJobId != null) {
+                        String payload = new String(item.getPayload());
+                        String[] logLines = splitBehindNewLines(payload);
+                        ZonedDateTime now = ZonedDateTime.now();
+
+                        if (buildJobId == null) {
+                            return;
+                        }
+                        for (String line : logLines) {
+                            if (line.isEmpty()) {
+                                continue;
+                            }
+                            BuildLogDTO buildLogEntry = new BuildLogDTO(now, line);
                             buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
                         }
                     }
@@ -576,5 +585,10 @@ public class BuildJobContainerService {
             }
             return null;
         }
+    }
+
+    private String[] splitBehindNewLines(String input) {
+        String newlineLookBehindPattern = "(?<=\\R)";
+        return input.split(newlineLookBehindPattern);
     }
 }

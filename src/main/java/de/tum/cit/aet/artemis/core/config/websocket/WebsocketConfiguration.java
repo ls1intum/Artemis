@@ -138,12 +138,23 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     .setClientLogin(brokerUsername).setClientPasscode(brokerPassword)
                     // Set system username and password to the one loaded from the config
                     .setSystemLogin(brokerUsername).setSystemPasscode(brokerPassword)
+                    // Set the same heartbeat as in the client (websocket-service.ts) to detect broken connections
+                    .setSystemHeartbeatReceiveInterval(10_000)
+                    // Set the same heartbeat as in the client (websocket-service.ts) to detect broken connections
+                    .setSystemHeartbeatSendInterval(10_000)
                     // Set the TCP client to the one generated above
                     .setTcpClient(tcpClient);
         }
         else {
             log.info("Did NOT enable StompBrokerRelay for WebSocket messages. Use simple integrated broker instead.");
-            config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 10000, 20000 }).setTaskScheduler(messageBrokerTaskScheduler);
+
+            // @formatter:off
+            config.enableSimpleBroker("/topic")
+                // Set the same heartbeat as in the client (websocket-service.ts) to detect broken connections
+                .setHeartbeatValue(new long[] { 10_000, 10_000 })
+                // Use the custom task scheduler for the heartbeat messages
+                .setTaskScheduler(messageBrokerTaskScheduler);
+            // @formatter:on
         }
     }
 

@@ -507,7 +507,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @throws URISyntaxException       if the URI for the created resource cannot be constructed.
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
-    @PostMapping("{courseId}/{exerciseId}/feedback-channel")
+    @PostMapping("{courseId}/exercises/{exerciseId}/feedback-channel")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<ChannelDTO> createFeedbackChannel(@PathVariable Long courseId, @PathVariable Long exerciseId,
             @RequestBody FeedbackChannelRequestDTO feedbackChannelRequest) throws URISyntaxException {

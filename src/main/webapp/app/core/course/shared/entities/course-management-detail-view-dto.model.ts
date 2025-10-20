@@ -1,9 +1,4 @@
 export class CourseManagementDetailViewDto {
-    numberOfStudentsInCourse: number;
-    numberOfTeachingAssistantsInCourse: number;
-    numberOfEditorsInCourse: number;
-    numberOfInstructorsInCourse: number;
-
     // Total Assessment
     currentPercentageAssessments: number;
     currentAbsoluteAssessments: number;
@@ -23,8 +18,6 @@ export class CourseManagementDetailViewDto {
     currentPercentageAverageScore: number;
     currentAbsoluteAverageScore: number;
     currentMaxAverageScore: number;
-
-    activeStudents?: number[];
 
     // LLM Stats
     currentTotalLlmCostInEur: number;

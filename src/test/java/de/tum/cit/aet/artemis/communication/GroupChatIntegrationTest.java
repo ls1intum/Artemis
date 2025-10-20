@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
@@ -32,6 +33,9 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     private static final String TEST_PREFIX = "grtest";
 
     private static final int NUMBER_OF_STUDENTS = 11;
+
+    @Autowired
+    private GroupChatRepository groupChatRepository;
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;

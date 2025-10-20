@@ -11,15 +11,6 @@
             "online": "Online",
             "german": "Deutsch",
             "english": "Englisch",
-            "weekdays": {
-                "monday": "Montag",
-                "tuesday": "Dienstag",
-                "wednesday": "Mittwoch",
-                "thursday": "Donnerstag",
-                "friday": "Freitag",
-                "saturday": "Samstag",
-                "sunday": "Sonntag"
-            },
             "repetitions": {
                 "everyWeek": "Jede Woche",
                 "everyNWeeks": "Alle {{ n }} Wochen"
@@ -48,11 +39,10 @@
                 "channelWithName": "Kanal: {{ channel }}",
                 "channelReverse": "Kanal der Übungsgruppe {{ title }}",
                 "utilization": "Auslastung",
-                "attendance": "Anwesenheit",
                 "utilizationHelp": "Durchschnittliche Anwesenheit geteilt durch Kapazität (falls definiert). Die durchschnittliche Anwesenheit bezieht sich auf die letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
                 "utilizationHelpDetail": "Durchschnittliche Anwesenheit geteilt durch Kapazität",
                 "averageAttendance": "Durchschnittliche Anwesenheit: {{ averageAttendance }}",
-                "averageAttendanceDetail": "Durchschnittliche Anwesenheit",
+                "averageAttendanceDetail": "Durchschnittliche Teilnehmerzahl",
                 "averageAttendanceHelpDetail": "Durchschnittliche Anwesenheit in den letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
                 "profilePicture": "Tutor:in Profilbild",
                 "profilePictureAlt": "Profilbild von {{ user }}",
@@ -219,7 +209,7 @@
             },
             "configurationForm": {
                 "timeZoneInput": {
-                    "label": "Zeitzone",
+                    "label": "Übungsgruppen-Zeitzone",
                     "beta": "Die Zeitzone wird momentan nur in Verbindung mit dem Übungsgruppen-Feature verwendet. Sie hat momentan keinen Einfluss auf andere Bereiche von Artemis",
                     "changeWarning": "Die Zeitzone wurde geändert. Alle individuell erstellten Sitzungen und freien Tage werden gelöscht. In der neuen Zeitzone werden nur Sitzungen, die einem Zeitplan folgen neu erstellt. Soll das wirklich gemacht werden?",
                     "placeholder": "Wähle eine Zeitzone aus",
@@ -274,13 +264,52 @@
                 "title": "Übungsgruppe bearbeiten"
             },
             "tutorialGroupDetail": {
+                "cardTitles": {
+                    "tutorCardTitle": "Tutor:in",
+                    "generalInfoCardTitle": "Allgemeine Information",
+                    "averageAttendanceCardTitle": "Auslastung",
+                    "nextSessionCardTitle": "Nächste Session"
+                },
+                "language": "Sprache:",
+                "capacity": "Kapazität:",
+                "mode": "Modus:",
+                "campus": "Campus:",
+                "status": "Status:",
+                "statusChipLabel": {
+                    "regular": "Regulär",
+                    "cancelled": "Abgesagt",
+                    "rescheduled": "Verschoben",
+                    "relocated": "Raumänderung"
+                },
+                "date": "Datum:",
+                "time": "Uhrzeit:",
+                "location": "Ort:",
                 "title": "Übungsgruppen-Details",
                 "teachingAssistantNotSet": "Tutor:in nicht gesetzt",
                 "capacityNotSet": "Kapazität nicht eingestellt",
                 "campusNotSet": "Campus nicht gesetzt",
                 "additionalInformationNotSet": "Keine zusätzlichen Informationen festgelegt",
                 "scheduleNotSet": "Kein Sitzungsplan festgelegt",
-                "sessionsNotFound": "Keine Sitzungen gefunden"
+                "sessionsNotFound": "Keine Sitzungen gefunden",
+                "sessionsListTitle": "Sessions",
+                "sessionListOptionLabel": {
+                    "allSessions": "Alle",
+                    "futureSessions": "Zukünftige"
+                },
+                "tutorChatLinkLabel": "Tutor Chat",
+                "groupChannelLinkLabel": "Gruppen Channel",
+                "sessionTableColumnTitle": {
+                    "date": "Datum",
+                    "time": "Uhrzeit",
+                    "location": "Ort",
+                    "attendance": "Teilnehmerzahl",
+                    "status": "Status"
+                },
+                "disclaimerText": {
+                    "noAttendanceDataAvailable": "Keine Daten verfügbar",
+                    "noUpcomingSession": "Keine bevorstehende Session"
+                },
+                "createOneToOneChatError": "Fehler beim Erstellen des Tutor-Chats. Bitte versuchen Sie es erneut."
             },
             "tutorialFreePeriodsManagement": {
                 "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",

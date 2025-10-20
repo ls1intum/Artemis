@@ -51,18 +51,22 @@
     flex-flow: column nowrap;
     margin-left: 15px;
     cursor: pointer;
+
     span {
         writing-mode: vertical-rl;
         margin: auto;
     }
+
     fa-icon {
         display: flex;
         justify-content: center;
         padding: 15px 0;
     }
 }
+
 .expandable-header {
     cursor: pointer;
+
     fa-icon {
         padding-left: 5px;
     }

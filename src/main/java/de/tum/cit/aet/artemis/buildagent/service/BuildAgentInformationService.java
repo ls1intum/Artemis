@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @Profile(PROFILE_BUILDAGENT)
-@Lazy
+@Lazy(false)
 @Service
 public class BuildAgentInformationService {
 

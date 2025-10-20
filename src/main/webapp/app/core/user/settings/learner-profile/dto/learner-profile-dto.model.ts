@@ -1,8 +1,8 @@
 export interface LearnerProfileData {
     id?: number;
-    feedbackAlternativeStandard?: number;
-    feedbackFollowupSummary?: number;
-    feedbackBriefDetailed?: number;
+    feedbackDetail?: number;
+    feedbackFormality?: number;
+    hasSetupFeedbackPreferences?: boolean;
 }
 
 export class LearnerProfileDTO {
@@ -23,20 +23,18 @@ export class LearnerProfileDTO {
     public static readonly MAX_VALUE = 3;
 
     public id: number;
-    public feedbackAlternativeStandard: number;
-    public feedbackFollowupSummary: number;
-    public feedbackBriefDetailed: number;
+    public feedbackDetail: number;
+    public feedbackFormality: number;
+    public hasSetupFeedbackPreferences?: boolean;
 
     constructor(data: LearnerProfileData) {
         if (!data) {
             throw new Error('LearnerProfileDTO: data parameter cannot be null or undefined');
         }
-
-        // Initialize with default values
         this.id = data.id ?? 0;
-        this.feedbackAlternativeStandard = this.validateAndGetValue(data.feedbackAlternativeStandard, 'feedbackAlternativeStandard');
-        this.feedbackFollowupSummary = this.validateAndGetValue(data.feedbackFollowupSummary, 'feedbackFollowupSummary');
-        this.feedbackBriefDetailed = this.validateAndGetValue(data.feedbackBriefDetailed, 'feedbackBriefDetailed');
+        this.feedbackDetail = this.validateAndGetValue(data.feedbackDetail, 'feedbackDetail');
+        this.feedbackFormality = this.validateAndGetValue(data.feedbackFormality, 'feedbackFormality');
+        this.hasSetupFeedbackPreferences = data.hasSetupFeedbackPreferences;
     }
 
     private validateAndGetValue(value: number | undefined, fieldName: string): number {
@@ -52,7 +50,7 @@ export class LearnerProfileDTO {
     }
 
     public isValid(): boolean {
-        return this.isValueInRange(this.feedbackAlternativeStandard) && this.isValueInRange(this.feedbackFollowupSummary) && this.isValueInRange(this.feedbackBriefDetailed);
+        return this.isValueInRange(this.feedbackDetail) && this.isValueInRange(this.feedbackFormality);
     }
 
     private isValueInRange(value: number): boolean {

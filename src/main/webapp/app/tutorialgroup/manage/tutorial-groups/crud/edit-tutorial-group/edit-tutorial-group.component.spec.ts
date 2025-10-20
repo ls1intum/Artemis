@@ -24,7 +24,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { expectComponentRendered } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('EditTutorialGroupComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupComponent>;
@@ -43,7 +43,7 @@ describe('EditTutorialGroupComponent', () => {
             providers: [
                 MockProvider(ArtemisDatePipe),
                 MockProvider(AlertService),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
                 { provide: Router, useValue: router },
                 mockedActivatedRoute(
                     {
@@ -123,8 +123,8 @@ describe('EditTutorialGroupComponent', () => {
 
         const updatedStub = jest.spyOn(tutorialGroupService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
-        const calendarEventService = TestBed.inject(CalendarEventService);
-        const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+        const calendarService = TestBed.inject(CalendarService);
+        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
         const tutorialGroupForm: TutorialGroupFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFormComponent)).componentInstance;
 

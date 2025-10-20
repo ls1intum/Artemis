@@ -220,13 +220,12 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    void testOfSubmissionWithNullSubmission() throws Exception {
+    void testAthenaDTOConverterService_ofSubmission_withNullSubmission_returnsNull() throws Exception {
         // Test that AthenaDTOConverterService.ofSubmission handles null submissions gracefully
-        Method ofSubmissionMethod = AthenaFeedbackSuggestionsService.class.getDeclaredField("athenaDTOConverterService").getType().getDeclaredMethod("ofSubmission", long.class,
-                Submission.class);
-        ofSubmissionMethod.setAccessible(true);
-
+        // Access the converter service directly and test the public behavior
         Object athenaDTOConverterService = ReflectionTestUtils.getField(athenaFeedbackSuggestionsService, "athenaDTOConverterService");
+        Method ofSubmissionMethod = athenaDTOConverterService.getClass().getDeclaredMethod("ofSubmission", long.class, Submission.class);
+        ofSubmissionMethod.setAccessible(true);
         Object result = ofSubmissionMethod.invoke(athenaDTOConverterService, 1L, null);
         assertThat(result).isNull();
     }

@@ -19,9 +19,8 @@ describe('FeedbackLearnerProfileComponent', () => {
 
     const mockProfile = new LearnerProfileDTO({
         id: 1,
-        feedbackAlternativeStandard: 2,
-        feedbackFollowupSummary: 2,
-        feedbackBriefDetailed: 2,
+        feedbackDetail: 1,
+        feedbackFormality: 3,
     });
 
     beforeEach(async () => {
@@ -64,16 +63,14 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Arrange
             const newProfile = new LearnerProfileDTO({
                 id: mockProfile.id,
-                feedbackAlternativeStandard: 1,
-                feedbackFollowupSummary: 3,
-                feedbackBriefDetailed: 2,
+                feedbackDetail: 2,
+                feedbackFormality: 3,
             });
 
             component.learnerProfile.set(mockProfile);
             component.disabled = false;
-            component.feedbackAlternativeStandard.set(newProfile.feedbackAlternativeStandard);
-            component.feedbackFollowupSummary.set(newProfile.feedbackFollowupSummary);
-            component.feedbackBriefDetailed.set(newProfile.feedbackBriefDetailed);
+            component.feedbackDetail.set(newProfile.feedbackDetail);
+            component.feedbackFormality.set(newProfile.feedbackFormality);
 
             const putSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(newProfile);
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
@@ -98,9 +95,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Arrange
             const newProfile = new LearnerProfileDTO({
                 id: mockProfile.id,
-                feedbackAlternativeStandard: 1,
-                feedbackFollowupSummary: 3,
-                feedbackBriefDetailed: 2,
+                feedbackDetail: 2,
+                feedbackFormality: 4,
             });
 
             // Set initial state
@@ -108,9 +104,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             component.disabled = false;
 
             // Set new values
-            component.feedbackAlternativeStandard.set(newProfile.feedbackAlternativeStandard);
-            component.feedbackFollowupSummary.set(newProfile.feedbackFollowupSummary);
-            component.feedbackBriefDetailed.set(newProfile.feedbackBriefDetailed);
+            component.feedbackDetail.set(newProfile.feedbackDetail);
+            component.feedbackFormality.set(newProfile.feedbackFormality);
 
             // Mock the API call to fail
             const putSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(new Error('Bad Request'));
@@ -125,9 +120,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             // The profile should remain unchanged
             expect(component.learnerProfile()).toEqual(mockProfile);
             // The signals should keep their new values since the component doesn't reset them on error
-            expect(component.feedbackAlternativeStandard()).toBe(newProfile.feedbackAlternativeStandard);
-            expect(component.feedbackFollowupSummary()).toBe(newProfile.feedbackFollowupSummary);
-            expect(component.feedbackBriefDetailed()).toBe(newProfile.feedbackBriefDetailed);
+            expect(component.feedbackDetail()).toBe(newProfile.feedbackDetail);
+            expect(component.feedbackFormality()).toBe(newProfile.feedbackFormality);
         });
     });
 
@@ -220,9 +214,8 @@ describe('FeedbackLearnerProfileComponent', () => {
         // Arrange
         const newProfile = new LearnerProfileDTO({
             id: 1,
-            feedbackAlternativeStandard: 3,
-            feedbackFollowupSummary: 1,
-            feedbackBriefDetailed: 2,
+            feedbackDetail: 1,
+            feedbackFormality: 3,
         });
 
         // Mock the API to return our new profile
@@ -233,18 +226,16 @@ describe('FeedbackLearnerProfileComponent', () => {
         await fixture.whenStable();
 
         // Assert
-        expect(component.feedbackAlternativeStandard()).toBe(newProfile.feedbackAlternativeStandard);
-        expect(component.feedbackFollowupSummary()).toBe(newProfile.feedbackFollowupSummary);
-        expect(component.feedbackBriefDetailed()).toBe(newProfile.feedbackBriefDetailed);
+        expect(component.feedbackDetail()).toBe(newProfile.feedbackDetail);
+        expect(component.feedbackFormality()).toBe(newProfile.feedbackFormality);
     });
 
     it('should handle profile with undefined values', async () => {
         // Arrange
         const profileWithUndefinedValues = new LearnerProfileDTO({
             id: 1,
-            feedbackAlternativeStandard: undefined,
-            feedbackFollowupSummary: undefined,
-            feedbackBriefDetailed: undefined,
+            feedbackDetail: undefined,
+            feedbackFormality: undefined,
         });
 
         jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profileWithUndefinedValues);
@@ -254,9 +245,8 @@ describe('FeedbackLearnerProfileComponent', () => {
         await fixture.whenStable();
 
         // Assert - Should set default values since DTO constructor converts undefined to DEFAULT_VALUE
-        expect(component.feedbackAlternativeStandard()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
-        expect(component.feedbackFollowupSummary()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
-        expect(component.feedbackBriefDetailed()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+        expect(component.feedbackDetail()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+        expect(component.feedbackFormality()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
     });
 
     it('should handle non-HTTP error during profile update', async () => {
@@ -310,16 +300,14 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Arrange
             const newProfile = new LearnerProfileDTO({
                 id: mockProfile.id,
-                feedbackAlternativeStandard: 3,
-                feedbackFollowupSummary: 3,
-                feedbackBriefDetailed: 3,
+                feedbackDetail: 1,
+                feedbackFormality: 3,
             });
 
             component.learnerProfile.set(mockProfile);
             component.disabled = false;
-            component.feedbackAlternativeStandard.set(newProfile.feedbackAlternativeStandard);
-            component.feedbackFollowupSummary.set(newProfile.feedbackFollowupSummary);
-            component.feedbackBriefDetailed.set(newProfile.feedbackBriefDetailed);
+            component.feedbackDetail.set(newProfile.feedbackDetail);
+            component.feedbackFormality.set(newProfile.feedbackFormality);
 
             const putSpy = jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(newProfile);
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
@@ -344,16 +332,14 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Arrange
             const newProfile = new LearnerProfileDTO({
                 id: mockProfile.id,
-                feedbackAlternativeStandard: 3,
-                feedbackFollowupSummary: 3,
-                feedbackBriefDetailed: 3,
+                feedbackDetail: 1,
+                feedbackFormality: 3,
             });
 
             component.learnerProfile.set(mockProfile);
             component.disabled = false;
-            component.feedbackAlternativeStandard.set(newProfile.feedbackAlternativeStandard);
-            component.feedbackFollowupSummary.set(newProfile.feedbackFollowupSummary);
-            component.feedbackBriefDetailed.set(newProfile.feedbackBriefDetailed);
+            component.feedbackDetail.set(newProfile.feedbackDetail);
+            component.feedbackFormality.set(newProfile.feedbackFormality);
 
             jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockResolvedValue(newProfile);
 
@@ -362,9 +348,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
 
             // Assert
-            expect(component.feedbackAlternativeStandard()).toBe(newProfile.feedbackAlternativeStandard);
-            expect(component.feedbackFollowupSummary()).toBe(newProfile.feedbackFollowupSummary);
-            expect(component.feedbackBriefDetailed()).toBe(newProfile.feedbackBriefDetailed);
+            expect(component.feedbackDetail()).toBe(newProfile.feedbackDetail);
+            expect(component.feedbackFormality()).toBe(newProfile.feedbackFormality);
         });
     });
 
@@ -373,9 +358,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Arrange
             const profile = new LearnerProfileDTO({
                 id: 1,
-                feedbackAlternativeStandard: 3,
-                feedbackFollowupSummary: 2,
-                feedbackBriefDetailed: 1,
+                feedbackDetail: 1,
+                feedbackFormality: 3,
             });
             jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profile);
 
@@ -384,9 +368,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
 
             // Assert
-            expect(component.feedbackAlternativeStandard()).toBe(profile.feedbackAlternativeStandard);
-            expect(component.feedbackFollowupSummary()).toBe(profile.feedbackFollowupSummary);
-            expect(component.feedbackBriefDetailed()).toBe(profile.feedbackBriefDetailed);
+            expect(component.feedbackDetail()).toBe(profile.feedbackDetail);
+            expect(component.feedbackFormality()).toBe(profile.feedbackFormality);
             expect(component.disabled).toBeFalsy();
         });
 
@@ -398,9 +381,8 @@ describe('FeedbackLearnerProfileComponent', () => {
 
             const testProfile = new LearnerProfileDTO({
                 id: 1,
-                feedbackAlternativeStandard: 3,
-                feedbackFollowupSummary: 2,
-                feedbackBriefDetailed: 1,
+                feedbackDetail: 1,
+                feedbackFormality: 3,
             });
 
             jest.spyOn(newLearnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(testProfile);
@@ -410,18 +392,16 @@ describe('FeedbackLearnerProfileComponent', () => {
             await newFixture.whenStable();
 
             // Assert
-            expect(newComponent.feedbackAlternativeStandard()).toBe(3);
-            expect(newComponent.feedbackFollowupSummary()).toBe(2);
-            expect(newComponent.feedbackBriefDetailed()).toBe(1);
+            expect(newComponent.feedbackDetail()).toBe(1);
+            expect(newComponent.feedbackFormality()).toBe(3);
         });
 
         it('should load profile and update component state through ngOnInit', async () => {
             // Arrange
             const testProfile = new LearnerProfileDTO({
                 id: 1,
-                feedbackAlternativeStandard: 3,
-                feedbackFollowupSummary: 2,
-                feedbackBriefDetailed: 1,
+                feedbackDetail: 1,
+                feedbackFormality: 3,
             });
             jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(testProfile);
 
@@ -432,9 +412,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Assert
             expect(component.learnerProfile()).toEqual(testProfile);
             expect(component.disabled).toBeFalsy();
-            expect(component.feedbackAlternativeStandard()).toBe(3);
-            expect(component.feedbackFollowupSummary()).toBe(2);
-            expect(component.feedbackBriefDetailed()).toBe(1);
+            expect(component.feedbackDetail()).toBe(1);
+            expect(component.feedbackFormality()).toBe(3);
         });
 
         it('should handle errors during profile loading through ngOnInit', async () => {
@@ -479,9 +458,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Arrange
             const testProfile = new LearnerProfileDTO({
                 id: 1,
-                feedbackAlternativeStandard: 3,
-                feedbackFollowupSummary: 2,
-                feedbackBriefDetailed: 1,
+                feedbackDetail: 1,
+                feedbackFormality: 3,
             });
             jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(testProfile);
 
@@ -492,9 +470,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Assert
             expect(component.learnerProfile()).toEqual(testProfile);
             expect(component.disabled).toBeFalsy();
-            expect(component.feedbackAlternativeStandard()).toBe(3);
-            expect(component.feedbackFollowupSummary()).toBe(2);
-            expect(component.feedbackBriefDetailed()).toBe(1);
+            expect(component.feedbackDetail()).toBe(1);
+            expect(component.feedbackFormality()).toBe(3);
         });
 
         it('should test loadProfile error handling through ngOnInit', async () => {
@@ -518,9 +495,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Arrange
             const testProfile = new LearnerProfileDTO({
                 id: 1,
-                feedbackAlternativeStandard: 3,
-                feedbackFollowupSummary: 2,
-                feedbackBriefDetailed: 1,
+                feedbackDetail: 1,
+                feedbackFormality: 3,
             });
             jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(testProfile);
 
@@ -529,18 +505,16 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
 
             // Assert
-            expect(component.feedbackAlternativeStandard()).toBe(3);
-            expect(component.feedbackFollowupSummary()).toBe(2);
-            expect(component.feedbackBriefDetailed()).toBe(1);
+            expect(component.feedbackDetail()).toBe(1);
+            expect(component.feedbackFormality()).toBe(3);
         });
 
         it('should test updateProfileValues method with undefined values through profile loading', async () => {
             // Arrange
             const testProfile = new LearnerProfileDTO({
                 id: 1,
-                feedbackAlternativeStandard: undefined,
-                feedbackFollowupSummary: undefined,
-                feedbackBriefDetailed: undefined,
+                feedbackDetail: undefined,
+                feedbackFormality: undefined,
             });
             jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(testProfile);
 
@@ -549,9 +523,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
 
             // Assert - Should set default values since DTO constructor converts undefined to DEFAULT_VALUE
-            expect(component.feedbackAlternativeStandard()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
-            expect(component.feedbackFollowupSummary()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
-            expect(component.feedbackBriefDetailed()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackDetail()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackFormality()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
         });
 
         it('should test handleError method with HttpErrorResponse through API failure', async () => {
@@ -631,9 +604,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             // Arrange
             const profileWithNullValues = new LearnerProfileDTO({
                 id: 1,
-                feedbackAlternativeStandard: null as any,
-                feedbackFollowupSummary: null as any,
-                feedbackBriefDetailed: null as any,
+                feedbackDetail: null as any,
+                feedbackFormality: null as any,
             });
 
             jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profileWithNullValues);
@@ -643,18 +615,16 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
 
             // Assert - Should set default values since DTO constructor converts null to DEFAULT_VALUE
-            expect(component.feedbackAlternativeStandard()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
-            expect(component.feedbackFollowupSummary()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
-            expect(component.feedbackBriefDetailed()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackDetail()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackFormality()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
         });
 
         it('should handle profile with zero values', async () => {
             // Arrange
             const profileWithZeroValues = new LearnerProfileDTO({
                 id: 1,
-                feedbackAlternativeStandard: 0,
-                feedbackFollowupSummary: 0,
-                feedbackBriefDetailed: 0,
+                feedbackDetail: 0,
+                feedbackFormality: 0,
             });
 
             jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profileWithZeroValues);
@@ -664,18 +634,16 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
 
             // Assert - Should set default values since DTO constructor converts out-of-range values (0 < MIN_VALUE) to DEFAULT_VALUE
-            expect(component.feedbackAlternativeStandard()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
-            expect(component.feedbackFollowupSummary()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
-            expect(component.feedbackBriefDetailed()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackDetail()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackFormality()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
         });
 
         it('should handle profile with maximum values', async () => {
             // Arrange
             const profileWithMaxValues = new LearnerProfileDTO({
                 id: 1,
-                feedbackAlternativeStandard: 3,
-                feedbackFollowupSummary: 3,
-                feedbackBriefDetailed: 3,
+                feedbackDetail: 5,
+                feedbackFormality: 5,
             });
 
             jest.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser').mockResolvedValue(profileWithMaxValues);
@@ -685,9 +653,8 @@ describe('FeedbackLearnerProfileComponent', () => {
             await fixture.whenStable();
 
             // Assert
-            expect(component.feedbackAlternativeStandard()).toBe(3);
-            expect(component.feedbackFollowupSummary()).toBe(3);
-            expect(component.feedbackBriefDetailed()).toBe(3);
+            expect(component.feedbackDetail()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
+            expect(component.feedbackFormality()).toBe(LearnerProfileDTO.DEFAULT_VALUE);
         });
 
         it('should test onToggleChange with undefined profile', async () => {
@@ -718,14 +685,12 @@ describe('FeedbackLearnerProfileComponent', () => {
 
         it('should test component with different signal values', () => {
             // Arrange
-            component.feedbackAlternativeStandard.set(1);
-            component.feedbackFollowupSummary.set(2);
-            component.feedbackBriefDetailed.set(3);
+            component.feedbackDetail.set(1);
+            component.feedbackFormality.set(3);
 
             // Act & Assert
-            expect(component.feedbackAlternativeStandard()).toBe(1);
-            expect(component.feedbackFollowupSummary()).toBe(2);
-            expect(component.feedbackBriefDetailed()).toBe(3);
+            expect(component.feedbackDetail()).toBe(1);
+            expect(component.feedbackFormality()).toBe(3);
         });
 
         it('should test component disabled state changes', () => {

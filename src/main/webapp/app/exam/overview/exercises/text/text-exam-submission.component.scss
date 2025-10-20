@@ -48,19 +48,23 @@
         box-shadow: 0 0 20px rgba(0, 0, 200, 0.04);
     }
 }
+
 div {
     &.positive-feedback {
         color: #155724;
         background-color: #d4edda;
     }
+
     &.negative-feedback {
         color: #721c24;
         background-color: #f8d7da;
     }
+
     &.neutral-feedback {
         color: #383d41;
         background-color: #e2e3e5;
     }
+
     .unreferencedFeedback {
         background-color: whitesmoke;
     }

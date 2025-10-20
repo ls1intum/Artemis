@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation, input, output } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
@@ -18,17 +18,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, FormsModule, FaIconComponent, NgbTooltip, NgClass, ArtemisTranslatePipe],
 })
 export class MultipleChoiceVisualQuestionComponent {
-    _question: MultipleChoiceQuestion;
+    question = input.required<MultipleChoiceQuestion>();
 
-    @Input()
-    set question(question: MultipleChoiceQuestion) {
-        this._question = question;
-    }
-    get question(): MultipleChoiceQuestion {
-        return this._question;
-    }
-
-    @Output() questionChanged = new EventEmitter();
+    questionChanged = output();
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -41,19 +33,19 @@ export class MultipleChoiceVisualQuestionComponent {
     faXmark = faXmark;
 
     parseQuestion() {
-        let markdown = this.question.text ?? '';
+        let markdown = this.question().text ?? '';
 
-        if (this.question.hint) {
-            markdown += '\n\t[hint] ' + this.question.hint;
+        if (this.question().hint) {
+            markdown += '\n\t[hint] ' + this.question().hint;
         }
-        if (this.question.explanation) {
-            markdown += '\n\t[exp] ' + this.question.explanation;
+        if (this.question().explanation) {
+            markdown += '\n\t[exp] ' + this.question().explanation;
         }
 
-        if (this.question.answerOptions && this.question.answerOptions.length > 0) {
+        if (this.question().answerOptions && this.question().answerOptions!.length > 0) {
             markdown += '\n';
 
-            this.question.answerOptions.forEach((answerOption) => {
+            this.question().answerOptions!.forEach((answerOption) => {
                 markdown += '\n' + (answerOption.isCorrect ? '[correct] ' : '[wrong] ') + answerOption.text;
 
                 if (answerOption.hint) {
@@ -69,7 +61,7 @@ export class MultipleChoiceVisualQuestionComponent {
     }
 
     deleteAnswer(index: number) {
-        this.question.answerOptions?.splice(index, 1);
+        this.question().answerOptions?.splice(index, 1);
 
         this.questionChanged.emit();
     }
@@ -85,15 +77,16 @@ export class MultipleChoiceVisualQuestionComponent {
     }
 
     correctToggleDisabled() {
-        return this.question.singleChoice && this.question.answerOptions?.some((option) => option.isCorrect);
+        return this.question().singleChoice && this.question().answerOptions?.some((option) => option.isCorrect);
     }
 
     addNewAnswer() {
-        if (this.question.answerOptions === undefined) {
-            this.question.answerOptions = [];
+        const currentQuestion = this.question();
+        if (!currentQuestion.answerOptions) {
+            currentQuestion.answerOptions = [];
         }
-
-        this.question.answerOptions?.push(new AnswerOption());
+        currentQuestion.answerOptions.push(new AnswerOption());
+        this.question().answerOptions = currentQuestion.answerOptions;
 
         this.questionChanged.emit();
     }

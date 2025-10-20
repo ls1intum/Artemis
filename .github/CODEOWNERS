@@ -17,6 +17,7 @@
 /src/main/java/de/tum/cit/aet/artemis/atlas          @ls1intum/atlas-maintainers
 /src/main/java/de/tum/cit/aet/artemis/buildagent     @ls1intum/programming-maintainers
 /src/main/java/de/tum/cit/aet/artemis/communication  @ls1intum/communication-maintainers
+/src/main/java/de/tum/cit/aet/artemis/hyperion       @ls1intum/hyperion-maintainers
 /src/main/java/de/tum/cit/aet/artemis/iris           @ls1intum/iris-maintainers
 /src/main/java/de/tum/cit/aet/artemis/lecture        @ls1intum/lectures-maintainers
 /src/main/java/de/tum/cit/aet/artemis/lti            @ls1intum/lti-maintainers
@@ -31,6 +32,7 @@
 /src/main/webapp/app/atlas          @ls1intum/atlas-maintainers
 /src/main/webapp/app/buildagent     @ls1intum/programming-maintainers
 /src/main/webapp/app/communication  @ls1intum/communication-maintainers
+/src/main/webapp/app/hyperion       @ls1intum/hyperion-maintainers
 /src/main/webapp/app/iris           @ls1intum/iris-maintainers
 /src/main/webapp/app/lecture        @ls1intum/lectures-maintainers
 /src/main/webapp/app/lti            @ls1intum/lti-maintainers
@@ -44,6 +46,7 @@
 /src/test/java/de/tum/cit/aet/artemis/atlas          @ls1intum/atlas-maintainers
 /src/test/java/de/tum/cit/aet/artemis/buildagent     @ls1intum/programming-maintainers
 /src/test/java/de/tum/cit/aet/artemis/communication  @ls1intum/communication-maintainers
+/src/test/java/de/tum/cit/aet/artemis/hyperion       @ls1intum/hyperion-maintainers
 /src/test/java/de/tum/cit/aet/artemis/iris           @ls1intum/iris-maintainers
 /src/test/java/de/tum/cit/aet/artemis/lecture        @ls1intum/lectures-maintainers
 /src/test/java/de/tum/cit/aet/artemis/lti            @ls1intum/lti-maintainers

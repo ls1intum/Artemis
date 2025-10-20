@@ -47,27 +47,25 @@ public class LearnerProfile extends DomainObject {
     public static final int MAX_PROFILE_VALUE = 3;
 
     @JsonIgnoreProperties("learnerProfile")
-    @OneToOne(mappedBy = "learnerProfile", cascade = CascadeType.PERSIST)
+    @OneToOne(mappedBy = "learnerProfile")
     private User user;
 
     @OneToMany(mappedBy = "learnerProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("learnerProfile")
     private Set<CourseLearnerProfile> courseLearnerProfiles = new HashSet<>();
 
-    @Column(name = "feedback_alternative_standard")
+    @Column(name = "feedback_detail")
     @Min(MIN_PROFILE_VALUE)
     @Max(MAX_PROFILE_VALUE)
-    private int feedbackAlternativeStandard = DEFAULT_PROFILE_VALUE;
+    private int feedbackDetail = DEFAULT_PROFILE_VALUE;
 
-    @Column(name = "feedback_followup_summary")
+    @Column(name = "feedback_formality")
     @Min(MIN_PROFILE_VALUE)
     @Max(MAX_PROFILE_VALUE)
-    private int feedbackFollowupSummary = DEFAULT_PROFILE_VALUE;
+    private int feedbackFormality = DEFAULT_PROFILE_VALUE;
 
-    @Column(name = "feedback_brief_detailed")
-    @Min(MIN_PROFILE_VALUE)
-    @Max(MAX_PROFILE_VALUE)
-    private int feedbackBriefDetailed = DEFAULT_PROFILE_VALUE;
+    @Column(name = "has_setup_feedback_preferences")
+    private boolean hasSetupFeedbackPreferences = false;
 
     public void setUser(User user) {
         this.user = user;
@@ -97,27 +95,27 @@ public class LearnerProfile extends DomainObject {
         return this.courseLearnerProfiles.remove(courseLearnerProfile);
     }
 
-    public int getFeedbackAlternativeStandard() {
-        return feedbackAlternativeStandard;
+    public int getFeedbackDetail() {
+        return feedbackDetail;
     }
 
-    public void setFeedbackAlternativeStandard(int feedbackAlternativeStandard) {
-        this.feedbackAlternativeStandard = feedbackAlternativeStandard;
+    public void setFeedbackDetail(int feedbackDetail) {
+        this.feedbackDetail = feedbackDetail;
     }
 
-    public int getFeedbackFollowupSummary() {
-        return feedbackFollowupSummary;
+    public int getFeedbackFormality() {
+        return feedbackFormality;
     }
 
-    public void setFeedbackFollowupSummary(int feedbackFollowupSummary) {
-        this.feedbackFollowupSummary = feedbackFollowupSummary;
+    public void setFeedbackFormality(int feedbackFormality) {
+        this.feedbackFormality = feedbackFormality;
     }
 
-    public int getFeedbackBriefDetailed() {
-        return feedbackBriefDetailed;
+    public boolean hasSetupFeedbackPreferences() {
+        return hasSetupFeedbackPreferences;
     }
 
-    public void setFeedbackBriefDetailed(int feedbackBriefDetailed) {
-        this.feedbackBriefDetailed = feedbackBriefDetailed;
+    public void setHasSetupFeedbackPreferences(boolean hasSetupFeedbackPreferences) {
+        this.hasSetupFeedbackPreferences = hasSetupFeedbackPreferences;
     }
 }

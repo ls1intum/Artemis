@@ -1,5 +1,20 @@
 <div>
-    @if (questions().length > 0) {
+    @if (questionsLoaded()) {
+        @if (!isRated()) {
+            <p-dialog [(visible)]="showUnratedConfirmation" [modal]="true" [draggable]="false" [style]="{ width: '450px' }">
+                <ng-template pTemplate="header">
+                    <h5 jhiTranslate="artemisApp.quizQuestion.unratedConfirmationTitle"></h5>
+                </ng-template>
+
+                <p jhiTranslate="artemisApp.quizQuestion.unratedConfirmation"></p>
+
+                <ng-template pTemplate="footer">
+                    <jhi-button (onClick)="confirmUnratedPractice()" [title]="'global.generic.yes'" />
+                    <jhi-button (onClick)="cancelUnratedPractice()" [title]="'global.generic.no'" />
+                </ng-template>
+            </p-dialog>
+        }
+
         @if (currentQuestion(); as question) {
             @if (question.type === MULTIPLE_CHOICE) {
                 <jhi-multiple-choice-question
@@ -19,6 +34,7 @@
                     [questionIndex]="currentIndex() + 1"
                     [showResult]="showingResult"
                     [score]="questionScores"
+                    [forceSampleSolution]="false"
                 />
             }
             @if (question.type === DRAG_AND_DROP) {
@@ -29,6 +45,7 @@
                     [questionIndex]="currentIndex() + 1"
                     [showResult]="showingResult"
                     [score]="questionScores"
+                    [forceSampleSolution]="false"
                 />
             }
         }

@@ -10,6 +10,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAllowedException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -158,7 +159,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     // taken from https://mtyurt.net/post/spring-how-to-handle-ioexception-broken-pipe.html
     public Object exceptionHandler(IOException e, HttpServletRequest request) {
-        if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), "Broken pipe")) {
+        if (Strings.CI.contains(ExceptionUtils.getRootCauseMessage(e), "Broken pipe")) {
             log.info("Broken pipe IOException occurred: {}", e.getMessage());
             // socket is closed, cannot return any response
             return null;

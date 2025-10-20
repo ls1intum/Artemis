@@ -51,8 +51,8 @@ public class ProgrammingExerciseFactory {
 
     public static final String DEFAULT_BRANCH = "main";
 
-    // must be injected from a test class
-    public static URI localVCBaseUri;
+    // we use a default value or it must be injected from a test class
+    public static URI localVCBaseUri = URI.create("https://version-control.fake.fake");
 
     /**
      * Generates a programming exercise with the given release and due date. This exercise is added to the provided course.

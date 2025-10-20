@@ -1,15 +1,19 @@
 // Note: we first need to define our own customizations
 @import 'src/main/webapp/content/scss/artemis-variables';
+@import 'src/main/webapp/content/scss/_artemis-mixins.scss';
 
 // Then, we include bootstrap so that it can use some magic functions to compute new values based on those customizations
 // The order is very important, otherwise the background and the button colors might not work correctly
 @import 'node_modules/bootstrap/scss/bootstrap';
 @import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
+
 // Needed for mathematical formulas in markdown editor
 @import 'node_modules/katex/dist/katex.min.css';
 @import 'node_modules/@siemens/ngx-datatable/themes/bootstrap';
+
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
+
 // Needed for markdown-it-github-alerts and markdown callouts
 @import 'markdown-it-github-alerts/styles/github-colors-light.css';
 @import 'markdown-it-github-alerts/styles/github-colors-dark-media.css';
@@ -41,8 +45,9 @@ h4 {
 
 /* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
-a:not(.btn):not(.dropdown-item):not(.page-link):not(.nav-link):not(.tab-link):hover {
+a:not(.btn, .dropdown-item, .page-link, .nav-link, .tab-link):hover {
     color: $link-color;
+
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
 }
@@ -162,7 +167,7 @@ textarea {
 .btn-primary input,
 .btn input {
     position: absolute;
-    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
 }
 
 th {
@@ -276,11 +281,13 @@ Generic styles
 .popover-text-truncate-4-lines > .popover-body {
     overflow: hidden;
     text-overflow: ellipsis;
+
     // Show only the first four lines (limiting height with something else than lines is not possible).
     display: -webkit-box;
     -webkit-line-clamp: 4;
     line-clamp: 4;
     -webkit-box-orient: vertical;
+
     // Add a margin at the bottom and solve problem in Chromium-based browsers,
     // that an additional line after the ellipsis end is shown.
     margin-bottom: 1em;
@@ -356,6 +363,7 @@ entity tables helpers
 /* Remove Bootstrap padding from the element
    http://stackoverflow.com/questions/19562903/remove-padding-from-columns-in-bootstrap-3 */
 $padding-sides: 'left', 'right', 'top', 'bottom', 'all';
+
 @each $side in $padding-sides {
     @if $side == 'all' {
         .no-padding {
@@ -533,7 +541,7 @@ span.bold {
     font-weight: bold;
 }
 
-bold {
+b {
     font-weight: 500;
 }
 
@@ -541,12 +549,7 @@ bold {
 .positive {
     padding: 2px 4px;
     border-radius: 4px;
-    font-family:
-        Menlo,
-        Monaco,
-        Consolas,
-        Courier New,
-        monospace;
+    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 .negative {
@@ -561,11 +564,11 @@ bold {
 
 table {
     .col-xs-1 {
-        width: 8.33333%;
+        width: 8.3333%;
     }
 
     .col-xs-2 {
-        width: 16.66667%;
+        width: 16.6667%;
     }
 
     .col-xs-3 {
@@ -582,10 +585,9 @@ pre {
     padding: 9.5px;
     margin: 0 0 10px;
     font-size: 13px;
-    line-height: 1.42857;
+    line-height: 1.4268;
     white-space: pre-wrap;
-    word-break: break-word;
-    word-wrap: break-word;
+    overflow-wrap: break-word;
     color: $artemis-pre-color;
     background-color: $artemis-pre-background;
     border: 1px solid $artemis-pre-border;
@@ -598,12 +600,7 @@ pre {
     padding: 2px 4px;
     font-size: 90%;
     border-radius: 4px;
-    font-family:
-        Menlo,
-        Monaco,
-        Consolas,
-        Courier New,
-        monospace;
+    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 .code-success {
@@ -679,13 +676,13 @@ code.password:hover {
                 &.half {
                     position: relative;
 
-                    &:before {
+                    &::before {
                         display: block;
                         width: 60%;
                         overflow: hidden;
                     }
 
-                    &:after {
+                    &::after {
                         position: absolute;
                         top: 0;
                         left: 0;
@@ -698,7 +695,7 @@ code.password:hover {
                 color: $success;
 
                 &.half {
-                    &:after {
+                    &::after {
                         content: '\F00C';
                     }
                 }
@@ -712,7 +709,7 @@ code.password:hover {
                 color: $danger;
 
                 &.half {
-                    &:after {
+                    &::after {
                         content: '\f00d';
                     }
                 }
@@ -745,7 +742,7 @@ code.password:hover {
     cursor: not-allowed;
 }
 
-.colon-suffix:after {
+.colon-suffix::after {
     content: ':';
 }
 
@@ -772,6 +769,7 @@ Course Info Bar
     }
 
     $color-options: 'red', 'green', 'white', 'black', 'yellow', 'blue', 'lila', 'orange';
+
     @each $col in $color-options {
         .#{$col} {
             color: var(--markdown-preview-#{$col});
@@ -833,6 +831,7 @@ Course Info Bar
 
 .git-info {
     --bs-tooltip-max-width: 500px;
+
     .tooltip-inner {
         text-align: left;
     }
@@ -874,60 +873,76 @@ Course Info Bar
         text-shadow: none !important;
         box-shadow: none !important;
     }
+
     a:not(.btn) {
         text-decoration: underline;
     }
+
     abbr[title]::after {
         content: ' (' attr(title) ')';
     }
+
     pre {
         white-space: pre-wrap !important;
     }
+
     pre,
     blockquote {
         border: 1px solid #adb5bd;
-        page-break-inside: avoid;
+        break-inside: avoid;
     }
+
     tr,
     img {
-        page-break-inside: avoid;
+        break-inside: avoid;
     }
+
     p,
     h2,
     h3 {
         orphans: 3;
         widows: 3;
     }
+
     h2,
     h3 {
-        page-break-after: avoid;
+        break-after: avoid;
     }
+
     @page {
         size: a3;
     }
+
     body {
         min-width: 992px !important;
     }
+
     .container {
         min-width: 992px !important;
     }
+
     .badge {
         border: 1px solid #000;
     }
+
     .table {
         border-collapse: collapse !important;
     }
+
     .table td,
     .table th {
         background-color: #fff !important;
     }
+
     .table-bordered th,
     .table-bordered td {
         border: 1px solid #dee2e6 !important;
     }
+
     .table-dark {
         color: inherit;
     }
+
     .table-dark th,
     .table-dark td,
     .table-dark thead th,
@@ -937,24 +952,29 @@ Course Info Bar
 }
 
 /* Custom fixes for printing */
+
 @media print {
     /* Without this property only the first page is printed and the scroll bar is visible in the pdf */
     * {
         overflow: visible !important;
     }
+
     .container {
         min-width: 0 !important;
     }
+
     .card,
     .card-header,
     .card-footer {
         display: block !important;
         border: 1px solid #000;
     }
+
     /* Print detail views with full width */
     .row.justify-content-center > .col-8 {
         width: 100% !important;
     }
+
     /* Hide buttons that are not part of a group */
     :not(.btn-group) > {
         button,
@@ -962,34 +982,40 @@ Course Info Bar
             display: none !important;
         }
     }
+
     /* Adjust border with for button groups so they can be printed */
     div.btn-group > .btn.selected {
         border-width: 4px;
     }
+
     /* Hide navbar toggle */
     [data-toggle='collapse'] {
         display: none;
     }
+
     /* Add columns to description list to avoid long pages */
     dl {
         columns: 2;
     }
+
     /* Hide footer */
     .footer,
     .edit-quiz-footer {
         display: none;
     }
+
     /* Hide popovers and notifications */
     .connection-warning,
     .popover,
     .alert-wrap {
         display: none;
     }
+
     /* Fix progress bars */
     .progress {
         position: relative;
 
-        &:before {
+        &::before {
             display: block;
             content: '';
             position: absolute;
@@ -1001,6 +1027,7 @@ Course Info Bar
             border-bottom: 2rem solid #e9ecef;
         }
     }
+
     .progress-bar {
         position: absolute;
         top: 0;
@@ -1090,16 +1117,8 @@ body.transparent-background {
 }
 
 .scrollable-content {
-    height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height));
+    @include dynamic-content-height(--header-height);
     overflow-y: auto;
-
-    &.content-height-dev {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height));
-    }
-    @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height)) !important;
-        height: calc(100dvh - var(--sidebar-header-footer-combined-height) - var(--header-height)) !important;
-    }
 }
 
 .sidebar-collapsed-course-overview {
@@ -1112,13 +1131,11 @@ $transition-in-between-delay: 0.05s;
 
 .sidebar-content {
     opacity: 1;
-
     transition: opacity $transition-sidebar-content-opacity-length 0s ease-in-out;
 }
 
 .sidebar-collapsed .sidebar-content {
     opacity: 0;
-
     transition: opacity $transition-sidebar-content-opacity-length 0s ease-in-out;
 }
 
@@ -1126,7 +1143,6 @@ $transition-in-between-delay: 0.05s;
     overflow: hidden;
     max-width: $sidebar-width;
     margin-right: 0.5rem;
-
     transition:
         max-width $transition-sidebar-width-length 0s ease-in-out,
         margin-right $transition-sidebar-width-length 0s ease-in-out;
@@ -1135,7 +1151,6 @@ $transition-in-between-delay: 0.05s;
 .sidebar-collapsed .sidebar-wrap {
     max-width: 0;
     margin-right: 0;
-
     transition:
         max-width $transition-sidebar-width-length 0s ease-in-out,
         margin-right $transition-sidebar-width-length 0s ease-in-out;

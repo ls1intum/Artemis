@@ -3,7 +3,7 @@ import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { Subject, of } from 'rxjs';
-import { CommitState, FileBadge, FileBadgeType, FileType, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, FileBadge, FileBadgeType, FileType, GitConflictState, PROBLEM_STATEMENT_IDENTIFIER } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
@@ -20,6 +20,7 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CodeEditorFileBrowserProblemStatementComponent } from 'app/programming/manage/code-editor/file-browser/problem-statement/code-editor-file-browser-problem-statement.component';
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;
@@ -47,6 +48,7 @@ describe('CodeEditorFileBrowserComponent', () => {
                 CodeEditorFileBrowserCreateNodeComponent,
                 MockComponent(CodeEditorStatusComponent),
                 TranslatePipeMock,
+                MockComponent(CodeEditorFileBrowserProblemStatementComponent),
             ],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
@@ -74,9 +76,132 @@ describe('CodeEditorFileBrowserComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('uncompresses the tree when toggling from true → false', () => {
+        comp.repositoryFiles = { a: FileType.FILE };
+        comp.compressFolders = true;
+
+        const treeNode = { folder: '', file: 'a', children: [], text: 'a', value: 'a' };
+        jest.spyOn(comp, 'buildTree').mockReturnValue([treeNode]);
+        const transformSpy = jest.spyOn(comp, 'transformTreeToTreeViewItem').mockReturnValue([new TreeViewItem(treeNode)]);
+
+        comp.toggleTreeCompress();
+
+        expect(comp.compressFolders).toBeFalse();
+        expect(transformSpy).toHaveBeenCalled();
+    });
+
+    it('returns [] for getFolderBadges on unknown folder', () => {
+        comp.fileBadges = { 'known/file': [] };
+        const result = comp.getFolderBadges({ value: 'unknown', collapsed: true } as TreeViewItem<string>);
+        expect(result).toEqual([]);
+    });
+
+    it('should NOT open a delete modal for Problem Statement (PS is not deletable)', () => {
+        // PS present
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
+        comp.repositoryFiles = { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT };
+        comp.setupTreeview();
+        fixture.detectChanges();
+
+        const item = { value: PROBLEM_STATEMENT_IDENTIFIER, text: PROBLEM_STATEMENT_IDENTIFIER } as TreeViewItem<string>;
+        const openModalSpy = jest.spyOn(comp.modalService, 'open');
+
+        // Try to delete PS
+        comp.openDeleteFileModal(item);
+
+        // Expect no modal to be opened
+        expect(openModalSpy).not.toHaveBeenCalled();
+    });
+
+    it('should NOT enter rename mode for Problem Statement (PS is not renamable)', fakeAsync(() => {
+        comp.repositoryFiles = { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT };
+        comp.setupTreeview();
+        fixture.detectChanges();
+
+        // Try to trigger renaming on PS
+        const psItem = { value: PROBLEM_STATEMENT_IDENTIFIER, text: PROBLEM_STATEMENT_IDENTIFIER } as TreeViewItem<string>;
+        comp.setRenamingFile(psItem);
+        fixture.detectChanges();
+        tick();
+
+        // PS must never be put into renaming state
+        expect(comp.renamingFile).toBeUndefined();
+
+        // And there must be no rename input rendered for PS
+        const anyRenameInput =
+            debugElement.query(By.css('jhi-code-editor-file-browser-file input')) ||
+            debugElement.query(By.css('jhi-code-editor-file-browser-folder input')) ||
+            debugElement.query(By.css('jhi-code-editor-file-browser-problem-statement input'));
+        expect(anyRenameInput).toBeNull();
+    }));
+
+    it('places Problem Statement at the top of the tree', () => {
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
+        comp.ngOnInit();
+
+        comp.repositoryFiles = {
+            [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+            'b.txt': FileType.FILE,
+            'a.txt': FileType.FILE,
+        };
+
+        comp.setupTreeview();
+
+        const values = comp.filesTreeViewItem.map((i) => i.value);
+        expect(values[0]).toBe(PROBLEM_STATEMENT_IDENTIFIER);
+        expect(values.slice(1)).toEqual(['a.txt', 'b.txt']);
+    });
+
+    it('adds the Problem Statement entry when isProblemStatementVisible is true', () => {
+        // ensure fresh state
+        (comp as any).repositoryFiles = undefined;
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
+
+        comp.ngOnInit();
+        comp.setupTreeview();
+
+        expect(comp.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.PROBLEM_STATEMENT);
+        expect(comp.filesTreeViewItem.map((i) => i.value)).toContain(PROBLEM_STATEMENT_IDENTIFIER);
+    });
+
+    it('removes the Problem Statement entry when isProblemStatementVisible toggles to false', () => {
+        // start with PS present
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
+        comp.ngOnInit();
+        (comp as any).handleProblemStatementVisibility?.();
+
+        // toggle isProblemStatementVisible to false (no PS)
+        fixture.componentRef.setInput('isProblemStatementVisible', false);
+        (comp as any).handleProblemStatementVisibility?.();
+
+        expect(comp.repositoryFiles?.[PROBLEM_STATEMENT_IDENTIFIER]).toBeUndefined();
+    });
+
+    it('removes Problem Statement when showEditorInstructions toggles to false', () => {
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
+        comp.ngOnInit();
+        expect(comp.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.PROBLEM_STATEMENT);
+        // flip instructions visibility (signal input)
+        fixture.componentRef.setInput('showEditorInstructions', false);
+        fixture.detectChanges();
+        expect(comp.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER]).toBeUndefined();
+        expect(comp.filesTreeViewItem.find((i) => i.value === PROBLEM_STATEMENT_IDENTIFIER)).toBeUndefined();
+    });
+
+    it('re-adds Problem Statement when showEditorInstructions toggles back to true', () => {
+        fixture.componentRef.setInput('isProblemStatementVisible', true);
+        fixture.componentRef.setInput('participation', { id: 1 });
+        comp.ngOnInit();
+        fixture.componentRef.setInput('showEditorInstructions', false);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('showEditorInstructions', true);
+        fixture.detectChanges();
+        expect(comp.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.PROBLEM_STATEMENT);
+        expect(comp.filesTreeViewItem.map((i) => i.value)).toContain(PROBLEM_STATEMENT_IDENTIFIER);
+    });
+
     it('should create no treeviewItems if getRepositoryContent returns an empty result', () => {
         const repositoryContent: { [fileName: string]: string } = {};
-        const expectedFileTreeItems: TreeViewItem<string>[] = [];
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
@@ -85,12 +210,43 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
 
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toEqual(repositoryContent);
-        expect(comp.filesTreeViewItem).toEqual(expectedFileTreeItems);
+        // repositoryFiles now contains only PS
+        expect(comp.repositoryFiles).toEqual({
+            [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
+
+        // tree now has exactly 1 item: PS
+        expect(comp.filesTreeViewItem).toHaveLength(1);
+        expect(comp.filesTreeViewItem[0].value).toBe(PROBLEM_STATEMENT_IDENTIFIER);
+
+        // still no regular folders/files rendered
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(0);
         expect(renderedFiles).toHaveLength(0);
+    });
+
+    it('opens a delete modal when deleting a folder', () => {
+        comp.repositoryFiles = {
+            folder: FileType.FOLDER,
+            'folder/file1': FileType.FILE,
+        };
+        comp.setupTreeview();
+        fixture.detectChanges();
+
+        const item = { value: 'folder', text: 'folder' } as unknown as TreeViewItem<string>;
+        const modalRef = {
+            componentInstance: { parent: undefined, fileNameToDelete: undefined, fileType: undefined },
+        } as any;
+
+        const openSpy = jest.spyOn(comp.modalService, 'open').mockReturnValue(modalRef);
+
+        comp.openDeleteFileModal(item);
+
+        expect(openSpy).toHaveBeenCalledOnce();
+        expect(modalRef.componentInstance.parent).toBe(comp);
+        expect(modalRef.componentInstance.fileNameToDelete).toBe('folder');
+        expect(modalRef.componentInstance.fileType).toBe(FileType.FOLDER);
     });
 
     it('should create treeviewItems if getRepositoryContent returns files', () => {
@@ -102,7 +258,10 @@ describe('CodeEditorFileBrowserComponent', () => {
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toEqual(repositoryContent);
+        expect(comp.repositoryFiles).toEqual({
+            ...repositoryContent,
+            [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(1);
@@ -233,23 +392,24 @@ describe('CodeEditorFileBrowserComponent', () => {
             ...allowedFiles,
             ...forbiddenFiles,
         };
-        const expectedFileTreeItems = [
-            new TreeViewItem({
-                internalDisabled: false,
-                internalChecked: false,
-                internalCollapsed: false,
-                text: 'file1',
-                value: 'file1',
-            } as any),
-        ].map((x) => x.toString());
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toEqual(allowedFiles);
-        expect(comp.filesTreeViewItem.map((x) => x.toString())).toEqual(expectedFileTreeItems);
+        expect(comp.repositoryFiles).toEqual({
+            ...allowedFiles,
+            [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
+
+        // tree should contain exactly the allowed file and PS
+        expect(comp.filesTreeViewItem).toHaveLength(2);
+        const values = comp.filesTreeViewItem.map((i) => i.value);
+        expect(values).toContain('allowedFile.java');
+        expect(values).toContain(PROBLEM_STATEMENT_IDENTIFIER);
+
+        // rendered components: one file, zero folders
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(0);
@@ -295,10 +455,20 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
         expect(comp.commitState).toEqual(CommitState.COULD_NOT_BE_RETRIEVED);
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toBeUndefined();
-        expect(comp.filesTreeViewItem).toBeUndefined();
+
+        // PS is still present
+        expect(comp.repositoryFiles).toEqual({
+            [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
+
+        // tree was built to show PS
+        expect(comp.filesTreeViewItem).toHaveLength(1);
+        expect(comp.filesTreeViewItem[0].value).toBe(PROBLEM_STATEMENT_IDENTIFIER);
+
         expect(onErrorSpy).toHaveBeenCalledOnce();
         expect(loadFilesSpy).not.toHaveBeenCalled();
+
+        // still no regular folders/files rendered
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(0);
@@ -321,9 +491,14 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toBeUndefined();
-        expect(comp.filesTreeViewItem).toBeUndefined();
+        expect(comp.repositoryFiles).toEqual({
+            [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
+        expect(comp.filesTreeViewItem).toHaveLength(1);
+        expect(comp.filesTreeViewItem[0].value).toBe(PROBLEM_STATEMENT_IDENTIFIER);
+
         expect(onErrorSpy).toHaveBeenCalledOnce();
+
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(0);
@@ -628,8 +803,11 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renameFileStub).toHaveBeenCalledWith(fileName, afterRename);
         expect(comp.renamingFile).toBeUndefined();
         expect(onFileChangeSpy).toHaveBeenCalledOnce();
-        expect(comp.repositoryFiles).toEqual({ folder2: FileType.FOLDER, [afterRename]: FileType.FILE });
-
+        expect(comp.repositoryFiles).toEqual({
+            folder2: FileType.FOLDER,
+            [afterRename]: FileType.FILE,
+            [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
         filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(filesInTreeHtml).toHaveLength(1);
         foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
@@ -706,6 +884,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             [[afterRename, 'file2'].join('/')]: FileType.FILE,
             [afterRename]: FileType.FOLDER,
             folder2: FileType.FOLDER,
+            [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
         });
 
         filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));

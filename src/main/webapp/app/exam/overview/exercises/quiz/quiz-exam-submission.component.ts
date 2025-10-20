@@ -7,7 +7,7 @@ import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-dr
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -17,7 +17,6 @@ import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multi
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { cloneDeep } from 'lodash-es';
-import * as smoothscroll from 'smoothscroll-polyfill';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
@@ -27,6 +26,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
+import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -77,7 +77,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
     ngOnInit(): void {
-        smoothscroll.polyfill();
         this.initQuiz();
         this.updateViewFromSubmission();
     }
@@ -133,6 +132,20 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         }
     }
 
+    private highlightQuizQuestion(questionId: number): void {
+        const quizQuestions = this.quizConfiguration().quizQuestions;
+        if (!quizQuestions) {
+            return;
+        }
+
+        const questionToBeHighlighted: QuizQuestion | undefined = quizQuestions.find((question) => question.id === questionId);
+        if (!questionToBeHighlighted) {
+            return;
+        }
+
+        addTemporaryHighlightToQuestion(questionToBeHighlighted);
+    }
+
     /**
      * TODO This is duplicated with {@link QuizParticipationComponent#navigateToQuestion}, extract to a shared component
      *
@@ -141,13 +154,17 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      */
     navigateToQuestion(questionId: number): void {
         const element = document.getElementById('question' + questionId);
-        if (element) {
-            element.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest',
-                inline: 'start',
-            });
+        if (!element) {
+            captureException('navigateToQuestion: element not found for questionId ' + questionId);
+            return;
         }
+        element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'start',
+        });
+
+        this.highlightQuizQuestion(questionId);
     }
 
     /**
