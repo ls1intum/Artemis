@@ -93,6 +93,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
 
+    isProblemStatementVisible = input<boolean>(true);
+
     @Output()
     onCommitStateChange = new EventEmitter<CommitState>();
     @Output()

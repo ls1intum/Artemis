@@ -54,7 +54,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -83,6 +82,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestionStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
@@ -97,6 +97,31 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private static final String TEST_PREFIX = "quizexerciseintegration";
 
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseIntegrationTest.class);
+
+    // helper attributes for shorter code in assert statements
+    private final PointCounter pc01 = pc(0, 1);
+
+    private final PointCounter pc02 = pc(0, 2);
+
+    private final PointCounter pc03 = pc(0, 3);
+
+    private final PointCounter pc04 = pc(0, 4);
+
+    private final PointCounter pc05 = pc(0, 5);
+
+    private final PointCounter pc06 = pc(0, 6);
+
+    private final PointCounter pc10 = pc(1, 0);
+
+    private final PointCounter pc20 = pc(2, 0);
+
+    private final PointCounter pc30 = pc(3, 0);
+
+    private final PointCounter pc40 = pc(4, 0);
+
+    private final PointCounter pc50 = pc(5, 0);
+
+    private final PointCounter pc60 = pc(6, 0);
 
     @Autowired
     private QuizExerciseService quizExerciseService;
@@ -143,30 +168,46 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private ConversationUtilService conversationUtilService;
 
-    // helper attributes for shorter code in assert statements
-    private final PointCounter pc01 = pc(0, 1);
+    private static List<Arguments> testPerformJoin_args() {
+        var now = ZonedDateTime.now();
+        var longPast = now.minusHours(4);
+        var past = now.minusMinutes(30);
+        var future = now.plusMinutes(30);
+        var longFuture = now.plusHours(4);
 
-    private final PointCounter pc02 = pc(0, 2);
+        var batchLongPast = new QuizBatch();
+        batchLongPast.setStartTime(longPast);
+        batchLongPast.setPassword("12345678");
+        var batchPast = new QuizBatch();
+        batchPast.setStartTime(past);
+        batchPast.setPassword("12345678");
+        var batchFuture = new QuizBatch();
+        batchFuture.setStartTime(future);
+        batchFuture.setPassword("12345678");
 
-    private final PointCounter pc03 = pc(0, 3);
-
-    private final PointCounter pc04 = pc(0, 4);
-
-    private final PointCounter pc05 = pc(0, 5);
-
-    private final PointCounter pc06 = pc(0, 6);
-
-    private final PointCounter pc10 = pc(1, 0);
-
-    private final PointCounter pc20 = pc(2, 0);
-
-    private final PointCounter pc30 = pc(3, 0);
-
-    private final PointCounter pc40 = pc(4, 0);
-
-    private final PointCounter pc50 = pc(5, 0);
-
-    private final PointCounter pc60 = pc(6, 0);
+        return List.of(Arguments.of(QuizMode.SYNCHRONIZED, future, null, null, null, FORBIDDEN, FORBIDDEN), // start in future
+                Arguments.of(QuizMode.SYNCHRONIZED, past, null, null, null, BAD_REQUEST, OK), // synchronized
+                Arguments.of(QuizMode.SYNCHRONIZED, past, null, null, "12345678", BAD_REQUEST, OK), // synchronized
+                Arguments.of(QuizMode.SYNCHRONIZED, longPast, past, null, null, FORBIDDEN, OK), // due date passed
+                Arguments.of(QuizMode.INDIVIDUAL, future, null, null, null, FORBIDDEN, FORBIDDEN), // start in future
+                Arguments.of(QuizMode.INDIVIDUAL, longPast, null, null, null, OK, OK), Arguments.of(QuizMode.INDIVIDUAL, longPast, longFuture, null, null, OK, OK),
+                Arguments.of(QuizMode.INDIVIDUAL, longPast, future, null, null, OK, OK), // NOTE: reduced working time because of due date
+                Arguments.of(QuizMode.INDIVIDUAL, longPast, past, null, null, FORBIDDEN, OK), // after due date
+                Arguments.of(QuizMode.BATCHED, future, null, null, null, FORBIDDEN, FORBIDDEN), // start in future
+                Arguments.of(QuizMode.BATCHED, longPast, null, null, null, BAD_REQUEST, OK), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, longFuture, null, null, BAD_REQUEST, OK), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, future, null, null, BAD_REQUEST, OK), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, past, null, null, FORBIDDEN, OK), // after due date
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchLongPast, null, BAD_REQUEST, OK), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchPast, null, BAD_REQUEST, OK), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchFuture, null, BAD_REQUEST, OK), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchLongPast, "87654321", BAD_REQUEST, OK), // wrong pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchPast, "87654321", BAD_REQUEST, OK), // wrong pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchFuture, "87654321", BAD_REQUEST, OK), // wrong pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchLongPast, "12345678", BAD_REQUEST, OK), // batch done
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchPast, "12345678", OK, OK), // NOTE: reduced working time because batch had already started
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchFuture, "12345678", OK, OK));
+    }
 
     @BeforeEach
     void init() {
@@ -188,16 +229,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = createQuizOnServerForExam();
         createdQuizAssert(quizExercise);
         checkCreatedFiles(quizExercise);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
-        quizExercise.setCourse(exerciseGroup.getExam().getCourse());
-
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     private Course createEmptyCourse() {
@@ -255,10 +286,17 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
      * @return the created quiz exercise or null if the request failed
      */
     private QuizExercise createQuizExerciseWithFiles(QuizExercise quizExercise, HttpStatus expectedStatus, boolean addBackgroundImage) throws Exception {
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz/quiz-exercises");
+        String url;
+        if (quizExercise.isExamExercise()) {
+            url = "/api/quiz/exercise-groups/" + quizExercise.getExerciseGroup().getId() + "/quiz-exercises";
+        }
+        else {
+            url = "/api/quiz/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises";
+        }
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, url);
         addFilesToBuilderAndModifyExercise(builder, quizExercise, addBackgroundImage);
-        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
-                .contentType(MediaType.MULTIPART_FORM_DATA);
+        QuizExerciseCreateDTO dto = QuizExerciseCreateDTO.of(quizExercise);
+        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(dto))).contentType(MediaType.MULTIPART_FORM_DATA);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
@@ -331,49 +369,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(null);
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createQuizExercise_InvalidMaxScore() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-        quizExercise.setMaxPoints(0.0);
-
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createQuizExercise_InvalidDates_badRequest() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now()));
-
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createQuizExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-
-        quizExercise.setMaxPoints(10.0);
-        quizExercise.setBonusPoints(1.0);
-        quizExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createQuizExercise_NotIncludedInvalidBonusPoints() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-
-        quizExercise.setMaxPoints(10.0);
-        quizExercise.setBonusPoints(1.0);
-        quizExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
 
         createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
@@ -384,6 +382,150 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testUpdateQuizExercise(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, quizMode);
         updateQuizAndAssert(quizExercise);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_NoQuestions_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setQuizQuestions(List.of());
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_MissingTitle_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setTitle(null);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_EmptyTitle_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setTitle("");
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_MissingScoringType_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            question.setScoringType(null);
+        }
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_DnD_MissingTempID_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).findFirst().ifPresent(q -> {
+            DragAndDropQuestion dnd = (DragAndDropQuestion) q;
+            dnd.getDragItems().getFirst().setTempID(null);
+        });
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_DnD_EmptyDropLocations_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).findFirst().ifPresent(q -> {
+            DragAndDropQuestion dnd = (DragAndDropQuestion) q;
+            dnd.setDropLocations(List.of());
+        });
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_DnD_EmptyDragItems_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).findFirst().ifPresent(q -> {
+            DragAndDropQuestion dnd = (DragAndDropQuestion) q;
+            dnd.setDragItems(List.of());
+        });
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_DnD_EmptyCorrectMappings_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).findFirst().ifPresent(q -> {
+            DragAndDropQuestion dnd = (DragAndDropQuestion) q;
+            dnd.setCorrectMappings(List.of());
+        });
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_SA_EmptySpots_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizQuestions().stream().filter(q -> q instanceof ShortAnswerQuestion).findFirst().ifPresent(q -> {
+            ShortAnswerQuestion sa = (ShortAnswerQuestion) q;
+            sa.setSpots(List.of());
+        });
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_SA_EmptySolutions_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizQuestions().stream().filter(q -> q instanceof ShortAnswerQuestion).findFirst().ifPresent(q -> {
+            ShortAnswerQuestion sa = (ShortAnswerQuestion) q;
+            sa.setSolutions(List.of());
+        });
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_SA_EmptyCorrectMappings_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizQuestions().stream().filter(q -> q instanceof ShortAnswerQuestion).findFirst().ifPresent(q -> {
+            ShortAnswerQuestion sa = (ShortAnswerQuestion) q;
+            sa.setCorrectMappings(List.of());
+        });
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_SA_MissingTempID_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizQuestions().stream().filter(q -> q instanceof ShortAnswerQuestion).findFirst().ifPresent(q -> {
+            ShortAnswerQuestion sa = (ShortAnswerQuestion) q;
+            sa.getSpots().get(0).setTempID(null);
+        });
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_MC_EmptyAnswerOptions_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizQuestions().stream().filter(q -> q instanceof MultipleChoiceQuestion).findFirst().ifPresent(q -> {
+            MultipleChoiceQuestion mc = (MultipleChoiceQuestion) q;
+            mc.setAnswerOptions(List.of());
+        });
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuiz_MC_MissingAnswerText_badRequest() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizQuestions().stream().filter(q -> q instanceof MultipleChoiceQuestion).findFirst().ifPresent(q -> {
+            MultipleChoiceQuestion mc = (MultipleChoiceQuestion) q;
+            mc.getAnswerOptions().get(0).setText(null);
+        });
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @Test
@@ -573,14 +715,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
         assertThat(updatedQuizExercise).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExistingQuizExercise() throws Exception {
-        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -2061,46 +2195,5 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         else if (!quizExercise.isQuizStarted()) {
             assertThat(quizExercise.getQuizQuestions()).isEmpty();
         }
-    }
-
-    private static List<Arguments> testPerformJoin_args() {
-        var now = ZonedDateTime.now();
-        var longPast = now.minusHours(4);
-        var past = now.minusMinutes(30);
-        var future = now.plusMinutes(30);
-        var longFuture = now.plusHours(4);
-
-        var batchLongPast = new QuizBatch();
-        batchLongPast.setStartTime(longPast);
-        batchLongPast.setPassword("12345678");
-        var batchPast = new QuizBatch();
-        batchPast.setStartTime(past);
-        batchPast.setPassword("12345678");
-        var batchFuture = new QuizBatch();
-        batchFuture.setStartTime(future);
-        batchFuture.setPassword("12345678");
-
-        return List.of(Arguments.of(QuizMode.SYNCHRONIZED, future, null, null, null, FORBIDDEN, FORBIDDEN), // start in future
-                Arguments.of(QuizMode.SYNCHRONIZED, past, null, null, null, BAD_REQUEST, OK), // synchronized
-                Arguments.of(QuizMode.SYNCHRONIZED, past, null, null, "12345678", BAD_REQUEST, OK), // synchronized
-                Arguments.of(QuizMode.SYNCHRONIZED, longPast, past, null, null, FORBIDDEN, OK), // due date passed
-                Arguments.of(QuizMode.INDIVIDUAL, future, null, null, null, FORBIDDEN, FORBIDDEN), // start in future
-                Arguments.of(QuizMode.INDIVIDUAL, longPast, null, null, null, OK, OK), Arguments.of(QuizMode.INDIVIDUAL, longPast, longFuture, null, null, OK, OK),
-                Arguments.of(QuizMode.INDIVIDUAL, longPast, future, null, null, OK, OK), // NOTE: reduced working time because of due date
-                Arguments.of(QuizMode.INDIVIDUAL, longPast, past, null, null, FORBIDDEN, OK), // after due date
-                Arguments.of(QuizMode.BATCHED, future, null, null, null, FORBIDDEN, FORBIDDEN), // start in future
-                Arguments.of(QuizMode.BATCHED, longPast, null, null, null, BAD_REQUEST, OK), // no pw
-                Arguments.of(QuizMode.BATCHED, longPast, longFuture, null, null, BAD_REQUEST, OK), // no pw
-                Arguments.of(QuizMode.BATCHED, longPast, future, null, null, BAD_REQUEST, OK), // no pw
-                Arguments.of(QuizMode.BATCHED, longPast, past, null, null, FORBIDDEN, OK), // after due date
-                Arguments.of(QuizMode.BATCHED, longPast, null, batchLongPast, null, BAD_REQUEST, OK), // no pw
-                Arguments.of(QuizMode.BATCHED, longPast, null, batchPast, null, BAD_REQUEST, OK), // no pw
-                Arguments.of(QuizMode.BATCHED, longPast, null, batchFuture, null, BAD_REQUEST, OK), // no pw
-                Arguments.of(QuizMode.BATCHED, longPast, null, batchLongPast, "87654321", BAD_REQUEST, OK), // wrong pw
-                Arguments.of(QuizMode.BATCHED, longPast, null, batchPast, "87654321", BAD_REQUEST, OK), // wrong pw
-                Arguments.of(QuizMode.BATCHED, longPast, null, batchFuture, "87654321", BAD_REQUEST, OK), // wrong pw
-                Arguments.of(QuizMode.BATCHED, longPast, null, batchLongPast, "12345678", BAD_REQUEST, OK), // batch done
-                Arguments.of(QuizMode.BATCHED, longPast, null, batchPast, "12345678", OK, OK), // NOTE: reduced working time because batch had already started
-                Arguments.of(QuizMode.BATCHED, longPast, null, batchFuture, "12345678", OK, OK));
     }
 }
