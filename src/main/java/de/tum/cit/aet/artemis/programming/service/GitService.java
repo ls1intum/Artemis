@@ -676,7 +676,7 @@ public class GitService extends AbstractGitService {
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen
                 log.debug("Cannot find a commit in the template repo for: {}", repository.getLocalPath());
-                return;
+                throw new de.tum.cit.aet.artemis.core.exception.GitException("Template repository has no commits; cannot compute student diff");
             }
 
             // checkout own local "diff" branch to keep main as is
@@ -693,6 +693,7 @@ public class GitService extends AbstractGitService {
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
             log.warn("Cannot reset the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+            throw new de.tum.cit.aet.artemis.core.exception.GitException("Failed to combine student commits: " + ex.getMessage(), ex);
         }
         finally {
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
@@ -721,7 +722,7 @@ public class GitService extends AbstractGitService {
             if (latestHash == null) {
                 // Template Repository is somehow empty. Should never happen
                 log.debug("Cannot find a commit in the template repo for: {}", repository.getLocalPath());
-                return;
+                throw new de.tum.cit.aet.artemis.core.exception.GitException("Template repository has no commits; cannot anonymize student commits");
             }
 
             // Create copy branch
@@ -762,11 +763,83 @@ public class GitService extends AbstractGitService {
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
             log.warn("Cannot anonymize the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+            throw new de.tum.cit.aet.artemis.core.exception.GitException("Failed to anonymize repository: " + ex.getMessage(), ex);
         }
         finally {
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
             // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
             repository.close();
+        }
+    }
+
+    /**
+     * Verifies that the repository is anonymized according to expectations.
+     * - All remotes removed and no remote tracking refs exist
+     * - .git/logs directory removed and FETCH_HEAD deleted
+     * - All commits after the template's last commit use anonymized author/committer
+     * - Optionally check that at most one student commit exists after the template (when combinedExpected is true)
+     *
+     * @param repository          the local repository
+     * @param programmingExercise related programming exercise (to locate the template repository last commit)
+     * @param combinedExpected    whether to enforce that there is at most one student commit after the template commit
+     * @throws de.tum.cit.aet.artemis.core.exception.GitException if verification fails
+     */
+    public void verifyAnonymizationOrThrow(Repository repository, ProgrammingExercise programmingExercise, boolean combinedExpected) {
+        try (Git git = new Git(repository)) {
+            // Check remotes removed
+            if (!git.remoteList().call().isEmpty()) {
+                throw new de.tum.cit.aet.artemis.core.exception.GitException("Anonymization verification failed: repository still has remotes configured");
+            }
+            // Also ensure no remote tracking refs remain
+            try {
+                for (Ref ref : git.getRepository().getRefDatabase().getRefs()) {
+                    if (ref.getName().startsWith("refs/remotes/")) {
+                        throw new de.tum.cit.aet.artemis.core.exception.GitException("Anonymization verification failed: remote tracking refs remain");
+                    }
+                }
+            }
+            catch (java.io.IOException ioEx) {
+                throw new de.tum.cit.aet.artemis.core.exception.GitException("Failed to access refs during verification: " + ioEx.getMessage(), ioEx);
+            }
+
+            // Filesystem checks for logs and FETCH_HEAD
+            Path logsPath = Path.of(repository.getDirectory().getPath(), "logs");
+            if (Files.exists(logsPath)) {
+                throw new de.tum.cit.aet.artemis.core.exception.GitException("Anonymization verification failed: .git/logs still present");
+            }
+            Path fetchHeadPath = Path.of(repository.getDirectory().getPath(), "FETCH_HEAD");
+            if (Files.exists(fetchHeadPath)) {
+                throw new de.tum.cit.aet.artemis.core.exception.GitException("Anonymization verification failed: FETCH_HEAD still present");
+            }
+
+            // Determine last template commit
+            ObjectId latestTemplate = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUri());
+            if (latestTemplate == null) {
+                throw new de.tum.cit.aet.artemis.core.exception.GitException("Cannot determine template commit for verification");
+            }
+
+            // Collect student commits (after the template commit) reachable from HEAD
+            Iterable<RevCommit> commits = git.log().call();
+            int studentCommitCount = 0;
+            for (RevCommit commit : commits) {
+                if (commit.getId().equals(latestTemplate)) {
+                    break;
+                }
+                // For each commit after template: must be anonymized
+                var author = commit.getAuthorIdent();
+                var committer = commit.getCommitterIdent();
+                if (!(ANONYMIZED_STUDENT_NAME.equals(author.getName()) && ANONYMIZED_STUDENT_EMAIL.equals(author.getEmailAddress())
+                        && ANONYMIZED_STUDENT_NAME.equals(committer.getName()) && ANONYMIZED_STUDENT_EMAIL.equals(committer.getEmailAddress()))) {
+                    throw new de.tum.cit.aet.artemis.core.exception.GitException("Anonymization verification failed: found non-anonymized commit");
+                }
+                studentCommitCount++;
+                if (combinedExpected && studentCommitCount > 1) {
+                    throw new de.tum.cit.aet.artemis.core.exception.GitException("Anonymization verification failed: commits not combined into a single commit");
+                }
+            }
+        }
+        catch (org.eclipse.jgit.api.errors.GitAPIException | org.eclipse.jgit.api.errors.JGitInternalException e) {
+            throw new de.tum.cit.aet.artemis.core.exception.GitException("Failed during anonymization verification: " + e.getMessage(), e);
         }
     }
 
