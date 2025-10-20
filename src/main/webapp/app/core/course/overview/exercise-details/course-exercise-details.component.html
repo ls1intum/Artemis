@@ -182,7 +182,7 @@
                     (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
                 ) {
                     <div class="row">
-                        <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult" />
+                        <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult" [participation]="gradedStudentParticipation" />
                     </div>
                 }
                 @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisProgrammingExerciseChatSettings?.enabled) {
