@@ -24,7 +24,7 @@ export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsis
     `;
 
     // Place box beneath the line
-    editor.addLineWidget(issue.endLine, `comment-${issue.endLine}`, node);
+    editor.addLineWidget(issue.endLine, `comment-${issue.startLine}-${issue.endLine}-${issue.category}`, node);
 }
 
 export function issuesForSelectedFile(
