@@ -425,13 +425,26 @@ export class CourseUpdateComponent implements OnInit {
         if (this.course.enrollmentEnabled) {
             // online course cannot be activated if enrollment enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
-            if (!this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
+            if (!this.course.enrollmentStartDate) {
                 this.course.enrollmentStartDate = this.course.startDate;
                 this.courseForm.controls['enrollmentStartDate'].setValue(this.course.startDate);
-                this.course.enrollmentEndDate = this.course.endDate;
-                this.courseForm.controls['enrollmentEndDate'].setValue(this.course.endDate);
+            }
+            if (!this.course.enrollmentEndDate) {
+                // default unenrollment end date would be set as course end date (when enabled)
+                // therefore default enrollment end date should be before unenrollment end date to be valid
+                const defaultEnrollmentEndDate = this.course.endDate?.subtract(1, 'minute');
+                this.course.enrollmentEndDate = defaultEnrollmentEndDate;
+                this.courseForm.controls['enrollmentEndDate'].setValue(defaultEnrollmentEndDate);
             }
         } else {
+            if (this.course.enrollmentStartDate) {
+                this.course.enrollmentStartDate = undefined;
+                this.courseForm.controls['enrollmentStartDate'].setValue(undefined);
+            }
+            if (this.course.enrollmentEndDate) {
+                this.course.enrollmentEndDate = undefined;
+                this.courseForm.controls['enrollmentEndDate'].setValue(undefined);
+            }
             if (this.course.unenrollmentEnabled) {
                 this.changeUnenrollmentEnabled();
             }
@@ -448,6 +461,9 @@ export class CourseUpdateComponent implements OnInit {
         if (this.course.unenrollmentEnabled && !this.course.unenrollmentEndDate) {
             this.course.unenrollmentEndDate = this.course.endDate;
             this.courseForm.controls['unenrollmentEndDate'].setValue(this.course.unenrollmentEndDate);
+        } else if (!this.course.unenrollmentEnabled && this.course.unenrollmentEndDate) {
+            this.course.unenrollmentEndDate = undefined;
+            this.courseForm.controls['unenrollmentEndDate'].setValue(undefined);
         }
     }
 
@@ -604,11 +620,7 @@ export class CourseUpdateComponent implements OnInit {
             return false;
         }
 
-        return (
-            dayjs(this.course.enrollmentStartDate).isBefore(this.course.enrollmentEndDate) &&
-            !dayjs(this.course.enrollmentStartDate).isAfter(this.course.startDate) &&
-            !dayjs(this.course.enrollmentEndDate).isAfter(this.course.endDate)
-        );
+        return dayjs(this.course.enrollmentStartDate).isBefore(this.course.enrollmentEndDate) && !dayjs(this.course.enrollmentEndDate).isAfter(this.course.endDate);
     }
 
     /**

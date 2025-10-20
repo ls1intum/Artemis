@@ -1,6 +1,6 @@
 <table class="table table-striped align-middle flex">
     <thead class="thead-dark">
-        <tr (sortChange)="onSortChange($event)" [(ascending)]="ascending" [(predicate)]="search.sortedColumn" class="flex-row" jhiSort>
+        <tr (sortChange)="onSortChange($event)" [(ascending)]="ascending" [predicate]="search().sortedColumn" class="flex-row" jhiSort>
             <th jhiSortBy="ID" class="col-0.5">
                 <span>#</span>
                 <fa-icon [icon]="faSort" />
@@ -26,7 +26,7 @@
         </tr>
     </thead>
     <tbody>
-        @for (competency of content.resultsOnPage; track competency.id) {
+        @for (competency of content().resultsOnPage; track competency.id) {
             <tr>
                 <td class="col-0.5">{{ competency.id }}</td>
                 <td class="col-2">{{ competency.title }}</td>
@@ -34,20 +34,20 @@
                 <td class="col-2">{{ competency.course?.title }}</td>
                 <td class="col-0.5">{{ competency.course?.semester }}</td>
                 <td class="col-1">
-                    <ng-container *ngTemplateOutlet="buttonsTemplate; context: { competency: competency }" />
+                    <ng-container *ngTemplateOutlet="buttonsTemplate(); context: { competency: competency }" />
                 </td>
             </tr>
         }
     </tbody>
 </table>
-@if (displayPagination) {
+@if (displayPagination()) {
     <div class="d-flex justify-content-between p-2">
         <ngb-pagination
             (pageChange)="onPageChange($event)"
-            [(page)]="search.page"
-            [collectionSize]="search.pageSize * content.numberOfPages"
+            [page]="search().page"
+            [collectionSize]="search().pageSize * content().numberOfPages"
             [maxSize]="10"
-            [pageSize]="search.pageSize"
+            [pageSize]="search().pageSize"
             [rotate]="true"
         />
     </div>
