@@ -10,8 +10,6 @@ import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/ada
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
-import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 export abstract class TextEditorAction implements Disposable {
@@ -326,20 +324,5 @@ export abstract class TextEditorAction implements Disposable {
                 },
             });
         }
-    }
-
-    /**
-     * Runs the consistency check on the exercise.
-     *
-     * @param artemisIntelligence The service to use for consistency checking.
-     * @param exerciseId The id of the exercise to check.
-     * @param resultSignal The signal to write the result of the consistency check to.
-     */
-    consistencyCheck(artemisIntelligence: ArtemisIntelligenceService, exerciseId: number, resultSignal: WritableSignal<ConsistencyIssue[]>): void {
-        artemisIntelligence.consistencyCheck(exerciseId).subscribe({
-            next: (response: ConsistencyCheckResponse) => {
-                resultSignal.set(response.issues ?? []);
-            },
-        });
     }
 }

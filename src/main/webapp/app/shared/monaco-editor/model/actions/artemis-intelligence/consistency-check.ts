@@ -69,7 +69,7 @@ export function issuesForSelectedFile(
     return inlineIssues;
 }
 
-function isMatchingRepository(repo1: ArtifactLocation.TypeEnum, repo2: RepositoryType | 'PROBLEM_STATEMENT') {
+export function isMatchingRepository(repo1: ArtifactLocation.TypeEnum, repo2: RepositoryType | 'PROBLEM_STATEMENT') {
     if (repo1 === ArtifactLocation.TypeEnum.TemplateRepository && repo2 === RepositoryType.TEMPLATE) {
         return true;
     } else if (repo1 === ArtifactLocation.TypeEnum.SolutionRepository && repo2 === RepositoryType.SOLUTION) {
@@ -116,7 +116,7 @@ export function formatConsistencyCheckResults(issue: InlineConsistencyIssue): st
 /**
  * Convert an ENUM_STYLE category (e.g. IDENTIFIER_NAMING_INCONSISTENCY) into Title Case (e.g. Identifier Naming Inconsistency)
  */
-function humanizeCategory(category: string): string {
+export function humanizeCategory(category: string): string {
     return category
         .split('_')
         .filter((p) => p.length > 0)
@@ -124,7 +124,7 @@ function humanizeCategory(category: string): string {
         .join(' ');
 }
 
-function severityToString(severity: ConsistencyIssue.SeverityEnum) {
+export function severityToString(severity: ConsistencyIssue.SeverityEnum) {
     switch (severity) {
         case ConsistencyIssue.SeverityEnum.High:
             return 'HIGH';
@@ -137,7 +137,7 @@ function severityToString(severity: ConsistencyIssue.SeverityEnum) {
     }
 }
 
-function formatArtifactType(type: ArtifactLocation.TypeEnum): string {
+export function formatArtifactType(type: ArtifactLocation.TypeEnum): string {
     switch (type) {
         case ArtifactLocation.TypeEnum.ProblemStatement:
             return 'Problem Statement';
