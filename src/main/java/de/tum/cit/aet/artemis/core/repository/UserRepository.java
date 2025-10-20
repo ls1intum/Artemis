@@ -1400,4 +1400,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE store.token = :token
             """)
     Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
+
+    @Query("""
+            SELECT user
+            FROM User user
+                LEFT JOIN FETCH user.examUsers
+            WHERE user.login = :login
+            """)
+    Optional<User> findOneWithExamUsersByLogin(@Param("login") String login);
 }

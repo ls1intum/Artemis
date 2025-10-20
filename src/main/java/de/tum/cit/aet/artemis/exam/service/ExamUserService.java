@@ -196,7 +196,7 @@ public class ExamUserService {
      *                                       otherwise throw an exception on such an encounter
      * @throws BadRequestAlertException if {@code supportLegacy} is true and an exam user's room or seat cannot be mapped to actual entities.
      */
-    public void setRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, Function<ExamUser, String> roomGetter, Function<ExamUser, String> seatGetter,
+    private void setRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, Function<ExamUser, String> roomGetter, Function<ExamUser, String> seatGetter,
             TriConsumer<ExamUser, ExamRoom, ExamSeatDTO> transientRoomAndSeatSetter, boolean supportLegacy) {
         List<Exam> usedExams = examUsers.stream().map(ExamUser::getExam).distinct().toList();
         if (usedExams.size() != 1) {

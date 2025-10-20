@@ -140,6 +140,7 @@
         "notEnoughExamSeats": "The selected rooms can only seat {{ numberOfUsableSeats }} of the {{ numberOfExamUsers }} students",
         "noRoomIDs": "You didn't select any rooms",
         "invalidRoomIDs": "At least one of your selected rooms doesn't exist or is outdated",
+        "noStudentDistributed": "None of the exam participants have been assigned a room and seat",
         "wrongCourse": "The reaction does not belong to the selected course.",
         "reactionNotFound": "The reaction could not be found.",
         "missingAssociation": "The reaction must be associated with a post or an answer post.",

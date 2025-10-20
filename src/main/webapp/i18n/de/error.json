@@ -140,6 +140,7 @@
         "notEnoughExamSeats": "Die ausgewählten Räume haben nur Kapazität für {{ numberOfUsableSeats }} der {{ numberOfExamUsers }} Klausurteilnehmer",
         "noRoomIDs": "Du hast keine Räume ausgewählt",
         "invalidRoomIDs": "Mindestens einer der Räume, die du ausgewählt hast, existiert nicht oder ist veraltet",
+        "noStudentDistributed": "Keinem der Klausurteilnehmer wurde ein Raum und Sitz zugewiesen",
         "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
         "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",
         "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",

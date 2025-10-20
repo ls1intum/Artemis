@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotEmpty;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -131,8 +132,12 @@ public class ExamRoomDistributionService {
      */
     public AttendanceCheckerAppExamInformationDTO getAttendanceCheckerAppInformation(long examId) {
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
-
         Set<ExamUser> examUsers = exam.getExamUsers();
+
+        if (examUsers.stream().noneMatch(examUser -> StringUtils.hasText(examUser.getPlannedRoom()) && StringUtils.hasText(examUser.getPlannedSeat()))) {
+            throw new BadRequestAlertException("No distribution has happened, yet", ENTITY_NAME, "noStudentDistributed");
+        }
+
         examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers);
         examUserService.setActualRoomAndSeatTransientForExamUsers(examUsers);
 
