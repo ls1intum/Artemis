@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -162,35 +160,5 @@ public class ExamUserResource {
         examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
         String login = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new EntityNotFoundException("ERROR: No current user login found!"));
         return ResponseEntity.ok().body(examUserRepository.isAttendanceChecked(examId, login));
-    }
-
-    /**
-     * PUT courses/{courseId}/exams/{examId}/attendance : Verifies attendance for the specified student
-     *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
-     * @param studentLogin the login of the student we want to verify
-     * @return 204 (No Content) if the verification was successful
-     */
-    @PutMapping("courses/{courseId}/exams/{examId}/attendance")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Void> markAsAttended(@PathVariable long courseId, @PathVariable long examId, @RequestParam String studentLogin) {
-        log.debug("REST request to verify attendance of student '{}' for exam with id: {}", studentLogin, examId);
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
-        User student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
-                .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
-
-        ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, student.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Exam user with login: \"" + studentLogin + "\" does not exist"));
-
-        examUser.setDidCheckImage(true);
-        examUser.setDidCheckLogin(true);
-        examUser.setDidCheckName(true);
-        examUser.setDidCheckRegistrationNumber(true);
-        examUser.setSigningImagePath("some path");
-        examUserRepository.save(examUser);
-
-        return ResponseEntity.noContent().build();
     }
 }
