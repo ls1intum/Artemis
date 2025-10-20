@@ -51,7 +51,7 @@ describe('CalendarMobileMonthPresentationComponent', () => {
         fixture = TestBed.createComponent(CalendarMobileMonthPresentationComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('firstDateOfMonth', dayjs('2025-05-01'));
+        fixture.componentRef.setInput('firstDateOfCurrentMonth', dayjs('2025-05-01'));
         fixture.detectChanges();
     });
 
