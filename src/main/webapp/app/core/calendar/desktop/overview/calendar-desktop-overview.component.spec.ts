@@ -160,7 +160,7 @@ describe('CalendarDesktopOverviewComponent', () => {
         component.presentation.set('month');
         fixture.detectChanges();
 
-        const heading = () => fixture.debugElement.query(By.css('.h3')).nativeElement.textContent.trim();
+        const heading = () => fixture.debugElement.query(By.css('h3')).nativeElement.textContent.trim();
 
         expect(heading()).toBe('October 2025');
 
