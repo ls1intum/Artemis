@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamRoomZipFiles;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-public class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "roomdistributionintegration";
 
