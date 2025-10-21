@@ -89,7 +89,11 @@ public class SpringAIConfiguration {
      */
     @Bean
     @Lazy
-    public ChatClient chatClient(AzureOpenAiChatModel azureOpenAiChatModel, @Nullable ChatMemory chatMemory) {
+    public ChatClient chatClient(@Nullable AzureOpenAiChatModel azureOpenAiChatModel, @Nullable ChatMemory chatMemory) {
+        if (azureOpenAiChatModel == null) {
+            return null;
+        }
+
         ChatClient.Builder builder = ChatClient.builder(azureOpenAiChatModel)
                 .defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build());
 
