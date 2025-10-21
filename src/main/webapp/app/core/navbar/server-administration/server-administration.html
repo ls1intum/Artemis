@@ -8,9 +8,9 @@
         </a>
     }
     <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
-        @if (!isLoggedInWIthPasskey) {
+        @if (!isLoggedInWithPasskey) {
             <li>
-                <a class="dropdown-item">
+                <a class="dropdown-item" (click)="loginWithPasskey()">
                     <fa-icon [icon]="faKey" [fixedWidth]="true" />
                     <span jhiTranslate="global.menu.admin.loginWithPasskey"></span>
                 </a>

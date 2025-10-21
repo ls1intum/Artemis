@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -26,8 +26,15 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { IsLoggedInWithPasskeyGuard } from 'app/core/auth/is-logged-in-with-passkey/is-logged-in-with-passkey.guard';
+import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
+import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
+import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
+import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-server-administration',
@@ -45,7 +52,7 @@ import { IsLoggedInWithPasskeyGuard } from 'app/core/auth/is-logged-in-with-pass
     templateUrl: './server-administration.html',
     styleUrl: '../navbar.scss',
 })
-export class ServerAdministration {
+export class ServerAdministration implements OnInit {
     protected readonly faUniversity = faUniversity;
     protected readonly faStamp = faStamp;
     protected readonly faTasks = faTasks;
@@ -68,6 +75,12 @@ export class ServerAdministration {
     protected readonly faKey = faKey;
 
     private readonly isLoggedInWithPasskeyGuard = inject(IsLoggedInWithPasskeyGuard);
+    private readonly webauthnService = inject(WebauthnService);
+    private readonly webauthnApiService = inject(WebauthnApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly router = inject(Router);
+    private readonly eventManager = inject(EventManager);
+    private readonly accountService = inject(AccountService);
 
     isExamActive = input<boolean>(false);
     isExamStarted = input<boolean>(false);
@@ -80,13 +93,66 @@ export class ServerAdministration {
 
     collapseNavbarListener = output<void>();
 
-    protected isLoggedInWIthPasskey: boolean = false;
+    authenticationError = false;
 
-    constructor() {
-        this.isLoggedInWIthPasskey = this.isLoggedInWithPasskeyGuard.isLoggedInWithPasskey();
+    protected isLoggedInWithPasskey: boolean = false;
+
+    ngOnInit() {
+        this.isLoggedInWithPasskey = this.isLoggedInWithPasskeyGuard.isLoggedInWithPasskey();
     }
 
     protected collapseNavbar() {
         this.collapseNavbarListener.emit();
+    }
+
+    async loginWithPasskey() {
+        try {
+            const authenticatorCredential = await this.webauthnService.getCredential();
+
+            if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new InvalidCredentialError();
+            }
+
+            const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential) as unknown as PublicKeyCredential;
+            if (!credential) {
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new InvalidCredentialError();
+            }
+
+            await this.webauthnApiService.loginWithPasskey(credential);
+            this.handleLoginSuccess();
+        } catch (error) {
+            if (error instanceof InvalidCredentialError) {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
+            } else {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
+            }
+            // eslint-disable-next-line no-undef
+            console.error(error);
+            throw error;
+        }
+    }
+
+    /**
+     * Handle a successful user login.
+     */
+    private handleLoginSuccess() {
+        this.authenticationError = false;
+        this.accountService.userIdentity = {
+            ...this.accountService.userIdentity,
+            isLoggedInWithPasskey: true,
+            internal: this.accountService.userIdentity?.internal ?? false,
+        };
+        this.isLoggedInWithPasskey = true;
+
+        if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
+            this.router.navigate(['']);
+        }
+
+        this.eventManager.broadcast({
+            name: 'authenticationSuccess',
+            content: 'Sending Authentication Success',
+        });
     }
 }

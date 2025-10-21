@@ -10,7 +10,8 @@ export class IsLoggedInWithPasskeyGuard implements CanActivate {
     private readonly router = inject(Router);
 
     isLoggedInWithPasskey(): boolean {
-        return !!this.accountService.userIdentity?.loggedInWithPasskey;
+        // TODO shall use a signal
+        return !!this.accountService.userIdentity?.isLoggedInWithPasskey;
     }
 
     /**
