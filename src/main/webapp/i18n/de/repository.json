@@ -18,7 +18,8 @@
                     "date": "Datum",
                     "commit": "Commit",
                     "empty": "Keine Änderungen",
-                    "fileUnchanged": "Keine Änderungen am Dateiinhalt"
+                    "fileUnchanged": "Keine Änderungen am Dateiinhalt",
+                    "fileTooLarge": "Änderungen sind zu groß für die Anzeige. Es wird eine ungefähre Zusammenfassung angezeigt."
                 }
             },
             "vcsAccessLog": {
