@@ -9,6 +9,7 @@ import java.util.Set;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -30,6 +31,6 @@ public interface QuizQuestionProgressRepository extends ArtemisJpaRepository<Qui
             AND quizQuestionProgress.courseId = :courseId
             AND quizQuestionProgress.dueDate > :dueDate
             """)
-    Set<Long> findNotDueQuizQuestions(long userId, long courseId, ZonedDateTime dueDate);
+    Set<Long> findNotDueQuizQuestions(@Param("userId") long userId, @Param("courseId") long courseId, @Param("dueDate") ZonedDateTime dueDate);
 
 }

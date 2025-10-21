@@ -113,6 +113,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         quizQuestionProgress.setProgressJson(progressData);
         quizQuestionProgress.setLastAnsweredAt(ZonedDateTime.now());
+        quizQuestionProgress.setDueDate(ZonedDateTime.now());
         quizQuestionProgressRepository.save(quizQuestionProgress);
     }
 
