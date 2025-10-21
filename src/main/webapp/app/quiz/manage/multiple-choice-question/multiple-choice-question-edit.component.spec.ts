@@ -46,6 +46,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         });
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
+        component.question = question;
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
@@ -59,6 +60,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should initialize with question markdown text', () => {
+        fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(component.questionEditorText).toEqual(
             'some-text\n' +

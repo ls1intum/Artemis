@@ -1,4 +1,3 @@
-<!-- TODO for a follow-up: This template relies on method calls to ensure the drag/drop of answer options works. We should avoid this for performance reasons -->
 <div class="edit-mc-question">
     <div class="card-header">
         <div class="row">
@@ -7,7 +6,7 @@
                     class="btn question-collapse"
                     (click)="isQuestionCollapsed = !isQuestionCollapsed"
                     [attr.aria-expanded]="!isQuestionCollapsed"
-                    [attr.aria-controls]="'collapseQuestion' + questionIndex"
+                    [attr.aria-controls]="'collapseQuestion' + questionIndex()"
                 >
                     <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
                 </button>
@@ -17,7 +16,7 @@
                     <div class="col-10 col-lg-11">
                         <input
                             class="form-control"
-                            [(ngModel)]="question.title"
+                            [(ngModel)]="question().title"
                             placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                             attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                         />
@@ -79,7 +78,7 @@
             <div class="col-12 col-lg-4">
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                    <select class="form-select" [(ngModel)]="question.scoringType" title="scoring type">
+                    <select class="form-select" [(ngModel)]="question().scoringType" title="scoring type">
                         <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
                         <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
                         <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
@@ -89,7 +88,7 @@
             <div class="col-12 col-lg-2">
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                    <input class="form-control point-input" title="score" type="number" [value]="question.points" disabled />
+                    <input class="form-control point-input" title="score" type="number" [value]="question().points" disabled />
                 </div>
             </div>
             <div class="col-12 col-lg-3">
@@ -97,13 +96,13 @@
                     <div class="form-check custom-control custom-checkbox">
                         <input
                             type="checkbox"
-                            id="{{ 'cbRandomizeOrderMC' + questionIndex }}"
-                            [(ngModel)]="question.randomizeOrder"
+                            id="{{ 'cbRandomizeOrderMC' + questionIndex() }}"
+                            [(ngModel)]="question().randomizeOrder"
                             class="form-check-input custom-control-input"
                         />
                         <label
                             class="form-check-label custom-control-label"
-                            for="{{ 'cbRandomizeOrderMC' + questionIndex }}"
+                            for="{{ 'cbRandomizeOrderMC' + questionIndex() }}"
                             jhiTranslate="artemisApp.multipleChoiceQuestion.randomizeOrder"
                         ></label>
                     </div>
@@ -113,14 +112,14 @@
                 <div class="col-8 form-group">
                     <button
                         class="btn btn-outline-secondary question-invalid"
-                        [hidden]="question.invalid"
-                        (click)="question.invalid = true"
+                        [hidden]="question().invalid"
+                        (click)="question().invalid = true"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                     ></button>
                     <button
                         class="btn btn-outline-secondary question-invalid"
-                        [hidden]="!question.invalid"
-                        [disabled]="question.invalid"
+                        [hidden]="!question().invalid"
+                        [disabled]="question().invalid"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
                     ></button>
                 </div>
@@ -146,7 +145,7 @@
                             [showEditButton]="false"
                             [showPreviewButton]="false"
                             (markdownChange)="onQuestionChange($event)"
-                            (onBlurEditor)="questionText = getQuestionText(question)"
+                            (onBlurEditor)="questionText = getQuestionText(question())"
                             [enableFileUpload]="false"
                             class="editor col"
                             style="width: 90%"
@@ -168,7 +167,7 @@
             </div>
         </div>
         <div cdkDropList (cdkDropListDropped)="onReorderAnswerOptionDrop($event)">
-            @for (answer of question.answerOptions; track answer) {
+            @for (answer of question().answerOptions; track answer.id) {
                 <div class="answer-border" cdkDrag>
                     <div class="question-options row align-items-start">
                         <div class="col-3 col-lg-1 drag-handle">

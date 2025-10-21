@@ -1,11 +1,11 @@
-@if (quizExercises && filteredQuizExercises.length > 0) {
+@if (quizExercises() && filteredQuizExercises.length > 0) {
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                     @if (course.isAtLeastInstructor) {
                         <th class="d-md-table-cell">
-                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(quizExercises)" [ngModel]="allChecked" />
+                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(quizExercises())" [ngModel]="allChecked" />
                         </th>
                     }
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
