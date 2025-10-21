@@ -219,22 +219,22 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should parse markdown when preparing for save in edit mode', () => {
-        component.markdownEditor().inVisualMode = false;
-        const parseMarkdownSpy = jest.spyOn(component.markdownEditor(), 'parseMarkdown');
+        component.markdownEditor()!.inVisualMode = false;
+        const parseMarkdownSpy = jest.spyOn(component.markdownEditor()!, 'parseMarkdown');
         component.prepareForSave();
         expect(parseMarkdownSpy).toHaveBeenCalledOnce();
     });
 
     it('should update markdown from the visual component when preparing for save in visual mode', () => {
-        component.markdownEditor().inVisualMode = true;
+        component.markdownEditor()!.inVisualMode = true;
         // if we don't mock this, we get heap out of memory, probably due to some infinite recursion
-        component.markdownEditor()['monacoEditor'] = {
+        component.markdownEditor()!['monacoEditor'] = {
             setText: jest.fn(),
         } as Partial<MonacoEditorComponent> as MonacoEditorComponent;
 
         const parseQuestionStub = jest.spyOn(component.visualChild(), 'parseQuestion').mockReturnValue('parsed-question');
         component.prepareForSave();
         expect(parseQuestionStub).toHaveBeenCalledOnce();
-        expect(component.markdownEditor()['_markdown']).toBe('parsed-question');
+        expect(component.markdownEditor()!['_markdown']).toBe('parsed-question');
     });
 });
