@@ -93,7 +93,7 @@
             },
             "longLectureWarning": "Avoid lectures that take more than a couple of hours. They quickly overcrowd the calendar.",
             "createSeries": {
-                "startAndEndDateExplanation": "Quickly create a lecture series by only defining titles and timing. Add lecture contents later. Start by specifying start and end of at least one lectures that you would like to repeat weekly:",
+                "startAndEndDateExplanation": "Quickly create a lecture series by only defining titles and timing. Add lecture contents later. Start by specifying start and end of at least one lecture, that you would like to repeat weekly:",
                 "seriesEndDateExplanation": "Now define a date on which you would like the repeated lectures to end:",
                 "inputLabel": {
                     "startDate": "Start",
