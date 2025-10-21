@@ -6,7 +6,6 @@ import { ComplaintResponseService } from 'app/assessment/manage/services/complai
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';

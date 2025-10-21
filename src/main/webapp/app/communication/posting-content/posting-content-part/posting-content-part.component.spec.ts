@@ -10,7 +10,6 @@ import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { MockProvider } from 'ng-mocks';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { FileService } from 'app/shared/service/file.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';

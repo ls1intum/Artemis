@@ -119,7 +119,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse = new ComplaintResponse();
             _complaint.complaintResponse.reviewer = { login } as User;
             _complaint.complaintResponse.isCurrentlyLocked = true;
-            accountService.userIdentity = { login: anotherLogin } as User;
+            accountService.userIdentity.set({ login: anotherLogin } as User);
             jest.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(true);
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
