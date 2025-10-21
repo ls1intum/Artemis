@@ -21,7 +21,7 @@ import org.springframework.web.client.RestClientException;
 
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO;
 import de.tum.cit.aet.artemis.lecture.dto.TumLivePlaylistDTO.StreamDTO;
-import de.tum.cit.aet.artemis.lecture.service.TumLiveService;
+import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class TumLiveServiceIntTest extends AbstractSpringIntegrationIndependentTest {

@@ -18,7 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
-import de.tum.cit.aet.artemis.lecture.service.TranscriptionPollingScheduler;
+import de.tum.cit.aet.artemis.nebula.service.NebulaTranscriptionPollingScheduler;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -26,7 +26,7 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
     private static final String TEST_PREFIX = "transcriptionpollingschedulertest";
 
     @Autowired
-    private TranscriptionPollingScheduler transcriptionPollingScheduler;
+    private NebulaTranscriptionPollingScheduler transcriptionPollingScheduler;
 
     @Autowired
     private LectureTranscriptionRepository lectureTranscriptionRepository;
@@ -65,7 +65,7 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
         // Stub the spy bean to avoid real HTTP calls
         doNothing().when(lectureTranscriptionService).processTranscription(any(LectureTranscription.class));
 
-        transcriptionPollingScheduler.pollPendingTranscriptions();
+        transcriptionPollingScheduler.pollPendingNebulaTranscriptions();
 
         // Verify only the two PENDING transcriptions with non-null jobId were processed
         ArgumentCaptor<LectureTranscription> captor = ArgumentCaptor.forClass(LectureTranscription.class);
