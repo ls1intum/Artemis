@@ -131,11 +131,6 @@ public class AtlasAgentService {
      * @return true if the service is ready, false otherwise
      */
     public boolean isAvailable() {
-        try {
-            return chatClient != null && chatMemory != null;
-        }
-        catch (Exception e) {
-            return false;
-        }
+        return chatClient != null && chatMemory != null;
     }
 }

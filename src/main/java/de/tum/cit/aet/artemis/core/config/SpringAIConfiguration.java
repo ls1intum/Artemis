@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import javax.annotation.Nullable;
 import javax.sql.DataSource;
 
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
@@ -22,6 +21,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.lang.Nullable;
 
 /**
  * Configuration for Spring AI chat clients.
@@ -44,7 +44,7 @@ public class SpringAIConfiguration {
 
     /**
      * Creates a JDBC-based chat memory repository for persistent storage.
-     * Uses MySQL dialect for database-specific operations.
+     * Uses an auto-detected JDBC dialect based on the configured DataSource.
      * This bean is only created if no other ChatMemoryRepository bean exists,
      * allowing Spring AI auto-configuration to take precedence if available.
      *
@@ -83,10 +83,7 @@ public class SpringAIConfiguration {
      */
     @Bean
     @Lazy
-    public ChatClient chatClient(@Nullable AzureOpenAiChatModel azureOpenAiChatModel, @Nullable ChatMemory chatMemory) {
-        if (azureOpenAiChatModel == null) {
-            return null;
-        }
+    public ChatClient chatClient(AzureOpenAiChatModel azureOpenAiChatModel, @Nullable ChatMemory chatMemory) {
         ChatClient.Builder builder = ChatClient.builder(azureOpenAiChatModel)
                 .defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build());
 
