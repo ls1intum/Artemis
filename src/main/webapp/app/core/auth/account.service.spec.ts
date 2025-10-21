@@ -139,7 +139,7 @@ describe('AccountService', () => {
 
         accountService.syncGroups(user3.groups!);
 
-        expect(accountService.userIdentity().groups).toEqual(['USER', 'TA']);
+        expect(accountService.userIdentity()?.groups).toEqual(['USER', 'TA']);
     });
 
     describe('test authority check', () => {
@@ -638,7 +638,7 @@ describe('AccountService', () => {
             accountService.setUserAcceptedExternalLLMUsage();
 
             // Check if the date was set correctly
-            const acceptedDate = accountService.userIdentity().externalLLMUsageAccepted;
+            const acceptedDate = accountService.userIdentity()?.externalLLMUsageAccepted;
             expect(acceptedDate).toBeDefined();
             expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2024-02-06');
         });

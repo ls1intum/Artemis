@@ -27,7 +27,7 @@ describe('NewTutorialGroupDetail', () => {
     const mockTranslateService = new MockTranslateService();
     mockTranslateService.use('en');
     const mockAccountService = new MockAccountService();
-    mockAccountService.userIdentity = new User(undefined, 'artemis_admin');
+    mockAccountService.userIdentity.set(new User(undefined, 'artemis_admin'));
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
