@@ -125,7 +125,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
     it('should display the button when Athena is enabled and it is not an exam exercise', fakeAsync(() => {
         setAthenaEnabled(true);
-        const exercise = createBaseExercise(ExerciseType.TEXT, false);
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, undefined, 'test-module');
         setupComponentInputs(exercise);
 
         initAndTick();
@@ -150,7 +150,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
     it('should disable the button when participation is missing', fakeAsync(() => {
         setAthenaEnabled(true);
-        const exercise = createBaseExercise(ExerciseType.TEXT, false);
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, undefined, 'test-module');
         setupComponentInputs(exercise);
 
         initAndTick();
@@ -163,7 +163,7 @@ describe('RequestFeedbackButtonComponent', () => {
     it('should display the correct button label and style when Athena is enabled', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation, 'test-module');
         setupComponentInputs(exercise);
         component.isExamExercise = false;
 
@@ -179,7 +179,7 @@ describe('RequestFeedbackButtonComponent', () => {
     it('should call requestAIFeedback() when button is clicked', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation, 'test-module');
         setupComponentInputs(exercise);
         component.hasUserAcceptedExternalLLMUsage = true;
 
@@ -213,7 +213,7 @@ describe('RequestFeedbackButtonComponent', () => {
     it('should disable the button if latest submission is not submitted or feedback is generating', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation, 'test-module');
         setupComponentInputs(exercise, false, false);
 
         initAndTick();
@@ -226,7 +226,7 @@ describe('RequestFeedbackButtonComponent', () => {
     it('should enable the button if latest submission is submitted and feedback is not generating', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation, 'test-module');
         setupComponentInputs(exercise, true, false);
 
         initAndTick();
@@ -239,7 +239,7 @@ describe('RequestFeedbackButtonComponent', () => {
     it('should open modal when hasUserAcceptedExternalLLMUsage is false and requestAIFeedback is clicked', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation, 'test-module');
         setupComponentInputs(exercise, true, false);
         component.hasUserAcceptedExternalLLMUsage = false;
 
@@ -260,7 +260,7 @@ describe('RequestFeedbackButtonComponent', () => {
     it('should not open modal when hasUserAcceptedExternalLLMUsage is true and requestAIFeedback is clicked', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation, 'test-module');
         setupComponentInputs(exercise, true, false);
         component.hasUserAcceptedExternalLLMUsage = true;
 
@@ -295,7 +295,7 @@ describe('RequestFeedbackButtonComponent', () => {
     it('should accept external LLM usage and proceed with feedback request', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation, 'test-module');
         setupComponentInputs(exercise, true, false);
         fixture.componentRef.setInput('hasAthenaResultForLatestSubmission', false);
         fixture.componentRef.setInput('pendingChanges', false);
