@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 
+@Nested
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentServiceTest {
 
@@ -161,23 +162,29 @@ class AtlasAgentServiceTest {
         Long courseId = 123L;
         String instructor1SessionId = "course_123_user_1";
         String instructor2SessionId = "course_123_user_2";
-        String instructor1Message = "Create competency A";
-        String instructor2Message = "Create competency B";
+        String instructor1FirstMessage = "Remember my name is Alice";
+        String instructor1SecondMessage = "What is my name?";
+        String instructor2FirstMessage = "Remember my name is Bob";
+        String instructor2SecondMessage = "What is my name?";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response for instructor 1")))))
-                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response for instructor 2")))));
+        // Mock should be set up to verify the prompt contains the right history
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Hello Alice")))))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Hello Bob")))))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Your name is Alice")))))
+                .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Your name is Bob")))));
 
-        CompletableFuture<AgentChatResult> result1 = atlasAgentService.processChatMessage(instructor1Message, courseId, instructor1SessionId);
-        CompletableFuture<AgentChatResult> result2 = atlasAgentService.processChatMessage(instructor2Message, courseId, instructor2SessionId);
+        atlasAgentService.processChatMessage(instructor1FirstMessage, courseId, instructor1SessionId).get();
+        atlasAgentService.processChatMessage(instructor2FirstMessage, courseId, instructor2SessionId).get();
+
+        CompletableFuture<AgentChatResult> result1 = atlasAgentService.processChatMessage(instructor1SecondMessage, courseId, instructor1SessionId);
+        CompletableFuture<AgentChatResult> result2 = atlasAgentService.processChatMessage(instructor2SecondMessage, courseId, instructor2SessionId);
 
         AgentChatResult chatResult1 = result1.get();
         AgentChatResult chatResult2 = result2.get();
 
-        assertThat(chatResult1.message()).isEqualTo("Response for instructor 1");
-        assertThat(chatResult2.message()).isEqualTo("Response for instructor 2");
-
-        assertThat(instructor1SessionId).isNotEqualTo(instructor2SessionId);
+        assertThat(chatResult1.message()).contains("Alice");
+        assertThat(chatResult2.message()).contains("Bob");
     }
 
     @Test
@@ -219,6 +226,28 @@ class AtlasAgentServiceTest {
         when(mockToolsService.wasCompetencyCreated()).thenReturn(false);
 
         CompletableFuture<AgentChatResult> result = serviceWithToolsService.processChatMessage(testMessage, courseId, sessionId);
+
+        assertThat(result).isNotNull();
+        AgentChatResult chatResult = result.get();
+        assertThat(chatResult.message()).isEqualTo(expectedResponse);
+        assertThat(chatResult.competenciesModified()).isFalse();
+    }
+
+    @Test
+    void testProcessChatMessage_WithChatMemory() throws ExecutionException, InterruptedException {
+        org.springframework.ai.chat.memory.ChatMemory mockChatMemory = org.mockito.Mockito.mock(org.springframework.ai.chat.memory.ChatMemory.class);
+        ChatClient chatClient = ChatClient.create(chatModel);
+        AtlasAgentService serviceWithChatMemory = new AtlasAgentService(chatClient, templateService, null, mockChatMemory, null);
+
+        String testMessage = "Test message with memory";
+        Long courseId = 123L;
+        String sessionId = "session_with_memory";
+        String expectedResponse = "Response with memory context";
+
+        when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
+
+        CompletableFuture<AgentChatResult> result = serviceWithChatMemory.processChatMessage(testMessage, courseId, sessionId);
 
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
