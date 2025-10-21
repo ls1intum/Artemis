@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import javax.annotation.Nullable;
 import javax.sql.DataSource;
 
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
@@ -11,7 +12,6 @@ import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepositoryDialect;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -35,6 +35,12 @@ public class SpringAIConfiguration {
 
     @Value("${spring.ai.chat.memory.max-messages:20}")
     private int maxMessages;
+
+    @Value("${spring.ai.azure.openai.chat.options.deployment-name:gpt-5-mini}")
+    private String deploymentName;
+
+    @Value("${spring.ai.azure.openai.chat.options.temperature:1.0}")
+    private double temperature;
 
     /**
      * Creates a JDBC-based chat memory repository for persistent storage.
@@ -77,12 +83,12 @@ public class SpringAIConfiguration {
      */
     @Bean
     @Lazy
-    public ChatClient chatClient(@Autowired(required = false) AzureOpenAiChatModel azureOpenAiChatModel, @Autowired(required = false) ChatMemory chatMemory) {
+    public ChatClient chatClient(@Nullable AzureOpenAiChatModel azureOpenAiChatModel, @Nullable ChatMemory chatMemory) {
         if (azureOpenAiChatModel == null) {
             return null;
         }
         ChatClient.Builder builder = ChatClient.builder(azureOpenAiChatModel)
-                .defaultOptions(AzureOpenAiChatOptions.builder().deploymentName("gpt-5-mini").temperature(1.0).build());
+                .defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build());
 
         // Add memory advisor if available
         if (chatMemory != null) {
