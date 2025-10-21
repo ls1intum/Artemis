@@ -10,7 +10,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 import * as globalUtils from 'app/shared/util/global.utils';
 import { HttpResponse } from '@angular/common/http';
-import { LeaderboardSettingsDTO } from 'app/core/user/settings/quiz-training-settings/leaderboard-settings-dto';
+import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types.ts';
 
 describe('QuizTrainingSettingsComponent', () => {
     let component: QuizTrainingSettingsComponent;

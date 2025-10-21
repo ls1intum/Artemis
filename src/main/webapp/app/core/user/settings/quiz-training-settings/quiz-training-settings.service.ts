@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { LeaderboardSettingsDTO } from 'app/core/user/settings/quiz-training-settings/leaderboard-settings-dto';
+import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types.ts';
 
 @Injectable({ providedIn: 'root' })
 export class QuizTrainingSettingsService {
