@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.lecture.web;
+package de.tum.cit.aet.artemis.nebula.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -24,9 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
-import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
-import de.tum.cit.aet.artemis.lecture.service.TumLiveService;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
+import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
+import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 
 /**
  * REST controller for managing Nebula-powered lecture transcriptions and related utilities.
