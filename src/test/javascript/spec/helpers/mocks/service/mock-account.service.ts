@@ -3,16 +3,10 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { IAccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { signal } from '@angular/core';
 
 export class MockAccountService implements IAccountService {
-    userIdentityValue: User | undefined;
-
-    get userIdentity() {
-        return this.userIdentityValue;
-    }
-    set userIdentity(user: User | undefined) {
-        this.userIdentityValue = user;
-    }
+    userIdentity = signal<User | undefined>(undefined);
 
     identity = () => Promise.resolve({ id: 99, login: 'admin' } as User);
     getAndClearPrefilledUsername = () => 'prefilledUsername';
