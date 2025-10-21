@@ -505,8 +505,10 @@ public class ExamRoomService {
                 double yDifference = Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate());
                 double xDifference = Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate());
 
-                return (0 < yDifference && yDifference <= ySpace)  // different row, but not enough space between rows
-                        || (yDifference == 0 && xDifference <= xSpace);  // same row, but not enough space between columns
+                boolean isDifferentRowWithoutEnoughSpaceBetweenRows = 0 < yDifference && yDifference <= ySpace;
+                boolean isSameRowWithoutEnoughSpaceBetweenColumns = yDifference == 0 && xDifference <= xSpace;
+
+                return isDifferentRowWithoutEnoughSpaceBetweenRows || isSameRowWithoutEnoughSpaceBetweenColumns;
             });
 
             if (isFarEnough) {
