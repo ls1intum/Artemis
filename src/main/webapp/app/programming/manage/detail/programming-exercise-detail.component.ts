@@ -49,7 +49,7 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
-import { Detail } from 'app/shared/detail-overview-list/detail.model';
+import { Detail, ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { catchError, mergeMap, switchMap, tap } from 'rxjs/operators';
@@ -137,9 +137,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     programmingExercise: ProgrammingExercise;
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
-    repositoryDiffInformation: RepositoryDiffInformation;
-    templateFileContentByPath: Map<string, string>;
-    solutionFileContentByPath: Map<string, string>;
+    repositoryDiffInformation?: RepositoryDiffInformation;
+    templateFileContentByPath?: Map<string, string>;
+    solutionFileContentByPath?: Map<string, string>;
     competencies: Competency[];
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;
@@ -149,6 +149,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     loadingTemplateParticipationResults = true;
     loadingSolutionParticipationResults = true;
     diffReady = false;
+    lineChangesLoading = false;
+
+    private diffDetailData: ProgrammingDiffReportDetail['data'] = {
+        repositoryDiffInformation: undefined,
+        templateFileContentByPath: new Map<string, string>(),
+        solutionFileContentByPath: new Map<string, string>(),
+        lineChangesLoading: false,
+    };
+
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
     formattedGradingInstructions: SafeHtml;
@@ -166,12 +175,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private templateAndSolutionParticipationSubscription: Subscription;
     private irisSettingsSubscription: Subscription;
     private exerciseStatisticsSubscription: Subscription;
+    private diffFetchSubscription?: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     exerciseDetailSections: DetailOverviewSection[];
 
+    private diffRunId = 0;
     private lastUpdateTime = 0;
     private readonly UPDATE_DEBOUNCE_MS = 1000;
 
@@ -241,14 +252,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     tap((submissionPolicy) => {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
-                    mergeMap(() => this.fetchRepositoryFiles()),
-                    catchError(() => {
-                        this.alertService.error('artemisApp.programmingExercise.repositoryFilesError');
-                        return of({ templateFiles: new Map<string, string>(), solutionFiles: new Map<string, string>() });
-                    }),
-                    switchMap(({ templateFiles, solutionFiles }: { templateFiles: Map<string, string> | undefined; solutionFiles: Map<string, string> | undefined }) => {
-                        return from(this.handleDiff(templateFiles, solutionFiles));
-                    }),
                 )
                 // split pipe to keep type checks
                 .subscribe({
@@ -257,8 +260,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.plagiarismCheckSupported =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false;
 
-                        /** we make sure to await the results of the subscriptions (switchMap) to only call {@link getExerciseDetails} once */
-                        this.exerciseDetailSections = this.getExerciseDetails();
+                        this.startDiffRefresh();
                     },
                     error: (error) => {
                         this.alertService.error(error.message);
@@ -277,6 +279,67 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.templateAndSolutionParticipationSubscription?.unsubscribe();
         this.irisSettingsSubscription?.unsubscribe();
         this.exerciseStatisticsSubscription?.unsubscribe();
+        this.diffFetchSubscription?.unsubscribe();
+    }
+
+    private ensureExerciseDetailsInitialized() {
+        if (!this.exerciseDetailSections) {
+            this.exerciseDetailSections = this.getExerciseDetails();
+        }
+    }
+
+    private startDiffRefresh(
+        previousDiffInfo?: RepositoryDiffInformation,
+        previousTemplateFiles?: Map<string, string>,
+        previousSolutionFiles?: Map<string, string>,
+        errorAlertKey = 'artemisApp.programmingExercise.repositoryFilesError',
+    ): void {
+        this.diffFetchSubscription?.unsubscribe();
+
+        this.diffReady = false;
+        this.repositoryDiffInformation = undefined;
+        this.lineChangesLoading = true;
+
+        this.diffDetailData.repositoryDiffInformation = undefined;
+        this.diffDetailData.lineChangesLoading = true;
+        this.diffDetailData.templateFileContentByPath = new Map<string, string>();
+        this.diffDetailData.solutionFileContentByPath = new Map<string, string>();
+
+        this.ensureExerciseDetailsInitialized();
+
+        // Increment diff run sequence; used to ignore stale results from previous runs
+        const runId = ++this.diffRunId;
+
+        this.diffFetchSubscription = this.fetchRepositoryFiles()
+            .pipe(
+                catchError(() => {
+                    this.alertService.error(errorAlertKey);
+                    return of({ templateFiles: undefined, solutionFiles: undefined });
+                }),
+                switchMap(({ templateFiles, solutionFiles }) =>
+                    from(this.handleDiff(templateFiles, solutionFiles, runId)).pipe(
+                        tap(() => {
+                            const diffDataChanged =
+                                this.repositoryDiffInformation !== previousDiffInfo ||
+                                this.templateFileContentByPath !== previousTemplateFiles ||
+                                this.solutionFileContentByPath !== previousSolutionFiles;
+
+                            if (diffDataChanged) {
+                                this.lastUpdateTime = Date.now();
+                            }
+                        }),
+                    ),
+                ),
+            )
+            .subscribe({
+                error: () => {
+                    if (runId !== this.diffRunId) {
+                        return;
+                    }
+                    this.lineChangesLoading = false;
+                    this.diffDetailData.lineChangesLoading = false;
+                },
+            });
     }
 
     /**
@@ -296,6 +359,25 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.getExerciseDetailsProblemSection(exercise),
             this.getExerciseDetailsGradingSection(exercise),
         ] as DetailOverviewSection[];
+    }
+
+    private getDiffReportDetail(): ProgrammingDiffReportDetail | undefined {
+        const showDiffReport =
+            this.diffDetailData.lineChangesLoading ||
+            !!this.diffDetailData.repositoryDiffInformation ||
+            this.diffDetailData.templateFileContentByPath.size > 0 ||
+            this.diffDetailData.solutionFileContentByPath.size > 0;
+
+        if (!showDiffReport) {
+            return undefined;
+        }
+
+        return {
+            type: DetailType.ProgrammingDiffReport,
+            title: 'artemisApp.programmingExercise.diffReport.title',
+            titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
+            data: this.diffDetailData,
+        };
     }
 
     getExerciseDetailsGeneralSection(exercise: ProgrammingExercise): DetailOverviewSection {
@@ -371,6 +453,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
         this.checkAndSetWindFile(exercise);
+        const diffReportDetail = this.getDiffReportDetail();
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
             details: [
@@ -470,19 +553,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: ProgrammingExerciseParticipationType.SOLUTION,
                     },
                 },
-                this.repositoryDiffInformation &&
-                    this.templateFileContentByPath &&
-                    this.solutionFileContentByPath &&
-                    this.diffReady && {
-                        type: DetailType.ProgrammingDiffReport,
-                        title: 'artemisApp.programmingExercise.diffReport.title',
-                        titleHelpText: 'artemisApp.programmingExercise.diffReport.detailedTooltip',
-                        data: {
-                            repositoryDiffInformation: this.repositoryDiffInformation,
-                            templateFileContentByPath: this.templateFileContentByPath,
-                            solutionFileContentByPath: this.solutionFileContentByPath,
-                        },
-                    },
+                diffReportDetail,
                 !!exercise.buildConfig?.buildScript &&
                     !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Text,
@@ -617,33 +688,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const previousDiffInfo = this.repositoryDiffInformation;
-        const previousTemplateFiles = this.templateFileContentByPath;
-        const previousSolutionFiles = this.solutionFileContentByPath;
-
-        this.fetchRepositoryFiles()
-            .pipe(
-                switchMap(({ templateFiles, solutionFiles }) => {
-                    return from(this.handleDiff(templateFiles, solutionFiles));
-                }),
-                tap(() => {
-                    // Update exercise details if any diff-related data has actually changed
-                    const diffDataChanged =
-                        this.repositoryDiffInformation !== previousDiffInfo ||
-                        this.templateFileContentByPath !== previousTemplateFiles ||
-                        this.solutionFileContentByPath !== previousSolutionFiles;
-
-                    if (diffDataChanged) {
-                        this.exerciseDetailSections = this.getExerciseDetails();
-                        this.lastUpdateTime = Date.now();
-                    }
-                }),
-            )
-            .subscribe({
-                error: (error) => {
-                    this.alertService.error('artemisApp.programmingExercise.participationChangeError');
-                },
-            });
+        this.startDiffRefresh(
+            this.repositoryDiffInformation,
+            this.templateFileContentByPath,
+            this.solutionFileContentByPath,
+            'artemisApp.programmingExercise.participationChangeError',
+        );
     }
 
     generateStructureOracle() {
@@ -739,20 +789,56 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    async handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined) {
-        if (!templateFiles || !solutionFiles) {
+    async handleDiff(templateFiles: Map<string, string> | undefined, solutionFiles: Map<string, string> | undefined, runId: number): Promise<void> {
+        if (runId !== this.diffRunId) {
             return;
         }
 
+        if (!templateFiles || !solutionFiles) {
+            if (runId === this.diffRunId) {
+                this.templateFileContentByPath = new Map<string, string>();
+                this.solutionFileContentByPath = new Map<string, string>();
+                this.repositoryDiffInformation = undefined;
+                this.diffDetailData.templateFileContentByPath = new Map<string, string>();
+                this.diffDetailData.solutionFileContentByPath = new Map<string, string>();
+                this.diffDetailData.repositoryDiffInformation = undefined;
+                this.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading = false;
+            }
+            return;
+        }
+
+        this.templateFileContentByPath = templateFiles;
+        this.solutionFileContentByPath = solutionFiles;
+
+        this.diffReady = false;
+        this.repositoryDiffInformation = undefined;
+        this.diffDetailData.repositoryDiffInformation = undefined;
+
+        this.lineChangesLoading = true;
+        this.diffDetailData.templateFileContentByPath = templateFiles;
+        this.diffDetailData.solutionFileContentByPath = solutionFiles;
+        this.diffDetailData.lineChangesLoading = true;
+
+        this.ensureExerciseDetailsInitialized();
+
+        await this.calculateRepositoryDiff(templateFiles, solutionFiles, runId);
+    }
+
+    private async calculateRepositoryDiff(templateFiles: Map<string, string>, solutionFiles: Map<string, string>, runId: number): Promise<void> {
         try {
-            this.templateFileContentByPath = templateFiles;
-            this.solutionFileContentByPath = solutionFiles;
             this.repositoryDiffInformation = await processRepositoryDiff(templateFiles, solutionFiles);
-            // Set ready state to true when diff processing is complete
+            // Ignore stale results
+            if (runId !== this.diffRunId) {
+                return;
+            }
+            this.diffDetailData.repositoryDiffInformation = this.repositoryDiffInformation;
             this.diffReady = true;
         } catch (error) {
+            if (runId !== this.diffRunId) {
+                return;
+            }
             this.alertService.error('artemisApp.programmingExercise.diffProcessingError');
-            // Reset to a consistent state
             this.diffReady = false;
             this.repositoryDiffInformation = {
                 diffInformations: [],
@@ -761,6 +847,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     removedLineCount: 0,
                 },
             };
+            this.diffDetailData.repositoryDiffInformation = this.repositoryDiffInformation;
+        } finally {
+            if (runId === this.diffRunId) {
+                this.lineChangesLoading = false;
+                this.diffDetailData.lineChangesLoading = false;
+            }
         }
     }
 }

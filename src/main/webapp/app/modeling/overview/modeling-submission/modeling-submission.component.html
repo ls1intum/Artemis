@@ -20,15 +20,7 @@
                             <jhi-button
                                 id="Continue"
                                 [title]="'entity.action.continueSubmission'"
-                                [routerLink]="[
-                                    '/courses',
-                                    course?.id,
-                                    'exercises',
-                                    'modeling-exercises',
-                                    modelingExercise?.id!,
-                                    'participate',
-                                    result?.submission?.participation?.id,
-                                ]"
+                                [routerLink]="['/courses', course?.id, 'exercises', 'modeling-exercises', modelingExercise?.id!, 'participate', participation?.id!]"
                             />
                         }
                     } @else {
@@ -216,7 +208,7 @@
                         }
                         @if (result) {
                             <div class="row">
-                                <jhi-rating class="mt-2 alert alert-info" [result]="result" />
+                                <jhi-rating class="mt-2 alert alert-info" [result]="result" [participation]="participation" />
                             </div>
                         }
                         @if (result && !examMode && !isFeedbackView) {

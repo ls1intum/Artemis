@@ -1347,7 +1347,6 @@ public class ExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     *
      * @return the ResponseEntity with status 200 (OK) and with body a summary of the deletion of the exam
      */
     @GetMapping("courses/{courseId}/exams/{examId}/deletion-summary")
