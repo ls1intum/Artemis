@@ -38,20 +38,20 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
 
-    private router = inject(Router);
-    private activatedRoute = inject(ActivatedRoute);
-    private accountService = inject(AccountService);
-    private loginService = inject(LoginService);
-    private sessionStorageService = inject(SessionStorageService);
-    private renderer = inject(Renderer2);
-    private eventManager = inject(EventManager);
-    private profileService = inject(ProfileService);
-    private alertService = inject(AlertService);
-    private translateService = inject(TranslateService);
-    private webauthnService = inject(WebauthnService);
-    private webauthnApiService = inject(WebauthnApiService);
-    private modalService = inject(NgbModal);
-    private localStorageService = inject(LocalStorageService);
+    private readonly router = inject(Router);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly accountService = inject(AccountService);
+    private readonly loginService = inject(LoginService);
+    private readonly sessionStorageService = inject(SessionStorageService);
+    private readonly renderer = inject(Renderer2);
+    private readonly eventManager = inject(EventManager);
+    private readonly profileService = inject(ProfileService);
+    private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
+    private readonly webauthnService = inject(WebauthnService);
+    private readonly webauthnApiService = inject(WebauthnApiService);
+    private readonly modalService = inject(NgbModal);
+    private readonly localStorageService = inject(LocalStorageService);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
