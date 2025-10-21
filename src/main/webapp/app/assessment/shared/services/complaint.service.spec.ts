@@ -91,7 +91,6 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse = new ComplaintResponse();
             _complaint.complaintResponse.reviewer = { login } as User;
             _complaint.complaintResponse.isCurrentlyLocked = true;
-            accountService.userIdentity = { login } as User;
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
 
