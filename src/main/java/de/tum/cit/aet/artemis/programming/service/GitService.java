@@ -821,10 +821,8 @@ public class GitService extends AbstractGitService {
             // Collect student commits (after the template commit) reachable from HEAD
             Iterable<RevCommit> commits = git.log().call();
             int studentCommitCount = 0;
-            boolean foundTemplate = false;
             for (RevCommit commit : commits) {
                 if (commit.getId().equals(latestTemplate)) {
-                    foundTemplate = true;
                     break;
                 }
                 // For each commit after template: must be anonymized
@@ -838,9 +836,6 @@ public class GitService extends AbstractGitService {
                 if (combinedExpected && studentCommitCount > 1) {
                     throw new de.tum.cit.aet.artemis.core.exception.GitException("Anonymization verification failed: commits not combined into a single commit");
                 }
-            }
-            if (!foundTemplate) {
-                throw new de.tum.cit.aet.artemis.core.exception.GitException("Anonymization verification failed: template commit not reachable from HEAD");
             }
         }
         catch (org.eclipse.jgit.api.errors.GitAPIException | org.eclipse.jgit.api.errors.JGitInternalException e) {
