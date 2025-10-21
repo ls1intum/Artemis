@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -476,7 +477,7 @@ class AtlasAgentServiceTest {
             String resourcePath = "/prompts/atlas/nonexistent_template.st";
             Map<String, String> variables = Map.of();
 
-            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, () -> promptTemplateService.render(resourcePath, variables));
+            assertThatThrownBy(() -> promptTemplateService.render(resourcePath, variables)).isInstanceOf(RuntimeException.class).hasMessageContaining("Failed to load template");
         }
 
         @Test
