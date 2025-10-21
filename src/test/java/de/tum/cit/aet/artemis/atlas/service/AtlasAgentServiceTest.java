@@ -226,27 +226,6 @@ class AtlasAgentServiceTest {
         assertThat(chatResult.competenciesModified()).isFalse();
     }
 
-    @Test
-    void testIsAvailable_WithException() {
-        ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService service = new AtlasAgentService(chatClient, templateService, null, null, null) {
-
-            @Override
-            public boolean isAvailable() {
-                try {
-                    throw new RuntimeException("Simulated error");
-                }
-                catch (Exception e) {
-                    return false;
-                }
-            }
-        };
-
-        boolean available = service.isAvailable();
-
-        assertThat(available).isFalse();
-    }
-
     @Nested
     class AtlasAgentToolsServiceTests {
 
