@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import jakarta.annotation.Nullable;
+
 import javax.sql.DataSource;
 
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
@@ -21,7 +23,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.lang.Nullable;
 
 /**
  * Configuration for Spring AI chat clients.
@@ -33,14 +34,19 @@ import org.springframework.lang.Nullable;
 @Lazy
 public class SpringAIConfiguration {
 
-    @Value("${spring.ai.chat.memory.max-messages:20}")
-    private int maxMessages;
+    private final int maxMessages;
 
-    @Value("${spring.ai.azure.openai.chat.options.deployment-name:gpt-5-mini}")
-    private String deploymentName;
+    private final String deploymentName;
 
-    @Value("${spring.ai.azure.openai.chat.options.temperature:1.0}")
-    private double temperature;
+    private final double temperature;
+
+    public SpringAIConfiguration(@Value("${spring.ai.chat.memory.max-messages:20}") int maxMessages,
+            @Value("${spring.ai.azure.openai.chat.options.deployment-name:gpt-5-mini}") String deploymentName,
+            @Value("${spring.ai.azure.openai.chat.options.temperature:1.0}") double temperature) {
+        this.maxMessages = maxMessages;
+        this.deploymentName = deploymentName;
+        this.temperature = temperature;
+    }
 
     /**
      * Creates a JDBC-based chat memory repository for persistent storage.
