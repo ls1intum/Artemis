@@ -17,6 +17,11 @@ public class AiAuditServiceLogger implements AiAuditService {
     }
 
     @Override
+    public void logEvent(String category, String user, String message) {
+        log.info("[AI][{}] user={} msg={}", category, user, message);
+    }
+
+    @Override
     public void logImport(String user, Long exerciseId, int n) {
         log.info("[AI-QUIZ][IMP] user={} exerciseId={} n={}", user, exerciseId, n);
     }
