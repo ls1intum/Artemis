@@ -24,7 +24,7 @@ plugins {
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "21.1.3"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
-    id "org.owasp.dependencycheck" version "12.1.6"
+    id "org.owasp.dependencycheck" version "12.1.8"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.16.0"
@@ -32,12 +32,12 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.4.2"
+version = "8.4.4"
 description = "Interactive Learning with Individual Feedback"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
@@ -271,7 +271,7 @@ dependencies {
     implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
 
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
-    implementation "com.google.protobuf:protobuf-java:4.32.1"
+    implementation "com.google.protobuf:protobuf-java:4.33.0"
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
@@ -355,16 +355,16 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.data:spring-data-jpa:3.5.4"
-    implementation "org.springframework.data:spring-data-ldap:3.5.4"
-    implementation "org.springframework.ldap:spring-ldap-core:3.3.3"
+    implementation "org.springframework.data:spring-data-jpa:3.5.5"
+    implementation "org.springframework.data:spring-data-ldap:3.5.5"
+    implementation "org.springframework.ldap:spring-ldap-core:3.3.4"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
-    implementation "io.projectreactor.netty:reactor-netty-core:1.2.10"
+    implementation "io.projectreactor.netty:reactor-netty-core:1.2.11"
 
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.12"
@@ -415,9 +415,9 @@ dependencies {
 
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.maven:maven-model:3.9.11"
-    implementation "org.apache.pdfbox:pdfbox:3.0.5"
+    implementation "org.apache.pdfbox:pdfbox:3.0.6"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.26.0"
+    implementation "org.commonmark:commonmark:0.27.0"
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
@@ -454,7 +454,7 @@ dependencies {
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
 
-    implementation "org.mnode.ical4j:ical4j:4.1.1"
+    implementation "org.mnode.ical4j:ical4j:4.2.0"
 
 
     // ---- CHECKSTYLE DEPENDENCIES ----
@@ -479,7 +479,7 @@ dependencies {
     }
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.181"
+    testImplementation "io.github.classgraph:classgraph:4.8.184"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:9.1.0"

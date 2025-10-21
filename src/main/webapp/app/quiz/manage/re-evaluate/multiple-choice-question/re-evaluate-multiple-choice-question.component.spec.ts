@@ -19,7 +19,6 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
         fixture = TestBed.createComponent(ReEvaluateMultipleChoiceQuestionComponent);
         component = fixture.componentInstance;
 
-        // Provide the @Inputs
         const question = {
             title: 'Test Question',
             answerOptions: [answer1],
@@ -32,8 +31,10 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
             answerOptions: [answerBackup],
         } as MultipleChoiceQuestion;
 
-        component.question = question;
-        component.backupQuestion = backupQuestion;
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('backupQuestion', backupQuestion);
+        fixture.componentRef.setInput('questionIndex', 1);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -41,7 +42,6 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
     });
 
     it('should initialize component', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
@@ -86,11 +86,11 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
             button.click();
             fixture.detectChanges();
 
-            expect(component.question.title).toBe(component.backupQuestion.title);
-            expect(component.question.text).toBe(component.backupQuestion.text);
-            expect(component.question.explanation).toBe(component.backupQuestion.explanation);
-            expect(component.question.hint).toBe(component.backupQuestion.hint);
-            expect(component.question.answerOptions).toEqual(component.backupQuestion.answerOptions);
+            expect(component.question().title).toBe(component.backupQuestion().title);
+            expect(component.question().text).toBe(component.backupQuestion().text);
+            expect(component.question().explanation).toBe(component.backupQuestion().explanation);
+            expect(component.question().hint).toBe(component.backupQuestion().hint);
+            expect(component.question().answerOptions).toEqual(component.backupQuestion().answerOptions);
         });
     });
 
@@ -98,33 +98,33 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
         component.deleteAnswer(answer1);
         fixture.detectChanges();
 
-        expect(component.question.answerOptions).toHaveLength(0);
+        expect(component.question().answerOptions).toHaveLength(0);
     });
 
     it('should reset an answer', () => {
         component.resetAnswer(answer1);
         fixture.detectChanges();
 
-        expect(component.question.answerOptions).toEqual(component.backupQuestion.answerOptions);
+        expect(component.question().answerOptions).toEqual(component.backupQuestion().answerOptions);
     });
 
     it('should invalidate answers', () => {
         component.setAnswerInvalid(answer1);
         fixture.detectChanges();
 
-        expect(component.question.answerOptions).toHaveLength(1);
+        expect(component.question().answerOptions).toHaveLength(1);
 
-        const answer = component.question.answerOptions![0];
+        const answer = component.question().answerOptions![0];
         expect(answer.invalid).toBeTrue();
         expect(component.isAnswerInvalid(answer)).toBeTrue();
     });
 
     it('should react to answer option changes', () => {
-        const answer = component.question.answerOptions![0];
+        const answer = component.question().answerOptions![0];
         component.onAnswerOptionChange('solution[wrong]answer', answer1);
         fixture.detectChanges();
 
-        expect(component.question.answerOptions).toHaveLength(1);
+        expect(component.question().answerOptions).toHaveLength(1);
 
         expect(answer.isCorrect).toBeUndefined();
     });
@@ -135,37 +135,37 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
         component.onQuestionChange(questionText);
         fixture.detectChanges();
 
-        expect(component.question.text).toBe(questionText);
+        expect(component.question().text).toBe(questionText);
     });
 
     it('should get question text', () => {
         const fakeText = '';
 
-        const text = component.getQuestionText(component.question);
+        const text = component.getQuestionText(component.question());
         fixture.detectChanges();
 
         expect(text).toBe(fakeText);
     });
 
     it('should change answer isCorrect to true if text is set to correct', () => {
-        const answer = component.question.answerOptions![0];
+        const answer = component.question().answerOptions![0];
         component.onAnswerOptionChange('[correct] correct option', answer1);
         fixture.detectChanges();
         expect(answer.isCorrect).toBeTrue();
     });
 
     it('should change answer isCorrect to false if text is set to wrong', () => {
-        const answer = component.question.answerOptions![0];
+        const answer = component.question().answerOptions![0];
         component.onAnswerOptionChange('[wrong] wrong option', answer1);
         fixture.detectChanges();
         expect(answer.isCorrect).toBeFalse();
     });
 
     it('should not change answer isCorrect if text is not set to either correct or wrong', () => {
-        const answer = component.question.answerOptions![0];
+        const answer = component.question().answerOptions![0];
         component.onAnswerOptionChange('[some text] wrong option', answer1);
         fixture.detectChanges();
-        expect(component.question.answerOptions).toHaveLength(1);
+        expect(component.question().answerOptions).toHaveLength(1);
         expect(answer.isCorrect).toBeUndefined();
     });
 });

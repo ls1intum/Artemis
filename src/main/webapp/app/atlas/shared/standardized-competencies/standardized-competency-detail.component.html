@@ -8,23 +8,23 @@
     <div class="detail-body d-flex flex-column">
         <div class="detail-row">
             <h5 jhiTranslate="artemisApp.standardizedCompetency.model.title"></h5>
-            <p class="mb-0">{{ competency.title }}</p>
+            <p class="mb-0">{{ competency().title }}</p>
         </div>
         <div class="detail-row">
             <h5 jhiTranslate="artemisApp.standardizedCompetency.model.description"></h5>
-            <p class="markdown-preview" [innerHTML]="competency.description ?? '&nbsp;' | htmlForMarkdown"></p>
+            <p class="markdown-preview" [innerHTML]="competency().description ?? '&nbsp;' | htmlForMarkdown"></p>
         </div>
         <div class="detail-row">
             <h5 jhiTranslate="artemisApp.standardizedCompetency.model.taxonomy"></h5>
-            <p class="mb-0" jhiTranslate="artemisApp.courseCompetency.taxonomies.{{ competency.taxonomy }}"></p>
+            <p class="mb-0" jhiTranslate="artemisApp.courseCompetency.taxonomies.{{ competency().taxonomy }}"></p>
         </div>
         <div class="detail-row">
             <h5 jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></h5>
-            <p class="mb-0">{{ knowledgeAreaTitle }}</p>
+            <p class="mb-0">{{ knowledgeAreaTitle() }}</p>
         </div>
         <div class="detail-row">
             <h5 jhiTranslate="artemisApp.standardizedCompetency.model.source"></h5>
-            <p class="mb-0">{{ sourceString }}</p>
+            <p class="mb-0">{{ sourceString() }}</p>
         </div>
     </div>
 </div>

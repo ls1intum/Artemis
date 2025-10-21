@@ -87,19 +87,10 @@ export class ExamRoomsComponent {
             .join(', '),
     );
     hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
-    examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => {
-        return this.overview()?.newestUniqueExamRooms?.map(
-            (examRoomDTO) =>
-                ({
-                    ...examRoomDTO,
-                    maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
-                    layoutStrategyNames: this.getLayoutStrategyNames(examRoomDTO),
-                }) as ExamRoomDTOExtended,
-        );
-    });
+    examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
 
     // Fields for working with SortDirective
-    sortAttribute: 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'roomNumber';
+    sortAttribute: 'id' | 'roomNumber' | 'name' | 'building' | 'defaultCapacity' | 'maxCapacity' = 'id';
     ascending: boolean = true;
 
     initEffect = effect(() => {
@@ -113,6 +104,7 @@ export class ExamRoomsComponent {
         this.examRoomsService.getAdminOverview().subscribe({
             next: (examRoomAdminOverviewResponse: HttpResponse<ExamRoomAdminOverviewDTO>) => {
                 this.overview.set(examRoomAdminOverviewResponse.body as ExamRoomAdminOverviewDTO);
+                this.sortRows();
             },
             error: (errorResponse: HttpErrorResponse) => {
                 this.showErrorNotification('examRoomOverview.loadError', {}, errorResponse.message);
@@ -212,7 +204,16 @@ export class ExamRoomsComponent {
     }
 
     private getMaxCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
-        return examRoom.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity ?? 0).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
+        return examRoom.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
+    }
+
+    private getDefaultCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
+        return (
+            examRoom.layoutStrategies
+                ?.filter((layoutStrategy) => layoutStrategy.name.toLowerCase() === 'default')
+                .map((layoutStrategy) => layoutStrategy.capacity)
+                .at(0) ?? 0
+        );
     }
 
     private getLayoutStrategyNames(examRoom: ExamRoomDTO): string {
@@ -221,6 +222,18 @@ export class ExamRoomsComponent {
                 ?.map((layoutStrategy) => layoutStrategy.name)
                 .sort()
                 .join(', ') ?? ''
+        );
+    }
+
+    private calculateExamRoomData() {
+        return this.overview()?.newestUniqueExamRooms?.map(
+            (examRoomDTO) =>
+                ({
+                    ...examRoomDTO,
+                    defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
+                    maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
+                    layoutStrategyNames: this.getLayoutStrategyNames(examRoomDTO),
+                }) as ExamRoomDTOExtended,
         );
     }
 }

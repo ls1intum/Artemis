@@ -42,7 +42,7 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { PageType, SortDirection } from 'app/communication/metis.util';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, take, takeUntil } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
@@ -315,7 +315,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     subscribeToQueryParameter() {
-        this.activatedRoute.queryParams.pipe(take(1), takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
+        this.activatedRoute.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
             // NOTE: queryParams.conversationId can either be a number or a string according to SavedPostStatus
             if (queryParams.conversationId) {
                 if (

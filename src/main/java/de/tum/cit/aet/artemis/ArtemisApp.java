@@ -29,7 +29,6 @@ import org.springframework.core.env.Profiles;
 import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
 import de.tum.cit.aet.artemis.core.config.DeferredEagerBeanInitializer;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.config.LicenseConfiguration;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
@@ -94,9 +93,7 @@ public class ArtemisApp {
         if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_DEVELOPMENT))) {
             context.publishEvent(new PrintStartupBeansEvent());
         }
-        // Publish the FullStartupEvent to indicate that the application is fully started.
-        // We use this in most of our services that execute logic on startup as we there's no need that they already execute this logic when the ApplicationReadyEvent is published.
-        context.publishEvent(new FullStartupEvent());
+
         if (env.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
             deferredEagerBeanInitialization(context);
         }
