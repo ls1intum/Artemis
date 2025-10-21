@@ -13,6 +13,7 @@ import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { FileService } from 'app/shared/service/file.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;
@@ -22,6 +23,7 @@ describe('PostingContentPartComponent', () => {
     let fileService: FileService;
     let openAttachmentSpy: jest.SpyInstance;
     let navigateByUrlSpy: jest.SpyInstance;
+    let accountService: AccountService;
 
     let contentBeforeReference: string;
     let contentAfterReference: string;
@@ -43,7 +45,7 @@ describe('PostingContentPartComponent', () => {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute(),
                 },
-                MockProvider(AccountService),
+                { provide: AccountService, useClass: MockAccountService },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(PostingContentPartComponent);
@@ -51,6 +53,7 @@ describe('PostingContentPartComponent', () => {
         debugElement = fixture.debugElement;
         router = TestBed.inject(Router);
         fileService = TestBed.inject(FileService);
+        accountService = TestBed.inject(AccountService);
         navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
         openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
         contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
@@ -236,7 +239,6 @@ describe('PostingContentPartComponent', () => {
         });
 
         it('should trigger userReferenceClicked event for different user logins', () => {
-            const accountService = TestBed.inject(AccountService);
             accountService.userIdentity.set({ login: 'user1' } as User);
             const outputEmitter = jest.spyOn(component.userReferenceClicked, 'emit');
 
@@ -246,7 +248,6 @@ describe('PostingContentPartComponent', () => {
         });
 
         it('should not trigger userReferenceClicked event for same user logins', () => {
-            const accountService = TestBed.inject(AccountService);
             accountService.userIdentity.set({ login: 'user1' } as User);
             const outputEmitter = jest.spyOn(component.userReferenceClicked, 'emit');
 
