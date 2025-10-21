@@ -7,7 +7,6 @@ import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-q
 import { QuizScoringInfoModalComponent } from 'app/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { MatchPercentageInfoModalComponent } from 'app/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { SimpleChange } from '@angular/core';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
@@ -17,7 +16,6 @@ import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-qu
 import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockResizeObserver } from 'src/test/javascript/spec/helpers/mocks/service/mock-resize-observer';
-import { firstValueFrom } from 'rxjs';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -86,9 +84,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         component.shortAnswerQuestion = question;
-        component.questionIndex = 0;
-        component.reEvaluationInProgress = false;
-
+        fixture.componentRef.setInput('questionIndex', 0);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
         fixture.detectChanges();
     });
 
@@ -98,8 +95,10 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     it('should initialize with different question texts', () => {
         // test spots concatenated to other words
-        component.shortAnswerQuestion.text = 'This is a[-spot 12]regarding this question.\nAnother [-spot 8] is in the line above';
-        component.ngOnInit();
+        const newQuestion1 = new ShortAnswerQuestion();
+        newQuestion1.text = 'This is a[-spot 12]regarding this question.\nAnother [-spot 8] is in the line above';
+        fixture.componentRef.setInput('question', newQuestion1);
+        fixture.detectChanges();
 
         let expectedTextParts = [
             ['This', 'is', 'a', '[-spot 12]', 'regarding', 'this', 'question.'],
@@ -108,7 +107,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).toEqual(expectedTextParts);
 
         // test a long method with multiple indentations and concatenated words
-        component.shortAnswerQuestion.text =
+        const newQuestion2 = cloneDeep(component.question() as ShortAnswerQuestion);
+        newQuestion2.text =
             'Enter your long question if needed\n\n' +
             'Select a part of the[-spot 6]and click on Add Spot to automatically [-spot 9]an input field and the corresponding[-spot 16]\n\n' +
             'You can define a input field like this: This [-spot 1] an [-spot 2] field.\n' +
@@ -125,8 +125,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
             '}\n' +
             '\n' +
             'To define the solution for the input fields you need to create a mapping (multiple mapping also possible):';
-
-        component.ngOnInit();
+        fixture.componentRef.setInput('question', newQuestion2);
+        fixture.detectChanges();
 
         expectedTextParts = [
             ['Enter', 'your', 'long', 'question', 'if', 'needed'],
@@ -170,23 +170,25 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).toEqual(expectedTextParts);
 
         // tests simple indentation
-        component.shortAnswerQuestion.text =
+        const newQuestion3 = cloneDeep(component.question() as ShortAnswerQuestion);
+        newQuestion3.text =
             '[-spot 5]\n' + '    [-spot 6]\n' + '        [-spot 7]\n' + '            [-spot 8]\n' + '                [-spot 9]\n' + '                    [-spot 10]';
-
-        component.ngOnInit();
+        fixture.componentRef.setInput('question', newQuestion3);
+        fixture.detectChanges();
 
         expectedTextParts = [['[-spot 5]'], ['    [-spot 6]'], ['        [-spot 7]'], ['            [-spot 8]'], ['                [-spot 9]'], ['                    [-spot 10]']];
         expect(component.textParts).toEqual(expectedTextParts);
 
         // classic java main method test
-        component.shortAnswerQuestion.text =
+        const newQuestion4 = cloneDeep(component.question() as ShortAnswerQuestion);
+        newQuestion4.text =
             '[-spot 1] class [-spot 2] {\n' +
             '    public static void main([-spot 3][] args){\n' +
             '        System.out.println("This is the [-spot 4] method");\n' +
             '    }\n' +
             '}';
-
-        component.ngOnInit();
+        fixture.componentRef.setInput('question', newQuestion4);
+        fixture.detectChanges();
 
         expectedTextParts = [
             ['[-spot 1]', 'class', '[-spot 2]', '{'],
@@ -198,7 +200,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).toEqual(expectedTextParts);
 
         // test multiple line parameter for method header
-        component.shortAnswerQuestion.text =
+        const newQuestion5 = cloneDeep(component.question() as ShortAnswerQuestion);
+        newQuestion5.text =
             'private[-spot 1] methodCallWithMultipleLineParameter (\n' +
             '    int number,\n' +
             '    [-spot 2] secondNumber,\n' +
@@ -206,8 +209,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
             '    boolean doesWork) {\n' +
             '        System.out.[-spot 4]("[-spot 5]");\n' +
             '}';
-
-        component.ngOnInit();
+        fixture.componentRef.setInput('question', newQuestion5);
+        fixture.detectChanges();
 
         expectedTextParts = [
             ['private', '[-spot 1]', 'methodCallWithMultipleLineParameter', '('],
@@ -221,10 +224,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).toEqual(expectedTextParts);
 
         // test nested arrays
-        component.shortAnswerQuestion.text =
+        const newQuestion6 = cloneDeep(component.question() as ShortAnswerQuestion);
+        newQuestion6.text =
             'const manyArrayFields = [\n' + "    ['test1'],\n" + "    ['test2'],\n" + "    ['[-spot 1]'],\n" + "    ['middleField'],\n" + "    ['[-spot 2]'],\n" + '];';
-
-        component.ngOnInit();
+        fixture.componentRef.setInput('question', newQuestion6);
+        fixture.detectChanges();
 
         expectedTextParts = [
             ['const', 'manyArrayFields', '=', '['],
@@ -238,7 +242,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).toEqual(expectedTextParts);
 
         // test textual enumeration
-        component.shortAnswerQuestion.text =
+        const newQuestion7 = cloneDeep(component.question() as ShortAnswerQuestion);
+        newQuestion7.text =
             'If we want a enumeration, we can also [-spot 1] this:\n' +
             '- first major point\n' +
             '    - first not so major point\n' +
@@ -246,8 +251,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
             '- second major point\n' +
             '- third major point\n' +
             '        - first very not major point, super indented';
-
-        component.ngOnInit();
+        fixture.componentRef.setInput('question', newQuestion7);
+        fixture.detectChanges();
 
         expectedTextParts = [
             ['If', 'we', 'want', 'a', 'enumeration,', 'we', 'can', 'also', '[-spot 1]', 'this:'],
@@ -261,10 +266,26 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).toEqual(expectedTextParts);
     });
 
-    it('should invoke ngOnChanges', () => {
-        component.ngOnChanges({
-            question: { currentValue: question2, previousValue: question } as SimpleChange,
-        });
+    it('should update shortAnswerQuestion and emit questionUpdated on question input change', () => {
+        const emitSpy = jest.spyOn(component.questionUpdated, 'emit');
+
+        expect(component.shortAnswerQuestion).toEqual(question);
+
+        fixture.componentRef.setInput('question', question2);
+
+        fixture.detectChanges();
+
+        expect(component.shortAnswerQuestion).toEqual(question2);
+
+        expect(emitSpy).toHaveBeenCalledTimes(0);
+
+        fixture.componentRef.setInput('question', question);
+
+        fixture.detectChanges();
+
+        expect(component.shortAnswerQuestion).toEqual(question);
+
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should react to a solution being dropped on a spot', () => {
@@ -316,18 +337,30 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(modalSpy).toHaveBeenCalledOnce();
     });
 
-    it('should add spot to cursor and increase the spot number', async () => {
+    it('should add spot to cursor and increase the spot number', () => {
+        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
+        // Mock console methods to prevent test failures
+        jest.spyOn(console, 'error').mockImplementation();
+        jest.spyOn(console, 'warn').mockImplementation();
+
         component.addSpotAtCursor();
-        await firstValueFrom(component.questionUpdated);
+
+        expect(questionUpdatedSpy).toHaveBeenCalled();
         const text: string = component.questionEditorText;
         const firstLine = text.split('\n')[0];
         expect(firstLine).toInclude('[-spot 1]');
         expect(component.numberOfSpot).toBe(2);
     });
 
-    it('should add option', async () => {
+    it('should add option', () => {
+        const questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
+        // Mock console methods to prevent test failures
+        jest.spyOn(console, 'error').mockImplementation();
+        jest.spyOn(console, 'warn').mockImplementation();
+
         component.addOption();
-        await firstValueFrom(component.questionUpdated);
+
+        expect(questionUpdatedSpy).toHaveBeenCalled();
         const text: string = component.questionEditorText;
         const lastLine = text.split('\n').last();
         expect(lastLine).toInclude(lastLine!);
@@ -423,6 +456,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.shortAnswerQuestion.spots = [spot1, spot2];
         component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
+        fixture.componentRef.setInput('question', component.shortAnswerQuestion);
         fixture.detectChanges();
 
         component.addSpotAtCursorVisualMode();
@@ -486,6 +520,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     it('should reset spot', () => {
+        const backup = new ShortAnswerQuestion();
+        component.backupQuestion = backup;
         component.backupQuestion.spots = [spot1, spot2];
         const modifiedSpot = cloneDeep(spot1);
         modifiedSpot.spotNr = 10; // initial spotNr was 0
