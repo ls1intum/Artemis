@@ -35,8 +35,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
@@ -133,10 +133,10 @@ public class QuizTrainingResource {
      */
     @GetMapping("courses/{courseId}/training/leaderboard")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<LeaderboardEntryDTO>> getQuizTrainingLeaderboard(@PathVariable long courseId) {
+    public ResponseEntity<LeaderboardWithCurrentUserEntryDTO> getQuizTrainingLeaderboard(@PathVariable long courseId) {
         log.info("REST request to get leaderboard for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        List<LeaderboardEntryDTO> leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
+        LeaderboardWithCurrentUserEntryDTO leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
         return ResponseEntity.ok(leaderboard);
     }
 
@@ -145,7 +145,7 @@ public class QuizTrainingResource {
      *
      * <p>
      * This endpoint allows a user to update their preference for being shown in the leaderboard.
-     * If the `shownInLeaderboard` property is provided in the request body, the user's setting is updated accordingly.
+     * If the `showInLeaderboard` property is provided in the request body, the user's setting is updated accordingly.
      * </p>
      *
      * @param leaderboardSettingDTO the DTO containing the leaderboard visibility setting
@@ -157,33 +157,10 @@ public class QuizTrainingResource {
         log.debug("Rest request to set leaderboard settings: {}", leaderboardSettingDTO);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Boolean shownInLeaderboard = leaderboardSettingDTO.shownInLeaderboard();
+        Boolean shownInLeaderboard = leaderboardSettingDTO.showInLeaderboard();
         if (shownInLeaderboard != null) {
-            quizTrainingLeaderboardService.updateShownInLeaderboard(user.getId(), shownInLeaderboard);
+            quizTrainingLeaderboardService.updateShowInLeaderboard(user.getId(), shownInLeaderboard);
         }
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * Initializes or updates the leaderboard entry for the current user in the specified course.
-     *
-     * <p>
-     * This endpoint creates a new leaderboard entry for the user in the given course.
-     * The visibility is determined by the `shownInLeaderboard` property in the request body; if not provided, it defaults to false.
-     * </p>
-     *
-     * @param courseId            the ID of the course for which the leaderboard entry is initialized or updated
-     * @param leaderboardEntryDTO the DTO containing the leaderboard entry settings
-     * @return a ResponseEntity with HTTP status 200 (OK)
-     */
-    @PostMapping("courses/{courseId}/leaderboard-entry")
-    @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Void> initializeLeaderboardEntry(@PathVariable long courseId, @Valid @RequestBody LeaderboardSettingDTO leaderboardEntryDTO) {
-        log.debug("REST request to initialize or update leaderboard entry: {}", leaderboardEntryDTO);
-
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        boolean shownInLeaderboard = leaderboardEntryDTO.shownInLeaderboard() != null ? leaderboardEntryDTO.shownInLeaderboard() : false;
-        quizTrainingLeaderboardService.setInitialLeaderboardEntry(user.getId(), courseId, shownInLeaderboard);
         return ResponseEntity.ok().build();
     }
 }
