@@ -1,18 +1,4 @@
-import {
-    AfterViewInit,
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnInit,
-    Output,
-    SimpleChanges,
-    ViewEncapsulation,
-    inject,
-    viewChild,
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation, effect, inject, input, output, viewChild } from '@angular/core';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -71,7 +57,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ArtemisTranslatePipe,
     ],
 })
-export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
+export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
@@ -85,19 +71,15 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     shortAnswerQuestion: ShortAnswerQuestion;
 
-    @Input()
-    set question(quizQuestion: QuizQuestion) {
-        this.shortAnswerQuestion = quizQuestion as ShortAnswerQuestion;
-    }
+    question = input<QuizQuestion>();
+    questionIndex = input.required<number>();
+    reEvaluationInProgress = input<boolean>();
 
-    @Input() questionIndex: number;
-    @Input() reEvaluationInProgress: boolean;
-
-    @Output() questionUpdated = new EventEmitter();
-    @Output() questionDeleted = new EventEmitter();
+    readonly questionUpdated = output<void>();
+    readonly questionDeleted = output<void>();
     /** Question move up and down are used for re-evaluate **/
-    @Output() questionMoveUp = new EventEmitter();
-    @Output() questionMoveDown = new EventEmitter();
+    readonly questionMoveUp = output<void>();
+    readonly questionMoveDown = output<void>();
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
@@ -132,6 +114,26 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     protected readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
+    private firstChange = true;
+
+    constructor() {
+        effect(() => {
+            if (!this.question()) {
+                return;
+            }
+            this.shortAnswerQuestion = this.question() as ShortAnswerQuestion;
+
+            this.backupQuestion = cloneDeep(this.shortAnswerQuestion);
+            this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
+            this.changeDetector.detectChanges();
+
+            if (!this.firstChange) {
+                this.questionUpdated.emit();
+            }
+            this.firstChange = false;
+        });
+    }
+
     ngOnInit(): void {
         this.markdownActions = [
             new BoldAction(),
@@ -146,30 +148,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             this.insertShortAnswerOptionAction,
         ];
 
-        // create deepcopy
-        this.backupQuestion = cloneDeep(this.shortAnswerQuestion);
-
-        /** We create now the structure on how to display the text of the question
-         * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
-         * 2. Now each line of the question text will be divided into each word (we use whitespace and the borders of spots as separator, see regex).
-         */
-        this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
-
         /** Assign status booleans and strings **/
         this.showVisualMode = false;
         this.isQuestionCollapsed = false;
-    }
-
-    /**
-     * @function ngOnChanges
-     * @desc Watch for any changes to the question model and notify listener
-     * @param changes {SimpleChanges}
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        /** Check if previousValue wasn't null to avoid firing at component initialization **/
-        if (changes.question && changes.question.previousValue) {
-            this.questionUpdated.emit();
-        }
     }
 
     /**
@@ -177,7 +158,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @desc Setup the question editor
      */
     ngAfterViewInit(): void {
-        if (!this.reEvaluationInProgress) {
+        if (!this.reEvaluationInProgress()) {
             requestAnimationFrame(this.setupQuestionEditor.bind(this));
         }
     }
@@ -474,7 +455,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const solution = new ShortAnswerSolution();
         solution.text = InsertShortAnswerOptionAction.DEFAULT_TEXT_SHORT;
         // Add solution directly to the question if re-evaluation is in progress
-        if (this.reEvaluationInProgress) {
+        if (this.reEvaluationInProgress()) {
             this.shortAnswerQuestion.solutions.push(solution);
             this.questionUpdated.emit();
             // Use the editor to add the solution
@@ -662,9 +643,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     resetQuestionText() {
         this.shortAnswerQuestion.text = this.backupQuestion.text;
         this.shortAnswerQuestion.spots = cloneDeep(this.backupQuestion.spots);
-        this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
         this.shortAnswerQuestion.explanation = this.backupQuestion.explanation;
         this.shortAnswerQuestion.hint = this.backupQuestion.hint;
+
+        this.textParts = [];
+        this.changeDetector.detectChanges();
+
+        this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -680,6 +666,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.shortAnswerQuestion.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
         this.shortAnswerQuestion.spots = cloneDeep(this.backupQuestion.spots);
         this.resetQuestionText();
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -695,6 +682,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         // Remove current spot at given index and insert the backup at the same position
         this.shortAnswerQuestion.spots!.splice(spotIndex, 1);
         this.shortAnswerQuestion.spots!.splice(spotIndex, 0, backupSpot);
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -734,7 +722,13 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const rowColumn: string[] = textPartId.split('-').slice(1);
         this.textParts[Number(rowColumn[0])][Number(rowColumn[1])] = (<HTMLInputElement>document.getElementById(textPartId)).value;
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
+
+        // Force re-render by clearing textParts temporarily
+        this.textParts = [];
+        this.changeDetector.detectChanges();
+
         this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text);
+        this.changeDetector.detectChanges();
     }
 
     /**
