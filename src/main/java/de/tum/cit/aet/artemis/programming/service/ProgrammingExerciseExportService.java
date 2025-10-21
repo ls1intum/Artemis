@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -491,7 +492,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         List<Path> exportedStudentRepositories = Collections.synchronizedList(new ArrayList<>());
-        java.util.concurrent.atomic.AtomicBoolean anonymizationFailed = new java.util.concurrent.atomic.AtomicBoolean(false);
+        AtomicBoolean anonymizationFailed = new AtomicBoolean(false);
 
         log.info("export student repositories for programming exercise {} in parallel", programmingExercise.getId());
         try (var threadPool = Executors.newFixedThreadPool(10)) {
@@ -515,7 +516,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             // wait until all operations finish
             CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
             if (anonymizationFailed.get()) {
-                throw new GitException("Anonymization failed for one or more repositories; aborting export");
+                throw new GitException("Anonymization failed for one or more repositories");
             }
         }
         return exportedStudentRepositories;
