@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -25,7 +25,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
     providers: [ApollonDiagramService],
     imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, DeleteButtonDirective],
 })
-export class ApollonDiagramListComponent implements OnInit {
+export class ApollonDiagramListComponent {
     private apollonDiagramsService = inject(ApollonDiagramService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
@@ -33,16 +33,18 @@ export class ApollonDiagramListComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
 
-    apollonDiagrams: ApollonDiagram[] = [];
+    apollonDiagrams = signal<ApollonDiagram[]>([]);
     predicate = 'id';
     reverse = true;
 
-    @Input() courseId: number;
+    courseId = input<number>();
 
-    @Output() openDiagram = new EventEmitter<number>();
-    @Output() closeDialog = new EventEmitter();
+    internalCourseId = computed(() => this.courseId() ?? Number(this.route.snapshot.paramMap.get('courseId')));
 
-    course: Course;
+    openDiagram = output<number>();
+    closeDialog = output<void>();
+
+    course = signal<Course | null>(null);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -55,25 +57,25 @@ export class ApollonDiagramListComponent implements OnInit {
 
     ButtonSize = ButtonSize;
 
-    /**
-     * Initializes Apollon diagrams from the server
-     */
-    ngOnInit() {
-        this.courseId ??= Number(this.route.snapshot.paramMap.get('courseId'));
-
-        this.courseService.find(this.courseId).subscribe((courseResponse: HttpResponse<Course>) => {
-            this.course = courseResponse.body!;
+    constructor() {
+        effect(() => {
+            const id = this.internalCourseId();
+            if (id) {
+                this.courseService.find(id).subscribe((courseResponse: HttpResponse<Course>) => {
+                    this.course.set(courseResponse.body);
+                });
+                this.loadDiagrams();
+            }
         });
-        this.loadDiagrams();
     }
 
     /**
      * Loads the Apollon diagrams of this course which will be shown
      */
     loadDiagrams() {
-        this.apollonDiagramsService.getDiagramsByCourse(this.courseId).subscribe({
+        this.apollonDiagramsService.getDiagramsByCourse(this.internalCourseId()).subscribe({
             next: (response) => {
-                this.apollonDiagrams = response.body!;
+                this.apollonDiagrams.set(response.body!);
             },
             error: () => {
                 this.alertService.error('artemisApp.apollonDiagram.home.error.loading');
@@ -86,12 +88,10 @@ export class ApollonDiagramListComponent implements OnInit {
      * @param apollonDiagram
      */
     delete(apollonDiagram: ApollonDiagram) {
-        this.apollonDiagramsService.delete(apollonDiagram.id!, this.courseId).subscribe({
+        this.apollonDiagramsService.delete(apollonDiagram.id!, this.internalCourseId()).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
-                this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {
-                    return diagram.id !== apollonDiagram.id;
-                });
+                this.apollonDiagrams.update((diagrams) => diagrams.filter((diagram) => diagram.id !== apollonDiagram.id));
                 this.dialogErrorSource.next('');
             },
             error: () => {
@@ -137,6 +137,8 @@ export class ApollonDiagramListComponent implements OnInit {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.apollonDiagrams, this.predicate, this.reverse);
+        const sorted = [...this.apollonDiagrams()];
+        this.sortService.sortByProperty(sorted, this.predicate, this.reverse);
+        this.apollonDiagrams.set(sorted);
     }
 }
