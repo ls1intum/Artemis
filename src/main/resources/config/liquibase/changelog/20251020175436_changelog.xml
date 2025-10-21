@@ -15,7 +15,7 @@
             UPDATE quiz_question_progress
             SET "due_date" =
                     CASE
-                        WHEN progress_json->>'dueDate' IS NOT NULL THEN (progress_json->>'dueDate')::TIMESTAMP WITH TIME ZONE
+                        WHEN progress_json->>'dueDate' IS NOT NULL THEN (progress_json->>'dueDate')::TIMESTAMP
                 ELSE NOW()
             END;
         </sql>
