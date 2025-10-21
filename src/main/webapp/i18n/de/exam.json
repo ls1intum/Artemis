@@ -30,7 +30,15 @@
                 "attendanceStatusTitle": "Status der Prüfungsteilnahme",
                 "attendanceCheckFailed": "Anwesenheitskontrolle nicht bestanden",
                 "attendanceCheckPassed": "Anwesenheitskontrolle bestanden",
-                "didNotAttend": "Hat nicht teilgenommen"
+                "didNotAttend": "Hat nicht teilgenommen",
+                "roomDistribute": "Verteilen",
+                "rooms": {
+                    "number": "Nummer",
+                    "alternativeNumber": "Nummer 2",
+                    "name": "Name",
+                    "alternativeName": "Name 2",
+                    "building": "Gebäude"
+                }
             },
             "overview": {
                 "start": "Beginn: {{start}}",
