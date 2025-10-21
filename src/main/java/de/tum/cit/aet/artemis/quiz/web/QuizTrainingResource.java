@@ -35,8 +35,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
@@ -133,10 +133,10 @@ public class QuizTrainingResource {
      */
     @GetMapping("courses/{courseId}/training/leaderboard")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<LeaderboardEntryDTO>> getQuizTrainingLeaderboard(@PathVariable long courseId) {
+    public ResponseEntity<LeaderboardWithCurrentUserEntryDTO> getQuizTrainingLeaderboard(@PathVariable long courseId) {
         log.info("REST request to get leaderboard for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        List<LeaderboardEntryDTO> leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
+        LeaderboardWithCurrentUserEntryDTO leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
         return ResponseEntity.ok(leaderboard);
     }
 
@@ -145,7 +145,7 @@ public class QuizTrainingResource {
      *
      * <p>
      * This endpoint allows a user to update their preference for being shown in the leaderboard.
-     * If the `shownInLeaderboard` property is provided in the request body, the user's setting is updated accordingly.
+     * If the `showInLeaderboard` property is provided in the request body, the user's setting is updated accordingly.
      * </p>
      *
      * @param leaderboardSettingDTO the DTO containing the leaderboard visibility setting
@@ -159,7 +159,7 @@ public class QuizTrainingResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Boolean shownInLeaderboard = leaderboardSettingDTO.showInLeaderboard();
         if (shownInLeaderboard != null) {
-            quizTrainingLeaderboardService.updateShownInLeaderboard(user.getId(), shownInLeaderboard);
+            quizTrainingLeaderboardService.updateShowInLeaderboard(user.getId(), shownInLeaderboard);
         }
         return ResponseEntity.ok().build();
     }
