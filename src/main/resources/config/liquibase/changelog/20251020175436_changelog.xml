@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20251020175436" author="MoritzSpengler">
+        <addColumn tableName="quiz_question_progress">
+            <column name="due_date" type="datetime(3)">
+            </column>
+        </addColumn>
+
+        <comment>
+            Migrate dueDate from progress_json to due_date column.
+        </comment>
+        <sql dbms="postgresql">
+            UPDATE quiz_question_progress
+            SET "due_date" =
+                    CASE
+                        WHEN progress_json->>'dueDate' IS NOT NULL THEN (progress_json->>'dueDate')::TIMESTAMP WITH TIME ZONE
+                ELSE NOW()
+            END;
+        </sql>
+
+        <sql dbms="mysql">
+            UPDATE quiz_question_progress
+            SET due_date =
+                    CASE
+                        WHEN JSON_EXTRACT(progress_json, '$.dueDate') IS NOT NULL THEN CONVERT(FROM_UNIXTIME(JSON_UNQUOTE(JSON_EXTRACT(progress_json, '$.dueDate'))), DATETIME)
+                        ELSE NOW()
+                        END;
+        </sql>
+
+        <addNotNullConstraint tableName="quiz_question_progress" columnName="due_date" columnDataType="datetime(3)"/>
+    </changeSet>
+</databaseChangeLog>
