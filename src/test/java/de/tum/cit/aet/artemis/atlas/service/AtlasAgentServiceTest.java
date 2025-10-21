@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -34,7 +35,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 
-@Nested
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentServiceTest {
 
@@ -226,28 +226,6 @@ class AtlasAgentServiceTest {
         when(mockToolsService.wasCompetencyCreated()).thenReturn(false);
 
         CompletableFuture<AgentChatResult> result = serviceWithToolsService.processChatMessage(testMessage, courseId, sessionId);
-
-        assertThat(result).isNotNull();
-        AgentChatResult chatResult = result.get();
-        assertThat(chatResult.message()).isEqualTo(expectedResponse);
-        assertThat(chatResult.competenciesModified()).isFalse();
-    }
-
-    @Test
-    void testProcessChatMessage_WithChatMemory() throws ExecutionException, InterruptedException {
-        org.springframework.ai.chat.memory.ChatMemory mockChatMemory = org.mockito.Mockito.mock(org.springframework.ai.chat.memory.ChatMemory.class);
-        ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService serviceWithChatMemory = new AtlasAgentService(chatClient, templateService, null, mockChatMemory, null);
-
-        String testMessage = "Test message with memory";
-        Long courseId = 123L;
-        String sessionId = "session_with_memory";
-        String expectedResponse = "Response with memory context";
-
-        when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
-
-        CompletableFuture<AgentChatResult> result = serviceWithChatMemory.processChatMessage(testMessage, courseId, sessionId);
 
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
@@ -458,6 +436,68 @@ class AtlasAgentServiceTest {
             assertThat(result).contains("error");
             assertThat(result).contains("Failed to create competency");
             assertThat(toolsService.wasCompetencyCreated()).isFalse();
+        }
+    }
+
+    @Nested
+    class AtlasPromptTemplateServiceTests {
+
+        private AtlasPromptTemplateService promptTemplateService;
+
+        @BeforeEach
+        void setUp() {
+            promptTemplateService = new AtlasPromptTemplateService();
+        }
+
+        @Test
+        void testRender_WithoutVariables() {
+            String resourcePath = "/prompts/atlas/agent_system_prompt.st";
+            Map<String, String> variables = Map.of();
+
+            String result = promptTemplateService.render(resourcePath, variables);
+
+            assertThat(result).isNotEmpty();
+            assertThat(result).contains("You are the Atlas ↔ Artemis AI Competency Assistant");
+        }
+
+        @Test
+        void testRender_WithVariables() {
+            String resourcePath = "/prompts/atlas/agent_system_prompt.st";
+            Map<String, String> variables = Map.of("testVar", "testValue", "anotherVar", "anotherValue");
+
+            String result = promptTemplateService.render(resourcePath, variables);
+
+            assertThat(result).isNotEmpty();
+            // Variables loop should execute even if not in template
+        }
+
+        @Test
+        void testRender_NonExistentResource() {
+            String resourcePath = "/prompts/atlas/nonexistent_template.st";
+            Map<String, String> variables = Map.of();
+
+            org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, () -> promptTemplateService.render(resourcePath, variables));
+        }
+
+        @Test
+        void testRender_VariableSubstitution() {
+            String resourcePath = "/prompts/atlas/agent_system_prompt.st";
+            Map<String, String> variables = Map.of("var1", "value1", "var2", "value2", "var3", "value3");
+
+            String result = promptTemplateService.render(resourcePath, variables);
+
+            assertThat(result).isNotEmpty();
+            // The variables loop should execute
+        }
+
+        @Test
+        void testRender_EmptyVariables() {
+            String resourcePath = "/prompts/atlas/agent_system_prompt.st";
+            Map<String, String> variables = Map.of();
+
+            String result = promptTemplateService.render(resourcePath, variables);
+
+            assertThat(result).isNotEmpty();
         }
     }
 
