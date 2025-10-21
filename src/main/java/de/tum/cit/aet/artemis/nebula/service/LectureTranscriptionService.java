@@ -104,7 +104,7 @@ public class LectureTranscriptionService {
                 markTranscriptionAsFailed(transcription, response.error());
             }
             else {
-                log.info("Transcription still in progress for jobId={}", jobId);
+                log.debug("Transcription still in progress for jobId={}", jobId);
             }
         }
         catch (Exception e) {
