@@ -30,7 +30,8 @@ export class StudentsRoomDistributionDialogComponent {
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
 
     // Configurable options
-    reserveFactor: WritableSignal<number> = signal(0.1);
+    readonly reserveFactorDefaultPercentage: number = 10;
+    private reserveFactor: WritableSignal<number> = signal(this.reserveFactorDefaultPercentage / 100);
     allowNarrowLayouts: WritableSignal<boolean> = signal(false);
 
     private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = toSignal(

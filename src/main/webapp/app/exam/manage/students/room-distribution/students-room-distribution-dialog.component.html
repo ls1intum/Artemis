@@ -7,7 +7,7 @@
     </div>
     <div class="modal-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <p jhiTranslate="artemisApp.exam.examUsers.rooms.introText" class="intro-text"></p>
+            <p jhiTranslate="artemisApp.exam.examUsers.rooms.introText" [translateValues]="{ defaultPercentage: reserveFactorDefaultPercentage }" class="intro-text"></p>
             <div>
                 <div class="form-group small text-end">
                     <label for="reserveFactor" jhiTranslate="artemisApp.exam.examUsers.rooms.reserveFactor"></label>
@@ -15,7 +15,7 @@
                         id="reserveFactor"
                         type="number"
                         class="form-control"
-                        [placeholder]="reserveFactor() * 100"
+                        [placeholder]="reserveFactorDefaultPercentage"
                         (input)="handleReserveFactorEvent($event)"
                         (focusout)="resetReserveFactorText($event)"
                         min="0"

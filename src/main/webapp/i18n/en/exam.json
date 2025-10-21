@@ -34,7 +34,7 @@
                 "roomDistribute": "Distribute",
                 "rooms": {
                     "dialogTitle": "Distribute students",
-                    "introText": "Here you can select rooms for distribution",
+                    "introText": "Select rooms by typing any parts of their name in any order, then either select it via arrow keys and Enter, or by clicking on it.\nOn the right hand side you are able to select the percentage of reserved seats per room. By default this is {{ defaultPercentage }}%. A reserved seats percentage of 0 is not recommended, as that means there will be no additional space in case of mishaps like a student going to the wrong room.\nThe toggle underneath allows Artemis to use narrower distributions, which may be necessary if you can't use additional rooms. If enabled, Artemis automatically chooses the combination of layouts per room that minimizes the number of students required to be in a narrower layout.",
                     "reserveFactor": "Reserved Seats %",
                     "allowNarrowLayouts": "Allow narrower layouts?",
                     "searchPlaceholder": "Search by room number, name, and/or building",

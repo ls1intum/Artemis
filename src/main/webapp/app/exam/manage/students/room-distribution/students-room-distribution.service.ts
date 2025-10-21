@@ -37,7 +37,7 @@ export class StudentsRoomDistributionService {
      * @param useOnlyDefaultLayouts defines if only default layouts should be used for distribution
      */
     distributeStudentsAcrossRooms(courseId: number, examId: number, roomIds: number[], reserveFactor: number, useOnlyDefaultLayouts: boolean): Observable<HttpResponse<void>> {
-        const requestUrl = `${this.baseUrl}/courses/${courseId}/exams/${examId}/distribute-registered-students?reserveFactor=${reserveFactor}?useOnlyDefaultLayouts=${useOnlyDefaultLayouts}`;
+        const requestUrl = `${this.baseUrl}/courses/${courseId}/exams/${examId}/distribute-registered-students?reserveFactor=${reserveFactor}&useOnlyDefaultLayouts=${useOnlyDefaultLayouts}`;
 
         return this.http.post<void>(requestUrl, roomIds, { observe: 'response' });
     }
