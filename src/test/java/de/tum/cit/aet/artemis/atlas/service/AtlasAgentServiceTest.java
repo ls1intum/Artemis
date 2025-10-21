@@ -31,8 +31,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentServiceTest {
@@ -187,10 +187,10 @@ class AtlasAgentServiceTest {
         private CompetencyRepository competencyRepository;
 
         @Mock
-        private CourseRepository courseRepository;
+        private CourseTestRepository courseRepository;
 
         @Mock
-        private ExerciseRepository exerciseRepository;
+        private ExerciseTestRepository exerciseRepository;
 
         private AtlasAgentToolsService toolsService;
 
