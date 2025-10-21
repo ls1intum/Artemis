@@ -7,10 +7,13 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -21,6 +24,15 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentServiceTest {
@@ -166,6 +178,153 @@ class AtlasAgentServiceTest {
         assertThat(chatResult2.message()).isEqualTo("Response for instructor 2");
 
         assertThat(instructor1SessionId).isNotEqualTo(instructor2SessionId);
+    }
+
+    @Nested
+    class AtlasAgentToolsServiceTests {
+
+        @Mock
+        private CompetencyRepository competencyRepository;
+
+        @Mock
+        private CourseRepository courseRepository;
+
+        @Mock
+        private ExerciseRepository exerciseRepository;
+
+        private AtlasAgentToolsService toolsService;
+
+        @BeforeEach
+        void setUp() {
+            ObjectMapper objectMapper = new ObjectMapper();
+            toolsService = new AtlasAgentToolsService(objectMapper, competencyRepository, courseRepository, exerciseRepository);
+        }
+
+        @Test
+        void testGetCourseDescription_Success() {
+            Long courseId = 123L;
+            Course course = new Course();
+            course.setDescription("Software Engineering Course");
+
+            when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
+
+            String result = toolsService.getCourseDescription(courseId);
+
+            assertThat(result).isEqualTo("Software Engineering Course");
+        }
+
+        @Test
+        void testGetCourseDescription_NotFound() {
+            Long courseId = 999L;
+
+            when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
+
+            String result = toolsService.getCourseDescription(courseId);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        void testGetCourseCompetencies_Success() {
+            Long courseId = 123L;
+            Course course = new Course();
+            course.setId(courseId);
+
+            Competency competency = new Competency();
+            competency.setId(1L);
+            competency.setTitle("Java Programming");
+            competency.setDescription("Learn Java basics");
+            competency.setTaxonomy(CompetencyTaxonomy.APPLY);
+
+            when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
+            when(competencyRepository.findAllByCourseId(courseId)).thenReturn(Set.of(competency));
+
+            String result = toolsService.getCourseCompetencies(courseId);
+
+            assertThat(result).contains("Java Programming");
+            assertThat(result).contains("Learn Java basics");
+            assertThat(result).contains("APPLY");
+        }
+
+        @Test
+        void testGetCourseCompetencies_CourseNotFound() {
+            Long courseId = 999L;
+
+            when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
+
+            String result = toolsService.getCourseCompetencies(courseId);
+
+            assertThat(result).contains("error");
+            assertThat(result).contains("Course not found");
+        }
+
+        @Test
+        void testCreateCompetency_Success() {
+            Long courseId = 123L;
+            Course course = new Course();
+            course.setId(courseId);
+
+            Competency savedCompetency = new Competency();
+            savedCompetency.setId(1L);
+            savedCompetency.setTitle("Database Design");
+            savedCompetency.setDescription("Design relational databases");
+            savedCompetency.setTaxonomy(CompetencyTaxonomy.CREATE);
+
+            when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
+            when(competencyRepository.save(any(Competency.class))).thenReturn(savedCompetency);
+
+            String result = toolsService.createCompetency(courseId, "Database Design", "Design relational databases", CompetencyTaxonomy.CREATE);
+
+            assertThat(result).contains("success");
+            assertThat(result).contains("Database Design");
+            assertThat(result).contains("CREATE");
+            assertThat(toolsService.wasCompetencyCreated()).isTrue();
+        }
+
+        @Test
+        void testCreateCompetency_CourseNotFound() {
+            Long courseId = 999L;
+
+            when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
+
+            String result = toolsService.createCompetency(courseId, "Test", "Test desc", CompetencyTaxonomy.REMEMBER);
+
+            assertThat(result).contains("error");
+            assertThat(result).contains("Course not found");
+            assertThat(toolsService.wasCompetencyCreated()).isFalse();
+        }
+
+        @Test
+        void testGetExercisesListed_Success() {
+            Long courseId = 123L;
+            Course course = new Course();
+            course.setId(courseId);
+
+            when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
+            when(exerciseRepository.findByCourseIds(Set.of(courseId))).thenReturn(Set.of());
+
+            String result = toolsService.getExercisesListed(courseId);
+
+            assertThat(result).contains("courseId");
+            assertThat(result).contains("exercises");
+        }
+
+        @Test
+        void testGetExercisesListed_CourseNotFound() {
+            Long courseId = 999L;
+
+            when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
+
+            String result = toolsService.getExercisesListed(courseId);
+
+            assertThat(result).contains("error");
+            assertThat(result).contains("Course not found");
+        }
+
+        @Test
+        void testWasCompetencyCreated_InitiallyFalse() {
+            assertThat(toolsService.wasCompetencyCreated()).isFalse();
+        }
     }
 
 }
