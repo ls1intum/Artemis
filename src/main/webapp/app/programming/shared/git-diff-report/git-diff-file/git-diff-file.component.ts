@@ -14,11 +14,15 @@ export class GitDiffFileComponent {
     readonly monacoDiffEditor = viewChild.required(MonacoDiffEditorComponent);
     readonly diffInformation = input.required<DiffInformation>();
     readonly allowSplitView = input<boolean>(true);
+    readonly loadContent = input<boolean>(true); // Controls whether Monaco editor content should be loaded
     readonly onDiffReady = output<boolean>();
     readonly fileUnchanged = computed(() => this.diffInformation().originalFileContent === this.diffInformation().modifiedFileContent);
 
     constructor() {
         effect(() => {
+            if (!this.loadContent()) {
+                return;
+            }
             this.monacoDiffEditor().setFileContents(
                 this.diffInformation().originalFileContent,
                 this.diffInformation().modifiedFileContent,
