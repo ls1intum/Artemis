@@ -237,7 +237,7 @@ describe('PostingContentPartComponent', () => {
 
         it('should trigger userReferenceClicked event for different user logins', () => {
             const accountService = TestBed.inject(AccountService);
-            jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ login: 'user1' } as User);
+            accountService.userIdentity.set({ login: 'user1' } as User);
             const outputEmitter = jest.spyOn(component.userReferenceClicked, 'emit');
 
             component.onClickUserReference('user2');
@@ -247,7 +247,7 @@ describe('PostingContentPartComponent', () => {
 
         it('should not trigger userReferenceClicked event for same user logins', () => {
             const accountService = TestBed.inject(AccountService);
-            jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ login: 'user1' } as User);
+            accountService.userIdentity.set({ login: 'user1' } as User);
             const outputEmitter = jest.spyOn(component.userReferenceClicked, 'emit');
 
             component.onClickUserReference('user1');
