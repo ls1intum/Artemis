@@ -32,7 +32,7 @@ public interface QuizQuestionProgressRepository extends ArtemisJpaRepository<Qui
             AND quizQuestionProgress.dueDate > :dueDate
             """)
     Set<Long> findNotDueQuizQuestions(@Param("userId") long userId, @Param("courseId") long courseId, @Param("dueDate") ZonedDateTime dueDate);
-           
+
     long countByUserIdAndCourseId(long userId, long courseId);
 
 }
