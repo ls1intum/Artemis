@@ -675,9 +675,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public void setAthenaConfig(ExerciseAthenaConfig athenaConfig) {
-        this.athenaConfig = athenaConfig;
-        if (athenaConfig.isEmpty()) {
-            athenaConfig = null;
+        if (athenaConfig == null || athenaConfig.isEmpty()) {
+            this.athenaConfig = null;
+        }
+        else {
+            this.athenaConfig = athenaConfig;
         }
     }
 

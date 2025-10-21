@@ -13,7 +13,7 @@
             <label [ngStyle]="getCheckboxLabelStyle()" for="allowFeedbackRequests" jhiTranslate="artemisApp.exercise.allowFeedbackRequests"></label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.allowFeedbackRequestsTooltip'" />
         </div>
-        @if (this.showDropdownList || hasPreliminaryModule) {
+        @if (showDropdownList || hasPreliminaryModule) {
             <div class="form-group">
                 <label for="athenaModuleSelect">Athena Preliminary Feedback Module</label>
                 <select id="athenaModuleSelect" class="form-select" [value]="preliminaryModule" [(ngModel)]="preliminaryModule" [disabled]="inputControlsDisabled()">
