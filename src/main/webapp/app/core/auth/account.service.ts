@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
@@ -43,19 +43,23 @@ export class AccountService implements IAccountService {
     private readonly featureToggleService = inject(FeatureToggleService);
 
     // cached value of the user to avoid unnecessary requests to the server
-    private userIdentityValue?: User;
-    private authenticated = false;
+    private readonly userIdentity = signal<User | undefined>(undefined);
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
 
-    // TODO get and set userIdentity should be converted to a signal instead
-    get userIdentity() {
-        return this.userIdentityValue;
+    readonly authenticated = computed(() => !!this.userIdentity());
+
+    constructor() {
+        effect(
+            () => {
+                this.handleSideEffectsWhenUserIdentityChanges();
+            },
+            { injector: this.injector },
+        );
     }
 
-    set userIdentity(user: User | undefined) {
-        this.userIdentityValue = user;
-        this.authenticated = !!user;
+    private handleSideEffectsWhenUserIdentityChanges(): void {
+        const user = this.userIdentity();
         // Alert subscribers about user updates, that is when the user logs in or logs out (undefined).
         this.authenticationState.next(user);
 
@@ -82,7 +86,7 @@ export class AccountService implements IAccountService {
     }
 
     authenticate(identity?: User) {
-        this.userIdentity = identity;
+        this.userIdentity.set(identity);
     }
 
     syncGroups(groups: string[]) {
@@ -94,7 +98,7 @@ export class AccountService implements IAccountService {
     }
 
     hasAnyAuthorityDirect(authorities: string[]): boolean {
-        if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities) {
+        if (!this.authenticated() || !this.userIdentity || !this.userIdentity.authorities) {
             return false;
         }
 
@@ -108,7 +112,7 @@ export class AccountService implements IAccountService {
     }
 
     hasAuthority(authority: string): Promise<boolean> {
-        if (!this.authenticated) {
+        if (!this.authenticated()) {
             return Promise.resolve(false);
         }
 
@@ -124,7 +128,7 @@ export class AccountService implements IAccountService {
     }
 
     hasGroup(group?: string): boolean {
-        if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities || !this.userIdentity.groups || !group) {
+        if (!this.authenticated() || !this.userIdentity || !this.userIdentity.authorities || !this.userIdentity.groups || !group) {
             return false;
         }
 
@@ -133,7 +137,7 @@ export class AccountService implements IAccountService {
 
     identity(force?: boolean): Promise<User | undefined> {
         if (force) {
-            this.userIdentity = undefined;
+            this.userIdentity.set(undefined);
         }
 
         // check and see if we have retrieved the userIdentity data from the server.
@@ -148,7 +152,7 @@ export class AccountService implements IAccountService {
                 map((response: HttpResponse<User>) => {
                     const user = response.body!;
                     if (user) {
-                        this.userIdentity = user;
+                        this.userIdentity.set(user);
 
                         // improved error tracking in sentry
                         setUser({ username: user.login! });
@@ -160,12 +164,12 @@ export class AccountService implements IAccountService {
                             this.translateService.use(langKey);
                         }
                     } else {
-                        this.userIdentity = undefined;
+                        this.userIdentity.set(undefined);
                     }
                     return this.userIdentity;
                 }),
                 catchError(() => {
-                    this.userIdentity = undefined;
+                    this.userIdentity.set(undefined);
                     return of(undefined);
                 }),
             ),
@@ -234,7 +238,7 @@ export class AccountService implements IAccountService {
     }
 
     isAuthenticated(): boolean {
-        return this.authenticated;
+        return this.authenticated();
     }
 
     getAuthenticationState(): Observable<User | undefined> {
