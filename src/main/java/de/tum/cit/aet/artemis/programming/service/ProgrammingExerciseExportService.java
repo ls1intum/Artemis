@@ -645,14 +645,10 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
             return gitRepositoryExportService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository(), zipOutput);
         }
-        catch (GitAPIException ex) {
+        catch (GitAPIException | GitException ex) {
             log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),
                     participation.getProgrammingExercise().getId(), ex);
             return null;
-        }
-        catch (GitException ex) {
-            // propagate anonymization/verification failures
-            throw ex;
         }
     }
 

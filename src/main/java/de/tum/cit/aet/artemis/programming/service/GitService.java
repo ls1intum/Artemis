@@ -704,8 +704,8 @@ public class GitService extends AbstractGitService {
 
     /**
      * Removes all author information from the commits on the currently active branch.
-     * Removes all remotes and FETCH_HEAD since they contain data about the student.
-     * Deletes the .git/logs folder to prevent restoring commits from reflogs
+     * Also removes all remotes and FETCH_HEAD since they contain data about the student.
+     * Also deletes the .git/logs folder to prevent restoring commits from reflogs
      *
      * @param repository          Local Repository Object.
      * @param programmingExercise ProgrammingExercise associated with this repo.
@@ -790,7 +790,7 @@ public class GitService extends AbstractGitService {
             if (!git.remoteList().call().isEmpty()) {
                 throw new de.tum.cit.aet.artemis.core.exception.GitException("Anonymization verification failed: repository still has remotes configured");
             }
-            // Ensure no remote tracking refs remain
+            // Also ensure no remote tracking refs remain
             try {
                 for (Ref ref : git.getRepository().getRefDatabase().getRefs()) {
                     if (ref.getName().startsWith("refs/remotes/")) {
@@ -839,9 +839,6 @@ public class GitService extends AbstractGitService {
             }
         }
         catch (org.eclipse.jgit.api.errors.GitAPIException | org.eclipse.jgit.api.errors.JGitInternalException e) {
-            throw new de.tum.cit.aet.artemis.core.exception.GitException("Failed during anonymization verification: " + e.getMessage(), e);
-        }
-        catch (de.tum.cit.aet.artemis.core.exception.EntityNotFoundException e) {
             throw new de.tum.cit.aet.artemis.core.exception.GitException("Failed during anonymization verification: " + e.getMessage(), e);
         }
     }
