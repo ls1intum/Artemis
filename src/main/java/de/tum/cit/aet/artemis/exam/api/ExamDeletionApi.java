@@ -18,7 +18,7 @@ public class ExamDeletionApi extends AbstractExamApi {
         this.examDeletionService = examDeletionService;
     }
 
-    public void delete(long examId) {
-        examDeletionService.delete(examId);
+    public void deleteByCourseId(long courseId) {
+        examDeletionService.deleteByCourseId(courseId);
     }
 }

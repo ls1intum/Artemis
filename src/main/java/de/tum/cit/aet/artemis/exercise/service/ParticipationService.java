@@ -14,8 +14,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -57,8 +55,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 @Lazy
 @Service
 public class ParticipationService {
-
-    private static final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;

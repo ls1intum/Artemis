@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor  # Add multithreading support
 
 # Load configuration
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(['../config.ini', 'config.ini'])
 
 # Constants from config file
 CLIENT_URL: str = config.get('Settings', 'client_url')
