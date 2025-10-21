@@ -99,7 +99,7 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
         var request = new NebulaTranscriptionRequestDTO("https://example.com/video.mp4", lecture.getId(), lectureUnit.getId());
 
         // Perform POST request
-        restNebulaTranscriptionMockMvc.perform(post("/api/lecture/nebula/{lectureId}/lecture-unit/{lectureUnitId}/transcriber", lecture.getId(), lectureUnit.getId())
+        restNebulaTranscriptionMockMvc.perform(post("/api/nebula/{lectureId}/lecture-unit/{lectureUnitId}/transcriber", lecture.getId(), lectureUnit.getId())
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))).andExpect(status().isOk());
 
         // Verify transcription was created with PENDING status
@@ -128,7 +128,7 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
         var request = new NebulaTranscriptionRequestDTO("https://example.com/video.mp4", lecture.getId(), lectureUnit.getId());
 
         // Perform POST request
-        restNebulaTranscriptionMockMvc.perform(post("/api/lecture/nebula/{lectureId}/lecture-unit/{lectureUnitId}/transcriber", lecture.getId(), lectureUnit.getId())
+        restNebulaTranscriptionMockMvc.perform(post("/api/nebula/{lectureId}/lecture-unit/{lectureUnitId}/transcriber", lecture.getId(), lectureUnit.getId())
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))).andExpect(status().isOk());
 
         // Verify old transcription was replaced
@@ -148,7 +148,7 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
         var request = new NebulaTranscriptionRequestDTO("https://example.com/video.mp4", lecture.getId(), lectureUnit.getId());
 
         // Should return 500 when Nebula service fails
-        restNebulaTranscriptionMockMvc.perform(post("/api/lecture/nebula/{lectureId}/lecture-unit/{lectureUnitId}/transcriber", lecture.getId(), lectureUnit.getId())
+        restNebulaTranscriptionMockMvc.perform(post("/api/nebula/{lectureId}/lecture-unit/{lectureUnitId}/transcriber", lecture.getId(), lectureUnit.getId())
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))).andExpect(status().isInternalServerError());
 
         // Verify no transcription was created
@@ -161,7 +161,7 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
         var request = new NebulaTranscriptionRequestDTO("https://example.com/video.mp4", lecture.getId(), lectureUnit.getId());
 
         // Students should not be able to start transcriptions
-        restNebulaTranscriptionMockMvc.perform(post("/api/lecture/nebula/{lectureId}/lecture-unit/{lectureUnitId}/transcriber", lecture.getId(), lectureUnit.getId())
+        restNebulaTranscriptionMockMvc.perform(post("/api/nebula/{lectureId}/lecture-unit/{lectureUnitId}/transcriber", lecture.getId(), lectureUnit.getId())
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request))).andExpect(status().isForbidden());
     }
 
@@ -172,8 +172,7 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
         when(tumLiveService.getTumLivePlaylistLink(anyString())).thenReturn(java.util.Optional.empty());
 
         // Non-TUM-Live URLs should return 404
-        restNebulaTranscriptionMockMvc.perform(get("/api/lecture/nebula/video-utils/tum-live-playlist").param("url", "https://youtube.com/watch?v=123"))
-                .andExpect(status().isNotFound());
+        restNebulaTranscriptionMockMvc.perform(get("/api/nebula/video-utils/tum-live-playlist").param("url", "https://youtube.com/watch?v=123")).andExpect(status().isNotFound());
     }
 
     @Test
@@ -183,7 +182,6 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
         when(tumLiveService.getTumLivePlaylistLink(anyString())).thenReturn(java.util.Optional.empty());
 
         // Invalid TUM Live URL format should return 404
-        restNebulaTranscriptionMockMvc.perform(get("/api/lecture/nebula/video-utils/tum-live-playlist").param("url", "https://tum.live/invalid-format"))
-                .andExpect(status().isNotFound());
+        restNebulaTranscriptionMockMvc.perform(get("/api/nebula/video-utils/tum-live-playlist").param("url", "https://tum.live/invalid-format")).andExpect(status().isNotFound());
     }
 }

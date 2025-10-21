@@ -20,6 +20,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
@@ -27,8 +29,6 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionInitResponseDTO;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionStatusResponseDTO;
-import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 
 /**
@@ -43,9 +43,9 @@ public class LectureTranscriptionService {
 
     private static final Logger log = LoggerFactory.getLogger(LectureTranscriptionService.class);
 
-    private final LectureTranscriptionRepository lectureTranscriptionRepository;
+    private final LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi;
 
-    private final LectureUnitRepository lectureUnitRepository;
+    private final LectureUnitRepositoryApi lectureUnitRepositoryApi;
 
     private final RestTemplate restTemplate;
 
@@ -53,11 +53,11 @@ public class LectureTranscriptionService {
 
     private final String nebulaSecretToken;
 
-    public LectureTranscriptionService(LectureTranscriptionRepository lectureTranscriptionRepository, LectureUnitRepository lectureUnitRepository,
+    public LectureTranscriptionService(LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi, LectureUnitRepositoryApi lectureUnitRepositoryApi,
             @Qualifier("nebulaRestTemplate") RestTemplate restTemplate, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
             @Value("${artemis.nebula.secret}") String nebulaSecretToken) {
-        this.lectureTranscriptionRepository = lectureTranscriptionRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
+        this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.restTemplate = restTemplate;
         this.nebulaBaseUrl = nebulaBaseUrl;
         this.nebulaSecretToken = nebulaSecretToken;
@@ -120,14 +120,14 @@ public class LectureTranscriptionService {
      */
     @VisibleForTesting
     void saveFinalTranscriptionResult(String jobId, LectureTranscriptionDTO dto) {
-        LectureTranscription transcription = lectureTranscriptionRepository.findByJobId(jobId)
+        LectureTranscription transcription = lectureTranscriptionsRepositoryApi.findByJobId(jobId)
                 .orElseThrow(() -> new IllegalStateException("No transcription found for jobId: " + jobId));
 
         transcription.setLanguage(dto.language());
         transcription.setSegments(dto.segments());
         transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
 
-        lectureTranscriptionRepository.save(transcription);
+        lectureTranscriptionsRepositoryApi.save(transcription);
     }
 
     /**
@@ -139,7 +139,7 @@ public class LectureTranscriptionService {
     @VisibleForTesting
     void markTranscriptionAsFailed(LectureTranscription transcription, String errorMessage) {
         transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-        lectureTranscriptionRepository.save(transcription);
+        lectureTranscriptionsRepositoryApi.save(transcription);
         log.warn("Transcription failed for jobId={}, reason: {}", transcription.getJobId(), errorMessage);
     }
 
@@ -160,7 +160,7 @@ public class LectureTranscriptionService {
         t.setJobId(jobId);
         t.setTranscriptionStatus(TranscriptionStatus.PENDING);
 
-        lectureTranscriptionRepository.save(t);
+        lectureTranscriptionsRepositoryApi.save(t);
     }
 
     /**
@@ -172,7 +172,7 @@ public class LectureTranscriptionService {
      * @throws ResponseStatusException if the unit does not belong to the lecture
      */
     private LectureUnit validateAndCleanup(Long lectureId, Long lectureUnitId) {
-        LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
+        LectureUnit lectureUnit = lectureUnitRepositoryApi.findByIdElseThrow(lectureUnitId);
 
         if (lectureUnit.getLecture() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lecture Unit has no associated Lecture.");
@@ -182,9 +182,9 @@ public class LectureTranscriptionService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lecture Unit does not belong to the Lecture.");
         }
 
-        lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(existing -> {
-            lectureTranscriptionRepository.deleteById(existing.getId());
-            lectureTranscriptionRepository.flush();
+        lectureTranscriptionsRepositoryApi.findByLectureUnit_Id(lectureUnitId).ifPresent(existing -> {
+            lectureTranscriptionsRepositoryApi.deleteById(existing.getId());
+            lectureTranscriptionsRepositoryApi.flush();
         });
 
         return lectureUnit;

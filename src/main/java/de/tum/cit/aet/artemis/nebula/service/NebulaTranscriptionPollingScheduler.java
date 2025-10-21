@@ -12,9 +12,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
-import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 
 /**
@@ -29,12 +29,12 @@ public class NebulaTranscriptionPollingScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(NebulaTranscriptionPollingScheduler.class);
 
-    private final LectureTranscriptionRepository transcriptionRepository;
+    private final LectureTranscriptionsRepositoryApi transcriptionRepositoryApi;
 
     private final LectureTranscriptionService transcriptionService;
 
-    public NebulaTranscriptionPollingScheduler(LectureTranscriptionRepository transcriptionRepository, LectureTranscriptionService transcriptionService) {
-        this.transcriptionRepository = transcriptionRepository;
+    public NebulaTranscriptionPollingScheduler(LectureTranscriptionsRepositoryApi transcriptionRepositoryApi, LectureTranscriptionService transcriptionService) {
+        this.transcriptionRepositoryApi = transcriptionRepositoryApi;
         this.transcriptionService = transcriptionService;
     }
 
@@ -47,7 +47,7 @@ public class NebulaTranscriptionPollingScheduler {
     public void pollPendingNebulaTranscriptions() {
         log.debug("Polling pending Nebula transcriptions...");
 
-        List<LectureTranscription> pendingTranscriptions = transcriptionRepository.findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus.PENDING);
+        List<LectureTranscription> pendingTranscriptions = transcriptionRepositoryApi.findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus.PENDING);
 
         if (!pendingTranscriptions.isEmpty()) {
             log.info("Found {} pending Nebula transcriptions to process", pendingTranscriptions.size());

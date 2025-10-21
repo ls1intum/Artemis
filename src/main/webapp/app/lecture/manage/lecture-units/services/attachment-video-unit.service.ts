@@ -105,7 +105,7 @@ export class AttachmentVideoUnitService {
         };
 
         return this.httpClient
-            .post(`/api/lecture/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`, body, {
+            .post(`/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`, body, {
                 observe: 'response',
                 responseType: 'text',
             })

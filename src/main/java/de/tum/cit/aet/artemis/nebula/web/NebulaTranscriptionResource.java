@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/lecture/nebula/")
+@RequestMapping("api/nebula/")
 public class NebulaTranscriptionResource {
 
     private static final Logger log = LoggerFactory.getLogger(NebulaTranscriptionResource.class);
