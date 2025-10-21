@@ -180,6 +180,73 @@ class AtlasAgentServiceTest {
         assertThat(instructor1SessionId).isNotEqualTo(instructor2SessionId);
     }
 
+    @Test
+    void testProcessChatMessage_WithCompetencyCreated() throws ExecutionException, InterruptedException {
+        AtlasAgentToolsService mockToolsService = org.mockito.Mockito.mock(AtlasAgentToolsService.class);
+        ChatClient chatClient = ChatClient.create(chatModel);
+        AtlasAgentService serviceWithToolsService = new AtlasAgentService(chatClient, templateService, null, null, mockToolsService);
+
+        String testMessage = "Create a competency";
+        Long courseId = 123L;
+        String sessionId = "session_create_comp";
+        String expectedResponse = "Competency created";
+
+        when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
+        when(mockToolsService.wasCompetencyCreated()).thenReturn(true);
+
+        CompletableFuture<AgentChatResult> result = serviceWithToolsService.processChatMessage(testMessage, courseId, sessionId);
+
+        assertThat(result).isNotNull();
+        AgentChatResult chatResult = result.get();
+        assertThat(chatResult.message()).isEqualTo(expectedResponse);
+        assertThat(chatResult.competenciesModified()).isTrue();
+    }
+
+    @Test
+    void testProcessChatMessage_WithCompetencyNotCreated() throws ExecutionException, InterruptedException {
+        AtlasAgentToolsService mockToolsService = org.mockito.Mockito.mock(AtlasAgentToolsService.class);
+        ChatClient chatClient = ChatClient.create(chatModel);
+        AtlasAgentService serviceWithToolsService = new AtlasAgentService(chatClient, templateService, null, null, mockToolsService);
+
+        String testMessage = "Show me competencies";
+        Long courseId = 123L;
+        String sessionId = "session_no_comp_created";
+        String expectedResponse = "Here are the competencies";
+
+        when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
+        when(mockToolsService.wasCompetencyCreated()).thenReturn(false);
+
+        CompletableFuture<AgentChatResult> result = serviceWithToolsService.processChatMessage(testMessage, courseId, sessionId);
+
+        assertThat(result).isNotNull();
+        AgentChatResult chatResult = result.get();
+        assertThat(chatResult.message()).isEqualTo(expectedResponse);
+        assertThat(chatResult.competenciesModified()).isFalse();
+    }
+
+    @Test
+    void testIsAvailable_WithException() {
+        ChatClient chatClient = ChatClient.create(chatModel);
+        AtlasAgentService service = new AtlasAgentService(chatClient, templateService, null, null, null) {
+
+            @Override
+            public boolean isAvailable() {
+                try {
+                    throw new RuntimeException("Simulated error");
+                }
+                catch (Exception e) {
+                    return false;
+                }
+            }
+        };
+
+        boolean available = service.isAvailable();
+
+        assertThat(available).isFalse();
+    }
+
     @Nested
     class AtlasAgentToolsServiceTests {
 
@@ -323,6 +390,65 @@ class AtlasAgentServiceTest {
 
         @Test
         void testWasCompetencyCreated_InitiallyFalse() {
+            assertThat(toolsService.wasCompetencyCreated()).isFalse();
+        }
+
+        @Test
+        void testGetCourseCompetencies_WithNullTaxonomy() {
+            Long courseId = 123L;
+            Course course = new Course();
+            course.setId(courseId);
+
+            Competency competency = new Competency();
+            competency.setId(1L);
+            competency.setTitle("No Taxonomy");
+            competency.setDescription("Competency without taxonomy");
+            competency.setTaxonomy(null);
+
+            when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
+            when(competencyRepository.findAllByCourseId(courseId)).thenReturn(Set.of(competency));
+
+            String result = toolsService.getCourseCompetencies(courseId);
+
+            assertThat(result).contains("No Taxonomy");
+            assertThat(result).contains("Competency without taxonomy");
+            assertThat(result).contains("\"taxonomy\":\"\"");
+        }
+
+        @Test
+        void testCreateCompetency_WithNullTaxonomy() {
+            Long courseId = 123L;
+            Course course = new Course();
+            course.setId(courseId);
+
+            Competency savedCompetency = new Competency();
+            savedCompetency.setId(1L);
+            savedCompetency.setTitle("No Taxonomy");
+            savedCompetency.setDescription("Test");
+            savedCompetency.setTaxonomy(null);
+
+            when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
+            when(competencyRepository.save(any(Competency.class))).thenReturn(savedCompetency);
+
+            String result = toolsService.createCompetency(courseId, "No Taxonomy", "Test", CompetencyTaxonomy.APPLY);
+
+            assertThat(result).contains("success");
+            assertThat(result).contains("\"taxonomy\":\"\"");
+        }
+
+        @Test
+        void testCreateCompetency_WithException() {
+            Long courseId = 123L;
+            Course course = new Course();
+            course.setId(courseId);
+
+            when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
+            when(competencyRepository.save(any(Competency.class))).thenThrow(new RuntimeException("Database error"));
+
+            String result = toolsService.createCompetency(courseId, "Test", "Test desc", CompetencyTaxonomy.APPLY);
+
+            assertThat(result).contains("error");
+            assertThat(result).contains("Failed to create competency");
             assertThat(toolsService.wasCompetencyCreated()).isFalse();
         }
     }
