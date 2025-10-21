@@ -43,19 +43,16 @@ export class AccountService implements IAccountService {
     private readonly featureToggleService = inject(FeatureToggleService);
 
     // cached value of the user to avoid unnecessary requests to the server
-    private readonly userIdentity = signal<User | undefined>(undefined);
+    userIdentity = signal<User | undefined>(undefined);
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
 
     readonly authenticated = computed(() => !!this.userIdentity());
 
     constructor() {
-        effect(
-            () => {
-                this.handleSideEffectsWhenUserIdentityChanges();
-            },
-            { injector: this.injector },
-        );
+        effect(() => {
+            this.handleSideEffectsWhenUserIdentityChanges();
+        });
     }
 
     private handleSideEffectsWhenUserIdentityChanges(): void {
@@ -90,7 +87,7 @@ export class AccountService implements IAccountService {
     }
 
     syncGroups(groups: string[]) {
-        this.userIdentity!.groups = groups;
+        this.userIdentity()!.groups = groups;
     }
 
     hasAnyAuthority(authorities: string[]): Promise<boolean> {
@@ -98,12 +95,12 @@ export class AccountService implements IAccountService {
     }
 
     hasAnyAuthorityDirect(authorities: string[]): boolean {
-        if (!this.authenticated() || !this.userIdentity || !this.userIdentity.authorities) {
+        if (!this.authenticated() || !this.userIdentity() || !this.userIdentity()?.authorities) {
             return false;
         }
 
         for (let i = 0; i < authorities.length; i++) {
-            if (this.userIdentity.authorities.includes(authorities[i])) {
+            if (this.userIdentity()?.authorities?.includes(authorities[i])) {
                 return true;
             }
         }
@@ -128,11 +125,11 @@ export class AccountService implements IAccountService {
     }
 
     hasGroup(group?: string): boolean {
-        if (!this.authenticated() || !this.userIdentity || !this.userIdentity.authorities || !this.userIdentity.groups || !group) {
+        if (!this.authenticated() || !this.userIdentity() || !this.userIdentity()?.authorities || !this.userIdentity()?.groups || !group) {
             return false;
         }
 
-        return this.userIdentity.groups.some((userGroup: string) => userGroup === group);
+        return this.userIdentity()?.groups?.some((userGroup: string) => userGroup === group) ?? false;
     }
 
     identity(force?: boolean): Promise<User | undefined> {
@@ -142,8 +139,8 @@ export class AccountService implements IAccountService {
 
         // check and see if we have retrieved the userIdentity data from the server.
         // if we have, reuse it by immediately resolving
-        if (this.userIdentity) {
-            return Promise.resolve(this.userIdentity);
+        if (this.userIdentity()) {
+            return Promise.resolve(this.userIdentity());
         }
 
         // retrieve the userIdentity data from the server, update the identity object, and then resolve.
@@ -159,14 +156,14 @@ export class AccountService implements IAccountService {
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
-                        const langKey = this.userIdentity.langKey || this.sessionStorageService.retrieve<string>('locale');
+                        const langKey = this.userIdentity()?.langKey || this.sessionStorageService.retrieve<string>('locale');
                         if (langKey) {
                             this.translateService.use(langKey);
                         }
                     } else {
                         this.userIdentity.set(undefined);
                     }
-                    return this.userIdentity;
+                    return this.userIdentity();
                 }),
                 catchError(() => {
                     this.userIdentity.set(undefined);
@@ -282,9 +279,9 @@ export class AccountService implements IAccountService {
      */
     isOwnerOfParticipation(participation: StudentParticipation): boolean {
         if (participation.student) {
-            return this.userIdentity?.login === participation.student.login;
+            return this.userIdentity()?.login === participation.student.login;
         } else if (participation.team?.students) {
-            return participation.team.students.some((student) => this.userIdentity?.login === student.login);
+            return participation.team.students.some((student) => this.userIdentity()?.login === student.login);
         }
         throw new Error('Participation does not have any owners');
     }
@@ -295,13 +292,15 @@ export class AccountService implements IAccountService {
      * Returns undefined if the user is not authenticated or the user does not have an image.
      */
     getImageUrl() {
-        return this.isAuthenticated() && this.userIdentity ? addPublicFilePrefix(this.userIdentity.imageUrl) : undefined;
+        return this.isAuthenticated() && this.userIdentity() ? addPublicFilePrefix(this.userIdentity()!.imageUrl) : undefined;
     }
 
     setImageUrl(url: string | undefined) {
-        if (this.userIdentity != null) {
-            this.userIdentity!.imageUrl = url;
+        if (!this.userIdentity()) {
+            return;
         }
+
+        this.userIdentity()!.imageUrl = url;
     }
 
     /**
@@ -377,11 +376,11 @@ export class AccountService implements IAccountService {
      * to omit accepting external LLM usage popup appearing multiple time before user refreshes the page.
      */
     setUserAcceptedExternalLLMUsage(accepted: boolean = true): void {
-        if (!this.userIdentity) {
+        if (!this.userIdentity()) {
             return;
         }
 
-        this.userIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
+        this.userIdentity()!.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
     }
 
     setUserEnabledMemiris(memirisEnabled: boolean): void {
@@ -391,7 +390,7 @@ export class AccountService implements IAccountService {
 
         this.http.put('api/core/account/enable-memiris', memirisEnabled).subscribe({
             next: () => {
-                this.userIdentity!.memirisEnabled = memirisEnabled;
+                this.userIdentity()!.memirisEnabled = memirisEnabled;
             },
             error: (_) => {},
         });

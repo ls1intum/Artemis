@@ -15,7 +15,7 @@ export class IrisLearnerProfileComponent implements OnInit {
     memirisEnabled: boolean;
 
     ngOnInit(): void {
-        this.memirisEnabled = this.accountService.userIdentity?.memirisEnabled ?? false;
+        this.memirisEnabled = this.accountService.userIdentity()?.memirisEnabled ?? false;
     }
 
     onMemirisEnabledChange() {

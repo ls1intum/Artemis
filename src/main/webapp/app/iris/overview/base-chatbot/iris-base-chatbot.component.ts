@@ -303,7 +303,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     checkIfUserAcceptedExternalLLMUsage(): void {
-        this.userAccepted = !!this.accountService.userIdentity?.externalLLMUsageAccepted;
+        this.userAccepted = !!this.accountService.userIdentity()?.externalLLMUsageAccepted;
         setTimeout(() => this.adjustTextareaRows(), 0);
     }
 
