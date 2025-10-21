@@ -53,8 +53,11 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
             id: 7,
             type: ExerciseType.TEXT,
             assessmentType: AssessmentType.SEMI_AUTOMATIC,
-            dueDate: dayjs().add(2, 'day').toISOString(),
+            dueDate: dayjs().add(2, 'day'),
             feedbackSuggestionModule: 'initial-module',
+            numberOfAssessmentsOfCorrectionRounds: [],
+            studentAssignedTeamIdComputed: false,
+            secondCorrectionEnabled: false,
         } as Exercise;
     });
 
@@ -95,7 +98,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         };
 
         component.exercise.feedbackSuggestionModule = 'changed-module';
-        component.exercise.dueDate = dayjs().subtract(1, 'day').toISOString();
+        component.exercise.dueDate = dayjs().subtract(1, 'day');
         component.dueDate = dayjs().subtract(1, 'day');
 
         component.ngOnChanges({
@@ -108,7 +111,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should keep the selected module when inputs remain enabled after due date change', () => {
         component.initialAthenaModule = 'initial-module';
         component.exercise.feedbackSuggestionModule = 'selected-module';
-        component.exercise.dueDate = dayjs().add(1, 'day').toISOString();
+        component.exercise.dueDate = dayjs().add(1, 'day');
         component.dueDate = dayjs().add(1, 'day');
 
         component.ngOnChanges({
@@ -123,7 +126,10 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
             id: 8,
             type: ExerciseType.PROGRAMMING,
             assessmentType: AssessmentType.AUTOMATIC,
-            dueDate: dayjs().add(1, 'day').toISOString(),
+            dueDate: dayjs().add(1, 'day'),
+            numberOfAssessmentsOfCorrectionRounds: [],
+            studentAssignedTeamIdComputed: false,
+            secondCorrectionEnabled: false,
         } as Exercise;
 
         expect(component.inputControlsDisabled()).toBeTrue();
@@ -136,10 +142,10 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         component.exercise.dueDate = undefined;
         expect(component.inputControlsDisabled()).toBeTrue();
 
-        component.exercise.dueDate = dayjs().add(2, 'day').toISOString();
+        component.exercise.dueDate = dayjs().add(2, 'day');
         expect(component.inputControlsDisabled()).toBeFalse();
 
-        component.exercise.dueDate = dayjs().subtract(1, 'day').toISOString();
+        component.exercise.dueDate = dayjs().subtract(1, 'day');
         expect(component.inputControlsDisabled()).toBeTrue();
     });
 
@@ -148,12 +154,15 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
             id: 9,
             type: ExerciseType.TEXT,
             assessmentType: AssessmentType.SEMI_AUTOMATIC,
-            dueDate: dayjs().add(1, 'day').toISOString(),
+            dueDate: dayjs().add(1, 'day'),
+            numberOfAssessmentsOfCorrectionRounds: [],
+            studentAssignedTeamIdComputed: false,
+            secondCorrectionEnabled: false,
         } as Exercise;
 
         expect(component.inputControlsDisabled()).toBeFalse();
 
-        component.exercise.dueDate = dayjs().subtract(1, 'day').toISOString();
+        component.exercise.dueDate = dayjs().subtract(1, 'day');
         expect(component.inputControlsDisabled()).toBeTrue();
     });
 
