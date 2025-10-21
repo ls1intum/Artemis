@@ -39,7 +39,6 @@
                 "channelWithName": "Kanal: {{ channel }}",
                 "channelReverse": "Kanal der Übungsgruppe {{ title }}",
                 "utilization": "Auslastung",
-                "attendance": "Anwesenheit",
                 "utilizationHelp": "Durchschnittliche Anwesenheit geteilt durch Kapazität (falls definiert). Die durchschnittliche Anwesenheit bezieht sich auf die letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
                 "utilizationHelpDetail": "Durchschnittliche Anwesenheit geteilt durch Kapazität",
                 "averageAttendance": "Durchschnittliche Anwesenheit: {{ averageAttendance }}",
