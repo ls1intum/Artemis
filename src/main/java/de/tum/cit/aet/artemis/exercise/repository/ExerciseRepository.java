@@ -361,6 +361,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise e
                 LEFT JOIN FETCH e.categories
                 LEFT JOIN FETCH e.submissionPolicy
+                LEFT JOIN FETCH e.athenaConfig
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
@@ -579,7 +580,22 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @param dueDate - filter by due date
      * @return Set of Exercises
      */
-    Set<Exercise> findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime dueDate);
+    @Query("""
+            SELECT e
+            FROM Exercise e
+                JOIN FETCH e.athenaConfig cfg
+            WHERE cfg.feedbackSuggestionModule IS NOT NULL
+                AND e.dueDate > :dueDate
+            """)
+    Set<Exercise> findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(@Param("dueDate") ZonedDateTime dueDate);
+
+    @EntityGraph(type = LOAD, attributePaths = { "athenaConfig" })
+    Optional<Exercise> findWithAthenaConfigById(Long exerciseId);
+
+    @NotNull
+    default Exercise findWithAthenaConfigByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithAthenaConfigById(exerciseId), exerciseId);
+    }
 
     /**
      * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
@@ -599,10 +615,10 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
-            UPDATE Exercise e
-            SET e.feedbackSuggestionModule = NULL
-            WHERE e.course.id = :courseId
-                  AND e.feedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
+            UPDATE ExerciseAthenaConfig cfg
+            SET cfg.feedbackSuggestionModule = NULL
+            WHERE cfg.exercise.course.id = :courseId
+                  AND cfg.feedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
             """)
     void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
             @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
@@ -616,10 +632,10 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
-            UPDATE Exercise e
-            SET e.preliminaryFeedbackModule = NULL
-            WHERE e.course.id = :courseId
-                  AND e.preliminaryFeedbackModule IN :restrictedPreliminaryFeedbackModule
+            UPDATE ExerciseAthenaConfig cfg
+            SET cfg.preliminaryFeedbackModule = NULL
+            WHERE cfg.exercise.course.id = :courseId
+                  AND cfg.preliminaryFeedbackModule IN :restrictedPreliminaryFeedbackModule
             """)
     void revokeAccessToRestrictedPreliminaryFeedbackModulesByCourseId(@Param("courseId") Long courseId,
             @Param("restrictedPreliminaryFeedbackModule") Collection<String> restrictedPreliminaryFeedbackModule);

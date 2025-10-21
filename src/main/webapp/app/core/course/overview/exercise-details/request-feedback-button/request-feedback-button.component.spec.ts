@@ -72,15 +72,13 @@ describe('RequestFeedbackButtonComponent', () => {
     }
 
     function createBaseExercise(type: ExerciseType, isExam = false, participation?: StudentParticipation, preliminaryModule?: string): Exercise {
-        if (!preliminaryModule) {
-            preliminaryModule = 'module';
-        }
+        const athenaConfig = preliminaryModule ? { preliminaryFeedbackModule: preliminaryModule } : undefined;
         return {
             id: 1,
             type,
             course: isExam ? undefined : {},
             studentParticipations: participation ? [participation] : undefined,
-            preliminaryFeedbackModule: preliminaryModule,
+            athenaConfig,
         } as Exercise;
     }
 

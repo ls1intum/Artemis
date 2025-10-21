@@ -86,7 +86,8 @@ public class AthenaScheduleService {
      * @param exercise exercise to schedule Athena for
      */
     public void scheduleExerciseForAthenaIfRequired(Exercise exercise) {
-        if (!exercise.areFeedbackSuggestionsEnabled()) {
+        var config = exercise.getAthenaConfig();
+        if (config == null || config.getFeedbackSuggestionModule() == null) {
             cancelScheduledAthena(exercise.getId());
             return;
         }

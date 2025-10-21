@@ -172,7 +172,7 @@ public class InstanceMessageReceiveService {
 
     public void processSchedulePotentialAthenaExercise(Long exerciseId) {
         log.info("Received schedule update for potential Athena exercise {}", exerciseId);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        Exercise exercise = exerciseRepository.findWithAthenaConfigByIdElseThrow(exerciseId);
         athenaApi.ifPresent(api -> api.scheduleExerciseForAthenaIfRequired(exercise));
     }
 

@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
@@ -136,10 +137,12 @@ public class TextExerciseCreationUpdateResource {
             api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
         }
         else {
-            textExercise.setFeedbackSuggestionModule(null);
-            textExercise.setPreliminaryFeedbackModule(null);
+            textExercise.setAthenaConfig(null);
         }
 
+        if (textExercise.getAthenaConfig() != null) {
+            textExercise.getAthenaConfig().setExercise(textExercise);
+        }
         TextExercise result = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
@@ -179,7 +182,8 @@ public class TextExerciseCreationUpdateResource {
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
-        final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findWithEagerCompetenciesAndCategoriesByIdElseThrow(textExercise.getId());
+        final TextExercise textExerciseBeforeUpdate = textExerciseRepository
+                .findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndAthenaConfigByIdElseThrow(textExercise.getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExerciseBeforeUpdate, user);
 
         // Forbid changing the course the exercise belongs to.
@@ -198,8 +202,7 @@ public class TextExerciseCreationUpdateResource {
             api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
         }
         else {
-            textExercise.setFeedbackSuggestionModule(textExerciseBeforeUpdate.getFeedbackSuggestionModule());
-            textExercise.setPreliminaryFeedbackModule(textExerciseBeforeUpdate.getPreliminaryFeedbackModule());
+            textExercise.setAthenaConfig(copyAthenaConfig(textExerciseBeforeUpdate.getAthenaConfig()));
         }
         // Changing Athena module after the due date has passed is not allowed
         athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(textExerciseBeforeUpdate, textExercise, ENTITY_NAME));
@@ -255,5 +258,9 @@ public class TextExerciseCreationUpdateResource {
         exerciseService.reEvaluateExercise(textExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateTextExercise(textExercise, null);
+    }
+
+    private static ExerciseAthenaConfig copyAthenaConfig(ExerciseAthenaConfig source) {
+        return source == null ? null : new ExerciseAthenaConfig(source);
     }
 }

@@ -173,7 +173,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
             this.exercise.assessmentDueDate = undefined;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
-            this.exercise.feedbackSuggestionModule = undefined;
+            this.clearFeedbackSuggestionModule();
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
@@ -193,6 +193,15 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
      */
     toggleReleaseTests() {
         this.exercise.releaseTestsWithExampleSolution = !this.exercise.releaseTestsWithExampleSolution;
+    }
+
+    private clearFeedbackSuggestionModule() {
+        if (this.exercise.athenaConfig) {
+            delete this.exercise.athenaConfig.feedbackSuggestionModule;
+            if (!this.exercise.athenaConfig.preliminaryFeedbackModule) {
+                this.exercise.athenaConfig = undefined;
+            }
+        }
     }
 
     /**

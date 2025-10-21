@@ -590,8 +590,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution',
                     data: { boolean: exercise.releaseTestsWithExampleSolution },
                 },
-                { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackSuggestions', data: { boolean: !!exercise.feedbackSuggestionModule } },
-                { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackRequests', data: { boolean: !!exercise.preliminaryFeedbackModule } },
+                { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackSuggestions', data: { boolean: !!exercise.athenaConfig?.feedbackSuggestionModule } },
+                { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackRequests', data: { boolean: !!exercise.athenaConfig?.preliminaryFeedbackModule } },
                 { type: DetailType.Markdown, title: 'artemisApp.exercise.assessmentInstructions', data: { innerHtml: this.formattedGradingInstructions } },
                 exercise.gradingCriteria && {
                     type: DetailType.GradingCriteria,

@@ -77,7 +77,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      */
     load(exerciseId: number) {
         // TODO: Use a separate find method for exam exercises containing course, exam, exerciseGroup and exercise exerciseId
-        this.textExerciseService.find(exerciseId).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
+        this.textExerciseService.find(exerciseId, false, true).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
             this.textExercise = textExerciseResponse.body!;
             this.isExamExercise = !!this.textExercise.exerciseGroup;
             this.course = this.isExamExercise ? this.textExercise.exerciseGroup?.exam?.course : this.textExercise.course;
@@ -109,8 +109,8 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
                 headline: 'artemisApp.exercise.sections.grading',
                 details: [
                     ...defaultGradingDetails,
-                    { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackSuggestions', data: { boolean: !!exercise.feedbackSuggestionModule } },
-                    { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackRequests', data: { boolean: !!exercise.preliminaryFeedbackModule } },
+                    { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackSuggestions', data: { boolean: !!exercise.athenaConfig?.feedbackSuggestionModule } },
+                    { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackRequests', data: { boolean: !!exercise.athenaConfig?.preliminaryFeedbackModule } },
                     ...gradingInstructionsCriteriaDetails,
                 ],
             },

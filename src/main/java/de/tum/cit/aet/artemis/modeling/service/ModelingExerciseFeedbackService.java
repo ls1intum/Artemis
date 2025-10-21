@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -53,14 +54,18 @@ public class ModelingExerciseFeedbackService {
 
     private final ResultRepository resultRepository;
 
+    private final ModelingExerciseRepository modelingExerciseRepository;
+
     public ModelingExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, SubmissionService submissionService, ResultService resultService,
-            ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService) {
+            ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService,
+            ModelingExerciseRepository modelingExerciseRepository) {
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.resultWebsocketService = resultWebsocketService;
         this.participationService = participationService;
+        this.modelingExerciseRepository = modelingExerciseRepository;
     }
 
     /**
@@ -91,7 +96,8 @@ public class ModelingExerciseFeedbackService {
                 throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);
             }
 
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise));
+            ModelingExercise modelingExerciseWithConfig = modelingExerciseRepository.findWithAthenaConfigByIdElseThrow(modelingExercise.getId());
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExerciseWithConfig));
         }
         return participation;
     }

@@ -611,7 +611,8 @@ public class ProgrammingExercise extends Exercise {
         participation.getSubmissions().forEach(submission -> {
             List<Result> results = submission.getResults();
             if (results != null && !results.isEmpty()) {
-                results.removeIf(result -> !(result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this))));
+                results.removeIf(
+                        result -> !(result.isAssessmentComplete() && (result.isAutomatic() || result.isAthenaBased() || ExerciseDateService.isAfterAssessmentDueDate(this))));
             }
         });
     }

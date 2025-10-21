@@ -194,11 +194,9 @@ public class AthenaFeedbackSuggestionsService {
         Submission latestSubmission = getLatestSubmission((StudentParticipation) submission.getParticipation());
         SubmissionBaseDTO latestSubmissionDTO = latestSubmission != null ? athenaDTOConverterService.ofSubmission(exercise.getId(), latestSubmission) : null;
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-
                 LearnerProfileDTO.of(extractLearnerProfile(submission)), !isPreliminary, latestSubmissionDTO);
-        ResponseDTOText response = textAthenaConnector.invokeWithRetry(
-                athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
-                        + "/feedback_suggestions",
+        var module = getModuleOrThrow(exercise, isPreliminary);
+        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), module) + "/feedback_suggestions",
                 request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Non Graded" : "Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isPreliminary);
@@ -223,10 +221,9 @@ public class AthenaFeedbackSuggestionsService {
         log.debug("Start Athena {} Feedback Suggestions Service for Exercise '{}' (#{}).", isPreliminary ? "Non Graded" : "Graded", exercise.getTitle(), exercise.getId());
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 !isPreliminary, null);
-        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(
-                athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
-                        + "/feedback_suggestions",
-                request, 0);
+        var module = getModuleOrThrow(exercise, isPreliminary);
+        ResponseDTOProgramming response = programmingAthenaConnector
+                .invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), module) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Non-Graded" : "Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isPreliminary);
         return response.data.stream().toList();
@@ -254,9 +251,8 @@ public class AthenaFeedbackSuggestionsService {
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 !isPreliminary, null);
-        ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(
-                athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
-                        + "/feedback_suggestions",
+        var module = getModuleOrThrow(exercise, isPreliminary);
+        ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), module) + "/feedback_suggestions",
                 request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Non Graded" : "Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isPreliminary);
@@ -327,5 +323,17 @@ public class AthenaFeedbackSuggestionsService {
             log.debug("Submission ID: {} already has an Athena result. Skipping feedback generation.", submission.getId());
             throw new BadRequestAlertException("Submission already has an Athena result", "submission", "submissionAlreadyHasAthenaResult", true);
         }
+    }
+
+    private String getModuleOrThrow(Exercise exercise, boolean isPreliminary) {
+        var config = exercise.getAthenaConfig();
+        if (config == null) {
+            throw new IllegalArgumentException("The exercise does not have an Athena configuration.");
+        }
+        var module = isPreliminary ? config.getPreliminaryFeedbackModule() : config.getFeedbackSuggestionModule();
+        if (module == null) {
+            throw new IllegalArgumentException("The exercise does not have " + (isPreliminary ? "a preliminary feedback" : "a feedback suggestion") + " module configured.");
+        }
+        return module;
     }
 }

@@ -135,7 +135,8 @@ public class AthenaResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         // Check if feedback suggestions are actually enabled
-        if (!exercise.areFeedbackSuggestionsEnabled()) {
+        var config = exercise.getAthenaConfig();
+        if (config == null || config.getFeedbackSuggestionModule() == null) {
             throw new InternalServerErrorException("Feedback suggestions are not enabled for this exercise");
         }
 
@@ -178,7 +179,7 @@ public class AthenaResource {
         var api = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class));
         var submissionApi = textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class));
 
-        return getFeedbackSuggestions(exerciseId, submissionId, api::findByIdElseThrow, submissionApi::findByIdElseThrow,
+        return getFeedbackSuggestions(exerciseId, submissionId, api::findWithAthenaConfigByIdElseThrow, submissionApi::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getTextFeedbackSuggestions);
     }
 
@@ -192,8 +193,8 @@ public class AthenaResource {
     @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findByIdElseThrow, programmingSubmissionRepository::findByIdElseThrow,
-                athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
+        return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findWithAthenaConfigByIdElseThrow,
+                programmingSubmissionRepository::findByIdElseThrow, athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
     }
 
     /**
@@ -206,7 +207,7 @@ public class AthenaResource {
     @GetMapping("modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ModelingFeedbackDTO>> getModelingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        return getFeedbackSuggestions(exerciseId, submissionId, modelingExerciseRepository::findByIdElseThrow, modelingSubmissionRepository::findByIdElseThrow,
+        return getFeedbackSuggestions(exerciseId, submissionId, modelingExerciseRepository::findWithAthenaConfigByIdElseThrow, modelingSubmissionRepository::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getModelingFeedbackSuggestions);
     }
 

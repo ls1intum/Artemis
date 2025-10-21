@@ -201,7 +201,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
 
-        var modelingSubmission = modelingSubmissionRepository.findByIdElseThrow(submissionId);
+        var modelingSubmission = modelingSubmissionRepository.findByIdWithExerciseAthenaConfigElseThrow(submissionId);
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
 
@@ -275,7 +275,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
 
         log.debug("REST request to get a modeling submission without assessment");
-        final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        final var exercise = modelingExerciseRepository.findWithAthenaConfigByIdElseThrow(exerciseId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 

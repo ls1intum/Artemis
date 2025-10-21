@@ -33,7 +33,8 @@
                         }
                     } @else {
                         @if (
-                            modelingExercise.preliminaryFeedbackModule && (!this.modelingExercise.dueDate || !hasExerciseDueDatePassed(this.modelingExercise, this.participation))
+                            modelingExercise.athenaConfig?.preliminaryFeedbackModule &&
+                            (!this.modelingExercise.dueDate || !hasExerciseDueDatePassed(this.modelingExercise, this.participation))
                         ) {
                             <jhi-request-feedback-button
                                 [exercise]="modelingExercise"

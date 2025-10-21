@@ -14,7 +14,7 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = route.params['exerciseId'] ? route.params['exerciseId'] : undefined;
         if (exerciseId) {
-            return this.service.find(exerciseId, true).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
+            return this.service.find(exerciseId, true, true).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
         return of(new ProgrammingExercise(undefined, undefined));
     }

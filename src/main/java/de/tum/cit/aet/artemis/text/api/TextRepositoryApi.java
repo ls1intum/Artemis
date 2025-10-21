@@ -42,4 +42,8 @@ public class TextRepositoryApi extends AbstractTextApi {
     public TextExercise findByIdElseThrow(long exerciseId) {
         return textExerciseRepository.findByIdElseThrow(exerciseId);
     }
+
+    public TextExercise findWithAthenaConfigByIdElseThrow(long exerciseId) {
+        return textExerciseRepository.findWithAthenaConfigByIdElseThrow(exerciseId);
+    }
 }

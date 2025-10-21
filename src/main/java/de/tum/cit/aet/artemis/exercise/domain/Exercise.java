@@ -133,12 +133,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
 
-    @Column(name = "feedback_suggestion_module") // Athena module name (Athena enabled) or null
-    private String feedbackSuggestionModule;
-
-    @Column(name = "preliminary_feedback_module") // Athena module name (Athena enabled) or null
-    private String preliminaryFeedbackModule;
-
     @ManyToOne
     private Course course;
 
@@ -179,6 +173,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JoinColumn(name = "plagiarism_detection_config_id")
     @JsonIgnoreProperties("exercise")
     private PlagiarismDetectionConfig plagiarismDetectionConfig;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "athena_config_id")
+    @JsonIgnoreProperties("exercise")
+    private ExerciseAthenaConfig athenaConfig;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -671,28 +670,15 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 
-    public String getFeedbackSuggestionModule() {
-        return feedbackSuggestionModule;
+    public ExerciseAthenaConfig getAthenaConfig() {
+        return athenaConfig;
     }
 
-    public void setFeedbackSuggestionModule(String feedbackSuggestionModule) {
-        this.feedbackSuggestionModule = feedbackSuggestionModule;
-    }
-
-    public String getPreliminaryFeedbackModule() {
-        return preliminaryFeedbackModule;
-    }
-
-    public void setPreliminaryFeedbackModule(String preliminaryFeedbackModule) {
-        this.preliminaryFeedbackModule = preliminaryFeedbackModule;
-    }
-
-    public boolean areFeedbackSuggestionsEnabled() {
-        return feedbackSuggestionModule != null;
-    }
-
-    public boolean isPreliminaryFeedbackEnabled() {
-        return preliminaryFeedbackModule != null;
+    public void setAthenaConfig(ExerciseAthenaConfig athenaConfig) {
+        this.athenaConfig = athenaConfig;
+        if (athenaConfig.isEmpty()) {
+            athenaConfig = null;
+        }
     }
 
     public Set<GradingCriterion> getGradingCriteria() {

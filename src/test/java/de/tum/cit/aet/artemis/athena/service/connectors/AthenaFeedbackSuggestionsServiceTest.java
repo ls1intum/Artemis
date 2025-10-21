@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -98,8 +99,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
         Course course = courseUtilService.addEmptyCourse();
         textExercise = textExerciseUtilService.createSampleTextExercise(course);
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_SUGGESTIONS_TEST);
-        textExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_TEXT_PRELIMINARY_TEST);
+        textExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_TEXT_SUGGESTIONS_TEST, ATHENA_MODULE_TEXT_PRELIMINARY_TEST));
         textSubmission = new TextSubmission(2L).text("This is a text submission");
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -110,8 +110,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         textSubmission.setParticipation(textParticipation);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST);
-        programmingExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST);
+        programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST, ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST));
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setId(3L);
 
@@ -119,8 +118,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
         var modelingCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise(null);
         modelingExercise = (ModelingExercise) modelingCourse.getExercises().stream().findFirst().orElseThrow();
-        modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_SUGGESTIONS_TEST);
-        modelingExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_MODELING_PRELIMINARY_TEST);
+        modelingExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_MODELING_SUGGESTIONS_TEST, ATHENA_MODULE_MODELING_PRELIMINARY_TEST));
         modelingSubmission = new ModelingSubmission();
         modelingSubmission.setId(4L);
         modelingSubmission.setParticipation(new StudentParticipation().exercise(modelingExercise));

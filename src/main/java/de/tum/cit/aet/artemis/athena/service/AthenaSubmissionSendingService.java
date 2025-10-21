@@ -83,7 +83,8 @@ public class AthenaSubmissionSendingService {
      * @param maxRetries number of retries before the request will be canceled
      */
     public void sendSubmissions(Exercise exercise, int maxRetries) {
-        if (!exercise.areFeedbackSuggestionsEnabled()) {
+        var config = exercise.getAthenaConfig();
+        if (config == null || config.getFeedbackSuggestionModule() == null) {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }
 
@@ -91,9 +92,10 @@ public class AthenaSubmissionSendingService {
 
         // Find all submissions for exercise (later we will support others)
         Pageable pageRequest = PageRequest.of(0, SUBMISSIONS_PER_REQUEST);
+        var feedbackSuggestionModule = config.getFeedbackSuggestionModule();
         while (true) {
             Page<Submission> submissions = submissionRepository.findLatestSubmittedSubmissionsByExerciseId(exercise.getId(), pageRequest);
-            sendSubmissions(exercise, submissions.toSet(), maxRetries);
+            sendSubmissions(exercise, submissions.toSet(), maxRetries, feedbackSuggestionModule);
             if (submissions.isLast()) {
                 break;
             }
@@ -109,6 +111,14 @@ public class AthenaSubmissionSendingService {
      * @param maxRetries  number of retries before the request will be canceled
      */
     public void sendSubmissions(Exercise exercise, Set<Submission> submissions, int maxRetries) {
+        var config = exercise.getAthenaConfig();
+        if (config == null || config.getFeedbackSuggestionModule() == null) {
+            throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
+        }
+        sendSubmissions(exercise, submissions, maxRetries, config.getFeedbackSuggestionModule());
+    }
+
+    private void sendSubmissions(Exercise exercise, Set<Submission> submissions, int maxRetries, String feedbackSuggestionModule) {
         Set<Submission> filteredSubmissions = new HashSet<>(submissions);
 
         // filter submissions with an open participation (because of individual due dates)
@@ -129,8 +139,8 @@ public class AthenaSubmissionSendingService {
             final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise),
                     filteredSubmissions.stream().map((submission) -> athenaDTOConverterService.ofSubmission(exercise.getId(), submission)).toList());
             // applies only to feedback suggestions
-            ResponseDTO response = connector.invokeWithRetry(
-                    athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), exercise.getFeedbackSuggestionModule()) + "/submissions", request, maxRetries);
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), feedbackSuggestionModule) + "/submissions", request,
+                    maxRetries);
             log.info("Athena (calculating automatic feedback) responded: {}", response.data);
         }
         catch (NetworkingException error) {

@@ -105,18 +105,31 @@ public class TextExerciseExportImportResource {
                 api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME);
             }
             catch (BadRequestAlertException e) {
-                importedExercise.setFeedbackSuggestionModule(null);
+                if (importedExercise.getAthenaConfig() != null) {
+                    importedExercise.getAthenaConfig().setFeedbackSuggestionModule(null);
+                    if (importedExercise.getAthenaConfig().isEmpty()) {
+                        importedExercise.setAthenaConfig(null);
+                    }
+                }
             }
             try {
                 api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
             }
             catch (BadRequestAlertException e) {
-                importedExercise.setPreliminaryFeedbackModule(null);
+                if (importedExercise.getAthenaConfig() != null) {
+                    importedExercise.getAthenaConfig().setPreliminaryFeedbackModule(null);
+                    if (importedExercise.getAthenaConfig().isEmpty()) {
+                        importedExercise.setAthenaConfig(null);
+                    }
+                }
             }
         }
         else {
-            importedExercise.setFeedbackSuggestionModule(null);
-            importedExercise.setPreliminaryFeedbackModule(null);
+            importedExercise.setAthenaConfig(null);
+        }
+
+        if (importedExercise.getAthenaConfig() != null) {
+            importedExercise.getAthenaConfig().setExercise(importedExercise);
         }
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);

@@ -67,11 +67,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
-        if (this.athenaEnabled) {
-            this.requestFeedbackEnabled = !!this.exercise().preliminaryFeedbackModule;
-        } else {
-            this.requestFeedbackEnabled = this.exercise().allowManualFeedbackRequests ?? false;
-        }
+        this.updateRequestFeedbackEnabled(this.exercise());
         this.isExamExercise = isExamExercise(this.exercise());
         if (this.isExamExercise || !this.exercise().id) {
             return;
@@ -89,6 +85,12 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
             this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
                 next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
                     this.participation = this.participationService.getSpecificStudentParticipation(exerciseResponse.body!.exercise.studentParticipations ?? [], false);
+                    const exerciseFromResponse = exerciseResponse.body!.exercise;
+                    if (exerciseFromResponse) {
+                        // synchronize athena configuration with latest exercise details
+                        this.exercise().athenaConfig = exerciseFromResponse.athenaConfig;
+                        this.updateRequestFeedbackEnabled(exerciseFromResponse);
+                    }
                     if (this.participation) {
                         this.currentFeedbackRequestCount =
                             getAllResultsOfAllSubmissions(this.participation.submissions)?.filter(
@@ -149,6 +151,15 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     private handleAthenaAssessment(result: Result) {
         if (result.completionDate && result.successful) {
             this.currentFeedbackRequestCount += 1;
+        }
+    }
+
+    private updateRequestFeedbackEnabled(exercise: Exercise) {
+        if (this.athenaEnabled) {
+            const athenaConfig = exercise.athenaConfig;
+            this.requestFeedbackEnabled = !!athenaConfig && !!athenaConfig.preliminaryFeedbackModule;
+        } else {
+            this.requestFeedbackEnabled = exercise.allowManualFeedbackRequests ?? false;
         }
     }
 

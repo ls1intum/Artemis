@@ -44,13 +44,13 @@ export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnCh
             this.cdr.detectChanges();
         });
         this.isAthenaEnabled = this.athenaService.isEnabled();
-        this.initialAthenaModule = this.exercise().preliminaryFeedbackModule;
+        this.initialAthenaModule = this.getPreliminaryModule();
     }
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.dueDate && !changes.dueDate.isFirstChange()) {
             if (this.inputControlsDisabled()) {
-                this.exercise().preliminaryFeedbackModule = this.initialAthenaModule;
+                this.setPreliminaryModule(this.initialAthenaModule);
             }
         }
     }
@@ -75,13 +75,46 @@ export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnCh
     togglePreliminaryFeedback(event: any) {
         this.showDropdownList = event.target.checked;
         if (event.target.checked) {
-            this.exercise().preliminaryFeedbackModule = this.availableAthenaModules.first();
+            this.setPreliminaryModule(this.availableAthenaModules.first());
         } else {
-            this.exercise().preliminaryFeedbackModule = undefined;
+            this.setPreliminaryModule(undefined);
         }
     }
 
     private hasDueDatePassed() {
         return dayjs(this.exercise().dueDate).isBefore(dayjs());
+    }
+
+    get preliminaryModule(): string | undefined {
+        return this.getPreliminaryModule();
+    }
+
+    set preliminaryModule(value: string | undefined) {
+        this.setPreliminaryModule(value);
+    }
+
+    get hasPreliminaryModule(): boolean {
+        return !!this.getPreliminaryModule();
+    }
+
+    private getPreliminaryModule(): string | undefined {
+        return this.exercise().athenaConfig?.preliminaryFeedbackModule ?? undefined;
+    }
+
+    private setPreliminaryModule(value: string | undefined) {
+        const exercise = this.exercise();
+        if (!value) {
+            if (exercise.athenaConfig) {
+                delete exercise.athenaConfig.preliminaryFeedbackModule;
+                if (!exercise.athenaConfig.feedbackSuggestionModule) {
+                    exercise.athenaConfig = undefined;
+                }
+            }
+            return;
+        }
+        if (!exercise.athenaConfig) {
+            exercise.athenaConfig = {};
+        }
+        exercise.athenaConfig.preliminaryFeedbackModule = value;
     }
 }

@@ -138,12 +138,23 @@ public class ProgrammingExerciseRetrievalResource {
         return ResponseEntity.ok().body(exercises);
     }
 
-    private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
+    private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig, boolean includeAthenaConfig) {
+        if (includePlagiarismDetectionConfig && includeAthenaConfig) {
+            var programmingExercise = programmingExerciseRepository
+                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigAndAthenaConfigElseThrow(
+                            exerciseId);
+            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, programmingExerciseRepository);
+            return programmingExercise;
+        }
         if (includePlagiarismDetectionConfig) {
             var programmingExercise = programmingExerciseRepository
                     .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(exerciseId);
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, programmingExerciseRepository);
             return programmingExercise;
+        }
+        if (includeAthenaConfig) {
+            return programmingExerciseRepository
+                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigAndAthenaConfigElseThrow(exerciseId);
         }
         return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(exerciseId);
     }
@@ -153,13 +164,15 @@ public class ProgrammingExerciseRetrievalResource {
      *
      * @param exerciseId                    the id of the programmingExercise to retrieve
      * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
+     * @param withAthenaConfig              boolean flag whether to include the athena config of the exercise
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping("programming-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+    public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig,
+            @RequestParam(defaultValue = "false") boolean withAthenaConfig) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
-        var programmingExercise = findProgrammingExercise(exerciseId, withPlagiarismDetectionConfig);
+        var programmingExercise = findProgrammingExercise(exerciseId, withPlagiarismDetectionConfig, withAthenaConfig);
         // Fetch grading criterion into exercise of participation
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);

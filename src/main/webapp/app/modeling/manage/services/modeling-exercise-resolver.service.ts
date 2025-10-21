@@ -19,7 +19,7 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
 
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
-            return this.modelingExerciseService.find(route.params['exerciseId']).pipe(
+            return this.modelingExerciseService.find(route.params['exerciseId'], true).pipe(
                 filter((res) => !!res.body),
                 map((modelingExercise: HttpResponse<ModelingExercise>) => modelingExercise.body!),
             );

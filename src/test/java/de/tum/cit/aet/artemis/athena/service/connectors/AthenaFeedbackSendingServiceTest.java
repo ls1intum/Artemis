@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSendingService;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -106,7 +107,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+        textExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_TEXT_TEST, null));
         textExercise = textExerciseRepository.save(textExercise);
 
         var textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
@@ -128,7 +129,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         textFeedback = feedbackRepository.save(textFeedback);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         var programmingParticipation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student2");
@@ -236,7 +237,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Test
     void testSendFeedbackWithFeedbackSuggestionsDisabled() {
-        textExercise.setFeedbackSuggestionModule(null);
+        textExercise.setAthenaConfig(null);
         textExercise = textExerciseRepository.save(textExercise);
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
         await().untilAsserted(
@@ -244,7 +245,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
         asyncExceptionLogAppender.list.clear();
 
-        programmingExercise.setFeedbackSuggestionModule(null);
+        programmingExercise.setAthenaConfig(null);
         programmingExerciseRepository.save(programmingExercise);
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback));
         await().untilAsserted(

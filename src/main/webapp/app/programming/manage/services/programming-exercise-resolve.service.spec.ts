@@ -45,7 +45,7 @@ describe('ProgrammingExerciseResolve', () => {
 
         const result = await firstValueFrom(resolver.resolve(route));
         expect(result).toEqual(mockExercise);
-        expect(mockProgrammingExerciseService.find).toHaveBeenCalledWith(exerciseId, true);
+        expect(mockProgrammingExerciseService.find).toHaveBeenCalledWith(exerciseId, true, true);
     });
 
     it('should return new programming exercise when exerciseId is not provided', async () => {

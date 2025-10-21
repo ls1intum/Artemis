@@ -49,7 +49,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should initialize with available modules', async () => {
         const modules = ['Module1', 'Module2'];
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(modules));
-        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, feedbackSuggestionModule: undefined } as Exercise;
+        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, athenaConfig: undefined } as Exercise;
 
         component.ngOnInit();
 
@@ -60,7 +60,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should set isAthenaEnabled$ with the result from athenaService', async () => {
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of());
         jest.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA);
-        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, feedbackSuggestionModule: undefined } as Exercise;
+        component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, athenaConfig: undefined } as Exercise;
 
         component.ngOnInit();
 
@@ -68,7 +68,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     });
 
     it('should disable input controls for programming exercises with automatic assessment type or read-only', () => {
-        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, dueDate: futureDueDate } as Exercise;
+        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, dueDate: futureDueDate, athenaConfig: undefined } as Exercise;
 
         let result = component.inputControlsDisabled();
         expect(result).toBeTruthy();
@@ -83,14 +83,14 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     });
 
     it('should disable input controls if due date has passed', () => {
-        component.exercise = { type: ExerciseType.TEXT, dueDate: pastDueDate } as Exercise;
+        component.exercise = { type: ExerciseType.TEXT, dueDate: pastDueDate, athenaConfig: undefined } as Exercise;
 
         const result = component.inputControlsDisabled();
         expect(result).toBeTruthy();
     });
 
     it('should return grey color for checkbox label style for automatic programming exercises', () => {
-        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, dueDate: futureDueDate } as Exercise;
+        component.exercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, dueDate: futureDueDate, athenaConfig: undefined } as Exercise;
 
         const style = component.getCheckboxLabelStyle();
 
@@ -107,27 +107,32 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
     it('should toggle feedback suggestions and set the module for programming exercises', () => {
         component.availableAthenaModules = ['Module1', 'Module2'];
-        component.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+        component.exercise = { type: ExerciseType.PROGRAMMING, athenaConfig: undefined } as Exercise;
 
         expect(component.showDropdownList).toBeFalse();
 
         const event = { target: { checked: true } };
         component.toggleFeedbackSuggestions(event);
 
-        expect(component.exercise.feedbackSuggestionModule).toBe('Module1');
+        expect(component.exercise.athenaConfig?.feedbackSuggestionModule).toBe('Module1');
         expect(component.showDropdownList).toBeTrue();
         expect(component.exercise.allowManualFeedbackRequests).toBeFalse();
 
         event.target.checked = false;
         component.toggleFeedbackSuggestions(event);
 
-        expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
+        expect(component.exercise.athenaConfig?.feedbackSuggestionModule).toBeUndefined();
     });
 
     it('should toggle feedback requests and set the module for programming exercises', () => {
         component.availableAthenaModules = ['Module1', 'Module2'];
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(component.availableAthenaModules));
-        component.exercise = { type: ExerciseType.PROGRAMMING, dueDate: futureDueDate, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Exercise;
+        component.exercise = {
+            type: ExerciseType.PROGRAMMING,
+            dueDate: futureDueDate,
+            assessmentType: AssessmentType.SEMI_AUTOMATIC,
+            athenaConfig: undefined,
+        } as Exercise;
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue({ activeProfiles: [PROFILE_ATHENA] } as ProfileInfo);
         fixture.detectChanges();
@@ -152,7 +157,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
         // Now, change the assessment type back to semi automatic
         component.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        component.exercise.feedbackSuggestionModule = undefined; // will be reset by parent component
+        component.exercise.athenaConfig = undefined; // will be reset by parent component
 
         fixture.detectChanges();
 

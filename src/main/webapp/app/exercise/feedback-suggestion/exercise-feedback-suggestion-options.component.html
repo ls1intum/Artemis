@@ -5,7 +5,7 @@
                 type="checkbox"
                 class="form-check-input"
                 name="feedbackSuggestionsEnabledCheck"
-                [checked]="showDropdownList || !!this.exercise.feedbackSuggestionModule"
+                [checked]="showDropdownList || hasFeedbackModule"
                 [disabled]="inputControlsDisabled()"
                 id="feedbackSuggestionsEnabledCheck"
                 (change)="toggleFeedbackSuggestions($event)"
@@ -18,16 +18,10 @@
             ></label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.allowFeedbackSuggestionsTooltip'" />
         </div>
-        @if (showDropdownList || !!this.exercise.feedbackSuggestionModule) {
+        @if (showDropdownList || hasFeedbackModule) {
             <div class="form-group">
                 <label for="athenaModuleSelect">Athena Feedback Suggestions Module</label>
-                <select
-                    id="athenaModuleSelect"
-                    class="form-select"
-                    [value]="this.exercise.feedbackSuggestionModule"
-                    [(ngModel)]="this.exercise.feedbackSuggestionModule"
-                    [disabled]="inputControlsDisabled()"
-                >
+                <select id="athenaModuleSelect" class="form-select" [value]="feedbackModule" [(ngModel)]="feedbackModule" [disabled]="inputControlsDisabled()">
                     @for (athenaModule of availableAthenaModules; track athenaModule) {
                         <option [value]="athenaModule">{{ athenaModule }}</option>
                     }

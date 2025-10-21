@@ -272,7 +272,8 @@ public class SubmissionService {
      */
     public <S extends Submission> Optional<S> getAthenaSubmissionToAssess(Exercise exercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound,
             Function<Long, Optional<S>> findSubmissionById) {
-        if (exercise.areFeedbackSuggestionsEnabled() && athenaApi.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
+        var config = exercise.getAthenaConfig();
+        if (config != null && config.getFeedbackSuggestionModule() != null && athenaApi.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
             var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
             var athenaSubmissionId = athenaApi.get().getProposedSubmissionId(exercise, assessableSubmissions.stream().map(Submission::getId).toList());
             if (athenaSubmissionId.isPresent()) {

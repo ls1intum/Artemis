@@ -417,6 +417,9 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
                 LEFT JOIN FETCH r.assessmentNote
+                LEFT JOIN FETCH submission.participation participation
+                LEFT JOIN FETCH participation.exercise exercise
+                LEFT JOIN FETCH exercise.athenaConfig
             WHERE submission.id = :submissionId
             """)
     Optional<Submission> findWithEagerResultAndFeedbackAndAssessmentNoteById(@Param("submissionId") long submissionId);
@@ -431,6 +434,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH submission.participation p
                 LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH p.exercise exercise
+                LEFT JOIN FETCH exercise.athenaConfig
                 LEFT JOIN FETCH t.students
             WHERE submission.id = :submissionId
             """)

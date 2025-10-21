@@ -360,7 +360,7 @@ public class TextAssessmentResource extends AssessmentResource {
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
         var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
-        final var exercise = participation.getExercise();
+        var exercise = participation.getExercise();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
@@ -400,8 +400,10 @@ public class TextAssessmentResource extends AssessmentResource {
         // prepare and load in all feedbacks
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, result);
 
+        exercise = exerciseRepository.findWithAthenaConfigByIdElseThrow(exercise.getId());
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
+        participation.setExercise(exercise);
         // Remove sensitive information of submission depending on user
         textSubmissionService.hideDetails(textSubmission, user);
 
@@ -522,7 +524,8 @@ public class TextAssessmentResource extends AssessmentResource {
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
     private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
-        if (athenaFeedbackApi.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
+        var config = exercise.getAthenaConfig();
+        if (athenaFeedbackApi.isPresent() && config != null && config.getFeedbackSuggestionModule() != null) {
             athenaFeedbackApi.get().sendFeedback(exercise, textSubmission, feedbacks);
         }
     }

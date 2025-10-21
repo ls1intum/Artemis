@@ -37,9 +37,9 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
-    find(modelingExerciseId: number): Observable<EntityResponseType> {
+    find(modelingExerciseId: number, withAthenaConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' })
+            .get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response', params: { withAthenaConfig: withAthenaConfig } })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

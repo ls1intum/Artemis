@@ -24,7 +24,9 @@
                             />
                         }
                     } @else {
-                        @if (textExercise.preliminaryFeedbackModule && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))) {
+                        @if (
+                            textExercise.athenaConfig?.preliminaryFeedbackModule && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))
+                        ) {
                             <jhi-request-feedback-button
                                 [exercise]="textExercise"
                                 [pendingChanges]="submission.text !== answer"

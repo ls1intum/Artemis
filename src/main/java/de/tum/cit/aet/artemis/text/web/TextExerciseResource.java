@@ -149,11 +149,19 @@ public class TextExerciseResource {
         return ResponseEntity.ok().body(exercises);
     }
 
-    private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
+    private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig, boolean includeAthenaConfig) {
+        if (includePlagiarismDetectionConfig && includeAthenaConfig) {
+            var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndAthenaConfigById(exerciseId);
+            textExercise.ifPresent(it -> PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(it, textExerciseRepository));
+            return textExercise;
+        }
         if (includePlagiarismDetectionConfig) {
             var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId);
             textExercise.ifPresent(it -> PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(it, textExerciseRepository));
             return textExercise;
+        }
+        if (includeAthenaConfig) {
+            return textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndAthenaConfigById(exerciseId);
         }
         return textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId);
     }
@@ -163,14 +171,16 @@ public class TextExerciseResource {
      *
      * @param exerciseId                    the id of the textExercise to retrieve
      * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
+     * @param withAthenaConfig              boolean flag whether to include the athena config of the exercise
      * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with
      *         status 404 (Not Found)
      */
     @GetMapping("text-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig,
+            @RequestParam(defaultValue = "false") boolean withAthenaConfig) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
-        var textExercise = findTextExercise(exerciseId, withPlagiarismDetectionConfig).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
+        var textExercise = findTextExercise(exerciseId, withPlagiarismDetectionConfig, withAthenaConfig).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
 
         // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it
         if (textExercise.isExamExercise()) {

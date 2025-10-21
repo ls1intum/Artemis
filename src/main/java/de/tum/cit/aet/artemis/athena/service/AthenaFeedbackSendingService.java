@@ -82,7 +82,8 @@ public class AthenaFeedbackSendingService {
      */
     @Async
     public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks, int maxRetries) {
-        if (!exercise.areFeedbackSuggestionsEnabled()) {
+        var config = exercise.getAthenaConfig();
+        if (config == null || config.getFeedbackSuggestionModule() == null) {
             throw new IllegalArgumentException("The exercise does not have feedback suggestions enabled.");
         }
 
@@ -100,8 +101,9 @@ public class AthenaFeedbackSendingService {
             // Based on the current design, this applies only to feedback suggestions
             final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
                     feedbacks.stream().filter(Feedback::isManualFeedback).map((feedback) -> athenaDTOConverterService.ofFeedback(exercise, submission.getId(), feedback)).toList());
-            ResponseDTO response = connector.invokeWithRetry(
-                    athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), exercise.getFeedbackSuggestionModule()) + "/feedbacks", request, maxRetries);
+            var feedbackSuggestionModule = config.getFeedbackSuggestionModule();
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), feedbackSuggestionModule) + "/feedbacks", request,
+                    maxRetries);
             log.info("Athena responded to feedback: {}", response.data);
         }
         catch (NetworkingException networkingException) {

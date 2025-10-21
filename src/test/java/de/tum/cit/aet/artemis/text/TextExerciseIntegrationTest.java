@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -608,8 +609,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Course course1 = courseUtilService.addEmptyCourse();
         Course course2 = courseUtilService.addEmptyCourse();
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
-        textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
-        textExercise.setPreliminaryFeedbackModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
+        textExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_RESTRICTED_MODULE_TEXT_TEST, ATHENA_RESTRICTED_MODULE_TEXT_TEST));
         textExerciseRepository.save(textExercise);
 
         textExercise.setCourse(course2);
@@ -618,8 +618,12 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise importedExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class,
                 HttpStatus.CREATED);
 
-        assertThat(importedExercise.getFeedbackSuggestionModule()).isNull();
-        assertThat(importedExercise.getPreliminaryFeedbackModule()).isNull();
+        var importedConfig = importedExercise.getAthenaConfig();
+        var feedbackModule = importedConfig != null ? importedConfig.getFeedbackSuggestionModule() : null;
+        var preliminaryModule = importedConfig != null ? importedConfig.getPreliminaryFeedbackModule() : null;
+
+        assertThat(feedbackModule).isNull();
+        assertThat(preliminaryModule).isNull();
     }
 
     @Test

@@ -193,10 +193,10 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
 
         comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        comp.exercise.feedbackSuggestionModule = 'programming_module';
+        comp.exercise.athenaConfig = { feedbackSuggestionModule: 'programming_module' };
         comp.toggleAssessmentType(); // toggle to AUTOMATIC
 
-        expect(comp.exercise.feedbackSuggestionModule).toBeUndefined();
+        expect(comp.exercise.athenaConfig?.feedbackSuggestionModule).toBeUndefined();
     });
 
     it('should change publication of tests for programming exercise with published solution', () => {

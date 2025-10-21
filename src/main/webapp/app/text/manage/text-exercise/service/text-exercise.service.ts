@@ -68,10 +68,14 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * Finds the text exercise of the given exerciseId.
      * @param exerciseId of text exercise of type {number}
      * @param withPlagiarismDetectionConfig true if plagiarism detection context should be fetched with the exercise
+     * @param withAthenaConfig true if athena config should be fetched with the exercise
      */
-    find(exerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+    find(exerciseId: number, withPlagiarismDetectionConfig: boolean = false, withAthenaConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response', params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig } })
+            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}`, {
+                observe: 'response',
+                params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig, withAthenaConfig: withAthenaConfig },
+            })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

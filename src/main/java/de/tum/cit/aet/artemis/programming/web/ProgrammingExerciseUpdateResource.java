@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -179,11 +180,14 @@ public class ProgrammingExerciseUpdateResource {
             api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
         }
         else {
-            updatedProgrammingExercise.setFeedbackSuggestionModule(programmingExerciseBeforeUpdate.getFeedbackSuggestionModule());
-            updatedProgrammingExercise.setPreliminaryFeedbackModule(programmingExerciseBeforeUpdate.getPreliminaryFeedbackModule());
+            updatedProgrammingExercise.setAthenaConfig(copyAthenaConfig(programmingExerciseBeforeUpdate.getAthenaConfig()));
         }
         // Changing Athena module after the due date has passed is not allowed
         athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
+
+        if (updatedProgrammingExercise.getAthenaConfig() != null) {
+            updatedProgrammingExercise.getAthenaConfig().setExercise(updatedProgrammingExercise);
+        }
 
         // Ignore changes to the default branch
         updatedProgrammingExercise.getBuildConfig().setBranch(programmingExerciseBeforeUpdate.getBuildConfig().getBranch());
@@ -213,6 +217,10 @@ public class ProgrammingExerciseUpdateResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
 
         return ResponseEntity.ok(savedProgrammingExercise);
+    }
+
+    private static ExerciseAthenaConfig copyAthenaConfig(ExerciseAthenaConfig source) {
+        return source == null ? null : new ExerciseAthenaConfig(source);
     }
 
     /**

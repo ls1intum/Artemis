@@ -313,6 +313,7 @@ export class ExerciseService {
             dueDate: convertDateFromClient(exercise.dueDate),
             assessmentDueDate: convertDateFromClient(exercise.assessmentDueDate),
             exampleSolutionPublicationDate: convertDateFromClient(exercise.exampleSolutionPublicationDate),
+            athenaConfig: exercise.athenaConfig ?? null,
         });
     }
 

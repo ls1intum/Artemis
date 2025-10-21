@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 @Conditional(TextEnabled.class)
 @Lazy
@@ -55,8 +56,11 @@ public class TextExerciseFeedbackService {
 
     private final TextBlockService textBlockService;
 
+    private final TextExerciseRepository textExerciseRepository;
+
     public TextExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, SubmissionService submissionService, ResultService resultService,
-            ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextBlockService textBlockService) {
+            ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextBlockService textBlockService,
+            TextExerciseRepository textExerciseRepository) {
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.submissionService = submissionService;
         this.resultService = resultService;
@@ -64,6 +68,7 @@ public class TextExerciseFeedbackService {
         this.resultWebsocketService = resultWebsocketService;
         this.participationService = participationService;
         this.textBlockService = textBlockService;
+        this.textExerciseRepository = textExerciseRepository;
     }
 
     /**
@@ -91,7 +96,8 @@ public class TextExerciseFeedbackService {
                 throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);
             }
 
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise));
+            TextExercise textExerciseWithConfig = textExerciseRepository.findWithAthenaConfigByIdElseThrow(textExercise.getId());
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExerciseWithConfig));
         }
         return participation;
     }

@@ -42,7 +42,7 @@ describe('TextExerciseResolver', () => {
             expect(result).toEqual(dummyExercise);
         });
 
-        expect(textExerciseService.find).toHaveBeenCalledWith('123', true);
+        expect(textExerciseService.find).toHaveBeenCalledWith('123', true, true);
     });
 
     it('should resolve a TextExercise for a course and exercise group', () => {

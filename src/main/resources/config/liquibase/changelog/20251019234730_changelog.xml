@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- New config table and FK on exercise -->
+    <changeSet id="20251019234730-1" author="undernagruzez">
+        <createTable tableName="exercise_athena_config">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="preliminary_feedback_module" type="varchar(255)"/>
+            <column name="feedback_suggestion_module" type="varchar(255)"/>
+            <!-- temp helper to link rows during migration; dropped later -->
+            <column name="legacy_exercise_id" type="bigint"/>
+        </createTable>
+
+        <addColumn tableName="exercise">
+            <column name="athena_config_id" type="bigint"/>
+        </addColumn>
+
+        <addForeignKeyConstraint
+            baseTableName="exercise" baseColumnNames="athena_config_id"
+            referencedTableName="exercise_athena_config" referencedColumnNames="id"
+            constraintName="fk_exercise_athena_config"/>
+
+        <addUniqueConstraint tableName="exercise" columnNames="athena_config_id"
+                             constraintName="uk_exercise_athena_config_one_to_one"/>
+    </changeSet>
+
+    <!-- Data migration: copy old value; preliminary = feedback_suggestion -->
+    <changeSet id="20251019234730-2" author="undernagruzez">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="feedback_suggestion_module"/>
+        </preConditions>
+
+        <sql>
+            INSERT INTO exercise_athena_config (preliminary_feedback_module, feedback_suggestion_module, legacy_exercise_id)
+            SELECT e.feedback_suggestion_module, e.feedback_suggestion_module, e.id
+            FROM exercise e
+            WHERE e.feedback_suggestion_module IS NOT NULL;
+        </sql>
+
+        <update tableName="exercise">
+            <column name="athena_config_id" valueComputed="(SELECT c.id FROM exercise_athena_config c WHERE c.legacy_exercise_id = exercise.id)"/>
+            <where>EXISTS (SELECT 1 FROM exercise_athena_config c WHERE c.legacy_exercise_id = exercise.id)</where>
+        </update>
+
+        <dropColumn tableName="exercise_athena_config" columnName="legacy_exercise_id"/>
+    </changeSet>
+
+    <!-- Drop the legacy column from exercise -->
+    <changeSet id="20251019234730-3" author="undernagruzez">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="feedback_suggestion_module"/>
+        </preConditions>
+        <dropColumn tableName="exercise" columnName="feedback_suggestion_module"/>
+    </changeSet>
+
+</databaseChangeLog>

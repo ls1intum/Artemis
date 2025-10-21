@@ -33,7 +33,7 @@ describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
     it('should initialize with available modules', async () => {
         const modules = ['Module1', 'Module2'];
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(modules));
-        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT, dueDate: futureDueDate, preliminaryFeedbackModule: undefined } as Exercise);
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT, dueDate: futureDueDate, athenaConfig: undefined } as Exercise);
 
         await component.ngOnInit();
 
@@ -44,7 +44,7 @@ describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
     it('should set isAthenaEnabled with the result from athenaService', async () => {
         jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of());
         jest.spyOn(athenaService, 'isEnabled').mockReturnValue(true);
-        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT, dueDate: futureDueDate, preliminaryFeedbackModule: undefined } as Exercise);
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT, dueDate: futureDueDate, athenaConfig: undefined } as Exercise);
 
         await component.ngOnInit();
 
@@ -53,7 +53,12 @@ describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
     });
 
     it('should disable input controls for programming exercises with automatic assessment type or read-only', () => {
-        fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC, dueDate: pastDueDate } as Exercise);
+        fixture.componentRef.setInput('exercise', {
+            type: ExerciseType.PROGRAMMING,
+            assessmentType: AssessmentType.AUTOMATIC,
+            dueDate: pastDueDate,
+            athenaConfig: undefined,
+        } as Exercise);
 
         let result = component.inputControlsDisabled();
         expect(result).toBeTruthy();
@@ -79,7 +84,12 @@ describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
     });
 
     it('should return an empty object for checkbox label style for non-automatic programming exercises', () => {
-        fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.MANUAL, dueDate: futureDueDate } as Exercise);
+        fixture.componentRef.setInput('exercise', {
+            type: ExerciseType.PROGRAMMING,
+            assessmentType: AssessmentType.MANUAL,
+            dueDate: futureDueDate,
+            athenaConfig: undefined,
+        } as Exercise);
 
         const style = component.getCheckboxLabelStyle();
 
@@ -88,19 +98,19 @@ describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
 
     it('should toggle preliminary feedback module and set the module for any exercise', () => {
         component.availableAthenaModules = ['Module1', 'Module2'];
-        fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING, athenaConfig: undefined } as Exercise);
 
         expect(component.showDropdownList).toBeFalse();
 
         const event = { target: { checked: true } };
         component.togglePreliminaryFeedback(event);
 
-        expect(component.exercise().preliminaryFeedbackModule).toBe('Module1');
+        expect(component.exercise().athenaConfig?.preliminaryFeedbackModule).toBe('Module1');
         expect(component.showDropdownList).toBeTrue();
 
         event.target.checked = false;
         component.togglePreliminaryFeedback(event);
 
-        expect(component.exercise().preliminaryFeedbackModule).toBeUndefined();
+        expect(component.exercise().athenaConfig?.preliminaryFeedbackModule).toBeUndefined();
     });
 });

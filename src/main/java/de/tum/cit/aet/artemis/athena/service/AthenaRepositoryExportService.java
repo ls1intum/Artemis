@@ -67,7 +67,10 @@ public class AthenaRepositoryExportService {
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
     private void checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(Exercise exercise) {
-        if (!(exercise.areFeedbackSuggestionsEnabled() || exercise.isPreliminaryFeedbackEnabled())) {
+        var config = exercise.getAthenaConfig();
+        var feedbackSuggestionModule = config != null ? config.getFeedbackSuggestionModule() : null;
+        var preliminaryFeedbackModule = config != null ? config.getPreliminaryFeedbackModule() : null;
+        if (feedbackSuggestionModule == null && preliminaryFeedbackModule == null) {
             log.error("Feedback suggestions are not enabled for exercise {}", exercise.getId());
             throw new ServiceUnavailableException("Feedback suggestions are not enabled for exercise");
         }
@@ -87,7 +90,7 @@ public class AthenaRepositoryExportService {
     public Path exportRepository(long exerciseId, Long submissionId, RepositoryType repositoryType) throws IOException {
         log.debug("Exporting repository for exercise {}, submission {}", exerciseId, submissionId);
 
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAthenaConfigByIdElseThrow(exerciseId);
         checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
 
         // Athena currently does not support individual due dates

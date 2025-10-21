@@ -57,7 +57,7 @@ export class AthenaService {
      * @return observable that emits the feedback suggestions
      */
     private getFeedbackSuggestions<T>(exercise: Exercise, submissionId: number): Observable<T[]> {
-        if (!exercise.feedbackSuggestionModule) {
+        if (!exercise.athenaConfig?.feedbackSuggestionModule) {
             return of([]);
         }
         if (!this.profileService.isProfileActive(PROFILE_ATHENA)) {

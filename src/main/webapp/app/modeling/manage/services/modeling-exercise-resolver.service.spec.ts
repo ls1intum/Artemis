@@ -44,7 +44,7 @@ describe('ModelingExerciseResolver', () => {
             expect(result).toEqual(dummyExercise);
         });
 
-        expect(modelingExerciseService.find).toHaveBeenCalledWith('123');
+        expect(modelingExerciseService.find).toHaveBeenCalledWith('123', true);
     });
 
     it('should resolve a ModelingExercise for a course and exercise group', () => {

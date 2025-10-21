@@ -71,7 +71,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     load(exerciseId: number) {
-        this.modelingExerciseService.find(exerciseId).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
+        this.modelingExerciseService.find(exerciseId, true).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
             this.modelingExercise = modelingExerciseResponse.body!;
             this.isExamExercise = this.modelingExercise.exerciseGroup !== undefined;
             this.course = this.isExamExercise ? this.modelingExercise.exerciseGroup?.exam?.course : this.modelingExercise.course;
@@ -125,8 +125,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                     ...defaultGradingDetails,
                     { type: DetailType.Text, title: 'artemisApp.modelingExercise.diagramType', data: { text: exercise.diagramType } },
                     ...gradingInstructionsCriteriaDetails,
-                    { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackSuggestions', data: { boolean: !!exercise.feedbackSuggestionModule } },
-                    { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackRequests', data: { boolean: !!exercise.preliminaryFeedbackModule } },
+                    { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackSuggestions', data: { boolean: !!exercise.athenaConfig?.feedbackSuggestionModule } },
+                    { type: DetailType.Boolean, title: 'artemisApp.exercise.allowFeedbackRequests', data: { boolean: !!exercise.athenaConfig?.preliminaryFeedbackModule } },
                 ],
             },
         ];

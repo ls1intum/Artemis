@@ -164,9 +164,13 @@ public class AthenaModuleService {
     }
 
     private static String getModule(Exercise exercise, AthenaModuleMode athenaModuleMode) {
+        var config = exercise.getAthenaConfig();
+        if (config == null) {
+            return null;
+        }
         return switch (athenaModuleMode) {
-            case FEEDBACK_SUGGESTIONS -> exercise.getFeedbackSuggestionModule();
-            case PRELIMINARY_FEEDBACK -> exercise.getPreliminaryFeedbackModule();
+            case FEEDBACK_SUGGESTIONS -> config.getFeedbackSuggestionModule();
+            case PRELIMINARY_FEEDBACK -> config.getPreliminaryFeedbackModule();
         };
     }
 
@@ -182,8 +186,15 @@ public class AthenaModuleService {
      */
     public void checkValidAthenaModuleChange(Exercise originalExercise, Exercise updatedExercise, String entityName) throws BadRequestAlertException {
         var dueDate = originalExercise.getDueDate();
-        checkValidityOfAnAthenaModuleBasedOnDueDate(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule(), entityName, dueDate);
-        checkValidityOfAnAthenaModuleBasedOnDueDate(originalExercise.getPreliminaryFeedbackModule(), updatedExercise.getPreliminaryFeedbackModule(), entityName, dueDate);
+        var originalConfig = originalExercise.getAthenaConfig();
+        var updatedConfig = updatedExercise.getAthenaConfig();
+        var originalFeedbackModule = originalConfig != null ? originalConfig.getFeedbackSuggestionModule() : null;
+        var updatedFeedbackModule = updatedConfig != null ? updatedConfig.getFeedbackSuggestionModule() : null;
+        var originalPreliminaryModule = originalConfig != null ? originalConfig.getPreliminaryFeedbackModule() : null;
+        var updatedPreliminaryModule = updatedConfig != null ? updatedConfig.getPreliminaryFeedbackModule() : null;
+
+        checkValidityOfAnAthenaModuleBasedOnDueDate(originalFeedbackModule, updatedFeedbackModule, entityName, dueDate);
+        checkValidityOfAnAthenaModuleBasedOnDueDate(originalPreliminaryModule, updatedPreliminaryModule, entityName, dueDate);
     }
 
     private static void checkValidityOfAnAthenaModuleBasedOnDueDate(String originalExerciseModule, String updatedExerciseModule, String entityName, ZonedDateTime dueDate) {

@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -680,7 +681,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST);
+        this.programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(null, ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST));
         this.exerciseRepository.save(programmingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", true, null);
@@ -727,7 +728,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST);
+        this.programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(null, ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST));
         this.exerciseRepository.save(programmingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", true, null);
@@ -773,7 +774,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(textCourse);
 
-        this.textExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_TEXT_PRELIMINARY_TEST);
+        this.textExercise.setAthenaConfig(ExerciseAthenaConfig.of(null, ATHENA_MODULE_TEXT_PRELIMINARY_TEST));
         this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", true, null);
@@ -813,7 +814,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         modelingCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(modelingCourse);
 
-        this.modelingExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_MODELING_PRELIMINARY_TEST);
+        this.modelingExercise.setAthenaConfig(ExerciseAthenaConfig.of(null, ATHENA_MODULE_MODELING_PRELIMINARY_TEST));
         this.exerciseRepository.save(modelingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", true, null);
@@ -851,7 +852,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST);
+        this.programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(null, ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST));
         this.exerciseRepository.save(programmingExercise);
         this.athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming", true);
 
@@ -896,7 +897,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(textCourse);
 
-        this.textExercise.setPreliminaryFeedbackModule(ATHENA_MODULE_TEXT_PRELIMINARY_TEST);
+        this.textExercise.setAthenaConfig(ExerciseAthenaConfig
+                .of(this.textExercise.getAthenaConfig() != null ? this.textExercise.getAthenaConfig().getFeedbackSuggestionModule() : null, ATHENA_MODULE_TEXT_PRELIMINARY_TEST));
 
         this.exerciseRepository.save(textExercise);
 
@@ -934,7 +936,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         modelingCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(modelingCourse);
 
-        this.modelingExercise.setPreliminaryFeedbackModule("module_modeling_preliminary_test");
+        this.modelingExercise.setAthenaConfig(
+                ExerciseAthenaConfig.of(this.modelingExercise.getAthenaConfig() != null ? this.modelingExercise.getAthenaConfig().getFeedbackSuggestionModule() : null,
+                        "module_modeling_preliminary_test"));
         this.exerciseRepository.save(modelingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("modeling", true);

@@ -226,7 +226,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        Exercise exercise = exerciseRepository.findWithAthenaConfigByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         if (!(exercise instanceof TextExercise)) {
             throw new BadRequestAlertException("The exerciseId does not belong to a text exercise", ENTITY_NAME, "wrongExerciseType");

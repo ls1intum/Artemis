@@ -115,8 +115,10 @@ public class ProgrammingExerciseCreationResource {
             api.checkHasAccessToAthenaModule(programmingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
         }
         else {
-            programmingExercise.setFeedbackSuggestionModule(null);
-            programmingExercise.setPreliminaryFeedbackModule(null);
+            programmingExercise.setAthenaConfig(null);
+        }
+        if (programmingExercise.getAthenaConfig() != null) {
+            programmingExercise.getAthenaConfig().setExercise(programmingExercise);
         }
         try {
             // Setup all repositories etc

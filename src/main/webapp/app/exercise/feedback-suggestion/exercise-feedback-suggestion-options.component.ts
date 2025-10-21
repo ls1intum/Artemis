@@ -46,13 +46,13 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
             this.cdr.detectChanges();
         });
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
-        this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
+        this.initialAthenaModule = this.getFeedbackModule();
     }
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.dueDate && !changes.dueDate.isFirstChange()) {
             if (this.inputControlsDisabled()) {
-                this.exercise.feedbackSuggestionModule = this.initialAthenaModule;
+                this.setFeedbackModule(this.initialAthenaModule);
             }
         }
     }
@@ -87,14 +87,46 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     toggleFeedbackSuggestions(event: any) {
         this.showDropdownList = event.target.checked;
         if (event.target.checked) {
-            this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
+            this.setFeedbackModule(this.availableAthenaModules.first());
             this.exercise.allowManualFeedbackRequests = false;
         } else {
-            this.exercise.feedbackSuggestionModule = undefined;
+            this.setFeedbackModule(undefined);
         }
     }
 
     private hasDueDatePassed() {
         return dayjs(this.exercise.dueDate).isBefore(dayjs());
+    }
+
+    get feedbackModule(): string | undefined {
+        return this.getFeedbackModule();
+    }
+
+    set feedbackModule(value: string | undefined) {
+        this.setFeedbackModule(value);
+    }
+
+    get hasFeedbackModule(): boolean {
+        return !!this.getFeedbackModule();
+    }
+
+    private getFeedbackModule(): string | undefined {
+        return this.exercise.athenaConfig?.feedbackSuggestionModule ?? undefined;
+    }
+
+    private setFeedbackModule(value: string | undefined) {
+        if (!value) {
+            if (this.exercise.athenaConfig) {
+                delete this.exercise.athenaConfig.feedbackSuggestionModule;
+                if (!this.exercise.athenaConfig.preliminaryFeedbackModule) {
+                    this.exercise.athenaConfig = undefined;
+                }
+            }
+            return;
+        }
+        if (!this.exercise.athenaConfig) {
+            this.exercise.athenaConfig = {};
+        }
+        this.exercise.athenaConfig.feedbackSuggestionModule = value;
     }
 }
