@@ -46,7 +46,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         });
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
-        component.question = question;
+        fixture.componentRef.setInput('question', question);
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
