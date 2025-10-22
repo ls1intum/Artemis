@@ -343,7 +343,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
 
         effect(() => {
-            this.consistencyIssues(); // ensures Angular tracks the signal
             this.renderConsistencyIssues();
         });
     }
@@ -352,11 +351,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Renders consistency issues inside the editor.
      */
     protected renderConsistencyIssues() {
+        const issues = this.consistencyIssues();
+
+        // Bail out until the editor is ready
+        if (!this.monacoEditor) {
+            return;
+        }
+
         setTimeout(() => {
             this.monacoEditor.disposeWidgets();
 
             // Readd inconsistency issue comments, because all widgets got removed
-            for (const issue of issuesForSelectedFile('problem_statement.md', 'PROBLEM_STATEMENT', this.consistencyIssues())) {
+            for (const issue of issuesForSelectedFile('problem_statement.md', 'PROBLEM_STATEMENT', issues)) {
                 addCommentBox(this.monacoEditor, issue);
             }
         }, 0);
@@ -447,6 +453,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
+        this.renderConsistencyIssues();
     }
 
     /**

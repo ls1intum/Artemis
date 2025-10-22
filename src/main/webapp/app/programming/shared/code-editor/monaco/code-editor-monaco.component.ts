@@ -347,6 +347,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     protected renderFeedbackWidgets(lineOfWidgetToFocus?: number) {
         // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node, hence the timeout.
         this.changeDetectorRef.detectChanges();
+        const issues = this.consistencyIssues();
         setTimeout(() => {
             this.editor().disposeWidgets();
             for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
@@ -365,7 +366,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             }
 
             // Readd inconsistency issue comments, because all widgets got removed
-            for (const issue of issuesForSelectedFile(this.selectedFile(), this.selectedRepository(), this.consistencyIssues())) {
+            for (const issue of issuesForSelectedFile(this.selectedFile(), this.selectedRepository(), issues)) {
                 addCommentBox(this.editor(), issue);
             }
         }, 0);

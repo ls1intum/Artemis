@@ -29,7 +29,8 @@ export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsis
     `;
 
     // Place box beneath the line
-    editor.addLineWidget(issue.endLine, `comment-${issue.startLine}-${issue.endLine}-${issue.category}`, node);
+    const key = window.crypto.randomUUID().toString() ?? `${issue.startLine}-${issue.endLine}-${issue.category}-${window.btoa(issue.description).slice(0, 8)}`;
+    editor.addLineWidget(issue.endLine, `comment-${key}`, node);
 }
 
 /**
@@ -60,7 +61,15 @@ export function issuesForSelectedFile(
             // Problem statement filePath is either problem_statement.md or empty
             const isProblemStatement = loc.filePath === 'problem_statement.md' || loc.filePath === '';
             // Remove the first part of e.g. template_repository/src/TEST/BubbleSort.java
-            const issueFile = isProblemStatement ? 'problem_statement.md' : loc.filePath.split('/').slice(1).join('/');
+            // Remove only known repo prefixes (template_repository/..., solution_repository/..., tests_repository/...)
+            const issueFile = (() => {
+                if (isProblemStatement) {
+                    return 'problem_statement.md';
+                }
+                const parts = (loc.filePath ?? '').split('/');
+                const knownPrefixes = ['template_repository', 'solution_repository', 'tests_repository'];
+                return knownPrefixes.includes(parts[0]) ? parts.slice(1).join('/') : loc.filePath;
+            })();
 
             if (issueFile !== selectedFile) {
                 continue;
@@ -110,25 +119,21 @@ export function isMatchingRepository(repo1: ArtifactLocation.TypeEnum, repo2: Re
 export function formatConsistencyCheckResults(issue: InlineConsistencyIssue): string {
     let md = '';
 
+    let linePart = '';
+    if (issue.startLine && issue.endLine) {
+        linePart = issue.startLine === issue.endLine ? `L${issue.startLine}` : `L${issue.startLine}-${issue.endLine}`;
+    } else if (issue.startLine) {
+        linePart = `L${issue.startLine}`;
+    }
+
     const categoryRaw = issue.category || 'GENERAL';
     const category = humanizeCategory(categoryRaw);
-    md += `**[${severityToString(issue.severity)}] ${category}**\n\n`;
+    md += `**[${severityToString(issue.severity)}] ${category} (${linePart})**\n\n`;
     md += `${issue.description}\n\n`;
     if (issue.suggestedFix) {
         md += `**Suggested fix:** ${issue.suggestedFix}\n\n`;
     }
 
-    // Full location listing (no collapsing)
-    md += `**Location:** `;
-    const typeLabel = formatArtifactType(issue.type as ArtifactLocation.TypeEnum);
-    const file = issue.filePath ?? '';
-    let linePart = '';
-    if (issue.startLine && issue.endLine) {
-        linePart = issue.startLine === issue.endLine ? `:L${issue.startLine}` : `:L${issue.startLine}-${issue.endLine}`;
-    } else if (issue.startLine) {
-        linePart = `:L${issue.startLine}`;
-    }
-    md += `${typeLabel}${file ? `: ${file}` : ''}${linePart}\n`;
     md += `\n`;
 
     return md;

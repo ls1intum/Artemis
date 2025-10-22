@@ -91,6 +91,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {ProgrammingExercise} exercise - The exercise to check.
      */
     checkConsistencies(exercise: ProgrammingExercise) {
+        // Clear previous consistency issues
+        this.consistencyIssues.set([]);
+
         if (!exercise.id) {
             this.alertService.error(this.translateService.instant('artemisApp.consistencyCheck.checkFailedAlert'));
             return;
@@ -112,11 +115,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     next: (response: ConsistencyCheckResponse) => {
                         this.consistencyIssues.set(response.issues ?? []);
 
-                        if (this.consistencyIssues().length == 0) {
+                        if (this.consistencyIssues().length === 0) {
                             this.alertService.success(this.translateService.instant('artemisApp.consistencyCheck.noInconsistencies'));
                         } else {
                             this.alertService.warning(this.translateService.instant('artemisApp.consistencyCheck.inconsistenciesFoundAlert'));
                         }
+                    },
+                    error: () => {
+                        this.alertService.error(this.translateService.instant('artemisApp.consistencyCheck.checkFailedAlert'));
                     },
                 });
             },
