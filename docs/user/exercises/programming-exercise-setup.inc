@@ -124,8 +124,6 @@ Generate programming exercise
 
     - **Regular Expression for the branch name** The custom branch name is matched against this java regular expression and pushing is only allowed, if it matches.
 
-src/main/webapp/i18n/en/programmingExercise.json
-
     |
 
     .. figure:: programming/programming-options-score.png
