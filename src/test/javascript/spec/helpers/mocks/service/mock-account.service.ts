@@ -37,4 +37,5 @@ export class MockAccountService implements IAccountService {
     createVcsAccessToken = (participationId: number) => of();
     getToolToken = () => of();
     setUserEnabledMemiris = (enabled: boolean) => of();
+    setUserAcceptedExternalLLMUsage = (accepted: boolean) => of();
 }
