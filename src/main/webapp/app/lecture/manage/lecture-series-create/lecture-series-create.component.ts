@@ -134,6 +134,11 @@ export class LectureSeriesCreateComponent {
     private updateLectureDraftsAndExistingLecturesBasedOnInitialLecturesAndSeriesEndDate() {
         const lectureDrafts = this.computeLectureDraftsBasedOnSeriesEndDateAndInitialLectures();
 
+        if (lectureDrafts.length === 0) {
+            this.lectureDrafts.set([]);
+            return;
+        }
+
         const sortedLectureDrafts = this.sort(lectureDrafts, (draft) => this.getSortingKeyFor(draft.dto));
         const sortedExistingLectures = this.sort(this.existingLectures(), (lecture) => this.getSortingKeyFor(lecture));
         this.assignTitlesToNewLectures(sortedLectureDrafts, sortedExistingLectures);
@@ -145,7 +150,9 @@ export class LectureSeriesCreateComponent {
 
     private computeLectureDraftsBasedOnSeriesEndDateAndInitialLectures(): LectureDraft[] {
         const rawSeriesEndDate = this.seriesEndDate();
-        if (!rawSeriesEndDate) {
+        const initialLectures = this.initialLectures();
+        const anyInputInvalid = initialLectures.some((initialLecture) => initialLecture.isEndDateInvalid() || initialLecture.isStartDateInvalid()) || this.isSeriesEndDateInvalid();
+        if (!rawSeriesEndDate || anyInputInvalid) {
             return [];
         }
         const endDate = dayjs(rawSeriesEndDate).endOf('day');
@@ -160,9 +167,7 @@ export class LectureSeriesCreateComponent {
     private computeLectureDraftsForInitialLecture(initialLecture: InitialLecture, seriesEndDate: Dayjs): LectureDraft[] {
         const startDate = initialLecture.startDate();
         const endDate = initialLecture.endDate();
-        const isStartDateInvalid = initialLecture.isStartDateInvalid();
-        const isEndDateInvalid = initialLecture.isEndDateInvalid();
-        if ((!startDate && !endDate) || isStartDateInvalid || isEndDateInvalid) {
+        if (!startDate && !endDate) {
             return [];
         }
 
