@@ -15,7 +15,7 @@
             },
             "scoring": {
                 "title": "Scoring System",
-                "content": "Answer questions correctly to collect points and rank up to higher leagues. You can change the settings for the training mode in the user settings."
+                "content": "Answer questions correctly to collect points and rank up to higher leagues. You can change the settings for the training mode in the user settings. The more often a question is answered correctly in a row, the more points you earn for it."
             },
             "showInLeaderboard": "Show in leaderboard",
             "bronzeLeague": "Bronze league",

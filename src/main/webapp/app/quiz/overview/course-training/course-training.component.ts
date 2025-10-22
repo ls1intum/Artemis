@@ -15,10 +15,24 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AccordionModule } from 'primeng/accordion';
 import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-badge/league-badge.component';
 import dayjs from 'dayjs/esm';
+import { PopoverModule } from 'primeng/popover';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-course-training',
-    imports: [ButtonComponent, LeaderboardComponent, TranslateDirective, DialogModule, FormsModule, FontAwesomeModule, ToggleSwitchModule, AccordionModule, LeagueBadgeComponent],
+    imports: [
+        ButtonComponent,
+        LeaderboardComponent,
+        TranslateDirective,
+        DialogModule,
+        FormsModule,
+        FontAwesomeModule,
+        ToggleSwitchModule,
+        AccordionModule,
+        LeagueBadgeComponent,
+        PopoverModule,
+        ButtonModule,
+    ],
     templateUrl: './course-training.component.html',
     styleUrl: './course-training.component.scss',
 })
@@ -48,6 +62,7 @@ export class CourseTrainingComponent {
 
     showDialog = true;
     showInLeaderboard = true;
+    displayInfoDialog = false;
 
     league = computed(() => {
         const entry = this.currentUserEntry();
@@ -185,5 +200,9 @@ export class CourseTrainingComponent {
                 this.isLoading.set(false);
             },
         });
+    }
+
+    showInfoDialog(): void {
+        this.displayInfoDialog = true;
     }
 }

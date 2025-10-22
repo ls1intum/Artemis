@@ -90,6 +90,20 @@
                     <div>
                         <span> <fa-icon [icon]="faXmark" /> {{ wrongQuestions() }} <span jhiTranslate="artemisApp.quizTraining.wrongQuestions"></span> </span>
                     </div>
+                    <div class="mt-3">
+                        <p-button (click)="showInfoDialog()" severity="secondary" label="View Info" />
+                        <p-dialog [(visible)]="displayInfoDialog" [modal]="true" [style]="{ width: '600px', height: 'auto' }" appendTo="body">
+                            <ng-template pTemplate="header">
+                                <h5 jhiTranslate="artemisApp.quizTraining.theQuizTraining"></h5>
+                            </ng-template>
+                            <h6 jhiTranslate="artemisApp.quizTraining.howItWorks.title"></h6>
+                            <p jhiTranslate="artemisApp.quizTraining.howItWorks.content"></p>
+                            <h6 jhiTranslate="artemisApp.quizTraining.leagues.title"></h6>
+                            <p jhiTranslate="artemisApp.quizTraining.leagues.content"></p>
+                            <h6 jhiTranslate="artemisApp.quizTraining.scoring.title"></h6>
+                            <p jhiTranslate="artemisApp.quizTraining.scoring.content"></p>
+                        </p-dialog>
+                    </div>
                 </div>
                 <div class="leaderboard-section">
                     <jhi-leaderboard [leaderboard]="leaderboardEntries()" [currentUserId]="currentUserEntry()?.userId" [leaderboardName]="leaderboardName()" />
