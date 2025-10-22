@@ -116,8 +116,11 @@ Generate programming exercise
               :align: center
 
     - **Allow Custom Branches:** Activate this option if students should be able to push (to) other branches than the default one.
+
       .. warning::
+
           Artemis does not show those branches in the UI, and also offers no merge support in the UI.
+
       Pushing to other (non-default) branches does not trigger any builds, and does not create submissions.
       Students are therefore fully responsible for managing their branches locally. Further features that deal with branches
       in the Artemis UI are out of scope and will not be implemented in the future.
