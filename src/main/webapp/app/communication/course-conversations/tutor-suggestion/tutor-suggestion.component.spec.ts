@@ -18,6 +18,8 @@ import { HttpClient } from '@angular/common/http';
 import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
 
 describe('TutorSuggestionComponent', () => {
     let component: TutorSuggestionComponent;
@@ -40,11 +42,6 @@ describe('TutorSuggestionComponent', () => {
     const mockUserService = {
         updateExternalLLMUsageConsent: jest.fn(),
     } as any;
-    const accountMock = {
-        userIdentity: { externalLLMUsageAccepted: dayjs() },
-        setUserAcceptedExternalLLMUsage: jest.fn(),
-        getAuthenticationState: jest.fn(),
-    } as any;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -52,12 +49,11 @@ describe('TutorSuggestionComponent', () => {
             providers: [
                 { provide: TranslateService, useValue: {} },
                 { provide: HttpClient, useValue: {} },
-                { provide: AccountService, useValue: accountMock },
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
                 MockProvider(IrisSettingsService),
                 MockProvider(ProfileService),
-                MockProvider(AccountService),
                 MockProvider(FeatureToggleService),
                 MockProvider(TranslateService),
                 MockProvider(ActivatedRoute),
@@ -89,6 +85,7 @@ describe('TutorSuggestionComponent', () => {
         (translateService as any).onTranslationChange = of({ lang: 'en', translations: {} });
         (translateService as any).onDefaultLangChange = of({ lang: 'en', translations: {} });
         chatService.setCourseId(123);
+        accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
 
         componentRef.setInput('post', { id: 1 } as any);
         componentRef.setInput('course', { id: 1 } as any);
