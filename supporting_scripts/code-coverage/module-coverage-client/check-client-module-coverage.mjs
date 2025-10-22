@@ -60,10 +60,10 @@ const moduleThresholds = {
         lines:      91.53,
     },
     exercise: {
-        statements: 88.52,
-        branches:   78.91,
-        functions:  80.18,
-        lines:      88.63,
+        statements: 88.55,
+        branches:   79.09,
+        functions:  80.22,
+        lines:      88.65,
     },
     fileupload: {
         statements: 92.59,
@@ -105,7 +105,7 @@ const moduleThresholds = {
         statements: 88.75,
         branches:   76.65,
         functions:  80.97,
-        lines:      88.86,
+        lines:      88.87,
     },
     quiz: {
         statements: 86.25,
@@ -114,10 +114,10 @@ const moduleThresholds = {
         lines:      86.35,
     },
     shared: {
-        statements: 86.74,
+        statements: 86.75,
         branches:   71.49,
         functions:  83.88,
-        lines:      86.53,
+        lines:      86.55,
     },
     text: {
         statements: 89.32,
