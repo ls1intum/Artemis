@@ -82,10 +82,24 @@ export class CourseOverviewService {
     readonly faLock = faLock;
 
     getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
-        if (tutorialGroups && tutorialGroups.length) {
-            return tutorialGroups?.reduce((a, b) => ((a?.nextSession?.start?.valueOf() ?? 0) > (b?.nextSession?.start?.valueOf() ?? 0) ? a : b));
+        if (!tutorialGroups?.length) {
+            return undefined;
         }
+        const now = dayjs();
+        const futureGroups = tutorialGroups.filter((group) => {
+            const start = group.nextSession?.start;
+            return start?.isAfter(now);
+        });
+        if (!futureGroups.length) {
+            return undefined;
+        }
+        return futureGroups.reduce((earliest, current) => {
+            const earliestStart = earliest.nextSession!.start!;
+            const currentStart = current.nextSession!.start!;
+            return currentStart.isBefore(earliestStart) ? current : earliest;
+        });
     }
+
     getUpcomingLecture(lectures: Lecture[] | undefined): Lecture | undefined {
         if (lectures && lectures.length) {
             return lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));

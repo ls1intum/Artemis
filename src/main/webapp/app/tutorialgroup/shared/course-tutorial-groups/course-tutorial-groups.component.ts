@@ -1,13 +1,11 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, Signal, effect, inject, signal } from '@angular/core';
-import { Subject } from 'rxjs';
-import { distinctUntilChanged } from 'rxjs/operators';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Component, Signal, effect, inject, signal } from '@angular/core';
+import { distinctUntilChanged, startWith, switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { map, takeUntil } from 'rxjs/operators';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
@@ -19,14 +17,14 @@ import { CourseOverviewService } from 'app/core/course/overview/services/course-
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/shared/types/sidebar';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
-export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
+export class CourseTutorialGroupsComponent {
     private readonly EMPTY_TUTORIAL_UNIT_GROUPS = {
         registered: { entityData: [] },
         further: { entityData: [] },
@@ -46,163 +44,80 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
-    private cdr = inject(ChangeDetectorRef);
     private courseStorageService = inject(CourseStorageService);
-    private courseManagementService = inject(CourseManagementService);
     private tutorialGroupService = inject(TutorialGroupsService);
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
-    private ngUnsubscribe = new Subject<void>();
-    private course?: Course;
-    private tutorialGroups: TutorialGroup[] = [];
     private accordionGroups: AccordionGroups = this.EMPTY_TUTORIAL_UNIT_GROUPS;
     private sidebarCardElements: SidebarCardElement[] = [];
+    private updatedCourse: Signal<Course | undefined>;
 
+    tutorialGroups = signal<TutorialGroup[]>([]);
     tutorialGroupSelected = signal(true);
     courseId = this.getCurrentCourseIdSignal();
-    sidebarData: SidebarData;
+    sidebarData = signal<SidebarData | undefined>(undefined);
     isCollapsed = false;
 
     constructor() {
+        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup');
+        this.updatedCourse = this.getUpdatedCourseSignal();
+
         effect(() => {
-            if (this.courseId()) {
-                this.setCourse();
-                this.setTutorialGroups();
-                this.prepareSidebarData();
-                this.subscribeToCourseUpdates();
-                this.cdr.detectChanges();
+            const courseId = this.courseId();
+            if (courseId) {
+                this.setTutorialGroups(courseId);
             }
         });
-    }
 
-    ngOnInit(): void {
-        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup');
-    }
+        effect(() => {
+            const tutorialGroups = this.tutorialGroups();
+            if (tutorialGroups.length > 0) {
+                this.prepareSidebarData(tutorialGroups);
+                this.navigateToTutorialGroup(tutorialGroups);
+            }
+        });
 
-    ngOnDestroy(): void {
-        this.ngUnsubscribe.next();
-        this.ngUnsubscribe.complete();
-    }
-
-    onSubRouteDeactivate() {
-        if (this.activatedRoute.firstChild) {
-            return;
-        }
-        this.navigateToTutorialGroup();
+        effect(() => {
+            const updatedCourse = this.updatedCourse();
+            if (updatedCourse !== undefined) {
+                this.tutorialGroups.set(updatedCourse.tutorialGroups ?? []);
+            }
+        });
     }
 
     toggleSidebar() {
         this.isCollapsed = !this.isCollapsed;
         this.courseOverviewService.setSidebarCollapseState('tutorialGroup', this.isCollapsed);
-        this.cdr.detectChanges();
     }
 
-    private setCourse() {
-        const courseLoadedFromCache = this.loadCourseFromCache();
-        if (!courseLoadedFromCache) {
-            this.loadCourseFromServer();
-        }
-    }
-
-    private loadCourseFromCache(): boolean {
-        const courseId = this.courseId();
-        if (courseId) {
-            const cachedCourse = this.courseStorageService.getCourse(courseId);
-            if (cachedCourse !== undefined) {
-                this.course = cachedCourse;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private loadCourseFromServer() {
-        const courseId = this.courseId();
-        if (!courseId) {
-            return;
-        }
-        this.courseManagementService
-            .find(courseId)
-            .pipe(
-                map((res: HttpResponse<Course>) => res.body),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe({
-                next: (course: Course) => {
-                    this.course = course;
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            })
-            .add(() => this.cdr.detectChanges());
-    }
-
-    private setTutorialGroups() {
-        const tutorialGroupsLoadedFromCache = this.loadTutorialGroupsFromCache();
-        if (!tutorialGroupsLoadedFromCache) {
-            this.loadTutorialGroupsFromServer();
-        }
-        this.navigateToTutorialGroup();
-    }
-
-    private loadTutorialGroupsFromCache(): boolean {
-        const courseId = this.courseId();
-        if (courseId) {
-            const cachedTutorialGroups = this.courseStorageService.getCourse(courseId)?.tutorialGroups;
-            if (cachedTutorialGroups !== undefined) {
-                this.tutorialGroups = cachedTutorialGroups;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private loadTutorialGroupsFromServer() {
-        const courseId = this.courseId();
-        if (!courseId) {
-            return;
-        }
-        this.tutorialGroupService
-            .getAllForCourse(courseId)
-            .pipe(
-                map((res: HttpResponse<TutorialGroup[]>) => res.body),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe({
-                next: (tutorialGroups: TutorialGroup[]) => {
-                    this.tutorialGroups = tutorialGroups ?? [];
-                    this.updateCachedTutorialGroups();
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            })
-            .add(() => this.cdr.detectChanges());
-    }
-
-    private updateCachedTutorialGroups() {
+    private updateCachedTutorialGroups(tutorialGroups: TutorialGroup[]) {
         const courseId = this.courseId();
         if (courseId) {
             const course = this.courseStorageService.getCourse(courseId);
             if (course) {
-                course.tutorialGroups = this.tutorialGroups;
+                course.tutorialGroups = tutorialGroups;
                 this.courseStorageService.updateCourse(course);
             }
         }
     }
 
-    private prepareSidebarData() {
-        if (!this.course?.tutorialGroups) {
-            return;
-        }
-        this.sidebarCardElements = this.courseOverviewService.mapTutorialGroupsToSidebarCardElements(this.tutorialGroups);
-        this.accordionGroups = this.groupTutorialGroupsByRegistration();
-        this.updateSidebarData();
+    private prepareSidebarData(tutorialGroups: TutorialGroup[]) {
+        this.sidebarCardElements = this.courseOverviewService.mapTutorialGroupsToSidebarCardElements(tutorialGroups);
+        this.accordionGroups = this.groupTutorialGroupsByRegistration(tutorialGroups);
+        this.sidebarData.set({
+            groupByCategory: true,
+            storageId: 'tutorialGroup',
+            groupedData: this.accordionGroups,
+            ungroupedData: this.sidebarCardElements,
+        });
     }
 
-    private groupTutorialGroupsByRegistration(): AccordionGroups {
+    private groupTutorialGroupsByRegistration(tutorialGroups: TutorialGroup[]): AccordionGroups {
         const groupedTutorialGroupGroups = cloneDeep(this.EMPTY_TUTORIAL_UNIT_GROUPS) as AccordionGroups;
         let tutorialGroupCategory: TutorialGroupCategory;
 
-        const hasUserAtLeastOneTutorialGroup = this.tutorialGroups.some((tutorialGroup) => tutorialGroup.isUserRegistered || tutorialGroup.isUserTutor);
-        this.tutorialGroups.forEach((tutorialGroup) => {
+        const hasUserAtLeastOneTutorialGroup = tutorialGroups.some((tutorialGroup) => tutorialGroup.isUserRegistered || tutorialGroup.isUserTutor);
+        tutorialGroups.forEach((tutorialGroup) => {
             const tutorialGroupCardItem = this.courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
             if (!hasUserAtLeastOneTutorialGroup) {
                 tutorialGroupCategory = 'all';
@@ -214,33 +129,28 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
         return groupedTutorialGroupGroups;
     }
 
-    private updateSidebarData() {
-        this.sidebarData = {
-            groupByCategory: true,
-            storageId: 'tutorialGroup',
-            groupedData: this.accordionGroups,
-            ungroupedData: this.sidebarCardElements,
-        };
-    }
-
-    private subscribeToCourseUpdates() {
-        const courseId = this.courseId();
-        if (!courseId) {
-            return;
+    private setTutorialGroups(courseId: number) {
+        const cachedTutorialGroups = this.courseStorageService.getCourse(courseId)?.tutorialGroups;
+        if (cachedTutorialGroups !== undefined) {
+            this.tutorialGroups.set(cachedTutorialGroups);
+        } else {
+            this.loadTutorialGroupsFromServer(courseId);
         }
-        this.courseStorageService
-            .subscribeToCourseUpdates(courseId)
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe((course) => {
-                this.course = course;
-                this.setTutorialGroups();
-                this.prepareSidebarData();
-            })
-            .add(() => this.cdr.detectChanges());
     }
 
-    private navigateToTutorialGroup() {
-        const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(this.tutorialGroups);
+    private loadTutorialGroupsFromServer(courseId: number): void {
+        this.tutorialGroupService.getAllForCourse(courseId).subscribe({
+            next: ({ body }) => {
+                const tutorialGroups = body ?? [];
+                this.tutorialGroups.set(tutorialGroups);
+                this.updateCachedTutorialGroups(tutorialGroups);
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    private navigateToTutorialGroup(tutorialGroups: TutorialGroup[]) {
+        const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(tutorialGroups);
         const lastSelectedTutorialGroup = this.getLastSelectedTutorialGroup();
         const tutorialGroupId = this.activatedRoute.firstChild?.snapshot.params.tutorialGroupId;
         if (!tutorialGroupId && lastSelectedTutorialGroup) {
@@ -250,12 +160,12 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
             this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
             this.tutorialGroupSelected.set(true);
         } else {
-            this.tutorialGroupSelected.set(tutorialGroupId ? true : false);
+            this.tutorialGroupSelected.set(!!tutorialGroupId);
         }
     }
 
     private getLastSelectedTutorialGroup(): string | undefined {
-        return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.tutorialGroup.byCourse.' + this.courseId);
+        return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.tutorialGroup.byCourse.' + this.courseId());
     }
 
     private getCurrentCourseIdSignal(): Signal<number | undefined> {
@@ -269,5 +179,14 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
             ),
             { initialValue: undefined },
         );
+    }
+
+    private getUpdatedCourseSignal(): Signal<Course | undefined> {
+        const updatedCourseObservable = toObservable(this.courseId).pipe(
+            distinctUntilChanged(),
+            switchMap((courseId) => (courseId == null ? of(undefined) : this.courseStorageService.subscribeToCourseUpdates(courseId))),
+            startWith(undefined),
+        );
+        return toSignal(updatedCourseObservable, { initialValue: undefined });
     }
 }
