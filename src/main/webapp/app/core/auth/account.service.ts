@@ -1,4 +1,4 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
@@ -51,13 +51,14 @@ export class AccountService implements IAccountService {
 
     constructor() {
         effect(() => {
-            this.handleSideEffectsWhenUserIdentityChanges();
+            this.handleSideEffectsWhenUserLogsInOrOut();
         });
     }
 
-    private handleSideEffectsWhenUserIdentityChanges(): void {
-        const user = this.userIdentity();
+    private handleSideEffectsWhenUserLogsInOrOut(): void {
+        const isAuthenticated = this.authenticated();
         // Alert subscribers about user updates, that is when the user logs in or logs out (undefined).
+        const user = isAuthenticated ? untracked(() => this.userIdentity()) : undefined;
         this.authenticationState.next(user);
 
         // We only subscribe the feature toggle updates when the user is logged in, otherwise we unsubscribe them.
