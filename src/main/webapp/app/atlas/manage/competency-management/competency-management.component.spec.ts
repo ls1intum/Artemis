@@ -4,6 +4,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { Competency, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
+import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
@@ -235,5 +236,27 @@ describe('CompetencyManagementComponent', () => {
         });
 
         expect(component.competencies()).toHaveLength(existingCompetencies + 3);
+    });
+
+    it('should open agent chat modal and set courseId', () => {
+        sessionStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
+        const modalRef = {
+            componentInstance: {
+                courseId: undefined,
+                competencyChanged: {
+                    subscribe: jest.fn(),
+                },
+            },
+        } as any;
+        const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        fixture.detectChanges();
+
+        component['openAgentChatModal']();
+
+        expect(openModalSpy).toHaveBeenCalledWith(AgentChatModalComponent, {
+            size: 'lg',
+            backdrop: true,
+        });
+        expect(modalRef.componentInstance.courseId).toBe(1);
     });
 });
