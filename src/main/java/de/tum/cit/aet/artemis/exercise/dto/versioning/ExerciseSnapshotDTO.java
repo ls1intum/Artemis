@@ -95,7 +95,7 @@ public record ExerciseSnapshotDTO(
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record PlagiarismDetectionConfigSnapshotDTO(boolean continuousPlagiarismControlEnabled, boolean continuousPlagiarismControlPostDueDateChecksEnabled,
-            int continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, int similarityThreshold, int minimumScore, int minimum_size) implements Serializable {
+            int continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, int similarityThreshold, int minimumScore, int minimumSize) implements Serializable {
 
         private static PlagiarismDetectionConfigSnapshotDTO of(@Nullable PlagiarismDetectionConfig config) {
             if (config == null) {

@@ -38,7 +38,7 @@ jobs:
           # TODO these values should become zero in the future
           max_entitygraph_violations=10
           max_query_violations=24
-          max_total_violations=34
+          max_total_violations=$((max_entitygraph_violations + max_query_violations))
 
           echo "=========================================="
           echo "QUERY QUALITY ANALYSIS SUMMARY"
