@@ -9,6 +9,7 @@ export interface ChatMessage {
     canCreateCompetencies?: boolean;
     suggestedCompetencies?: CompetencyDraft[];
     competencyPreview?: CompetencyPreview;
+    competencyCreated?: boolean;
 }
 
 export interface CompetencyDraft {

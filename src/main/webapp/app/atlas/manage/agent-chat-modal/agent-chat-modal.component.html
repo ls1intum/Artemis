@@ -26,6 +26,16 @@
                         @if (message.competencyPreview) {
                             <div class="competency-preview-container mt-2">
                                 <jhi-competency-card [courseId]="courseId" [competency]="message.competencyPreview" [noProgressRings]="true" />
+                                <button
+                                    type="button"
+                                    class="btn btn-sm mt-2"
+                                    [class.btn-primary]="!message.competencyCreated"
+                                    [class.btn-success]="message.competencyCreated"
+                                    (click)="onCreateCompetency(message)"
+                                    [disabled]="isAgentTyping() || message.competencyCreated"
+                                >
+                                    {{ message.competencyCreated ? 'Created' : 'Create' }}
+                                </button>
                             </div>
                         }
                     </div>

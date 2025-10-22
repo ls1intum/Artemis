@@ -23,6 +23,8 @@ import { AgentChatService } from './agent-chat.service';
 import { ChatMessage, CompetencyPreview } from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
 
 @Component({
     selector: 'jhi-agent-chat-modal',
@@ -42,6 +44,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     private readonly activeModal = inject(NgbActiveModal);
     private readonly agentChatService = inject(AgentChatService);
+    private readonly competencyService = inject(CompetencyService);
     private readonly translateService = inject(TranslateService);
     private readonly cdr = inject(ChangeDetectorRef);
 
@@ -136,6 +139,48 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         const textarea = this.messageInput().nativeElement;
         textarea.style.height = 'auto';
         textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+
+    protected onCreateCompetency(message: ChatMessage): void {
+        // Prevent duplicate creation
+        if (message.competencyCreated || !message.competencyPreview) {
+            return;
+        }
+
+        // Create competency object from preview data
+        const competency = new Competency();
+        competency.title = message.competencyPreview.title;
+        competency.description = message.competencyPreview.description;
+        competency.taxonomy = message.competencyPreview.taxonomy;
+
+        // Show typing indicator while creating
+        this.isAgentTyping.set(true);
+
+        // Call the competency service to create the competency
+        this.competencyService.create(competency, this.courseId).subscribe({
+            next: () => {
+                this.isAgentTyping.set(false);
+
+                // Mark this message's competency as created
+                this.messages = this.messages.map((msg) => (msg.id === message.id ? { ...msg, competencyCreated: true } : msg));
+                this.cdr.markForCheck();
+
+                this.addMessage('Competency created successfully!', false);
+
+                // Emit event to refresh competencies in parent component
+                this.competencyChanged.emit();
+
+                // Restore focus to input
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+            },
+            error: () => {
+                this.isAgentTyping.set(false);
+                this.addMessage('Failed to create competency. Please try again.', false);
+
+                // Restore focus to input
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+            },
+        });
     }
 
     private addMessage(content: string, isUser: boolean): void {

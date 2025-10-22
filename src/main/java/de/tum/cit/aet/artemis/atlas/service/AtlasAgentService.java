@@ -93,11 +93,10 @@ public class AtlasAgentService {
                 // Remove the marker from the response before returning to user
                 response = response.replace(DELEGATE_TO_COMPETENCY_EXPERT, "").trim();
 
-                // Immediately append Competency Expert welcome message
-                String welcomeMessage = "\n\n---\n\n**Welcome! I'll help you create a well-structured competency for this course.**\n\n" + "**Quick Guidelines:**\n"
-                        + "- Title: max 4 words\n" + "- Description: 2-5 bullets, each under 15 words\n" + "- Must align with course scope\n" + "- Competency should be unique\n\n"
-                        + "What topic or skill would you like to create a competency for?";
-                response = response + welcomeMessage;
+                // Immediately invoke Competency Expert with the original user message
+                // This allows the expert to react to what the instructor already said
+                String expertResponse = processWithCompetencyExpert(message, courseId, sessionId);
+                response = response + "\n\n---\n\n" + expertResponse;
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
