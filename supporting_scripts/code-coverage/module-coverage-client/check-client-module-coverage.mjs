@@ -147,6 +147,10 @@ const moduleThresholds = {
 const metrics = ['statements', 'branches', 'functions', 'lines'];
 
 const AIMED_FOR_COVERAGE = 90;
+/**
+ * If the coverage is >= this value higher than the threshold, an upward arrow is shown to indicate the threshold should be bumped up.
+ */
+const SHOULD_BUMP_COVERAGE_DELTA = 0.1;
 
 const roundToTwoDigits = (value) => Math.round(value * 100) / 100;
 
@@ -160,8 +164,9 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
         const roundedThreshold = roundToTwoDigits(thresholds[metric]);
         const pass = roundedPercentage >= roundedThreshold;
         const higherThanExpected = roundedPercentage > roundedThreshold && roundedThreshold < AIMED_FOR_COVERAGE;
+        const shouldBumpCoverageUp = (roundedPercentage - roundedThreshold) >= SHOULD_BUMP_COVERAGE_DELTA;
 
-        const status = `${higherThanExpected ? '⬆️' : ''} ${pass ? '✅' : '❌'}`;
+        const status = `${higherThanExpected && shouldBumpCoverageUp ? '⬆️' : ''} ${pass ? '✅' : '❌'}`;
         console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${roundedPercentage.toFixed(2).padStart(6)}%  (need ≥ ${roundedThreshold.toFixed(2)}%)`);
         if (!pass) failed = true;
     }
