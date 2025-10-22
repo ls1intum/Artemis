@@ -26,7 +26,10 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
+import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseVersionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -57,6 +60,9 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
     @Autowired
     private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
+
+    @Autowired
+    private ExerciseVersionTestRepository exerciseVersionTestRepository;
 
     private Course course;
 
@@ -405,6 +411,71 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
             assertThat(originalVersion.getExerciseSnapshot().programmingData().auxiliaryRepositories()).usingRecursiveComparison()
                     .isNotEqualTo(newVersion.getExerciseSnapshot().programmingData().auxiliaryRepositories());
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseVersions_returnsPagedVersionsWithUserInfo() throws Exception {
+        ExerciseVersion version1 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+
+        ExerciseVersionUtilService.updateExercise(programmingExercise);
+        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+
+        ExerciseVersion version2 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        assertThat(version2.getId()).isNotEqualTo(version1.getId());
+
+        List<ExerciseVersionDTO> response = request.get("/api/exercise/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.OK, new TypeReference<>() {
+        });
+
+        assertThat(response).isNotNull();
+        assertThat(response).hasSize(2);
+
+        ExerciseVersionDTO firstVersion = response.get(0);
+        ExerciseVersionDTO secondVersion = response.get(1);
+
+        assertThat(firstVersion.id()).isEqualTo(version2.getId());
+        assertThat(secondVersion.id()).isEqualTo(version1.getId());
+
+        assertThat(firstVersion.author()).isNotNull();
+        assertThat(firstVersion.author().getLogin()).isEqualTo(TEST_PREFIX + "instructor1");
+        assertThat(firstVersion.createdDate()).isNotNull();
+
+        assertThat(secondVersion.author()).isNotNull();
+        assertThat(secondVersion.author().getLogin()).isEqualTo(TEST_PREFIX + "instructor1");
+        assertThat(secondVersion.createdDate()).isNotNull();
+
+        assertThat(firstVersion.createdDate()).isAfter(secondVersion.createdDate());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseVersions_forbidden() throws Exception {
+        // `beforeEach` requires instructor access to run
+        // Switch to student user and attempt to get snapshot
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        request.get("/api/exercise/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.FORBIDDEN, ArrayList.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseSnapshot_returnsCompleteSnapshotData() throws Exception {
+        ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        ExerciseSnapshotDTO snapshot = request.get("/api/exercise/version/" + version.getId(), HttpStatus.OK, ExerciseSnapshotDTO.class);
+
+        assertThat(snapshot).isNotNull();
+        assertThat(snapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(version.getExerciseSnapshot());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseSnapshot_forbiddenForStudent() throws Exception {
+        // `beforeEach` requires instructor access to run
+        ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        Long versionId = version.getId();
+
+        // Switch to student user and attempt to get snapshot
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        request.get("/api/exercise/version/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
     }
 
 }
