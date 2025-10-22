@@ -87,6 +87,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      * Truncates the title to 255 characters if necessary.
      * This is a utility method that can be used by services that don't extend this class.
      *
+     * @param <T>               The type of chat session (must extend IrisChatSession)
      * @param session           The session to update
      * @param sessionTitle      The title to set (can be null or blank)
      * @param sessionRepository The repository to save the session
@@ -106,6 +107,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      * Return a localized "New chat" title based on the user's language key.
      * - German variants (starts with "de") -> "Neuer Chat"
      * - English variants (starts with "en") -> "New Chat"
+     *
+     * @param langKey The language key of the user
+     * @return the localized title
      */
     public static String getLocalizedNewChatTitle(String langKey) {
         if (langKey != null && langKey.startsWith("de")) {
@@ -117,7 +121,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
     }
 
     /**
-     * Handles the status update of a ExerciseChatJob by sending the result to the student via the Websocket.
+     * Handles the status update of an ExerciseChatJob by sending the result to the student via the Websocket.
      *
      * @param job          The job that was executed
      * @param statusUpdate The status update of the job
