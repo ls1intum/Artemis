@@ -17,7 +17,7 @@ describe('IrisLearnerProfileComponent', () => {
         lastName: 'User',
         email: 'test@example.com',
         memirisEnabled: true,
-    };
+    } as User;
 
     const mockUserWithMemirisDisabled = {
         id: 1,
@@ -26,7 +26,7 @@ describe('IrisLearnerProfileComponent', () => {
         lastName: 'User',
         email: 'test@example.com',
         memirisEnabled: false,
-    };
+    } as User;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
