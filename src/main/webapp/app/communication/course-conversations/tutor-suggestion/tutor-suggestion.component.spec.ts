@@ -14,12 +14,13 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { TranslateService } from '@ngx-translate/core';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('TutorSuggestionComponent', () => {
     let component: TutorSuggestionComponent;
@@ -48,7 +49,6 @@ describe('TutorSuggestionComponent', () => {
             imports: [TutorSuggestionComponent, MockComponent(IrisBaseChatbotComponent)],
             providers: [
                 { provide: TranslateService, useValue: {} },
-                { provide: HttpClient, useValue: {} },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
@@ -57,6 +57,8 @@ describe('TutorSuggestionComponent', () => {
                 MockProvider(FeatureToggleService),
                 MockProvider(TranslateService),
                 MockProvider(ActivatedRoute),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
