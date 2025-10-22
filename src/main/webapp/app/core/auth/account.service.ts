@@ -88,13 +88,13 @@ export class AccountService implements IAccountService {
     }
 
     syncGroups(groups: string[]) {
-        const user = this.userIdentity();
-        if (!user) {
-            return;
-        }
-
-        user.groups = groups;
-        this.userIdentity.set(user);
+        this.userIdentity.update((currentUserIdentity) => {
+            if (!currentUserIdentity) {
+                return currentUserIdentity;
+            }
+            currentUserIdentity.groups = groups;
+            return currentUserIdentity;
+        });
     }
 
     hasAnyAuthority(authorities: string[]): Promise<boolean> {
@@ -303,13 +303,14 @@ export class AccountService implements IAccountService {
     }
 
     setImageUrl(url: string | undefined) {
-        const user = this.userIdentity();
-        if (!user) {
-            return;
-        }
+        this.userIdentity.update((currentUserIdentity) => {
+            if (!currentUserIdentity) {
+                return currentUserIdentity;
+            }
 
-        user.imageUrl = url;
-        this.userIdentity.set(user);
+            currentUserIdentity.imageUrl = url;
+            return currentUserIdentity;
+        });
     }
 
     /**
@@ -322,7 +323,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Returns the current prefilled username and clears it. Necessary as we don't want to show the prefilled username after a later log out.
+     * Returns the current prefilled username and clears it. Necessary as we don't want to show the prefilled username after a later log-out.
      *
      * @returns the prefilled username
      */
@@ -393,25 +394,27 @@ export class AccountService implements IAccountService {
      * to omit accepting external LLM usage popup appearing multiple time before user refreshes the page.
      */
     setUserAcceptedExternalLLMUsage(accepted: boolean = true): void {
-        const user = this.userIdentity();
-        if (!user) {
-            return;
-        }
+        this.userIdentity.update((currentUserIdentity) => {
+            if (!currentUserIdentity) {
+                return currentUserIdentity;
+            }
 
-        user.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
-        this.userIdentity.set(user);
+            currentUserIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
+            return currentUserIdentity;
+        });
     }
 
     setUserEnabledMemiris(memirisEnabled: boolean): void {
         this.http.put('api/core/account/enable-memiris', memirisEnabled).subscribe({
             next: () => {
-                const user = this.userIdentity();
-                if (!user) {
-                    return;
-                }
+                this.userIdentity.update((currentUserIdentity) => {
+                    if (!currentUserIdentity) {
+                        return currentUserIdentity;
+                    }
 
-                user.memirisEnabled = memirisEnabled;
-                this.userIdentity.set(user);
+                    currentUserIdentity.memirisEnabled = memirisEnabled;
+                    return currentUserIdentity;
+                });
             },
             error: (_) => {},
         });
