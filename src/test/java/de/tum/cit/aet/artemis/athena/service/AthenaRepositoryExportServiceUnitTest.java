@@ -20,11 +20,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AthenaRepositoryExportServiceUnitTest {
@@ -36,16 +36,16 @@ class AthenaRepositoryExportServiceUnitTest {
     private static final long PARTICIPATION_ID = 99L;
 
     @Mock
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Mock
     private RepositoryService repositoryService;
 
     @Mock
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Mock
-    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
     private AthenaRepositoryExportService athenaRepositoryExportService;
 
