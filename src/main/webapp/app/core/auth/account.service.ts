@@ -87,11 +87,11 @@ export class AccountService implements IAccountService {
     }
 
     syncGroups(groups: string[]) {
-        if (!this.userIdentity()) {
+        const user = this.userIdentity()!;
+        if (!user) {
             return;
         }
 
-        const user = this.userIdentity();
         user.groups = groups;
         this.userIdentity.set(user);
     }
@@ -302,11 +302,11 @@ export class AccountService implements IAccountService {
     }
 
     setImageUrl(url: string | undefined) {
-        if (!this.userIdentity()) {
+        const user = this.userIdentity();
+        if (!user) {
             return;
         }
 
-        const user = this.userIdentity();
         user.imageUrl = url;
         this.userIdentity.set(user);
     }
@@ -392,23 +392,23 @@ export class AccountService implements IAccountService {
      * to omit accepting external LLM usage popup appearing multiple time before user refreshes the page.
      */
     setUserAcceptedExternalLLMUsage(accepted: boolean = true): void {
-        if (!this.userIdentity()) {
+        const user = this.userIdentity();
+        if (!user) {
             return;
         }
 
-        const user = this.userIdentity();
         user.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
         this.userIdentity.set(user);
     }
 
     setUserEnabledMemiris(memirisEnabled: boolean): void {
-        if (!this.userIdentity()) {
-            return;
-        }
-
         this.http.put('api/core/account/enable-memiris', memirisEnabled).subscribe({
             next: () => {
                 const user = this.userIdentity();
+                if (!user) {
+                    return;
+                }
+
                 user.memirisEnabled = memirisEnabled;
                 this.userIdentity.set(user);
             },
