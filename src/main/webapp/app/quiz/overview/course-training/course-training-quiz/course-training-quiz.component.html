@@ -1,7 +1,7 @@
 <div>
     @if (questionsLoaded()) {
         @if (!isRated()) {
-            <p-dialog [(visible)]="showUnratedConfirmation" [modal]="true" [draggable]="false" [style]="{ width: '450px' }">
+            <p-dialog [(visible)]="showUnratedConfirmation" [modal]="true" [closable]="false" [draggable]="false" [style]="{ width: '450px' }" [appendTo]="'body'">
                 <ng-template pTemplate="header">
                     <h5 jhiTranslate="artemisApp.quizQuestion.unratedConfirmationTitle"></h5>
                 </ng-template>

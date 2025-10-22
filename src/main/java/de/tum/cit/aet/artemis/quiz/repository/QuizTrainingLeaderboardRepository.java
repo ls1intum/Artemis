@@ -36,9 +36,9 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
      * Each league corresponds to a score range:
      * - Bronze (5): 0-49
      * - Silver (4): 50-149
-     * - Gold (3): 150-349
-     * - Diamond (2): 350-699
-     * - Master (1): 700 and above
+     * - Gold (3): 150-299
+     * - Diamond (2): 300-500
+     * - Master (1): 500 and above
      */
     @Transactional
     @Modifying
@@ -48,8 +48,8 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
                             CASE
                                 WHEN (qtl.score + :scoreDelta) < 50 THEN 5
                                 WHEN (qtl.score + :scoreDelta) >= 50 AND (qtl.score + :scoreDelta) < 150 THEN 4
-                                WHEN (qtl.score + :scoreDelta) >= 150 AND (qtl.score + :scoreDelta) < 350 THEN 3
-                                WHEN (qtl.score + :scoreDelta) >= 350 AND (qtl.score + :scoreDelta)< 700 THEN 2
+                                WHEN (qtl.score + :scoreDelta) >= 150 AND (qtl.score + :scoreDelta) < 300 THEN 3
+                                WHEN (qtl.score + :scoreDelta) >= 300 AND (qtl.score + :scoreDelta)< 500 THEN 2
                                 ELSE 1
                             END,
                        qtl.score = qtl.score + :scoreDelta,

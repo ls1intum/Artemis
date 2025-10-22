@@ -34,8 +34,8 @@ export class CourseTrainingComponent {
 
     protected readonly pointsBronzeLeague = 50;
     protected readonly pointsSilverLeague = 150;
-    protected readonly pointsGoldLeague = 350;
-    protected readonly pointsDiamondLeague = 700;
+    protected readonly pointsGoldLeague = 300;
+    protected readonly pointsDiamondLeague = 500;
 
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
