@@ -378,7 +378,7 @@ describe('AttachmentVideoUnitService', () => {
 
             const req = httpMock.expectOne({
                 method: 'POST',
-                url: `/api/lecture/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
+                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
             });
 
             // Verify request shape
@@ -394,7 +394,7 @@ describe('AttachmentVideoUnitService', () => {
             req.flush('transcription started', { status: 200, statusText: 'OK' });
 
             expect(completed).toBeTrue();
-            expect(successSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.started');
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.started');
         }));
 
         it('should show error alert and handle server errors gracefully', fakeAsync(() => {
@@ -411,14 +411,14 @@ describe('AttachmentVideoUnitService', () => {
 
             const req = httpMock.expectOne({
                 method: 'POST',
-                url: `/api/lecture/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
+                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
             });
 
             // Simulate server error
             req.flush('Internal error', { status: 500, statusText: 'Server Error' });
 
             expect(completed).toBeTrue();
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.error');
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.error');
         }));
 
         it('should send videoUrl verbatim even with special characters', fakeAsync(() => {
@@ -429,7 +429,7 @@ describe('AttachmentVideoUnitService', () => {
 
             const req = httpMock.expectOne({
                 method: 'POST',
-                url: `/api/lecture/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
+                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
             });
 
             // Body should contain the exact string we passed in
@@ -440,7 +440,7 @@ describe('AttachmentVideoUnitService', () => {
             });
 
             req.flush('ok', { status: 200, statusText: 'OK' });
-            expect(successSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.started');
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.started');
         }));
 
         it('should handle errors with missing message gracefully', fakeAsync(() => {
@@ -450,13 +450,13 @@ describe('AttachmentVideoUnitService', () => {
 
             const req = httpMock.expectOne({
                 method: 'POST',
-                url: `/api/lecture/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
+                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
             });
 
             // Simulate error without message
             req.error(new ProgressEvent('Network error'));
 
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.error');
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.error');
         }));
     });
 });

@@ -2,13 +2,14 @@ package de.tum.cit.aet.artemis.nebula.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.net.URI;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -35,7 +36,7 @@ import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/lecture/nebula/")
+@RequestMapping("api/nebula/")
 public class NebulaTranscriptionResource {
 
     private static final Logger log = LoggerFactory.getLogger(NebulaTranscriptionResource.class);
@@ -43,9 +44,6 @@ public class NebulaTranscriptionResource {
     private final LectureTranscriptionService lectureTranscriptionService;
 
     private final TumLiveService tumLiveService;
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     public NebulaTranscriptionResource(LectureTranscriptionService lectureTranscriptionService, TumLiveService tumLiveService) {
         this.lectureTranscriptionService = lectureTranscriptionService;
@@ -66,7 +64,6 @@ public class NebulaTranscriptionResource {
     public ResponseEntity<Void> startNebulaTranscription(@PathVariable Long lectureId, @PathVariable Long lectureUnitId,
             @RequestBody @Valid NebulaTranscriptionRequestDTO request) {
 
-        log.info("Starting Nebula transcription for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
         lectureTranscriptionService.startNebulaTranscription(lectureId, lectureUnitId, request);
         return ResponseEntity.ok().build();
     }
@@ -79,17 +76,29 @@ public class NebulaTranscriptionResource {
      */
     @GetMapping("video-utils/tum-live-playlist")
     @EnforceAtLeastStudent
-    public ResponseEntity<String> getTumLivePlaylist(@RequestParam String url) {
-        log.info("Received request to fetch playlist for TUM Live URL: {}", url);
+    public ResponseEntity<String> getTumLivePlaylist(@RequestParam @NotBlank String url) {
+        log.info("Received request to fetch playlist for TUM Live URL");
+
+        // Basic URL validation to match Javadoc promise of 400 for invalid input
+        if (url.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
 
         Optional<String> playlistUrl = tumLiveService.getTumLivePlaylistLink(url);
 
         if (playlistUrl.isPresent()) {
-            log.info("Playlist URL found: {}", playlistUrl.get());
+            // Log only the host for security, avoid exposing full URLs
+            try {
+                String host = URI.create(url).getHost();
+                log.debug("Playlist URL found for host: {}", host);
+            }
+            catch (Exception e) {
+                log.debug("Playlist URL found for request");
+            }
             return ResponseEntity.ok(playlistUrl.get());
         }
         else {
-            log.warn("No playlist URL found for: {}", url);
+            log.warn("No playlist URL found for request");
             return ResponseEntity.notFound().build();
         }
     }
