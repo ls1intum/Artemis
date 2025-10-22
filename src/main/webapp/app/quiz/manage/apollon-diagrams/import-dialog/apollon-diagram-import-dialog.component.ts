@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -7,6 +7,7 @@ import { ApollonDiagramDetailComponent } from '../detail/apollon-diagram-detail.
 
 @Component({
     selector: 'jhi-apollon-diagram-import-dialog',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './apollon-diagram-import-dialog.component.html',
     providers: [ApollonDiagramService],
     imports: [ApollonDiagramListComponent, ApollonDiagramDetailComponent],
@@ -14,22 +15,21 @@ import { ApollonDiagramDetailComponent } from '../detail/apollon-diagram-detail.
 export class ApollonDiagramImportDialogComponent {
     private activeModal = inject(NgbActiveModal);
 
-    @Input()
-    courseId: number;
+    courseId = input.required<number>();
 
-    isInEditView = false;
-    apollonDiagramDetailId: number;
+    isInEditView = signal(false);
+    apollonDiagramDetailId = signal<number | undefined>(undefined);
 
     handleDetailOpen(id: number) {
-        this.isInEditView = true;
-        this.apollonDiagramDetailId = id;
+        this.isInEditView.set(true);
+        this.apollonDiagramDetailId.set(id);
     }
 
     handleDetailClose(dndQuestion?: DragAndDropQuestion) {
         if (dndQuestion) {
             this.activeModal.close(dndQuestion);
         } else {
-            this.isInEditView = false;
+            this.isInEditView.set(false);
         }
     }
 
