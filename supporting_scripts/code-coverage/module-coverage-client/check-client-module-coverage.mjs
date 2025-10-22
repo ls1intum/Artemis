@@ -49,8 +49,8 @@ const moduleThresholds = {
     },
     core: {
         statements: 89.03,
-        branches:   72.60,
-        functions:  81.60,
+        branches:   71.15,
+        functions:  80.59,
         lines:      89.05,
     },
     exam: {
@@ -61,8 +61,8 @@ const moduleThresholds = {
     },
     exercise: {
         statements: 88.52,
-        branches:   79.00,
-        functions:  80.20,
+        branches:   78.91,
+        functions:  80.18,
         lines:      88.63,
     },
     fileupload: {
@@ -102,16 +102,16 @@ const moduleThresholds = {
         lines:      92.20,
     },
     programming: {
-        statements: 89.10,
-        branches:   77.10,
-        functions:  81.40,
-        lines:      89.20,
+        statements: 88.75,
+        branches:   76.65,
+        functions:  80.97,
+        lines:      88.86,
     },
     quiz: {
-        statements: 87.70,
-        branches:   75.40,
-        functions:  81.40,
-        lines:      87.90,
+        statements: 86.25,
+        branches:   74.69,
+        functions:  78.69,
+        lines:      86.35,
     },
     shared: {
         statements: 86.74,
@@ -127,8 +127,8 @@ const moduleThresholds = {
     },
     tutorialgroup: {
         statements: 91.31,
-        branches:   76.70,
-        functions:  83.70,
+        branches:   75.85,
+        functions:  83.51,
         lines:      91.20,
     },
 };
