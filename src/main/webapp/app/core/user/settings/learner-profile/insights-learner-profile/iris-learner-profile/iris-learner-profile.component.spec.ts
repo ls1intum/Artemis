@@ -41,6 +41,7 @@ describe('IrisLearnerProfileComponent', () => {
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService);
         accountService.userIdentity.set(mockUser);
+        jest.spyOn(accountService, 'setUserEnabledMemiris').mockImplementation(() => {});
     });
 
     afterEach(() => {
@@ -145,10 +146,7 @@ describe('IrisLearnerProfileComponent', () => {
 
     describe('Component integration', () => {
         it('should properly initialize and handle toggle changes', () => {
-            Object.defineProperty(accountService, 'userIdentity', {
-                get: () => mockUserWithMemirisDisabled,
-                configurable: true,
-            });
+            accountService.userIdentity.set(mockUserWithMemirisDisabled);
             component.ngOnInit();
             expect(component.memirisEnabled).toBeFalse();
             component.memirisEnabled = true;
@@ -157,16 +155,10 @@ describe('IrisLearnerProfileComponent', () => {
         });
 
         it('should handle user identity changes during component lifecycle', () => {
-            Object.defineProperty(accountService, 'userIdentity', {
-                get: () => mockUser,
-                configurable: true,
-            });
+            accountService.userIdentity.set(mockUser);
             component.ngOnInit();
             expect(component.memirisEnabled).toBeTrue();
-            Object.defineProperty(accountService, 'userIdentity', {
-                get: () => mockUserWithMemirisDisabled,
-                configurable: true,
-            });
+            accountService.userIdentity.set(mockUserWithMemirisDisabled);
             component.ngOnInit();
             expect(component.memirisEnabled).toBeFalse();
         });
