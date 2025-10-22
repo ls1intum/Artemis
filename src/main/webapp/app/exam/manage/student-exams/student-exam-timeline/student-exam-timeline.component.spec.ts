@@ -170,7 +170,6 @@ describe('Student Exam Timeline Component', () => {
             .spyOn(component, 'retrieveSubmissionDataAndTimeStamps')
             .mockReturnValue(of([[submissionVersion], [programmingSubmission1], [fileUploadSubmission1]]) as unknown as Observable<(SubmissionVersion[] | Submission[])[]>);
         component.ngOnInit();
-        fixture.detectChanges();
         expect(retrieveDataSpy).toHaveBeenCalledOnce();
         expect(component.currentSubmission).toEqual(submissionVersion);
         expect(component.selectedTimestamp).toEqual(dayjs('2023-01-07').valueOf());
