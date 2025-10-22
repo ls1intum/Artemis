@@ -87,7 +87,7 @@ export class AccountService implements IAccountService {
     }
 
     syncGroups(groups: string[]) {
-        const user = this.userIdentity()!;
+        const user = this.userIdentity();
         if (!user) {
             return;
         }
