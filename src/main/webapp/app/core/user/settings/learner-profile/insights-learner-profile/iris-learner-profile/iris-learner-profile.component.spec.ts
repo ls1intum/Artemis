@@ -79,7 +79,7 @@ describe('IrisLearnerProfileComponent', () => {
                 firstName: 'Test',
                 lastName: 'User',
                 email: 'test@example.com',
-            };
+            } as User;
 
             accountService.userIdentity.set(userWithoutMemiris);
             component.ngOnInit();
