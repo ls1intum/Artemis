@@ -42,9 +42,7 @@ describe('ExerciseChatbotButtonComponent', () => {
     const userMock = {
         acceptExternalLLMUsage: jest.fn(),
     };
-    const accountMock = {
-        userIdentity: { externalLLMUsageAccepted: dayjs() },
-    } as User;
+    const accountMock = { externalLLMUsageAccepted: dayjs() } as User;
 
     const mockExerciseId = 123;
     const mockCourseId = 456;

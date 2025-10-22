@@ -3,7 +3,6 @@ import { InsightsLearnerProfileComponent } from './insights-learner-profile.comp
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockProvider } from 'ng-mocks';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('InsightsLearnerProfileComponent', () => {
