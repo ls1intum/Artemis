@@ -174,8 +174,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnoreProperties("exercise")
     private PlagiarismDetectionConfig plagiarismDetectionConfig;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "athena_config_id")
+    @OneToOne(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private ExerciseAthenaConfig athenaConfig;
 
@@ -675,11 +674,18 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public void setAthenaConfig(ExerciseAthenaConfig athenaConfig) {
+        if (this.athenaConfig != null && this.athenaConfig != athenaConfig) {
+            this.athenaConfig.setExercise(null);
+        }
+
         if (athenaConfig == null || athenaConfig.isEmpty()) {
             this.athenaConfig = null;
+            return;
         }
-        else {
-            this.athenaConfig = athenaConfig;
+
+        this.athenaConfig = athenaConfig;
+        if (athenaConfig.getExercise() != this) {
+            athenaConfig.setExercise(this);
         }
     }
 
