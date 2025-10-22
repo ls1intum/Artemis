@@ -87,7 +87,13 @@ export class AccountService implements IAccountService {
     }
 
     syncGroups(groups: string[]) {
-        this.userIdentity()!.groups = groups;
+        if (!this.userIdentity()) {
+            return;
+        }
+
+        this.userIdentity.update((userIdentity) => {
+            userIdentity.groups = groups;
+        });
     }
 
     hasAnyAuthority(authorities: string[]): Promise<boolean> {
@@ -300,7 +306,9 @@ export class AccountService implements IAccountService {
             return;
         }
 
-        this.userIdentity()!.imageUrl = url;
+        this.userIdentity.update((userIdentity) => {
+            userIdentity.imageUrl = url;
+        });
     }
 
     /**
@@ -357,7 +365,11 @@ export class AccountService implements IAccountService {
      */
     getVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.get<string>('api/core/account/participation-vcs-access-token', { observe: 'response', params, responseType: 'text' as 'json' });
+        return this.http.get<string>('api/core/account/participation-vcs-access-token', {
+            observe: 'response',
+            params,
+            responseType: 'text' as 'json',
+        });
     }
 
     /**
@@ -368,7 +380,11 @@ export class AccountService implements IAccountService {
      */
     createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.put<string>('api/core/account/participation-vcs-access-token', null, { observe: 'response', params, responseType: 'text' as 'json' });
+        return this.http.put<string>('api/core/account/participation-vcs-access-token', null, {
+            observe: 'response',
+            params,
+            responseType: 'text' as 'json',
+        });
     }
 
     /**
@@ -380,17 +396,21 @@ export class AccountService implements IAccountService {
             return;
         }
 
-        this.userIdentity()!.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
+        this.userIdentity.update((userIdentity) => {
+            userIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
+        });
     }
 
     setUserEnabledMemiris(memirisEnabled: boolean): void {
-        if (!this.userIdentity) {
+        if (!this.userIdentity()) {
             return;
         }
 
         this.http.put('api/core/account/enable-memiris', memirisEnabled).subscribe({
             next: () => {
-                this.userIdentity()!.memirisEnabled = memirisEnabled;
+                this.userIdentity.update((userIdentity) => {
+                    userIdentity.memirisEnabled = memirisEnabled;
+                });
             },
             error: (_) => {},
         });
@@ -401,6 +421,9 @@ export class AccountService implements IAccountService {
      * The Cookie stays valid, a new bearer token is generated on every call with a validity of max 1d.
      */
     getToolToken(tool: string): Observable<string> {
-        return this.http.post<string>('api/core/tool-token', null, { params: { tool: tool }, responseType: 'text' as 'json' });
+        return this.http.post<string>('api/core/tool-token', null, {
+            params: { tool: tool },
+            responseType: 'text' as 'json',
+        });
     }
 }

@@ -21,7 +21,6 @@ describe('ExternalLlmUsageSettingsComponent', () => {
             providers: [
                 MockProvider(IrisChatService),
                 MockProvider(TranslateService),
-                MockProvider(AccountService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
