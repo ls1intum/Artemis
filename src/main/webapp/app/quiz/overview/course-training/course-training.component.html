@@ -91,7 +91,9 @@
                         <span> <fa-icon [icon]="faXmark" /> {{ wrongQuestions() }} <span jhiTranslate="artemisApp.quizTraining.wrongQuestions"></span> </span>
                     </div>
                     <div class="mt-3">
-                        <p-button (click)="showInfoDialog()" severity="secondary" label="View Info" />
+                        <p-button (click)="showInfoDialog()" severity="secondary">
+                            <span jhiTranslate="artemisApp.quizTraining.infoButton"></span>
+                        </p-button>
                         <p-dialog [(visible)]="displayInfoDialog" [modal]="true" [style]="{ width: '600px', height: 'auto' }" appendTo="body">
                             <ng-template pTemplate="header">
                                 <h5 jhiTranslate="artemisApp.quizTraining.theQuizTraining"></h5>

@@ -31,7 +31,8 @@
             "correctQuestions": "correct answers",
             "wrongQuestions": "wrong answers",
             "theQuizTraining": "The Quiz Training Mode",
-            "save": "Save"
+            "save": "Save",
+            "infoButton": "View description"
         }
     }
 }

@@ -31,7 +31,8 @@
             "correctQuestions": "richtige Antworten",
             "wrongQuestions": "falsche Antworten",
             "theQuizTraining": "Der Quiz Trainingsmodus",
-            "save": "Speichern"
+            "save": "Speichern",
+            "infoButton": "Beschreibung anzeigen"
         }
     }
 }
