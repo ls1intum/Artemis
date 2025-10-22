@@ -15,7 +15,6 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AccordionModule } from 'primeng/accordion';
 import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-badge/league-badge.component';
 import dayjs from 'dayjs/esm';
-import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 
 @Component({
@@ -30,7 +29,6 @@ import { ButtonModule } from 'primeng/button';
         ToggleSwitchModule,
         AccordionModule,
         LeagueBadgeComponent,
-        PopoverModule,
         ButtonModule,
     ],
     templateUrl: './course-training.component.html',
