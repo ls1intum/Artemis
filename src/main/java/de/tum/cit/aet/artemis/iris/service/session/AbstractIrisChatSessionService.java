@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 
 public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface {
 
+    private static final int MAX_SESSION_TITLE_LENGTH = 255;
+
     private final IrisSessionRepository irisSessionRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
@@ -92,12 +94,26 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      */
     public static <T extends IrisChatSession> String setSessionTitle(T session, String sessionTitle, IrisSessionRepository sessionRepository) {
         if (sessionTitle != null && !sessionTitle.isBlank()) {
-            String truncatedTitle = sessionTitle.length() > 255 ? sessionTitle.substring(0, 255) : sessionTitle;
+            String truncatedTitle = sessionTitle.length() > MAX_SESSION_TITLE_LENGTH ? sessionTitle.substring(0, MAX_SESSION_TITLE_LENGTH) : sessionTitle;
             session.setTitle(truncatedTitle);
             sessionRepository.save(session);
             return truncatedTitle;
         }
         return null;
+    }
+
+    /**
+     * Return a localized "New chat" title based on the user's language key.
+     * - German variants (starts with "de") -> "Neuer Chat"
+     * - English variants (starts with "en") -> "New Chat"
+     */
+    public static String getLocalizedNewChatTitle(String langKey) {
+        if (langKey != null && langKey.startsWith("de")) {
+            return "Neuer Chat";
+        }
+        else {
+            return "New Chat";
+        }
     }
 
     /**

@@ -357,7 +357,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         checkIfExamExercise(exercise);
 
         var exerciseChat = new IrisProgrammingExerciseChatSession(exercise, user);
-        exerciseChat.setTitle("New chat");
+        exerciseChat.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey()));
         var session = irisExerciseChatSessionRepository.save(exerciseChat);
 
         if (sendInitialMessage) {

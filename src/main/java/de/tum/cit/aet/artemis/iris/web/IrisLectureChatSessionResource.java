@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
@@ -113,7 +114,7 @@ public class IrisLectureChatSessionResource {
         user.hasAcceptedExternalLLMUsageElseThrow();
 
         var session = new IrisLectureChatSession(lecture, user);
-        session.setTitle("New chat");
+        session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey()));
         session = irisLectureChatSessionRepository.save(session);
         var uriString = "/api/iris/sessions/" + session.getId();
 

@@ -215,7 +215,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private IrisCourseChatSession createSessionInternal(Course course, User user, boolean sendInitialMessage) {
         var courseChat = new IrisCourseChatSession(course, user);
-        courseChat.setTitle("New chat");
+        courseChat.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey()));
         var session = irisCourseChatSessionRepository.save(courseChat);
 
         if (sendInitialMessage) {
