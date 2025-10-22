@@ -4,6 +4,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('InsightsLearnerProfileComponent', () => {
     let component: InsightsLearnerProfileComponent;
@@ -12,7 +13,10 @@ describe('InsightsLearnerProfileComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [InsightsLearnerProfileComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(AccountService)],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(InsightsLearnerProfileComponent);

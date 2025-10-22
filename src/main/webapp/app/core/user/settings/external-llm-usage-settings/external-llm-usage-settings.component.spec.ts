@@ -8,6 +8,7 @@ import { MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ExternalLlmUsageSettingsComponent', () => {
     let component: ExternalLlmUsageSettingsComponent;
@@ -17,7 +18,14 @@ describe('ExternalLlmUsageSettingsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ExternalLlmUsageSettingsComponent],
             declarations: [MockDirective(TranslateDirective)],
-            providers: [MockProvider(IrisChatService), MockProvider(TranslateService), MockProvider(AccountService), provideHttpClient(), provideHttpClientTesting()],
+            providers: [
+                MockProvider(IrisChatService),
+                MockProvider(TranslateService),
+                MockProvider(AccountService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExternalLlmUsageSettingsComponent);
