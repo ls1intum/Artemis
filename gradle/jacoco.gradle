@@ -8,8 +8,8 @@ ext {
         "athena"        :          ["INSTRUCTION": 0.879, "CLASS":  2],
         "atlas"         :          ["INSTRUCTION": 0.894, "CLASS":  7],
         "buildagent"    :          ["INSTRUCTION": 0.781, "CLASS":  0],
-        "communication" :          ["INSTRUCTION": 0.870, "CLASS":  7],
-        "core"          :          ["INSTRUCTION": 0.825, "CLASS": 48],
+        "communication" :          ["INSTRUCTION": 0.870, "CLASS":  6],
+        "core"          :          ["INSTRUCTION": 0.815, "CLASS": 47],
         "exam"          :          ["INSTRUCTION": 0.915, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.913, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.946, "CLASS":  0],
@@ -19,7 +19,7 @@ ext {
         "lti"           :          ["INSTRUCTION": 0.888, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.936, "CLASS":  0],
         "plagiarism"    :          ["INSTRUCTION": 0.908, "CLASS":  2],
-        "programming"   :          ["INSTRUCTION": 0.834, "CLASS": 15],
+        "programming"   :          ["INSTRUCTION": 0.834, "CLASS": 14],
         "quiz"          :          ["INSTRUCTION": 0.906, "CLASS":  2],
         "text"          :          ["INSTRUCTION": 0.947, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.915, "CLASS":  1],
@@ -40,7 +40,7 @@ ext {
 }
 
 jacoco {
-    toolVersion = "0.8.13"
+    toolVersion = "0.8.14"
 }
 
 jacocoTestReport {
