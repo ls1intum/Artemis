@@ -201,10 +201,7 @@ describe('IrisLearnerProfileComponent', () => {
                 memirisEnabled: 1 as any,
             };
 
-            Object.defineProperty(accountService, 'userIdentity', {
-                get: () => userWithTruthyMemiris,
-                configurable: true,
-            });
+            accountService.userIdentity.set(userWithTruthyMemiris);
             component.ngOnInit();
             expect(component.memirisEnabled).toBe(1);
         });
@@ -219,10 +216,7 @@ describe('IrisLearnerProfileComponent', () => {
                 memirisEnabled: 0 as any,
             };
 
-            Object.defineProperty(accountService, 'userIdentity', {
-                get: () => userWithFalsyMemiris,
-                configurable: true,
-            });
+            accountService.userIdentity.set(userWithFalsyMemiris);
             component.ngOnInit();
             expect(component.memirisEnabled).toBe(0);
         });
@@ -230,10 +224,7 @@ describe('IrisLearnerProfileComponent', () => {
 
     describe('Component state management', () => {
         it('should maintain state consistency between ngOnInit and onMemirisEnabledChange', () => {
-            Object.defineProperty(accountService, 'userIdentity', {
-                get: () => mockUser,
-                configurable: true,
-            });
+            accountService.userIdentity.set(mockUser);
             component.ngOnInit();
             const initialState = component.memirisEnabled;
             component.memirisEnabled = !initialState;
