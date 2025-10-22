@@ -111,10 +111,10 @@ export class AttachmentVideoUnitService {
             })
             .pipe(
                 map(() => {
-                    this.alertService.success('artemisApp.lectureUnit.attachmentVideoUnit.transcription.started');
+                    this.alertService.success('artemisApp.attachmentVideoUnit.transcription.started');
                 }),
                 catchError((error: any) => {
-                    this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcription.error');
+                    this.alertService.error('artemisApp.attachmentVideoUnit.transcription.error');
                     return of();
                 }),
             );
