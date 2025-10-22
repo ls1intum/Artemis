@@ -27,10 +27,10 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserEntryDTO;
-import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizTrainingLeaderboardRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTest {
@@ -50,7 +50,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
     private CourseTestRepository courseTestRepository;
 
     @Autowired
-    private QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseTestRepository quizExerciseRepository;
 
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;
