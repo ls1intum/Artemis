@@ -1,12 +1,7 @@
 <div>
-    @if (!this.isInEditView) {
-        <jhi-apollon-diagram-list [courseId]="this.courseId" (openDiagram)="handleDetailOpen($event)" (closeDialog)="closeModal()" />
+    @if (!isInEditView()) {
+        <jhi-apollon-diagram-list [courseId]="courseId()" (openDiagram)="handleDetailOpen($event)" (closeDialog)="closeModal()" />
     } @else {
-        <jhi-apollon-diagram-detail
-            [courseId]="this.courseId"
-            [apollonDiagramId]="this.apollonDiagramDetailId"
-            (closeEdit)="handleDetailClose($event)"
-            (closeModal)="closeModal()"
-        />
+        <jhi-apollon-diagram-detail [courseId]="courseId()" [apollonDiagramId]="apollonDiagramDetailId()!" (closeEdit)="handleDetailClose($event)" (closeModal)="closeModal()" />
     }
 </div>
