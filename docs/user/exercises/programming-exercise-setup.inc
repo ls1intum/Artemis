@@ -116,13 +116,14 @@ Generate programming exercise
               :align: center
 
     - **Allow Custom Branches:** Activate this option if students should be able to push (to) other branches than the default one.
-      *Warning*: Artemis does not show those branches in the UI, and also offers no merge support in the UI.
+      .. warning::
+          Artemis does not show those branches in the UI, and also offers no merge support in the UI.
       Pushing to other (non-default) branches does not trigger any builds, and does not create submissions.
-      Students are therefore fully responsible to manage their branches locally. Further features that deal with branches
+      Students are therefore fully responsible for managing their branches locally. Further features that deal with branches
       in the Artemis UI are out of scope and will not be implemented in the future.
       Please only activate this option if it is absolutely necessary!
 
-    - **Regular Expression for the branch name** The custom branch name is matched against this java regular expression and pushing is only allowed, if it matches.
+    - **Regular Expression for the branch name:** The custom branch name is matched against this Java regular expression and pushing is only allowed, if it matches.
 
     |
 
