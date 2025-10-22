@@ -162,4 +162,8 @@ export interface SidebarCardElement {
     startDate?: dayjs.Dayjs;
 
     isCurrent?: boolean;
+
+    attendanceText?: string;
+
+    attendanceChipColor?: string;
 }
