@@ -4,6 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
 
 describe('IrisLearnerProfileComponent', () => {
     let component: IrisLearnerProfileComponent;
@@ -65,12 +66,6 @@ describe('IrisLearnerProfileComponent', () => {
             expect(component.memirisEnabled).toBeFalse();
         });
 
-        it('should initialize memirisEnabled to false when user identity is null', () => {
-            accountService.userIdentity.set(null);
-            component.ngOnInit();
-            expect(component.memirisEnabled).toBeFalse();
-        });
-
         it('should initialize memirisEnabled to false when user identity is undefined', () => {
             accountService.userIdentity.set(undefined);
             component.ngOnInit();
@@ -99,7 +94,7 @@ describe('IrisLearnerProfileComponent', () => {
                 lastName: 'User',
                 email: 'test@example.com',
                 memirisEnabled: null as any,
-            };
+            } as User;
 
             accountService.userIdentity.set(userWithNullMemiris);
             component.ngOnInit();
@@ -191,7 +186,7 @@ describe('IrisLearnerProfileComponent', () => {
                 lastName: 'User',
                 email: 'test@example.com',
                 memirisEnabled: 1 as any,
-            };
+            } as User;
 
             accountService.userIdentity.set(userWithTruthyMemiris);
             component.ngOnInit();
@@ -206,7 +201,7 @@ describe('IrisLearnerProfileComponent', () => {
                 lastName: 'User',
                 email: 'test@example.com',
                 memirisEnabled: 0 as any,
-            };
+            } as User;
 
             accountService.userIdentity.set(userWithFalsyMemiris);
             component.ngOnInit();
