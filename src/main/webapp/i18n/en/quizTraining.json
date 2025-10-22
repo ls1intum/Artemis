@@ -11,11 +11,11 @@
             },
             "leagues": {
                 "title": "Leagues and Rankings",
-                "content": "You can participate in a leaderboard that shows your score compared to other students. There are 5 leagues (Bronze, Silver, Gold, Diamond, and Master), each with its own leaderboard."
+                "content": "You can participate in a leaderboard that shows your score compared to other students. There are 5 leagues (Bronze, Silver, Gold, Diamond, and Master), each with its own leaderboard. You can change the settings for the training mode in the user settings."
             },
             "scoring": {
                 "title": "Scoring System",
-                "content": "Answer questions correctly to collect points and rank up to higher leagues. You can change the settings for the training mode in the user settings. The more often a question is answered correctly in a row, the more points you earn for it."
+                "content": "Answer questions correctly to collect points and rank up to higher leagues. The more often a question is answered correctly in a row, the more points you earn for it."
             },
             "showInLeaderboard": "Show in leaderboard",
             "bronzeLeague": "Bronze league",
