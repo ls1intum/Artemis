@@ -394,7 +394,7 @@ describe('AttachmentVideoUnitService', () => {
             req.flush('transcription started', { status: 200, statusText: 'OK' });
 
             expect(completed).toBeTrue();
-            expect(successSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.started');
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.started');
         }));
 
         it('should show error alert and handle server errors gracefully', fakeAsync(() => {
@@ -418,7 +418,7 @@ describe('AttachmentVideoUnitService', () => {
             req.flush('Internal error', { status: 500, statusText: 'Server Error' });
 
             expect(completed).toBeTrue();
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.error');
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.error');
         }));
 
         it('should send videoUrl verbatim even with special characters', fakeAsync(() => {
@@ -440,7 +440,7 @@ describe('AttachmentVideoUnitService', () => {
             });
 
             req.flush('ok', { status: 200, statusText: 'OK' });
-            expect(successSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.started');
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.started');
         }));
 
         it('should handle errors with missing message gracefully', fakeAsync(() => {
@@ -456,7 +456,7 @@ describe('AttachmentVideoUnitService', () => {
             // Simulate error without message
             req.error(new ProgressEvent('Network error'));
 
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcription.error');
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.error');
         }));
     });
 });
