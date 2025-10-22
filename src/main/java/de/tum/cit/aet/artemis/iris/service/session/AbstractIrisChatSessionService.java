@@ -128,14 +128,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         var session = (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);
         IrisMessage savedMessage;
-        String sessionTitle;
-        boolean statusSent = false;
 
-        sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
-        if (sessionTitle != null) {
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), sessionTitle, statusUpdate.suggestions(), statusUpdate.tokens());
-            statusSent = true;
-        }
+        String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
@@ -143,7 +137,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
             message.setCreatedMemories(statusUpdate.createdMemories());
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle);
         }
         else {
             savedMessage = null;
@@ -161,9 +155,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
                     irisChatWebsocketService.sendMessage(session, message, statusUpdate.stages());
                 });
             }
-            if (!statusSent) {
-                irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens());
-            }
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), sessionTitle, statusUpdate.suggestions(), statusUpdate.tokens());
         }
 
         if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {

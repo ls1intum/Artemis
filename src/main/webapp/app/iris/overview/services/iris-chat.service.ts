@@ -398,6 +398,15 @@ export class IrisChatService implements OnDestroy {
         if (payload.rateLimitInfo) {
             this.status.handleRateLimitInfo(payload.rateLimitInfo);
         }
+        if (payload.sessionTitle && this.sessionId) {
+            if (this.latestStartedSession?.id === this.sessionId) {
+                this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
+            }
+
+            // Update the observable list immutably so OnPush change detection picks up the new title immediately.
+            const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, title: payload.sessionTitle } : session));
+            this.chatSessions.next(updatedSessions);
+        }
         switch (payload.type) {
             case IrisChatWebsocketPayloadType.MESSAGE:
                 if (payload.message?.sender === IrisSender.LLM) {
@@ -414,20 +423,6 @@ export class IrisChatService implements OnDestroy {
                 this.stages.next(payload.stages || []);
                 if (payload.suggestions) {
                     this.suggestions.next(payload.suggestions);
-                }
-                if (payload.sessionTitle && this.sessionId) {
-                    const sid = this.sessionId;
-                    // If the session that just started (latestStartedSession) is the one we’re updating,
-                    // replace its title immutably so Angular picks it up in the sidebar immediately.
-                    if (this.latestStartedSession?.id === sid) {
-                        this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
-                    }
-                    // Also update the session in the full chatSessions list immutably.
-                    // This ensures OnPush change detection triggers and the new title
-                    // is displayed in the history sidebar without requiring a reload.
-                    const current = this.chatSessions.getValue();
-                    const next = current.map((s) => (s.id === sid ? { ...s, title: payload.sessionTitle } : s));
-                    this.chatSessions.next(next);
                 }
                 break;
         }
