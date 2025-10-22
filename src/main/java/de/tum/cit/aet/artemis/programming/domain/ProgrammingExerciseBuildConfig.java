@@ -201,12 +201,21 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.theiaImage = theiaImage;
     }
 
+    /**
+     * A regex defining which branches are allowed to be created.
+     *
+     * <p>
+     * Should only be considered if branching is allowed ({@link #isAllowBranching()}).
+     * Otherwise, only the default branch for the exercise should be allowed regardless of this regex.
+     *
+     * @return The branch name regex pattern.
+     */
     public String getBranchRegex() {
         return branchRegex;
     }
 
     public void setBranchRegex(String branchRegex) {
-        this.branchRegex = branchRegex;
+        this.branchRegex = Objects.requireNonNullElse(branchRegex, ".*");
     }
 
     public boolean isAllowBranching() {
