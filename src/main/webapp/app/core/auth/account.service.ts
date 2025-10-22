@@ -91,9 +91,10 @@ export class AccountService implements IAccountService {
             return;
         }
 
-        this.userIdentity.update((userIdentity) => {
-            userIdentity.groups = groups;
-        });
+        this.userIdentity.update((userIdentity) => ({
+            ...userIdentity,
+            groups,
+        }));
     }
 
     hasAnyAuthority(authorities: string[]): Promise<boolean> {
@@ -306,9 +307,10 @@ export class AccountService implements IAccountService {
             return;
         }
 
-        this.userIdentity.update((userIdentity) => {
-            userIdentity.imageUrl = url;
-        });
+        this.userIdentity.update((userIdentity) => ({
+            ...userIdentity,
+            imageUrl: url,
+        }));
     }
 
     /**
@@ -396,9 +398,10 @@ export class AccountService implements IAccountService {
             return;
         }
 
-        this.userIdentity.update((userIdentity) => {
-            userIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
-        });
+        this.userIdentity.update((userIdentity) => ({
+            ...userIdentity,
+            externalLLMUsageAccepted: accepted ? dayjs() : undefined,
+        }));
     }
 
     setUserEnabledMemiris(memirisEnabled: boolean): void {
@@ -408,9 +411,10 @@ export class AccountService implements IAccountService {
 
         this.http.put('api/core/account/enable-memiris', memirisEnabled).subscribe({
             next: () => {
-                this.userIdentity.update((userIdentity) => {
-                    userIdentity.memirisEnabled = memirisEnabled;
-                });
+                this.userIdentity.update((userIdentity) => ({
+                    ...userIdentity,
+                    memirisEnabled: memirisEnabled,
+                }));
             },
             error: (_) => {},
         });
