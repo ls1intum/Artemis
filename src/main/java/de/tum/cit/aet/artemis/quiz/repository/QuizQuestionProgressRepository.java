@@ -22,8 +22,6 @@ public interface QuizQuestionProgressRepository extends ArtemisJpaRepository<Qui
 
     Optional<QuizQuestionProgress> findByUserIdAndQuizQuestionId(long userId, long quizQuestionId);
 
-    Set<QuizQuestionProgress> findAllByUserIdAndCourseId(long userId, long courseId);
-
     @Query("""
             SELECT quizQuestionProgress.quizQuestionId
             FROM QuizQuestionProgress quizQuestionProgress
@@ -34,5 +32,13 @@ public interface QuizQuestionProgressRepository extends ArtemisJpaRepository<Qui
     Set<Long> findNotDueQuizQuestions(@Param("userId") long userId, @Param("courseId") long courseId, @Param("dueDate") ZonedDateTime dueDate);
 
     long countByUserIdAndCourseId(long userId, long courseId);
+
+    @Query("""
+            SELECT MIN(quizQuestionProgress.dueDate)
+            FROM QuizQuestionProgress quizQuestionProgress
+            WHERE quizQuestionProgress.userId = :userId
+            AND quizQuestionProgress.courseId = :courseId
+            """)
+    Optional<ZonedDateTime> getDueDate(@Param("userId") long userId, @Param("courseId") long courseId);
 
 }

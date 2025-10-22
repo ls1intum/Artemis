@@ -108,10 +108,6 @@ public class QuizQuestionProgressService {
             isNewSession = false;
         }
 
-        if (questionIds == null) {
-            questionIds = Set.of();
-        }
-
         if (areQuestionsDue(courseId, questionIds.size())) {
             return loadDueQuestions(questionIds, courseId, pageable, isNewSession);
         }
