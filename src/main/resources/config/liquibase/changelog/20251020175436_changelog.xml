@@ -15,7 +15,7 @@
             UPDATE quiz_question_progress
             SET "due_date" =
                     CASE
-                        WHEN progress_json->>'dueDate' IS NOT NULL THEN TO_TIMESTAMP(progress_json->>'dueDate' :: DOUBLE PRECISION)
+                        WHEN progress_json->>'dueDate' IS NOT NULL THEN TO_TIMESTAMP((progress_json->>'dueDate') :: DOUBLE PRECISION)
                 ELSE NOW()
             END;
         </sql>
