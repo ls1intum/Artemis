@@ -9,8 +9,12 @@
                 <p jhiTranslate="artemisApp.quizQuestion.unratedConfirmation"></p>
 
                 <ng-template pTemplate="footer">
-                    <jhi-button (onClick)="confirmUnratedPractice()" [title]="'global.generic.yes'" />
-                    <jhi-button (onClick)="cancelUnratedPractice()" [title]="'global.generic.no'" />
+                    <p-button (onClick)="confirmUnratedPractice()">
+                        <span jhiTranslate="global.generic.yes"></span>
+                    </p-button>
+                    <p-button (onClick)="cancelUnratedPractice()" severity="secondary" S>
+                        <span jhiTranslate="global.generic.no"></span>
+                    </p-button>
                 </ng-template>
             </p-dialog>
         }
