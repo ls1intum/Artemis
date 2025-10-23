@@ -102,7 +102,7 @@ export class AccountService implements IAccountService {
     }
 
     hasAnyAuthorityDirect(authorities: string[]): boolean {
-        if (!this.authenticated() || !this.userIdentity() || !this.userIdentity()?.authorities) {
+        if (!this.authenticated() || !this.userIdentity()?.authorities) {
             return false;
         }
 
@@ -132,7 +132,7 @@ export class AccountService implements IAccountService {
     }
 
     hasGroup(group?: string): boolean {
-        if (!this.authenticated() || !this.userIdentity() || !this.userIdentity()?.authorities || !this.userIdentity()?.groups || !group) {
+        if (!this.authenticated() || !this.userIdentity()?.authorities || !this.userIdentity()?.groups || !group) {
             return false;
         }
 
