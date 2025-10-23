@@ -197,6 +197,15 @@ public class RepositoryService {
         return getFileContentFromBareRepositoryForCommitId(repository, headCommitId);
     }
 
+    /**
+     * Retrieves the contents of text-based files from the latest commit in a bare repository identified by its URI.
+     * If the bare repository is unavailable, falls back to retrieving files from the checked-out repository.
+     * Binary files, as defined by {@link BinaryFileExtensionConfiguration}, are excluded.
+     *
+     * @param repositoryUri the {@link LocalVCRepositoryUri} identifying the repository location.
+     * @return a {@link Map} where keys are file paths and values are file contents as UTF-8 strings.
+     * @throws IOException if an error occurs while accessing the repository.
+     */
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri) throws IOException {
         try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
             return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
