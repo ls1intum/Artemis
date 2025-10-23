@@ -466,12 +466,20 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onClearSearchAndRestorePrevious() {
+        this.courseWideSearchConfig.searchTerm = '';
+        this.courseWideSearchConfig.selectedConversations = [];
+        this.courseWideSearchConfig.selectedAuthors = [];
+
         if (this.previousConversationBeforeSearch?.id) {
             this.metisConversationService.setActiveConversation(this.previousConversationBeforeSearch.id);
         } else if (this.lastKnownConversationId) {
             this.metisConversationService.setActiveConversation(this.lastKnownConversationId);
         } else {
+            this.selectedSavedPostStatus = undefined;
             this.metisConversationService.setActiveConversation(undefined);
+            this.activeConversation = undefined;
+            this.updateQueryParameters();
+            this.courseWideSearch()?.onSearch();
         }
 
         this.previousConversationBeforeSearch = undefined;

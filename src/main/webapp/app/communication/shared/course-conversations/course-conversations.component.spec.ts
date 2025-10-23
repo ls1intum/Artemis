@@ -789,12 +789,15 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
             });
 
-            it('should restore previous conversation when cleared after search', () => {
+            it('should clear search config and restore previous conversation when X is clicked', () => {
                 const previousConversation = { id: 42, type: 'channel' } as ConversationDTO;
                 component.activeConversation = previousConversation;
                 component.lastKnownConversationId = 42;
 
-                // Start search (this should save the conversation)
+                component.courseWideSearchConfig.searchTerm = 'test search';
+                component.courseWideSearchConfig.selectedConversations = [previousConversation];
+                component.courseWideSearchConfig.selectedAuthors = [{ id: 1 } as any];
+
                 component.onSelectionChange({
                     searchTerm: '',
                     selectedConversations: [previousConversation],
@@ -803,8 +806,11 @@ examples.forEach((activeConversation) => {
 
                 expect(component.previousConversationBeforeSearch).toEqual(previousConversation);
 
-                // Clear search - should restore previous conversation
                 component.onClearSearchAndRestorePrevious();
+
+                expect(component.courseWideSearchConfig.searchTerm).toBe('');
+                expect(component.courseWideSearchConfig.selectedConversations).toEqual([]);
+                expect(component.courseWideSearchConfig.selectedAuthors).toEqual([]);
 
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(42);
                 expect(component.previousConversationBeforeSearch).toBeUndefined();
@@ -814,18 +820,39 @@ examples.forEach((activeConversation) => {
                 component.previousConversationBeforeSearch = undefined;
                 component.lastKnownConversationId = 99;
 
+                component.courseWideSearchConfig.searchTerm = 'test';
+                component.courseWideSearchConfig.selectedConversations = [{ id: 1 } as ConversationDTO];
+
                 component.onClearSearchAndRestorePrevious();
+
+                expect(component.courseWideSearchConfig.searchTerm).toBe('');
+                expect(component.courseWideSearchConfig.selectedConversations).toEqual([]);
+                expect(component.courseWideSearchConfig.selectedAuthors).toEqual([]);
 
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(99);
             });
 
-            it('should set active conversation to undefined when no previous or last known conversation', () => {
+            it('should trigger All messages search when no conversation to restore', () => {
                 component.previousConversationBeforeSearch = undefined;
                 component.lastKnownConversationId = undefined;
+                const updateQueryParamsSpy = jest.spyOn(component, 'updateQueryParameters');
+                const courseWideSearchMock = { onSearch: jest.fn() };
+                jest.spyOn(component, 'courseWideSearch').mockReturnValue(courseWideSearchMock as any);
+
+                component.courseWideSearchConfig.searchTerm = 'test search';
+                component.courseWideSearchConfig.selectedConversations = [{ id: 1 } as ConversationDTO];
 
                 component.onClearSearchAndRestorePrevious();
 
+                expect(component.courseWideSearchConfig.searchTerm).toBe('');
+                expect(component.courseWideSearchConfig.selectedConversations).toEqual([]);
+                expect(component.courseWideSearchConfig.selectedAuthors).toEqual([]);
+
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(undefined);
+                expect(component.activeConversation).toBeUndefined();
+                expect(component.selectedSavedPostStatus).toBeUndefined();
+                expect(updateQueryParamsSpy).toHaveBeenCalled();
+                expect(courseWideSearchMock.onSearch).toHaveBeenCalled();
             });
 
             it('should track last known conversation ID when active conversation changes', fakeAsync(() => {
