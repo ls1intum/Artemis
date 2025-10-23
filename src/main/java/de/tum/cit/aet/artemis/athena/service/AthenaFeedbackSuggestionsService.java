@@ -189,8 +189,8 @@ public class AthenaFeedbackSuggestionsService {
 
         Submission latestSubmission = getLatestSubmission((StudentParticipation) submission.getParticipation());
         SubmissionBaseDTO latestSubmissionDTO = latestSubmission != null ? athenaDTOConverterService.ofSubmission(exercise.getId(), latestSubmission) : null;
-        List<CourseCompetencyDTO> competencies = courseCompetencyApi
-                .map(api -> api.findAllByExerciseIdWithExerciseLinks(exercise.getId()).stream().map(CourseCompetencyDTO::of).toList()).orElse(null);
+        List<CourseCompetencyDTO> competencies = courseCompetencyApi.map(api -> api.findAllByExerciseId(exercise.getId()).stream().map(CourseCompetencyDTO::of).toList())
+                .orElse(null);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
                 LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, latestSubmissionDTO, competencies);
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);

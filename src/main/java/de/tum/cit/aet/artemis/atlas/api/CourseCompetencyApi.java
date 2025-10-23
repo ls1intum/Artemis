@@ -31,7 +31,7 @@ public class CourseCompetencyApi extends AbstractAtlasApi {
      * @param exerciseId the ID of the exercise
      * @return list of course competencies linked to the exercise
      */
-    public List<CourseCompetency> findAllByExerciseIdWithExerciseLinks(long exerciseId) {
-        return courseCompetencyRepository.findAllByExerciseIdWithExerciseLinks(exerciseId);
+    public List<CourseCompetency> findAllByExerciseId(long exerciseId) {
+        return courseCompetencyRepository.findAllByExerciseId(exerciseId);
     }
 }
