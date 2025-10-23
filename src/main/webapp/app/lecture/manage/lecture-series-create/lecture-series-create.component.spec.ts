@@ -277,6 +277,36 @@ describe('LectureSeriesCreateComponent', () => {
         expect(spy).toHaveBeenCalledWith(['course-management', testCourseId, 'lectures']);
     });
 
+    it('should generate drafts for initialLecture with only startDate', async () => {
+        const initialLectures = component.initialLectures();
+        expect(initialLectures).toHaveLength(1);
+
+        const now = dayjs();
+        const inThreeWeeks = now.add(2, 'weeks');
+        const firstInitialLecture = initialLectures[0];
+        firstInitialLecture.startDate.set(now.toDate());
+        component.seriesEndDate.set(inThreeWeeks.toDate());
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.lectureDrafts()).toHaveLength(3);
+    });
+
+    it('should generate drafts for initialLecture with only endDate', async () => {
+        const initialLectures = component.initialLectures();
+        expect(initialLectures).toHaveLength(1);
+
+        const now = dayjs();
+        const inThreeWeeks = now.add(2, 'weeks');
+        const firstInitialLecture = initialLectures[0];
+        firstInitialLecture.endDate.set(now.toDate());
+        component.seriesEndDate.set(inThreeWeeks.toDate());
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.lectureDrafts()).toHaveLength(3);
+    });
+
     describe('save()', () => {
         const todayAt14 = dayjs().hour(14).minute(0).second(0).millisecond(0);
         const seriesEndDate = todayAt14.add(14, 'day').toDate();
