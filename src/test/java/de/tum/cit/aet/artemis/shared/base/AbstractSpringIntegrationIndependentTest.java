@@ -23,6 +23,8 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -54,7 +56,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS, PROFILE_AEOLUS,
         PROFILE_LTI, "local" })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.user-management.passkey.enabled=true",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=false" })
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=false",
+        "spring.ai.chat.memory.repository.jdbc.initialize-schema=never" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
@@ -77,13 +80,20 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
-    // NOTE: MockitoBean is used here because ChatModel and ChatClient cannot be instantiated in tests without Azure OpenAI credentials
+    // NOTE: MockitoBean is used here because Spring AI beans cannot be instantiated in tests without Azure OpenAI credentials
     // These beans are provided by SpringAIConfiguration in production, but need to be mocked for tests
+    // The @ConditionalOnMissingBean in SpringAIConfiguration will detect these mocks and skip real bean creation
     @MockitoBean
     protected ChatModel chatModel;
 
     @MockitoBean
     protected ChatClient chatClient;
+
+    @MockitoBean
+    protected ChatMemoryRepository chatMemoryRepository;
+
+    @MockitoBean
+    protected ChatMemory chatMemory;
 
     @BeforeEach
     protected void setupSpringAIMocks() {
@@ -101,6 +111,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         }
         if (chatClient != null) {
             Mockito.reset(chatClient);
+        }
+        if (chatMemoryRepository != null) {
+            Mockito.reset(chatMemoryRepository);
+        }
+        if (chatMemory != null) {
+            Mockito.reset(chatMemory);
         }
         super.resetSpyBeans();
     }
