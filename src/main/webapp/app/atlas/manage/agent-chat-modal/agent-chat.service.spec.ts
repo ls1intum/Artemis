@@ -275,4 +275,133 @@ describe('AgentChatService', () => {
             });
         });
     });
+
+    describe('getConversationHistory', () => {
+        const courseId = 123;
+        const expectedUrl = `api/atlas/agent/courses/${courseId}/chat/history`;
+
+        it('should fetch conversation history successfully', () => {
+            const mockHistory = [
+                { content: 'Hello', isUser: true },
+                { content: 'Hi there!', isUser: false },
+                { content: 'How are you?', isUser: true },
+            ];
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            expect(req.request.method).toBe('GET');
+
+            req.flush(mockHistory);
+
+            expect(result).toEqual(mockHistory);
+        });
+
+        it('should return empty array on HTTP error', () => {
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
+
+            expect(result).toEqual([]);
+        });
+
+        it('should return empty array on network failure', () => {
+            let result: any;
+            let errorOccurred = false;
+
+            service.getConversationHistory(courseId).subscribe({
+                next: (history) => {
+                    result = history;
+                },
+                error: () => {
+                    errorOccurred = true;
+                },
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.error(new ProgressEvent('Network error'));
+
+            // Verify catchError worked - no error thrown, empty array returned
+            expect(errorOccurred).toBeFalse();
+            expect(result).toEqual([]);
+        });
+
+        it('should handle empty history response', () => {
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.flush([]);
+
+            expect(result).toEqual([]);
+        });
+
+        it('should make GET request to correct URL with different courseId', () => {
+            const differentCourseId = 456;
+            const differentUrl = `api/atlas/agent/courses/${differentCourseId}/chat/history`;
+
+            service.getConversationHistory(differentCourseId).subscribe();
+
+            const req = httpMock.expectOne(differentUrl);
+            expect(req.request.method).toBe('GET');
+            req.flush([]);
+        });
+    });
+
+    describe('getSessionId', () => {
+        it('should generate sessionId correctly with valid user', () => {
+            mockAccountService.userIdentity = { id: 42, login: 'testuser' };
+            const courseId = 123;
+
+            const sessionId = service.getSessionId(courseId);
+
+            expect(sessionId).toBe('course_123_user_42');
+        });
+
+        it('should generate different sessionId for different courseId', () => {
+            mockAccountService.userIdentity = { id: 42, login: 'testuser' };
+
+            const sessionId1 = service.getSessionId(100);
+            const sessionId2 = service.getSessionId(200);
+
+            expect(sessionId1).toBe('course_100_user_42');
+            expect(sessionId2).toBe('course_200_user_42');
+        });
+
+        it('should generate different sessionId for different userId', () => {
+            const courseId = 123;
+
+            mockAccountService.userIdentity = { id: 10, login: 'user1' };
+            const sessionId1 = service.getSessionId(courseId);
+
+            mockAccountService.userIdentity = { id: 20, login: 'user2' };
+            const sessionId2 = service.getSessionId(courseId);
+
+            expect(sessionId1).toBe('course_123_user_10');
+            expect(sessionId2).toBe('course_123_user_20');
+        });
+
+        it('should throw error when userIdentity is null', () => {
+            mockAccountService.userIdentity = null;
+
+            expect(() => service.getSessionId(123)).toThrow('User must be authenticated to use agent chat');
+        });
+
+        it('should throw error when userIdentity.id is undefined', () => {
+            mockAccountService.userIdentity = { id: undefined, login: 'testuser' };
+
+            expect(() => service.getSessionId(123)).toThrow('User must be authenticated to use agent chat');
+        });
+    });
 });
