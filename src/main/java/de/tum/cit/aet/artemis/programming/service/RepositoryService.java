@@ -41,6 +41,7 @@ import org.springframework.util.FileSystemUtils;
 import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.File;
@@ -200,6 +201,10 @@ public class RepositoryService {
         try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
             return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
         }
+        catch (GitException exception) {
+            log.debug("Bare repository for {} is unavailable, falling back to checked out repository", repositoryUri, exception);
+            return getFilesContentFromCheckedOutRepository(repositoryUri, null);
+        }
     }
 
     /**
@@ -252,6 +257,10 @@ public class RepositoryService {
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(LocalVCRepositoryUri repositoryUri, ZonedDateTime deadline) throws IOException {
         try (Repository bareRepository = gitService.getBareRepository(repositoryUri, false)) {
             return getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(bareRepository, deadline);
+        }
+        catch (GitException exception) {
+            log.debug("Bare repository for {} before deadline {} is unavailable, falling back to checked out repository", repositoryUri, deadline, exception);
+            return getFilesContentFromCheckedOutRepository(repositoryUri, deadline);
         }
     }
 
@@ -307,6 +316,18 @@ public class RepositoryService {
         }
         revWalk.close();
         return filesWithContent;
+    }
+
+    private Map<String, String> getFilesContentFromCheckedOutRepository(LocalVCRepositoryUri repositoryUri, ZonedDateTime deadline) throws IOException {
+        try (Repository checkedOutRepository = gitService.getOrCheckoutRepository(repositoryUri, true, false)) {
+            if (deadline == null) {
+                return getFilesContentFromBareRepositoryForLastCommit(checkedOutRepository);
+            }
+            return getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(checkedOutRepository, deadline);
+        }
+        catch (GitAPIException | GitException e) {
+            throw new IOException("Failed to retrieve repository content for " + repositoryUri, e);
+        }
     }
 
     /**

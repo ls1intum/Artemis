@@ -89,6 +89,8 @@ public class AthenaRepositoryExportService {
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
+        checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
+
         ProgrammingSubmission submission = programmingSubmissionRepository.findByIdElseThrow(submissionId);
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(submission.getParticipation().getId());
         LocalVCRepositoryUri repoUri = participation.getVcsRepositoryUri();

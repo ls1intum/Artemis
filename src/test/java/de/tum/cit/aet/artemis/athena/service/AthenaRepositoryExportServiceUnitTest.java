@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -62,6 +63,7 @@ class AthenaRepositoryExportServiceUnitTest {
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(EXERCISE_ID);
+        programmingExercise.setFeedbackSuggestionModule("module");
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setId(SUBMISSION_ID);
@@ -69,6 +71,17 @@ class AthenaRepositoryExportServiceUnitTest {
         participation = new ProgrammingExerciseStudentParticipation();
         participation.setId(PARTICIPATION_ID);
         programmingSubmission.setParticipation(participation);
+    }
+
+    @Test
+    void getStudentRepositoryFilesContentShouldCheckFeedbackSettings() {
+        programmingExercise.setFeedbackSuggestionModule(null);
+        programmingExercise.setAllowFeedbackRequests(false);
+
+        when(programmingExerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
+
+        assertThatExceptionOfType(ServiceUnavailableException.class).isThrownBy(() -> athenaRepositoryExportService.getStudentRepositoryFilesContent(EXERCISE_ID, SUBMISSION_ID))
+                .withMessageContaining("Feedback suggestions are not enabled");
     }
 
     @Test
