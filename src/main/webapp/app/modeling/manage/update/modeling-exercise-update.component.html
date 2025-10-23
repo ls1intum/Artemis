@@ -1,4 +1,5 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
+    <button type="submit" style="display: none" (click)="handleEnterKeyNavigation($event)"></button>
     <div class="d-flex align-items-center gap-2">
         @if (!modelingExercise.id) {
             <h2 id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel"></h2>
