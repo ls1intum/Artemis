@@ -434,13 +434,15 @@ Configuration (server/core node):
                # Example: offer a fully isolated option and a restricted bridge network
                allowed-custom-networks: none, artemis-restricted
 
-Notes
-"""""
+.. important::
 
-- In distributed deployments, configure the same list on all core nodes. The build agent uses the network passed from the core
-  and expects the network to be present on the Docker host.
-- Selecting ``none`` disables network access for the container. Ensure all dependencies are available in the image or are cached,
-  and configure builds to run offline where applicable (e.g., Maven ``--offline``), otherwise builds may fail.
+    In distributed deployments, configure the same list on all core nodes. The build agent uses the network passed from the core
+    and expects the network to be present on the Docker host.
+
+.. warning::
+
+    Selecting ``none`` disables network access for the container. Ensure all dependencies are available in the image or are cached,
+    and configure builds to run offline where applicable (e.g., Maven ``--offline``), otherwise builds may fail.
 
 Pause Grace Period
 ^^^^^^^^^^^^^^^^^^^^^^
