@@ -216,4 +216,208 @@ describe('VideoPlayerComponent', () => {
         fixture.destroy();
         expect(vjs.__player.dispose).toHaveBeenCalledOnce();
     });
+
+    // ---- Search Functionality Tests ----
+
+    describe('Search Functionality', () => {
+        const testSegments: TranscriptSegment[] = [
+            { startTime: 0, endTime: 5, text: 'Hello world' },
+            { startTime: 5, endTime: 10, text: 'Welcome to the lecture' },
+            { startTime: 10, endTime: 15, text: 'Today we will discuss algorithms' },
+            { startTime: 15, endTime: 20, text: 'Hello again, let us start' },
+        ];
+
+        it('filteredSegments returns all segments when search is empty', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            expect(component.filteredSegments()).toEqual(testSegments);
+            expect(component.searchResultsCount()).toBe(4);
+        });
+
+        it('filteredSegments filters segments based on search query (case-insensitive)', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.onSearchQueryChange('hello');
+
+            expect(component.filteredSegments()).toHaveLength(2);
+            expect(component.filteredSegments()[0].text).toBe('Hello world');
+            expect(component.filteredSegments()[1].text).toBe('Hello again, let us start');
+            expect(component.searchResultsCount()).toBe(2);
+        });
+
+        it('filteredSegments returns empty array when no matches found', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.onSearchQueryChange('nonexistent');
+
+            expect(component.filteredSegments()).toHaveLength(0);
+            expect(component.searchResultsCount()).toBe(0);
+        });
+
+        it('onSearchQueryChange updates search query and resets to first result', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.currentSearchIndex.set(2);
+            component.onSearchQueryChange('lecture');
+
+            expect(component.searchQuery()).toBe('lecture');
+            expect(component.currentSearchIndex()).toBe(0);
+            expect(component.filteredSegments()).toHaveLength(1);
+        });
+
+        it('clearSearch resets search query and index', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.onSearchQueryChange('hello');
+            expect(component.searchQuery()).toBe('hello');
+
+            component.clearSearch();
+
+            expect(component.searchQuery()).toBe('');
+            expect(component.currentSearchIndex()).toBe(0);
+            expect(component.filteredSegments()).toEqual(testSegments);
+        });
+
+        it('nextSearchResult cycles through results', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.onSearchQueryChange('hello'); // 2 results
+
+            expect(component.currentSearchIndex()).toBe(0);
+
+            component.nextSearchResult();
+            expect(component.currentSearchIndex()).toBe(1);
+
+            component.nextSearchResult(); // wraps around
+            expect(component.currentSearchIndex()).toBe(0);
+        });
+
+        it('previousSearchResult cycles through results backwards', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.onSearchQueryChange('hello'); // 2 results
+            component.currentSearchIndex.set(1);
+
+            component.previousSearchResult();
+            expect(component.currentSearchIndex()).toBe(0);
+
+            component.previousSearchResult(); // wraps around to last
+            expect(component.currentSearchIndex()).toBe(1);
+        });
+
+        it('nextSearchResult does nothing when no results', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.onSearchQueryChange('xyz');
+            component.nextSearchResult();
+
+            expect(component.currentSearchIndex()).toBe(0);
+        });
+
+        it('previousSearchResult does nothing when no results', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.onSearchQueryChange('xyz');
+            component.previousSearchResult();
+
+            expect(component.currentSearchIndex()).toBe(0);
+        });
+
+        it('highlightText wraps matches in <mark> tags', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.searchQuery.set('hello');
+
+            const highlighted = component.highlightText('Hello world');
+            expect(highlighted).toBe('<mark>Hello</mark> world');
+        });
+
+        it('highlightText is case-insensitive', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.searchQuery.set('WORLD');
+
+            const highlighted = component.highlightText('Hello world');
+            expect(highlighted).toBe('Hello <mark>world</mark>');
+        });
+
+        it('highlightText returns original text when no query', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            const highlighted = component.highlightText('Hello world');
+            expect(highlighted).toBe('Hello world');
+        });
+
+        it('highlightText escapes regex special characters', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.searchQuery.set('(hello)');
+
+            const highlighted = component.highlightText('(hello) world');
+            expect(highlighted).toBe('<mark>(hello)</mark> world');
+        });
+
+        it('isCurrentSearchResult returns true for current search result segment', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.onSearchQueryChange('hello');
+            component.currentSearchIndex.set(0);
+
+            const filtered = component.filteredSegments();
+            expect(component.isCurrentSearchResult(filtered[0])).toBeTrue();
+            expect(component.isCurrentSearchResult(filtered[1])).toBeFalse();
+        });
+
+        it('isCurrentSearchResult returns false when search not active', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            expect(component.isCurrentSearchResult(testSegments[0])).toBeFalse();
+        });
+
+        it('isSearchActive returns true when query is not empty', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            expect(component.isSearchActive()).toBeFalse();
+
+            component.searchQuery.set('hello');
+            expect(component.isSearchActive()).toBeTrue();
+
+            component.searchQuery.set('');
+            expect(component.isSearchActive()).toBeFalse();
+        });
+
+        it('scrollToSearchResult scrolls element into view', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            const el = document.createElement('div');
+            const scrollSpy = jest.fn();
+            Object.defineProperty(el, 'scrollIntoView', { value: scrollSpy, configurable: true });
+
+            const getById = jest.spyOn(document, 'getElementById').mockReturnValue(el as unknown as HTMLElement);
+
+            component.onSearchQueryChange('hello');
+            component.nextSearchResult();
+
+            expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+
+            getById.mockRestore();
+        });
+    });
 });

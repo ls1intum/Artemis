@@ -5,17 +5,51 @@
     </div>
 
     <div class="transcript-column">
-        <div class="transcript-title">Transcript</div>
+        <div class="transcript-header">
+            <div class="transcript-title">Transcript</div>
+
+            <!-- Search Box -->
+            <div class="search-container">
+                <div class="search-input-wrapper">
+                    <fa-icon [icon]="faSearch" class="search-icon" />
+                    <input type="text" class="search-input" placeholder="Search transcript..." [ngModel]="searchQuery()" (ngModelChange)="onSearchQueryChange($event)" />
+                    @if (searchQuery()) {
+                        <button class="clear-button" (click)="clearSearch()" title="Clear search">
+                            <fa-icon [icon]="faTimes" />
+                        </button>
+                    }
+                </div>
+
+                <!-- Search Navigation -->
+                @if (isSearchActive()) {
+                    <div class="search-nav">
+                        <span class="search-results">
+                            {{ searchResultsCount() > 0 ? currentSearchIndex() + 1 + ' / ' + searchResultsCount() : 'No results' }}
+                        </span>
+                        <button class="nav-button" (click)="previousSearchResult()" [disabled]="searchResultsCount() === 0" title="Previous result">
+                            <fa-icon [icon]="faChevronUp" />
+                        </button>
+                        <button class="nav-button" (click)="nextSearchResult()" [disabled]="searchResultsCount() === 0" title="Next result">
+                            <fa-icon [icon]="faChevronDown" />
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
         <div class="transcript-list">
-            @for (segment of transcriptSegments(); track segment.startTime) {
+            @for (segment of filteredSegments(); track segment.startTime) {
                 <div
                     class="transcript-line"
                     [id]="'segment-' + segment.startTime"
                     (click)="seekTo(segment.startTime)"
                     [class.active]="currentSegmentIndex() >= 0 && segment.startTime === transcriptSegments()[currentSegmentIndex()].startTime"
-                >
-                    {{ segment.text }}
-                </div>
+                    [class.search-result]="isCurrentSearchResult(segment)"
+                    [innerHTML]="highlightText(segment.text)"
+                ></div>
+            }
+            @if (filteredSegments().length === 0 && transcriptSegments().length > 0) {
+                <div class="no-results">No matching transcript found</div>
             }
         </div>
     </div>

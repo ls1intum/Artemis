@@ -89,7 +89,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private async resolveTumLivePlaylist(pageUrl: string): Promise<string | undefined> {
         const params = new HttpParams().set('url', pageUrl);
         try {
-            const res = await firstValueFrom(this.http.get('/api/lecture/nebula/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(null))));
+            const res = await firstValueFrom(this.http.get('/api/nebula/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(null))));
             return (res || undefined) as string | undefined;
         } catch {
             return undefined;
