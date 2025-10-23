@@ -8,7 +8,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noDate';
 export type ExamGroupCategory = 'real' | 'test' | 'attempt';
-export type TutorialGroupCategory = 'all' | 'registered' | 'further';
+export type TutorialGroupCategory = 'allGroups' | 'registeredGroups' | 'furtherGroups' | 'tutorialLectures';
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
 export type AccordionGroups = Record<
     TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string,

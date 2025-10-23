@@ -4,7 +4,7 @@
     @if (currentCourseId && currentSidebarData) {
         <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
             <jhi-sidebar
-                [itemSelected]="tutorialGroupSelected()"
+                [itemSelected]="itemSelected()"
                 [courseId]="currentCourseId"
                 [sidebarData]="currentSidebarData"
                 [collapseState]="DEFAULT_COLLAPSE_STATE"
@@ -12,7 +12,7 @@
             />
         </div>
 
-        @if (tutorialGroupSelected()) {
+        @if (itemSelected()) {
             <div class="vw-100 module-bg rounded-3">
                 <router-outlet />
             </div>

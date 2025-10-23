@@ -283,6 +283,17 @@ export const routes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                     },
+                    {
+                        path: ':lectureId',
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.lectures',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
+                    },
                 ],
             },
             {
