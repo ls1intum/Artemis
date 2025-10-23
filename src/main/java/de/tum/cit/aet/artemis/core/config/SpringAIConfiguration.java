@@ -52,7 +52,6 @@ public class SpringAIConfiguration {
      * Creates a JDBC-based chat memory repository for persistent storage.
      * Uses an auto-detected JDBC dialect based on the configured DataSource.
      * This bean is only created if no other ChatMemoryRepository bean exists,
-     * allowing Spring AI auto-configuration to take precedence if available.
      *
      * @param dataSource the datasource to use for JDBC operations
      * @return configured ChatMemoryRepository
