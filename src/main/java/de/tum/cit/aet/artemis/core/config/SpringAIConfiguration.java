@@ -40,9 +40,9 @@ public class SpringAIConfiguration {
 
     private final double temperature;
 
-    public SpringAIConfiguration(@Value("${spring.ai.chat.memory.max-messages:20}") int maxMessages,
-            @Value("${spring.ai.azure.openai.chat.options.deployment-name:gpt-5-mini}") String deploymentName,
-            @Value("${spring.ai.azure.openai.chat.options.temperature:1.0}") double temperature) {
+    public SpringAIConfiguration(@Value("${spring.ai.chat.memory.max-messages}") int maxMessages,
+            @Value("${spring.ai.azure.openai.chat.options.deployment-name}") String deploymentName,
+            @Value("${spring.ai.azure.openai.chat.options.temperature}") double temperature) {
         this.maxMessages = maxMessages;
         this.deploymentName = deploymentName;
         this.temperature = temperature;

@@ -34,6 +34,7 @@ describe('AgentChatModalComponent', () => {
 
         mockAgentChatService = {
             sendMessage: jest.fn(),
+            getConversationHistory: jest.fn().mockReturnValue(of([])),
         } as any;
 
         mockTranslateService = {
@@ -231,12 +232,8 @@ describe('AgentChatModalComponent', () => {
             };
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
 
-            // Clear any existing messages to start fresh
             component.ngOnInit();
-            fixture.detectChanges();
 
-            component.messages = [];
-            // Act - Test through user interaction instead of calling private method
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
             sendButton.click();
 
