@@ -6,6 +6,8 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ServerAdministration', () => {
     let component: ServerAdministration;
@@ -14,6 +16,7 @@ describe('ServerAdministration', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ServerAdministration, RouterTestingModule, TranslateModule.forRoot(), MockDirective(HasAnyAuthorityDirective), MockComponent(FeatureOverlayComponent)],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ServerAdministration);
