@@ -191,7 +191,6 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExerciseVersion_OnNullUser() {
         Exercise exercise = createExerciseByType(ExerciseType.TEXT);
-        exercise.setId(null);
         var previousCount = exerciseVersionRepository.count();
         exerciseVersionService.createExerciseVersion(exercise, null);
         var afterCount = exerciseVersionRepository.count();

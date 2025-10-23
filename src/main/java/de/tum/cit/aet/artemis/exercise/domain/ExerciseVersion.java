@@ -14,11 +14,12 @@ import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 @Table(name = "exercise_version")
 public class ExerciseVersion extends AbstractAuditingEntity {
 
-    // Direct ID access (for saving)
+    // Direct ID access (for saving), not nullable because delete will cascade when an exercise is deleted
     @Column(name = "exercise_id", updatable = false, nullable = false)
     private Long exerciseId;
 
-    @Column(name = "author_id", updatable = false, nullable = false)
+    // nullable because user can be deleted
+    @Column(name = "author_id", updatable = false)
     private Long authorId;
 
     @JdbcTypeCode(SqlTypes.JSON)
