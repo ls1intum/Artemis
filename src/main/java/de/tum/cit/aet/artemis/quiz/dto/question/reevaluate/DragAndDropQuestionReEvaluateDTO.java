@@ -9,10 +9,19 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropQuestionReEvaluateDTO(@NotNull Long id, @NotBlank String title, String text, String hint, String explanation, @NotNull ScoringType scoringType,
         @NotNull Boolean randomizeOrder, @NotNull Boolean invalid, @NotEmpty List<@Valid DropLocationReEvaluateDTO> dropLocations,
         @NotEmpty List<@Valid DragItemReEvaluateDTO> dragItems, @NotEmpty List<@Valid DragAndDropMappingReEvaluateDTO> correctMappings) implements QuizQuestionReEvaluateDTO {
+
+    public static DragAndDropQuestionReEvaluateDTO of(DragAndDropQuestion dragAndDropQuestion) {
+        return new DragAndDropQuestionReEvaluateDTO(dragAndDropQuestion.getId(), dragAndDropQuestion.getTitle(), dragAndDropQuestion.getText(), dragAndDropQuestion.getHint(),
+                dragAndDropQuestion.getExplanation(), dragAndDropQuestion.getScoringType(), dragAndDropQuestion.isRandomizeOrder(), dragAndDropQuestion.isInvalid(),
+                dragAndDropQuestion.getDropLocations().stream().map(DropLocationReEvaluateDTO::of).toList(),
+                dragAndDropQuestion.getDragItems().stream().map(DragItemReEvaluateDTO::of).toList(),
+                dragAndDropQuestion.getCorrectMappings().stream().map(DragAndDropMappingReEvaluateDTO::of).toList());
+    }
 }

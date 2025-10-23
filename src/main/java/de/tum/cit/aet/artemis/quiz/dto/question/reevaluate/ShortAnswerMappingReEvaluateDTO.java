@@ -4,6 +4,12 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
+
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ShortAnswerMappingReEvaluateDTO(@NotNull Long solutionId, @NotNull Long spotId) {
+
+    public static ShortAnswerMappingReEvaluateDTO of(ShortAnswerMapping shortAnswerMapping) {
+        return new ShortAnswerMappingReEvaluateDTO(shortAnswerMapping.getSolution().getId(), shortAnswerMapping.getSpot().getId());
+    }
 }
