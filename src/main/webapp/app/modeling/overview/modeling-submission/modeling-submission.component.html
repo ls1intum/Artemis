@@ -146,26 +146,30 @@
                                                 @if (assessmentResult && assessmentResult!.feedbacks && assessmentResult!.feedbacks!.length > 0) {
                                                     <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions"></p>
                                                     <div class="feedback-list">
-                                                        @for (feedback of referencedFeedback; track feedback) {
-                                                            @if (shouldBeDisplayed(feedback)) {
-                                                                <jhi-unified-feedback
-                                                                    [feedbackContent]="buildFeedbackTextForReview(feedback)"
-                                                                    [points]="feedback.credits || 0"
-                                                                    [feedback]="feedback"
-                                                                    [assessmentsNames]="assessmentsNames"
-                                                                />
+                                                        <div id="component-feedback-table">
+                                                            @for (feedback of referencedFeedback; track feedback) {
+                                                                @if (shouldBeDisplayed(feedback)) {
+                                                                    <jhi-unified-feedback
+                                                                        [feedbackContent]="buildFeedbackTextForReview(feedback)"
+                                                                        [points]="feedback.credits || 0"
+                                                                        [feedback]="feedback"
+                                                                        [assessmentsNames]="assessmentsNames"
+                                                                    />
+                                                                }
                                                             }
-                                                        }
+                                                        </div>
 
-                                                        @for (feedback of unreferencedFeedback; track feedback.id) {
-                                                            @if (shouldBeDisplayed(feedback)) {
-                                                                <jhi-unified-feedback
-                                                                    [feedbackContent]="feedback.detailText || ''"
-                                                                    [points]="feedback.credits || 0"
-                                                                    [feedback]="feedback"
-                                                                />
+                                                        <div id="additional-feedback">
+                                                            @for (feedback of unreferencedFeedback; track feedback.id) {
+                                                                @if (shouldBeDisplayed(feedback)) {
+                                                                    <jhi-unified-feedback
+                                                                        [feedbackContent]="feedback.detailText || ''"
+                                                                        [points]="feedback.credits || 0"
+                                                                        [feedback]="feedback"
+                                                                    />
+                                                                }
                                                             }
-                                                        }
+                                                        </div>
                                                     </div>
                                                 }
                                             </div>

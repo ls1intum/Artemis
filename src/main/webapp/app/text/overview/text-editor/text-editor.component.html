@@ -148,7 +148,7 @@
                                     <hr />
                                 </div>
                                 @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
-                                    <div class="col-xl-8">
+                                    <div id="additional-feedback" class="col-xl-8">
                                         @for (feedback of unreferencedFeedback; track feedback.id) {
                                             <jhi-unified-feedback [feedbackContent]="feedback.detailText || ''" [points]="feedback.credits || 0" />
                                         }

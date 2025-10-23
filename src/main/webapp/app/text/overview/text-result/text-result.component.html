@@ -2,6 +2,7 @@
     <span class="white-space" [ngClass]="block.cssClass" [innerHTML]="block.text"></span>
     @if (block.feedback) {
         <jhi-unified-feedback
+            [attr.id]="'text-feedback-' + i"
             [feedbackContent]="buildFeedbackTextForReview(block.feedback)"
             [points]="block.feedback.credits || 0"
             [feedback]="block.feedback"

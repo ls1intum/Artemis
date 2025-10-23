@@ -35,8 +35,8 @@ export class ExamResultsPage {
     async checkAdditionalFeedback(exerciseId: number, points: number, feedback: string) {
         const exercise = getExercise(this.page, exerciseId);
         const feedbackElement = exercise.locator(`#additional-feedback`);
-        await expect(feedbackElement.locator('.feedback-points', { hasText: points.toString() })).toBeVisible();
-        await expect(feedbackElement.locator('span', { hasText: feedback })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-points', { hasText: points.toString() })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
     }
 
     async checkProgrammingExerciseAssessments(exerciseId: number, resultType: string, count: number) {
@@ -89,10 +89,10 @@ export class ExamResultsPage {
     async checkModellingExerciseAssessment(exerciseId: number, element: string, feedback: string, points: number) {
         const exercise = getExercise(this.page, exerciseId);
         const componentFeedbacks = exercise.locator('#component-feedback-table');
-        const assessmentRow = componentFeedbacks.locator('tr', { hasText: element });
-        await expect(assessmentRow).toBeVisible();
-        await expect(assessmentRow.getByText(`Feedback: ${feedback}`)).toBeVisible();
-        await expect(assessmentRow.getByText(`${points}`)).toBeVisible();
+        const feedbackElement = componentFeedbacks.locator('.unified-feedback', { hasText: element });
+        await expect(feedbackElement).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-title', { hasText: feedback })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-points', { hasText: points.toString() })).toBeVisible();
     }
 }
 
