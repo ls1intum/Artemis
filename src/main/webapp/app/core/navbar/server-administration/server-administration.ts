@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -82,6 +82,8 @@ export class ServerAdministration implements OnInit {
     private readonly eventManager = inject(EventManager);
     private readonly accountService = inject(AccountService);
 
+    adminMenuDropdown = viewChild.required<NgbDropdown>('adminMenuDropdown');
+
     isExamActive = input<boolean>(false);
     isExamStarted = input<boolean>(false);
     localCIActive = input<boolean>(false);
@@ -95,10 +97,30 @@ export class ServerAdministration implements OnInit {
 
     authenticationError = false;
 
-    protected isLoggedInWithPasskey: boolean = false;
+    protected isLoggedInWithPasskey = signal<boolean>(false);
+    private justLoggedInWithPasskey = false;
+
+    constructor() {
+        effect(() => {
+            this.openDropdownIfUserLoggedInWithPasskey();
+        });
+    }
+
+    private openDropdownIfUserLoggedInWithPasskey() {
+        if (this.isLoggedInWithPasskey() && this.justLoggedInWithPasskey) {
+            this.justLoggedInWithPasskey = false;
+
+            // Use setTimeout to wait for the next JavaScript tick (macrotask).
+            // This allows Angular to finish re-rendering the dropdown's
+            // new content *before* we try to open and position it.
+            setTimeout(() => {
+                this.adminMenuDropdown().open();
+            }, 0);
+        }
+    }
 
     ngOnInit() {
-        this.isLoggedInWithPasskey = this.isLoggedInWithPasskeyGuard.isLoggedInWithPasskey();
+        this.isLoggedInWithPasskey.set(this.isLoggedInWithPasskeyGuard.isLoggedInWithPasskey());
     }
 
     protected collapseNavbar() {
@@ -144,7 +166,8 @@ export class ServerAdministration implements OnInit {
             isLoggedInWithPasskey: true,
             internal: this.accountService.userIdentity?.internal ?? false,
         };
-        this.isLoggedInWithPasskey = true;
+        this.isLoggedInWithPasskey.set(true); // TODO can be done via effect one other PR is merged
+        this.justLoggedInWithPasskey = true;
 
         if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
             this.router.navigate(['']);

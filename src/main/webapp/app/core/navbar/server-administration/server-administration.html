@@ -1,4 +1,11 @@
-<li *jhiHasAnyAuthority="'ROLE_ADMIN'" ngbDropdown class="nav-item dropdown pointer server-administration" display="dynamic" routerLinkActive="active">
+<li
+    *jhiHasAnyAuthority="'ROLE_ADMIN'"
+    ngbDropdown
+    #adminMenuDropdown="ngbDropdown"
+    class="nav-item dropdown pointer server-administration"
+    display="dynamic"
+    routerLinkActive="active"
+>
     @if (!isExamActive() && !isExamStarted()) {
         <a class="jh-navbar nav-link dropdown-toggle py-0" ngbDropdownToggle id="admin-menu">
             <span>
@@ -8,7 +15,7 @@
         </a>
     }
     <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
-        @if (!isLoggedInWithPasskey) {
+        @if (!isLoggedInWithPasskey()) {
             <li>
                 <a class="dropdown-item" (click)="loginWithPasskey()">
                     <fa-icon [icon]="faKey" [fixedWidth]="true" />
