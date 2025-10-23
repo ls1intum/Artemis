@@ -210,6 +210,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     /**
      * Opens the Agent Chat Modal for AI-powered competency assistance.
+     * Listens for competency changes and refreshes the list immediately.
      */
     protected openAgentChatModal(): void {
         const modalRef = this.modalService.open(AgentChatModalComponent, {
@@ -217,5 +218,9 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             backdrop: true,
         });
         modalRef.componentInstance.courseId = this.courseId();
+
+        modalRef.componentInstance.competencyChanged.subscribe(() => {
+            this.loadCourseCompetencies(this.courseId());
+        });
     }
 }
