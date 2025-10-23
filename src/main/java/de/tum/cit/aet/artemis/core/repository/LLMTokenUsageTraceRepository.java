@@ -20,8 +20,7 @@ public interface LLMTokenUsageTraceRepository extends ArtemisJpaRepository<LLMTo
             SELECT COALESCE(ROUND(SUM((req.numInputTokens * req.costPerMillionInputTokens / 1000000) +
                             (req.numOutputTokens * req.costPerMillionOutputTokens / 1000000)), 2), 0.0)
             FROM LLMTokenUsageRequest req
-            JOIN req.trace trace
-            WHERE trace.courseId = :courseId
+            WHERE req.trace.courseId = :courseId
             """)
     Double calculateTotalLlmCostInEurForCourse(@Param("courseId") Long courseId);
 }

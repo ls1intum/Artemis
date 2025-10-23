@@ -1,6 +1,4 @@
-import { AfterViewInit, Component, ElementRef, computed, input, signal, viewChild } from '@angular/core';
-import { NgClass, NgStyle } from '@angular/common';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { AfterViewInit, Component, ElementRef, computed, input, viewChild } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
@@ -9,16 +7,15 @@ import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/c
 
 @Component({
     selector: 'jhi-calendar-desktop-week-presentation',
-    imports: [CalendarDayBadgeComponent, ArtemisTranslatePipe, NgbPopover, NgStyle, NgClass, CalendarEventsPerDaySectionComponent],
+    imports: [CalendarDayBadgeComponent, ArtemisTranslatePipe, CalendarEventsPerDaySectionComponent],
     templateUrl: './calendar-desktop-week-presentation.component.html',
     styleUrl: './calendar-desktop-week-presentation.component.scss',
 })
 export class CalendarDesktopWeekPresentationComponent implements AfterViewInit {
     private static readonly INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT = 7.5;
     private static readonly INITIAL_SCROLL_POSITION =
-        CalendarDesktopWeekPresentationComponent.INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT * CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
+        CalendarDesktopWeekPresentationComponent.INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT * CalendarEventsPerDaySectionComponent.HOUR_HEIGHT_IN_PIXEL;
     firstDayOfCurrentWeek = input.required<Dayjs>();
-    isEventSelected = signal<boolean>(false);
     scrollContainer = viewChild<ElementRef>('scrollContainer');
     weekDays = computed(() => this.computeWeekDaysFrom(this.firstDayOfCurrentWeek()));
 

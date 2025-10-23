@@ -13,7 +13,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-edit-tutorial-group',
@@ -26,7 +26,7 @@ export class EditTutorialGroupComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
-    private calendarEventService = inject(CalendarEventService);
+    private calendarService = inject(CalendarService);
     private cdr = inject(ChangeDetectorRef);
 
     ngUnsubscribe = new Subject<void>();
@@ -118,7 +118,7 @@ export class EditTutorialGroupComponent implements OnInit, OnDestroy {
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
-                    this.calendarEventService.refresh();
+                    this.calendarService.reloadEvents();
                     this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
                 }),
                 takeUntil(this.ngUnsubscribe),

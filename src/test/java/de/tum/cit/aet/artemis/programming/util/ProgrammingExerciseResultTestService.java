@@ -131,13 +131,13 @@ public class ProgrammingExerciseResultTestService {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     @Autowired
     private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
 
     private Course course;
 
@@ -168,7 +168,7 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         programmingExerciseStudentParticipationStaticCodeAnalysis = participationUtilService
                 .addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, userPrefix + "student2");
-        var localRepoFile = Files.createTempDirectory("repo").toFile();
+        var localRepoFile = Files.createTempDirectory(tempPath, "repo").toFile();
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean(), anyBoolean());
     }

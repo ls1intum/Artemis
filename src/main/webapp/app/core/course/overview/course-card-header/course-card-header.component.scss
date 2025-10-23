@@ -7,6 +7,7 @@
     filter: alpha(opacity = 100);
     transition: 0.15s;
     background-color: var(--background-color-for-hover) !important;
+
     // inner border radius : outer border radius - outer border thickness (8px - 1px)
     border-top-left-radius: 7px;
     border-top-right-radius: 7px;
@@ -26,6 +27,7 @@
     .card-title {
         overflow: hidden;
         padding-bottom: 1px;
+
         // matches 4 lines
         max-height: 76px;
     }

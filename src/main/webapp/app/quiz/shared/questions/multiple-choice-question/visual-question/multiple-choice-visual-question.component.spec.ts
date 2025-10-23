@@ -38,7 +38,8 @@ describe('QuizVisualEditorComponent', () => {
                 fixture = TestBed.createComponent(MultipleChoiceVisualQuestionComponent);
                 comp = fixture.componentInstance;
 
-                comp.question = new MultipleChoiceQuestion();
+                fixture.componentRef.setInput('question', new MultipleChoiceQuestion());
+                fixture.detectChanges();
             });
     });
 
@@ -49,16 +50,16 @@ describe('QuizVisualEditorComponent', () => {
     it('parse the given question properly to markdown', fakeAsync(() => {
         fixture.detectChanges();
 
-        comp.question.text = 'Hallo';
-        comp.question.hint = 'Hint';
-        comp.question.explanation = 'Exp';
+        comp.question().text = 'Hallo';
+        comp.question().hint = 'Hint';
+        comp.question().explanation = 'Exp';
 
         const answerOption = new AnswerOption();
         answerOption.text = 'Answer';
         answerOption.hint = 'H2';
         answerOption.explanation = 'Exp2';
         answerOption.isCorrect = true;
-        comp.question.answerOptions = [answerOption];
+        comp.question().answerOptions = [answerOption];
 
         const markdown = comp.parseQuestion();
         const expected = 'Hallo\n\t[hint] Hint\n\t[exp] Exp\n\n[correct] Answer\n\t[hint] H2\n\t[exp] Exp2';
@@ -71,12 +72,12 @@ describe('QuizVisualEditorComponent', () => {
 
         const answerOption = new AnswerOption();
         const answerOption2 = new AnswerOption();
-        comp.question.answerOptions = [answerOption, answerOption2];
-        expect(comp.question.answerOptions).toHaveLength(2);
+        comp.question().answerOptions = [answerOption, answerOption2];
+        expect(comp.question().answerOptions).toHaveLength(2);
 
         comp.deleteAnswer(0);
 
-        expect(comp.question.answerOptions).toHaveLength(1);
+        expect(comp.question().answerOptions).toHaveLength(1);
     }));
 
     it('toggle the isCorrect state', fakeAsync(() => {
@@ -85,7 +86,7 @@ describe('QuizVisualEditorComponent', () => {
         const answerOption = new AnswerOption();
         answerOption.text = 'Answer';
         answerOption.isCorrect = true;
-        comp.question.answerOptions = [answerOption];
+        comp.question().answerOptions = [answerOption];
 
         expect(answerOption.isCorrect).toBeTrue();
 
@@ -97,14 +98,14 @@ describe('QuizVisualEditorComponent', () => {
     it('does not toggle the if single mode and already has correct answer', fakeAsync(() => {
         fixture.detectChanges();
 
-        comp.question.singleChoice = true;
+        comp.question().singleChoice = true;
 
         const answerOption = new AnswerOption();
         answerOption.text = 'Answer';
         answerOption.isCorrect = true;
 
         const answerOption2 = new AnswerOption();
-        comp.question.answerOptions = [answerOption, answerOption2];
+        comp.question().answerOptions = [answerOption, answerOption2];
 
         expect(answerOption2.isCorrect).toBeFalse();
 
@@ -116,10 +117,10 @@ describe('QuizVisualEditorComponent', () => {
     it('add a new answer option', fakeAsync(() => {
         fixture.detectChanges();
 
-        expect(comp.question.answerOptions).toBeUndefined();
+        expect(comp.question().answerOptions).toBeUndefined();
 
         comp.addNewAnswer();
 
-        expect(comp.question.answerOptions).toHaveLength(1);
+        expect(comp.question().answerOptions).toHaveLength(1);
     }));
 });

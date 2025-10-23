@@ -1,8 +1,5 @@
 .learning-path-student-page {
-    height: calc(100vh - var(--sidebar-header-footer-combined-height) - 6.25rem);
-
     .learning-path-student-content {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - 10.65rem);
         overflow: auto;
     }
 

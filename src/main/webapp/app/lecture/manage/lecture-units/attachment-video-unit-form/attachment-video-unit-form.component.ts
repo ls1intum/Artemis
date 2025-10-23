@@ -118,7 +118,6 @@ function validJsonOrEmpty(control: AbstractControl): ValidationErrors | null {
         FormDateTimePickerComponent,
         CompetencySelectionComponent,
         ArtemisTranslatePipe,
-        ButtonComponent,
         DecimalPipe,
     ],
 })

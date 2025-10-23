@@ -87,10 +87,13 @@ artemis:
     restricted-modules: module_text_llm,module_programming_llm
   apollon:
     conversion-service-url: http://localhost:8080
+  hyperion:
+    enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
 
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
     data-export-creation-time: 0 0 4 * * * # every day at 4am
+    programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
 
   data-export:
@@ -102,3 +105,27 @@ artemis:
   science: # The science module is used for research purposes such as the collection of data.
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
+
+  nebula: # The nebula module is used for llm features such as faq-rewriting and lecture transcription
+    enabled: false
+    url: <your-nebula-url>
+    secret: <your-secret>
+
+# Configure Spring AI, if you want to use Hyperion or Atlas
+spring:
+  ai:
+    chat:
+      client:
+        enabled: #{${artemis.hyperion.enabled} or ${artemis.atlas.enabled}}
+    # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
+    azure:
+      openai:
+        api-key: <azure_openai_key>
+        # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets endpoint automatically
+        endpoint: <azure_openai_endpoint>
+        # deployment-name should match the Azure OpenAI deployment
+        chat:
+          options:
+            deployment-name: <azure_openai_deployment_name or openai_model_name>
+            # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
+            temperature: 1.0

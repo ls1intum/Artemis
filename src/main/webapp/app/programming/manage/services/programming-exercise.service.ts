@@ -33,8 +33,6 @@ export type ProgrammingExerciseTestCaseStateDTO = {
 };
 
 export type ProgrammingExerciseResetOptions = {
-    deleteBuildPlans: boolean;
-    deleteRepositories: boolean;
     deleteParticipationsSubmissionsAndResults: boolean;
     recreateBuildPlans: boolean;
 };
@@ -71,11 +69,10 @@ export class ProgrammingExerciseService {
     /**
      * Resets a programming exercise with the given exerciseId by performing a set of operations
      * as specified in the ProgrammingExerciseResetOptions. The available operations include:
-     * 1. Recreating the BASE and SOLUTION build plans for the exercise.
-     * 2. Deleting all student participations associated with the exercise.
-     * 3. Deleting student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
+     * 1. `deleteParticipationsSubmissionsAndResults`: Deleting all participations, submissions, and results (also deletes repositories and build plans).
+     * 2. `recreateBuildPlans`: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
      *
-     * @param exerciseId - Id of the programming exercise that should be reset.
+     * @param exerciseId - of the programming exercise that should be reset.
      * @param options - Configuration options specifying which operations to perform during the exercise reset.
      * @returns An Observable that returns a string response.
      */

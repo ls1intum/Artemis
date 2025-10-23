@@ -24,5 +24,13 @@
 .sidebar-divider {
     all: unset;
     display: block;
-    border-top: 1px solid var(--bs-card-border-color) !important;
+    border-top: 1px solid var(--bs-border-color) !important;
+}
+
+.attendance-chip {
+    display: flex;
+    border-radius: 0.75rem;
+    padding: 0.25rem 0.35rem;
+    font-size: 0.6rem;
+    line-height: 0.6rem;
 }

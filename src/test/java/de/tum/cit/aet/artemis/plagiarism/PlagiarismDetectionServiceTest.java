@@ -17,8 +17,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -54,8 +54,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class PlagiarismDetectionServiceTest {
 
-    @TempDir
-    Path tempDir;
+    private static Path tempPath;
 
     private final PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
 
@@ -78,6 +77,13 @@ class PlagiarismDetectionServiceTest {
     private static final String COMPLEX_JAVA_CONTENT_TEMPLATE = "public class Test%d { public static void main(String[] args) { System.out.println(\"Hello World\"); } }";
 
     private static final String NON_JAVA_CONTENT = "This is a readme file with lots of content that should not be counted for Java token analysis";
+
+    @BeforeAll
+    static void setTempPath() throws IOException {
+        // we cannot rely on spring boot value injection here as it's not an integration test.
+        tempPath = Path.of("local", "server-integration-test");
+        Files.createDirectories(tempPath);
+    }
 
     @Test
     void shouldExecuteChecksForTextExercise() {
@@ -280,12 +286,18 @@ class PlagiarismDetectionServiceTest {
     }
 
     private Path createTestFile(String filename, String content) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path testFile = tempDir.resolve(filename);
         FileUtils.writeStringToFile(testFile.toFile(), content, StandardCharsets.UTF_8);
         return testFile;
     }
 
+    private Path createTemporaryDirectory() throws IOException {
+        return Files.createTempDirectory(tempPath, "plagiarismRepo");
+    }
+
     private void setupRepositoryWithFile(String filename, String content, Repository repository) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath);
         lenient().when(repository.getLocalPath()).thenReturn(repoPath);
@@ -295,6 +307,7 @@ class PlagiarismDetectionServiceTest {
     }
 
     private void setupRepositoryWithMultipleFiles(Repository repository) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath);
         lenient().when(repository.getLocalPath()).thenReturn(repoPath);
@@ -308,6 +321,7 @@ class PlagiarismDetectionServiceTest {
     }
 
     private void setupRepositoryWithMixedFiles(Repository repository) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath);
         lenient().when(repository.getLocalPath()).thenReturn(repoPath);

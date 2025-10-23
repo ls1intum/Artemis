@@ -156,15 +156,6 @@ public interface ContinuousIntegrationService {
     void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri, String newBranch);
 
     /**
-     * Set Build Plan Permissions for admins, instructors and teaching assistants.
-     *
-     * @param programmingExercise a programming exercise with the required information to set the needed build plan permissions
-     * @param planName            The name of the source plan
-     */
-    // TODO: Move to a new ContinuousIntegrationPermissionService that is only implemented by the Jenkins subsystem
-    void givePlanPermissions(ProgrammingExercise programmingExercise, String planName);
-
-    /**
      * Checks if the underlying CI server is up and running and gives some additional information about the running
      * services if available
      *

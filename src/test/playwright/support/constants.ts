@@ -10,6 +10,7 @@ export const COURSE_ADMIN_BASE = `${BASE_API}/core/admin/courses`;
 
 export const PROGRAMMING_EXERCISE_BASE = `${BASE_API}/programming/programming-exercises`;
 export const QUIZ_EXERCISE_BASE = `${BASE_API}/quiz/quiz-exercises`;
+export const QUIZ_EXERCISE_BASE_CREATION = new RegExp(`${BASE_API}/quiz/(courses|exercise-groups)/\\d+/quiz-exercises$`);
 export const TEXT_EXERCISE_BASE = `${BASE_API}/text/text-exercises`;
 export const MODELING_EXERCISE_BASE = `${BASE_API}/modeling/modeling-exercises`;
 export const UPLOAD_EXERCISE_BASE = `${BASE_API}/fileupload/file-upload-exercises`;

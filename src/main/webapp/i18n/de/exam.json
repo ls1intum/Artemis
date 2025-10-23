@@ -298,6 +298,10 @@
             "examExercises": "Klausuraufgaben:",
             "exercisePoints": "Punkte",
             "exerciseName": "Name",
+            "navigation": {
+                "nextButton": "Weiter",
+                "previousButton": "Zurück"
+            },
             "noStudentExam": "Du bist nicht für die Klausur angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
             "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur möglich. Um deine Abgaben zu betrachten, navigiere zur Klausurseite ",
             "atLeastTutorStudentExam": "Da du nicht Studierende:r bist, kannst du nicht an der Klausur teilnehmen:",

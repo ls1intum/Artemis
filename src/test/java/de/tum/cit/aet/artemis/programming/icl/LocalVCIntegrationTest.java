@@ -287,7 +287,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             throws Exception {
 
         // Create a second local repository and push a file from there
-        Path tempDirectory = Files.createTempDirectory("tempDirectory");
+        Path tempDirectory = Files.createTempDirectory(tempPath, "tempDirectory");
         Git secondLocalGit = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDirectory.toFile()).call();
         localVCLocalCITestService.commitFile(tempDirectory, secondLocalGit);
         localVCLocalCITestService.testPushSuccessful(secondLocalGit, login, projectKey, repositorySlug);

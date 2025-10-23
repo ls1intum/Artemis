@@ -4,7 +4,7 @@ import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/l
 import { BehaviorSubject } from 'rxjs';
 import { MockComponent } from 'ng-mocks';
 import { CalendarDesktopOverviewComponent } from 'app/core/calendar/desktop/overview/calendar-desktop-overview.component';
-import { CalendarMobileOverviewComponent } from 'app/core/calendar/mobile/overview/calendar-mobile-overview';
+import { CalendarMobileOverviewComponent } from 'app/core/calendar/mobile/overview/calendar-mobile-overview.component';
 
 describe('CalendarOverview', () => {
     let component: CalendarOverviewComponent;

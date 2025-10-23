@@ -1,15 +1,11 @@
 package de.tum.cit.aet.artemis.core.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.getWeekOfDate;
 
-import java.time.DayOfWeek;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.IsoFields;
-import java.time.temporal.TemporalField;
-import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -743,97 +739,5 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             returnList.add(listElement);
         });
         return returnList;
-    }
-
-    /**
-     * Gets the week of the given date
-     *
-     * @param date the date to get the week for
-     * @return the calendar week of the given date
-     */
-    default Integer getWeekOfDate(ZonedDateTime date) {
-        LocalDate localDate = date.toLocalDate();
-        TemporalField weekOfYear = WeekFields.of(DayOfWeek.MONDAY, 4).weekOfWeekBasedYear();
-        return localDate.get(weekOfYear);
-    }
-
-    /**
-     * Gets a List<StatisticsData> each containing a date and an amount of entries. We take the amount of entries and
-     * map it into the results list based on the date of the entry. This method handles the spanType DAY
-     * **Note**: The length of the result list must be correct, all values must be initialized with 0
-     *
-     * @param outcome A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result  the list in which the converted outcome should be inserted
-     */
-    default void sortDataIntoHours(List<StatisticsEntry> outcome, List<Integer> result) {
-        for (StatisticsEntry entry : outcome) {
-            int hourIndex = ((ZonedDateTime) entry.getDay()).getHour();
-            int amount = Math.toIntExact(entry.getAmount());
-            int currentValue = result.get(hourIndex);
-            result.set(hourIndex, currentValue + amount);
-        }
-    }
-
-    /**
-     * Gets a List<StatisticsData> each containing a date and an amount of entries. We take the amount of entries and
-     * map it into the results list based on the date of the entry. This method handles the spanType WEEK and MONTH
-     * **Note**: The length of the result list must be correct, all values must be initialized with 0
-     *
-     * @param outcome   A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result    the list in which the converted outcome should be inserted
-     * @param startDate the startDate of the result list
-     */
-    default void sortDataIntoDays(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
-        for (StatisticsEntry entry : outcome) {
-            ZonedDateTime date = (ZonedDateTime) entry.getDay();
-            int amount = Math.toIntExact(entry.getAmount());
-            int dayIndex = Math.toIntExact(ChronoUnit.DAYS.between(startDate, date));
-            int currentValue = result.get(dayIndex);
-            result.set(dayIndex, currentValue + amount);
-        }
-    }
-
-    /**
-     * Gets a List<StatisticsData> each containing a date and an amount of entries. We take the amount of entries and
-     * map it into the results list based on the date of the entry. This method sorts the data into weeks.
-     * **Note**: The length of the result list must be correct, all values must be initialized with 0
-     *
-     * @param outcome   A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result    the list in which the converted outcome should be inserted, should be initialized with enough values
-     * @param startDate the startDate of the result list
-     */
-    default void sortDataIntoWeeks(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
-        for (StatisticsEntry entry : outcome) {
-            ZonedDateTime date = (ZonedDateTime) entry.getDay();
-            int amount = Math.toIntExact(entry.getAmount());
-            int dateWeek = getWeekOfDate(date);
-            int startDateWeek = getWeekOfDate(startDate);
-            int weeksInYear = Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(startDate).getMaximum());    // either 52 or 53
-            int weekIndex = (dateWeek - startDateWeek + weeksInYear) % weeksInYear;     // make sure to have a positive value in the range [0, 52 or 53]
-            int currentValue = result.get(weekIndex);
-            result.set(weekIndex, currentValue + amount);
-        }
-    }
-
-    /**
-     * Gets a List<StatisticsData> each containing a date and an amount of entries. We take the amount of entries and
-     * map it into the results list based on the date of the entry. This method handles the spanType YEAR
-     * **Note**: The length of the result list must be correct, all values must be initialized with 0
-     *
-     * @param outcome   A List<StatisticsData>, each StatisticsData containing a date and the amount of entries for one timeslot
-     * @param result    the list in which the converted outcome should be inserted
-     * @param startDate the startDate of the result list
-     */
-    default void sortDataIntoMonths(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
-        for (StatisticsEntry entry : outcome) {
-            ZonedDateTime date = (ZonedDateTime) entry.getDay();
-            int amount = (int) entry.getAmount();
-            int monthOfDate = date.getMonth().getValue();
-            int monthOfStartDate = startDate.getMonth().getValue();
-            int monthsPerYear = 12;
-            int monthIndex = (monthOfDate - monthOfStartDate + monthsPerYear) % monthsPerYear; // make sure to have a positive value in the range [0, 12]
-            int currentValue = result.get(monthIndex);
-            result.set(monthIndex, currentValue + amount);
-        }
     }
 }

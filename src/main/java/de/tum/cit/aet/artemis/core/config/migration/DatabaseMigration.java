@@ -8,7 +8,7 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -188,7 +188,7 @@ public class DatabaseMigration {
         }
         catch (SQLException e) {
             boolean isEmptyH2Database = e.getMessage().contains("not found");
-            if (StringUtils.containsIgnoreCase(e.getMessage(), "databasechangelog")
+            if (Strings.CI.contains(e.getMessage(), "databasechangelog")
                     && (e.getMessage().contains("does not exist") || (e.getMessage().contains("doesn't exist")) || isEmptyH2Database)) {
                 return null;
             }

@@ -35,7 +35,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
         translateService = TestBed.inject(TranslateService);
 
         translateSpy = jest.spyOn(translateService, 'instant');
-        comp.question = {} as ShortAnswerQuestion;
+        fixture.componentRef.setInput('question', {} as ShortAnswerQuestion);
     });
 
     afterEach(() => {
@@ -43,8 +43,8 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     });
 
     it('should check for singular point singular score', () => {
-        comp.question.points = 1;
-        comp.score = 1;
+        comp.question().points = 1;
+        comp.score.set(1);
         comp.ngAfterViewInit();
         expect(translateSpy).toHaveBeenCalledTimes(2);
         expect(translateSpy).toHaveBeenNthCalledWith(1, translationBasePath + 'point');
@@ -52,8 +52,8 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     });
 
     it('should check for plural points and scores', () => {
-        comp.question.points = 2;
-        comp.score = 2;
+        comp.question().points = 2;
+        comp.score.set(2);
         comp.ngAfterViewInit();
         expect(translateSpy).toHaveBeenCalledTimes(2);
         expect(translateSpy).toHaveBeenNthCalledWith(1, translationBasePath + 'points');
@@ -71,9 +71,9 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     });
 
     it('check count for drag and drop exercise with singular values', () => {
-        comp.question = new DragAndDropQuestion();
-        comp.correctlyMappedDragAndDropItems = 1;
-        comp.incorrectlyMappedDragAndDropItems = 1;
+        fixture.componentRef.setInput('question', new DragAndDropQuestion());
+        fixture.componentRef.setInput('correctlyMappedDragAndDropItems', 1);
+        fixture.componentRef.setInput('incorrectlyMappedDragAndDropItems', 1);
         comp.ngAfterViewInit();
 
         expect(comp.differenceDragAndDrop).toBe(0);
@@ -83,9 +83,9 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     });
 
     it('check count for drag and drop exercise with plural values', () => {
-        comp.question = new DragAndDropQuestion();
-        comp.correctlyMappedDragAndDropItems = 5;
-        comp.incorrectlyMappedDragAndDropItems = 2;
+        fixture.componentRef.setInput('question', new DragAndDropQuestion());
+        fixture.componentRef.setInput('correctlyMappedDragAndDropItems', 5);
+        fixture.componentRef.setInput('incorrectlyMappedDragAndDropItems', 2);
         comp.ngAfterViewInit();
 
         expect(comp.differenceDragAndDrop).toBe(3);
@@ -97,13 +97,13 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     it('check count for short answer exercise with singular values', () => {
         const question = new ShortAnswerQuestion();
         question.spots = [new ShortAnswerSpot(), new ShortAnswerSpot()];
-        comp.question = question;
+        fixture.componentRef.setInput('question', question);
 
         const shortAnswerText1 = new ShortAnswerSubmittedText();
         shortAnswerText1.isCorrect = true;
         const shortAnswerText2 = new ShortAnswerSubmittedText();
         shortAnswerText2.isCorrect = false;
-        comp.shortAnswerText = [shortAnswerText1, shortAnswerText2];
+        fixture.componentRef.setInput('shortAnswerText', [shortAnswerText1, shortAnswerText2]);
 
         comp.ngAfterViewInit();
 
@@ -119,7 +119,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
     it('check count for short answer exercise with plural values', () => {
         const question = new ShortAnswerQuestion();
         question.spots = [new ShortAnswerSpot(), new ShortAnswerSpot(), new ShortAnswerSpot(), new ShortAnswerSpot()];
-        comp.question = question;
+        fixture.componentRef.setInput('question', question);
 
         const shortAnswerText1 = new ShortAnswerSubmittedText();
         shortAnswerText1.isCorrect = true;
@@ -129,7 +129,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
         shortAnswerText3.isCorrect = false;
         const shortAnswerText4 = new ShortAnswerSubmittedText();
         shortAnswerText4.isCorrect = false;
-        comp.shortAnswerText = [shortAnswerText1, shortAnswerText2, shortAnswerText3, shortAnswerText4];
+        fixture.componentRef.setInput('shortAnswerText', [shortAnswerText1, shortAnswerText2, shortAnswerText3, shortAnswerText4]);
 
         comp.ngAfterViewInit();
 
@@ -156,12 +156,11 @@ describe('Quiz Scoring Info Student Modal Component', () => {
             wrongAnswer1.id = 2;
             wrongAnswer1.isCorrect = false;
             question.answerOptions = [correctAnswer1, wrongAnswer1];
-            comp.question = question;
-
-            comp.quizQuestions = [question];
+            fixture.componentRef.setInput('question', question);
+            fixture.componentRef.setInput('quizQuestions', [question]);
 
             const submittedResult = new Result();
-            comp.multipleChoiceSubmittedResult = submittedResult;
+            fixture.componentRef.setInput('multipleChoiceSubmittedResult', submittedResult);
 
             const submission = new QuizSubmission();
             submittedResult.submission = submission;

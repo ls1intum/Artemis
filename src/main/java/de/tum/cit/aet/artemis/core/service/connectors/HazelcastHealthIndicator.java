@@ -17,7 +17,7 @@ import com.hazelcast.core.HazelcastInstance;
 
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Component
-@Lazy
+@Lazy(false)
 public class HazelcastHealthIndicator implements HealthIndicator {
 
     private final HazelcastInstance hazelcastInstance;

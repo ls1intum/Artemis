@@ -128,6 +128,10 @@ public class CacheConfiguration {
         this.serverProperties = serverProperties;
         this.registration = registration;
         this.env = env;
+
+        // Do not send telemetry to Hazelcast.
+        // https://docs.hazelcast.com/hazelcast/5.5/phone-homes
+        System.setProperty("hazelcast.phone.home.enabled", "false");
     }
 
     @PreDestroy

@@ -173,7 +173,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
         doReturn(resource).when(resourceLoader).getResource(anyString());
 
         // Instantiate the class under test and invoke the method.
-        ResourceLoaderService resourceLoaderService = new ResourceLoaderService(resourceLoader);
+        ResourceLoaderService resourceLoaderService = new ResourceLoaderService(resourceLoader, tempPath);
         Path path = Path.of("path", "to", "resource.txt");
         Path resourceFilePath = resourceLoaderService.getResourceFilePath(path);
 

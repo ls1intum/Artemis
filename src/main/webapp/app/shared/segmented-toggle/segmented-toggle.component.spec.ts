@@ -22,33 +22,29 @@ describe('SegmentedToggleComponent', () => {
 
         fixture = TestBed.createComponent(SegmentedToggleComponent<number>);
         component = fixture.componentInstance;
-        component.options = mockOptions;
+        fixture.componentRef.setInput('options', mockOptions);
         fixture.detectChanges();
     });
 
     it('should create', () => {
         expect(component).toBeTruthy();
-        expect(component.options).toEqual(mockOptions);
+        expect(component.options()).toEqual(mockOptions);
     });
 
     it('should bind selected value correctly', () => {
-        component.selected = 2;
+        component.selected.set(2);
         fixture.detectChanges();
-        expect(component.selected).toBe(2);
+        expect(component.selected()).toBe(2);
     });
 
     it('should emit selectedChange event when an option is selected', () => {
         const selectedValue = 1;
-        const spy = jest.spyOn(component.selectedChange, 'emit');
-
         component.select(selectedValue);
-
-        expect(spy).toHaveBeenCalledWith(selectedValue);
-        expect(component.selected).toBe(selectedValue);
+        expect(component.selected()).toBe(selectedValue);
     });
 
     it('should handle empty options array', () => {
-        component.options = [];
+        fixture.componentRef.setInput('options', []);
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
@@ -57,7 +53,7 @@ describe('SegmentedToggleComponent', () => {
     });
 
     it('should render all options correctly', () => {
-        component.options = mockOptions;
+        fixture.componentRef.setInput('options', mockOptions);
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
@@ -70,8 +66,8 @@ describe('SegmentedToggleComponent', () => {
     });
 
     it('should apply selected class to the active option', () => {
-        component.options = mockOptions;
-        component.selected = 2;
+        fixture.componentRef.setInput('options', mockOptions);
+        component.selected.set(2);
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;

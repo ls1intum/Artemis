@@ -4,10 +4,7 @@ textarea {
     height: 150px;
     resize: none;
     font-size: small;
-    font-family:
-        Bitstream Vera Sans Mono,
-        Courier New,
-        monospace;
+    font-family: 'Bitstream Vera Sans Mono', 'Courier New', monospace;
     border-color: var(--border-color) !important;
 }
 
@@ -42,7 +39,7 @@ table {
 
 th,
 td {
-    padding: 15px 15px;
+    padding: 15px;
 }
 
 /* Button styling */

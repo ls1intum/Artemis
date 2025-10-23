@@ -59,7 +59,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
  * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.
  * submitted to the executor service.
  */
-@Lazy
+@Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildJobExecutionService {

@@ -1,10 +1,7 @@
 <!-- Since the design of welcome page is changed, we use different alignments for startView and endView
      However, it includes some duplicated code and ids and should be refactored with e.g. ngTemplates
       -->
-<div
-    class="px-3 pb-3 overflow-auto"
-    [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunStartTime, 'scrollable-content-exam-cover': !testRunStartTime && startView }"
->
+<div class="px-3 pb-3 overflow-auto" [ngClass]="{ 'scrollable-content-exam-cover': !testRunStartTime && startView }">
     @if (startView) {
         <div class="d-flex justify-content-between">
             <h3 class="mt-3">

@@ -6,13 +6,14 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -71,7 +72,7 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
         return getValueElseThrow(findByIdWithLectureUnits(competencyId), competencyId);
     }
 
-    long countByCourse(Course course);
+    long countByCourseId(long courseId);
 
     List<Prerequisite> findByCourseIdOrderById(long courseId);
 
@@ -94,4 +95,8 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
             WHERE lp.id = :learningPathId
             """)
     Set<Prerequisite> findByLearningPathIdWithLectureUnitsAndExercises(@Param("learningPathId") long learningPathId);
+
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteAllByCourseId(long courseId);
 }

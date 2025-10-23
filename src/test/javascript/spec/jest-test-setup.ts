@@ -7,6 +7,7 @@ import 'jest-extended';
 import failOnConsole from 'jest-fail-on-console';
 import { TextDecoder, TextEncoder } from 'util';
 import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
+import { Text } from '@ls1intum/apollon/lib/es6/utils/svg/text';
 
 /*
  * In the Jest configuration, we only import the basic features of monaco (editor.api.js) instead
@@ -99,3 +100,8 @@ jest.mock('pdfjs-dist', () => {
         },
     };
 });
+
+// has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
+Text.size = () => {
+    return { width: 0, height: 0 };
+};

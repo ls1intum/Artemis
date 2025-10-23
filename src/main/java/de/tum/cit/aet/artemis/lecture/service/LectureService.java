@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
@@ -34,8 +36,7 @@ import de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
-import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
+import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -309,35 +310,68 @@ public class LectureService {
      *
      * @param courseId      the ID of the course
      * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @param language      the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent) {
-        Set<LectureCalendarEventDTO> daos = lectureRepository.getLectureCalendarEventDAOsForCourseId(courseId);
-        return daos.stream().map(dao -> deriveCalendarEventDTO(dao, userIsStudent)).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent, Language language) {
+        Set<LectureCalendarEventDTO> dtos = lectureRepository.getLectureCalendarEventDTOsForCourseId(courseId);
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
     }
 
     /**
-     * Derives an event for a given {@link LectureCalendarEventDTO} that represents either startDate if exclusively available, or endDate
-     * if exclusively available or both startDate and endDate if both are available.
-     * <p>
-     * The event is only derived given that either the lecture represented by a DTO is visible to students or the logged-in user is a course
-     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     * Derives calendar events from the given {@link LectureCalendarEventDTO}. Expects at least one of startDate and endDate of the LectureCalendarEventDTO to be non-null-
      *
-     * @param dto           the dao from which to derive the event
-     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @param dto           the dto from which to derive the event
+     * @param userIsStudent indicates whether the logged-in user is a student of the course (hence no tutor, editor, instructor)
+     * @param language      the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
+     * @throws IllegalArgumentException if both startDate and endDate of the LectureCalendarEventDTO are null
      * @return the derived event
      */
-    private Optional<CalendarEventDTO> deriveCalendarEventDTO(LectureCalendarEventDTO dto, boolean userIsStudent) {
-        if (userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate())) {
-            return Optional.empty();
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(LectureCalendarEventDTO dto, boolean userIsStudent, Language language) {
+        ZonedDateTime startDate = dto.startDate();
+        ZonedDateTime endDate = dto.endDate();
+
+        boolean noDatesAvailable = startDate == null && endDate == null;
+        if (noDatesAvailable) {
+            throw new IllegalArgumentException("Tried to derive CalendarEventDTOs from a LectureCalendarEventDTO without startDate and endDate.");
         }
-        if (dto.startDate() == null && dto.endDate() != null) {
-            return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.END_DATE, dto.title(), dto.endDate(), null, null, null));
+
+        boolean lectureIsInvisible = userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate());
+        if (lectureIsInvisible) {
+            return Set.of();
         }
-        if (dto.startDate() != null && dto.endDate() == null) {
-            return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_DATE, dto.title(), dto.startDate(), null, null, null));
+
+        boolean onlyEndDateAvailable = startDate == null && endDate != null;
+        if (onlyEndDateAvailable) {
+            String titlePrefix = switch (language) {
+                case ENGLISH -> "End: ";
+                case GERMAN -> "Ende: ";
+            };
+            return Set.of(new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.endDate(), null, null, null));
         }
-        return Optional
-                .of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_AND_END_DATE, dto.title(), dto.startDate(), dto.endDate(), null, null));
+
+        boolean onlyStartDateAvailable = startDate != null && endDate == null;
+        if (onlyStartDateAvailable) {
+            String titlePrefix = "Start: ";
+            return Set
+                    .of(new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.startDate(), null, null, null));
+        }
+
+        final int TWELVE_HOURS_IN_MINUTES = 12 * 60;
+        boolean lectureLengthExceedsTwelveHours = Duration.between(startDate, endDate).abs().toMinutes() > TWELVE_HOURS_IN_MINUTES;
+        if (lectureLengthExceedsTwelveHours) {
+            String startTitlePrefix = "Start: ";
+            CalendarEventDTO startDto = new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, startTitlePrefix + dto.title(),
+                    dto.startDate(), null, null, null);
+            String endTitlePrefix = switch (language) {
+                case ENGLISH -> "End: ";
+                case GERMAN -> "Ende: ";
+            };
+            CalendarEventDTO endDto = new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, endTitlePrefix + dto.title(), dto.endDate(), null,
+                    null, null);
+            return Set.of(startDto, endDto);
+        }
+
+        return Set.of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
     }
 }

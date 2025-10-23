@@ -46,7 +46,7 @@ import { JsonPipe, NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -87,7 +87,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private exerciseGroupService = inject(ExerciseGroupService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private modalService = inject(NgbModal);
-    private calendarEventService = inject(CalendarEventService);
+    private calendarService = inject(CalendarService);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
 
@@ -562,7 +562,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         } else if (isCreate) {
             this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route, skipLocationChange: true });
         }
-        this.calendarEventService.refresh();
+        this.calendarService.reloadEvents();
     }
 
     /**

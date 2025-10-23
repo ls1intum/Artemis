@@ -387,7 +387,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void testGetAttachmentVideoUnit(boolean isTutor) throws Exception {
-        Path tempFile = Files.createTempFile("dummy", ".pdf");
+        Path tempFile = Files.createTempFile(tempPath, "dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
         FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
         tempFile.toFile().deleteOnExit();

@@ -1,8 +1,8 @@
-$management-header-height: 230px;
+@import '../../../../content/scss/artemis-mixins';
 
 .update-footer {
     margin-top: 1rem;
-    padding: 0.5rem 0 0.75rem 0;
+    padding: 0.5rem 0 0.75rem;
     width: 100%;
     position: sticky;
     bottom: 0;
@@ -54,27 +54,8 @@ $management-header-height: 230px;
     overflow-y: auto;
 
     &.content-exam-height-testRun {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
-
-        &.content-exam-height-testRun-dev {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
-
-            @media (max-width: 1349px) {
-                height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 40px) !important;
-            }
-
-            @media (max-width: 768px) {
-                height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 20px) !important;
-            }
-        }
-
-        @media (max-width: 1349px) {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 40px) !important;
-        }
-
-        @media (max-width: 768px) {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 20px) !important;
-        }
+        --management-header-height: 127px;
+        @include dynamic-content-height(--management-header-height);
     }
 }
 
