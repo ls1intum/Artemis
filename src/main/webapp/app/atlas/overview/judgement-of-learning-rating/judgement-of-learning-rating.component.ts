@@ -29,7 +29,7 @@ export class JudgementOfLearningRatingComponent {
      * @param event - starRating component that holds the new rating value
      */
 
-    onRate(event: { oldValue: number; newValue: number; starRating: StarRatingComponent }) {
+    onRate(event: { oldValue: number; newValue: number }) {
         if (this.rating() !== undefined || this.courseId() === undefined) {
             return;
         }
