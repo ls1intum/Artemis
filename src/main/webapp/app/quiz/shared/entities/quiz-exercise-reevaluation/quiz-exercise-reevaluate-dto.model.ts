@@ -155,12 +155,12 @@ export function convertQuizExerciseToReEvaluateDTO(quizExercise: QuizExercise): 
         includedInOverallScore: quizExercise.includedInOverallScore,
         randomizeQuestionOrder: quizExercise.randomizeQuestionOrder,
         quizQuestions: quizExercise.quizQuestions?.map((question) => {
-            if (question instanceof MultipleChoiceQuestion) {
+            if (question.type === 'multiple-choice') {
                 return convertMultipleChoiceQuestionToReEvaluateDTO(question);
-            } else if (question instanceof DragAndDropQuestion) {
+            } else if (question.type === 'drag-and-drop') {
                 return convertDragAndDropQuestionToReEvaluateDTO(question);
-            } else if (question instanceof ShortAnswerQuestion) {
-                return convertShortAnswerQuestionToReEvaluateDTO(question);
+            } else if (question.type === 'short-answer') {
+                return convertShortAnswerQuestionToReEvaluateDTO(question as ShortAnswerQuestion);
             } else {
                 throw new Error(`Unknown question type: ${question.constructor.name}`);
             }
