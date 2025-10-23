@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentToolsService;
+import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService;
 
 @Lazy
 @Configuration
@@ -15,15 +16,26 @@ import de.tum.cit.aet.artemis.atlas.service.AtlasAgentToolsService;
 public class AtlasAgentToolConfig {
 
     /**
-     * Registers the tools found on the AtlasAgentToolsService bean.
-     * MethodToolCallbackProvider discovers @Tool-annotated methods on the provided instances
-     * and makes them available for Spring AI's tool calling system.
+     * Registers the tools for the Main Atlas Agent (Requirements Engineer/Orchestrator).
+     * This agent has access to information retrieval tools only.
      *
-     * @param toolsService the service containing @Tool-annotated methods
-     * @return ToolCallbackProvider that exposes the tools to Spring AI
+     * @param toolsService the service containing @Tool-annotated methods for main agent
+     * @return ToolCallbackProvider that exposes the main agent tools to Spring AI
      */
     @Bean
-    public ToolCallbackProvider atlasToolCallbackProvider(AtlasAgentToolsService toolsService) {
+    public ToolCallbackProvider mainAgentToolCallbackProvider(AtlasAgentToolsService toolsService) {
         return MethodToolCallbackProvider.builder().toolObjects(toolsService).build();
+    }
+
+    /**
+     * Registers the tools for the Competency Expert sub-agent.
+     * This agent has access to both previewCompetency and createCompetency tools.
+     *
+     * @param expertToolsService the service containing @Tool-annotated methods for competency expert
+     * @return ToolCallbackProvider that exposes the competency expert tools to Spring AI
+     */
+    @Bean
+    public ToolCallbackProvider competencyExpertToolCallbackProvider(CompetencyExpertToolsService expertToolsService) {
+        return MethodToolCallbackProvider.builder().toolObjects(expertToolsService).build();
     }
 }
