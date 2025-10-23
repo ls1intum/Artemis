@@ -32,7 +32,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActiveMenuDirective } from './active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
@@ -62,7 +61,6 @@ import { ServerAdministration } from 'app/core/navbar/server-administration/serv
         SystemNotificationComponent,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
-        FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         ServerAdministration,
