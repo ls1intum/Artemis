@@ -23,7 +23,7 @@ import { isManualResult as isManualResultFunction } from 'app/exercise/result/re
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructionComponent } from '../../shared/instructions-render/programming-exercise-instruction.component';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
@@ -41,7 +41,7 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseInstructionComponent,
-        AdditionalFeedbackComponent,
+        UnifiedFeedbackComponent,
     ],
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {

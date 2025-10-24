@@ -161,13 +161,11 @@
 
                                                         <div id="additional-feedback">
                                                             @for (feedback of unreferencedFeedback; track feedback.id) {
-                                                                @if (shouldBeDisplayed(feedback)) {
-                                                                    <jhi-unified-feedback
-                                                                        [feedbackContent]="feedback.detailText || ''"
-                                                                        [points]="feedback.credits || 0"
-                                                                        [feedback]="feedback"
-                                                                    />
-                                                                }
+                                                                <jhi-unified-feedback
+                                                                    [feedbackContent]="feedback.detailText || ''"
+                                                                    [points]="feedback.credits || 0"
+                                                                    [feedback]="feedback"
+                                                                />
                                                             }
                                                         </div>
                                                     </div>
