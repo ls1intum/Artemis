@@ -50,7 +50,6 @@ const Image = ({
             src={src as string}
             alt={alt}
             style={combinedStyles}
-            aria-label={alt}
             {...rest}
         />
     );
