@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
@@ -45,6 +46,14 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
+/**
+ * Base class for all Atlas integration tests.
+ * Disables Spring AI JDBC schema initialization because:
+ * - Tests use H2 database (no schema-h2.sql exists in Spring AI)
+ * - Production uses MySQL with Liquibase changelog 20251017200800
+ * - Mock beans (ChatMemoryRepository, ChatMemory) prevent real bean creation
+ */
+@TestPropertySource(properties = { "spring.ai.chat.memory.repository.jdbc.initialize-schema=never" })
 public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     // Repositories

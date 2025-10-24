@@ -56,8 +56,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS, PROFILE_AEOLUS,
         PROFILE_LTI, "local" })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.user-management.passkey.enabled=true",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=false",
-        "spring.ai.chat.memory.repository.jdbc.initialize-schema=never" })
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=false" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
@@ -80,9 +79,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
-    // NOTE: MockitoBean is used here because Spring AI beans cannot be instantiated in tests without Azure OpenAI credentials
-    // These beans are provided by SpringAIConfiguration in production, but need to be mocked for tests
-    // The @ConditionalOnMissingBean in SpringAIConfiguration will detect these mocks and skip real bean creation
     @MockitoBean
     protected ChatModel chatModel;
 
