@@ -89,7 +89,7 @@ export class CourseTutorialGroupsComponent {
                 const tutorialGroups = updatedCourse.tutorialGroups ?? [];
                 this.tutorialGroups.set(tutorialGroups);
                 const lectures = updatedCourse.lectures ?? [];
-                const tutorialLectures = lectures.filter((lecture) => lecture.isTutorialLecture === true);
+                const tutorialLectures = lectures.filter((lecture) => lecture.isTutorialLecture !== true);
                 this.tutorialLectures.set(tutorialLectures);
             }
         });
@@ -110,7 +110,7 @@ export class CourseTutorialGroupsComponent {
             this.loadAndSetTutorialGroups(courseId);
         }
         if (cachedLectures !== undefined) {
-            this.tutorialLectures.set(cachedLectures.filter((lecture) => lecture.isTutorialLecture === true));
+            this.tutorialLectures.set(cachedLectures.filter((lecture) => lecture.isTutorialLecture !== true));
         } else {
             this.loadAndSetTutorialLectures(courseId);
         }
@@ -157,7 +157,7 @@ export class CourseTutorialGroupsComponent {
 
     private prepareSidebarData(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]) {
         const tutorialGroupCardElements = this.courseOverviewService.mapTutorialGroupsToSidebarCardElements(tutorialGroups);
-        const tutorialLectureCardElements = this.courseOverviewService.mapLecturesToSidebarCardElements(tutorialLectures);
+        const tutorialLectureCardElements = this.courseOverviewService.mapTutorialLecturesToSidebarCardElements(tutorialLectures);
         const cardElements = [...tutorialGroupCardElements, ...tutorialLectureCardElements];
         const accordionGroups = this.createAccordionGroups(tutorialGroups, tutorialLectures);
         this.sidebarData.set({
@@ -183,7 +183,7 @@ export class CourseTutorialGroupsComponent {
             accordionGroups[tutorialGroupCategory].entityData.push(tutorialGroupCardItem);
         });
         tutorialLectures.forEach((tutorialLecture) => {
-            const tutorialLectureCardItem = this.courseOverviewService.mapLectureToSidebarCardElement(tutorialLecture);
+            const tutorialLectureCardItem = this.courseOverviewService.mapTutorialLectureToSidebarCardElement(tutorialLecture);
             tutorialGroupCategory = 'tutorialLectures';
             accordionGroups[tutorialGroupCategory].entityData.push(tutorialLectureCardItem);
         });

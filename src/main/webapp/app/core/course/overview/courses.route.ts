@@ -284,7 +284,7 @@ export const routes: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        path: ':lectureId',
+                        path: 'tutorial-lectures/:lectureId',
                         data: {
                             authorities: [Authority.USER],
                             pageTitle: 'overview.lectures',
