@@ -17,12 +17,14 @@ const Image = ({
                    alt,
                    size = ImageSize.medium,
                    style,
+                   hideBorder,
                    ...rest
                }: {
     src: string | {};
     alt: string;
     size?: ImageSize;
     style?: object;
+    hideBorder?: boolean;
 }): React.ReactElement => {
     const sizeStyles = {
         [ImageSize.small]: { maxWidth: '300px' },
@@ -33,7 +35,7 @@ const Image = ({
     const defaultStyles = {
         ...sizeStyles[size],
         height: 'auto',
-        border: '1px solid var(--ifm-color-emphasis-300)',
+        border: hideBorder ? '' : '1px solid var(--ifm-color-emphasis-300)',
         borderRadius: '8px',
         margin: '1.5rem 0',
         padding: '0.5rem', // Internal padding around the image
