@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilServic
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.StandardizedCompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.learningpath.util.LearningPathUtilService;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
@@ -62,13 +63,6 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-/**
- * Base class for all Atlas integration tests.
- * Spring AI JDBC schema initialization is disabled in test configuration (application.yml):
- * - Tests use H2 database (no schema-h2.sql exists in Spring AI)
- * - Production uses MySQL with Liquibase changelog 20251017200800
- * - Mock beans (ChatMemoryRepository, ChatMemory) prevent real bean creation
- */
 public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     // Repositories
@@ -200,6 +194,9 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     @Autowired
     protected TeamUtilService teamUtilService;
 
+    @Autowired
+    protected AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+
     // AtlasCompanion mocks
     @MockitoBean
     protected ChatModel chatModel;
@@ -214,6 +211,11 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     protected ChatMemory chatMemory;
 
     @BeforeEach
+    void setupAtlasMLMocks() {
+        atlasMLRequestMockProvider.enableMockingOfRequests();
+        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+    }
+
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
