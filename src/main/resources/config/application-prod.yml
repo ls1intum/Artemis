@@ -120,6 +120,10 @@ info:
     operatorAdminName: # Can be set before starting the application in production. Shown in the about us page and used by the telemetry service
     contact: # The admins contact email address, shown in the about us page, and sent to the telemetry service
 
+atlas:
+  atlasml:
+    base-url: http://atlasml.aet.cit.tum.de/
+
 # Overrides for sample rate and environment
 # To ensure consistency across all parts of the Sentry SDK, these settings need to be specified in the configuration files
 sentry:

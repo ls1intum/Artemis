@@ -145,3 +145,8 @@ sentry:
 helios:
   status:
     enabled: false
+
+atlas:
+    atlasml:
+        base-url: http://atlasml.aet.cit.tum.de
+

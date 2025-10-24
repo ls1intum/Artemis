@@ -293,17 +293,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
             const exerciseTypePath = this.exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
 
-            this.router.navigate([
-                '/courses',
-                courseId,
-                'exercises',
-                exerciseTypePath,
-                this.exercise?.id,
-                'participate',
-                result.submission?.participation?.id,
-                'submission',
-                submissionId,
-            ]);
+            this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, this.exercise?.id, 'participate', this.participation?.id, 'submission', submissionId]);
             return undefined;
         }
 
