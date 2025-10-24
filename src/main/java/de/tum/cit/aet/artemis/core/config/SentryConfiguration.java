@@ -48,42 +48,12 @@ public class SentryConfiguration {
 
             Sentry.init(options -> {
                 options.setDsn(dsn);
-                options.setSendDefaultPii(true);
-                //options.setEnvironment(getEnvironment());
                 options.setRelease(artemisVersion);
-                options.setTracesSampleRate(getTracesSampleRate());
             });
         }
         catch (Exception ex) {
             log.error("Sentry configuration was not successful due to exception!", ex);
         }
 
-    }
-
-    private String getEnvironment() {
-        if (isTestServer.isPresent()) {
-            if (isTestServer.get()) {
-                return "test";
-            }
-            else {
-                return "prod";
-            }
-        }
-        else {
-            return "local";
-        }
-    }
-
-    /**
-     * Get the traces sample rate based on the environment.
-     *
-     * @return 0% for local, 100% for test, 20% for production environments
-     */
-    private double getTracesSampleRate() {
-        return switch (getEnvironment()) {
-            case "test" -> 1.0;
-            case "prod" -> 0.2;
-            default -> 0.0;
-        };
     }
 }
