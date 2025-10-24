@@ -125,8 +125,22 @@
             "invalidSeatCondition": "Raum {{ roomNumber }} hat einen unbekannten Sitz-Zustand: '{{ seatCondition }}'",
             "missingLayouts": "Konnte die Layouts von Raum {{ roomNumber }} nicht verarbeiten",
             "malformedLayout": "Layout {{ layoutName }} ist fehlerhaft in Raum {{ roomNumber }}",
-            "unknownLayoutType": "Unbekannter Layout-Typ '{{ layoutType }}' in Layout '{{ layoutName }}' in Raum {{ roomNumber }}"
+            "unknownLayoutType": "Unbekannter Layout-Typ '{{ layoutType }}' in Layout '{{ layoutName }}' in Raum {{ roomNumber }}",
+            "invalidLayout": "Das Layout {{ layoutName }} in Raum {{ roomNumber }} ist fehlerhaft",
+            "seatNotFoundFixedSelection": "Der Sitz mit Reihenindex {{ rowIndex }} und Sitzindex {{ seatIndex }} in Raum {{ roomNumber }} existiert nicht",
+            "missingDefaultLayout": "Der Raum {{ roomNumber }} hat kein Standardlayout ('default')"
         },
+        "examUser": {
+            "service": {
+                "multipleExams": "Alle Klausurteilnehmer müssen zur selben Klausur gehören, aber aktuell gehören sie zu {{ foundExams }} verschiedenen Klausuren",
+                "missingPlannedRoomOrSeat": "Nutzer {{ userName }} hat keinen geplanten Raum und Sitz",
+                "plannedRoomNotFound": "Der geplante Raum {{ plannedRoom }} von Nutzer {{ userName }} konnte nicht gefunden werden",
+                "plannedSeatNotFound": "Der geplante Sitz {{ plannedSeat }} von Nutzer {{ userName }} konnte nicht gefunden werden"
+            }
+        },
+        "notEnoughExamSeats": "Die ausgewählten Räume haben nur Kapazität für {{ numberOfUsableSeats }} der {{ numberOfExamUsers }} Klausurteilnehmer",
+        "noRoomIDs": "Du hast keine Räume ausgewählt",
+        "invalidRoomIDs": "Mindestens einer der Räume, die du ausgewählt hast, existiert nicht oder ist veraltet",
         "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
         "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",
         "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
