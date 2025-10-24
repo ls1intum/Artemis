@@ -68,7 +68,7 @@ public class SentryConfiguration {
 
     private String getEnvironment() {
         if (environment.isPresent() && environment.get().trim().length() > 0) {
-            return environment.get().trim();
+            return environment.get().trim().toLowerCase();
         }
         if (isTestServer.isPresent()) {
             if (isTestServer.get()) {
@@ -96,7 +96,7 @@ public class SentryConfiguration {
         }
 
         // Only "prod" get 0.2, all others (like local) are disabled
-        return switch (getEnvironment()) {
+        return switch (env) {
             case "prod" -> 0.2;
             default -> 0.0;
         };
