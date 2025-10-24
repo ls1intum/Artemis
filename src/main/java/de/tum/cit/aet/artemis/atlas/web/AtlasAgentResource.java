@@ -1,14 +1,13 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
 import java.time.ZonedDateTime;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import jakarta.validation.Valid;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -22,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatResponseDTO;
+import de.tum.cit.aet.artemis.atlas.service.AgentChatResult;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 
@@ -33,8 +33,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 @RestController
 @RequestMapping("api/atlas/agent/")
 public class AtlasAgentResource {
-
-    private static final Logger log = LoggerFactory.getLogger(AtlasAgentResource.class);
 
     private static final int CHAT_TIMEOUT_SECONDS = 30;
 
@@ -54,29 +52,24 @@ public class AtlasAgentResource {
     @PostMapping("courses/{courseId}/chat")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<AtlasAgentChatResponseDTO> sendChatMessage(@PathVariable Long courseId, @Valid @RequestBody AtlasAgentChatRequestDTO request) {
-
-        log.debug("Received chat message for course {}: {}", courseId, request.message().substring(0, Math.min(request.message().length(), 50)));
-
         try {
-            final var future = atlasAgentService.processChatMessage(request.message(), courseId);
-            final String response = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            return ResponseEntity.ok(new AtlasAgentChatResponseDTO(response, request.sessionId(), ZonedDateTime.now(), true));
+            final CompletableFuture<AgentChatResult> future = atlasAgentService.processChatMessage(request.message(), courseId, request.sessionId());
+            final AgentChatResult result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+            return ResponseEntity.ok(new AtlasAgentChatResponseDTO(result.message(), request.sessionId(), ZonedDateTime.now(), true, result.competenciesModified()));
         }
         catch (TimeoutException te) {
-            log.warn("Chat timed out for course {}: {}", courseId, te.getMessage());
             return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
-                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", request.sessionId(), ZonedDateTime.now(), false));
+                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", request.sessionId(), ZonedDateTime.now(), false, false));
         }
         catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
-            log.warn("Chat interrupted for course {}: {}", courseId, ie.getMessage());
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(new AtlasAgentChatResponseDTO("The request was interrupted. Please try again.", request.sessionId(), ZonedDateTime.now(), false));
+                    .body(new AtlasAgentChatResponseDTO("The request was interrupted. Please try again.", request.sessionId(), ZonedDateTime.now(), false, false));
         }
         catch (ExecutionException ee) {
-            log.error("Upstream error processing chat for course {}: {}", courseId, ee.getMessage(), ee);
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(new AtlasAgentChatResponseDTO("Upstream error while processing your request.", request.sessionId(), ZonedDateTime.now(), false));
+                    .body(new AtlasAgentChatResponseDTO("Upstream error while processing your request.", request.sessionId(), ZonedDateTime.now(), false, false));
         }
     }
 }

@@ -163,4 +163,48 @@ public class QuizTrainingResource {
         }
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * Initializes or updates the leaderboard entry for the current user in the specified course.
+     *
+     * <p>
+     * This endpoint creates a new leaderboard entry for the user in the given course.
+     * The visibility is determined by the `shownInLeaderboard` property in the request body; if not provided, it defaults to false.
+     * </p>
+     *
+     * @param courseId            the ID of the course for which the leaderboard entry is initialized or updated
+     * @param leaderboardEntryDTO the DTO containing the leaderboard entry settings
+     * @return a ResponseEntity with HTTP status 200 (OK)
+     */
+    @PostMapping("courses/{courseId}/leaderboard-entry")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Void> initializeLeaderboardEntry(@PathVariable long courseId, @Valid @RequestBody LeaderboardSettingDTO leaderboardEntryDTO) {
+        log.debug("REST request to initialize or update leaderboard entry: {}", leaderboardEntryDTO);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean shownInLeaderboard = leaderboardEntryDTO.showInLeaderboard() != null ? leaderboardEntryDTO.showInLeaderboard() : false;
+        quizTrainingLeaderboardService.setInitialLeaderboardEntry(user.getId(), courseId, shownInLeaderboard);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Retrieves the leaderboard visibility settings for the current user.
+     *
+     * <p>
+     * This endpoint returns the user's preference regarding their visibility in the quiz training leaderboard.
+     * It fetches the current setting from the repository and returns it wrapped in a LeaderboardSettingDTO.
+     * If no setting is found, the user has not yet set an initial preference in the quiz training mode after reading the instructions.
+     * Therefore, we return null to indicate that the setting is not explicitly set.
+     * </p>
+     *
+     * @return a ResponseEntity containing a LeaderboardSettingDTO with the user's leaderboard visibility preference
+     */
+    @GetMapping("leaderboard-settings")
+    @EnforceAtLeastStudent
+    public ResponseEntity<LeaderboardSettingDTO> getLeaderboardSettings() {
+        log.debug("REST request to get leaderboard settings");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        LeaderboardSettingDTO leaderboardSettingDTO = quizTrainingService.getLeaderboardSettings(user.getId());
+        return ResponseEntity.ok().body(leaderboardSettingDTO);
+    }
 }
