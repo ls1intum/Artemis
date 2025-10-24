@@ -10,6 +10,7 @@ import menuImg from './assets/general/general-menu-exercise.png';
 import sidebarImg from './assets/general/sidebar-collapse-exercise.png';
 import exerciseOverviewCurrentImg from './assets/general/exercise-overview-current.png';
 import exerciseOverviewPastImg from './assets/general/exercise-overview-past.png';
+import Image, {ImageSize} from "../../src/components/Image/Image";
 
 # General Information
 
@@ -26,7 +27,7 @@ Artemis offers different exercise types that share common characteristics:
 
 Students can access the exercise overview by clicking the **Exercises** tab.
 
-<img src={menuImg} width="250" alt="Exercise Menu"/>
+<Image src={menuImg} alt={"Exercise Menu"} size={ImageSize.small}></Image>
 
 The exercise overview categorizes exercises by time periods:
 
@@ -36,13 +37,13 @@ The exercise overview categorizes exercises by time periods:
 - **Past:** Closed, submission no longer possible.
 - **No Date:** Exercises without time restrictions.
 
-<img src={sidebarImg} width="250" alt="Sidebar Menu"/>
+<Image src={sidebarImg} alt={"Sidebar Menu"} size={ImageSize.small}></Image>
 
 When sections (like *No Date*) contain more than 5 exercises, Artemis may group them by week for easier navigation.
 
-| Current Exercises                                                                    | Past Exercises                                                                 |
-|--------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| <img src={exerciseOverviewCurrentImg} width="250" alt="Exercise Overview Current" /> | <img src={exerciseOverviewPastImg} width="250" alt="Exercise Overview Past" /> |
+| Current Exercises                                                                                   | Past Exercises                                                                                |
+|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| <Image src={exerciseOverviewCurrentImg} alt={"Exercise Overview Current"} size={ImageSize.small} /> | <Image src={exerciseOverviewPastImg} alt={"Exercise Overview Past"} size={ImageSize.small} /> |
 
 <Callout variant={CalloutVariant.info}>
     <p>Tip: Use the sidebar filters to quickly locate upcoming or overdue exercises.</p>

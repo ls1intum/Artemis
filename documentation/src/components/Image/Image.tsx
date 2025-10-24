@@ -35,7 +35,8 @@ const Image = ({
         height: 'auto',
         border: '1px solid var(--ifm-color-emphasis-300)',
         borderRadius: '8px',
-        marginTop: '1rem',
+        margin: '1.5rem 0',
+        padding: '0.5rem', // Internal padding around the image
         display: 'block', // Prevents extra space below the image
     };
 
