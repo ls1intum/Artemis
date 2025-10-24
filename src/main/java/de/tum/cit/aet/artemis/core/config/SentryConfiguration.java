@@ -30,6 +30,12 @@ public class SentryConfiguration {
     @Value("${info.testServer}")
     private Optional<Boolean> isTestServer;
 
+    @Value("${sentry.environment}")
+    private Optional<String> environment;
+
+    @Value("${sentry.send-default-pii}")
+    private boolean sendDefaultPii;
+
     /**
      * init sentry with the correct package name and Artemis version
      * EventListener cannot be used here, as the bean is lazy
@@ -48,6 +54,8 @@ public class SentryConfiguration {
 
             Sentry.init(options -> {
                 options.setDsn(dsn);
+                options.setSendDefaultPii(sendDefaultPii);
+                options.setEnvironment(getEnvironment());
                 options.setRelease(artemisVersion);
                 options.setTracesSampleRate(getTracesSampleRate());
             });
@@ -59,6 +67,9 @@ public class SentryConfiguration {
     }
 
     private String getEnvironment() {
+        if (environment.isPresent()) {
+            return environment.get();
+        }
         if (isTestServer.isPresent()) {
             if (isTestServer.get()) {
                 return "test";
@@ -79,9 +90,9 @@ public class SentryConfiguration {
      */
     private double getTracesSampleRate() {
         return switch (getEnvironment()) {
-            case "test" -> 1.0;
             case "prod" -> 0.2;
-            default -> 0.0;
+            case "local" -> 0.0;
+            default -> 1.0;
         };
     }
 }
