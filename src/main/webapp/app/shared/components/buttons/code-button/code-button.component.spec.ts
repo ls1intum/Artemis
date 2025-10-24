@@ -543,9 +543,7 @@ describe('CodeButtonComponent', () => {
         expect(formSubmitSpy).toHaveBeenCalledOnce();
 
         const form = documentAppendChildSpy.mock.calls[0]?.[0] as HTMLFormElement;
-        if (!form) {
-            throw new Error('Form element is undefined');
-        }
+        expect(form).toBeDefined();
 
         const inputs = form.getElementsByTagName('input');
 
