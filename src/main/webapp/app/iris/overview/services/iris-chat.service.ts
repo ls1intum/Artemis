@@ -343,6 +343,7 @@ export class IrisChatService implements OnDestroy {
             chatMode: chatMode,
             entityId: newIrisSession.entityId,
             entityName: '',
+            title: newIrisSession.title,
         };
 
         if (!this.isLatestSessionIncludedInHistory(newIrisSessionDTO, currentSessions)) {
@@ -396,6 +397,15 @@ export class IrisChatService implements OnDestroy {
     private handleWebsocketMessage(payload: IrisChatWebsocketDTO) {
         if (payload.rateLimitInfo) {
             this.status.handleRateLimitInfo(payload.rateLimitInfo);
+        }
+        if (payload.sessionTitle && this.sessionId) {
+            if (this.latestStartedSession?.id === this.sessionId) {
+                this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
+            }
+
+            // Update the observable list immutably so OnPush change detection picks up the new title immediately.
+            const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, title: payload.sessionTitle } : session));
+            this.chatSessions.next(updatedSessions);
         }
         switch (payload.type) {
             case IrisChatWebsocketPayloadType.MESSAGE:
