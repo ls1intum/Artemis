@@ -50,6 +50,7 @@
                 id="competencies"
                 [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                 [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                [exerciseDescription]="programmingExercise.problemStatement || programmingExercise.title"
                 [(ngModel)]="programmingExercise.competencyLinks"
                 name="competencyLinks"
             />
