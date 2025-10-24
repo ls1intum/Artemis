@@ -112,6 +112,13 @@ export const routes: Routes = [
                     pageTitle: 'artemisApp.userSettings.categories.GLOBAL_NOTIFICATIONS',
                 },
             },
+            {
+                path: 'quiz-training',
+                loadComponent: () => import('app/core/user/settings/quiz-training-settings/quiz-training-settings.component').then((m) => m.QuizTrainingSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.QUIZ_TRAINING_SETTINGS',
+                },
+            },
         ],
     },
 ];
