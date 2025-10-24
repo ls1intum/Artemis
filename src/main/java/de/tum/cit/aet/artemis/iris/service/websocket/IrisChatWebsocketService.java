@@ -45,11 +45,7 @@ public class IrisChatWebsocketService {
      * @param stages      that should be sent over the websocket
      */
     public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages) {
-        var user = userRepository.findByIdElseThrow(session.getUserId());
-        var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
-        var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null, null, null);
-        websocketService.send(user.getLogin(), topic, payload);
+        this.sendMessage(session, irisMessage, stages, null);
     }
 
     /**
