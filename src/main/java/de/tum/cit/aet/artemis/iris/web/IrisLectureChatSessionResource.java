@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -53,9 +54,11 @@ public class IrisLectureChatSessionResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final MessageSource messageSource;
+
     protected IrisLectureChatSessionResource(UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, IrisLectureChatSessionService irisLectureChatSessionService,
-            IrisLectureChatSessionRepository irisLectureChatSessionRepository, AuthorizationCheckService authorizationCheckService) {
+            IrisLectureChatSessionRepository irisLectureChatSessionRepository, AuthorizationCheckService authorizationCheckService, MessageSource messageSource) {
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
@@ -63,6 +66,7 @@ public class IrisLectureChatSessionResource {
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.irisLectureChatSessionRepository = irisLectureChatSessionRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.messageSource = messageSource;
     }
 
     /**
@@ -114,7 +118,7 @@ public class IrisLectureChatSessionResource {
         user.hasAcceptedExternalLLMUsageElseThrow();
 
         var session = new IrisLectureChatSession(lecture, user);
-        session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey()));
+        session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
         session = irisLectureChatSessionRepository.save(session);
         var uriString = "/api/iris/sessions/" + session.getId();
 

@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.springframework.context.MessageSource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -111,13 +114,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      * @param langKey The language key of the user
      * @return the localized title
      */
-    public static String getLocalizedNewChatTitle(String langKey) {
-        if (langKey != null && langKey.startsWith("de")) {
-            return "Neuer Chat";
-        }
-        else {
-            return "New Chat";
-        }
+    public static String getLocalizedNewChatTitle(String langKey, MessageSource messageSource) {
+        Locale locale = langKey == null || langKey.isBlank() ? Locale.ENGLISH : Locale.forLanguageTag(langKey);
+        return messageSource.getMessage("iris.chat.session.newChatTitle", null, "New Chat", locale);
     }
 
     /**
