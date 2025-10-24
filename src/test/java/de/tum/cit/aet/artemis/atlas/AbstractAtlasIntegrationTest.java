@@ -224,6 +224,7 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     @AfterEach
     @Override
     protected void resetSpyBeans() {
+        super.resetSpyBeans();
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }
