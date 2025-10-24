@@ -21,6 +21,11 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 
+function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
+    inputElement.value = value;
+    inputElement.dispatchEvent(new Event('input'));
+}
+
 describe('StudentsRoomDistributionDialogComponent', () => {
     let component: StudentsRoomDistributionDialogComponent;
     let fixture: ComponentFixture<StudentsRoomDistributionDialogComponent>;
@@ -71,7 +76,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(spyModalDismiss).toHaveBeenCalledOnce();
     });
 
-    it('should call the dialog on pressing the close button', () => {
+    it('should close the dialog on pressing the close button', () => {
         const spyModalDismiss = jest.spyOn(ngbModal, 'dismiss');
         fixture.detectChanges();
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-button');
@@ -80,8 +85,8 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should not have selected rooms and no finish button displayed on open', () => {
-        expect(component.hasSelectedRooms()).toBeFalse();
         fixture.detectChanges();
+        expect(component.hasSelectedRooms()).toBeFalse();
         const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
         expect(button.hidden).toBeTrue();
     });
@@ -128,7 +133,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.selectedRooms()).toEqual([rooms[0]]);
     });
 
-    it('should call distributeStudentsAcrossRooms and close modal on finish', () => {
+    it('should call distributeStudentsAcrossRooms with default arguments and close modal on finish', () => {
         const distributeSpy = jest.spyOn(service, 'distributeStudentsAcrossRooms');
         const modalCloseSpy = jest.spyOn(ngbModal, 'close');
 
@@ -137,7 +142,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
         component.onFinish();
 
-        expect(distributeSpy).toHaveBeenCalledWith(course.id, exam.id, [rooms[0].id]);
+        expect(distributeSpy).toHaveBeenCalledWith(course.id, exam.id, [rooms[0].id], 0.1, true);
         expect(modalCloseSpy).toHaveBeenCalled();
     });
 
@@ -158,5 +163,70 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const result = component.findAllMatchingRoomsForTerm('two');
         expect(result).toHaveLength(1);
         expect(result[0].name).toBe('two');
+    });
+
+    it('should update reserve percentage when typing valid numbers', async () => {
+        fixture.detectChanges();
+        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+
+        dispatchInputEvent(input, '25');
+        fixture.detectChanges();
+        expect(input.value).toBe('25');
+
+        input.dispatchEvent(new FocusEvent('focusout'));
+        fixture.detectChanges();
+        expect(input.value).toBe('25');
+    });
+
+    it('should reset reserve factor to latest value when invalid input is entered', () => {
+        fixture.detectChanges();
+        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+
+        dispatchInputEvent(input, '25');
+        fixture.detectChanges();
+
+        dispatchInputEvent(input, '259');
+        fixture.detectChanges();
+        expect(input.value).toBe('25');
+
+        input.dispatchEvent(new FocusEvent('focusout'));
+        fixture.detectChanges();
+        expect(input.value).toBe('25');
+
+        dispatchInputEvent(input, '2 5');
+        fixture.detectChanges();
+        expect(input.value).toBe('25');
+
+        dispatchInputEvent(input, '25a');
+        fixture.detectChanges();
+        expect(input.value).toBe('25');
+    });
+
+    it('should select all text when the input gains focus', async () => {
+        fixture.detectChanges();
+        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+        input.value = '42';
+        const selectSpy = jest.spyOn(input, 'select');
+
+        input.dispatchEvent(new FocusEvent('focusin'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(selectSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should toggle use narrow layouts when switch is pressed', () => {
+        fixture.detectChanges();
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowNarrowLayoutsToggle');
+
+        expect(component.allowNarrowLayouts()).toBeFalse();
+
+        checkbox.click();
+        fixture.detectChanges();
+        expect(component.allowNarrowLayouts()).toBeTrue();
+
+        checkbox.click();
+        fixture.detectChanges();
+        expect(component.allowNarrowLayouts()).toBeFalse();
     });
 });

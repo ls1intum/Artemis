@@ -30,7 +30,24 @@
                 "attendanceStatusTitle": "Status der Prüfungsteilnahme",
                 "attendanceCheckFailed": "Anwesenheitskontrolle nicht bestanden",
                 "attendanceCheckPassed": "Anwesenheitskontrolle bestanden",
-                "didNotAttend": "Hat nicht teilgenommen"
+                "didNotAttend": "Hat nicht teilgenommen",
+                "roomDistribute": "Verteilen",
+                "rooms": {
+                    "dialogTitle": "Verteile Klausurteilnehmer",
+                    "introText": "In diesem Dialogfeld kannst du die für eine Prüfung angemeldeten Studierenden auf verschiedene Räume verteilen.",
+                    "reserveFactor": "Reservierte Sitze %",
+                    "reserveFactorTooltip": "Der Prozentsatz der Sitze, die reserviert werden sollten, d. h. nicht verteilt werden sollten; gilt für jeden Raum einzeln",
+                    "allowNarrowLayouts": "Engere Layouts zulassen?",
+                    "allowNarrowLayoutsTooltip": "Wenn diese Option aktiviert ist, kann Artemis die Studenten enger zusammenpacken. Artemis versucht, die Anzahl der davon betroffenen Studenten so gering wie möglich zu halten.",
+                    "searchPlaceholder": "Suche nach Zimmernummer, Name und/oder Gebäude",
+                    "number": "Nummer",
+                    "name": "Name",
+                    "building": "Gebäude",
+                    "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Schüler unterbringen.",
+                    "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Schüler unterbringen ({{ percentage }}%).",
+                    "distribute": "Verteilen",
+                    "distributeWarning": "Du hast nicht ausreichend Kapazitäten"
+                }
             },
             "overview": {
                 "start": "Beginn: {{start}}",

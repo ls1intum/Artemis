@@ -10,6 +10,7 @@
         <div class="d-flex flex-column align-items-end mb-2">
             <div class="form-group text-end mb-2">
                 <label for="reserveFactor" jhiTranslate="artemisApp.exam.examUsers.rooms.reserveFactor" class="small"></label>
+                <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.reserveFactorTooltip" />
                 <input
                     id="reserveFactor"
                     type="text"
@@ -24,6 +25,7 @@
             <div class="form-check form-switch ms-auto">
                 <label for="allowNarrowLayoutsToggle" jhiTranslate="artemisApp.exam.examUsers.rooms.allowNarrowLayouts" class="form-check-label"></label>
                 <input id="allowNarrowLayoutsToggle" type="checkbox" class="form-check-input" [checked]="allowNarrowLayouts()" (change)="toggleNarrowLayouts()" />
+                <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.allowNarrowLayoutsTooltip" />
             </div>
         </div>
         <input
@@ -87,8 +89,16 @@
         <button id="cancel-button" type="button" class="btn btn-secondary cancel me-2" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button class="btn btn-success me-2" id="finish-button" (click)="onFinish()" [hidden]="!hasSelectedRooms()" [disabled]="!canSeatAllStudents()">
-            <fa-icon [icon]="faThLarge" />&nbsp;<span jhiTranslate="artemisApp.exam.examUsers.roomDistribute"></span>
-        </button>
+        @if (hasSelectedRooms() && canSeatAllStudents()) {
+            <button class="btn btn-success me-2" id="finish-button" (click)="onFinish()">
+                <fa-icon [icon]="faThLarge" />&nbsp;<span jhiTranslate="artemisApp.exam.examUsers.rooms.distribute"></span>
+            </button>
+        } @else {
+            <span [title]="'artemisApp.exam.examUsers.rooms.distributeWarning' | artemisTranslate" class="d-inline-block">
+                <button class="btn btn-warning me-2" id="finish-button" [disabled]="true" [hidden]="!hasSelectedRooms()">
+                    <fa-icon [icon]="faThLarge" />&nbsp;<span jhiTranslate="artemisApp.exam.examUsers.rooms.distribute"></span>
+                </button>
+            </span>
+        }
     </div>
 </form>

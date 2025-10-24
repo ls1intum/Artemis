@@ -34,15 +34,19 @@
                 "roomDistribute": "Distribute",
                 "rooms": {
                     "dialogTitle": "Distribute students",
-                    "introText": "Select the rooms that you want to distribute students to. The reserved seats factor applies to each room individually.",
+                    "introText": "This dialog can be used to distribute students who are registered for an exam to a selection of rooms.",
                     "reserveFactor": "Reserved Seats %",
+                    "reserveFactorTooltip": "The percentage of seats that should be reserved, i.e. not distributed to; applied to each room individually",
                     "allowNarrowLayouts": "Allow narrower layouts?",
+                    "allowNarrowLayoutsTooltip": "If enabled, allows Artemis to pack students more tightly together. Artemis tries to keep the number of students affected by this as low as possible.",
                     "searchPlaceholder": "Search by room number, name, and/or building",
                     "number": "Number",
                     "name": "Name",
                     "building": "Building",
-                    "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students",
-                    "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%)"
+                    "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students.",
+                    "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%).",
+                    "distribute": "Distribute",
+                    "distributeWarning": "You do not have enough capacities"
                 }
             },
             "overview": {

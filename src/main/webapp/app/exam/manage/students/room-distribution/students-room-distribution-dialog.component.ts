@@ -11,12 +11,13 @@ import { StudentsRoomDistributionService } from 'app/exam/manage/students/room-d
 import { HttpResponse } from '@angular/common/http';
 import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-students-room-distribution-dialog',
     templateUrl: './students-room-distribution-dialog.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent],
 })
 export class StudentsRoomDistributionDialogComponent {
     private activeModal = inject(NgbActiveModal);
