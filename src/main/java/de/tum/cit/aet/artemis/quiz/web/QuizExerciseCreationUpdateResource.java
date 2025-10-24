@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.Valid;
 
@@ -25,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -65,15 +68,18 @@ public class QuizExerciseCreationUpdateResource {
 
     private final CourseRepository courseRepository;
 
+    private final Optional<AtlasMLApi> atlasMLApi;
+
     private final QuizExerciseRepository quizExerciseRepository;
 
     public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
+            AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
+        this.atlasMLApi = atlasMLApi;
     }
 
     /**
@@ -126,6 +132,10 @@ public class QuizExerciseCreationUpdateResource {
         quizExercise.setCourse(course);
 
         QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, false);
+
+        // Notify AtlasML about the new quiz exercise
+        notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise creation");
+
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -153,6 +163,28 @@ public class QuizExerciseCreationUpdateResource {
 
         quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO);
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files, notificationText);
+
+        // Notify AtlasML about the quiz exercise update
+        notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");
+
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Helper method to notify AtlasML about quiz exercise changes with consistent error handling.
+     *
+     * @param exercise             the exercise to save
+     * @param operationType        the operation type (UPDATE or DELETE)
+     * @param operationDescription the description of the operation for logging purposes
+     */
+    private void notifyAtlasML(QuizExercise exercise, OperationTypeDTO operationType, String operationDescription) {
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(exercise, operationType);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
+            }
+        });
     }
 }

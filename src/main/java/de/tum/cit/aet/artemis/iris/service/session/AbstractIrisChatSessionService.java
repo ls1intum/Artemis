@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.springframework.context.MessageSource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +31,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> implements IrisChatBasedFeatureInterface<S>, IrisRateLimitedFeatureInterface {
+
+    private static final int MAX_SESSION_TITLE_LENGTH = 255;
 
     private final IrisSessionRepository irisSessionRepository;
 
@@ -85,6 +90,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      * Truncates the title to 255 characters if necessary.
      * This is a utility method that can be used by services that don't extend this class.
      *
+     * @param <T>               The type of chat session (must extend IrisChatSession)
      * @param session           The session to update
      * @param sessionTitle      The title to set (can be null or blank)
      * @param sessionRepository The repository to save the session
@@ -92,7 +98,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      */
     public static <T extends IrisChatSession> String setSessionTitle(T session, String sessionTitle, IrisSessionRepository sessionRepository) {
         if (sessionTitle != null && !sessionTitle.isBlank()) {
-            String truncatedTitle = sessionTitle.length() > 255 ? sessionTitle.substring(0, 255) : sessionTitle;
+            String truncatedTitle = sessionTitle.length() > MAX_SESSION_TITLE_LENGTH ? sessionTitle.substring(0, MAX_SESSION_TITLE_LENGTH) : sessionTitle;
             session.setTitle(truncatedTitle);
             sessionRepository.save(session);
             return truncatedTitle;
@@ -101,7 +107,19 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
     }
 
     /**
-     * Handles the status update of a ExerciseChatJob by sending the result to the student via the Websocket.
+     * Return a localized "New chat" title based on the user's language key.
+     *
+     * @param langKey       The language key of the user
+     * @param messageSource The message source to resolve titles from
+     * @return the localized title
+     */
+    public static String getLocalizedNewChatTitle(String langKey, MessageSource messageSource) {
+        Locale locale = langKey == null || langKey.isBlank() ? Locale.ENGLISH : Locale.forLanguageTag(langKey);
+        return messageSource.getMessage("iris.chat.session.newChatTitle", null, "New Chat", locale);
+    }
+
+    /**
+     * Handles the status update of an ExerciseChatJob by sending the result to the student via the Websocket.
      *
      * @param job          The job that was executed
      * @param statusUpdate The status update of the job
@@ -112,14 +130,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         var session = (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);
         IrisMessage savedMessage;
-        String sessionTitle;
-        boolean statusSent = false;
 
-        sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
-        if (sessionTitle != null) {
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), sessionTitle, statusUpdate.suggestions(), statusUpdate.tokens());
-            statusSent = true;
-        }
+        String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
@@ -127,7 +139,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
             message.setCreatedMemories(statusUpdate.createdMemories());
             savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             updatedJob.getAndUpdate(j -> j.withAssistantMessageId(savedMessage.getId()));
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle);
         }
         else {
             savedMessage = null;
@@ -145,9 +157,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
                     irisChatWebsocketService.sendMessage(session, message, statusUpdate.stages());
                 });
             }
-            if (!statusSent) {
-                irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens());
-            }
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), sessionTitle, statusUpdate.suggestions(), statusUpdate.tokens());
         }
 
         if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {

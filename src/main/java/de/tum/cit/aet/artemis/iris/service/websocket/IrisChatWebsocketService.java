@@ -45,10 +45,26 @@ public class IrisChatWebsocketService {
      * @param stages      that should be sent over the websocket
      */
     public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages) {
+        this.sendMessage(session, irisMessage, stages, null);
+    }
+
+    /**
+     * Sends a message and/or a status update over the websocket to the user
+     * involved in the session. At least one of the message or the stages must be
+     * non-null, otherwise there is no need to send a message.
+     * This is currently used for both the exercise and course chat sessions, but
+     * this could be split up in the future.
+     *
+     * @param session      the session to send the message to
+     * @param irisMessage  that should be sent over the websocket
+     * @param stages       that should be sent over the websocket
+     * @param sessionTitle the session title to send
+     */
+    public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null, null, null);
+        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, sessionTitle, null, null);
         websocketService.send(user.getLogin(), topic, payload);
     }
 
