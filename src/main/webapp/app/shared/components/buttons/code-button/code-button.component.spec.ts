@@ -255,6 +255,19 @@ describe('CodeButtonComponent', () => {
         expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
+    it('should return http url if ssh is selected but http is forced', async () => {
+        participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        fixture.componentRef.setInput('participations', [participation]);
+        component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
+
+        component.isTeamParticipation = false;
+        component.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.SSH;
+        fixture.detectChanges();
+
+        const url = component.getHttpOrSshRepositoryUri(false, false, true);
+        expect(url).toBe(`https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
+    });
+
     it('should handle multiple participations', async () => {
         const participation1: ProgrammingExerciseStudentParticipation = {
             repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
@@ -504,6 +517,44 @@ describe('CodeButtonComponent', () => {
         windowOpenSpy.mockRestore();
         documentAppendChildSpy.mockRestore();
         documentRemoveChildSpy.mockRestore();
+        formSubmitSpy.mockRestore();
+    });
+
+    it('should use token authentication when startOnlineIDE is called with SSH is selected', async () => {
+        const windowOpenSpy = jest.spyOn(window, 'open').mockReturnValue({ name: '' } as any);
+        const formSubmitSpy = jest.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
+        const documentAppendChildSpy = jest.spyOn(document.body, 'appendChild');
+
+        const getToolTokenSpy = jest.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
+
+        fixture.componentRef.setInput('exercise', { buildConfig: { theiaImage: 'theia-image' } } as any);
+        component.activeParticipation = { repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' } as any;
+        component.theiaPortalURL = 'https://theia.portal.url';
+
+        component.sshTemplateUrl = 'https://ssh.repo.url';
+        component.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.SSH;
+
+        fixture.detectChanges();
+
+        await component.startOnlineIDE();
+        expect(getToolTokenSpy).toHaveBeenCalledOnce();
+        expect(windowOpenSpy).toHaveBeenCalledExactlyOnceWith('', '_blank');
+        expect(documentAppendChildSpy).toHaveBeenCalledOnce();
+        expect(formSubmitSpy).toHaveBeenCalledOnce();
+
+        const form = documentAppendChildSpy.mock.calls[0]?.[0] as HTMLFormElement;
+        if (!form) {
+            throw new Error('Form element is undefined');
+        }
+
+        const inputs = form.getElementsByTagName('input');
+
+        const gitUriTest = Array.from(inputs).find((input) => input.name === 'gitUri');
+        expect(gitUriTest).toBeDefined();
+        expect(gitUriTest!.value).toBe('https://user1:token@repo.uri');
+
+        windowOpenSpy.mockRestore();
+        documentAppendChildSpy.mockRestore();
         formSubmitSpy.mockRestore();
     });
 
