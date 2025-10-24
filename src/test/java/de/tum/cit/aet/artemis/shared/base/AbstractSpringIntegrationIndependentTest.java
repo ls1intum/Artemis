@@ -9,8 +9,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -18,9 +21,18 @@ import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -66,11 +78,35 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
+    // AtlasCompanion mocks
+    @MockitoBean
+    protected ChatModel chatModel;
+
+    @MockitoBean
+    protected ChatClient chatClient;
+
+    @MockitoBean
+    protected ChatMemoryRepository chatMemoryRepository;
+
+    @MockitoBean
+    protected ChatMemory chatMemory;
+
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
         super.resetSpyBeans();
+        if (chatModel != null) {
+            Mockito.reset(chatModel);
+        }
+        if (chatClient != null) {
+            Mockito.reset(chatClient);
+        }
+        if (chatMemoryRepository != null) {
+            Mockito.reset(chatMemoryRepository);
+        }
+        if (chatMemory != null) {
+            Mockito.reset(chatMemory);
+        }
     }
 
     @Override
@@ -198,4 +234,11 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     public void mockGetCiProjectMissing(ProgrammingExercise exercise) {
         log.debug("Requested CI project {}", exercise.getProjectKey());
     }
+
+    protected void setupSpringAIMocks() {
+        if (chatModel != null) {
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
+        }
+    }
+
 }
