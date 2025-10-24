@@ -17,7 +17,6 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
@@ -65,12 +64,11 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
  * Base class for all Atlas integration tests.
- * Disables Spring AI JDBC schema initialization because:
+ * Spring AI JDBC schema initialization is disabled in test configuration (application.yml):
  * - Tests use H2 database (no schema-h2.sql exists in Spring AI)
  * - Production uses MySQL with Liquibase changelog 20251017200800
  * - Mock beans (ChatMemoryRepository, ChatMemory) prevent real bean creation
  */
-@TestPropertySource(properties = { "spring.ai.chat.memory.repository.jdbc.initialize-schema=never" })
 public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     // Repositories
