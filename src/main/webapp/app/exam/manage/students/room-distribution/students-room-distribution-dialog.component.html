@@ -3,30 +3,27 @@
         <h4 class="modal-title">
             <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
         </h4>
-        <button id="close-cross" type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+        <button id="close-cross" type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" aria-label="Close" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <p jhiTranslate="artemisApp.exam.examUsers.rooms.introText" [translateValues]="{ defaultPercentage: reserveFactorDefaultPercentage }" class="intro-text"></p>
-            <div>
-                <div class="form-group small text-end">
-                    <label for="reserveFactor" jhiTranslate="artemisApp.exam.examUsers.rooms.reserveFactor"></label>
-                    <input
-                        id="reserveFactor"
-                        type="number"
-                        class="form-control"
-                        [placeholder]="reserveFactorDefaultPercentage"
-                        (input)="handleReserveFactorEvent($event)"
-                        (focusout)="resetReserveFactorText($event)"
-                        min="0"
-                        max="100"
-                        step="5"
-                    />
-                </div>
-                <div class="form-check form-switch ms-auto">
-                    <label for="allowNarrowLayoutsToggle" jhiTranslate="artemisApp.exam.examUsers.rooms.allowNarrowLayouts" class="form-check-label small"></label>
-                    <input id="allowNarrowLayoutsToggle" type="checkbox" class="form-check-input" [checked]="allowNarrowLayouts()" (change)="toggleNarrowLayouts()" />
-                </div>
+        <p jhiTranslate="artemisApp.exam.examUsers.rooms.introText" class="intro-text"></p>
+        <div class="d-flex flex-column align-items-end mb-2">
+            <div class="form-group text-end mb-2">
+                <label for="reserveFactor" jhiTranslate="artemisApp.exam.examUsers.rooms.reserveFactor" class="small"></label>
+                <input
+                    id="reserveFactor"
+                    type="text"
+                    class="form-control form-control-sm"
+                    style="width: 3rem"
+                    [defaultValue]="reserveFactorDefaultPercentage"
+                    (input)="handleReserveFactorInput($event)"
+                    (focusout)="resetReserveFactorText($event)"
+                    (focusin)="selectAllText($event)"
+                />
+            </div>
+            <div class="form-check form-switch ms-auto">
+                <label for="allowNarrowLayoutsToggle" jhiTranslate="artemisApp.exam.examUsers.rooms.allowNarrowLayouts" class="form-check-label"></label>
+                <input id="allowNarrowLayoutsToggle" type="checkbox" class="form-check-input" [checked]="allowNarrowLayouts()" (change)="toggleNarrowLayouts()" />
             </div>
         </div>
         <input
@@ -37,47 +34,61 @@
             [resultFormatter]="formatter"
             [inputFormatter]="formatter"
             (selectItem)="onRoomSelected($event)"
+            (focusin)="selectAllText($event)"
         />
     </div>
     @if (hasSelectedRooms()) {
         <div class="modal-body">
-            <table class="table table-bordered w-auto">
+            <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th jhiTranslate="artemisApp.exam.examUsers.rooms.number"></th>
-                        <th jhiTranslate="artemisApp.exam.examUsers.rooms.alternativeNumber"></th>
                         <th jhiTranslate="artemisApp.exam.examUsers.rooms.name"></th>
-                        <th jhiTranslate="artemisApp.exam.examUsers.rooms.alternativeName"></th>
                         <th jhiTranslate="artemisApp.exam.examUsers.rooms.building"></th>
-                        <th>{{ seatInfo().usableCapacity }} / {{ seatInfo().totalStudents }} ({{ seatInfo().percentage }}%)</th>
+                        <th jhiTranslate="artemisApp.exam.examUsers.rooms.number"></th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @for (examRoom of selectedRooms(); track examRoom.id) {
                         <tr>
-                            <td>{{ examRoom.number }}</td>
-                            <td>{{ examRoom.alternativeNumber }}</td>
-                            <td>{{ examRoom.name }}</td>
-                            <td>{{ examRoom.alternativeName }}</td>
+                            <td>
+                                {{ examRoom.name }}
+                                @if (examRoom.alternativeName) {
+                                    ({{ examRoom.alternativeName }})
+                                }
+                            </td>
                             <td>{{ examRoom.building }}</td>
-                            <td class="text-center">
-                                <button type="button" jhiTranslate="entity.action.remove" class="btn btn-sm btn-danger" (click)="removeSelectedRoom(examRoom)">
-                                    <fa-icon [icon]="faBan" />
-                                </button>
+                            <td>
+                                {{ examRoom.number }}
+                                @if (examRoom.alternativeNumber) {
+                                    ({{ examRoom.alternativeNumber }})
+                                }
+                            </td>
+                            <td>
+                                <button type="button" jhiTranslate="entity.action.remove" class="btn btn-sm btn-danger" (click)="removeSelectedRoom(examRoom)"></button>
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
+        <div class="modal-body py-0">
+            @if (canSeatAllStudents()) {
+                <p jhiTranslate="artemisApp.exam.examUsers.rooms.enoughSeatsForStudents" [translateValues]="{ totalStudents: seatInfo().totalStudents }"></p>
+            } @else {
+                <p
+                    jhiTranslate="artemisApp.exam.examUsers.rooms.notEnoughSeatsForStudents"
+                    [translateValues]="{ usableCapacity: seatInfo().usableCapacity, totalStudents: seatInfo().totalStudents, percentage: seatInfo().percentage }"
+                ></p>
+            }
+        </div>
     }
     <div class="modal-footer">
         <button id="cancel-button" type="button" class="btn btn-secondary cancel me-2" data-dismiss="modal" (click)="clear()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button class="btn btn-success" id="finish-button" (click)="onFinish()" [hidden]="!hasSelectedRooms()">
-            <fa-icon [icon]="faCheck" class="me-2" />
-            <span jhiTranslate="entity.action.finish"></span>
+        <button class="btn btn-success me-2" id="finish-button" (click)="onFinish()" [hidden]="!hasSelectedRooms()" [disabled]="!canSeatAllStudents()">
+            <fa-icon [icon]="faThLarge" />&nbsp;<span jhiTranslate="artemisApp.exam.examUsers.roomDistribute"></span>
         </button>
     </div>
 </form>

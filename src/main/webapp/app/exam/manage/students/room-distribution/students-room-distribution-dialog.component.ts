@@ -1,9 +1,9 @@
-import { Component, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, InputSignal, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, combineLatest, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -22,18 +22,18 @@ export class StudentsRoomDistributionDialogComponent {
     private activeModal = inject(NgbActiveModal);
     private studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
 
-    courseId = input.required<number>();
-    exam = input.required<Exam>();
+    courseId: InputSignal<number> = input.required();
+    exam: InputSignal<Exam> = input.required();
+
+    // Configurable options
+    readonly reserveFactorDefaultPercentage: number = 10;
+    private reservePercentage: WritableSignal<number> = signal(this.reserveFactorDefaultPercentage);
+    private reserveFactor: Signal<number> = computed(() => this.reservePercentage() / 100);
+    allowNarrowLayouts: WritableSignal<boolean> = signal(false);
 
     availableRooms: WritableSignal<RoomForDistributionDTO[] | undefined> = signal(undefined);
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
-
-    // Configurable options
-    readonly reserveFactorDefaultPercentage: number = 10;
-    private reserveFactor: WritableSignal<number> = signal(this.reserveFactorDefaultPercentage / 100);
-    allowNarrowLayouts: WritableSignal<boolean> = signal(false);
-
     private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = toSignal(
         combineLatest([toObservable(this.selectedRooms), toObservable(this.reserveFactor)]).pipe(
             switchMap(([rooms, reserveFactor]) => {
@@ -57,31 +57,36 @@ export class StudentsRoomDistributionDialogComponent {
             percentage,
         } as CapacityDisplayDTO;
     });
+    canSeatAllStudents: Signal<boolean> = computed(() => this.seatInfo().usableCapacity >= this.seatInfo().totalStudents);
 
     // Icons
     faBan = faBan;
-    faSpinner = faSpinner;
-    faCheck = faCheck;
-    faCircleNotch = faCircleNotch;
-    faUpload = faUpload;
-    faArrowRight = faArrowRight;
+    faThLarge = faThLarge;
 
-    initEffect = effect(() => {
-        this.studentsRoomDistributionService.getRoomData().subscribe({
-            next: (result: HttpResponse<RoomForDistributionDTO[]>) => {
-                this.availableRooms.set(result.body as RoomForDistributionDTO[]);
-            },
-            error: () => {
-                this.availableRooms.set(undefined);
-            },
+    constructor() {
+        effect(() => {
+            this.studentsRoomDistributionService.getRoomData().subscribe({
+                next: (result: HttpResponse<RoomForDistributionDTO[]>) => {
+                    this.availableRooms.set(result.body as RoomForDistributionDTO[]);
+                },
+                error: () => {
+                    this.availableRooms.set(undefined);
+                },
+            });
         });
-    });
+    }
 
-    clear() {
+    /**
+     * Dismisses the dialog
+     */
+    clear(): void {
         this.activeModal.dismiss('cancel');
     }
 
-    onFinish() {
+    /**
+     * Attempts a distribution and closes the dialog if successful
+     */
+    onFinish(): void {
         const selectedRoomIds = this.selectedRooms().map((room) => room.id);
         this.studentsRoomDistributionService
             .distributeStudentsAcrossRooms(this.courseId(), this.exam().id!, selectedRoomIds, this.reserveFactor(), !this.allowNarrowLayouts())
@@ -129,7 +134,6 @@ export class StudentsRoomDistributionDialogComponent {
      */
     formatter(room: RoomForDistributionDTO) {
         const namePart = room.alternativeName ? `${room.name} (${room.alternativeName})` : room.name;
-
         const numberPart = room.alternativeNumber ? `${room.number} (${room.alternativeNumber})` : room.number;
 
         return `${namePart} – ${numberPart} - [${room.building}]`;
@@ -177,22 +181,47 @@ export class StudentsRoomDistributionDialogComponent {
         return subsequenceIndex === subsequence.length;
     }
 
-    handleReserveFactorEvent(event: Event) {
-        const input = event.target as HTMLInputElement;
+    /**
+     * Handles a change of the reserve factor value.
+     *
+     * @param event an event with an input element
+     */
+    handleReserveFactorInput(event: Event): void {
+        const input: HTMLInputElement = event.target as HTMLInputElement;
 
-        const percentage = parseInt(input.value);
-        if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+        input.value = input.value.replaceAll(/\D/g, '');
+        const percentage: number = Number(input.value) || 0;
+        if (!Number.isInteger(percentage) || percentage < 0 || percentage > 100) {
+            this.resetReserveFactorText(event);
             return;
         }
 
-        this.reserveFactor.set(percentage / 100);
+        this.reservePercentage.set(percentage);
     }
 
-    resetReserveFactorText(event: Event) {
-        const input = event.target as HTMLInputElement;
-        input.value = `${this.reserveFactor() * 100}`;
+    /**
+     * Resets the reserve factor text to what is stored internally
+     *
+     * @param event an event with an input element
+     */
+    resetReserveFactorText(event: Event): void {
+        const input: HTMLInputElement = event.target as HTMLInputElement;
+        input.value = `${this.reservePercentage()}`;
     }
 
+    /**
+     * Selects all the text from a given focus event
+     *
+     * @param focusEvent a focus event
+     */
+    selectAllText(focusEvent: FocusEvent): void {
+        const input = focusEvent.target as HTMLInputElement;
+        setTimeout(() => input.select(), 0);
+    }
+
+    /**
+     * Toggles whether narrow layouts are allowed
+     */
     toggleNarrowLayouts(): void {
         this.allowNarrowLayouts.set(!this.allowNarrowLayouts());
     }
