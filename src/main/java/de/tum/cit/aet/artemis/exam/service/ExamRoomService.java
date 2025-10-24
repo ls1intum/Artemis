@@ -385,8 +385,19 @@ public class ExamRoomService {
         return applyReserveFactorToList(pickedSeats, reserveFactor);
     }
 
+    /**
+     * Calculates the size after applying a reserve factor
+     *
+     * @param originalSize  The original size
+     * @param reserveFactor The reserve factor in range [0,1]
+     * @return The size after applying the reserve factor
+     */
+    public int sizeAfterApplyingReserveFactor(int originalSize, double reserveFactor) {
+        return (int) (originalSize * (1 - reserveFactor));
+    }
+
     private <T> List<T> applyReserveFactorToList(List<T> list, double reserveFactor) {
-        int numberOfIncludedElements = (int) (list.size() * (1 - reserveFactor));
+        int numberOfIncludedElements = sizeAfterApplyingReserveFactor(list.size(), reserveFactor);
         return list.subList(0, numberOfIncludedElements);
     }
 

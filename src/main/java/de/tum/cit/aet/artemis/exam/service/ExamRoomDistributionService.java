@@ -182,7 +182,7 @@ public class ExamRoomDistributionService {
     private void distributeExamUsersToAnyUsableSeatsInRooms(Exam exam, Set<ExamRoom> examRoomsForExam, double reserveFactor) {
         final int numberOfExamUsers = exam.getExamUsers().size();
 
-        Map<Long, LayoutStrategy> layoutStrategyToBeUsedByRoomId = getBestLayoutPerRoomCombination(examRoomsForExam, numberOfExamUsers);
+        Map<Long, LayoutStrategy> layoutStrategyToBeUsedByRoomId = getBestLayoutPerRoomCombination(examRoomsForExam, numberOfExamUsers, reserveFactor);
 
         Map<String, List<ExamSeatDTO>> roomNumberToUsableSeats = new HashMap<>();
         for (ExamRoom examRoom : examRoomsForExam) {
@@ -195,9 +195,9 @@ public class ExamRoomDistributionService {
         setPlannedRoomAndPlannedSeatForExamUsersRandomly(exam, roomNumberToUsableSeats);
     }
 
-    private Map<Long, LayoutStrategy> getBestLayoutPerRoomCombination(Set<ExamRoom> examRoomsForExam, int numberOfExamUsers) {
+    private Map<Long, LayoutStrategy> getBestLayoutPerRoomCombination(Set<ExamRoom> examRoomsForExam, int numberOfExamUsers, double reserveFactor) {
         Map<Long, List<LayoutStrategy>> layoutStrategiesByRoomId = getLayoutStrategiesAtLeastDefaultSizeByExamRoomId(examRoomsForExam);
-        return getBestLayoutByRoomIdPermutation(layoutStrategiesByRoomId, numberOfExamUsers);
+        return getBestLayoutByRoomIdPermutation(layoutStrategiesByRoomId, numberOfExamUsers, reserveFactor);
     }
 
     private Map<Long, List<LayoutStrategy>> getLayoutStrategiesAtLeastDefaultSizeByExamRoomId(Set<ExamRoom> examRoomsForExam) {
@@ -218,14 +218,14 @@ public class ExamRoomDistributionService {
         return layoutStrategiesAtLeastDefaultSizeByExamRoom;
     }
 
-    private Map<Long, LayoutStrategy> getBestLayoutByRoomIdPermutation(Map<Long, List<LayoutStrategy>> layoutsByRoom, int requiredCapacity) {
+    private Map<Long, LayoutStrategy> getBestLayoutByRoomIdPermutation(Map<Long, List<LayoutStrategy>> layoutsByRoom, int requiredCapacity, double reserveFactor) {
         List<Long> roomIds = new ArrayList<>(layoutsByRoom.keySet());
 
-        return getBestLayoutPermutationRecursive(layoutsByRoom, roomIds, 0, new HashMap<>(), 0, requiredCapacity, null, Integer.MAX_VALUE);
+        return getBestLayoutPermutationRecursive(layoutsByRoom, roomIds, 0, new HashMap<>(), 0, requiredCapacity, reserveFactor, null, Integer.MAX_VALUE);
     }
 
     private Map<Long, LayoutStrategy> getBestLayoutPermutationRecursive(Map<Long, List<LayoutStrategy>> layoutsByRoom, List<Long> roomIds, int roomIndex,
-            Map<Long, LayoutStrategy> current, int currentCapacity, int requiredCapacity, Map<Long, LayoutStrategy> best, int bestCapacity) {
+            Map<Long, LayoutStrategy> current, int currentCapacity, int requiredCapacity, double reserveFactor, Map<Long, LayoutStrategy> best, int bestCapacity) {
 
         // If we've assigned all rooms, check if it's valid/better
         if (roomIndex == roomIds.size()) {
@@ -239,15 +239,16 @@ public class ExamRoomDistributionService {
         long roomId = roomIds.get(roomIndex);
         for (LayoutStrategy strategy : layoutsByRoom.get(roomId)) {
             current.put(roomId, strategy);
-            int newCapacity = currentCapacity + strategy.getCapacity();
+            int newCapacity = currentCapacity + examRoomService.sizeAfterApplyingReserveFactor(strategy.getCapacity(), reserveFactor);
 
             // pruning: if capacity already >= bestCapacity, no need to continue
             if (newCapacity < bestCapacity) {
-                best = getBestLayoutPermutationRecursive(layoutsByRoom, roomIds, roomIndex + 1, current, newCapacity, requiredCapacity, best, bestCapacity);
+                best = getBestLayoutPermutationRecursive(layoutsByRoom, roomIds, roomIndex + 1, current, newCapacity, requiredCapacity, reserveFactor, best, bestCapacity);
 
                 // update bestCapacity if best changed
                 if (best != null) {
-                    bestCapacity = best.values().stream().mapToInt(LayoutStrategy::getCapacity).sum();
+                    bestCapacity = best.values().stream().mapToInt(layoutStrategy -> examRoomService.sizeAfterApplyingReserveFactor(layoutStrategy.getCapacity(), reserveFactor))
+                            .sum();
                 }
             }
 
