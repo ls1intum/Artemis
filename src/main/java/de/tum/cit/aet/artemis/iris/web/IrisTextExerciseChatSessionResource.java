@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.text.api.TextApi;
@@ -52,15 +54,18 @@ public class IrisTextExerciseChatSessionResource {
 
     private final IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository;
 
+    private final MessageSource messageSource;
+
     protected IrisTextExerciseChatSessionResource(IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository, UserRepository userRepository,
             Optional<TextRepositoryApi> textRepositoryApi, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            IrisTextExerciseChatSessionService irisTextExerciseChatSessionService) {
+            IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, MessageSource messageSource) {
         this.irisTextExerciseChatSessionRepository = irisTextExerciseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
         this.textRepositoryApi = textRepositoryApi;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
+        this.messageSource = messageSource;
     }
 
     /**
@@ -107,7 +112,9 @@ public class IrisTextExerciseChatSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasAcceptedExternalLLMUsageElseThrow();
 
-        var session = irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
+        var session = new IrisTextExerciseChatSession(textExercise, user);
+        session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
+        session = irisTextExerciseChatSessionRepository.save(session);
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);
