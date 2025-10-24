@@ -108,10 +108,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
 
     /**
      * Return a localized "New chat" title based on the user's language key.
-     * - German variants (starts with "de") -> "Neuer Chat"
-     * - English variants (starts with "en") -> "New Chat"
      *
-     * @param langKey The language key of the user
+     * @param langKey       The language key of the user
+     * @param messageSource The message source to resolve titles from
      * @return the localized title
      */
     public static String getLocalizedNewChatTitle(String langKey, MessageSource messageSource) {
