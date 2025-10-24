@@ -35,12 +35,17 @@ export class StudentsRoomDistributionButtonComponent {
     readonly faThLarge = faThLarge;
 
     /**
-     * Open up upload dialog for exam users image upload
+     * Open the room distribution dialog for assigning exam users to rooms
+     *
      * @param {Event} event - Mouse Event which invoked the opening
      */
     openRoomDistributionDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(StudentsRoomDistributionDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(StudentsRoomDistributionDialogComponent, {
+            keyboard: true,
+            size: 'lg',
+            backdrop: 'static',
+        });
         modalRef.componentInstance.courseId = this.courseId;
         modalRef.componentInstance.exam = this.exam;
         modalRef.result.then(

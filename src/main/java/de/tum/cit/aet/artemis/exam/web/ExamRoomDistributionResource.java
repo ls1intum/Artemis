@@ -106,7 +106,7 @@ public class ExamRoomDistributionResource {
     }
 
     /**
-     * GET /rooms/distribution-capacities : Retrieves information about the combined default and maximum capacities of
+     * POST /rooms/distribution-capacities : Retrieves information about the combined default and maximum capacities of
      * all selected rooms, respecting the given reserve factor
      *
      * @param reserveFactor how much percent of seats should remain unassigned. Defaults to 0%

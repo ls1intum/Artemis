@@ -5,7 +5,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { StudentsUploadImagesDialogComponent } from 'app/exam/manage/students/upload-images/students-upload-images-dialog.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -40,12 +39,10 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FaIconComponent, FormsModule],
-            declarations: [StudentsUploadImagesDialogComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
+            declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [
                 MockProvider(NgbActiveModal),
-                MockProvider(AlertService),
                 MockProvider(HttpClient),
-                MockProvider(TranslateService),
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),
                 MockProvider(Router),
@@ -68,6 +65,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should close dialog on pressing the close cross', () => {
         const spyModalDismiss = jest.spyOn(ngbModal, 'dismiss');
+        fixture.detectChanges();
         const button = fixture.debugElement.nativeElement.querySelector('#close-cross');
         button.click();
         expect(spyModalDismiss).toHaveBeenCalledOnce();
@@ -75,6 +73,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should call the dialog on pressing the close button', () => {
         const spyModalDismiss = jest.spyOn(ngbModal, 'dismiss');
+        fixture.detectChanges();
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-button');
         button.click();
         expect(spyModalDismiss).toHaveBeenCalledOnce();

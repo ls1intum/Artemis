@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 
@@ -23,8 +23,10 @@ export class StudentsRoomDistributionService {
      * @param reserveFactor percentage of seats that should be left empty
      */
     getCapacityData(roomIds: number[], reserveFactor: number): Observable<HttpResponse<ExamDistributionCapacityDTO>> {
-        const requestUrl = `${this.baseUrl}/rooms/distribution-capacities?reserveFactor=${reserveFactor}`;
-        return this.http.post<ExamDistributionCapacityDTO>(requestUrl, roomIds, { observe: 'response' });
+        const requestUrl = `${this.baseUrl}/rooms/distribution-capacities`;
+        const params = new HttpParams().set('reserveFactor', reserveFactor);
+
+        return this.http.post<ExamDistributionCapacityDTO>(requestUrl, roomIds, { params, observe: 'response' });
     }
 
     /**
@@ -37,8 +39,9 @@ export class StudentsRoomDistributionService {
      * @param useOnlyDefaultLayouts defines if only default layouts should be used for distribution
      */
     distributeStudentsAcrossRooms(courseId: number, examId: number, roomIds: number[], reserveFactor: number, useOnlyDefaultLayouts: boolean): Observable<HttpResponse<void>> {
-        const requestUrl = `${this.baseUrl}/courses/${courseId}/exams/${examId}/distribute-registered-students?reserveFactor=${reserveFactor}&useOnlyDefaultLayouts=${useOnlyDefaultLayouts}`;
+        const requestUrl = `${this.baseUrl}/courses/${courseId}/exams/${examId}/distribute-registered-students`;
+        const params = new HttpParams().set('reserveFactor', reserveFactor).set('useOnlyDefaultLayouts', useOnlyDefaultLayouts);
 
-        return this.http.post<void>(requestUrl, roomIds, { observe: 'response' });
+        return this.http.post<void>(requestUrl, roomIds, { params, observe: 'response' });
     }
 }

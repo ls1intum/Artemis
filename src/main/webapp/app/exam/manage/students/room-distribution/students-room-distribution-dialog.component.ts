@@ -145,7 +145,9 @@ export class StudentsRoomDistributionDialogComponent {
      * @param event An event containing a selected room
      */
     onRoomSelected(event: { item: RoomForDistributionDTO }) {
-        this.selectedRooms.update((rooms) => (rooms.includes(event.item) ? rooms : [...rooms, event.item]));
+        if (this.selectedRooms().every((room) => room.id !== event.item.id)) {
+            this.selectedRooms.update((rooms) => [...rooms, event.item]);
+        }
     }
 
     /**
