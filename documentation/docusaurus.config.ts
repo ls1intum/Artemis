@@ -3,7 +3,7 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-const GUIDELINES_REPOSITORY_URL = 'https://github.com/ls1intum/Artemis/documentation';
+const ARTEMIS_DOCUMENTATION_REPOSITORY_URL = 'https://github.com/ls1intum/Artemis/documentation';
 const PAGE_TITLE = 'Artemis Documentation';
 
 const config: Config = {
@@ -85,7 +85,6 @@ const config: Config = {
         ],
     ],
 
-
     plugins: [
         [
             '@docusaurus/plugin-content-docs',
@@ -93,7 +92,7 @@ const config: Config = {
                 path: 'docs/student',
                 routeBasePath: 'student',
                 sidebarPath: './sidebars.ts',
-                editUrl: GUIDELINES_REPOSITORY_URL,
+                editUrl: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
                 exclude: ['**/README.md'],
             },
         ],
@@ -104,7 +103,7 @@ const config: Config = {
                 path: 'docs/instructor',
                 routeBasePath: 'instructor',
                 sidebarPath: './sidebars.ts',
-                editUrl: GUIDELINES_REPOSITORY_URL,
+                editUrl: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
             },
         ],
         [
@@ -114,7 +113,7 @@ const config: Config = {
                 path: 'docs/staff',
                 routeBasePath: 'staff',
                 sidebarPath: './sidebars.ts',
-                editUrl: GUIDELINES_REPOSITORY_URL,
+                editUrl: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
             },
         ],
         [
@@ -124,7 +123,7 @@ const config: Config = {
                 path: 'docs/admin',
                 routeBasePath: 'admin',
                 sidebarPath: './sidebars.ts',
-                editUrl: GUIDELINES_REPOSITORY_URL,
+                editUrl: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
             },
         ],
     ],
@@ -143,7 +142,7 @@ const config: Config = {
             },
             items: [
                 {
-                    href: GUIDELINES_REPOSITORY_URL,
+                    href: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
                     label: 'GitHub',
                     position: 'right',
                 },
@@ -174,7 +173,7 @@ const config: Config = {
                     items: [
                         {
                             label: 'GitHub - Artemis',
-                            href: GUIDELINES_REPOSITORY_URL,
+                            href: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
                         },
                         {
                             label: 'GitHub - AET Projects',
@@ -202,7 +201,7 @@ const config: Config = {
             theme: prismThemes.github,
             darkTheme: prismThemes.dracula,
         },
-    } satisfies Preset.ThemeConfig,
-};
+    },
+} as Config;
 
 export default config;
