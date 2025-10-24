@@ -50,8 +50,8 @@ export class AiQuizGenerationModalComponent {
     private readonly service = inject(AiQuizGenerationService);
 
     private readonly subtypeKeyMap: Record<AiRequestedSubtype | string, string> = {
-        [AiRequestedSubtype.SINGLE_CORRECT]: 'artemisApp.quizExercise.aiGeneration.subtype.single',
-        [AiRequestedSubtype.MULTI_CORRECT]: 'artemisApp.quizExercise.aiGeneration.subtypes.multiple',
+        [AiRequestedSubtype.SINGLE_CORRECT]: 'artemisApp.quizExercise.aiGeneration.subtypes.single',
+        [AiRequestedSubtype.MULTI_CORRECT]: 'artemisApp.quizExercise.aiGeneration.subtypes.multi',
         [AiRequestedSubtype.TRUE_FALSE]: 'artemisApp.quizExercise.aiGeneration.subtypes.trueFalse',
     };
     subtypeLabelKey(subtype: AiRequestedSubtype | string): string {
