@@ -15,10 +15,22 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AccordionModule } from 'primeng/accordion';
 import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-badge/league-badge.component';
 import dayjs from 'dayjs/esm';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-course-training',
-    imports: [ButtonComponent, LeaderboardComponent, TranslateDirective, DialogModule, FormsModule, FontAwesomeModule, ToggleSwitchModule, AccordionModule, LeagueBadgeComponent],
+    imports: [
+        ButtonComponent,
+        LeaderboardComponent,
+        TranslateDirective,
+        DialogModule,
+        FormsModule,
+        FontAwesomeModule,
+        ToggleSwitchModule,
+        AccordionModule,
+        LeagueBadgeComponent,
+        ButtonModule,
+    ],
     templateUrl: './course-training.component.html',
     styleUrl: './course-training.component.scss',
 })
@@ -34,8 +46,8 @@ export class CourseTrainingComponent {
 
     protected readonly pointsBronzeLeague = 50;
     protected readonly pointsSilverLeague = 150;
-    protected readonly pointsGoldLeague = 350;
-    protected readonly pointsDiamondLeague = 700;
+    protected readonly pointsGoldLeague = 300;
+    protected readonly pointsDiamondLeague = 500;
 
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
@@ -48,6 +60,7 @@ export class CourseTrainingComponent {
 
     showDialog = true;
     showInLeaderboard = true;
+    displayInfoDialog = false;
 
     league = computed(() => {
         const entry = this.currentUserEntry();
@@ -185,5 +198,9 @@ export class CourseTrainingComponent {
                 this.isLoading.set(false);
             },
         });
+    }
+
+    showInfoDialog(): void {
+        this.displayInfoDialog = true;
     }
 }
