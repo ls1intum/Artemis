@@ -205,4 +205,10 @@ describe('CourseTrainingComponent', () => {
 
         expect(component.isLoading()).toBeFalse();
     });
+
+    it('should set displayInfoDialog to true', () => {
+        expect(component.displayInfoDialog).toBeFalsy();
+        component.showInfoDialog();
+        expect(component.displayInfoDialog).toBeTrue();
+    });
 });
