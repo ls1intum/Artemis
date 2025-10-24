@@ -62,12 +62,6 @@ public class CompetencyExpertToolsService {
             @ToolParam(description = "the description of the competency") String description,
             @ToolParam(description = "the taxonomy level: REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, or CREATE") CompetencyTaxonomy taxonomyLevel) {
 
-        System.out.println("===== previewCompetency TOOL CALLED =====");
-        System.out.println("Title: " + title);
-        System.out.println("Description: " + description);
-        System.out.println("Taxonomy: " + taxonomyLevel);
-        System.out.println("==========================================");
-
         // Create a preview competency object (without saving to database)
         Map<String, Object> competencyPreview = new LinkedHashMap<>();
         competencyPreview.put("title", title);

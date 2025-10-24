@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 
 import { AgentChatModalComponent } from './agent-chat-modal.component';
 import { AgentChatService } from './agent-chat.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
@@ -17,6 +18,7 @@ describe('AgentChatModalComponent', () => {
     let fixture: ComponentFixture<AgentChatModalComponent>;
     let mockActiveModal: jest.Mocked<NgbActiveModal>;
     let mockAgentChatService: jest.Mocked<AgentChatService>;
+    let mockCompetencyService: jest.Mocked<CompetencyService>;
     let mockTranslateService: jest.Mocked<TranslateService>;
     let mockChangeDetectorRef: jest.Mocked<ChangeDetectorRef>;
 
@@ -34,6 +36,13 @@ describe('AgentChatModalComponent', () => {
 
         mockAgentChatService = {
             sendMessage: jest.fn(),
+        } as any;
+
+        mockCompetencyService = {
+            getAll: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
         } as any;
 
         mockTranslateService = {
@@ -68,6 +77,7 @@ describe('AgentChatModalComponent', () => {
             providers: [
                 { provide: NgbActiveModal, useValue: mockActiveModal },
                 { provide: AgentChatService, useValue: mockAgentChatService },
+                { provide: CompetencyService, useValue: mockCompetencyService },
                 { provide: TranslateService, useValue: mockTranslateService },
                 { provide: ChangeDetectorRef, useValue: mockChangeDetectorRef },
             ],
