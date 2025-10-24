@@ -67,8 +67,8 @@ public class SentryConfiguration {
     }
 
     private String getEnvironment() {
-        if (environment.isPresent()) {
-            return environment.get();
+        if (environment.isPresent() && environment.get().trim().length() > 0) {
+            return environment.get().trim();
         }
         if (isTestServer.isPresent()) {
             if (isTestServer.get()) {
@@ -89,10 +89,16 @@ public class SentryConfiguration {
      * @return 0% for local, 100% for test, 20% for production environments
      */
     private double getTracesSampleRate() {
+        String env = getEnvironment();
+        // All test/staging environments get 1.0 sample rate
+        if (env.contains("test") || env.contains("staging")) {
+            return 1.0;
+        }
+
+        // Only "prod" get 0.2, all others (like local) are disabled
         return switch (getEnvironment()) {
             case "prod" -> 0.2;
-            case "local" -> 0.0;
-            default -> 1.0;
+            default -> 0.0;
         };
     }
 }
