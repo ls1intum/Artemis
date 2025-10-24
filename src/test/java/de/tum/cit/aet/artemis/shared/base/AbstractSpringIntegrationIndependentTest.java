@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -235,6 +236,7 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         log.debug("Requested CI project {}", exercise.getProjectKey());
     }
 
+    @BeforeEach
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
