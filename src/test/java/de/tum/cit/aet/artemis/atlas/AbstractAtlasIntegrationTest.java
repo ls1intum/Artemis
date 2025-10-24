@@ -1,7 +1,24 @@
 package de.tum.cit.aet.artemis.atlas;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.mockito.Mockito;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
@@ -184,4 +201,40 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected TeamUtilService teamUtilService;
+
+    @MockitoBean
+    protected ChatModel chatModel;
+
+    @MockitoBean
+    protected ChatClient chatClient;
+
+    @MockitoBean
+    protected ChatMemoryRepository chatMemoryRepository;
+
+    @MockitoBean
+    protected ChatMemory chatMemory;
+
+    @BeforeEach
+    protected void setupSpringAIMocks() {
+        if (chatModel != null) {
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
+        }
+    }
+
+    @AfterEach
+    @Override
+    protected void resetSpyBeans() {
+        if (chatModel != null) {
+            Mockito.reset(chatModel);
+        }
+        if (chatClient != null) {
+            Mockito.reset(chatClient);
+        }
+        if (chatMemoryRepository != null) {
+            Mockito.reset(chatMemoryRepository);
+        }
+        if (chatMemory != null) {
+            Mockito.reset(chatMemory);
+        }
+    }
 }
