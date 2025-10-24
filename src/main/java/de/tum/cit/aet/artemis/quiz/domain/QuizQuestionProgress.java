@@ -29,7 +29,7 @@ public class QuizQuestionProgress extends DomainObject {
     @Column(name = "last_modified")
     private ZonedDateTime lastModified;
 
-    @Column(name = "dueDate")
+    @Column(name = "due_date")
     private ZonedDateTime dueDate;
 
     public long getUserId() {
