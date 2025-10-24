@@ -9,6 +9,7 @@ import React from 'react';
  * @param {string} props.alt - The alternative text for the image (required).
  * @param {ImageSize} [props.size] - The size of the image (default: medium).
  * @param {object} [props.style] - Optional style object to merge with default styles.
+ * @param {object} [props.style] - Optional style object to merge with default styles.
  * @returns {React.ReactElement} The rendered image component.
  */
 const Image = ({
