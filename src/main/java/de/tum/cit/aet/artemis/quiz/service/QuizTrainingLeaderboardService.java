@@ -195,7 +195,7 @@ public class QuizTrainingLeaderboardService {
 
         boolean hadFailedAttemptToday = getHadFailedAttemptToday(answeredQuestion);
 
-        double questionDelta = 2 * lastScore + box * lastScore;
+        double questionDelta = Math.pow(2, box - 1) * lastScore;
 
         boolean hasAnsweredCorrect = lastScore == 1.0;
         if (hadFailedAttemptToday && hasAnsweredCorrect) {

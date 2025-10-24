@@ -86,7 +86,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         data.setBox(2);
         quizTrainingLeaderboardService.updateLeaderboardScore(user.getId(), course.getId(), data);
         QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
-        assertThat(leaderboardEntry.getScore()).isEqualTo(14);
+        assertThat(leaderboardEntry.getScore()).isEqualTo(12);
         assertThat(leaderboardEntry.getLeague()).isEqualTo(5);
         assertThat(leaderboardEntry.getAnsweredCorrectly()).isEqualTo(11);
         assertThat(leaderboardEntry.getAnsweredWrong()).isEqualTo(10);
