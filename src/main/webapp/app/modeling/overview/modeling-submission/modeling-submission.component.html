@@ -147,7 +147,7 @@
                                                     <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions"></p>
                                                     <div class="feedback-list">
                                                         <div id="component-feedback-table">
-                                                            @for (feedback of referencedFeedback; track feedback) {
+                                                            @for (feedback of referencedFeedback; track feedback.id) {
                                                                 @if (shouldBeDisplayed(feedback)) {
                                                                     <jhi-unified-feedback
                                                                         [feedbackContent]="buildFeedbackTextForReview(feedback)"
