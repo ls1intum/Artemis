@@ -16,7 +16,7 @@
 @if (exercise().allowOnlineEditor) {
     <div>
         <jhi-code-editor-container
-            [forRepositoryView]="true"
+            [isProblemStatementVisible]="false"
             [editable]="!repositoryIsLocked"
             [participation]="studentParticipation()"
             [showEditorInstructions]="showEditorInstructions"

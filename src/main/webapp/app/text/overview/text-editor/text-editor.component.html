@@ -20,7 +20,7 @@
                             <jhi-button
                                 id="Continue"
                                 [title]="'entity.action.continueSubmission'"
-                                [routerLink]="['/courses', course?.id, 'exercises', 'text-exercises', textExercise?.id!, 'participate', result.submission?.participation?.id]"
+                                [routerLink]="['/courses', course?.id, 'exercises', 'text-exercises', textExercise?.id!, 'participate', participation?.id!]"
                             />
                         }
                     } @else {
@@ -156,7 +156,7 @@
                                     />
                                 }
                                 @if (isOwnerOfParticipation) {
-                                    <jhi-rating class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result" />
+                                    <jhi-rating class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result" [participation]="participation" />
                                 }
                             </div>
                         }

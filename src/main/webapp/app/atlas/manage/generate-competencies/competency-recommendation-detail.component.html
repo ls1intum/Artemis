@@ -1,98 +1,100 @@
-<div class="card form-group" [formGroup]="form">
-    <div class="card-header">
-        <div class="d-flex align-items-center mw-100 clickable" (click)="toggle()">
-            <div class="me-3">
-                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed" />
+@if (form()) {
+    <div class="card form-group" [formGroup]="form()!">
+        <div class="card-header">
+            <div class="d-flex align-items-center mw-100 clickable" (click)="toggle()">
+                <div class="me-3">
+                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed()" />
+                </div>
+                <h6 class="mb-0 text-nowrap text-truncate overflow-hidden">{{ titleControl()?.value ?? '' }}</h6>
             </div>
-            <h6 class="mb-0 text-nowrap text-truncate overflow-hidden">{{ titleControl.value ?? '' }}</h6>
-        </div>
-        <div class="d-flex align-items-center flex-grow-1 justify-content-end">
-            <div class="d-flex me-3">
-                <input class="me-1" type="checkbox" id="viewed-{{ index }}" formControlName="viewed" />
-                <label for="viewed-{{ index }}" jhiTranslate="artemisApp.competency.generate.viewedLabel"></label>
-            </div>
-            @if (!isInEditMode) {
+            <div class="d-flex align-items-center flex-grow-1 justify-content-end">
+                <div class="d-flex me-3">
+                    <input class="me-1" type="checkbox" id="viewed-{{ index() }}" formControlName="viewed" />
+                    <label for="viewed-{{ index() }}" jhiTranslate="artemisApp.competency.generate.viewedLabel"></label>
+                </div>
+                @if (!isInEditMode()) {
+                    <jhi-button
+                        class="me-1"
+                        id="editButton-{{ index() }}"
+                        [btnType]="ButtonType.WARNING"
+                        [btnSize]="ButtonSize.SMALL"
+                        [title]="'entity.action.edit'"
+                        [icon]="faPen"
+                        (onClick)="edit()"
+                        [shouldSubmit]="false"
+                    />
+                } @else {
+                    <jhi-button
+                        class="me-1"
+                        id="saveButton-{{ index() }}"
+                        [btnType]="ButtonType.SUCCESS"
+                        [btnSize]="ButtonSize.SMALL"
+                        [title]="'entity.action.save'"
+                        [icon]="faSave"
+                        (onClick)="save()"
+                        [disabled]="!isSavePossible()"
+                        [shouldSubmit]="false"
+                    />
+                }
                 <jhi-button
-                    class="me-1"
-                    id="editButton-{{ index }}"
-                    [btnType]="ButtonType.WARNING"
+                    id="deleteButton-{{ index() }}"
+                    [btnType]="ButtonType.ERROR"
                     [btnSize]="ButtonSize.SMALL"
-                    [title]="'entity.action.edit'"
-                    [icon]="faPencilAlt"
-                    (onClick)="edit()"
+                    [title]="'entity.action.delete'"
+                    [icon]="faTrash"
+                    (onClick)="delete()"
                     [shouldSubmit]="false"
                 />
-            } @else {
-                <jhi-button
-                    class="me-1"
-                    id="saveButton-{{ index }}"
-                    [btnType]="ButtonType.SUCCESS"
-                    [btnSize]="ButtonSize.SMALL"
-                    [title]="'entity.action.save'"
-                    [icon]="faSave"
-                    (onClick)="save()"
-                    [disabled]="!isSavePossible"
-                    [shouldSubmit]="false"
-                />
-            }
-            <jhi-button
-                id="deleteButton-{{ index }}"
-                [btnType]="ButtonType.ERROR"
-                [btnSize]="ButtonSize.SMALL"
-                [title]="'entity.action.delete'"
-                [icon]="faTrash"
-                (click)="delete()"
-                [shouldSubmit]="false"
-            />
+            </div>
+        </div>
+        <div class="card-body border-0" [ngbCollapse]="isCollapsed()" formGroupName="competency">
+            <div class="form-group">
+                <label for="title-{{ index() }}" jhiTranslate="artemisApp.competency.title"></label>
+                <input type="text" class="form-control" id="title-{{ index() }}" formControlName="title" />
+                @if (titleControl()?.invalid && (titleControl()?.dirty || titleControl()?.touched)) {
+                    <div class="alert alert-danger">
+                        @if (titleControl()?.errors?.required) {
+                            <div jhiTranslate="artemisApp.competency.create.titleRequiredValidationError"></div>
+                        }
+                        @if (titleControl()?.errors?.maxlength) {
+                            <div jhiTranslate="artemisApp.competency.create.titleMaxLengthValidationError" [translateValues]="{ max: competencyValidators.TITLE_MAX }"></div>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="form-group">
+                <label for="description-{{ index() }}" jhiTranslate="artemisApp.competency.description"></label>
+                @if (isInEditMode()) {
+                    <jhi-markdown-editor-monaco
+                        [markdown]="descriptionControl()?.value"
+                        (markdownChange)="updateDescriptionControl($event)"
+                        id="description-{{ index() }}"
+                        class="markdown-preview"
+                        [enableFileUpload]="false"
+                    />
+                } @else {
+                    <div
+                        id="description-{{ index() }}"
+                        disabled="true"
+                        class="markdown-preview border rounded p-1"
+                        [innerHTML]="descriptionControl()?.value || '&nbsp;' | htmlForMarkdown"
+                    ></div>
+                }
+                @if (descriptionControl()?.invalid && descriptionControl()?.dirty) {
+                    <div class="alert alert-danger">
+                        @if (descriptionControl()?.errors?.maxlength) {
+                            <div
+                                jhiTranslate="artemisApp.competency.create.descriptionMaxLengthValidationError"
+                                [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
+                            ></div>
+                        }
+                    </div>
+                }
+            </div>
+            <div class="form-group">
+                <label for="taxonomy-{{ index() }}" jhiTranslate="artemisApp.competency.taxonomy"></label>
+                <jhi-taxonomy-select selectId="taxonomy-{{ index() }}" [form]="taxonomyControl()!" />
+            </div>
         </div>
     </div>
-    <div class="card-body border-0" [ngbCollapse]="isCollapsed" formGroupName="competency">
-        <div class="form-group">
-            <label for="title-{{ index }}" jhiTranslate="artemisApp.competency.title"></label>
-            <input type="text" class="form-control" id="title-{{ index }}" formControlName="title" />
-            @if (titleControl.invalid && (titleControl.dirty || titleControl.touched)) {
-                <div class="alert alert-danger">
-                    @if (titleControl.errors?.required) {
-                        <div jhiTranslate="artemisApp.competency.create.titleRequiredValidationError"></div>
-                    }
-                    @if (titleControl.errors?.maxlength) {
-                        <div jhiTranslate="artemisApp.competency.create.titleMaxLengthValidationError" [translateValues]="{ max: competencyValidators.TITLE_MAX }"></div>
-                    }
-                </div>
-            }
-        </div>
-        <div class="form-group">
-            <label for="description-{{ index }}" jhiTranslate="artemisApp.competency.description"></label>
-            @if (isInEditMode) {
-                <jhi-markdown-editor-monaco
-                    [markdown]="descriptionControl.value"
-                    (markdownChange)="updateDescriptionControl($event)"
-                    id="description-{{ index }}"
-                    class="markdown-preview"
-                    [enableFileUpload]="false"
-                />
-            } @else {
-                <div
-                    id="description-{{ index }}"
-                    disabled="true"
-                    class="markdown-preview border rounded p-1"
-                    [innerHTML]="descriptionControl.value || '&nbsp;' | htmlForMarkdown"
-                ></div>
-            }
-            @if (descriptionControl.invalid && descriptionControl.dirty) {
-                <div class="alert alert-danger">
-                    @if (descriptionControl.errors?.maxlength) {
-                        <div
-                            jhiTranslate="artemisApp.competency.create.descriptionMaxLengthValidationError"
-                            [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
-                        ></div>
-                    }
-                </div>
-            }
-        </div>
-        <div class="form-group">
-            <label for="taxonomy-{{ index }}" jhiTranslate="artemisApp.competency.taxonomy"></label>
-            <jhi-taxonomy-select selectId="taxonomy-{{ index }}" [form]="taxonomyControl" />
-        </div>
-    </div>
-</div>
+}

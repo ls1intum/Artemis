@@ -15,6 +15,13 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import dayjs from 'dayjs/esm';
 import { firstValueFrom } from 'rxjs';
 import JSZip from 'jszip';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
+import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
+import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 /**
  * create a QuizExercise that when used as an HTTP response can be deserialized as an equal object
@@ -30,6 +37,59 @@ const makeQuiz = () => {
     return quizEx;
 };
 
+const makeDragAndDropQuestion = () => {
+    const question = new DragAndDropQuestion();
+    const dragItem = new DragItem();
+    const dropLocation = new DropLocation();
+    const mapping = new DragAndDropMapping(dragItem, dropLocation);
+    question.dragItems = [dragItem];
+    question.dropLocations = [dropLocation];
+    question.correctMappings = [mapping];
+    question.type = QuizQuestionType.DRAG_AND_DROP;
+    return question;
+};
+
+const makeShortAnswerQuestion = () => {
+    const question = new ShortAnswerQuestion();
+    const spot = new ShortAnswerSpot();
+    const solution = new ShortAnswerSolution();
+    const mapping = new ShortAnswerMapping(spot, solution);
+    question.type = QuizQuestionType.SHORT_ANSWER;
+    question.spots = [spot];
+    question.solutions = [solution];
+    question.correctMappings = [mapping];
+    return question;
+};
+
+const makeMultipleChoiceQuestion = () => {
+    const question = new MultipleChoiceQuestion();
+    question.type = QuizQuestionType.MULTIPLE_CHOICE;
+    const answerOption = new AnswerOption();
+    question.answerOptions = [answerOption];
+    return question;
+};
+
+const makeCourseQuiz = () => {
+    const quizEx = new QuizExercise(new Course(), undefined);
+    quizEx.releaseDate = dayjs('1000-01-01T00:00:00Z');
+    quizEx.dueDate = dayjs('2000-01-01T00:00:00Z');
+    quizEx.assessmentDueDate = undefined;
+    quizEx.exampleSolutionPublicationDate = undefined;
+    quizEx.quizQuestions = [makeDragAndDropQuestion(), makeShortAnswerQuestion(), makeMultipleChoiceQuestion()];
+    delete quizEx.exerciseGroup;
+    return quizEx;
+};
+
+const makeExamQuiz = () => {
+    const quizEx = new QuizExercise(undefined, { id: 1 } as any);
+    quizEx.releaseDate = dayjs('1000-01-01T00:00:00Z');
+    quizEx.dueDate = dayjs('2000-01-01T00:00:00Z');
+    quizEx.assessmentDueDate = undefined;
+    quizEx.exampleSolutionPublicationDate = undefined;
+    quizEx.quizQuestions = [makeDragAndDropQuestion(), makeShortAnswerQuestion(), makeMultipleChoiceQuestion()];
+    return quizEx;
+};
+
 describe('QuizExercise Service', () => {
     const fileMap = new Map<string, Blob>();
     fileMap.set('file.jpg', new Blob());
@@ -41,7 +101,15 @@ describe('QuizExercise Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                SessionStorageService,
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+            ],
         });
         service = TestBed.inject(QuizExerciseService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -61,7 +129,10 @@ describe('QuizExercise Service', () => {
         expect((await result)?.body).toEqual(elemDefault);
     });
 
-    it('should create a QuizExercise', async () => {
+    it('should create a QuizExercise for a course', async () => {
+        const course = makeCourseQuiz();
+        course.id = 1;
+        const quizExercise = new QuizExercise(course, undefined);
         const returnedFromService = Object.assign(
             {
                 id: 0,
@@ -69,11 +140,32 @@ describe('QuizExercise Service', () => {
             elemDefault,
         );
         const expected = Object.assign({}, returnedFromService);
-        const result = firstValueFrom(service.create(new QuizExercise(undefined, undefined), fileMap));
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/quiz-exercises' });
+        const result = firstValueFrom(service.create(quizExercise, fileMap));
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/courses/1/quiz-exercises' });
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
+    });
+
+    it('should create a QuizExercise for an exam', async () => {
+        const quizExercise = makeExamQuiz();
+        const returnedFromService = Object.assign(
+            {
+                id: 0,
+            },
+            elemDefault,
+        );
+        const expected = Object.assign({}, returnedFromService);
+        const result = firstValueFrom(service.create(quizExercise, fileMap));
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/exercise-groups/1/quiz-exercises' });
+        validateFormData(req);
+        req.flush(returnedFromService);
+        expect((await result)?.body).toEqual(expected);
+    });
+
+    it('should throw an error if QuizExercise has neither course nor exerciseGroup', async () => {
+        const quizExercise = new QuizExercise(undefined, undefined);
+        expect(() => service.create(quizExercise, fileMap)).toThrow('Quiz exercise must belong to a course or an exercise group');
     });
 
     it('should import a QuizExercise', async () => {
@@ -350,6 +442,7 @@ describe('QuizExercise Service', () => {
 
         await expect(service.fetchFilePromise(fileName, mockJSZip, filePath)).rejects.toThrow(`File with name: ${fileName} at path: ${filePath} could not be fetched`);
     });
+
     function validateFormData(req: TestRequest) {
         expect(req.request.body).toBeInstanceOf(FormData);
         expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);
