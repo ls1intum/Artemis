@@ -98,4 +98,14 @@ public class AiQuizGenerationServiceAzure implements AiQuizGenerationService {
                 No explanations, only valid JSON.
                 """.formatted(req.numberOfQuestions(), req.language(), req.topic());
     }
+
+    private String toSubtypeText(String subtype) {
+        if (subtype == null)
+            return "single-choice";
+        return switch (subtype) {
+            case "MULTI_CORRECT" -> "multiple-choice";
+            case "TRUE_FALSE" -> "true/false";
+            default -> "single-choice";
+        };
+    }
 }

@@ -1,0 +1,139 @@
+<!-- src/main/webapp/app/quiz/manage/ai-quiz-generation-modal/ai-quiz-generation-modal.component.html -->
+<div class="modal-header">
+    <h4 class="modal-title" jhiTranslate="artemisApp.quizExercise.aiGeneration.title"></h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="cancel()"></button>
+</div>
+
+<div class="modal-body">
+    @for (w of warnings; track $index) {
+        <ngb-alert type="warning" [dismissible]="false" class="mb-2">{{ w }}</ngb-alert>
+    }
+
+    <form #genForm="ngForm" (ngSubmit)="generate(genForm)" novalidate>
+        <div class="row g-2">
+            <!-- topic -->
+            <div class="col-8">
+                <label class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.topic"></label>
+                <input class="form-control" name="topic" [(ngModel)]="formData.topic" required />
+            </div>
+
+            <!-- number of questions -->
+            <div class="col-4">
+                <label class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.count"></label>
+                <input class="form-control" type="number" min="1" name="numberOfQuestions" [(ngModel)]="formData.numberOfQuestions" required />
+            </div>
+
+            <!-- language -->
+            <div class="col-4">
+                <label class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.language"></label>
+                <select class="form-select" name="language" [(ngModel)]="formData.language" required>
+                    <option [ngValue]="AiLanguage.ENGLISH" jhiTranslate="artemisApp.quizExercise.aiGeneration.languages.english"></option>
+                    <option [ngValue]="AiLanguage.GERMAN" jhiTranslate="artemisApp.quizExercise.aiGeneration.languages.german"></option>
+                </select>
+            </div>
+
+            <!-- difficulty slider -->
+            <div class="col-4">
+                <label class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.difficulty"></label>
+                <input
+                    type="range"
+                    min="0"
+                    max="2"
+                    step="1"
+                    class="form-range"
+                    [value]="difficultyToSlider(formData.difficultyLevel)"
+                    (input)="formData.difficultyLevel = sliderToDifficulty($any($event.target).value)"
+                />
+                <div class="d-flex justify-content-between small text-muted">
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.difficulties.easy"></span>
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.difficulties.medium"></span>
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.difficulties.hard"></span>
+                </div>
+            </div>
+
+            <!-- subtype -->
+            <div class="col-4">
+                <label class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.subtype"></label>
+                <select class="form-select" name="requestedSubtype" [(ngModel)]="formData.requestedSubtype" required>
+                    <option [ngValue]="AiRequestedSubtype.SINGLE_CORRECT" jhiTranslate="artemisApp.quizExercise.aiGeneration.subtypes.single"></option>
+                    <option [ngValue]="AiRequestedSubtype.MULTI_CORRECT" jhiTranslate="artemisApp.quizExercise.aiGeneration.subtypes.multi"></option>
+                    <option [ngValue]="AiRequestedSubtype.TRUE_FALSE" jhiTranslate="artemisApp.quizExercise.aiGeneration.subtypes.trueFalse"></option>
+                </select>
+            </div>
+
+            <!-- optional prompt hint -->
+            <div class="col-12">
+                <label class="form-label d-inline-flex align-items-center gap-2">
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.promptHint"></span>
+                    <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.quizExercise.aiGeneration.promptHintTooltip' | artemisTranslate }}" class="ms-1 text-muted" />
+                </label>
+                <textarea
+                    class="form-control"
+                    rows="2"
+                    name="promptHint"
+                    [(ngModel)]="formData.promptHint"
+                    placeholder="{{ 'artemisApp.quizExercise.aiGeneration.promptHintLabel' | artemisTranslate }}"
+                ></textarea>
+            </div>
+        </div>
+
+        <!-- generate + close buttons -->
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary" [disabled]="loading || !genForm.valid">
+                @if (!loading) {
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.generate"></span>
+                } @else {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+            </button>
+            <button type="button" class="btn btn-outline-secondary" (click)="cancel()" jhiTranslate="artemisApp.quizExercise.aiGeneration.close"></button>
+        </div>
+    </form>
+
+    <!-- generated preview -->
+    @if (generated.length) {
+        <h6 class="mt-4 mb-2" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview"></h6>
+        <div class="list-group">
+            @for (q of generated; track $index; let i = $index) {
+                <label class="list-group-item" [class.list-group-item-secondary]="!selected[i]">
+                    <div class="d-flex w-100 align-items-start gap-2">
+                        <input class="form-check-input mt-1" type="checkbox" name="sel-{{ i }}" [(ngModel)]="selected[i]" />
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <strong>{{ q.title || ('artemisApp.quizExercise.aiGeneration.untitled' | artemisTranslate) }}</strong>
+                                <span class="badge text-bg-light">{{ subtypeLabelKey(q.subtype) | artemisTranslate }}</span>
+                                @if (q.tags?.length) {
+                                    <span class="badge text-bg-info">{{ q.tags.join(', ') }}</span>
+                                }
+                            </div>
+
+                            <div class="mt-1" [innerHTML]="q.text"></div>
+
+                            <ul class="mt-2 mb-1">
+                                @for (o of q.options; track $index) {
+                                    <li>
+                                        <span [class.fw-bold]="o.correct">{{ o.text }}</span>
+                                        @if (o.feedback) {
+                                            <small> — {{ o.feedback }}</small>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+
+                            @if (q.explanation) {
+                                <small class="text-muted" jhiTranslate="artemisApp.quizExercise.aiGeneration.explanation"></small>
+                                <small class="text-muted">: {{ q.explanation }}</small>
+                            }
+                        </div>
+                    </div>
+                </label>
+            }
+        </div>
+    }
+</div>
+
+@if (generated.length) {
+    <div class="modal-footer">
+        <button class="btn btn-success" (click)="useInEditor()" [disabled]="!anySelected" jhiTranslate="artemisApp.quizExercise.aiGeneration.useInEditor"></button>
+    </div>
+}

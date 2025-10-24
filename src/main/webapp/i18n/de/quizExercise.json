@@ -308,7 +308,39 @@
             "addBatch": "Gruppe hinzufügen",
             "join": "Bearbeiten",
             "joinFailed": "Dem Quiz konnte nicht beigetreten werden.",
-            "submitSuccess": "Deine Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse sind verfügbar, nachdem das Quiz beendet ist."
+            "submitSuccess": "Deine Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse sind verfügbar, nachdem das Quiz beendet ist.",
+            "aiGeneration": {
+                "button": "Mit KI generieren",
+                "title": "Quizfragen mit KI generieren",
+                "topic": "Thema",
+                "count": "Anzahl Fragen",
+                "language": "Sprache",
+                "languages": {
+                    "english": "Englisch",
+                    "german": "Deutsch"
+                },
+                "difficulty": "Schwierigkeitsgrad",
+                "difficulties": {
+                    "easy": "Leicht",
+                    "medium": "Mittel",
+                    "hard": "Schwer"
+                },
+                "subtype": "Fragetyp",
+                "subtypes": {
+                    "single": "Einfachauswahl",
+                    "multi": "Mehrfachauswahl",
+                    "trueFalse": "Wahr/Falsch"
+                },
+                "promptHintLabel": "Zusätzlicher Hinweis (optional)",
+                "promptHintTooltip": "Optionaler Kontext oder Anweisung für das Modell (z. B. Stil, Umfang, was vermeiden).",
+                "generate": "Generieren",
+                "close": "Schließen",
+                "preview": "Vorschau (zum Einfügen auswählen)",
+                "useInEditor": "In Editor übernehmen",
+                "untitled": "Ohne Titel",
+                "explanation": "Erläuterung",
+                "noCourseContext": "Kein Kurskontext gefunden."
+            }
         }
     }
 }

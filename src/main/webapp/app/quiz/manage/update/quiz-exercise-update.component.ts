@@ -14,7 +14,7 @@ import { NgbDate, NgbModal, NgbModalOptions, NgbModalRef, NgbTooltip } from '@ng
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -47,6 +47,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { AiQuizGenerationModalComponent } from 'app/quiz/manage/ai-quiz-generation-modal/ai-quiz-generation-modal.component';
+import { AiGeneratedQuestionDTO, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.service';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -665,5 +669,60 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     handleQuestionChanged() {
         this.cacheValidation();
+    }
+    // Course id to use for generation (works in course AND exam mode)
+    get courseIdForGeneration(): number | undefined {
+        // Prefer the routed courseId; fall back to entity relations just in case
+        return this.courseId ?? this.quizExercise?.course?.id ?? this.quizExercise?.exerciseGroup?.exam?.course?.id ?? undefined;
+    }
+
+    openAiGeneration(): void {
+        const courseId = this.courseIdForGeneration;
+        if (!courseId) {
+            // Shouldn't happen on this page, but guard anyway
+            this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.aiGeneration.noCourseContext'));
+            return;
+        }
+
+        const modalRef: NgbModalRef = this.modalService.open(AiQuizGenerationModalComponent, { size: 'lg', backdrop: 'static' });
+        (modalRef.componentInstance as AiQuizGenerationModalComponent).courseId = courseId;
+
+        modalRef.result
+            .then((result?: { questions: AiGeneratedQuestionDTO[] }) => {
+                const picked = result?.questions ?? [];
+                if (!picked.length) return;
+
+                const toAdd = picked.map((dto) => this.mapDtoToMcQuestion(dto));
+                const current = this.quizExercise.quizQuestions ?? [];
+
+                // Reassign to trigger change detection in children
+                this.quizExercise.quizQuestions = [...current, ...toAdd];
+
+                // Update validity & UI (OnPush)
+                this.cacheValidation();
+                this.changeDetector.detectChanges();
+            })
+            .catch(() => {});
+    }
+
+    private mapDtoToMcQuestion(dto: AiGeneratedQuestionDTO): MultipleChoiceQuestion {
+        const q = new MultipleChoiceQuestion();
+        q.title = dto.title || '';
+        q.text = dto.text || '';
+        q.explanation = dto.explanation || '';
+        q.randomizeOrder = true;
+        q.singleChoice = dto.subtype === AiRequestedSubtype.SINGLE_CORRECT || dto.subtype === AiRequestedSubtype.TRUE_FALSE;
+        q.points = 1;
+        q.scoringType = ScoringType.ALL_OR_NOTHING;
+
+        q.answerOptions = (dto.options ?? []).map((o) => {
+            const ao = new AnswerOption();
+            ao.text = o.text;
+            ao.explanation = o.feedback || '';
+            ao.isCorrect = o.correct;
+            return ao;
+        });
+
+        return q;
     }
 }
