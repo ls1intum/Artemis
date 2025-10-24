@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
 /**
  * A reusable, styled image component.
@@ -35,7 +34,7 @@ const Image = ({
     const defaultStyles = {
         ...sizeStyles[size],
         height: 'auto',
-        border: hideBorder ? '' : '1px solid var(--ifm-color-emphasis-300)',
+        border: hideBorder ? 'none' : '1px solid var(--ifm-color-emphasis-300)',
         borderRadius: '8px',
         margin: '1.5rem 0',
         padding: '0.5rem', // Internal padding around the image
@@ -60,12 +59,5 @@ export enum ImageSize {
     medium = 'medium',
     large = 'large'
 }
-
-Image.propTypes = {
-    src: PropTypes.string.isRequired,
-    alt: PropTypes.string.isRequired,
-    size: PropTypes.oneOf(Object.values(ImageSize)),
-    style: PropTypes.object,
-};
 
 export default Image;
