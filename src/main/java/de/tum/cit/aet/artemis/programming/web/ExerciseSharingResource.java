@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.web;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -55,12 +54,12 @@ public class ExerciseSharingResource {
     /*
      * Customized FileInputStream to clean up the basic file after closing.
      */
-    private static final class AutoDeletingFileInputStream extends FileInputStream {
+    private static final class AutoDeletingFileInputStream extends FilterInputStream {
 
         private final Path path;
 
-        private AutoDeletingFileInputStream(@NotNull Path path) throws FileNotFoundException {
-            super(path.toFile());
+        private AutoDeletingFileInputStream(@NotNull Path path) throws IOException {
+            super(Files.newInputStream(path));
             this.path = path;
         }
 
@@ -204,7 +203,7 @@ public class ExerciseSharingResource {
             return ResponseEntity.ok().contentLength(zipFilePath.get().toFile().length()).contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .header("filename", zipFilePath.get().toString()).body(resource);
         }
-        catch (FileNotFoundException e) {
+        catch (IOException e) {
             log.error("Exported file not found for token {}", token, e);
             return ResponseEntity.internalServerError().build();
         }

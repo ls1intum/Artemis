@@ -1,16 +1,15 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
+import java.io.OutputStream;
+import java.io.Reader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -188,8 +187,8 @@ public class ExerciseSharingService {
                             throw new SharingException("Could not retrieve basket item resource");
                         }
                         Path basketFilePath = Files.createTempFile("basketStore", ".zip");
-                        try (InputStream zipInput = zipInputResource.getInputStream(); FileOutputStream fos = new FileOutputStream(basketFilePath.toFile())) {
-                            FileCopyUtils.copy(zipInput, fos);
+                        try (InputStream zipInput = zipInputResource.getInputStream(); OutputStream outputStream = Files.newOutputStream(basketFilePath)) {
+                            FileCopyUtils.copy(zipInput, outputStream);
                         }
 
                         return basketFilePath;
@@ -228,7 +227,7 @@ public class ExerciseSharingService {
         try {
             String exerciseDetailString = getEntryFromBasket(pattern, sharingInfo)
                     .orElseThrow(() -> new NotFoundException("Could not retrieve exercise details from imported exercise"));
-            ProgrammingExercise exerciseDetails = objectMapperAllowingUnknownProperties.readValue(new StringReader(exerciseDetailString), ProgrammingExercise.class);
+            ProgrammingExercise exerciseDetails = objectMapperAllowingUnknownProperties.readValue(Reader.of(exerciseDetailString), ProgrammingExercise.class);
             exerciseDetails.setId(null);
             return exerciseDetails;
         }
@@ -389,7 +388,7 @@ public class ExerciseSharingService {
         }
 
         String decodedToken = new String(Base64.getUrlDecoder().decode(b64Token), StandardCharsets.UTF_8);
-        Path zipPath = Paths.get(repoDownloadClonePath, decodedToken + ".zip");
+        Path zipPath = Path.of(repoDownloadClonePath, decodedToken + ".zip");
         if (!Files.isRegularFile(zipPath)) {
             return Optional.empty();
         }

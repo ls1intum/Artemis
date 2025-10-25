@@ -279,8 +279,8 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private void mockSampleBasketZipForToken(String basketToken) throws URISyntaxException, IOException {
         URI basketRepositoryZipURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + basketToken + "/repository/0?format=artemis");
-        try (InputStream in = Objects.requireNonNull(getClass().getResource("./basket/sampleExercise.zip")).openStream()) {
-            byte[] zippedBytes = IOUtils.toByteArray(in);
+        try (InputStream inputStream = Objects.requireNonNull(getClass().getResource("./basket/sampleExercise.zip")).openStream()) {
+            byte[] zippedBytes = inputStream.readAllBytes();
             final ResponseActions responseActions = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketRepositoryZipURI))
                     .andExpect(method(HttpMethod.GET));
             responseActions.andRespond(MockRestResponseCreators.withSuccess(zippedBytes, MediaType.APPLICATION_OCTET_STREAM));

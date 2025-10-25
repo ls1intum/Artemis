@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -171,7 +172,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
                 .andExpect(method(HttpMethod.GET));
         responseActions.andRespond(MockRestResponseCreators.withSuccess(sampleBasket, MediaType.APPLICATION_JSON));
 
-        MvcResult result = requestUtilService
+        requestUtilService
                 .performMvcRequest(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL,
                         "apiBaseURL", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().is4xxClientError()).andReturn();
@@ -296,8 +297,8 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     private void setUpMockRestServer(String basketToken) throws IOException, URISyntaxException {
         byte[] zippedBytes;
-        try (var is = Objects.requireNonNull(getClass().getResource("./basket/sampleExercise.zip")).openStream()) {
-            zippedBytes = IOUtils.toByteArray(is);
+        try (InputStream inputStream = Objects.requireNonNull(getClass().getResource("./basket/sampleExercise.zip")).openStream()) {
+            zippedBytes = inputStream.readAllBytes();
         }
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + basketToken + "/repository/0?format=artemis");
 
