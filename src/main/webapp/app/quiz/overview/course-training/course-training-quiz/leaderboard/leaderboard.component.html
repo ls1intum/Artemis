@@ -1,0 +1,59 @@
+<div class="leaderboard-container">
+    @if (isUserInLeaderboard()) {
+        <div class="highlight-box">
+            <div class="highlight-content">
+                <div class="highlight-item">
+                    <span class="highlight-label" jhiTranslate="artemisApp.quizTraining.rank"></span>
+                    <span class="highlight-value">#{{ currentUserRank() }}</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-label" jhiTranslate="artemisApp.quizTraining.student"></span>
+                    <span class="highlight-value">
+                        <jhi-profile-picture
+                            class="picture"
+                            [authorName]="leaderboardName()"
+                            [authorId]="currentUserId()"
+                            [imageUrl]="addPublicFilePrefix(currentUserPictureUrl())"
+                        />
+                        {{ leaderboardName() }}
+                    </span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-label" jhiTranslate="artemisApp.quizTraining.score"></span>
+                    <span class="highlight-value">{{ currentUserScore() }}</span>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="table-frame">
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th jhiTranslate="artemisApp.quizTraining.rank"></th>
+                    <th jhiTranslate="artemisApp.quizTraining.student"></th>
+                    <th jhiTranslate="artemisApp.quizTraining.score"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (entry of leaderboard(); track entry.rank) {
+                    <tr>
+                        <td class="not-user-column">{{ entry.rank }}</td>
+                        <td class="user-name">
+                            <jhi-profile-picture
+                                class="picture"
+                                [authorName]="entry.userName"
+                                [authorId]="entry.userId"
+                                [imageUrl]="addPublicFilePrefix(entry.imageURL)"
+                                imageId="user-profile-picture"
+                                defaultPictureId="user-default-profile-picture"
+                            />
+                            {{ entry.userName }}
+                        </td>
+                        <td class="not-user-column">{{ entry.score }}</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

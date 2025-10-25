@@ -86,6 +86,29 @@
                 "message": "Are you sure you want to discard your unsaved changes?",
                 "sectionsThatContainUnsavedChangesSingular": "The following section contains unsaved changes:",
                 "sectionsThatContainUnsavedChangesPlural": "The following sections contain unsaved changes:"
+            },
+            "creationMode": {
+                "singleLectureLabel": "Single Lecture",
+                "lectureSeriesLabel": "Lecture Series"
+            },
+            "longLectureWarning": "Avoid lectures that take more than a couple of hours. They quickly overcrowd the calendar.",
+            "createSeries": {
+                "startAndEndDateExplanation": "Quickly create a lecture series by only defining titles and timing. Add lecture contents later. Start by specifying start and end of at least one lecture, that you would like to repeat weekly:",
+                "seriesEndDateExplanation": "Now define a date on which you would like the repeated lectures to end:",
+                "inputLabel": {
+                    "startDate": "Start",
+                    "endDate": "End",
+                    "seriesEndDate": "Series End Date"
+                },
+                "addInitialLectureButtonLabel": "Add Initial Lecture",
+                "generatedLecturesHeading": "Generated Lectures",
+                "editLectureModalTitle": "Edit Lecture Details",
+                "seriesCreationError": "Something went wrong while creating the lecture series. Please try again.",
+                "updateNameError": "Something went wrong while updating the names of existing lectures. Please try again.",
+                "updateNameConfirmation": {
+                    "header": "Update existing lecture names?",
+                    "message": "Some existing lectures follow the default naming format (e.g., \"Lecture 1\"). Would you like to update the numbering of these lectures according to the new order?"
+                }
             }
         },
         "attachment": {

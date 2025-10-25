@@ -4,7 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -48,6 +51,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.web.LectureResource;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -127,9 +131,11 @@ public class LectureService {
 
         Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
         for (Lecture lecture : lecturesWithAttachments) {
-            if (lecture.isVisibleToStudents()) {
-                lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
-            }
+            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+            /* TODO: #11479 - remove the commented out code OR comment back in */
+            // if (lecture.isVisibleToStudents()) {
+            lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
+            // }
         }
         return lecturesWithFilteredAttachments;
     }
@@ -314,40 +320,107 @@ public class LectureService {
      */
     public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent, Language language) {
         Set<LectureCalendarEventDTO> dtos = lectureRepository.getLectureCalendarEventDTOsForCourseId(courseId);
-        return dtos.stream().map(dto -> deriveCalendarEventDTO(dto, userIsStudent, language)).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toSet());
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
     }
 
     /**
-     * Derives an event for a given {@link LectureCalendarEventDTO} that represents either startDate if exclusively available, or endDate
-     * if exclusively available or both startDate and endDate if both are available.
-     * <p>
-     * The event is only derived given that either the lecture represented by a DTO is visible to students or the logged-in user is a course
-     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     * Derives calendar events from the given {@link LectureCalendarEventDTO}. Expects at least one of startDate and endDate of the LectureCalendarEventDTO to be non-null-
      *
-     * @param dto           the dao from which to derive the event
-     * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @param dto           the dto from which to derive the event
+     * @param userIsStudent indicates whether the logged-in user is a student of the course (hence no tutor, editor, instructor)
      * @param language      the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
+     * @throws IllegalArgumentException if both startDate and endDate of the LectureCalendarEventDTO are null
      * @return the derived event
      */
-    private Optional<CalendarEventDTO> deriveCalendarEventDTO(LectureCalendarEventDTO dto, boolean userIsStudent, Language language) {
-        if (userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate())) {
-            return Optional.empty();
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(LectureCalendarEventDTO dto, boolean userIsStudent, Language language) {
+        ZonedDateTime startDate = dto.startDate();
+        ZonedDateTime endDate = dto.endDate();
+
+        boolean noDatesAvailable = startDate == null && endDate == null;
+        if (noDatesAvailable) {
+            throw new IllegalArgumentException("Tried to derive CalendarEventDTOs from a LectureCalendarEventDTO without startDate and endDate.");
         }
-        String titlePrefix;
-        if (dto.startDate() == null && dto.endDate() != null) {
-            titlePrefix = switch (language) {
+
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
+        // boolean lectureIsInvisible = userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate());
+        // if (lectureIsInvisible) {
+        // return Set.of();
+        // }
+
+        boolean onlyEndDateAvailable = startDate == null && endDate != null;
+        if (onlyEndDateAvailable) {
+            String titlePrefix = switch (language) {
                 case ENGLISH -> "End: ";
                 case GERMAN -> "Ende: ";
             };
-            return Optional
-                    .of(new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.endDate(), null, null, null));
+            return Set.of(new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.endDate(), null, null, null));
         }
-        if (dto.startDate() != null && dto.endDate() == null) {
-            titlePrefix = "Start: ";
-            return Optional
+
+        boolean onlyStartDateAvailable = startDate != null && endDate == null;
+        if (onlyStartDateAvailable) {
+            String titlePrefix = "Start: ";
+            return Set
                     .of(new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.startDate(), null, null, null));
         }
-        return Optional
-                .of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
+
+        final int TWELVE_HOURS_IN_MINUTES = 12 * 60;
+        boolean lectureLengthExceedsTwelveHours = Duration.between(startDate, endDate).abs().toMinutes() > TWELVE_HOURS_IN_MINUTES;
+        if (lectureLengthExceedsTwelveHours) {
+            String startTitlePrefix = "Start: ";
+            CalendarEventDTO startDto = new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, startTitlePrefix + dto.title(),
+                    dto.startDate(), null, null, null);
+            String endTitlePrefix = switch (language) {
+                case ENGLISH -> "End: ";
+                case GERMAN -> "Ende: ";
+            };
+            CalendarEventDTO endDto = new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, endTitlePrefix + dto.title(), dto.endDate(), null,
+                    null, null);
+            return Set.of(startDto, endDto);
+        }
+
+        return Set.of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
+    }
+
+    /**
+     * Corrects the default names of lectures and their corresponding channels for a given course after a lecture series has been created.
+     * <p>
+     * When {@link LectureResource#createLectureSeries} is called, Artemis generates new lectures, assigns them default titles,
+     * and creates channels with corresponding default names. A default lecture title follows the pattern {@code "Lecture ${index}"},
+     * while a default channel name uses the pattern {@code "lecture-lecture-${index}"}. Here, {@code ${index}} represents the lecture’s
+     * position within the sequence of all lectures in the course ordered like this:
+     * <p>
+     * Lectures are ordered according to the first non-null value of {@code startDate} or {@code endDate}. Lectures with neither of these
+     * are placed at the end of the sequence and ordered by their ID to ensure a stable sorting.
+     * <p>
+     * When {@code createLectureSeries()} is called multiple times, the existing numbering may become inconsistent due to the newly
+     * inserted lectures. This method corrects such inconsistencies by reapplying the proper numbering.
+     *
+     * @param courseId the ID of the course whose lecture and channel names should be corrected
+     */
+    public void correctDefaultLectureAndChannelNames(long courseId) {
+        Set<Channel> existingLectureChannels = channelRepository.findLectureChannelsByCourseId(courseId);
+        Map<Long, Channel> lectureToChannelMap = existingLectureChannels.stream().collect(Collectors.toMap(channel -> channel.getLecture().getId(), Function.identity()));
+        Comparator<Lecture> lectureComparator = Comparator
+                .comparing((Lecture lecture) -> lecture.getStartDate() != null ? lecture.getStartDate() : lecture.getEndDate(), Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Lecture::getId);
+        List<Lecture> existingLectures = existingLectureChannels.stream().map(Channel::getLecture).sorted(lectureComparator).toList();
+
+        Pattern defaultLectureNamePattern = Pattern.compile("^Lecture (\\d+)$");
+        Pattern defaultChannelnamePattern = Pattern.compile("^lecture-lecture-(\\d+)$");
+        for (int index = 0; index < existingLectures.size(); index++) {
+            Lecture lecture = existingLectures.get(index);
+            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches()) {
+                lecture.setTitle("Lecture " + (index + 1));
+            }
+            Channel channel = lectureToChannelMap.get(lecture.getId());
+            String channelName = channel.getName();
+            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches()) {
+                channel.setName("lecture-lecture-" + (index + 1));
+            }
+        }
+
+        lectureRepository.saveAll(existingLectures);
+        channelRepository.saveAll(existingLectureChannels);
     }
 }

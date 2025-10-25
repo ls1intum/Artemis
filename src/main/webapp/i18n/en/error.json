@@ -125,8 +125,23 @@
             "invalidSeatCondition": "Room {{ roomNumber }} has an unknown seat condition: '{{ seatCondition }}'",
             "missingLayouts": "Couldn't parse layouts from room {{ roomNumber }}",
             "malformedLayout": "Layout {{ layoutName }} is malformed in room {{ roomNumber }}",
-            "unknownLayoutType": "Unknown layout type '{{ layoutType }}' in layout '{{ layoutName }}' in room {{ roomNumber }}"
+            "unknownLayoutType": "Unknown layout type '{{ layoutType }}' in layout '{{ layoutName }}' in room {{ roomNumber }}",
+            "invalidLayout": "The layout {{ layoutName }} in room {{ roomNumber }} is invalid",
+            "seatNotFoundFixedSelection": "The seat at row index {{ rowIndex }} and seat index {{ seatIndex }} in room {{ roomNumber }} does not exist",
+            "missingDefaultLayout": "The room {{ roomNumber }} does not have a default layout",
+            "missingSpecifiedLayout": "The room {{ roomNumber }} does not have a {{ layoutName }} layout"
         },
+        "examUser": {
+            "service": {
+                "multipleExams": "All exam users must belong to the same exam, but currently they belong to {{ foundExams }} different exams",
+                "missingPlannedRoomOrSeat": "User {{ userName }} is missing a planned room and seat",
+                "plannedRoomNotFound": "The planned room {{ plannedRoom }} of user {{ userName }} could not be found",
+                "plannedSeatNotFound": "The planned seat {{ plannedSeat }} of user {{ userName }} could not be found"
+            }
+        },
+        "notEnoughExamSeats": "The selected rooms can only seat {{ numberOfUsableSeats }} of the {{ numberOfExamUsers }} students",
+        "noRoomIDs": "You didn't select any rooms",
+        "invalidRoomIDs": "At least one of your selected rooms doesn't exist or is outdated",
         "wrongCourse": "The reaction does not belong to the selected course.",
         "reactionNotFound": "The reaction could not be found.",
         "missingAssociation": "The reaction must be associated with a post or an answer post.",
