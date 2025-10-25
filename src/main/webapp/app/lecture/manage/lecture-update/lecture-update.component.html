@@ -1,121 +1,139 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
-            <div class="d-flex">
-                <div class="flex-grow-1">
-                    <div class="d-flex align-items-center">
-                        <h2 id="jhi-lecture-heading" [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.home.editLabel' : 'artemisApp.lecture.home.createLabel'"></h2>
-                        <jhi-documentation-button [type]="documentationType" />
-                    </div>
-                </div>
+        <div class="d-flex">
+            <div class="d-flex align-items-center">
+                <h2 id="jhi-lecture-heading" [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.home.editLabel' : 'artemisApp.lecture.home.createLabel'"></h2>
+                <jhi-documentation-button [type]="documentationType" />
             </div>
-            <jhi-form-status-bar [formStatusSections]="formStatusSections" />
-            <div>
+            <div class="flex-grow-1"></div>
+            @let currentCourseId = courseId();
+            @if (!isEditMode() && currentCourseId) {
+                <p-selectbutton
+                    [options]="createLectureOptions()"
+                    [ngModel]="selectedCreateLectureOption()"
+                    (ngModelChange)="selectedCreateLectureOption.set($event)"
+                    [unselectable]="true"
+                    optionLabel="label"
+                    optionValue="mode"
+                    size="small"
+                />
+            }
+        </div>
+        @if (isLectureSeriesCreationMode() && currentCourseId) {
+            <jhi-lecture-series-create [existingLectures]="existingLectures()" [courseId]="currentCourseId" />
+        } @else {
+            <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
+                <jhi-form-status-bar [formStatusSections]="formStatusSections" />
                 <div>
-                    <h3 id="artemisApp.lecture.sections.title"><span jhiTranslate="artemisApp.lecture.sections.title"></span></h3>
-                    <p><span jhiTranslate="artemisApp.lecture.sections.titleDescription"></span></p>
-                    @if (courseTitle()) {
-                        <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
-                            <div class="d-flex">
-                                <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="courseTitle" />
+                    <div>
+                        <h3 id="artemisApp.lecture.sections.title"><span jhiTranslate="artemisApp.lecture.sections.title"></span></h3>
+                        <p><span jhiTranslate="artemisApp.lecture.sections.titleDescription"></span></p>
+                        @if (courseTitle()) {
+                            <div class="form-group">
+                                <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
+                                <div class="d-flex">
+                                    <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="courseTitle" />
+                                </div>
                             </div>
-                        </div>
-                    }
-                    <jhi-lecture-title-channel-name [lecture]="lecture()" />
-                    @if (lecture()) {
-                        <div class="form-group" id="field_description">
-                            <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>
-                            <jhi-markdown-editor-monaco
-                                class="markdown-editor"
-                                [domainActions]="domainActionsDescription"
-                                [(markdown)]="lecture().description"
-                                (markdownChange)="updateIsChangesMadeToTitleOrPeriodSection()"
-                            />
-                        </div>
-                    }
-                </div>
-                <jhi-lecture-update-period [lecture]="lecture()" [validateDatesFunction]="onDatesValuesChanged" />
-                <div class="flex-grow-1 d-flex justify-content-end">
-                    <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                        <fa-icon [icon]="faBan" class="me-1" /><span jhiTranslate="entity.action.cancel"></span>
-                    </button>
-                    <button
-                        type="submit"
-                        id="save-entity"
-                        class="btn btn-primary ms-2"
-                        [disabled]="editForm.form.invalid || isSaving || processUnitMode || !isChangeMadeToTitleOrPeriodSection || !areSectionsValid()"
-                    >
-                        <fa-icon [icon]="faSave" class="me-1" /><span jhiTranslate="entity.action.save"></span>
-                    </button>
-                </div>
-            </div>
-            @if (isEditMode()) {
-                <div class="mt-3">
-                    <jhi-lecture-update-units [lecture]="lecture()" />
-                    <div class="py-2">
-                        <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
-                        <span class="px-1" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processAutomatically"></span>
-                        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.lectureFileToolTip' | artemisTranslate" />
+                        }
+                        <jhi-lecture-title-channel-name [lecture]="lecture()" />
+                        @if (lecture()) {
+                            <div class="form-group" id="field_description">
+                                <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>
+                                <jhi-markdown-editor-monaco
+                                    class="markdown-editor"
+                                    [domainActions]="domainActionsDescription"
+                                    [(markdown)]="lecture().description"
+                                    (markdownChange)="updateIsChangesMadeToTitleOrPeriodSection()"
+                                />
+                            </div>
+                        }
+                    </div>
+                    <jhi-lecture-update-period [lecture]="lecture()" [validateDatesFunction]="onDatesValuesChanged" />
+                    <div class="flex-grow-1 d-flex justify-content-end">
+                        <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                            <fa-icon [icon]="faBan" class="me-1" /><span jhiTranslate="entity.action.cancel"></span>
+                        </button>
+                        <button
+                            type="submit"
+                            id="save-entity"
+                            class="btn btn-primary ms-2"
+                            [disabled]="editForm.form.invalid || isSaving || processUnitMode || !isChangeMadeToTitleOrPeriodSection || !areSectionsValid()"
+                        >
+                            <fa-icon [icon]="faSave" class="me-1" /><span jhiTranslate="entity.action.save"></span>
+                        </button>
                     </div>
                 </div>
-            }
-            @if (processUnitMode) {
-                <div class="alert alert-warning mt-3">
-                    <ul class="informative-text">
-                        <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.informativeText.firstLine"></li>
-                        <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.informativeText.secondLine"></li>
-                        <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.informativeText.note"></li>
-                    </ul>
-                </div>
-            }
-            @if (processUnitMode) {
-                <div class="form-group">
-                    <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}*</label>
-                    <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
-                    <fa-icon
-                        [icon]="faQuestionCircle"
-                        [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
-                    />
-                    <div class="input-group background-file">
-                        <div class="custom-file overflow-ellipsis">
-                            <input
-                                id="fileInput"
-                                type="file"
-                                class="custom-file-input file-input-margin"
-                                [accept]="acceptedFileExtensionsFileBrowser"
-                                (change)="onFileChange($event)"
-                                aria-describedby="fileHelp"
-                                [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile' | artemisTranslate"
-                                (click)="fileInputTouched = true"
-                            />
-                        </div>
-                    </div>
-                    @if (!fileName && fileInputTouched) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></div>
-                    }
-                </div>
-            }
-            <div class="d-flex">
-                @if (processUnitMode) {
-                    <div class="flex-grow-1 ms-3">
-                        <div class="process-units-button">
-                            <button
-                                type="button"
-                                id="process-units-entity"
-                                [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !fileName"
-                                class="btn btn-success"
-                                (click)="proceedToUnitSplit()"
-                            >
-                                <fa-icon [icon]="faPuzzleProcess" class="me-1" /><span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processUnits"></span>
-                                @if (isProcessing) {
-                                    <span class="spinner-border spinner-border-sm"></span>
-                                }
-                            </button>
+                @if (isEditMode()) {
+                    <div class="mt-3">
+                        <jhi-lecture-update-units [lecture]="lecture()" />
+                        <div class="py-2">
+                            <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
+                            <span class="px-1" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processAutomatically"></span>
+                            <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.lectureFileToolTip' | artemisTranslate" />
                         </div>
                     </div>
                 }
-            </div>
-        </form>
+                @if (processUnitMode) {
+                    <div class="alert alert-warning mt-3">
+                        <ul class="informative-text">
+                            <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.informativeText.firstLine"></li>
+                            <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.informativeText.secondLine"></li>
+                            <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.informativeText.note"></li>
+                        </ul>
+                    </div>
+                }
+                @if (processUnitMode) {
+                    <div class="form-group">
+                        <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}*</label>
+                        <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            [ngbTooltip]="
+                                'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }
+                            "
+                        />
+                        <div class="input-group background-file">
+                            <div class="custom-file overflow-ellipsis">
+                                <input
+                                    id="fileInput"
+                                    type="file"
+                                    class="custom-file-input file-input-margin"
+                                    [accept]="acceptedFileExtensionsFileBrowser"
+                                    (change)="onFileChange($event)"
+                                    aria-describedby="fileHelp"
+                                    [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile' | artemisTranslate"
+                                    (click)="fileInputTouched = true"
+                                />
+                            </div>
+                        </div>
+                        @if (!fileName && fileInputTouched) {
+                            <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></div>
+                        }
+                    </div>
+                }
+                <div class="d-flex">
+                    @if (processUnitMode) {
+                        <div class="flex-grow-1 ms-3">
+                            <div class="process-units-button">
+                                <button
+                                    type="button"
+                                    id="process-units-entity"
+                                    [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !fileName"
+                                    class="btn btn-success"
+                                    (click)="proceedToUnitSplit()"
+                                >
+                                    <fa-icon [icon]="faPuzzleProcess" class="me-1" />
+                                    <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processUnits"></span>
+                                    @if (isProcessing) {
+                                        <span class="spinner-border spinner-border-sm"></span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </form>
+        }
     </div>
 </div>

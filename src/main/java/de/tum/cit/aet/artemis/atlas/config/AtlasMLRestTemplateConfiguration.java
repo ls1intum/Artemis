@@ -1,13 +1,10 @@
 package de.tum.cit.aet.artemis.atlas.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
@@ -15,7 +12,6 @@ import org.springframework.web.client.RestTemplate;
  * Configuration for AtlasML RestTemplate.
  * Provides RestTemplate beans for communicating with the AtlasML microservice.
  */
-@Profile(PROFILE_CORE)
 @Conditional(AtlasEnabled.class)
 @Configuration
 @Lazy
@@ -29,7 +25,7 @@ public class AtlasMLRestTemplateConfiguration {
 
     private static final int ATLASML_SHORT_READ_TIMEOUT = 10 * 1000; // 10 seconds
 
-    @Value("${atlas.atlasml.base-url:http://atlasml.aet.cit.tum.de/}")
+    @Value("${atlas.atlasml.base-url:https://atlasml.aet.cit.tum.de}")
     private String atlasmlBaseUrl;
 
     @Value("${atlas.atlasml.auth-token:}")

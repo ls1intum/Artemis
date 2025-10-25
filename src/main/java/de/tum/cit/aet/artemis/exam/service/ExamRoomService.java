@@ -53,12 +53,9 @@ public class ExamRoomService {
 
     private final ObjectMapper objectMapper;
 
-    private final ExamUserRepository examUserRepository;
-
     public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper, ExamUserRepository examUserRepository) {
         this.examRoomRepository = examRoomRepository;
         this.objectMapper = objectMapper;
-        this.examUserRepository = examUserRepository;
     }
 
     /* Multiple records that will be used internally for Jackson deserialization */
@@ -156,9 +153,9 @@ public class ExamRoomService {
 
     private static ExamRoom extractSimpleExamRoomFields(String roomNumber, ExamRoomInput examRoomInput) {
         ExamRoom room = new ExamRoom();
-        room.setRoomNumber(roomNumber);
+        room.setRoomNumber(roomNumber.replaceAll("\u0000", ""));
         final String alternativeRoomNumber = examRoomInput.alternativeNumber;
-        if (!roomNumber.equals(alternativeRoomNumber)) {
+        if (!room.getRoomNumber().equals(alternativeRoomNumber)) {
             room.setAlternativeRoomNumber(alternativeRoomNumber);
         }
 
@@ -456,7 +453,7 @@ public class ExamRoomService {
             final int seatIndex = seatInput.seatIndex();
 
             if (rowIndex < 0 || sortedRows.size() <= rowIndex || seatIndex < 0 || sortedRows.get(rowIndex).size() <= seatIndex) {
-                throw new BadRequestAlertException("Sire, the selected seat " + seatInput + " does not exist in room " + roomNumber, ENTITY_NAME, "room.seatNotFoundFixedSelection",
+                throw new BadRequestAlertException("The selected seat " + seatInput + " does not exist in room " + roomNumber, ENTITY_NAME, "room.seatNotFoundFixedSelection",
                         Map.of("rowIndex", rowIndex, "seatIndex", seatIndex, "roomNumber", roomNumber));
             }
 
@@ -500,8 +497,8 @@ public class ExamRoomService {
      *
      * @param examRoom The exam room
      * @param firstRow Number of the first row (starts at 1, lower values default to 1)
-     * @param xSpace   Minimum required free space between the left and right of seats
-     * @param ySpace   Minimum required free space between rows
+     * @param xSpace   Required spacing between seats (exclusive minimum - distances equal to this value are rejected)
+     * @param ySpace   Required spacing between rows (exclusive minimum - distances equal to this value are rejected)
      * @return Sorted list of this room's seats, respecting the given filters
      */
     private static List<ExamSeatDTO> getSortedSeatsWithRelativeDistanceFilters(ExamRoom examRoom, int firstRow, double xSpace, double ySpace) {
@@ -536,8 +533,16 @@ public class ExamRoomService {
     private static List<ExamSeatDTO> applyXSpaceAndYSpaceFilter(List<ExamSeatDTO> sortedSeatsAfterFirstRowFilter, double xSpace, double ySpace) {
         List<ExamSeatDTO> usableSeats = new ArrayList<>();
         for (ExamSeatDTO examSeatDTO : sortedSeatsAfterFirstRowFilter) {
-            boolean isFarEnough = usableSeats.stream().noneMatch(
-                    existing -> Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate()) <= ySpace && Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate()) <= xSpace);
+            boolean isFarEnough = usableSeats.stream().noneMatch(existing -> {
+                double yDifference = Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate());
+                double xDifference = Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate());
+
+                boolean isDifferentRowWithoutEnoughSpaceBetweenRows = 0 < yDifference && yDifference <= ySpace;
+                boolean isSameRowWithoutEnoughSpaceBetweenColumns = yDifference == 0 && xDifference <= xSpace;
+
+                return isDifferentRowWithoutEnoughSpaceBetweenRows || isSameRowWithoutEnoughSpaceBetweenColumns;
+            });
+
             if (isFarEnough) {
                 usableSeats.add(examSeatDTO);
             }
