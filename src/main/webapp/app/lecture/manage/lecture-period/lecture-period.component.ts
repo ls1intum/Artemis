@@ -1,27 +1,51 @@
-import { Component, Input, Signal, computed, input, viewChildren } from '@angular/core';
+import { Component, Input, computed, input, signal, viewChildren } from '@angular/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import dayjs from 'dayjs/esm';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-lecture-update-period',
     templateUrl: './lecture-period.component.html',
-    imports: [TranslateDirective, FormDateTimePickerComponent, FormsModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormDateTimePickerComponent, FormsModule, ArtemisTranslatePipe, FaIconComponent],
+    styleUrl: './lecture-period.component.scss',
 })
 export class LectureUpdatePeriodComponent {
-    lecture = input.required<Lecture>();
+    private static readonly MAX_RECOMMENDED_LECTURE_LENGTH_IN_MINUTES = 8 * 60;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+
     @Input() validateDatesFunction: () => void;
-
+    lecture = input.required<Lecture>();
     periodSectionDatepickers = viewChildren(FormDateTimePickerComponent);
+    isLectureLongerThanRecommended = signal(false);
+    isPeriodSectionValid = computed(() => this.computeIsPeriodSectionValid());
 
-    isPeriodSectionValid: Signal<boolean> = computed(() => {
+    onDateChange() {
+        this.isLectureLongerThanRecommended.set(this.computeIsLectureLongerThanRecommended());
+        this.validateDatesFunction();
+    }
+
+    private computeIsLectureLongerThanRecommended(): boolean {
+        const lecture = this.lecture();
+        const start = lecture.startDate;
+        const end = lecture.endDate;
+        if (!start || !end) {
+            return false;
+        }
+        const differenceInHours = dayjs(end).diff(dayjs(start), 'minutes');
+        return differenceInHours > LectureUpdatePeriodComponent.MAX_RECOMMENDED_LECTURE_LENGTH_IN_MINUTES;
+    }
+
+    private computeIsPeriodSectionValid(): boolean {
         for (const periodSectionDatepicker of this.periodSectionDatepickers()) {
             if (!periodSectionDatepicker.isValid()) {
                 return false;
             }
         }
         return true;
-    });
+    }
 }

@@ -7,7 +7,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -22,8 +21,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
@@ -35,9 +32,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamRoomTestRepository;
-import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamRoomZipFiles;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -79,12 +74,6 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static ExpectedRoom singleNoLayoutsExpectedRoom;
 
-    private Course course1;
-
-    private Exam exam1;
-
-    private static final int NUMBER_OF_STUDENTS = 200;
-
     record ExpectedRoom(String roomNumber, String alternativeRoomNumber, String name, String alternativeName, String building) {
 
         public ExpectedRoom(String roomNumber, String alternativeRoomNumber, String name, String alternativeName, String building) {
@@ -110,10 +99,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void setup() {
-        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
-
-        course1 = courseUtilService.addEmptyCourse();
-        exam1 = examUtilService.addExam(course1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
     }
 
     @AfterEach

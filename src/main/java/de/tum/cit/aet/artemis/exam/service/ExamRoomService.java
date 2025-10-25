@@ -153,9 +153,9 @@ public class ExamRoomService {
 
     private static ExamRoom extractSimpleExamRoomFields(String roomNumber, ExamRoomInput examRoomInput) {
         ExamRoom room = new ExamRoom();
-        room.setRoomNumber(roomNumber);
+        room.setRoomNumber(roomNumber.replaceAll("\u0000", ""));
         final String alternativeRoomNumber = examRoomInput.alternativeNumber;
-        if (!roomNumber.equals(alternativeRoomNumber)) {
+        if (!room.getRoomNumber().equals(alternativeRoomNumber)) {
             room.setAlternativeRoomNumber(alternativeRoomNumber);
         }
 
@@ -356,10 +356,26 @@ public class ExamRoomService {
      */
     public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom) {
         LayoutStrategy defaultLayoutStrategy = getDefaultLayoutStrategyOrElseThrow(examRoom);
+        return getUsableSeatsForLayout(examRoom, defaultLayoutStrategy);
+    }
 
-        return switch (defaultLayoutStrategy.getType()) {
-            case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, defaultLayoutStrategy);
-            case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, defaultLayoutStrategy);
+    /**
+     * Calculates the exam seats that are usable for an exam, according to given layout
+     *
+     * @param examRoom       The exam room, containing seats and default layout
+     * @param layoutStrategy The layout strategy we want to apply. Must be a layout strategy of the given exam room
+     *
+     * @return All seats that can be used for the exam, in ascending order
+     */
+    public List<ExamSeatDTO> getUsableSeatsForLayout(ExamRoom examRoom, LayoutStrategy layoutStrategy) {
+        if (!examRoom.getLayoutStrategies().contains(layoutStrategy)) {
+            throw new BadRequestAlertException("Could not find specified layout", ENTITY_NAME, "room.missingSpecifiedLayout",
+                    Map.of("roomNumber", examRoom.getRoomNumber(), "layoutName", layoutStrategy.getName()));
+        }
+
+        return switch (layoutStrategy.getType()) {
+            case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, layoutStrategy);
+            case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, layoutStrategy);
         };
     }
 
@@ -418,7 +434,7 @@ public class ExamRoomService {
             final int seatIndex = seatInput.seatIndex();
 
             if (rowIndex < 0 || sortedRows.size() <= rowIndex || seatIndex < 0 || sortedRows.get(rowIndex).size() <= seatIndex) {
-                throw new BadRequestAlertException("Sire, the selected seat " + seatInput + " does not exist in room " + roomNumber, ENTITY_NAME, "room.seatNotFoundFixedSelection",
+                throw new BadRequestAlertException("The selected seat " + seatInput + " does not exist in room " + roomNumber, ENTITY_NAME, "room.seatNotFoundFixedSelection",
                         Map.of("rowIndex", rowIndex, "seatIndex", seatIndex, "roomNumber", roomNumber));
             }
 
@@ -462,8 +478,8 @@ public class ExamRoomService {
      *
      * @param examRoom The exam room
      * @param firstRow Number of the first row (starts at 1, lower values default to 1)
-     * @param xSpace   Minimum required free space between the left and right of seats
-     * @param ySpace   Minimum required free space between rows
+     * @param xSpace   Required spacing between seats (exclusive minimum - distances equal to this value are rejected)
+     * @param ySpace   Required spacing between rows (exclusive minimum - distances equal to this value are rejected)
      * @return Sorted list of this room's seats, respecting the given filters
      */
     private static List<ExamSeatDTO> getSortedSeatsWithRelativeDistanceFilters(ExamRoom examRoom, int firstRow, double xSpace, double ySpace) {
@@ -498,8 +514,16 @@ public class ExamRoomService {
     private static List<ExamSeatDTO> applyXSpaceAndYSpaceFilter(List<ExamSeatDTO> sortedSeatsAfterFirstRowFilter, double xSpace, double ySpace) {
         List<ExamSeatDTO> usableSeats = new ArrayList<>();
         for (ExamSeatDTO examSeatDTO : sortedSeatsAfterFirstRowFilter) {
-            boolean isFarEnough = usableSeats.stream().noneMatch(
-                    existing -> Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate()) <= ySpace && Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate()) <= xSpace);
+            boolean isFarEnough = usableSeats.stream().noneMatch(existing -> {
+                double yDifference = Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate());
+                double xDifference = Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate());
+
+                boolean isDifferentRowWithoutEnoughSpaceBetweenRows = 0 < yDifference && yDifference <= ySpace;
+                boolean isSameRowWithoutEnoughSpaceBetweenColumns = yDifference == 0 && xDifference <= xSpace;
+
+                return isDifferentRowWithoutEnoughSpaceBetweenRows || isSameRowWithoutEnoughSpaceBetweenColumns;
+            });
+
             if (isFarEnough) {
                 usableSeats.add(examSeatDTO);
             }

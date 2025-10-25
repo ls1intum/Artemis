@@ -1,0 +1,31 @@
+{
+    "artemisApp": {
+        "sharing": {
+            "title": "Import aus Austauschplattform",
+            "expiresAt": "Verbindung zur Austauschplattform läuft um <strong>{{expirationDate}}</strong> ab",
+            "importedExercise": "Importierte Aufgaben",
+            "courseToImport": "Kurs für Aufgaben Import",
+            "noExercisesFound": "Keine importierten Aufgaben gefunden!",
+            "exerciseToImport": "Bitte wähle die zu importierende Aufgabe aus",
+            "loginAsInstructorOrEditor": "Bitte melde dich als Instruktor oder Editor an!",
+            "coursesLoading": "Kurse werden geladen, bitte ein wenig Geduld",
+            "error": {
+                "loadingStatus": "Sharing Profile ist nicht aktiv!",
+                "missingParameters": "Es fehlen Parameter!",
+                "statusError": "Status der Sharing Platform kann nicht identifiziert werden",
+                "navigation": "Navigation zur Importseite fehlgeschlagen",
+                "importError": "Das Importieren der Aufgabe ist fehlgeschlagen",
+                "missingToken": "Token aus der Sharing Plattform fehlt",
+                "noImportedExercises": "Keine importierten Aufgaben gefunden",
+                "loadingCourses": "Fehler beim Laden der Kurse",
+                "loadingBasket": "Fehler beim Laden des Imports",
+                "atLeastEditorNeeded": "Du musst mindestens Editorrechte haben! Bitte melde dich entsprechend an."
+            }
+        }
+    },
+    "health": {
+        "indicator": {
+            "SharingConnectorService": "Sharing Connector"
+        }
+    }
+}
