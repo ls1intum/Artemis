@@ -25,15 +25,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { IsLoggedInWithPasskeyGuard } from 'app/core/auth/is-logged-in-with-passkey/is-logged-in-with-passkey.guard';
-import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
-import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
-import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
-import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { LoginWithPasskeyModal } from 'app/core/navbar/server-administration/login-with-passkey/login-with-passkey.modal';
 
 @Component({
@@ -75,12 +68,6 @@ export class ServerAdministration implements OnInit {
     protected readonly faUserPlus = faUserPlus;
 
     private readonly isLoggedInWithPasskeyGuard = inject(IsLoggedInWithPasskeyGuard);
-    private readonly webauthnService = inject(WebauthnService);
-    private readonly webauthnApiService = inject(WebauthnApiService);
-    private readonly alertService = inject(AlertService);
-    private readonly router = inject(Router);
-    private readonly eventManager = inject(EventManager);
-    private readonly accountService = inject(AccountService);
 
     adminMenuDropdown = viewChild.required<NgbDropdown>('adminMenuDropdown');
     loginWithPasskeyModal = viewChild.required<LoginWithPasskeyModal>(LoginWithPasskeyModal);
@@ -95,8 +82,6 @@ export class ServerAdministration implements OnInit {
     examEnabled = input<boolean>(false);
 
     collapseNavbarListener = output<void>();
-
-    authenticationError = false;
 
     protected isLoggedInWithPasskey = signal<boolean>(false);
     private justLoggedInWithPasskey = false;
@@ -128,60 +113,20 @@ export class ServerAdministration implements OnInit {
         this.collapseNavbarListener.emit();
     }
 
-    protected showModal() {
+    protected showModalForPasskeyLogin() {
+        if (this.isLoggedInWithPasskey()) {
+            return;
+        }
+
         this.adminMenuDropdown().close();
         this.loginWithPasskeyModal().showModal = true;
     }
 
-    async loginWithPasskey() {
-        try {
-            const authenticatorCredential = await this.webauthnService.getCredential();
-
-            if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
-                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
-                throw new InvalidCredentialError();
-            }
-
-            const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential) as unknown as PublicKeyCredential;
-            if (!credential) {
-                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
-                throw new InvalidCredentialError();
-            }
-
-            await this.webauthnApiService.loginWithPasskey(credential);
-            this.handleLoginSuccess();
-        } catch (error) {
-            if (error instanceof InvalidCredentialError) {
-                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-            } else {
-                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
-            }
-            // eslint-disable-next-line no-undef
-            console.error(error);
-            throw error;
-        }
+    onIsLoggedInWithPasskeyOutput(value: boolean) {
+        this.isLoggedInWithPasskey.set(value);
     }
 
-    /**
-     * Handle a successful user login.
-     */
-    private handleLoginSuccess() {
-        this.authenticationError = false;
-        this.accountService.userIdentity = {
-            ...this.accountService.userIdentity,
-            isLoggedInWithPasskey: true,
-            internal: this.accountService.userIdentity?.internal ?? false,
-        };
-        this.isLoggedInWithPasskey.set(true); // TODO can be done via effect one other PR is merged
-        this.justLoggedInWithPasskey = true;
-
-        if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
-            this.router.navigate(['']);
-        }
-
-        this.eventManager.broadcast({
-            name: 'authenticationSuccess',
-            content: 'Sending Authentication Success',
-        });
+    onJustLoggedInWithPasskey(value: boolean) {
+        this.justLoggedInWithPasskey = false;
     }
 }

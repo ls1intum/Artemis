@@ -5,7 +5,7 @@
     class="nav-item dropdown pointer server-administration"
     display="dynamic"
     routerLinkActive="active"
-    (click)="showModal()"
+    (click)="showModalForPasskeyLogin()"
 >
     @if (!isExamActive() && !isExamStarted()) {
         <a class="jh-navbar nav-link dropdown-toggle py-0" ngbDropdownToggle id="admin-menu">
@@ -148,4 +148,4 @@
         }
     </ul>
 </li>
-<jhi-login-with-passkey-modal />
+<jhi-login-with-passkey-modal (isLoggedInWithPasskeyOutput)="onIsLoggedInWithPasskeyOutput($event)" (justLoggedInWithPasskey)="onJustLoggedInWithPasskey($event)" />
