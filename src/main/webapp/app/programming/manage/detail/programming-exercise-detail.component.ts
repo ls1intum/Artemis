@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -37,15 +37,13 @@ import { ConsistencyCheckService } from 'app/programming/manage/consistency-chec
 import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/button/programming-exercise-reset-button.directive';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
-import {
-    ProgrammingExerciseInstructorExerciseDownloadComponent,
-} from 'app/programming/shared/actions/instructor-exercise-download/programming-exercise-instructor-exercise-download.component';
+import { ProgrammingExerciseInstructorExerciseDownloadComponent } from 'app/programming/shared/actions/instructor-exercise-download/programming-exercise-instructor-exercise-download.component';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
-import { processRepositoryDiff, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
@@ -64,7 +62,7 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
-import { forkJoin, from, Observable, of, Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../shared/actions/programming-exercise-instructor-exercise-sharing.component';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
