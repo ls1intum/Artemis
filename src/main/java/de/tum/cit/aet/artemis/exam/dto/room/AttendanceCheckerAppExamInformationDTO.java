@@ -63,7 +63,8 @@ record ExamUserLocationDTO(
     static ExamUserLocationDTO actualFrom(ExamUser examUser) {
         final boolean isLegacy = examUser.getPlannedRoomTransient() == null || examUser.getPlannedSeatTransient() == null;
 
-        if (!isLegacy && (examUser.getActualRoomTransient() == null || examUser.getActualSeatTransient() == null)) {
+        if (examUser.getActualRoom() == null || examUser.getActualSeat() == null ||
+            (!isLegacy && (examUser.getActualRoomTransient() == null || examUser.getActualSeatTransient() == null))) {
             return null;
         }
 
