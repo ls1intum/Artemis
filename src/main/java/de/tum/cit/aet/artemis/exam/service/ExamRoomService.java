@@ -53,12 +53,9 @@ public class ExamRoomService {
 
     private final ObjectMapper objectMapper;
 
-    private final ExamUserRepository examUserRepository;
-
     public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper, ExamUserRepository examUserRepository) {
         this.examRoomRepository = examRoomRepository;
         this.objectMapper = objectMapper;
-        this.examUserRepository = examUserRepository;
     }
 
     /* Multiple records that will be used internally for Jackson deserialization */
@@ -156,9 +153,9 @@ public class ExamRoomService {
 
     private static ExamRoom extractSimpleExamRoomFields(String roomNumber, ExamRoomInput examRoomInput) {
         ExamRoom room = new ExamRoom();
-        room.setRoomNumber(roomNumber);
+        room.setRoomNumber(roomNumber.replaceAll("\u0000", ""));
         final String alternativeRoomNumber = examRoomInput.alternativeNumber;
-        if (!roomNumber.equals(alternativeRoomNumber)) {
+        if (!room.getRoomNumber().equals(alternativeRoomNumber)) {
             room.setAlternativeRoomNumber(alternativeRoomNumber);
         }
 
@@ -359,10 +356,26 @@ public class ExamRoomService {
      */
     public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom) {
         LayoutStrategy defaultLayoutStrategy = getDefaultLayoutStrategyOrElseThrow(examRoom);
+        return getUsableSeatsForLayout(examRoom, defaultLayoutStrategy);
+    }
 
-        return switch (defaultLayoutStrategy.getType()) {
-            case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, defaultLayoutStrategy);
-            case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, defaultLayoutStrategy);
+    /**
+     * Calculates the exam seats that are usable for an exam, according to given layout
+     *
+     * @param examRoom       The exam room, containing seats and default layout
+     * @param layoutStrategy The layout strategy we want to apply. Must be a layout strategy of the given exam room
+     *
+     * @return All seats that can be used for the exam, in ascending order
+     */
+    public List<ExamSeatDTO> getUsableSeatsForLayout(ExamRoom examRoom, LayoutStrategy layoutStrategy) {
+        if (!examRoom.getLayoutStrategies().contains(layoutStrategy)) {
+            throw new BadRequestAlertException("Could not find specified layout", ENTITY_NAME, "room.missingSpecifiedLayout",
+                    Map.of("roomNumber", examRoom.getRoomNumber(), "layoutName", layoutStrategy.getName()));
+        }
+
+        return switch (layoutStrategy.getType()) {
+            case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, layoutStrategy);
+            case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, layoutStrategy);
         };
     }
 
@@ -421,7 +434,7 @@ public class ExamRoomService {
             final int seatIndex = seatInput.seatIndex();
 
             if (rowIndex < 0 || sortedRows.size() <= rowIndex || seatIndex < 0 || sortedRows.get(rowIndex).size() <= seatIndex) {
-                throw new BadRequestAlertException("Sire, the selected seat " + seatInput + " does not exist in room " + roomNumber, ENTITY_NAME, "room.seatNotFoundFixedSelection",
+                throw new BadRequestAlertException("The selected seat " + seatInput + " does not exist in room " + roomNumber, ENTITY_NAME, "room.seatNotFoundFixedSelection",
                         Map.of("rowIndex", rowIndex, "seatIndex", seatIndex, "roomNumber", roomNumber));
             }
 
