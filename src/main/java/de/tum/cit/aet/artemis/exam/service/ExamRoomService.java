@@ -465,8 +465,8 @@ public class ExamRoomService {
      *
      * @param examRoom The exam room
      * @param firstRow Number of the first row (starts at 1, lower values default to 1)
-     * @param xSpace   Minimum required free space between the left and right of seats
-     * @param ySpace   Minimum required free space between rows
+     * @param xSpace   Required spacing between seats (exclusive minimum - distances equal to this value are rejected)
+     * @param ySpace   Required spacing between rows (exclusive minimum - distances equal to this value are rejected)
      * @return Sorted list of this room's seats, respecting the given filters
      */
     private static List<ExamSeatDTO> getSortedSeatsWithRelativeDistanceFilters(ExamRoom examRoom, int firstRow, double xSpace, double ySpace) {
@@ -501,8 +501,16 @@ public class ExamRoomService {
     private static List<ExamSeatDTO> applyXSpaceAndYSpaceFilter(List<ExamSeatDTO> sortedSeatsAfterFirstRowFilter, double xSpace, double ySpace) {
         List<ExamSeatDTO> usableSeats = new ArrayList<>();
         for (ExamSeatDTO examSeatDTO : sortedSeatsAfterFirstRowFilter) {
-            boolean isFarEnough = usableSeats.stream().noneMatch(
-                    existing -> Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate()) <= ySpace && Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate()) <= xSpace);
+            boolean isFarEnough = usableSeats.stream().noneMatch(existing -> {
+                double yDifference = Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate());
+                double xDifference = Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate());
+
+                boolean isDifferentRowWithoutEnoughSpaceBetweenRows = 0 < yDifference && yDifference <= ySpace;
+                boolean isSameRowWithoutEnoughSpaceBetweenColumns = yDifference == 0 && xDifference <= xSpace;
+
+                return isDifferentRowWithoutEnoughSpaceBetweenRows || isSameRowWithoutEnoughSpaceBetweenColumns;
+            });
+
             if (isFarEnough) {
                 usableSeats.add(examSeatDTO);
             }
