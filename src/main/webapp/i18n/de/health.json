@@ -29,7 +29,8 @@
             "apollon": "Apollon Conversion Server",
             "pyris": "Pyris",
             "ssl": "SSL",
-            "hermes": "Hermes Push Notifications"
+            "hermes": "Hermes Push Notifications",
+            "sharing": "Sharing Plattform Connector"
         },
         "table": {
             "service": "Dienst Name",
