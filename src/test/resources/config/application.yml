@@ -102,7 +102,7 @@ artemis:
     nebula:
         enabled: true
         url: http://localhost:8080  # dummy URL for tests
-        secret: test-secret         # dummy secret for tests
+        secret-token: test-secret         # dummy secret for tests
     tum-live:
         api-base-url: https://mocke.tum.live/api/v2
 

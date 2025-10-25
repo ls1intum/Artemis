@@ -134,7 +134,7 @@ artemis:
     nebula:
         enabled: false
         url: # Set this in production environment (e.g., https://nebula.example.com)
-        secret: # Set this in production environment
+        secret-token: # Set this in production environment
 
 
 
