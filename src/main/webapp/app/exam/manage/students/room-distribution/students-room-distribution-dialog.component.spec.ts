@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -14,16 +14,22 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
+import { fakeAsync, tick } from '@angular/core/testing';
+import { of } from 'rxjs';
+import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 import { StudentsRoomDistributionService } from 'app/exam/manage/students/room-distribution/students-room-distribution.service';
 import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 
 function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
     inputElement.value = value;
     inputElement.dispatchEvent(new Event('input'));
+}
+
+function convertBodyToHttpResponse<T>(body?: T): HttpResponse<T> {
+    return new HttpResponse<T>({ status: 200, body: body });
 }
 
 describe('StudentsRoomDistributionDialogComponent', () => {
@@ -62,6 +68,8 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         ngbModal = TestBed.inject(NgbActiveModal);
         service = TestBed.inject(StudentsRoomDistributionService);
+
+        jest.spyOn(service, 'getRoomData').mockReturnValue(of(convertBodyToHttpResponse(rooms)));
     });
 
     afterEach(() => {
@@ -92,9 +100,9 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should request room data from the server on initial opening', () => {
-        const getRoomDataSpy = jest.spyOn(service, 'getRoomData');
         fixture.detectChanges();
-        expect(getRoomDataSpy).toHaveBeenCalledOnce();
+
+        expect(service.getRoomData).toHaveBeenCalledOnce();
     });
 
     it('should show finish button after selecting a room', () => {
@@ -152,12 +160,21 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(formatted).toBe('A (Alt) – 101 (102) - [B]');
     });
 
-    it('should filter rooms correctly with findAllMatchingRoomsForTerm', () => {
+    it('should find correct rooms', fakeAsync(() => {
         fixture.detectChanges();
-        const result = component.findAllMatchingRoomsForTerm('two');
-        expect(result).toHaveLength(1);
-        expect(result[0].name).toBe('two');
-    });
+        tick();
+
+        let searchResult: RoomForDistributionDTO[] = [];
+        component.search(of('t')).subscribe((rooms) => {
+            searchResult = rooms;
+        });
+
+        tick(200);
+
+        expect(searchResult).toHaveLength(2);
+        expect(searchResult).toContainEqual(rooms[1]);
+        expect(searchResult).toContainEqual(rooms[2]);
+    }));
 
     it('should update reserve percentage when typing valid numbers', async () => {
         fixture.detectChanges();

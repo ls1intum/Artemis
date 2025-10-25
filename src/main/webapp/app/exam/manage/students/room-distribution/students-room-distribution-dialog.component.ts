@@ -1,7 +1,8 @@
-import { Component, InputSignal, Signal, ViewEncapsulation, WritableSignal, computed, inject, input, signal } from '@angular/core';
+import { Component, InputSignal, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpResponse } from '@angular/common/http';
 import { NgbActiveModal, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, catchError, combineLatest, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
+import { Observable, combineLatest, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -31,13 +32,7 @@ export class StudentsRoomDistributionDialogComponent {
     private reserveFactor: Signal<number> = computed(() => this.reservePercentage() / 100);
     allowNarrowLayouts: WritableSignal<boolean> = signal(false);
 
-    private availableRooms: Signal<RoomForDistributionDTO[] | undefined> = toSignal(
-        this.studentsRoomDistributionService.getRoomData().pipe(
-            map((result) => result.body as RoomForDistributionDTO[]),
-            catchError(() => of(undefined)),
-        ),
-        { initialValue: undefined },
-    );
+    private availableRooms: WritableSignal<RoomForDistributionDTO[] | undefined> = signal(undefined);
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
     private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = toSignal(
@@ -69,18 +64,18 @@ export class StudentsRoomDistributionDialogComponent {
     faBan = faBan;
     faThLarge = faThLarge;
 
-    // constructor() {
-    //     effect(() => {
-    //         this.studentsRoomDistributionService.getRoomData().subscribe({
-    //             next: (result: HttpResponse<RoomForDistributionDTO[]>) => {
-    //                 this.availableRooms.set(result.body as RoomForDistributionDTO[]);
-    //             },
-    //             error: () => {
-    //                 this.availableRooms.set(undefined);
-    //             },
-    //         });
-    //     });
-    // }
+    constructor() {
+        effect(() => {
+            this.studentsRoomDistributionService.getRoomData().subscribe({
+                next: (result: HttpResponse<RoomForDistributionDTO[]>) => {
+                    this.availableRooms.set(result.body as RoomForDistributionDTO[]);
+                },
+                error: () => {
+                    this.availableRooms.set(undefined);
+                },
+            });
+        });
+    }
 
     /**
      * Dismisses the dialog
@@ -114,7 +109,7 @@ export class StudentsRoomDistributionDialogComponent {
         return text$.pipe(debounceTime(200), distinctUntilChanged(), map(this.findAllMatchingRoomsForTerm));
     };
 
-    findAllMatchingRoomsForTerm = (term: string): RoomForDistributionDTO[] => {
+    private findAllMatchingRoomsForTerm = (term: string): RoomForDistributionDTO[] => {
         const trimmed = term.trim();
         if (!trimmed) {
             return this.availableRooms() ?? [];
@@ -132,6 +127,30 @@ export class StudentsRoomDistributionDialogComponent {
             }) ?? []
         );
     };
+
+    /**
+     * Returns true iff the subsequence is a subsequence of the string.
+     * A string is a subsequence of another, if it matches the string, while allowing for omitted characters.
+     *
+     * @param str A string
+     * @param subsequence A string that we want to check if it is a subsequence of {@code str}
+     */
+    private isSubsequence(str: string, subsequence: string): boolean {
+        if (str.length < subsequence.length) {
+            return false;
+        }
+
+        let strIndex: number = 0;
+        let subsequenceIndex: number = 0;
+        while (strIndex < str.length && subsequenceIndex < subsequence.length) {
+            if (str[strIndex] === subsequence[subsequenceIndex]) {
+                subsequenceIndex++;
+            }
+            strIndex++;
+        }
+
+        return subsequenceIndex === subsequence.length;
+    }
 
     /**
      * Formats the metadata of an exam room into a human-readable format for the dropdown search menu
@@ -163,30 +182,6 @@ export class StudentsRoomDistributionDialogComponent {
      */
     removeSelectedRoom(room: RoomForDistributionDTO) {
         this.selectedRooms.update((selectedRooms) => selectedRooms.filter((selectedRoom) => room.id !== selectedRoom.id));
-    }
-
-    /**
-     * Returns true iff the subsequence is a subsequence of the string.
-     * A string is a subsequence of another, if it matches the string, while allowing for omitted characters.
-     *
-     * @param str A string
-     * @param subsequence A string that we want to check if it is a subsequence of {@code str}
-     */
-    private isSubsequence(str: string, subsequence: string): boolean {
-        if (str.length < subsequence.length) {
-            return false;
-        }
-
-        let strIndex: number = 0;
-        let subsequenceIndex: number = 0;
-        while (strIndex < str.length && subsequenceIndex < subsequence.length) {
-            if (str[strIndex] === subsequence[subsequenceIndex]) {
-                subsequenceIndex++;
-            }
-            strIndex++;
-        }
-
-        return subsequenceIndex === subsequence.length;
     }
 
     /**
