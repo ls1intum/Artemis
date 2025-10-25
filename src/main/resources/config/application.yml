@@ -167,6 +167,8 @@ management:
             enabled: false # Disabled to prevent periodic health checks that lead to null pointer exceptions if the ldap is not configured or not active
         config:
             enabled: false # Disabled because we do not use a Spring Cloud Config Server
+        refresh:
+            enabled: false # Disabled because we do not use a refresh scope
     prometheus:
         # Prometheus is the default metrics server
         metrics:
@@ -194,6 +196,8 @@ spring:
         config:
             import-check:
                 enabled: false
+        refresh:
+            enabled: false # Not required in Artemis
     data:
         jpa:
             repositories:
