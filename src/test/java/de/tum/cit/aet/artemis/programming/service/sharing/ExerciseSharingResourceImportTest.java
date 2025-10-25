@@ -130,7 +130,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     @Test
     void shouldReturnFalseWhenSharingPlatformIsNotYetConnected() throws Exception {
-        sharingPlatformMockProvider.reset(); // Mocks a disconnect frpm Sharing Plattform
+        sharingPlatformMockProvider.reset(); // Mocks a disconnect from Sharing Platform
         MvcResult result = requestUtilService
                 .performMvcRequest(get("/api/core/sharing/" + SharingSupportResource.SHARINGCONFIG_RESOURCE_IS_ENABLED).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();

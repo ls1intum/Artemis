@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -106,7 +105,7 @@ public class ExerciseSharingService {
      * Allows the Sharing Platform to evolve its metadata format without breaking imports.
      * </p>
      */
-    private final ObjectMapper objectMapperAllowingUnknownProperties;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ExerciseSharingService(ProgrammingExerciseExportService programmingExerciseExportService, SharingConnectorService sharingConnectorService,
             ProgrammingExerciseRepository programmingExerciseRepository, @Qualifier("sharingRestTemplate") RestTemplate restTemplate) {
@@ -115,9 +114,9 @@ public class ExerciseSharingService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.restTemplate = restTemplate;
 
-        this.objectMapperAllowingUnknownProperties = new ObjectMapper();
-        objectMapperAllowingUnknownProperties.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapperAllowingUnknownProperties.findAndRegisterModules();
+        // Configure ObjectMapper to ignore unknown properties
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.objectMapper.findAndRegisterModules();
     }
 
     /**
@@ -249,7 +248,7 @@ public class ExerciseSharingService {
         try {
             String exerciseDetailString = getEntryFromBasket(pattern, sharingInfo)
                     .orElseThrow(() -> new NotFoundException("Could not retrieve exercise details from imported exercise"));
-            ProgrammingExercise exerciseDetails = objectMapperAllowingUnknownProperties.readValue(Reader.of(exerciseDetailString), ProgrammingExercise.class);
+            ProgrammingExercise exerciseDetails = objectMapper.readValue(exerciseDetailString, ProgrammingExercise.class);
             exerciseDetails.setId(null);
             return exerciseDetails;
         }
