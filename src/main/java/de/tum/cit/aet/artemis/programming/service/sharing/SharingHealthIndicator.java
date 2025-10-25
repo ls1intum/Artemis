@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -13,15 +11,15 @@ import org.apache.commons.collections4.list.UnmodifiableList;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
  * Health indicator that shows the status of the Sharing Platform connector.
  */
 @Component
-@Profile({ PROFILE_CORE })
+@Conditional(SharingEnabled.class)
 @Lazy
 public class SharingHealthIndicator implements HealthIndicator {
 

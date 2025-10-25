@@ -1,6 +1,5 @@
-import { Injectable } from '@angular/core';
 import { SearchResultDTO } from './search-result-dto.model';
-@Injectable()
+
 export class SharingInfo {
     /** Token representing the current shopping basket */
     public basketToken = '';

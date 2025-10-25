@@ -19,6 +19,7 @@ import { NgStyle } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { combineLatest, take } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+
 /**
  * controls the import of an exercise from the sharing platform.
  */
@@ -160,7 +161,7 @@ export class SharingComponent implements OnInit {
      * Initialises the sharing page for import
      */
     ngOnInit(): void {
-        combineLatest(this.route.params.pipe(take(1)), this.route.queryParams.pipe(take(1))).subscribe(([params, qparams]: [Params, Params]) => {
+        combineLatest([this.route.params.pipe(take(1)), this.route.queryParams.pipe(take(1))]).subscribe(([params, qparams]: [Params, Params]) => {
             this.sharingInfo.basketToken = params['basketToken'];
             this.sharingInfo.returnURL = qparams['returnURL'];
             this.sharingInfo.apiBaseURL = qparams['apiBaseURL'];

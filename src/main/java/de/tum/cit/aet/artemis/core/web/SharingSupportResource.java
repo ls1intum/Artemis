@@ -52,7 +52,7 @@ public class SharingSupportResource {
      *
      * @param sharingApiKey    the common secret api key token (transferred by Authorization header).
      * @param apiBaseUrl       the base url of the sharing application api (for callbacks)
-     * @param installationName a descriptive name of the sharing application (optinonal)
+     * @param installationName a descriptive name of the sharing application (optional)
      *
      * @return Sharing Plugin configuration
      * @see <a href="https://sharing-codeability.uibk.ac.at/development/sharing/codeability-sharing-platform/-/wikis/Setup/Connector-Interface-Setup">Connector Interface Setup</a>
@@ -62,9 +62,9 @@ public class SharingSupportResource {
     public ResponseEntity<SharingPluginConfig> getConfig(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestHeader("Authorization") Optional<String> sharingApiKey,
             @RequestParam String apiBaseUrl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestParam Optional<String> installationName) {
         final String BEARER_PREFIX = "Bearer ";
-        final Optional<String> token = sharingApiKey.map(v -> v.startsWith(BEARER_PREFIX) ? v.substring(BEARER_PREFIX.length()) : v);
+        final Optional<String> token = sharingApiKey.map(key -> key.startsWith(BEARER_PREFIX) ? key.substring(BEARER_PREFIX.length()) : key);
         if (token.isPresent() && sharingConnectorService.validateApiKey(token.get())) {
-            log.info("Delivered Sharing Config ");
+            log.info("Delivered Sharing Config");
             URL parsedApiBaseUrl;
             try {
                 parsedApiBaseUrl = URI.create(apiBaseUrl).toURL();

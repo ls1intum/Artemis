@@ -1,29 +1,8 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { SafeHtml } from '@angular/platform-browser';
-import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
-import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
-import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
-import dayjs from 'dayjs/esm';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
+import { Component, inject, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { SafeHtml } from '@angular/platform-browser';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     faBook,
     faChartBar,
@@ -41,32 +20,54 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
-import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { MODULE_FEATURE_PLAGIARISM, PROFILE_IRIS, PROFILE_LOCALCI } from 'app/app.constants';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_IRIS, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
+import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
-import { Detail, ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
-import { Competency } from 'app/atlas/shared/entities/competency.model';
-import { AeolusService } from 'app/programming/shared/services/aeolus.service';
-import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
-import { ProgrammingExerciseInstructorExerciseDownloadComponent } from 'app/programming/shared/actions/instructor-exercise-download/programming-exercise-instructor-exercise-download.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/button/programming-exercise-reset-button.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
-import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
+import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
+import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/button/programming-exercise-reset-button.directive';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
+import {
+    ProgrammingExerciseInstructorExerciseDownloadComponent,
+} from 'app/programming/shared/actions/instructor-exercise-download/programming-exercise-instructor-exercise-download.component';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { AeolusService } from 'app/programming/shared/services/aeolus.service';
+import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
+import { processRepositoryDiff, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { Detail, ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import dayjs from 'dayjs/esm';
+import { forkJoin, from, Observable, of, Subject, Subscription } from 'rxjs';
+import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../shared/actions/programming-exercise-instructor-exercise-sharing.component';
+import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 
 @Component({
@@ -96,12 +97,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
     private accountService = inject(AccountService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    exerciseService = inject(ExerciseService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private alertService = inject(AlertService);
     private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
     private eventManager = inject(EventManager);
-    modalService = inject(NgbModal);
+    private modalService = inject(NgbModal);
     private translateService = inject(TranslateService);
     private profileService = inject(ProfileService);
     private statisticsService = inject(StatisticsService);
@@ -114,7 +114,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
-    protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -194,7 +193,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private readonly UPDATE_DEBOUNCE_MS = 1000;
 
     ngOnInit() {
-        this.isBuildPlanEditable = this.profileService.isProfileActive('jenkins');
+        this.isBuildPlanEditable = this.profileService.isProfileActive(PROFILE_JENKINS);
+        this.isExportToSharingEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING);
 
         this.activatedRouteSubscription = this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
@@ -281,7 +281,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.sharingEnabledSubscription = this.sharingService
             .isSharingEnabled()
             .pipe(
-                map((response) => response.body ?? false),
+                map((response) => response ?? false),
                 catchError(() => {
                     return of(false);
                 }),

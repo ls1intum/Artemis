@@ -1,32 +1,19 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
-import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
-import org.springframework.context.annotation.Profile;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
  * just a utility class to hold the zip file from sharing
  */
-@Profile("sharing")
-public class SharingMultipartZipFile implements MultipartFile, Closeable {
-
-    private final String name;
-
-    private final InputStream inputStream;
-
-    public SharingMultipartZipFile(String name, InputStream inputStream) {
-        if (name == null || inputStream == null) {
-            throw new IllegalArgumentException("Name and inputStream must not be null");
-        }
-        this.name = name;
-        this.inputStream = new BufferedInputStream(inputStream);
-    }
+public record SharingMultipartZipFile(@NotNull String name, @NotNull InputStream inputStream) implements MultipartFile, Closeable {
 
     @Override
     public String getName() {

@@ -1,17 +1,19 @@
-import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-
-import { map } from 'rxjs/operators';
-import dayjs from 'dayjs/esm';
+import { inject, Injectable } from '@angular/core';
+import { MODULE_FEATURE_SHARING } from 'app/app.constants';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
+import dayjs from 'dayjs/esm';
+import { Observable } from 'rxjs';
+
+import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -19,6 +21,7 @@ export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 /** the programming exercise sharing service */
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseSharingService {
+
     protected readonly baseSharingConfigUrl = 'api/core/sharing/config';
     protected readonly resourceUrl = 'api/programming/sharing/import';
     protected readonly resourceUrlBasket = 'api/programming/sharing/import/basket/';
@@ -26,6 +29,7 @@ export class ProgrammingExerciseSharingService {
     protected readonly resourceUrlSetupImport = 'api/programming/sharing/setup-import';
 
     private readonly http = inject(HttpClient);
+    private readonly profileService = inject(ProfileService);
 
     /**
      * loads the Shopping Basket via the Service
@@ -125,9 +129,12 @@ export class ProgrammingExerciseSharingService {
      * Check if the Sharing platform integration has been enabled.
      * If enabled the request will return a 200  and true or false, and a 503 if not.
      */
-    isSharingEnabled(): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(this.baseSharingConfigUrl + '/is-enabled', {
-            observe: 'response',
-        });
+    isSharingEnabled(): Observable<boolean> {
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING)) {
+            return of(false);
+        }
+        return this.http
+            .get<boolean>(`${this.baseSharingConfigUrl}/is-enabled`, { observe: 'response' })
+            .pipe(map(response => response.body ?? false));
     }
 }

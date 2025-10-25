@@ -125,7 +125,6 @@ public class ExerciseSharingResource {
      * sets up the imported exercise as a ProgrammingExercise.
      *
      * @param sharingSetupInfo the sharing setup information containing the details of the exercise to be imported
-     * @throws GitAPIException if there is an error with the git operations
      * @return the ResponseEntity with status 200 (OK) and with body the programming exercise, or with status 404 (Not Found)
      */
     @PostMapping("setup-import")
