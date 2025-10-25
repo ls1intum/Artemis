@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.repository.conversation;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -26,6 +27,13 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
             ORDER BY channel.name
             """)
     List<Channel> findChannelsByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT channel
+            FROM Channel channel
+            WHERE channel.course.id = :courseId AND channel.lecture IS NOT NULL
+            """)
+    Set<Channel> findLectureChannelsByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT channel
@@ -70,6 +78,8 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
     Set<Channel> findChannelByCourseIdAndName(@Param("courseId") Long courseId, @Param("name") String name);
 
     boolean existsChannelByNameAndCourseId(String name, Long courseId);
+
+    boolean existsByCourseIdAndNameIn(Long courseId, Collection<String> names);
 
     @Query("""
             SELECT DISTINCT channel
