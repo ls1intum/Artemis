@@ -86,6 +86,29 @@
                 "message": "Bist du sicher, dass du die ungespeicherten Änderungen verwerfen willst?",
                 "sectionsThatContainUnsavedChangesSingular": "Der folgende Abschnitt enthält ungespeicherte Änderungen:",
                 "sectionsThatContainUnsavedChangesPlural": "Die folgenden Abschnitte enthalten ungespeicherte Änderungen:"
+            },
+            "creationMode": {
+                "singleLectureLabel": "Einzelne Vorlesung",
+                "lectureSeriesLabel": "Vorlesungsserie"
+            },
+            "longLectureWarning": "Vermeide Vorlesungen die mehr als ein paar Stunden dauern. Sie machen den Kalender unübersichtlich.",
+            "createSeries": {
+                "startAndEndDateExplanation": "Erstelle schnell eine Vorlesungsserie, indem du Title und Zeiten definierst. Füge Inhalte später hinzu. Definiere als erstes den Start und das Ende von mindestens einer Vorlesung, die du wöchentlich wiederholen willst:",
+                "seriesEndDateExplanation": "Definieren nun noch ein Datum, an dem die sich wiederholenden Vorlesungen aufhören sollen:",
+                "inputLabel": {
+                    "startDate": "Start",
+                    "endDate": "Ende",
+                    "seriesEndDate": "Serienenddatum"
+                },
+                "addInitialLectureButtonLabel": "Initiale Vorlesung hinzufügen",
+                "generatedLecturesHeading": "Generierte Vorlesungen",
+                "editLectureModalTitle": "Vorlesungsdetails bearbeiten",
+                "seriesCreationError": "Beim Erstellen der Vorlesungsserie ist etwas schiefgegangen. Bitte versuche es erneut.",
+                "updateNameError": "Beim Anpassen der Namen der bestehenden Vorlesungen ist etwas schiefgegangen. Bitte versuche es erneut.",
+                "updateNameConfirmation": {
+                    "header": "Bestehende Vorlesungsnamen aktualisieren?",
+                    "message": "Einige bestehende Vorlesungen folgen dem Standard-Namensformat (z.B. „Lecture 1“). Möchtest du die Nummerierung dieser Vorlesungen gemäß der neuen Reihenfolge anpassen?"
+                }
             }
         },
         "attachment": {

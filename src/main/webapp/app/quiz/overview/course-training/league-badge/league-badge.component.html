@@ -1,0 +1,26 @@
+@if (league() !== 'No League') {
+    <div class="league-badge {{ league().toLowerCase() }}">
+        <jhi-league-icon [league]="league()" />
+
+        <div class="league-info">
+            <div class="league-name" jhiTranslate="artemisApp.quizTraining.{{ leagueLower() }}League"></div>
+            @if (league() !== 'Master') {
+                <div class="league-points">{{ points() }} / {{ maxPointsForCurrentLeague() }}</div>
+            } @else {
+                <div class="league-points">{{ points() }}</div>
+            }
+            <div class="progress-bar">
+                <div class="progress" [style.width]="progressWidth()"></div>
+                @if (league() !== 'Master') {
+                    <jhi-league-icon class="small-icon" [league]="nextLeague()" />
+                } @else {
+                    <fa-icon class="max-level small-icon" [icon]="faStar" />
+                }
+            </div>
+        </div>
+    </div>
+} @else {
+    <div class="league-badge no-league">
+        <span jhiTranslate="artemisApp.quizTraining.noLeague"></span>
+    </div>
+}

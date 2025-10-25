@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 
 @Isolated
@@ -95,7 +96,7 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLtiReevaluateStatistics() throws Exception {
-
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         QuizExercise quizExercise = createQuizExercise(ZonedDateTime.now().plusHours(5));
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
         quizExercise.setDueDate(ZonedDateTime.now().minusHours(2));
@@ -146,10 +147,10 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     private QuizExercise createQuizExerciseWithFiles(QuizExercise quizExercise) throws Exception {
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz/quiz-exercises");
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises");
         addFilesToBuilderAndModifyExercise(builder, quizExercise);
-        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
-                .contentType(MediaType.MULTIPART_FORM_DATA);
+        QuizExerciseCreateDTO dto = QuizExerciseCreateDTO.of(quizExercise);
+        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(dto))).contentType(MediaType.MULTIPART_FORM_DATA);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().is(HttpStatus.CREATED.value())).andReturn();
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {

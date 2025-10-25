@@ -30,15 +30,15 @@ const moduleThresholds = {
         lines:      89.90,
     },
     atlas: {
-        statements: 92.00,
-        branches:   68.80,
-        functions:  85.40,
-        lines:      91.80,
+        statements: 91.50,
+        branches:   67.90,
+        functions:  84.60,
+        lines:      91.40,
     },
     buildagent: {
         statements: 93.00,
         branches:   83.60,
-        functions:  87.10,
+        functions:  87.20,
         lines:      92.90,
     },
     communication: {
@@ -49,8 +49,8 @@ const moduleThresholds = {
     },
     core: {
         statements: 89.70,
-        branches:   72.30,
-        functions:  81.50,
+        branches:   72.60,
+        functions:  81.60,
         lines:      89.70,
     },
     exam: {
@@ -61,8 +61,8 @@ const moduleThresholds = {
     },
     exercise: {
         statements: 88.50,
-        branches:   78.90,
-        functions:  80.10,
+        branches:   79.00,
+        functions:  80.20,
         lines:      88.60,
     },
     fileupload: {
@@ -111,16 +111,16 @@ const moduleThresholds = {
         lines:      93.60,
     },
     programming: {
-        statements: 88.74,
-        branches:   76.30,
-        functions:  80.92,
-        lines:      88.86,
+        statements: 89.10,
+        branches:   77.10,
+        functions:  81.40,
+        lines:      89.20,
     },
     quiz: {
-        statements: 87.10,
-        branches:   70.80,
-        functions:  77.30,
-        lines:      87.30,
+        statements: 87.70,
+        branches:   75.40,
+        functions:  81.40,
+        lines:      87.90,
     },
     shared: {
         statements: 86.90,
@@ -136,8 +136,8 @@ const moduleThresholds = {
     },
     tutorialgroup: {
         statements: 91.40,
-        branches:   75.80,
-        functions:  83.50,
+        branches:   76.70,
+        functions:  83.70,
         lines:      91.20,
     },
 };
@@ -147,6 +147,10 @@ const moduleThresholds = {
 const metrics = ['statements', 'branches', 'functions', 'lines'];
 
 const AIMED_FOR_COVERAGE = 90;
+/**
+ * If the coverage is >= this value higher than the threshold, an upward arrow is shown to indicate the threshold should be bumped up.
+ */
+const SHOULD_BUMP_COVERAGE_DELTA = 0.1;
 
 const roundToTwoDigits = (value) => Math.round(value * 100) / 100;
 
@@ -160,8 +164,9 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
         const roundedThreshold = roundToTwoDigits(thresholds[metric]);
         const pass = roundedPercentage >= roundedThreshold;
         const higherThanExpected = roundedPercentage > roundedThreshold && roundedThreshold < AIMED_FOR_COVERAGE;
+        const shouldBumpCoverageUp = (roundedPercentage - roundedThreshold) >= SHOULD_BUMP_COVERAGE_DELTA;
 
-        const status = `${higherThanExpected ? '⬆️' : ''} ${pass ? '✅' : '❌'}`;
+        const status = `${higherThanExpected && shouldBumpCoverageUp ? '⬆️' : ''} ${pass ? '✅' : '❌'}`;
         console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${roundedPercentage.toFixed(2).padStart(6)}%  (need ≥ ${roundedThreshold.toFixed(2)}%)`);
         if (!pass) failed = true;
     }

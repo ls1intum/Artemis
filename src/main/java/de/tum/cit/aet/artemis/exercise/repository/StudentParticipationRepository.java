@@ -782,6 +782,18 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Optional<StudentParticipation> findWithEagerLatestSubmissionResultsFeedbacksById(@Param("participationId") long participationId);
 
     @Query("""
+            SELECT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results sr
+                LEFT JOIN FETCH sr.feedbacks
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE p.id = :participationId
+            """)
+    Optional<StudentParticipation> findWithEagerSubmissionsResultsFeedbacksById(@Param("participationId") long participationId);
+
+    @Query("""
             SELECT DISTINCT p.id
             FROM StudentParticipation p
                 JOIN p.submissions s
@@ -1055,7 +1067,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     @NotNull
     default StudentParticipation findByIdWithLatestSubmissionsResultsFeedbackElseThrow(long participationId) {
-        return getValueElseThrow(findWithEagerLatestSubmissionResultsFeedbacksById(participationId), participationId);
+        return getValueElseThrow(findWithEagerSubmissionsResultsFeedbacksById(participationId), participationId);
     }
 
     @NotNull
