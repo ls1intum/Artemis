@@ -28,7 +28,7 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.16.0"
-
+    id "com.google.osdetector" version "1.7.3"
 }
 
 group = "de.tum.cit.aet.artemis"
@@ -302,10 +302,16 @@ dependencies {
     implementation("io.netty:netty-resolver") { version { 	    		strictly netty_version } }
     implementation("io.netty:netty-resolver-dns") { version { 			strictly netty_version } }
     implementation("io.netty:netty-transport") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-transport-classes-epoll") { version {	        strictly netty_version } }
+    implementation("io.netty:netty-transport-classes-epoll") { version {strictly netty_version } }
     implementation("io.netty:netty-transport-native-epoll") { version {	strictly netty_version } }
     implementation("io.netty:netty-handler") { version { 				strictly netty_version } }
     implementation("io.netty:netty-handler-proxy") { version { 			strictly netty_version } }
+
+    // only load netty-resolver-dns-native-macos on macos systems
+    if (osdetector.os == 'osx') {
+        def classifier = (osdetector.arch == 'aarch_64') ? 'osx-aarch_64' : 'osx-x86_64'
+        runtimeOnly("io.netty:netty-resolver-dns-native-macos:${netty_version}:${classifier}") { version { strictly netty_version } }
+    }
 
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version {strictly "2.6.0" } }
@@ -439,7 +445,7 @@ dependencies {
 
     implementation "com.google.errorprone:error_prone_annotations:2.43.0"
     // needed for OpenAPI generation
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
