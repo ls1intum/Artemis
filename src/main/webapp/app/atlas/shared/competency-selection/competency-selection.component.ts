@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, forwardRef, inject, input, output } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faLightbulb, faQuestionCircle, faStar } from '@fortawesome/free-solid-svg-icons';
+import { HttpClient } from '@angular/common/http';
 import {
     CompetencyLearningObjectLink,
     CourseCompetency,
@@ -21,6 +22,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-competency-selection',
@@ -33,7 +37,17 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
             useExisting: forwardRef(() => CompetencySelectionComponent),
         },
     ],
-    imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        FaStackComponent,
+        NgbTooltip,
+        FaIconComponent,
+        FaStackItemSizeDirective,
+        FormsModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FeatureToggleHideDirective,
+        ButtonComponent,
+    ],
 })
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
     private route = inject(ActivatedRoute);
@@ -41,9 +55,11 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     private courseCompetencyService = inject(CourseCompetencyService);
     private changeDetector = inject(ChangeDetectorRef);
     private profileService = inject(ProfileService);
+    private http = inject(HttpClient);
 
     labelName = input<string>('');
     labelTooltip = input<string>('');
+    exerciseDescription = input<string | undefined>(undefined);
 
     valueChange = output<CompetencyLearningObjectLink[] | undefined>();
 
@@ -54,10 +70,16 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     competencyLinks?: CompetencyLearningObjectLink[];
 
     isLoading = false;
+    isSuggesting = false;
     checkboxStates: Record<number, boolean>;
+    suggestedCompetencyIds = new Set<number>();
 
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
+    faStar = faStar;
+    faLightbulb = faLightbulb;
+
+    protected readonly FeatureToggle = FeatureToggle;
 
     _onChange = (_value: any) => {};
 
@@ -67,6 +89,9 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     protected readonly LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF = LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF; // halfway between low and medium
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF;
     // halfway between medium and high
+
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
     ngOnInit(): void {
         // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
@@ -177,6 +202,61 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     }
 
     registerOnTouched(_fn: any): void {}
+
+    suggestCompetencies(): void {
+        if (!this.exerciseDescription()?.trim()) {
+            return;
+        }
+
+        this.isSuggesting = true;
+        this.suggestedCompetencyIds.clear();
+
+        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        const requestBody = { description: this.exerciseDescription(), course_id: courseId?.toString() };
+
+        this.http
+            .post<{ competencies: any[] }>('/api/atlas/competencies/suggest', requestBody)
+            .pipe(
+                finalize(() => {
+                    this.isSuggesting = false;
+                    this.changeDetector.detectChanges();
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    response.competencies.forEach((suggestion) => {
+                        const matchingLink = this.competencyLinks?.find((link) => link.competency?.id === Number(suggestion.id));
+                        if (matchingLink?.competency?.id) {
+                            this.suggestedCompetencyIds.add(matchingLink.competency.id);
+                        }
+                    });
+                    this.sortCompetenciesBySuggestion();
+                },
+                error: (error) => {
+                    // console.error('Error getting competency suggestions:', error);
+                },
+            });
+    }
+
+    isSuggested(competencyId: number): boolean {
+        return this.suggestedCompetencyIds.has(competencyId);
+    }
+
+    sortCompetenciesBySuggestion(): void {
+        if (this.competencyLinks) {
+            this.competencyLinks.sort((a, b) => {
+                const aIsSuggested = a.competency?.id ? this.isSuggested(a.competency.id) : false;
+                const bIsSuggested = b.competency?.id ? this.isSuggested(b.competency.id) : false;
+
+                // Sort suggested competencies to the top
+                if (aIsSuggested && !bIsSuggested) return -1;
+                if (!aIsSuggested && bIsSuggested) return 1;
+
+                // Keep original order for items with same suggestion status
+                return 0;
+            });
+        }
+    }
 
     setDisabledState?(isDisabled: boolean): void {
         this.disabled = isDisabled;
