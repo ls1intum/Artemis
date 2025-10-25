@@ -161,4 +161,5 @@ public class ExamUserResource {
         String login = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new EntityNotFoundException("ERROR: No current user login found!"));
         return ResponseEntity.ok().body(examUserRepository.isAttendanceChecked(examId, login));
     }
+
 }
