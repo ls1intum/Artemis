@@ -97,12 +97,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(getRoomDataSpy).toHaveBeenCalledOnce();
     });
 
-    it('should have available rooms after initial opening', () => {
-        expect(component.availableRooms()).toBeUndefined();
-        fixture.detectChanges();
-        expect(component.availableRooms()).toEqual(rooms);
-    });
-
     it('should show finish button after selecting a room', () => {
         fixture.detectChanges();
         component.onRoomSelected({ item: rooms[0] });
@@ -159,7 +153,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should filter rooms correctly with findAllMatchingRoomsForTerm', () => {
-        component.availableRooms.set(rooms);
+        fixture.detectChanges();
         const result = component.findAllMatchingRoomsForTerm('two');
         expect(result).toHaveLength(1);
         expect(result[0].name).toBe('two');

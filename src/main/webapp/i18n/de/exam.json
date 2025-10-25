@@ -43,8 +43,8 @@
                     "number": "Nummer",
                     "name": "Name",
                     "building": "Gebäude",
-                    "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Schüler unterbringen.",
-                    "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Schüler unterbringen ({{ percentage }}%).",
+                    "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studenten unterbringen.",
+                    "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studenten unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
                     "distributeWarning": "Du hast nicht ausreichend Kapazitäten"
                 }

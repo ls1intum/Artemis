@@ -1,14 +1,13 @@
-import { Component, InputSignal, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, InputSignal, Signal, ViewEncapsulation, WritableSignal, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, combineLatest, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs';
+import { Observable, catchError, combineLatest, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentsRoomDistributionService } from 'app/exam/manage/students/room-distribution/students-room-distribution.service';
-import { HttpResponse } from '@angular/common/http';
 import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -32,7 +31,13 @@ export class StudentsRoomDistributionDialogComponent {
     private reserveFactor: Signal<number> = computed(() => this.reservePercentage() / 100);
     allowNarrowLayouts: WritableSignal<boolean> = signal(false);
 
-    availableRooms: WritableSignal<RoomForDistributionDTO[] | undefined> = signal(undefined);
+    private availableRooms: Signal<RoomForDistributionDTO[] | undefined> = toSignal(
+        this.studentsRoomDistributionService.getRoomData().pipe(
+            map((result) => result.body as RoomForDistributionDTO[]),
+            catchError(() => of(undefined)),
+        ),
+        { initialValue: undefined },
+    );
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
     private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = toSignal(
@@ -64,18 +69,18 @@ export class StudentsRoomDistributionDialogComponent {
     faBan = faBan;
     faThLarge = faThLarge;
 
-    constructor() {
-        effect(() => {
-            this.studentsRoomDistributionService.getRoomData().subscribe({
-                next: (result: HttpResponse<RoomForDistributionDTO[]>) => {
-                    this.availableRooms.set(result.body as RoomForDistributionDTO[]);
-                },
-                error: () => {
-                    this.availableRooms.set(undefined);
-                },
-            });
-        });
-    }
+    // constructor() {
+    //     effect(() => {
+    //         this.studentsRoomDistributionService.getRoomData().subscribe({
+    //             next: (result: HttpResponse<RoomForDistributionDTO[]>) => {
+    //                 this.availableRooms.set(result.body as RoomForDistributionDTO[]);
+    //             },
+    //             error: () => {
+    //                 this.availableRooms.set(undefined);
+    //             },
+    //         });
+    //     });
+    // }
 
     /**
      * Dismisses the dialog
