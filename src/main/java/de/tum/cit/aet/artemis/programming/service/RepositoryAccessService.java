@@ -179,7 +179,7 @@ public class RepositoryAccessService {
         throw new AccessForbiddenException("You are not allowed to access the plagiarism result of this programming exercise.");
     }
 
-    public void checkHasAccessToOfflineIDE(ProgrammingExercise exercise, User user) throws AccessForbiddenException {
+    public void checkHasAccessToOfflineIDEElseThrow(ProgrammingExercise exercise, User user) throws AccessForbiddenException {
         if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
             throw new AccessForbiddenException();
         }

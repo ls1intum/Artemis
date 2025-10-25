@@ -234,7 +234,7 @@ public class LocalVCServletService {
 
         // Check that offline IDE usage is allowed.
         try {
-            repositoryAccessService.checkHasAccessToOfflineIDE(exercise, user);
+            repositoryAccessService.checkHasAccessToOfflineIDEElseThrow(exercise, user);
         }
         catch (AccessForbiddenException e) {
             throw new LocalVCForbiddenException(e);
