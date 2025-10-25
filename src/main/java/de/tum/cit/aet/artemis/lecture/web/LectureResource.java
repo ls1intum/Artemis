@@ -16,6 +16,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +45,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -50,6 +53,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
@@ -58,6 +62,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
@@ -131,6 +136,39 @@ public class LectureResource {
         Lecture savedLecture = lectureRepository.save(lecture);
         channelService.createLectureChannel(savedLecture, Optional.ofNullable(lecture.getChannelName()));
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(savedLecture);
+    }
+
+    /**
+     * POST /courses/{courseId}/lectures : Creates a series of lectures for the given course. Adjusts default lecture and channel names to new lecture order.
+     *
+     * @param courseId    the ID of the course for which to create the lectures
+     * @param lectureDTOs a list of DTOs defining the individual lectures to create
+     * @return 204 (No Content) if the lecture series was successfully created
+     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user is not at least editor in the course or the course does not exist
+     */
+    @PostMapping("courses/{courseId}/lectures")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<Void> createLectureSeries(@PathVariable long courseId, @RequestBody @NotEmpty List<@Valid LectureSeriesCreateLectureDTO> lectureDTOs) {
+        log.debug("REST request to save Lecture series for courseId {} with lectures: {}", courseId, lectureDTOs);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUser();
+
+        List<Lecture> newLectures = lectureDTOs.stream().map(lectureDTO -> createLectureUsing(lectureDTO, course)).toList();
+        List<Lecture> savedLectures = lectureRepository.saveAll(newLectures);
+        channelService.createChannelsForLectures(savedLectures, course, user);
+
+        lectureService.correctDefaultLectureAndChannelNames(courseId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    private Lecture createLectureUsing(LectureSeriesCreateLectureDTO lectureDTO, Course course) {
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+        lecture.setTitle(lectureDTO.title());
+        lecture.setStartDate(lectureDTO.startDate());
+        lecture.setEndDate(lectureDTO.endDate());
+        return lecture;
     }
 
     /**
@@ -211,7 +249,9 @@ public class LectureResource {
         log.info("Getting all lectures with slides for course {}", courseId);
         long start = System.currentTimeMillis();
 
-        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId).stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR add back in such that the result of the query is filtered for visible lectures again */
+        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId); // .stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
         Set<Long> attachmentVideoUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream())
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(DomainObject::getId).collect(Collectors.toSet());
 
@@ -255,6 +295,8 @@ public class LectureResource {
             // only attachment video units visible to students are included
             List<AttachmentVideoUnitDTO> attachmentVideoUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
                     .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents).map(AttachmentVideoUnitDTO::from).toList();
+            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+            /* TODO: #11479 - remove the visibleDate property from the LectureDTO OR leave as is */
             return new LectureDTO(lecture.getId(), lecture.getTitle(), lecture.getVisibleDate(), lecture.getStartDate(), lecture.getEndDate(), attachmentDTOs,
                     attachmentVideoUnitDTOs);
         }
@@ -279,7 +321,7 @@ public class LectureResource {
     }
 
     /**
-     * GET /lectures/:lectureId : get the "lectureId" lecture.
+     * GET /lectures/:lectureId : get the lecture for the given ID.
      *
      * @param lectureId the lectureId of the lecture to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
@@ -289,7 +331,12 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in and remove the alternative auth check following it */
+        // authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
+        if (!authCheckService.isAtLeastStudentInCourse(lecture.getCourse(), userRepository.getUserWithGroupsAndAuthorities())) {
+            throw new AccessForbiddenException();
+        }
 
         Channel lectureChannel = channelRepository.findChannelByLectureId(lectureId);
         if (lectureChannel != null) {

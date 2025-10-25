@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewEncapsulation, inject, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, input, output, viewChildren } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -35,13 +35,13 @@ import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/qui
 export class QuizQuestionListEditComponent {
     private modalService = inject(NgbModal);
 
-    @Input() courseId: number;
-    @Input() quizQuestions: QuizQuestion[] = [];
-    @Input() disabled = false;
+    courseId = input.required<number>();
+    quizQuestions = input<QuizQuestion[]>([]);
+    disabled = input(false);
 
-    @Output() onQuestionAdded = new EventEmitter<QuizQuestion>();
-    @Output() onQuestionUpdated = new EventEmitter();
-    @Output() onQuestionDeleted = new EventEmitter<QuizQuestion>();
+    onQuestionAdded = output<QuizQuestion>();
+    onQuestionUpdated = output<void>();
+    onQuestionDeleted = output<QuizQuestion>();
 
     readonly editMultipleChoiceQuestionComponents = viewChildren<MultipleChoiceQuestionEditComponent>('editMultipleChoice');
 
@@ -72,8 +72,8 @@ export class QuizQuestionListEditComponent {
      * @param index the index of QuizQuestion to be deleted
      */
     handleQuestionDeleted(index: number) {
-        const quizQuestion = this.quizQuestions[index];
-        this.quizQuestions.splice(index, 1);
+        const quizQuestion = this.quizQuestions()[index];
+        this.quizQuestions().splice(index, 1);
         this.onQuestionDeleted.emit(quizQuestion);
     }
 
@@ -161,7 +161,7 @@ export class QuizQuestionListEditComponent {
 
     async importApollonDragAndDropQuestion() {
         const modalRef: NgbModalRef = this.modalService.open(ApollonDiagramImportDialogComponent as Component, { size: 'xl', backdrop: 'static' });
-        modalRef.componentInstance.courseId = this.courseId;
+        modalRef.componentInstance.courseId = this.courseId();
 
         const question = await modalRef.result;
         if (question) {
@@ -217,7 +217,7 @@ export class QuizQuestionListEditComponent {
      * @param quizQuestion the QuizQuestion to be added.
      */
     private addQuestion(quizQuestion: QuizQuestion) {
-        this.quizQuestions!.push(quizQuestion);
+        this.quizQuestions().push(quizQuestion);
         this.onQuestionAdded.emit(quizQuestion);
     }
 }
