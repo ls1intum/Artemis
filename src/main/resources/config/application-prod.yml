@@ -122,4 +122,5 @@ info:
 
 atlas:
   atlasml:
-    base-url: http://atlasml.aet.cit.tum.de/
+    # TODO: provide a local system for development
+    base-url: https://atlasml.aet.cit.tum.de
