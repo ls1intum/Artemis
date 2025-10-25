@@ -31,14 +31,14 @@ artemis:
 
     push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
     sharing:
-      enabled: true
-      # the shared common secret (overwritten in tests)
-      apikey: <placeholder>
-      # a url used to force reinitialization of Sharing Platform configuration
-      # if not set, you have to wait for the next scheduled reinitialization request from the sharing platform
-      # (typically every 5 minutes), overridden in Tests
-      serverurl: http://localhost:9001
-      actionname: Export to Artemis@testInstance
+        enabled: true
+        # the shared common secret (overwritten in tests)
+        apikey: <placeholder>
+        # a url used to force reinitialization of Sharing Platform configuration
+        # if not set, you have to wait for the next scheduled reinitialization request from the sharing platform
+        # (typically every 5 minutes), overridden in Tests
+        serverurl: http://localhost:9001
+        actionname: Export to Artemis@testInstance
 
     continuous-integration:
     # Defines the used docker images for certain programming languages

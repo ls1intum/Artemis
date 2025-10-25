@@ -43,7 +43,12 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfo;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
- * REST controller for managing the sharing of programming exercises.
+ * REST controller that orchestrates importing and exporting programming exercises
+ * between Artemis and the external Sharing Platform.
+ *
+ * <p>
+ * Active only when {@link SharingEnabled} matches; otherwise the controller is not loaded.
+ * </p>
  */
 @RestController
 @RequestMapping("api/programming/sharing/")
@@ -51,8 +56,11 @@ import tech.jhipster.web.util.ResponseUtil;
 @Lazy
 public class ExerciseSharingResource {
 
-    /*
-     * Customized FileInputStream to clean up the basic file after closing.
+    /**
+     * FileInputStream wrapper that deletes the underlying temporary file on close.
+     * <p>
+     * Used to ensure exported archives are removed after being streamed.
+     * </p>
      */
     private static final class AutoDeletingFileInputStream extends FilterInputStream {
 
@@ -97,19 +105,28 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET api/programming/sharing/import/basket
+     * GET {@code api/programming/sharing/import/basket}
+     * <p>
+     * Loads a shopping basket (a set of exercises) from the Sharing Platform after validating
+     * the request using a shared-secret checksum.
+     * </p>
      *
-     * @param basketToken the token of the shopping basket
-     * @param returnURL   the URL to return to after the basket is loaded
-     * @param apiBaseURL  the base URL of the API
-     * @param checksum    the checksum to validate the request
-     * @return the ResponseEntity with status 200 (OK) and with body the Shopping Basket, or with status 404 (Not Found)
+     * <h3>Validation</h3>
+     * The checksum is computed over {@code returnURL} and {@code apiBaseURL} with the shared API key.
+     * Requests with an invalid checksum are rejected with {@code 400 Bad Request}.
+     *
+     * @param basketToken opaque basket identifier issued by the Sharing Platform
+     * @param returnURL   URL to which the UI should return after loading the basket
+     * @param apiBaseURL  base URL of the Sharing Platform API (used for follow-up calls)
+     * @param checksum    HMAC-like checksum of {@code returnURL} and {@code apiBaseURL} using the shared secret
+     * @return {@code 200 OK} with the {@link ShoppingBasket}; {@code 404 Not Found} if the basket
+     *         does not exist; {@code 400 Bad Request} on checksum failure
      */
     @GetMapping("import/basket")
     @EnforceAtLeastEditor
     public ResponseEntity<ShoppingBasket> loadShoppingBasket(@RequestParam String basketToken, @RequestParam String returnURL, @RequestParam String apiBaseURL,
             @RequestParam String checksum) {
-        if (SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKeyOrNull(), checksum)) {
+        if (SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKey(), checksum)) {
             Optional<ShoppingBasket> sharingInfoDTO = exerciseSharingService.getBasketInfo(basketToken, apiBaseURL);
             return ResponseUtil.wrapOrNotFound(sharingInfoDTO);
         }
@@ -120,11 +137,15 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET api/programming/sharing/setup-import
-     * sets up the imported exercise as a ProgrammingExercise.
+     * POST {@code api/programming/sharing/setup-import}
+     * <p>
+     * Creates and persists a {@link ProgrammingExercise} in Artemis based on the provided
+     * {@link SharingSetupInfo} received from the Sharing Platform.
+     * </p>
      *
-     * @param sharingSetupInfo the sharing setup information containing the details of the exercise to be imported
-     * @return the ResponseEntity with status 200 (OK) and with body the programming exercise, or with status 404 (Not Found)
+     * @param sharingSetupInfo details required to import (exercise metadata, templates, etc.)
+     * @return {@code 200 OK} with the created {@link ProgrammingExercise}; {@code 500 Internal Server Error}
+     *         on import failures (e.g., VCS operations, invalid payload, IO/URI issues)
      */
     @PostMapping("setup-import")
     @EnforceAtLeastEditor
@@ -140,15 +161,20 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET api/programming/sharing/import/basket/exercise-details: get exercise details of the exercise defined in sharingInfo.
+     * POST {@code api/programming/sharing/import/basket/exercise-details}
+     * <p>
+     * Returns detailed information for a single exercise referenced by its position in a basket.
+     * The request must be signed using the shared checksum mechanism contained in {@link SharingInfoDTO}.
+     * </p>
      *
-     * @param sharingInfo the sharing info (with exercise position in the basket)
-     * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
+     * @param sharingInfo basket-scoped reference to an exercise; also carries a checksum for validation
+     * @return {@code 200 OK} with the {@link ProgrammingExercise} details; {@code 400 Bad Request}
+     *         on checksum failure; {@code 404 Not Found} if the exercise cannot be resolved
      */
     @PostMapping("import/basket/exercise-details")
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {
-        if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKeyOrNull())) {
+        if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKey())) {
             return ResponseEntity.badRequest().build();
         }
         ProgrammingExercise exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);
@@ -156,12 +182,16 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * POST api/programming/sharing/export/{exerciseId}: export programming exercise to sharing
-     * by generating a unique URL token exposing the exercise
+     * POST {@code api/programming/sharing/export/{exerciseId}}
+     * <p>
+     * Exports a programming exercise to the Sharing Platform and returns a one-time URL that the client
+     * can follow. The method appends a {@code callBack} parameter (the UI-return URL) to the generated link.
+     * </p>
      *
-     * @param exerciseId  the id of the exercise to export
-     * @param callBackUrl the call back url returned to the client after export has finished
-     * @return the URL to Sharing
+     * @param callBackUrl URL the Sharing Platform should redirect to after export completes
+     * @param exerciseId  Artemis exercise identifier to export
+     * @return {@code 200 OK} with a JSON-quoted URL string pointing to the Sharing Platform;
+     *         {@code 500 Internal Server Error} if export fails
      */
     @PostMapping(SHARING_EXPORT_RESOURCE_PATH + "/{exerciseId}")
     @EnforceAtLeastEditor
@@ -178,12 +208,24 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET api/programming/sharing/export/{exerciseToken}: Endpoint exposing an exported exercise zip to Sharing.
-     * Publicly available, access is guarded by a security token.
+     * GET {@code api/programming/sharing/export/{token}}
+     * <p>
+     * Streams the exported exercise archive (ZIP) to the Sharing Platform. Access is guarded by
+     * a token and a secondary digest parameter.
+     * </p>
      *
-     * @param token in base64 format and used to retrieve the exercise
-     * @param sec   digest of the shared key
-     * @return a stream of the zip file, or an internal server error, if file does not exist
+     * <h3>Security</h3>
+     * Both {@code token} and {@code sec} must be valid according to
+     * {@link ExerciseSharingService#validate(String, String)}. Invalid requests return {@code 401 Unauthorized}.
+     *
+     * <h3>Response</h3>
+     * Returns an octet-stream with the ZIP content. The underlying temporary file is deleted
+     * automatically once the response stream is closed.
+     *
+     * @param token base64-encoded export token that identifies the exported exercise
+     * @param sec   digest of the shared key for request validation
+     * @return {@code 200 OK} with the ZIP stream; {@code 404 Not Found} if the token is unknown;
+     *         {@code 401 Unauthorized} on failed validation; {@code 500 Internal Server Error} on IO errors
      */
     @GetMapping(SHARING_EXPORT_RESOURCE_PATH + "/{token}")
     // Custom Key validation is applied
@@ -208,5 +250,4 @@ public class ExerciseSharingResource {
             return ResponseEntity.internalServerError().build();
         }
     }
-
 }

@@ -63,7 +63,11 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 
 /**
- * service for sharing exercises via the sharing platform.
+ * Service for importing/exporting programming exercises between Artemis and the Sharing Platform.
+ * <p>
+ * Handles basket lookup and download, secure export link generation, ZIP streaming/parsing,
+ * and lightweight caching for repository downloads.
+ * </p>
  */
 @Service
 @Conditional(SharingEnabled.class)
@@ -71,10 +75,11 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportServi
 public class ExerciseSharingService {
 
     /**
-     * just a limit to the maximal accepted token length.
-     *
+     * Upper bound for accepted export token length (guards against abuse).
+     * <p>
+     * Also used in tests.
+     * </p>
      */
-    // also needed in tests.
     static final int MAX_EXPORT_TOKEN_LENGTH = 300;
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingService.class);
@@ -96,7 +101,10 @@ public class ExerciseSharingService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     /**
-     * just a local instance of an object mapper which ignores unknown properties, in case the Sharing Platform extends its metadata format.
+     * Local {@link ObjectMapper} instance that ignores unknown JSON fields.
+     * <p>
+     * Allows the Sharing Platform to evolve its metadata format without breaking imports.
+     * </p>
      */
     private final ObjectMapper objectMapperAllowingUnknownProperties;
 
@@ -118,9 +126,9 @@ public class ExerciseSharingService {
      * that allows the retrieval of the contained exercises.
      * For details see {@link ShoppingBasket}.
      *
-     * @param basketToken the basket token
-     * @param apiBaseUrl  the api base url to request the basket content from
-     * @return an optional shopping basket
+     * @param basketToken opaque basket identifier
+     * @param apiBaseUrl  base URL of the Sharing Platform API that serves the basket
+     * @return {@link Optional#of(Object)} with the basket, or {@link Optional#empty()} if not found / invalid / request failed
      */
     public Optional<ShoppingBasket> getBasketInfo(String basketToken, String apiBaseUrl) {
         if (isInvalidToken(basketToken)) {
@@ -142,12 +150,12 @@ public class ExerciseSharingService {
     }
 
     /**
-     * returns a single exercise from the basket (as a zip file)
+     * Retrieves one basket item as a ZIP stream (downloaded and cached on first access).
      *
-     * @param sharingInfo  the sharing info
-     * @param itemPosition the item position
-     * @return the exercise as a zip stream
-     * @throws SharingException if exercise cannot be loaded
+     * @param sharingInfo  basket reference and API endpoint info
+     * @param itemPosition index of the item inside the basket
+     * @return a handle to the ZIP content ({@link SharingMultipartZipFile}); caller must close the stream
+     * @throws SharingException if the item cannot be downloaded or cached
      */
     public SharingMultipartZipFile getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
         try {
@@ -162,7 +170,10 @@ public class ExerciseSharingService {
     }
 
     /**
-     * simple loading cache for paths to zip-files with 1-hour timeout.
+     * In-memory cache of downloaded basket ZIPs (evicted after 1 hour of inactivity).
+     * <p>
+     * On eviction, the temporary file is deleted.
+     * </p>
      */
     private final LoadingCache<@NotNull Pair<SharingInfoDTO, Integer>, @NotNull Path> repositoryCache = CacheBuilder.newBuilder().maximumSize(100)
             .expireAfterAccess(1, TimeUnit.HOURS).removalListener(notification -> {
@@ -202,24 +213,35 @@ public class ExerciseSharingService {
             });
 
     /**
-     * Access to the repository cache. For test purpose only!
+     * Exposes the repository cache (tests only).
      *
-     * @return repository cache
+     * @return the cache of basket ZIP file paths
      */
     LoadingCache<@NotNull Pair<SharingInfoDTO, Integer>, @NotNull Path> getRepositoryCache() {
         return repositoryCache;
     }
 
+    /**
+     * Convenience wrapper for {@link #getBasketItem(SharingInfoDTO, int)} using {@code sharingInfo.exercisePosition()}.
+     *
+     * @param sharingInfo basket reference
+     * @return the cached basket item ZIP
+     * @throws SharingException if retrieval fails
+     */
     public SharingMultipartZipFile getCachedBasketItem(SharingInfoDTO sharingInfo) throws SharingException {
         int itemPosition = sharingInfo.exercisePosition();
         return getBasketItem(sharingInfo, itemPosition);
     }
 
     /**
-     * Retrieves the Exercise-Details file from a Sharing basket, parses it, and returns it as a ProgrammingExercise-Object.
+     * Parses the {@code Exercise-Details*} entry from a basket ZIP and returns it as a {@link ProgrammingExercise}.
+     * <p>
+     * Unknown JSON properties are ignored; the returned entity has {@code id = null}.
+     * </p>
      *
-     * @param sharingInfo of the basket to extract the problem statement from
-     * @return The content of the Exercise-Details file
+     * @param sharingInfo basket reference
+     * @return the parsed exercise details
+     * @throws jakarta.ws.rs.NotFoundException if the details entry is missing or cannot be parsed
      */
     public ProgrammingExercise getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) {
         Pattern pattern = Pattern.compile("^Exercise-Details", Pattern.CASE_INSENSITIVE);
@@ -238,13 +260,12 @@ public class ExerciseSharingService {
     }
 
     /**
-     * Retrieves an entry from a given Sharing basket, selected by a RegEx and returns the content as a String.
-     * If nothing is found, Optional.empty() is returned.
+     * Extracts the first ZIP entry whose name matches {@code matchingPattern} and returns its content as UTF-8 text.
      *
-     * @param matchingPattern RegEx matching the entry to return.
-     * @param sharingInfo     of the basket to retrieve the entry from
-     * @return The content of the entry, or Optional.empty() if not found.
-     * @throws IOException if a reading error occurs
+     * @param matchingPattern regex to select the ZIP entry
+     * @param sharingInfo     basket reference
+     * @return {@link Optional String} with the entry content, or {@link Optional#empty()} if not found
+     * @throws IOException if reading the ZIP stream fails
      */
     public Optional<String> getEntryFromBasket(Pattern matchingPattern, SharingInfoDTO sharingInfo) throws IOException {
         try (SharingMultipartZipFile zipFile = this.getCachedBasketItem(sharingInfo); ZipInputStream zippedRepositoryStream = new ZipInputStream(zipFile.getInputStream())) {
@@ -275,11 +296,23 @@ public class ExerciseSharingService {
     }
 
     /**
-     * Creates a zip-file for exercise and returns a URL pointing to Sharing
-     * with a callback URL addressing the generated Zip file for download via the Sharing Platform
+     * Exports an exercise and returns a URL on the Sharing Platform that includes a callback to Artemis.
+     * <p>
+     * Steps:
+     * </p>
+     * <ol>
+     * <li>Export exercise to a ZIP file.</li>
+     * <li>Derive a relative path token, encode it URL-safe Base64 (no padding).</li>
+     * <li>Compute an HMAC to protect the token from tampering.</li>
+     * <li>Build a Sharing URL with {@code exerciseUrl=<Artemis callback>}.</li>
+     * </ol>
      *
-     * @param exerciseId the ID of the exercise to export
-     * @return URL to sharing with a callback URL to the generated zip file
+     * <h3>Security</h3>
+     * The download callback uses {@code token} + {@code sec} (HMAC-SHA256 over the token with the shared API key).
+     *
+     * @param exerciseId Artemis exercise id to export
+     * @return Sharing Platform URL that initiates the import flow
+     * @throws SharingException if the export fails, the path is invalid, or the Sharing API base URL is missing
      */
     public URL exportExerciseToSharing(Long exerciseId) throws SharingException {
         if (!sharingConnectorService.isSharingApiBaseUrlPresent()) {
@@ -328,15 +361,16 @@ public class ExerciseSharingService {
     }
 
     /**
-     * an HMAC just to secure token for integrity against tampering.
+     * Computes a URL-safe Base64 HMAC (SHA-256) over the already Base64-encoded token.
      *
-     * @param base64token the token (already base64 encoded
-     * @return returns HMAC-Hash
+     * @param base64token token (URL-safe Base64, without padding)
+     * @return HMAC digest encoded as URL-safe Base64 (no padding)
+     * @throws IllegalStateException if the API key is missing or HMAC calculation fails
      */
     private String createHMAC(String base64token) {
         // selects HMAC-method (here HmacSHA256)
         String algorithm = "HmacSHA256";
-        String psk = sharingConnectorService.getSharingApiKeyOrNull();
+        String psk = sharingConnectorService.getSharingApiKey();
         if (psk == null) {
             throw new IllegalStateException("Sharing API key is not configured");
         }
@@ -358,11 +392,14 @@ public class ExerciseSharingService {
     }
 
     /**
-     * checks the integrity of the base64token
+     * Validates the integrity of a token using its HMAC.
+     * <p>
+     * Accepts {@code sec} with space-for-plus substitutions (defensive for lenient URL decoders).
+     * </p>
      *
-     * @param base64token the base64token
-     * @param sec         the hmac hash
-     * @return true, iff hash is correct
+     * @param base64token URL-safe Base64 token (no padding)
+     * @param sec         expected HMAC (URL-safe Base64)
+     * @return {@code true} iff the computed HMAC matches {@code sec}
      */
     public boolean validate(String base64token, String sec) {
         // we have to take care that the base64 encoded token may contain a + sign, which may be converted to a space
@@ -376,10 +413,13 @@ public class ExerciseSharingService {
     }
 
     /**
-     * loads the stored file from the file system (via the b64 token).
+     * Resolves a previously exported ZIP on disk based on the Base64 token.
+     * <p>
+     * Integrity is enforced separately via {@link #validate(String, String)}.
+     * </p>
      *
-     * @param b64Token the base64 encoded token
-     * @return the file referenced by the token
+     * @param b64Token URL-safe Base64 token (no padding)
+     * @return path to the ZIP if it exists; otherwise {@link Optional#empty()}
      */
     public Optional<Path> getExportedExerciseByToken(String b64Token) {
         if (isInvalidToken(b64Token)) {
@@ -396,15 +436,19 @@ public class ExerciseSharingService {
         return Optional.of(zipPath);
     }
 
+    /**
+     * @return {@code true} if the token is blank, too long, or contains characters other than {@code [a-zA-Z0-9_-]}
+     */
     private boolean isInvalidToken(String token) {
         return StringUtils.isBlank(token) || token.length() >= MAX_EXPORT_TOKEN_LENGTH || !token.matches("^[a-zA-Z0-9_-]+$");
     }
 
     /**
-     * Returns a formatted filename for a basket file.
+     * Builds a predictable temp filename for a cached basket ZIP.
      *
-     * @param basketToken  of the retrieved file
-     * @param itemPosition of the retrieved file
+     * @param basketToken  basket identifier
+     * @param itemPosition item index inside the basket
+     * @return sanitized filename for the cached ZIP
      */
     private String getBasketFileName(String basketToken, int itemPosition) {
         String safeToken = basketToken.replaceAll("[^a-zA-Z0-9_-]", "");

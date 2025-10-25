@@ -11,7 +11,25 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * just a utility class to hold the zip file from sharing
+ * Simple wrapper around an {@link InputStream} representing a ZIP archive
+ * received from the Sharing Platform.
+ * <p>
+ * Implements both {@link MultipartFile} and {@link Closeable} so it can be
+ * handled like an uploaded file while ensuring proper stream cleanup.
+ * </p>
+ *
+ * <h2>Usage</h2>
+ * <ul>
+ * <li>Provides a read-only view of the underlying ZIP file.</li>
+ * <li>Supports standard {@link MultipartFile} operations such as {@code getBytes()},
+ * {@code transferTo(File)}, and {@code getInputStream()}.</li>
+ * <li>Implements {@link #close()} to release the input stream when done.</li>
+ * </ul>
+ *
+ * <p>
+ * Instances are typically short-lived and used within a try-with-resources block
+ * when importing exercises from the Sharing Platform.
+ * </p>
  */
 public record SharingMultipartZipFile(@NotNull String name, @NotNull InputStream inputStream) implements MultipartFile, Closeable {
 
@@ -65,6 +83,9 @@ public record SharingMultipartZipFile(@NotNull String name, @NotNull InputStream
         FileUtils.copyInputStreamToFile(this.inputStream, dest);
     }
 
+    /**
+     * Closes the underlying input stream and releases any associated resources.
+     */
     @Override
     public void close() throws IOException {
         if (this.inputStream != null) {

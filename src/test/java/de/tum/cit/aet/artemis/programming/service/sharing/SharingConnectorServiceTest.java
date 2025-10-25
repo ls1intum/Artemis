@@ -66,9 +66,9 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
         sharingConnectorService.setSharingApiBaseUrl(sharingConnectorService.getSharingApiBaseUrlOrNull());
         assertThat(sharingConnectorService.getSharingApiBaseUrlOrNull()).isNotNull();
 
-        assertThat(sharingConnectorService.getSharingApiKeyOrNull()).isNotNull();
-        sharingConnectorService.setSharingApiKey(sharingConnectorService.getSharingApiKeyOrNull());
-        assertThat(sharingConnectorService.getSharingApiKeyOrNull()).isNotNull();
+        assertThat(sharingConnectorService.getSharingApiKey()).isNotNull();
+        sharingConnectorService.setSharingApiKey(sharingConnectorService.getSharingApiKey());
+        assertThat(sharingConnectorService.getSharingApiKey()).isNotNull();
     }
 
     @ParameterizedTest
@@ -88,7 +88,7 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
         assertThat(sharingConnectorService.validateApiKey(hugeKey)).isFalse();
         assertThat(sharingConnectorService.validateApiKey(hugeKey.substring(0, SharingConnectorService.MAX_API_KEY_LENGTH + 1))).isFalse();
         String admissibleKey = hugeKey.substring(0, SharingConnectorService.MAX_API_KEY_LENGTH);
-        String configuredApiKey = sharingConnectorService.getSharingApiKeyOrNull();
+        String configuredApiKey = sharingConnectorService.getSharingApiKey();
         try {
             sharingConnectorService.setSharingApiKey(admissibleKey);
             assertThat(sharingConnectorService.validateApiKey(admissibleKey)).isTrue();

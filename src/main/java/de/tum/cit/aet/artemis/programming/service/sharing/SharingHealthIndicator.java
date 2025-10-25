@@ -27,8 +27,8 @@ public class SharingHealthIndicator implements HealthIndicator {
 
     private static final DateTimeFormatter TIME_STAMP_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm:ss");
 
-    @Value("${artemis.sharing.enabled:'undefined'}")
-    private String sharingEnabled;
+    @Value("${artemis.sharing.enabled:false}")
+    private boolean sharingEnabled;
 
     private final Optional<SharingConnectorService> sharingConnectorService;
 
@@ -43,7 +43,7 @@ public class SharingHealthIndicator implements HealthIndicator {
     @Override
     public Health health() {
         Health.Builder health;
-        if ("true".equals(sharingEnabled) && sharingConnectorService.isPresent()) {
+        if (sharingEnabled && sharingConnectorService.isPresent()) {
 
             SharingConnectorService.HealthStatusWithHistory lastHealthStati = sharingConnectorService.get().getLastHealthStati();
             if (lastHealthStati.getLastConnect() == null) {

@@ -7,7 +7,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 
 /**
- * Condition to check if the Sharing feature is enabled.
+ * Condition to check if the Sharing feature (for the Programming Exercise Sharing Platform) is enabled.
  * Based on this condition, Spring components concerning Sharing functionality can be enabled or disabled.
  */
 public class SharingEnabled implements Condition {

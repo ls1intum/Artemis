@@ -23,7 +23,15 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorServic
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 
 /**
- * REST controller for the exchange of configuration data between artemis and the sharing platform.
+ * REST controller that exposes Artemis ↔ Sharing Platform integration endpoints.
+ * <p>
+ * Loaded only when sharing is enabled ({@link SharingEnabled}); otherwise the controller
+ * is absent and all endpoints return HTTP 404.
+ * </p>
+ *
+ * <h2>Security</h2>
+ * All endpoints require a shared secret API key sent via the {@code Authorization} header
+ * using the {@code Bearer <token>} scheme.
  */
 @RestController
 @RequestMapping("api/core/sharing/")
@@ -46,17 +54,35 @@ public class SharingSupportResource {
 
     /**
      * GET api/core/sharing/config
-     * Returns Sharing Plugin configuration to be used in context with Artemis.
-     * This configuration is requested by the sharing platform in general every 10 minutes.
-     * It is secured by the common secret api key token transferred by Authorization header.
+     * <p>
+     * Returns the {@link SharingPluginConfig} that the sharing platform should use with Artemis.
+     * <p>
+     * The sharing platform polls this endpoint periodically (typically every ~10 minutes).
+     * Requests must be authenticated via {@code Authorization: Bearer <token>}.
+     * The {@code apiBaseUrl} is validated to contain a host and to use {@code https} or {@code http}.
+     * </p>
      *
-     * @param sharingApiKey    the common secret api key token (transferred by Authorization header).
-     * @param apiBaseUrl       the base url of the sharing application api (for callbacks)
-     * @param installationName a descriptive name of the sharing application (optional)
+     * <h3>Request</h3>
+     * <ul>
+     * <li><b>Header</b> {@code Authorization}: {@code Bearer <token>} (required)</li>
+     * <li><b>Query</b> {@code apiBaseUrl}: base URL of the sharing platform API used for callbacks (required)</li>
+     * <li><b>Query</b> {@code installationName}: human-readable installation identifier (optional)</li>
+     * </ul>
      *
-     * @return Sharing Plugin configuration
+     * <h3>Responses</h3>
+     * <ul>
+     * <li><b>200 OK</b>: returns the resolved {@link SharingPluginConfig}.</li>
+     * <li><b>400 Bad Request</b>: malformed or disallowed {@code apiBaseUrl}
+     * (missing host, unsupported scheme, or invalid URL).</li>
+     * <li><b>401 Unauthorized</b>: missing or invalid API key.</li>
+     * </ul>
+     *
+     * @param sharingApiKey    the {@code Authorization} header value; either {@code Bearer <token>} or the raw token
+     * @param apiBaseUrl       the sharing platform API base URL used for callbacks (must include a host; scheme must be {@code https} or {@code http})
+     * @param installationName optional descriptive name of the sharing platform installation
+     * @return {@code 200 OK} with the plugin configuration; {@code 400} on invalid {@code apiBaseUrl};
+     *         {@code 401} on missing/invalid credentials
      * @see <a href="https://sharing-codeability.uibk.ac.at/development/sharing/codeability-sharing-platform/-/wikis/Setup/Connector-Interface-Setup">Connector Interface Setup</a>
-     *
      */
     @GetMapping(SHARINGCONFIG_RESOURCE_PATH)
     public ResponseEntity<SharingPluginConfig> getConfig(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestHeader("Authorization") Optional<String> sharingApiKey,
@@ -90,17 +116,23 @@ public class SharingSupportResource {
 
     /**
      * GET api/core/sharing/config/is-enabled
-     * This method returns three different responses:
+     * <p>
+     * Indicates whether sharing support is effectively enabled and connected.
+     * <p>
+     * Returns {@code true} if a Sharing {@code apiBaseUrl} is configured and reachable (as determined
+     * by {@link SharingConnectorService#isSharingApiBaseUrlPresent()}), otherwise {@code false}.
+     * If sharing is disabled entirely, this controller is not loaded and the endpoint resolves to
+     * HTTP 404.
+     * </p>
      *
+     * <h3>Responses</h3>
      * <ul>
-     * <li>true, if the sharing profile is enabled, and the connection to the sharing platform is established.</li>
-     * <li>false. if the sharing profile is enabled, however the connection to the sharing platform is not (yet) established.</li>
-     * <li>If the sharing profile is not enabled, this endpoint is not available (HTTP 404).</li>
+     * <li><b>200 OK</b> with body {@code true}: sharing profile enabled and connection established.</li>
+     * <li><b>200 OK</b> with body {@code false}: sharing profile enabled but not yet connected.</li>
+     * <li><b>404 Not Found</b>: sharing profile disabled (controller not active).</li>
      * </ul>
-     * The last two cases must be interpreted as sharing is not enabled.
      *
-     * @return Status 200 with true if a Sharing ApiBaseUrl is present, or false if the Sharing profile is enabled but not yet connected.
-     *         If the Sharing profile is disabled, the endpoint is not available (HTTP 404).
+     * @return {@code ResponseEntity<Boolean>} indicating connection status when sharing is enabled
      */
     @GetMapping(SHARINGCONFIG_RESOURCE_IS_ENABLED)
     public ResponseEntity<Boolean> isSharingEnabled() {

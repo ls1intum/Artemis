@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
@@ -25,33 +26,59 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * Service to support Sharing Platform functionality as a plugin.
+ * Service that integrates Artemis with the external Sharing Platform via the plugin interface.
  *
- * @see <a href="https://sharing-codeability.uibk.ac.at/sharing/codeability-sharing-platform/-/wikis/technical/Plugin-Interface">Plugin Tutorial</a>
+ * <p>
+ * Exposes configuration, validates API keys, records lightweight health information, and
+ * optionally triggers a reinitialization handshake with the Sharing Platform at startup.
+ * </p>
+ *
+ * @see <a href="https://sharing-codeability.uibk.ac.at/sharing/codeability-sharing-platform/-/wikis/technical/Plugin-Interface">
+ *      Plugin Tutorial</a>
  */
 @Service
 @Conditional(SharingEnabled.class)
 @Lazy
 public class SharingConnectorService {
 
+    /**
+     * Maximum number of recent health entries to keep in memory.
+     */
     public static final int HEALTH_HISTORY_LIMIT = 10;
 
     /**
-     * just to signal a missing/inconsistent sharing configuration to the sharing connector service.
+     * Marker used when the installation name cannot be derived from configuration or hostname.
+     * <p>
+     * Signals a missing or inconsistent sharing configuration to the connector.
+     * </p>
      */
     public static final String UNKNOWN_INSTALLATION_NAME = "unknown installation name";
 
     /**
-     * protected, to be reused in tests.
+     * Hard upper bound for accepted API key length.
+     * <p>
+     * Restricts unbounded input and mitigates trivial abuse in validation.
+     * </p>
+     * <p>
+     * <b>Visibility:</b> protected to be reusable in tests.
+     * </p>
      */
     protected static final int MAX_API_KEY_LENGTH = 200;
 
+    /**
+     * Immutable health entry consisting of a creation timestamp and a short status message.
+     */
     public static class HealthStatus {
 
         private final Instant timeStamp = Instant.now();
 
         private final String statusMessage;
 
+        /**
+         * Creates a new health entry with the current timestamp.
+         *
+         * @param statusMessage human-readable status description
+         */
         public HealthStatus(String statusMessage) {
             this.statusMessage = statusMessage;
         }
@@ -66,7 +93,10 @@ public class SharingConnectorService {
     }
 
     /**
-     * holds the current status and the last connection timestamp
+     * Bounded in-memory history of recent {@link HealthStatus} entries plus the last successful connect time.
+     * <p>
+     * On insert, the oldest entry is removed when the size exceeds {@link #HEALTH_HISTORY_LIMIT}.
+     * </p>
      */
     public static class HealthStatusWithHistory extends ArrayList<HealthStatus> {
 
@@ -106,25 +136,34 @@ public class SharingConnectorService {
     private static final Logger log = LoggerFactory.getLogger(SharingConnectorService.class);
 
     /**
-     * Base url for callbacks to Sharing Platform
+     * Base URL used by Artemis to call back into the Sharing Platform.
+     * <p>
+     * Set on first configuration exchange and retained for subsequent operations.
+     * </p>
      */
     private URL sharingApiBaseUrl = null;
 
     /**
-     * cmd
-     * installation name forwarded in config for Sharing Platform
+     * Installation name forwarded to the Sharing Platform and shown in its UI.
+     * <p>
+     * Initialized to {@link #UNKNOWN_INSTALLATION_NAME} and resolved on first contact
+     * from the optional request parameter, {@code HOSTNAME} env var, or local host name.
+     * </p>
      */
     private String installationName = UNKNOWN_INSTALLATION_NAME; // to be set after first contact with sharing platform
 
     @Value("${artemis.sharing.apikey:#{null}}")
+    @Nullable
     private String sharingApiKey;
 
     @Value("${artemis.sharing.actionname:Export to Artemis@somewhere}")
     private String actionName;
 
     /**
-     * the url of the sharing platform.
-     * Only needed for initial trigger a configuration exchange during startup.
+     * Base URL of the Sharing Platform.
+     * <p>
+     * Used only to actively trigger a configuration refresh during startup.
+     * </p>
      */
     @Value("${artemis.sharing.serverurl:#{null}}")
     private String sharingUrl;
@@ -156,15 +195,16 @@ public class SharingConnectorService {
     }
 
     /**
-     * Sets the apiKey explicitly. For test purpose only.
+     * Overrides the configured API key. Intended for tests.
      *
-     * @param sharingApiKey the explicit api key
+     * @param sharingApiKey the explicit API key to set
      */
     public void setSharingApiKey(String sharingApiKey) {
         this.sharingApiKey = sharingApiKey;
     }
 
-    public String getSharingApiKeyOrNull() {
+    @Nullable
+    public String getSharingApiKey() {
         return sharingApiKey;
     }
 
@@ -173,11 +213,16 @@ public class SharingConnectorService {
     }
 
     /**
-     * Returns the configuration forwarded to sharing plugin.
+     * Builds and returns the {@link SharingPluginConfig} to be consumed by the Sharing Platform.
+     * <p>
+     * Also persists the provided {@code apiBaseUrl}, resolves and stores the installation name, and
+     * records a health entry and connection timestamp.
+     * </p>
      *
-     * @param apiBaseUrl       the base url of the sharing application api (for callbacks)
-     * @param installationName an optional descriptive name of the sharing application
-     * @return the sharing plugin config
+     * @param apiBaseUrl       base URL of the Sharing Platform API (used for callbacks)
+     * @param installationName optional human-readable installation identifier; if empty, falls back to
+     *                             {@code HOSTNAME} environment variable or the local canonical host name
+     * @return a plugin configuration containing the Artemis import action and metadata
      */
     public SharingPluginConfig getPluginConfig(URL apiBaseUrl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> installationName) {
         this.sharingApiBaseUrl = apiBaseUrl;
@@ -197,11 +242,14 @@ public class SharingConnectorService {
     }
 
     /**
-     * validates the api key transferred from sharing platform.
+     * Validates an API key supplied by the Sharing Platform.
+     * <p>
+     * Accepts either a raw token or a {@code Bearer &lt;token&gt;} header value. Length is bounded by
+     * {@link #MAX_API_KEY_LENGTH}. On failure, a health entry is recorded.
+     * </p>
      *
-     * @param apiKey the key to check
-     * @return true if the api key (resp. the bearer token) is valid.
-     *
+     * @param apiKey the provided credential; raw token or {@code Bearer} header value
+     * @return {@code true} if the token matches the configured {@code artemis.sharing.apikey}; otherwise {@code false}
      */
     public boolean validateApiKey(String apiKey) {
         if (apiKey == null || apiKey.length() > MAX_API_KEY_LENGTH) {
@@ -210,10 +258,10 @@ public class SharingConnectorService {
 
             return false;
         }
-        Pattern p = Pattern.compile("^Bearer\\s+(\\S+)$");
-        Matcher m = p.matcher(apiKey);
-        if (m.matches()) {
-            apiKey = m.group(1);
+        Pattern pattern = Pattern.compile("^Bearer\\s+(\\S+)$");
+        Matcher matcher = pattern.matcher(apiKey);
+        if (matcher.matches()) {
+            apiKey = matcher.group(1);
         }
 
         boolean success = Objects.equals(sharingApiKey, apiKey);
@@ -224,10 +272,11 @@ public class SharingConnectorService {
     }
 
     /**
-     * After bean creation, we trigger an reinitialization from the Sharing Platform:
-     * i.e. we query the Sharing Platform to send a
-     * new config request immediately, not waiting for the next scheduled request.
-     * It starts a background thread via the spring task scheduler in order not to block application startup.
+     * Schedules a one-time reinitialization request shortly after application startup.
+     * <p>
+     * Uses the Spring {@link TaskScheduler} to avoid blocking startup. If {@code artemis.sharing.serverurl}
+     * is unset, no request is made.
+     * </p>
      */
     @PostConstruct
     public void triggerSharingReinitAfterApplicationStart() {
@@ -235,8 +284,11 @@ public class SharingConnectorService {
     }
 
     /**
-     * Shuts down the service.
-     * Currently just for test purposes
+     * Shuts down the connector service.
+     * <p>
+     * Clears the cached API base URL and health {@code lastConnect} marker, and records a status entry.
+     * Primarily used in tests.
+     * </p>
      */
     void shutDown() {
         sharingApiBaseUrl = null;
@@ -245,8 +297,12 @@ public class SharingConnectorService {
     }
 
     /**
-     * request a reinitialization of the sharing platform.
-     * Not for external use, package visible for test purpose only.
+     * Requests a reinitialization from the Sharing Platform.
+     * <p>
+     * Package-private for tests. If {@code artemis.sharing.serverurl} is configured, sends a
+     * {@code GET /api/pluginIF/v0.1/reInitialize?apiKey=...} call using the configured {@link RestTemplate}.
+     * Records success or failure in health history and logs warnings on failure.
+     * </p>
      */
     void triggerReinit() {
         if (sharingUrl != null) {
@@ -268,8 +324,10 @@ public class SharingConnectorService {
         }
     }
 
+    /**
+     * @return the recent health history including the last connection time
+     */
     public HealthStatusWithHistory getLastHealthStati() {
         return lastHealthStati;
     }
-
 }

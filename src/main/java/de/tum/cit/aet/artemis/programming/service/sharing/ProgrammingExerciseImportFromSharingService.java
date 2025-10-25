@@ -13,6 +13,13 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
 
+/**
+ * Orchestrates importing programming exercises from the Sharing Platform into Artemis.
+ * <p>
+ * Delegates the actual ZIP-based import to {@link ProgrammingExerciseImportFromFileService}.
+ * Active only when {@link SharingEnabled} evaluates to true.
+ * </p>
+ */
 @Service
 @Conditional(SharingEnabled.class)
 @Lazy
@@ -32,12 +39,26 @@ public class ProgrammingExerciseImportFromSharingService {
     }
 
     /**
-     * Imports a programming exercise from the Sharing Platform.
-     * This method reuses the implementation of ProgrammingExerciseImportFromFileService for importing the exercise from a Zip file.
+     * Imports a programming exercise referenced by the Sharing Platform.
+     * <p>
+     * Steps:
+     * <ol>
+     * <li>Fetch the exported exercise ZIP via {@link ExerciseSharingService getCachedBasketItem(SharingSetupInfo.SharingInfoDTO)}</li>
+     * <li>Resolve the target course: if the exercise has no course/exercise group set, use
+     * {@code sharingSetupInfo.course()}, otherwise fail with {@link SharingException}</li>
+     * <li>Run the standard ZIP import using {@link ProgrammingExerciseImportFromFileService}</li>
+     * </ol>
+     * The import runs as the current user returned by {@link UserRepository#getUserWithGroupsAndAuthorities()}.
+     * </p>
      *
-     * @param sharingSetupInfo Containing sharing and exercise data needed for the import
-     * @return The imported ProgrammingExercise
-     * @throws SharingException if the sharing setup info is invalid or the import fails
+     * @param sharingSetupInfo container with the basket reference, the exercise model to import, and (optionally) the target course
+     * @return the persisted {@link ProgrammingExercise}
+     *
+     * @throws SharingException   if the setup info is inconsistent (e.g., exercise null or missing target course),
+     *                                or if the basket ZIP cannot be obtained
+     * @throws IOException        if reading the ZIP or related I/O fails
+     * @throws GitAPIException    if VCS operations during import fail
+     * @throws URISyntaxException if an internal URI cannot be constructed
      */
     public ProgrammingExercise importProgrammingExerciseFromSharing(SharingSetupInfo sharingSetupInfo) throws SharingException, IOException, GitAPIException, URISyntaxException {
         if (sharingSetupInfo.exercise() == null) {

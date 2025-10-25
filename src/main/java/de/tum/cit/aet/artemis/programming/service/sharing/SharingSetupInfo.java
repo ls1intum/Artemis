@@ -13,6 +13,5 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * @param course      the course context for the exercise
  * @param sharingInfo the original sharing information from the sharing platform
  */
-
 public record SharingSetupInfo(@NotNull ProgrammingExercise exercise, @NotNull Course course, @NotNull SharingInfoDTO sharingInfo) {
 }
