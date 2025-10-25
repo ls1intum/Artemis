@@ -405,4 +405,5 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         validateDeletionSummary(deletionSummary, 59 * (ITERATIONS - 1));
         validateDbStoredElementCounts(59, 14_589, 212);
     }
+
 }
