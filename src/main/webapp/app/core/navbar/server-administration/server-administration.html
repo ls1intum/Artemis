@@ -5,7 +5,7 @@
     class="nav-item dropdown pointer server-administration"
     display="dynamic"
     routerLinkActive="active"
-    (click)="showDialog()"
+    (click)="showModal()"
 >
     @if (!isExamActive() && !isExamStarted()) {
         <a class="jh-navbar nav-link dropdown-toggle py-0" ngbDropdownToggle id="admin-menu">

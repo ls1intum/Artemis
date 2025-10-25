@@ -13,14 +13,14 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
 export class LoginWithPasskeyModal {
     protected readonly faKey = faKey;
 
-    showDialog: boolean = false;
+    showModal: boolean = false;
 
     signInWithPasskey() {
         // TODO
     }
 
     cancel() {
-        this.showDialog = false;
+        this.showModal = false;
     }
 
     protected readonly ButtonType = ButtonType;
