@@ -10,7 +10,6 @@ import {
     faFlag,
     faGears,
     faHeart,
-    faKey,
     faList,
     faLock,
     faPuzzlePiece,
@@ -35,6 +34,7 @@ import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/weba
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { LoginWithPasskeyModal } from 'app/core/navbar/server-administration/login-with-passkey/login-with-passkey.modal';
 
 @Component({
     selector: 'jhi-server-administration',
@@ -48,6 +48,7 @@ import { AccountService } from 'app/core/auth/account.service';
         NgbDropdownToggle,
         RouterLinkActive,
         RouterLink,
+        LoginWithPasskeyModal,
     ],
     templateUrl: './server-administration.html',
     styleUrl: '../navbar.scss',
@@ -72,7 +73,6 @@ export class ServerAdministration implements OnInit {
     protected readonly faEye = faEye;
     protected readonly faUser = faUser;
     protected readonly faUserPlus = faUserPlus;
-    protected readonly faKey = faKey;
 
     private readonly isLoggedInWithPasskeyGuard = inject(IsLoggedInWithPasskeyGuard);
     private readonly webauthnService = inject(WebauthnService);
@@ -96,6 +96,8 @@ export class ServerAdministration implements OnInit {
     collapseNavbarListener = output<void>();
 
     authenticationError = false;
+
+    showLoginWithPasskeyDialog: boolean = false;
 
     protected isLoggedInWithPasskey = signal<boolean>(false);
     private justLoggedInWithPasskey = false;
@@ -125,6 +127,10 @@ export class ServerAdministration implements OnInit {
 
     protected collapseNavbar() {
         this.collapseNavbarListener.emit();
+    }
+
+    protected showDialog() {
+        this.showLoginWithPasskeyDialog = true;
     }
 
     async loginWithPasskey() {

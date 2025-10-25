@@ -1,0 +1,16 @@
+<p-dialog [(visible)]="showDialog" [modal]="true" [draggable]="false" [position]="'top'">
+    <ng-template pTemplate="header">
+        <h5>
+            <fa-icon [icon]="faKey" [fixedWidth]="true" />
+            <span jhiTranslate="global.menu.admin.loginWithPasskey"></span>
+        </h5>
+    </ng-template>
+
+    test test test
+    <p jhiTranslate="artemisApp.quizQuestion.unratedConfirmation"></p>
+
+    <ng-template pTemplate="footer">
+        <jhi-button (onClick)="cancel()" [title]="'entity.action.cancel'" [btnType]="ButtonType.SECONDARY" />
+        <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" />
+    </ng-template>
+</p-dialog>
