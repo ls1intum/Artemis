@@ -167,6 +167,16 @@ class AtlasAgentServiceTest {
     }
 
     @Test
+    void testIsAvailable_WithNullChatMemory() {
+        ChatClient chatClient = ChatClient.create(chatModel);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null, null);
+
+        boolean available = serviceWithNullMemory.isAvailable();
+
+        assertThat(available).isFalse();
+    }
+
+    @Test
     void testConversationIsolation_DifferentUsers() throws ExecutionException, InterruptedException {
         Long courseId = 123L;
         String instructor1SessionId = "course_123_user_1";
@@ -584,6 +594,52 @@ class AtlasAgentServiceTest {
             String result = promptTemplateService.render(resourcePath, variables);
 
             assertThat(result).isNotEmpty();
+        }
+    }
+
+    @Nested
+    class AtlasAgentHistoryMessageDTOTests {
+
+        private final ObjectMapper objectMapper = new ObjectMapper();
+
+        @Test
+        void shouldSerializeToJsonWhenValidData() throws Exception {
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("Test message content", true);
+
+            String actualJson = objectMapper.writeValueAsString(dto);
+
+            assertThat(actualJson).contains("\"content\":\"Test message content\"");
+            assertThat(actualJson).contains("\"isUser\":true");
+        }
+
+        @Test
+        void shouldDeserializeFromJsonWhenValidJson() throws Exception {
+            String json = "{\"content\":\"Deserialized content\",\"isUser\":false}";
+
+            AtlasAgentHistoryMessageDTO actualDto = objectMapper.readValue(json, AtlasAgentHistoryMessageDTO.class);
+
+            assertThat(actualDto.content()).isEqualTo("Deserialized content");
+            assertThat(actualDto.isUser()).isFalse();
+        }
+
+        @Test
+        void shouldExcludeContentWhenEmpty() throws Exception {
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("", true);
+
+            String actualJson = objectMapper.writeValueAsString(dto);
+
+            assertThat(actualJson).doesNotContain("content");
+            assertThat(actualJson).contains("\"isUser\":true");
+        }
+
+        @Test
+        void shouldExcludeContentWhenNull() throws Exception {
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO(null, false);
+
+            String actualJson = objectMapper.writeValueAsString(dto);
+
+            assertThat(actualJson).doesNotContain("content");
+            assertThat(actualJson).contains("\"isUser\":false");
         }
     }
 
