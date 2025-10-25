@@ -1,4 +1,4 @@
-import { Component, model } from '@angular/core';
+import { Component } from '@angular/core';
 import { DialogModule } from 'primeng/dialog';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faKey } from '@fortawesome/free-solid-svg-icons';
@@ -13,14 +13,14 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
 export class LoginWithPasskeyModal {
     protected readonly faKey = faKey;
 
-    showDialog = model.required<boolean>();
+    showDialog: boolean = false;
 
     signInWithPasskey() {
         // TODO
     }
 
     cancel() {
-        this.showDialog.set(false);
+        this.showDialog = false;
     }
 
     protected readonly ButtonType = ButtonType;

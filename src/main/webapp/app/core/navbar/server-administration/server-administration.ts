@@ -83,6 +83,7 @@ export class ServerAdministration implements OnInit {
     private readonly accountService = inject(AccountService);
 
     adminMenuDropdown = viewChild.required<NgbDropdown>('adminMenuDropdown');
+    loginWithPasskeyDialog = viewChild.required<LoginWithPasskeyModal>(LoginWithPasskeyModal);
 
     isExamActive = input<boolean>(false);
     isExamStarted = input<boolean>(false);
@@ -96,8 +97,6 @@ export class ServerAdministration implements OnInit {
     collapseNavbarListener = output<void>();
 
     authenticationError = false;
-
-    showLoginWithPasskeyDialog: boolean = false;
 
     protected isLoggedInWithPasskey = signal<boolean>(false);
     private justLoggedInWithPasskey = false;
@@ -130,7 +129,7 @@ export class ServerAdministration implements OnInit {
     }
 
     protected showDialog() {
-        this.showLoginWithPasskeyDialog = true;
+        this.loginWithPasskeyDialog().showDialog = true;
     }
 
     async loginWithPasskey() {
