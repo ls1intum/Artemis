@@ -1,0 +1,126 @@
+<div class="frame">
+    <p jhiTranslate="artemisApp.lecture.createSeries.startAndEndDateExplanation"></p>
+    @for (initialLecture of initialLectures(); track initialLecture.id; let index = $index) {
+        <div class="input-row">
+            <div class="enumerator secondary">
+                {{ index + 1 }}
+            </div>
+            <p-floatlabel variant="on">
+                <p-datepicker
+                    [inputId]="'start-date-' + (index + 1)"
+                    [ngModel]="initialLecture.startDate() ?? null"
+                    (ngModelChange)="initialLecture.startDate.set($event ?? undefined)"
+                    [firstDayOfWeek]="1"
+                    [invalid]="initialLecture.isStartDateInvalid()"
+                    [showTime]="true"
+                    hourFormat="24"
+                    [appendTo]="'body'"
+                    [baseZIndex]="100000"
+                />
+                <label [for]="'start-date-' + (index + 1)" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.startDate"></label>
+            </p-floatlabel>
+            <p-floatlabel variant="on">
+                <p-datepicker
+                    [inputId]="'end-date-' + (index + 1)"
+                    [ngModel]="initialLecture.endDate() ?? null"
+                    (ngModelChange)="initialLecture.endDate.set($event ?? undefined)"
+                    [firstDayOfWeek]="1"
+                    [invalid]="initialLecture.isEndDateInvalid()"
+                    [showTime]="true"
+                    hourFormat="24"
+                    [appendTo]="'body'"
+                    [baseZIndex]="100000"
+                />
+                <label [for]="'end-date-' + (index + 1)" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.endDate"></label>
+            </p-floatlabel>
+            @if (initialLectures().length !== 1) {
+                <button
+                    pButton
+                    outlined
+                    severity="secondary"
+                    size="small"
+                    class="initial-lecture-delete-button"
+                    (click)="removeInitialLecture(initialLecture)"
+                    [attr.aria-label]="'Remove Initial Lecture ' + (index + 1)"
+                >
+                    <fa-icon [icon]="faTrash" />
+                </button>
+            }
+            @if (initialLecture.isLongerThanRecommended()) {
+                <div class="long-lecture-warning">
+                    <fa-icon [icon]="faTriangleExclamation" />
+                    <span class="warning-text" jhiTranslate="artemisApp.lecture.longLectureWarning"></span>
+                </div>
+            }
+        </div>
+        @if ($last) {
+            <div class="input-row">
+                <div class="enumerator secondary">
+                    {{ index + 2 }}
+                </div>
+                <div>
+                    <button
+                        pButton
+                        outlined
+                        severity="secondary"
+                        size="small"
+                        class="primary-on-hover"
+                        (click)="addInitialLecture()"
+                        [attr.aria-label]="'Add Initial Lecture ' + (index + 2)"
+                    >
+                        <fa-icon [icon]="faPlus" />
+                    </button>
+                </div>
+            </div>
+        }
+    }
+    <p jhiTranslate="artemisApp.lecture.createSeries.seriesEndDateExplanation"></p>
+    <p-floatlabel variant="on">
+        <p-datepicker
+            inputId="series-end-date"
+            [ngModel]="seriesEndDate() ?? null"
+            (ngModelChange)="seriesEndDate.set($event ?? undefined)"
+            [firstDayOfWeek]="1"
+            [invalid]="isSeriesEndDateInvalid()"
+            [appendTo]="'body'"
+        />
+        <label for="series-end-date" jhiTranslate="artemisApp.lecture.createSeries.inputLabel.seriesEndDate"></label>
+    </p-floatlabel>
+    @let drafts = lectureDrafts();
+    @if (drafts.length > 0) {
+        <h3 jhiTranslate="artemisApp.lecture.createSeries.generatedLecturesHeading"></h3>
+        <div class="container w-100 px-0">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                @for (draft of drafts; track draft.id; let index = $index) {
+                    <div class="col">
+                        <div class="draft-card">
+                            <span class="enumerator primary" [ngClass]="{ edited: draft.state === LectureDraftState.EDITED }">
+                                {{ index + 1 }}
+                            </span>
+                            <span class="draft-title">{{ draft.dto.title }}</span>
+                            <button type="button" class="card-button primary-on-hover" (click)="draftEditModal.open(draft)" [attr.aria-label]="'Edit ' + draft.dto.title">
+                                <fa-icon [icon]="faPenToSquare" />
+                            </button>
+                            <button type="button" class="card-button primary-on-hover" (click)="deleteLectureDraft(draft)" [attr.aria-label]="'Delete ' + draft.dto.title">
+                                <fa-icon [icon]="faXmark" />
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    <div class="save-and-cancel-section">
+        <button pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+        <button pButton size="small" [disabled]="noDraftsGenerated()" (click)="save()" jhiTranslate="entity.action.save"></button>
+    </div>
+    @if (isLoading()) {
+        <div class="loading-overlay">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden" jhiTranslate="loading"></span>
+            </div>
+        </div>
+    }
+</div>
+
+<jhi-lecture-series-draft-edit-modal #draftEditModal />

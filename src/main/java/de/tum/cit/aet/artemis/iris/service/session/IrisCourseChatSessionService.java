@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -60,10 +61,12 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final CourseRepository courseRepository;
 
+    private final MessageSource messageSource;
+
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService, IrisCourseChatSessionRepository irisCourseChatSessionRepository,
-            PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper, CourseRepository courseRepository) {
+            PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper, CourseRepository courseRepository, MessageSource messageSource) {
         super(irisSessionRepository, null, null, objectMapper, irisMessageService, irisMessageRepository, irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -73,6 +76,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.pyrisPipelineService = pyrisPipelineService;
         this.courseRepository = courseRepository;
+        this.messageSource = messageSource;
     }
 
     /**
@@ -214,7 +218,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     }
 
     private IrisCourseChatSession createSessionInternal(Course course, User user, boolean sendInitialMessage) {
-        var session = irisCourseChatSessionRepository.save(new IrisCourseChatSession(course, user));
+        var courseChat = new IrisCourseChatSession(course, user);
+        courseChat.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
+        var session = irisCourseChatSessionRepository.save(courseChat);
 
         if (sendInitialMessage) {
             // Run async to allow the session to be returned immediately
