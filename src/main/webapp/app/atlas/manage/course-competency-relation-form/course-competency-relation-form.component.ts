@@ -8,8 +8,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -24,7 +22,7 @@ interface SuggestedRelationDTO {
     selector: 'jhi-course-competency-relation-form',
     templateUrl: './course-competency-relation-form.component.html',
     styleUrl: './course-competency-relation-form.component.scss',
-    imports: [TranslateDirective, CommonModule, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, NgbTooltip, FeatureToggleHideDirective, ButtonComponent],
+    imports: [TranslateDirective, CommonModule, FontAwesomeModule, FormsModule, FeatureToggleHideDirective, ButtonComponent],
 })
 export class CourseCompetencyRelationFormComponent {
     protected readonly faSpinner = faSpinner;
