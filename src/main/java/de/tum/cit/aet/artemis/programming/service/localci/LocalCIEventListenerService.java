@@ -79,6 +79,7 @@ public class LocalCIEventListenerService {
      */
     @PostConstruct
     public void init() {
+        log.info("Registering LocalCI event listeners for build job queue, processing jobs, and build agent information.");
         distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
         distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener(), true);
         distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), true);
@@ -93,7 +94,7 @@ public class LocalCIEventListenerService {
     @Scheduled(fixedRate = 60 * 1000)
     public void processQueuedResults() {
         final int initialSize = distributedDataAccessService.getResultQueueSize();
-        log.debug("{} queued results in the distributed build result queue. Processing up to {} results.", initialSize, initialSize);
+        log.info("Scheduled task found {} queued results in the Hazelcast distributed build result queue. Will process these results now.", initialSize);
         for (int i = 0; i < initialSize; i++) {
             if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
                 break;
