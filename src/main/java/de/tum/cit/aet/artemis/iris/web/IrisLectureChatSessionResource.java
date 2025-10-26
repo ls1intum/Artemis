@@ -80,7 +80,10 @@ public class IrisLectureChatSessionResource {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
 
         var lecture = api.findByIdElseThrow(lectureId);
-        validateLecture(lecture);
+
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
+        // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
@@ -109,7 +112,10 @@ public class IrisLectureChatSessionResource {
     public ResponseEntity<IrisLectureChatSession> createSessionForLecture(@PathVariable Long lectureId) throws URISyntaxException {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
-        validateLecture(lecture);
+
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
+        // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
@@ -135,7 +141,10 @@ public class IrisLectureChatSessionResource {
     public ResponseEntity<List<IrisLectureChatSession>> getAllSessions(@PathVariable Long lectureId) {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
-        validateLecture(lecture);
+
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code and the called method OR comment back in */
+        // checkWhetherLectureIsVisibleToStudentsElseThrow(lecture);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
@@ -149,7 +158,7 @@ public class IrisLectureChatSessionResource {
         return ResponseEntity.ok(filteredSessions);
     }
 
-    private static void validateLecture(Lecture lecture) {
+    private static void checkWhetherLectureIsVisibleToStudentsElseThrow(Lecture lecture) {
         if (!lecture.isVisibleToStudents()) {
             throw new ConflictException("The lecture is not visible to students yet", "Iris", "irisLecture");
         }
