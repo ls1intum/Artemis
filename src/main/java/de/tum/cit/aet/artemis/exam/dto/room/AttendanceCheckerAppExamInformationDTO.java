@@ -61,17 +61,17 @@ record ExamUserLocationDTO(
     }
 
     static ExamUserLocationDTO actualFrom(ExamUser examUser) {
-        final boolean isLegacy = examUser.getPlannedRoomTransient() == null || examUser.getPlannedSeatTransient() == null;
-
-        if (examUser.getActualRoom() == null || examUser.getActualSeat() == null ||
-            (!isLegacy && (examUser.getActualRoomTransient() == null || examUser.getActualSeatTransient() == null))) {
+        if (examUser.getActualRoom() == null || examUser.getActualSeat() == null) {
+            // examUser has not been moved
             return null;
         }
 
+        final boolean useLegacyFields = examUser.getActualRoomTransient() == null || examUser.getActualSeatTransient() == null;
+
         return new ExamUserLocationDTO(
-            isLegacy ? null : examUser.getActualRoomTransient().getId(),
-            isLegacy ? examUser.getActualRoom() : examUser.getActualRoomTransient().getRoomNumber(),
-            isLegacy ? examUser.getActualSeat() : examUser.getActualSeatTransient().name()
+            useLegacyFields ? null : examUser.getActualRoomTransient().getId(),
+            useLegacyFields ? examUser.getActualRoom() : examUser.getActualRoomTransient().getRoomNumber(),
+            useLegacyFields ? examUser.getActualSeat() : examUser.getActualSeatTransient().name()
         );
     }
 }
