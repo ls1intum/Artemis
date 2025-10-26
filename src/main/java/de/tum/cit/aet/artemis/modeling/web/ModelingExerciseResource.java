@@ -29,7 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -111,18 +113,20 @@ public class ModelingExerciseResource {
 
     private final ChannelRepository channelRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<SlideApi> slideApi;
 
-    private final ExerciseVersionService exerciseVersionService;
+    private final Optional<AtlasMLApi> atlasMLApi;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, ExerciseVersionService exerciseVersionService) {
+            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -138,9 +142,10 @@ public class ModelingExerciseResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.exerciseVersionService = exerciseVersionService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
-        this.exerciseVersionService = exerciseVersionService;
+        this.atlasMLApi = atlasMLApi;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -149,7 +154,9 @@ public class ModelingExerciseResource {
      * POST modeling-exercises : Create a new modelingExercise.
      *
      * @param modelingExercise the modelingExercise to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new modelingExercise, or with status 400 (Bad Request) if the modelingExercise has already an ID
+     * @return the ResponseEntity with status 201 (Created) and with body the new
+     *         modelingExercise, or with status 400 (Bad Request) if the
+     *         modelingExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     // TODO: we should add courses/{courseId} here
@@ -179,15 +186,27 @@ public class ModelingExerciseResource {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
+        // Notify AtlasML about the new modeling exercise
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about modeling exercise creation: {}", e.getMessage());
+            }
+        });
         exerciseVersionService.createExerciseVersion(result);
+
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
 
     /**
-     * Search for all modeling exercises by id, title and course title. The result is pageable since there might be hundreds
+     * Search for all modeling exercises by id, title and course title. The result
+     * is pageable since there might be hundreds
      * of exercises in the DB.
      *
-     * @param search         The pageable search containing the page size, page number and query string
+     * @param search         The pageable search containing the page size, page
+     *                           number and query string
      * @param isCourseFilter Whether to search in the courses for exercises
      * @param isExamFilter   Whether to search in the groups for exercises
      * @return The desired page, sorted and matching the given query
@@ -205,8 +224,11 @@ public class ModelingExerciseResource {
      *
      * @param modelingExercise the modelingExercise to update
      * @param notificationText the text shown to students
-     * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or with status 400 (Bad Request) if the modelingExercise is not valid, or with
-     *         status 500 (Internal Server Error) if the modelingExercise couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated
+     *         modelingExercise, or with status 400 (Bad Request) if the
+     *         modelingExercise is not valid, or with
+     *         status 500 (Internal Server Error) if the modelingExercise couldn't
+     *         be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("modeling-exercises")
@@ -251,7 +273,18 @@ public class ModelingExerciseResource {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise)));
 
+        // Notify AtlasML about the modeling exercise update
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(updatedModelingExercise, OperationTypeDTO.UPDATE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about modeling exercise update: {}", e.getMessage());
+            }
+        });
+
         exerciseVersionService.createExerciseVersion(updatedModelingExercise);
+
         return ResponseEntity.ok(updatedModelingExercise);
     }
 
@@ -259,7 +292,8 @@ public class ModelingExerciseResource {
      * GET /courses/:courseId/modeling-exercises : get all the exercises.
      *
      * @param courseId the id of the course
-     * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
+     * @return the ResponseEntity with status 200 (OK) and the list of
+     *         modelingExercises in body
      */
     @GetMapping("courses/{courseId}/modeling-exercises")
     @EnforceAtLeastTutor
@@ -280,7 +314,8 @@ public class ModelingExerciseResource {
      * GET modeling-exercises/:exerciseId : get the "id" modelingExercise.
      *
      * @param exerciseId the id of the modelingExercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the modelingExercise, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the
+     *         modelingExercise, or with status 404 (Not Found)
      */
     @GetMapping("modeling-exercises/{exerciseId}")
     @EnforceAtLeastTutor
@@ -316,23 +351,38 @@ public class ModelingExerciseResource {
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        // Notify AtlasML about the modeling exercise deletion before actual deletion
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(modelingExercise, OperationTypeDTO.DELETE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about modeling exercise deletion: {}", e.getMessage());
+            }
+        });
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
-        // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
+        // note: we use the exercise service here, because this one makes sure to clean
+        // up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
     }
 
     /**
-     * POST modeling-exercises/import: Imports an existing modeling exercise into an existing course
+     * POST modeling-exercises/import: Imports an existing modeling exercise into an
+     * existing course
      * <p>
      * This will import the whole exercise except for the participations and Dates.
      * Referenced entities will get cloned and assigned a new id.
      * Uses {@link ModelingExerciseImportService}.
      *
-     * @param sourceExerciseId The ID of the original exercise which should get imported
-     * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
-     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     * @param sourceExerciseId The ID of the original exercise which should get
+     *                             imported
+     * @param importedExercise The new exercise containing values that should get
+     *                             overwritten in the imported exercise, s.a. the title
+     *                             or difficulty
+     * @return The imported exercise (200), a not found error (404) if the template
+     *         does not exist, or a forbidden error
      *         (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
@@ -352,13 +402,17 @@ public class ModelingExerciseResource {
         importedExercise.validateGeneralSettings();
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
-        var savedModelingExercise = modelingExerciseRepository.save(newModelingExercise);
-        exerciseVersionService.createExerciseVersion(savedModelingExercise);
+        modelingExerciseRepository.save(newModelingExercise);
+        // Notify AtlasML about the imported exercise
+        atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
+        exerciseVersionService.createExerciseVersion(newModelingExercise, user);
+
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(newModelingExercise);
     }
 
     /**
-     * POST modeling-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
+     * POST modeling-exercises/:exerciseId/export-submissions : sends exercise
+     * submissions as zip
      *
      * @param exerciseId              the id of the exercise to get the repos from
      * @param submissionExportOptions the options that should be used for the export
@@ -382,14 +436,22 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * PUT modeling-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing modelingExercise.
+     * PUT modeling-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an
+     * existing modelingExercise.
      *
      * @param exerciseId                                  of the exercise
-     * @param modelingExercise                            the modelingExercise to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
-     * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or
-     *         with status 400 (Bad Request) if the modelingExercise is not valid, or with status 409 (Conflict)
-     *         if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     * @param modelingExercise                            the modelingExercise to
+     *                                                        re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that
+     *                                                        indicates whether the
+     *                                                        associated feedback should
+     *                                                        be deleted or not
+     * @return the ResponseEntity with status 200 (OK) and with body the updated
+     *         modelingExercise, or
+     *         with status 400 (Bad Request) if the modelingExercise is not valid,
+     *         or with status 409 (Conflict)
+     *         if given exerciseId is not same as in the object of the request body,
+     *         or with status 500 (Internal
      *         Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */

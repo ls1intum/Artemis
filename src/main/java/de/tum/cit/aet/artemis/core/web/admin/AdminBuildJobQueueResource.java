@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.util.SliceUtil;
@@ -68,6 +69,18 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get the queued build jobs");
         List<BuildJobQueueItem> buildJobQueue = distributedDataAccessService.getQueuedJobs();
         return ResponseEntity.ok(buildJobQueue);
+    }
+
+    /**
+     * Returns the queued result jobs.
+     *
+     * @return the queued result jobs
+     */
+    @GetMapping("queued-results")
+    public ResponseEntity<List<ResultQueueItem>> getQueuedResultJobs() {
+        log.debug("REST request to get the queued result jobs");
+        List<ResultQueueItem> buildResultQueue = distributedDataAccessService.getBuildResultQueue();
+        return ResponseEntity.ok(buildResultQueue);
     }
 
     /**

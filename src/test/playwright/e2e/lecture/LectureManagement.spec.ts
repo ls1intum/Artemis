@@ -35,7 +35,6 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         await lectureCreation.setTitle(lectureData.title);
         const description = await Fixtures.get('loremIpsum-short.txt');
         await lectureCreation.typeDescription(description!);
-        await lectureCreation.setVisibleDate(lectureData.visibleDate);
         await lectureCreation.setStartDate(lectureData.startDate);
         await lectureCreation.setEndDate(lectureData.endDate);
         const lectureResponse = await lectureCreation.save();
@@ -52,7 +51,6 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
 
         await expect(lectureManagement.getLectureTitle()).toContainText(lectureData.title);
         await expect(lectureManagement.getLectureDescription()).toContainText(adjustedDescription!);
-        await expect(lectureManagement.getLectureVisibleDate()).toContainText(lectureData.visibleDate!.format(dateFormat));
         await expect(lectureManagement.getLectureStartDate()).toContainText(lectureData.startDate!.format(dateFormat));
         await expect(lectureManagement.getLectureEndDate()).toContainText(lectureData.endDate!.format(dateFormat));
         await expect(lectureManagement.getLectureCourse()).toContainText(course.title!);

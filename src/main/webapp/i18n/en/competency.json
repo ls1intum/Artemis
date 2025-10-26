@@ -4,6 +4,12 @@
             "created": "Competency created",
             "deleted": "Competency deleted",
             "updated": "Competency updated",
+            "suggested": "AI Suggested",
+            "acceptSuggestion": "Accept this competency suggestion",
+            "dismissSuggestion": "Dismiss this competency suggestion",
+            "suggestions": {
+                "loadError": "Could not load competency suggestions. Please try again later."
+            },
             "competencyButton": "Competencies",
             "title": "Title",
             "description": "Description",
@@ -40,7 +46,9 @@
                 "importStandardizedButton": "Import standardized competencies",
                 "createButton": "Create competency",
                 "generateButton": "Generate Competencies",
+                "suggestionsButton": "AI Suggestions",
                 "empty": "No competencies exist for this course",
+                "noSuggestions": "No competency suggestions found. Try updating the course description to get better suggestions.",
                 "deleteRelationModalTitle": "Confirm Delete",
                 "deleteRelationModalText": "Are you sure you want to delete the relation between \"{{titleTail}}\" and \"{{titleHead}}\"?"
             },
@@ -126,6 +134,9 @@
                     "medium": "Medium",
                     "high": "High"
                 }
+            },
+            "suggestion": {
+                "tooltip": "This competency is suggested by AI based on the exercise description"
             },
             "competencyCard": {
                 "connectedLectureUnits": "Linked Lecture Units",
@@ -287,6 +298,17 @@
                         "competency": "This node represents a Competency",
                         "prerequisite": "This node represents a Prerequisite"
                     }
+                },
+                "suggestions": {
+                    "fetch": "AI suggestions",
+                    "title": "Suggestions",
+                    "empty": "No suggestions",
+                    "aiBadge": "AI",
+                    "aiTooltip": "Suggested by AI",
+                    "aiSuggestionsTitle": "AI Suggestions",
+                    "addSuggestions": "Add Suggestions ({{count}})",
+                    "alreadyExists": "(already exists)",
+                    "getAiSuggestionsTooltip": "Get AI Suggestions"
                 }
             },
             "featureExplanation": {

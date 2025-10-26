@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -95,8 +94,6 @@ public class ExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final QuizBatchService quizBatchService;
@@ -113,17 +110,15 @@ public class ExerciseResource {
 
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
-            ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
-            ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService, Optional<ExamAccessApi> examAccessApi,
-            Optional<IrisSettingsApi> irisSettingsApi, Optional<PlagiarismCaseApi> plagiarismCaseApi) {
+            ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
+            QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
+            Optional<ExamAccessApi> examAccessApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<PlagiarismCaseApi> plagiarismCaseApi) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examDateApi = examDateApi;
         this.exerciseRepository = exerciseRepository;
@@ -140,7 +135,8 @@ public class ExerciseResource {
      * GET /exercises/:exerciseId : get the "exerciseId" exercise.
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise,
+     *         or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}")
     @EnforceAtLeastStudent
@@ -161,10 +157,12 @@ public class ExerciseResource {
                 // continue
             }
             else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-                // tutors should only be able to see exam exercises when the exercise has finished
+                // tutors should only be able to see exam exercises when the exercise has
+                // finished
                 ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(exam);
                 if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
-                    // When there is no due date or the due date is in the future, we return forbidden here
+                    // When there is no due date or the due date is in the future, we return
+                    // forbidden here
                     throw new AccessForbiddenException();
                 }
             }
@@ -192,12 +190,18 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/example-solution : get the exercise with example solution without sensitive fields
-     * if the user is allowed to access the example solution and if the example solution is published.
+     * GET /exercises/:exerciseId/example-solution : get the exercise with example
+     * solution without sensitive fields
+     * if the user is allowed to access the example solution and if the example
+     * solution is published.
      *
      * @param exerciseId the exerciseId of the exercise with the example solution
-     * @return the ResponseEntity with status 200 (OK) and with the body of the exercise with its example solution after filtering sensitive data, or with
-     *         status 404 (Not Found) if the exercise is not found, or with status 403 (Forbidden) if the current user does not have access to the example solution.
+     * @return the ResponseEntity with status 200 (OK) and with the body of the
+     *         exercise with its example solution after filtering sensitive data, or
+     *         with
+     *         status 404 (Not Found) if the exercise is not found, or with status
+     *         403 (Forbidden) if the current user does not have access to the
+     *         example solution.
      */
     @GetMapping("exercises/{exerciseId}/example-solution")
     @EnforceAtLeastStudent
@@ -227,10 +231,12 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/for-assessment-dashboard : get the "exerciseId" exercise with data useful for tutors.
+     * GET /exercises/:exerciseId/for-assessment-dashboard : get the "exerciseId"
+     * exercise with data useful for tutors.
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise,
+     *         or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}/for-assessment-dashboard")
     @EnforceAtLeastTutor
@@ -240,7 +246,8 @@ public class ExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         if (exercise instanceof ProgrammingExercise) {
-            // Programming exercises with only automatic assessment should *NOT* be available on the assessment dashboard!
+            // Programming exercises with only automatic assessment should *NOT* be
+            // available on the assessment dashboard!
             if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC && !exercise.getAllowComplaintsForAutomaticAssessments()) {
                 throw new BadRequestAlertException("Programming exercises with only automatic assessment should NOT be available on the assessment dashboard", "Exercise",
                         "programmingExerciseWithOnlyAutomaticAssessment");
@@ -248,7 +255,7 @@ public class ExerciseResource {
             exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         }
 
-        Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
+        Set<ExampleSubmission> exampleSubmissions = exerciseService.findExampleSubmissionsForExercise(exercise);
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getLatestResult() == null);
         exercise.setExampleSubmissions(exampleSubmissions);
@@ -265,10 +272,12 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/title : Returns the title of the exercise with the given id
+     * GET /exercises/:exerciseId/title : Returns the title of the exercise with the
+     * given id
      *
      * @param exerciseId the id of the exercise
-     * @return the title of the exercise wrapped in an ResponseEntity or 404 Not Found if no exercise with that id exists
+     * @return the title of the exercise wrapped in an ResponseEntity or 404 Not
+     *         Found if no exercise with that id exists
      */
     @GetMapping("exercises/{exerciseId}/title")
     @EnforceAtLeastStudent
@@ -278,10 +287,13 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/stats-for-assessment-dashboard A collection of useful statistics for the tutor exercise dashboard of the exercise with the given exerciseId
+     * GET /exercises/:exerciseId/stats-for-assessment-dashboard A collection of
+     * useful statistics for the tutor exercise dashboard of the exercise with the
+     * given exerciseId
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the stats, or
+     *         with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}/stats-for-assessment-dashboard")
     @EnforceAtLeastTutor
@@ -293,7 +305,9 @@ public class ExerciseResource {
     }
 
     /**
-     * Reset the exercise by deleting all its participations /exercises/:exerciseId/reset This can be used by all exercise types, however they can also provide custom
+     * Reset the exercise by deleting all its participations
+     * /exercises/:exerciseId/reset This can be used by all exercise types, however
+     * they can also provide custom
      * implementations
      *
      * @param exerciseId exercise to delete
@@ -310,11 +324,13 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/details : sends exercise details including up to the latest 20 results for the currently logged-in user
+     * GET /exercises/:exerciseId/details : sends exercise details including up to
+     * the latest 20 results for the currently logged-in user
      * NOTE: this should only be used for course exercises, not for exam exercises
      *
      * @param exerciseId the exerciseId of the exercise to get the repos from
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise,
+     *         or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}/details")
     @EnforceAtLeastStudent
@@ -329,16 +345,19 @@ public class ExerciseResource {
             throw new AccessForbiddenException();
         }
 
-        // if exercise is not yet released to the students they should not have any access to it
+        // if exercise is not yet released to the students they should not have any
+        // access to it
         if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
             throw new AccessForbiddenException();
         }
 
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, user.getId());
-        // normally we only have one participation here (only in case of practice mode, there could be two)
+        // normally we only have one participation here (only in case of practice mode,
+        // there could be two)
         exercise.setStudentParticipations(new HashSet<>());
         for (StudentParticipation participation : participations) {
-            // By filtering the results available yet, they can become null for the exercise.
+            // By filtering the results available yet, they can become null for the
+            // exercise.
             exercise.filterResultsForStudents(participation);
             participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull)).forEach(Result::filterSensitiveInformation);
             exercise.addParticipation(participation);
@@ -364,8 +383,10 @@ public class ExerciseResource {
     /**
      * PUT /exercises/:exerciseId/toggle-second-correction
      *
-     * @param exerciseId the exerciseId of the exercise to toggle the second correction
-     * @return the ResponseEntity with status 200 (OK) and new state of the correction toggle state
+     * @param exerciseId the exerciseId of the exercise to toggle the second
+     *                       correction
+     * @return the ResponseEntity with status 200 (OK) and new state of the
+     *         correction toggle state
      */
     @PutMapping("exercises/{exerciseId}/toggle-second-correction")
     @EnforceAtLeastInstructor
@@ -381,7 +402,8 @@ public class ExerciseResource {
     /**
      * GET /exercises/{exerciseId}/latest-due-date
      *
-     * @param exerciseId the exerciseId of the exercise to get the latest due date from
+     * @param exerciseId the exerciseId of the exercise to get the latest due date
+     *                       from
      * @return the ResponseEntity with status 200 (OK) and the latest due date
      */
     @GetMapping("exercises/{exerciseId}/latest-due-date")
