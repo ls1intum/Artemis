@@ -12,7 +12,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 describe('CourseExercisePerformanceComponent', () => {
     let component: CourseExercisePerformanceComponent;
     let fixture: ComponentFixture<CourseExercisePerformanceComponent>;
-    let translateService: TranslateService;
 
     const mockExercisePerformance = [
         {
@@ -36,8 +35,6 @@ describe('CourseExercisePerformanceComponent', () => {
             imports: [CourseExercisePerformanceComponent, BrowserAnimationsModule, MockDirective(TranslateDirective)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
-
-        translateService = TestBed.inject(TranslateService);
 
         fixture = TestBed.createComponent(CourseExercisePerformanceComponent);
         component = fixture.componentInstance;
