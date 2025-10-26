@@ -1,14 +1,15 @@
 <p-dialog [(visible)]="showModal" [modal]="true" [draggable]="false" [position]="'top'" [style]="{ width: '40rem' }">
     <ng-template pTemplate="header">
-        <h5>
+        <h4>
             <fa-icon [icon]="faLock" />
             <span jhiTranslate="global.menu.admin.loginWithPasskey"></span>
-        </h5>
+        </h4>
     </ng-template>
 
-    <p class="text-wrap text-break mw-100">
-        <span jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"></span>
-    </p>
+    <p class="text-wrap text-break mw-100" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
+    <strong>
+        <p class="text-wrap text-break mw-100 font-weight-bold" jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"></p>
+    </strong>
 
     <ng-template pTemplate="footer">
         <jhi-button (onClick)="cancel()" [title]="'entity.action.cancel'" [btnType]="ButtonType.SECONDARY" />
