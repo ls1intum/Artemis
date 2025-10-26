@@ -11,10 +11,12 @@
         <p class="text-wrap text-break mw-100 font-weight-bold" jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"></p>
     </strong>
 
-    <!--    TODO handle no passkey registered yet -->
-
     <ng-template pTemplate="footer">
         <jhi-button (onClick)="cancel()" [title]="'entity.action.cancel'" [btnType]="ButtonType.SECONDARY" />
-        <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" [icon]="faKey" />
+        @if (userHasRegisteredAPasskey) {
+            <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" [icon]="faKey" />
+        } @else {
+            <jhi-button (onClick)="setupPasskeyAndLogin()" [title]="'global.menu.admin.setupAndLoginWithPasskey'" [icon]="faKey" />
+        }
     </ng-template>
 </p-dialog>

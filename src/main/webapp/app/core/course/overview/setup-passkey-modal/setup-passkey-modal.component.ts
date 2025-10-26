@@ -21,11 +21,11 @@ export class SetupPasskeyModalComponent {
     protected readonly faKey = faKey;
     protected readonly faShieldHalved = faShieldHalved;
 
-    private activeModal = inject(NgbActiveModal);
-    private webauthnApiService = inject(WebauthnApiService);
-    private alertService = inject(AlertService);
-    private accountService = inject(AccountService);
-    private localStorageService = inject(LocalStorageService);
+    private readonly activeModal = inject(NgbActiveModal);
+    private readonly webauthnApiService = inject(WebauthnApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly accountService = inject(AccountService);
+    private readonly localStorageService = inject(LocalStorageService);
 
     async setupPasskey() {
         await addNewPasskey(this.accountService.userIdentity, this.webauthnApiService, this.alertService);

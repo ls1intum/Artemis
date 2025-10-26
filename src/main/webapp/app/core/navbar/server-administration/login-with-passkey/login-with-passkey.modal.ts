@@ -1,4 +1,4 @@
-import { Component, inject, output } from '@angular/core';
+import { Component, OnInit, inject, output } from '@angular/core';
 import { DialogModule } from 'primeng/dialog';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faKey, faLock } from '@fortawesome/free-solid-svg-icons';
@@ -8,13 +8,16 @@ import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauth
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Router } from '@angular/router';
+import { addNewPasskey } from 'app/core/user/settings/passkey-settings/util/credential.util';
+import { AlertService } from 'app/shared/service/alert.service';
+import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 
 @Component({
     selector: 'jhi-login-with-passkey-modal',
     imports: [DialogModule, TranslateDirective, FaIconComponent, ButtonComponent],
     templateUrl: './login-with-passkey.modal.html',
 })
-export class LoginWithPasskeyModal {
+export class LoginWithPasskeyModal implements OnInit {
     // TODO fix that modal appears after 1. login with passkey 2. logout 3. login with password (seems like a change detection issue)
 
     protected readonly ButtonType = ButtonType;
@@ -26,11 +29,25 @@ export class LoginWithPasskeyModal {
     private readonly eventManager = inject(EventManager);
     private readonly accountService = inject(AccountService);
     private readonly webauthnService = inject(WebauthnService);
+    private readonly webauthnApiService = inject(WebauthnApiService);
+    private readonly alertService = inject(AlertService);
 
     isLoggedInWithPasskeyOutput = output<boolean>();
     justLoggedInWithPasskey = output<boolean>();
 
     showModal: boolean = false;
+
+    userHasRegisteredAPasskey: boolean = false;
+
+    ngOnInit() {
+        this.userHasRegisteredAPasskey = !this.accountService.userIdentity?.askToSetupPasskey;
+    }
+
+    async setupPasskeyAndLogin() {
+        await addNewPasskey(this.accountService.userIdentity, this.webauthnApiService, this.alertService);
+        this.alertService.success('artemisApp.userSettings.passkeySettingsPage.success.registration');
+        await this.signInWithPasskey();
+    }
 
     async signInWithPasskey() {
         this.showModal = false;

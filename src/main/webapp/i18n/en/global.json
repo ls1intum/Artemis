@@ -119,7 +119,7 @@
             },
             "admin": {
                 "main": "Server Administration",
-                "loginWithPasskey": "Sign in with a passkey to use admin features",
+                "setupAndLoginWithPasskey": "Setup & sign in with passkey",
                 "passkeyRestrictionExplanation": "To protect student data and ensure platform reliability, administrator actions require strong authentication with a passkey.",
                 "upcomingExamsAndExercises": "Upcoming exams & exercises",
                 "userManagement": "User management",
