@@ -192,7 +192,6 @@ public class ExamUserService {
      * @param roomGetter                 The getter function to get the room string from the exam user.
      * @param seatGetter                 The getter function to get the seat string from the exam user.
      * @param transientRoomAndSeatSetter The setter function to set the transient room and seat fields of the exam user.
-     * @throws BadRequestAlertException if {@code supportLegacy} is true and an exam user's room or seat cannot be mapped to actual entities.
      */
     private void setRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, Function<ExamUser, String> roomGetter, Function<ExamUser, String> seatGetter,
             TriConsumer<ExamUser, ExamRoom, ExamSeatDTO> transientRoomAndSeatSetter) {
