@@ -510,6 +510,11 @@ public class MetricsBean {
         log.debug("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
 
+    /**
+     * Calculate the number of missing build results and store it in a Gauge.
+     * The calculation is performed every minute and should only be done on the scheduling node.
+     * Only executed if the "scheduling" and "localCI" profile is present.
+     */
     @Scheduled(fixedRate = 60 * 1000, initialDelay = 30 * 1000) // Every minute with an initial delay of 30 seconds
     public void calculateMissingBuildResults() {
         if (!scheduledMetricsEnabled || !profileService.isLocalCIActive()) {
