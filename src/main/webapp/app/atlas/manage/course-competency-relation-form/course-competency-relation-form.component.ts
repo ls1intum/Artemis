@@ -62,11 +62,21 @@ export class CourseCompetencyRelationFormComponent {
     readonly isLoadingSuggestions = signal<boolean>(false);
     readonly selectedSuggestions = signal<Set<number>>(new Set());
     readonly selectedSuggestionsCount = computed(() => this.selectedSuggestions().size);
-    readonly addSuggestionsTitle = computed(() => 'artemisApp.courseCompetency.relations.suggestions.addSuggestions');
+    readonly shouldShowSuggestionsButton = computed(() => this.courseCompetencies().length > 1);
 
     constructor() {
         effect(() => this.selectRelation(this.selectedRelationId()));
         // Suggestions are fetched on demand via user action
+
+        // TODO: Remove mock data - temporary for UI testing
+        this.suggestedRelations.set([
+            { tail_id: '1', head_id: '2', relation_type: 'EXTENDS' },
+            { tail_id: '2', head_id: '3', relation_type: 'REQUIRES' },
+            { tail_id: '1', head_id: '3', relation_type: 'MATCHES' },
+            { tail_id: '3', head_id: '4', relation_type: 'EXTENDS' },
+        ]);
+        // Auto-select all mock suggestions
+        this.selectedSuggestions.set(new Set([0, 1, 2, 3]));
     }
 
     async fetchSuggestions(): Promise<void> {
