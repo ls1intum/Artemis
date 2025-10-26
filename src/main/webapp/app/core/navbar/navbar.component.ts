@@ -36,7 +36,7 @@ import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/con
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { ServerAdministration } from 'app/core/navbar/server-administration/server-administration';
+import { ServerAdministrationComponent } from 'app/core/navbar/server-administration/server-administration.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -63,7 +63,7 @@ import { ServerAdministration } from 'app/core/navbar/server-administration/serv
         ArtemisTranslatePipe,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
-        ServerAdministration,
+        ServerAdministrationComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {

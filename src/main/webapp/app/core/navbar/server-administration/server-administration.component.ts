@@ -43,10 +43,10 @@ import { LoginWithPasskeyModal } from 'app/core/navbar/server-administration/log
         RouterLink,
         LoginWithPasskeyModal,
     ],
-    templateUrl: './server-administration.html',
+    templateUrl: './server-administration.component.html',
     styleUrl: '../navbar.scss',
 })
-export class ServerAdministration implements OnInit {
+export class ServerAdministrationComponent implements OnInit {
     protected readonly faUniversity = faUniversity;
     protected readonly faStamp = faStamp;
     protected readonly faTasks = faTasks;

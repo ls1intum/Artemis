@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { ServerAdministration } from './server-administration';
+import { ServerAdministrationComponent } from './server-administration.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -10,16 +10,22 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ServerAdministration', () => {
-    let component: ServerAdministration;
-    let fixture: ComponentFixture<ServerAdministration>;
+    let component: ServerAdministrationComponent;
+    let fixture: ComponentFixture<ServerAdministrationComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ServerAdministration, RouterTestingModule, TranslateModule.forRoot(), MockDirective(HasAnyAuthorityDirective), MockComponent(FeatureOverlayComponent)],
+            imports: [
+                ServerAdministrationComponent,
+                RouterTestingModule,
+                TranslateModule.forRoot(),
+                MockDirective(HasAnyAuthorityDirective),
+                MockComponent(FeatureOverlayComponent),
+            ],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(ServerAdministration);
+        fixture = TestBed.createComponent(ServerAdministrationComponent);
         component = fixture.componentInstance;
     });
 
