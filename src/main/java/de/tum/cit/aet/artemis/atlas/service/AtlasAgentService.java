@@ -47,7 +47,7 @@ public class AtlasAgentService {
 
     /**
      * Process a chat message for the given course and return AI response with modification status.
-     * Uses request-scoped state tracking to detect competency modifications.
+     * Uses ThreadLocal state tracking to detect competency modifications in a thread-safe manner.
      *
      * @param message   The user's message
      * @param courseId  The course ID for context
@@ -56,6 +56,8 @@ public class AtlasAgentService {
      */
     public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
         try {
+            // Reset modification tracking for this request/thread
+            AtlasAgentToolsService.resetCompetenciesModified();
 
             // Load system prompt from external template
             String resourcePath = "/prompts/atlas/agent_system_prompt.st";
@@ -79,7 +81,7 @@ public class AtlasAgentService {
             // Execute the chat (tools are executed internally by Spring AI)
             String response = promptSpec.call().content();
 
-            // Check if createCompetency was called by examining the service state
+            // Check if competencies were modified during this request
             boolean competenciesModified = atlasAgentToolsService != null && atlasAgentToolsService.wasCompetencyCreated();
 
             String finalResponse = response != null && !response.trim().isEmpty() ? response : "I apologize, but I couldn't generate a response.";
@@ -89,6 +91,10 @@ public class AtlasAgentService {
         }
         catch (Exception e) {
             return CompletableFuture.completedFuture(new AgentChatResult("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
+        }
+        finally {
+            // Clean up ThreadLocal to prevent memory leaks
+            AtlasAgentToolsService.cleanup();
         }
     }
 
