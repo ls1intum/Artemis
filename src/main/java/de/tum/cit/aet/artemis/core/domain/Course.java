@@ -923,10 +923,6 @@ public class Course extends DomainObject {
 
         validateStartAndEndDate();
 
-        if (getEnrollmentStartDate().isAfter(getStartDate())) {
-            throw new BadRequestAlertException("Enrollment start date can not be after the start date of the course.", ENTITY_NAME, errorKey, true);
-        }
-
         if (getEnrollmentEndDate().isAfter(getEndDate())) {
             throw new BadRequestAlertException("Enrollment end can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
         }

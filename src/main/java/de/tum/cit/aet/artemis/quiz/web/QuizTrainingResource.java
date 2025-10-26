@@ -17,8 +17,10 @@ import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,10 +34,14 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
+import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
 
 @Profile(PROFILE_CORE)
@@ -45,6 +51,8 @@ import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
 public class QuizTrainingResource {
 
     private static final Logger log = LoggerFactory.getLogger(QuizTrainingResource.class);
+
+    private final QuizTrainingLeaderboardService quizTrainingLeaderboardService;
 
     private final UserRepository userRepository;
 
@@ -56,8 +64,9 @@ public class QuizTrainingResource {
 
     private final QuizTrainingService quizTrainingService;
 
-    public QuizTrainingResource(UserRepository userRepository, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService) {
+    public QuizTrainingResource(QuizTrainingLeaderboardService quizTrainingLeaderboardService, UserRepository userRepository, CourseRepository courseRepository,
+            AuthorizationCheckService authCheckService, QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService) {
+        this.quizTrainingLeaderboardService = quizTrainingLeaderboardService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -105,10 +114,98 @@ public class QuizTrainingResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        ZonedDateTime answeredAt = ZonedDateTime.now();
+        ZonedDateTime answeredAt = TimeUtil.now();
 
         SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestionId, user.getId(), courseId, submittedAnswer, isRated, answeredAt);
 
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Retrieves the leaderboard for quiz training in a specific course.
+     *
+     * <p>
+     * This endpoint returns a list of leaderboard entries for the given course,
+     * showing the ranking of users based on their quiz training performance.
+     * </p>
+     *
+     * @param courseId the id of the course for which the leaderboard is requested
+     * @return the ResponseEntity containing a list of LeaderboardEntryDTO objects representing the leaderboard
+     */
+    @GetMapping("courses/{courseId}/training/leaderboard")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<LeaderboardWithCurrentUserEntryDTO> getQuizTrainingLeaderboard(@PathVariable long courseId) {
+        log.info("REST request to get leaderboard for course with id : {}", courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        LeaderboardWithCurrentUserEntryDTO leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
+        return ResponseEntity.ok(leaderboard);
+    }
+
+    /**
+     * Updates the leaderboard visibility settings for the current user.
+     *
+     * <p>
+     * This endpoint allows a user to update their preference for being shown in the leaderboard.
+     * If the `showInLeaderboard` property is provided in the request body, the user's setting is updated accordingly.
+     * </p>
+     *
+     * @param leaderboardSettingDTO the DTO containing the leaderboard visibility setting
+     * @return a ResponseEntity with HTTP status 200 (OK)
+     */
+    @PutMapping("leaderboard-settings")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> updateLeaderboardSettings(@Valid @RequestBody LeaderboardSettingDTO leaderboardSettingDTO) {
+        log.debug("Rest request to set leaderboard settings: {}", leaderboardSettingDTO);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Boolean shownInLeaderboard = leaderboardSettingDTO.showInLeaderboard();
+        if (shownInLeaderboard != null) {
+            quizTrainingLeaderboardService.updateShowInLeaderboard(user.getId(), shownInLeaderboard);
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Initializes or updates the leaderboard entry for the current user in the specified course.
+     *
+     * <p>
+     * This endpoint creates a new leaderboard entry for the user in the given course.
+     * The visibility is determined by the `shownInLeaderboard` property in the request body; if not provided, it defaults to false.
+     * </p>
+     *
+     * @param courseId            the ID of the course for which the leaderboard entry is initialized or updated
+     * @param leaderboardEntryDTO the DTO containing the leaderboard entry settings
+     * @return a ResponseEntity with HTTP status 200 (OK)
+     */
+    @PostMapping("courses/{courseId}/leaderboard-entry")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Void> initializeLeaderboardEntry(@PathVariable long courseId, @Valid @RequestBody LeaderboardSettingDTO leaderboardEntryDTO) {
+        log.debug("REST request to initialize or update leaderboard entry: {}", leaderboardEntryDTO);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean shownInLeaderboard = leaderboardEntryDTO.showInLeaderboard() != null ? leaderboardEntryDTO.showInLeaderboard() : false;
+        quizTrainingLeaderboardService.setInitialLeaderboardEntry(user.getId(), courseId, shownInLeaderboard);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Retrieves the leaderboard visibility settings for the current user.
+     *
+     * <p>
+     * This endpoint returns the user's preference regarding their visibility in the quiz training leaderboard.
+     * It fetches the current setting from the repository and returns it wrapped in a LeaderboardSettingDTO.
+     * If no setting is found, the user has not yet set an initial preference in the quiz training mode after reading the instructions.
+     * Therefore, we return null to indicate that the setting is not explicitly set.
+     * </p>
+     *
+     * @return a ResponseEntity containing a LeaderboardSettingDTO with the user's leaderboard visibility preference
+     */
+    @GetMapping("leaderboard-settings")
+    @EnforceAtLeastStudent
+    public ResponseEntity<LeaderboardSettingDTO> getLeaderboardSettings() {
+        log.debug("REST request to get leaderboard settings");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        LeaderboardSettingDTO leaderboardSettingDTO = quizTrainingService.getLeaderboardSettings(user.getId());
+        return ResponseEntity.ok().body(leaderboardSettingDTO);
     }
 }

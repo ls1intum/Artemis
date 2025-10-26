@@ -5,10 +5,11 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.springframework.http.HttpStatus.OK;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -41,6 +43,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
+import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -70,6 +73,9 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private QuizExerciseService quizExerciseService;
+
+    @Autowired
+    private QuizTrainingLeaderboardService quizTrainingLeaderboardService;
 
     private QuizQuestionProgress quizQuestionProgress;
 
@@ -261,6 +267,10 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitForTraining() throws Exception {
+
+        Clock fixedClock = Clock.fixed(Instant.parse("2025-09-10T10:25:00Z"), ZoneOffset.UTC);
+        TimeUtil.setClock(fixedClock);
+
         Course course = courseUtilService.createCourse();
 
         MultipleChoiceQuestion mcQuestion = new MultipleChoiceQuestion();
@@ -283,6 +293,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
         submittedAnswer.setQuizQuestion(mcQuestion);
         submittedAnswer.setSelectedOptions(Set.of());
+
+        quizTrainingLeaderboardService.setInitialLeaderboardEntry(userId, course.getId(), true);
 
         SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody(
                 "/api/quiz/courses/" + course.getId() + "/training-questions/" + mcQuestion.getId() + "/submit?isRated=true", submittedAnswer,
@@ -309,8 +321,10 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(data.getInterval()).isEqualTo(1);
         assertThat(data.getPriority()).isEqualTo(2);
         assertThat(data.getBox()).isEqualTo(1);
-        ZonedDateTime expectedUtc = ZonedDateTime.now(ZoneOffset.UTC).plusDays(1).truncatedTo(ChronoUnit.MINUTES);
-        assertThat(data.getDueDate().withZoneSameInstant(ZoneOffset.UTC).truncatedTo(ChronoUnit.MINUTES)).isEqualTo(expectedUtc);
+        ZonedDateTime expectedUtc = TimeUtil.now().plusDays(1);
+        assertThat(data.getDueDate()).isEqualTo(expectedUtc);
+
+        TimeUtil.resetClock();
     }
 
     @Test
@@ -359,7 +373,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testUpdateExistingProgress_ProgressNotFound() {
-        Long nonExistentUserId = 999L;
+        long nonExistentUserId = 999;
         ZonedDateTime newAnsweredTime = ZonedDateTime.now();
         QuizQuestionProgressData newProgressData = new QuizQuestionProgressData();
 

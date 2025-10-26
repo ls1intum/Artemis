@@ -32,9 +32,13 @@ public class QuizQuestionProgressService {
 
     private final QuizQuestionRepository quizQuestionRepository;
 
-    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository) {
+    private final QuizTrainingLeaderboardService quizTrainingLeaderboardService;
+
+    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository,
+            QuizTrainingLeaderboardService quizTrainingLeaderboardService) {
         this.quizQuestionProgressRepository = quizQuestionProgressRepository;
         this.quizQuestionRepository = quizQuestionRepository;
+        this.quizTrainingLeaderboardService = quizTrainingLeaderboardService;
     }
 
     /**
@@ -266,6 +270,7 @@ public class QuizQuestionProgressService {
      * @param answer     The submitted answer for the question
      * @param answeredAt The time when the question was answered
      */
+
     public void saveProgressFromTraining(QuizQuestion question, long userId, long courseId, SubmittedAnswer answer, ZonedDateTime answeredAt) {
         QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
         QuizQuestionProgressData data = existingProgress.getProgressJson() != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
@@ -286,6 +291,7 @@ public class QuizQuestionProgressService {
             catch (DataIntegrityViolationException e) {
                 updateExistingProgress(userId, question, data, answeredAt);
             }
+            quizTrainingLeaderboardService.updateLeaderboardScore(userId, courseId, data);
         }
     }
 

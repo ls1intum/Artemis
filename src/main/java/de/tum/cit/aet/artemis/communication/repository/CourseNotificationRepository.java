@@ -9,9 +9,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatusType;
@@ -55,11 +57,7 @@ public interface CourseNotificationRepository extends ArtemisJpaRepository<Cours
      */
     List<CourseNotification> findByDeletionDateBefore(ZonedDateTime date);
 
-    /**
-     * Find all course notifications by course id.
-     *
-     * @param courseId id to query for
-     * @return list of course notifications in the course
-     */
-    List<CourseNotification> findAllByCourseId(long courseId);
+    @Transactional // ok because of delete
+    @Modifying
+    List<CourseNotification> deleteAllByCourseId(long courseId);
 }
