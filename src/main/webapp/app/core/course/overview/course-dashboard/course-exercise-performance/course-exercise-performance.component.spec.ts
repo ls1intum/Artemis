@@ -6,7 +6,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ScaleType } from '@swimlane/ngx-charts';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CourseExercisePerformanceComponent', () => {
@@ -33,9 +33,8 @@ describe('CourseExercisePerformanceComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CourseExercisePerformanceComponent, BrowserAnimationsModule],
+            imports: [CourseExercisePerformanceComponent, BrowserAnimationsModule, MockDirective(TranslateDirective)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-            declarations: [MockDirective(TranslateDirective)],
         }).compileComponents();
 
         translateService = TestBed.inject(TranslateService);
@@ -60,7 +59,6 @@ describe('CourseExercisePerformanceComponent', () => {
         component.ngOnChanges();
 
         expect(component.isDataAvailable).toBeTruthy();
-        expect(component.ngxData).toHaveLength(2);
         expect(component.ngxData).toHaveLength(2); // Your score and average score series
         const yourScoreSeries = component.ngxData[0].series;
 
