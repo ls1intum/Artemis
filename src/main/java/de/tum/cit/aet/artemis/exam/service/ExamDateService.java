@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exam.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Conditional(ExamEnabled.class)
 @Lazy
@@ -146,23 +144,6 @@ public class ExamDateService {
     }
 
     /**
-     * Returns the latest individual exam end date plus the grace period as determined by the working time of the student exams and exam grace period.
-     * <p>
-     * If no student exams are available, the exam end date plus grace period is returned.
-     *
-     * @param exam the exam
-     * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
-     */
-    public ZonedDateTime getLatestIndividualExamEndDateWithGracePeriod(Exam exam) {
-        ZonedDateTime latestEndDate = getLatestIndividualExamEndDate(exam);
-        if (latestEndDate == null) {
-            return null;
-        }
-        int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
-        return latestEndDate.plusSeconds(gracePeriodInSeconds);
-    }
-
-    /**
      * Returns all individual exam end dates as determined by the working time of the student exams.
      * <p>
      * If no student exams are available, an empty set returned.
@@ -191,23 +172,6 @@ public class ExamDateService {
         }
         var workingTimes = studentExamRepository.findAllDistinctWorkingTimesByExamId(exam.getId());
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
-    }
-
-    /**
-     * Returns the unlock date for the exam programming exercise.
-     * <p>
-     * The unlock date is the exam start date minus a certain amount of time to ensure that the exam is unlocked before the start date.
-     *
-     * @param exercise the programming exercise
-     * @return the unlock date or <code>null</code> if the exercise is not an exam exercise
-     */
-    @Nullable
-    public static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
-        // TODO: can we guarantee that this is an exam exercise to avoid the null check and return?
-        if (!exercise.isExamExercise()) {
-            return null;
-        }
-        return getExamProgrammingExerciseUnlockDate(exercise.getExerciseGroup().getExam());
     }
 
     @NotNull

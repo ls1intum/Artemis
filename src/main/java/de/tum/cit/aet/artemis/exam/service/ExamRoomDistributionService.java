@@ -70,6 +70,7 @@ public class ExamRoomDistributionService {
      * @throws BadRequestAlertException if the capacity doesn't suffice to seat the students
      */
     public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds, boolean useOnlyDefaultLayouts) {
+        log.debug("Distributing students for exam {} to rooms {}", examId, examRoomIds);
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 
