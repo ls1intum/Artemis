@@ -83,13 +83,13 @@ describe('CourseExercisePerformanceComponent', () => {
 
         component.exercisePerformance = [
             // Test with higher scores
-            { exerciseId: 1, title: 'Exercise 1', score: 120, averageScore: 110 },
+            { exerciseId: 1, title: 'Exercise 1', score: 111, averageScore: 110 },
         ];
         (component as any).setupChart();
         component.ngOnChanges();
 
+        // Should round score up to next multiple of 10
         expect(component.yScaleMax).toBe(120);
-        // Should round up to next multiple of 10
     });
 
     describe('should set up correct chart color configuration', () => {
