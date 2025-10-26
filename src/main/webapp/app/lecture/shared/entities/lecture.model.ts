@@ -5,6 +5,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { LectureVideo } from 'app/lecture/shared/entities/lecture-video.model';
 
 export class Lecture implements BaseEntity {
     id?: number;
@@ -17,6 +18,7 @@ export class Lecture implements BaseEntity {
     posts?: Post[];
     lectureUnits?: LectureUnit[];
     course?: Course;
+    video?: LectureVideo;
 
     // helper attribute
     channelName?: string;

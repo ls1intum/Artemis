@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20251026120000-1" author="goyal">
+        <comment>Create video_lecture table for storing lecture video metadata</comment>
+
+        <createTable tableName="video_lecture">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="lecture_id" type="bigint">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="video_id" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="filename" type="varchar(500)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="playlist_url" type="varchar(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="duration_seconds" type="decimal(10,2)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="uploaded_at" type="datetime(3)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="size_bytes" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <!-- Add foreign key constraint separately for better PostgreSQL compatibility -->
+        <addForeignKeyConstraint
+                baseTableName="video_lecture"
+                baseColumnNames="lecture_id"
+                referencedTableName="lecture"
+                referencedColumnNames="id"
+                constraintName="fk_video_lecture_lecture_id"
+                onDelete="CASCADE"/>
+
+        <!-- Add indexes for performance -->
+        <createIndex indexName="idx_video_lecture_lecture_id" tableName="video_lecture">
+            <column name="lecture_id"/>
+        </createIndex>
+
+        <createIndex indexName="idx_video_lecture_video_id" tableName="video_lecture">
+            <column name="video_id"/>
+        </createIndex>
+
+        <!-- Rollback section -->
+        <rollback>
+            <dropTable tableName="video_lecture"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
+

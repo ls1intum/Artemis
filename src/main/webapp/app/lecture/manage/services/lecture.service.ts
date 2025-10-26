@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureVideo } from 'app/lecture/shared/entities/lecture-video.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
@@ -12,6 +13,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
+type VideoResponseType = HttpResponse<LectureVideo>;
 
 @Injectable({ providedIn: 'root' })
 export class LectureService {
@@ -231,5 +233,67 @@ export class LectureService {
 
     private sendTitlesToEntityTitleService(lecture: Lecture | undefined | null) {
         this.entityTitleService.setTitle(EntityType.LECTURE, [lecture?.id], lecture?.title);
+    }
+
+    /**
+     * Uploads a video for a lecture
+     *
+     * @param lectureId the ID of the lecture
+     * @param file the video file to upload
+     * @return Observable containing the uploaded video metadata
+     */
+    uploadVideo(lectureId: number, file: File): Observable<HttpEvent<LectureVideo>> {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        return this.http.post<LectureVideo>(`api/nebula/lectures/${lectureId}/video`, formData, {
+            observe: 'events',
+            reportProgress: true,
+        });
+    }
+
+    /**
+     * Gets video metadata for a lecture
+     *
+     * @param lectureId the ID of the lecture
+     * @return Observable containing the video metadata
+     */
+    getVideo(lectureId: number): Observable<VideoResponseType> {
+        return this.http
+            .get<LectureVideo>(`api/nebula/lectures/${lectureId}/video`, { observe: 'response' })
+            .pipe(map((res: VideoResponseType) => this.convertVideoResponseDatesFromServer(res)));
+    }
+
+    /**
+     * Gets the video streaming URL for a lecture
+     *
+     * @param lectureId the ID of the lecture
+     * @return Observable containing the streaming URL
+     */
+    getVideoStreamUrl(lectureId: number): Observable<string> {
+        return this.http.get(`api/nebula/lectures/${lectureId}/video/stream-url`, { responseType: 'text' });
+    }
+
+    /**
+     * Deletes a lecture video
+     *
+     * @param lectureId the ID of the lecture
+     * @return Observable of the delete operation
+     */
+    deleteVideo(lectureId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`api/nebula/lectures/${lectureId}/video`, { observe: 'response' });
+    }
+
+    /**
+     * Converts video upload date from server format
+     *
+     * @param res the response containing video metadata
+     * @return the response with converted dates
+     */
+    private convertVideoResponseDatesFromServer(res: VideoResponseType): VideoResponseType {
+        if (res.body) {
+            res.body.uploadedAt = convertDateFromServer(res.body.uploadedAt);
+        }
+        return res;
     }
 }

@@ -171,8 +171,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
+        const playlistUrl = attachmentVideoUnitFormData.playlistUrl;
 
-        if (!name || (!fileName && !videoSource)) {
+        // Validation: name is required AND at least one of: fileName, videoSource, or playlistUrl
+        if (!name || (!fileName && !videoSource && !playlistUrl)) {
             return;
         }
 
@@ -205,7 +207,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentToCreateOrEdit.version = 1;
         attachmentToCreateOrEdit.uploadDate = dayjs();
 
-        if (videoSource) {
+        // Set videoSource: prefer playlistUrl from Nebula upload, fallback to videoSource URL
+        if (playlistUrl) {
+            this.currentlyProcessedAttachmentVideoUnit.videoSource = playlistUrl;
+        } else if (videoSource) {
             this.currentlyProcessedAttachmentVideoUnit.videoSource = videoSource;
         }
 

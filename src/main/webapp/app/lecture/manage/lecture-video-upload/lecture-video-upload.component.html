@@ -1,0 +1,68 @@
+<div class="lecture-video-upload-container">
+    <h4><fa-icon [icon]="faFilm" class="me-2" />Lecture Video</h4>
+
+    @if (existingVideo) {
+        <!-- Existing Video Display -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Current Video</h5>
+                <ul class="list-unstyled mb-3">
+                    <li><strong>Filename:</strong> {{ existingVideo.filename }}</li>
+                    <li><strong>Duration:</strong> {{ formatDuration(existingVideo.durationSeconds) }}</li>
+                    <li><strong>Size:</strong> {{ formatBytes(existingVideo.sizeBytes) }}</li>
+                    @if (existingVideo.uploadedAt) {
+                        <li><strong>Uploaded:</strong> {{ existingVideo.uploadedAt | artemisDate }}</li>
+                    }
+                </ul>
+                <button class="btn btn-danger" type="button" (click)="deleteVideo()" [disabled]="deleting()">
+                    @if (deleting()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                    } @else {
+                        <fa-icon [icon]="faTrash" class="me-1" />
+                    }
+                    Delete Video
+                </button>
+            </div>
+        </div>
+    } @else {
+        <!-- Upload New Video -->
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="video-file-input" class="form-label">Select Video File</label>
+                    <input id="video-file-input" type="file" class="form-control" [accept]="acceptedFormats" (change)="onFileSelected($event)" [disabled]="uploading()" />
+                    <small class="form-text text-muted"> Supported format: MP4 only (Max size: 500 MB) </small>
+                </div>
+
+                @if (selectedFile()) {
+                    <div class="alert alert-info mb-3"><strong>Selected:</strong> {{ selectedFile()!.name }} ({{ formatBytes(selectedFile()!.size) }})</div>
+                }
+
+                @if (uploading()) {
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Uploading and processing video...</span>
+                            <fa-icon [icon]="faSpinner" animation="spin" />
+                        </div>
+                        <div class="alert alert-warning">
+                            <small>
+                                <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                                The video is being uploaded and converted to HLS format. This may take several minutes depending on video size and duration.
+                            </small>
+                        </div>
+                    </div>
+                }
+
+                <button class="btn btn-primary" type="button" (click)="uploadVideo()" [disabled]="!selectedFile() || uploading()">
+                    @if (uploading()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                        Uploading...
+                    } @else {
+                        <fa-icon [icon]="faUpload" class="me-1" />
+                        Upload Video
+                    }
+                </button>
+            </div>
+        </div>
+    }
+</div>

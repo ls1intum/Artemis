@@ -56,7 +56,9 @@
                 "chooseFile": "Choose File",
                 "error": "The file {{ fileName }} is too large. The maximum file size is 20MB.",
                 "fileLimitation": "(max. size 20 MB)",
-                "fileLimitationTooltip": "Supported types: {{ extensions }}"
+                "fileLimitationTooltip": "Supported types: {{ extensions }}",
+                "videoFileAndUrlError": "Cannot provide both a video file and a video URL. Please provide only one.",
+                "videoUploadUnavailable": "Video upload functionality is not available. Please use a video URL instead or contact your administrator."
             },
             "import": {
                 "table": {
@@ -86,6 +88,19 @@
                 "message": "Are you sure you want to discard your unsaved changes?",
                 "sectionsThatContainUnsavedChangesSingular": "The following section contains unsaved changes:",
                 "sectionsThatContainUnsavedChangesPlural": "The following sections contain unsaved changes:"
+            },
+            "video": {
+                "uploadSuccess": "Video uploaded successfully",
+                "uploadError": "Failed to upload video. Please try again.",
+                "deleteSuccess": "Video deleted successfully",
+                "deleteError": "Failed to delete video. Please try again.",
+                "loadError": "Failed to load video. Please try again.",
+                "fileTooLarge": "The video file is too large. Maximum size is {{size}}.",
+                "invalidFormat": "Invalid video format. Please upload a valid video file.",
+                "networkError": "Network error occurred while loading video.",
+                "mediaError": "Media error occurred. Attempting to recover...",
+                "fatalError": "A fatal error occurred while playing the video.",
+                "notSupported": "HLS video playback is not supported in your browser."
             }
         },
         "attachment": {

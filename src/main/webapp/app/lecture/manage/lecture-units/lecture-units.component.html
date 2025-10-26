@@ -38,6 +38,7 @@
         @if (isAttachmentVideoUnitFormOpen()) {
             <jhi-attachment-video-unit-form
                 [isEditMode]="isEditingLectureUnit"
+                [lectureId]="lecture.id"
                 [hasCancelButton]="true"
                 (onCancel)="onCloseLectureUnitForms()"
                 (formSubmitted)="createEditAttachmentVideoUnit($event)"

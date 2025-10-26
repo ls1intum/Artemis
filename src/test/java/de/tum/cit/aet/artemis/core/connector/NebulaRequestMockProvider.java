@@ -97,4 +97,56 @@ public class NebulaRequestMockProvider {
                     throw exception;
                 });
     }
+
+    /**
+     * Mocks a successful video upload response.
+     *
+     * @param videoId      the video ID to return
+     * @param filename     the filename
+     * @param playlistUrl  the HLS playlist URL
+     * @param durationSecs the video duration in seconds
+     * @param sizeBytes    the file size in bytes
+     * @param count        the expected number of calls
+     */
+    public void mockSuccessfulVideoUpload(String videoId, String filename, String playlistUrl, double durationSecs, long sizeBytes, ExpectedCount count) {
+        mockServer.expect(count, requestTo(buildUrl("/video-storage/upload"))).andExpect(method(HttpMethod.POST)).andExpect(header("Authorization", nebulaSecretToken))
+                .andRespond(request -> {
+                    var responseBody = mapper.createObjectNode();
+                    responseBody.put("video_id", videoId);
+                    responseBody.put("filename", filename);
+                    responseBody.put("size_bytes", sizeBytes);
+                    responseBody.put("uploaded_at", java.time.ZonedDateTime.now().toString());
+                    responseBody.put("playlist_url", playlistUrl);
+                    responseBody.put("duration_seconds", durationSecs);
+                    responseBody.put("message", "Video uploaded and converted to HLS successfully");
+
+                    return MockRestResponseCreators.withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(responseBody.toString()).createResponse(request);
+                });
+    }
+
+    /**
+     * Mocks a successful video deletion.
+     *
+     * @param videoId the video ID to delete
+     * @param count   the expected number of calls
+     */
+    public void mockSuccessfulVideoDelete(String videoId, ExpectedCount count) {
+        mockServer.expect(count, requestTo(buildUrl("/video-storage/delete/" + videoId))).andExpect(method(HttpMethod.DELETE)).andExpect(header("Authorization", nebulaSecretToken))
+                .andRespond(request -> MockRestResponseCreators.withStatus(HttpStatus.NO_CONTENT).createResponse(request));
+    }
+
+    /**
+     * Mocks a failed video upload response.
+     *
+     * @param status the HTTP status to return
+     * @param count  the expected number of calls
+     */
+    public void mockFailedVideoUpload(HttpStatus status, ExpectedCount count) {
+        mockServer.expect(count, requestTo(buildUrl("/video-storage/upload"))).andExpect(method(HttpMethod.POST)).andExpect(header("Authorization", nebulaSecretToken))
+                .andRespond(request -> {
+                    var errorBody = mapper.createObjectNode();
+                    errorBody.put("error", "Video upload failed");
+                    return MockRestResponseCreators.withStatus(status).contentType(MediaType.APPLICATION_JSON).body(errorBody.toString()).createResponse(request);
+                });
+    }
 }

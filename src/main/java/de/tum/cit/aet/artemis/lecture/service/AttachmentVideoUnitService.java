@@ -12,10 +12,15 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
@@ -31,11 +36,17 @@ import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
+import de.tum.cit.aet.artemis.nebula.dto.VideoUploadResponseDTO;
+import de.tum.cit.aet.artemis.nebula.service.VideoStorageService;
 
 @Profile(PROFILE_CORE)
 @Service
 @Lazy
 public class AttachmentVideoUnitService {
+
+    private static final Logger log = LoggerFactory.getLogger(AttachmentVideoUnitService.class);
+
+    private static final Set<String> VIDEO_EXTENSIONS = Set.of("mp4", "avi", "mov", "mkv", "webm", "flv", "wmv");
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
@@ -51,9 +62,11 @@ public class AttachmentVideoUnitService {
 
     private final LectureUnitService lectureUnitService;
 
+    private final Optional<VideoStorageService> videoStorageService;
+
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService) {
+            LectureUnitService lectureUnitService, Optional<VideoStorageService> videoStorageService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -61,6 +74,7 @@ public class AttachmentVideoUnitService {
         this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
+        this.videoStorageService = videoStorageService;
     }
 
     /**
@@ -75,6 +89,9 @@ public class AttachmentVideoUnitService {
      */
     public AttachmentVideoUnit createAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, Lecture lecture, MultipartFile file,
             boolean keepFilename) {
+        // Validate that either video file OR video URL is provided, but not both
+        validateVideoSourceConsistency(attachmentVideoUnit.getVideoSource(), file);
+
         // persist lecture unit before lecture to prevent "null index column for collection" error
         attachmentVideoUnit.setLecture(null);
 
@@ -84,6 +101,8 @@ public class AttachmentVideoUnitService {
         lecture.addLectureUnit(savedAttachmentVideoUnit);
 
         if (attachment != null && file != null) {
+            // Note: For video files, the frontend has already uploaded to Nebula and set videoSource
+            // We don't upload again here - just save the attachment metadata
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
             irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(List.of(savedAttachmentVideoUnit)));
         }
@@ -105,6 +124,9 @@ public class AttachmentVideoUnitService {
      */
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnit updateUnit, Attachment updateAttachment,
             MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
+        // Validate that either video file OR video URL is provided, but not both
+        validateVideoSourceConsistency(updateUnit.getVideoSource(), updateFile);
+
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentVideoUnit.getCompetencyLinks());
 
         existingAttachmentVideoUnit.setDescription(updateUnit.getDescription());
@@ -118,6 +140,8 @@ public class AttachmentVideoUnitService {
         if (existingAttachment == null && updateAttachment != null) {
             createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
         }
+        // Note: For video file updates, the frontend has already uploaded to Nebula and set videoSource
+        // We don't upload again here - the videoSource is already updated above
 
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
 
@@ -253,5 +277,75 @@ public class AttachmentVideoUnitService {
     public void prepareAttachmentVideoUnitForClient(AttachmentVideoUnit attachmentVideoUnit) {
         attachmentVideoUnit.getLecture().setLectureUnits(null);
         attachmentVideoUnit.getLecture().setAttachments(null);
+    }
+
+    /**
+     * Checks if the provided file is a video file based on its extension.
+     *
+     * @param file The file to check
+     * @return true if the file is a video file, false otherwise
+     */
+    private boolean isVideoFile(MultipartFile file) {
+        if (file == null || file.getOriginalFilename() == null) {
+            return false;
+        }
+        String extension = FilenameUtils.getExtension(file.getOriginalFilename()).toLowerCase();
+        return VIDEO_EXTENSIONS.contains(extension);
+    }
+
+    /**
+     * Validates that either a video file OR a video URL is provided, but not both.
+     *
+     * @param videoSource The video source URL from the form
+     * @param file        The uploaded file
+     * @throws ResponseStatusException if both or neither are provided for video units
+     */
+    private void validateVideoSourceConsistency(String videoSource, MultipartFile file) {
+        boolean hasVideoSource = StringUtils.isNotBlank(videoSource);
+        boolean hasVideoFile = file != null && !file.isEmpty() && isVideoFile(file);
+
+        if (hasVideoSource && hasVideoFile) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot provide both a video file and a video URL. Please provide only one.");
+        }
+
+        // Note: It's valid to have neither (e.g., for PDF attachments), so we don't check for that case
+    }
+
+    /**
+     * Handles uploading a video file to the Nebula video storage service.
+     * The video is uploaded via multipart/form-data and Nebula handles the transcoding.
+     * Sets the resulting HLS playlist URL as the video source.
+     *
+     * @param file                The video file to upload
+     * @param attachmentVideoUnit The attachment video unit to update with the video source
+     * @throws ResponseStatusException if the video storage service is not available or upload fails
+     */
+    private void handleVideoFileUpload(MultipartFile file, AttachmentVideoUnit attachmentVideoUnit) {
+        if (videoStorageService.isEmpty()) {
+            log.warn("Video storage service is not available. Nebula may not be enabled.");
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "Video upload functionality is not available. Please use a video URL instead or contact your administrator.");
+        }
+
+        try {
+            log.info("Uploading video file to Nebula storage: {} (size: {} bytes)", file.getOriginalFilename(), file.getSize());
+
+            // Upload to Nebula - the service handles chunking/streaming internally via multipart upload
+            // Nebula receives the file via standard multipart/form-data and processes it asynchronously
+            VideoUploadResponseDTO uploadResponse = videoStorageService.get().uploadVideo(file);
+
+            // Set the HLS playlist URL as the video source
+            attachmentVideoUnit.setVideoSource(uploadResponse.playlistUrl());
+
+            log.info("Video successfully uploaded to Nebula. Playlist URL: {}", uploadResponse.playlistUrl());
+        }
+        catch (ResponseStatusException e) {
+            // Re-throw ResponseStatusException as-is
+            throw e;
+        }
+        catch (Exception e) {
+            log.error("Failed to upload video to Nebula storage service: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload video. Please try again or contact your administrator.");
+        }
     }
 }

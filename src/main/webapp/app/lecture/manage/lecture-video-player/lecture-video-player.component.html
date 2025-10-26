@@ -1,0 +1,20 @@
+<div class="lecture-video-player-container">
+    @if (loading()) {
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 300px">
+            <div class="text-center">
+                <fa-icon [icon]="faSpinner" animation="spin" size="3x" class="mb-3" />
+                <p>Loading video...</p>
+            </div>
+        </div>
+    } @else if (streamUrl()) {
+        <div class="video-wrapper">
+            <video #videoPlayer controls class="video-player" playsinline>
+                <p>Your browser does not support HLS video streaming.</p>
+            </video>
+        </div>
+    } @else {
+        <div class="alert alert-warning">
+            <p>No video available for this lecture.</p>
+        </div>
+    }
+</div>

@@ -56,7 +56,9 @@
                 "chooseFile": "Datei auswählen",
                 "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
                 "fileLimitation": "(max. Größe 20 MB)",
-                "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
+                "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}",
+                "videoFileAndUrlError": "Es kann nicht gleichzeitig eine Videodatei und eine Video-URL angegeben werden. Bitte gib nur eines an.",
+                "videoUploadUnavailable": "Die Video-Upload-Funktionalität ist nicht verfügbar. Bitte verwende stattdessen eine Video-URL oder kontaktiere deinen Administrator."
             },
             "import": {
                 "table": {
@@ -86,6 +88,19 @@
                 "message": "Bist du sicher, dass du die ungespeicherten Änderungen verwerfen willst?",
                 "sectionsThatContainUnsavedChangesSingular": "Der folgende Abschnitt enthält ungespeicherte Änderungen:",
                 "sectionsThatContainUnsavedChangesPlural": "Die folgenden Abschnitte enthalten ungespeicherte Änderungen:"
+            },
+            "video": {
+                "uploadSuccess": "Video erfolgreich hochgeladen",
+                "uploadError": "Fehler beim Hochladen des Videos. Bitte versuche es erneut.",
+                "deleteSuccess": "Video erfolgreich gelöscht",
+                "deleteError": "Fehler beim Löschen des Videos. Bitte versuche es erneut.",
+                "loadError": "Fehler beim Laden des Videos. Bitte versuche es erneut.",
+                "fileTooLarge": "Die Videodatei ist zu groß. Maximale Größe ist {{size}}.",
+                "invalidFormat": "Ungültiges Videoformat. Bitte lade eine gültige Videodatei hoch.",
+                "networkError": "Netzwerkfehler beim Laden des Videos.",
+                "mediaError": "Medienfehler aufgetreten. Versuche zu reparieren...",
+                "fatalError": "Ein schwerwiegender Fehler ist beim Abspielen des Videos aufgetreten.",
+                "notSupported": "HLS-Videowiedergabe wird in deinem Browser nicht unterstützt."
             }
         },
         "attachment": {

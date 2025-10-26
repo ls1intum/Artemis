@@ -169,7 +169,9 @@ public class AttachmentVideoUnitResource {
     public ResponseEntity<AttachmentVideoUnit> createAttachmentVideoUnit(@PathVariable Long lectureId, @RequestPart AttachmentVideoUnit attachmentVideoUnit,
             @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename)
             throws URISyntaxException {
-        log.debug("REST request to create AttachmentVideoUnit {} with Attachment {}", attachmentVideoUnit, attachment);
+        log.info("REST request to create AttachmentVideoUnit for lecture {} (file: {}, size: {} bytes, videoSource: {})", lectureId,
+                file != null ? file.getOriginalFilename() : "null", file != null ? file.getSize() : 0, attachmentVideoUnit.getVideoSource());
+
         if (attachmentVideoUnit.getId() != null) {
             throw new BadRequestAlertException("A new attachment video unit cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -188,15 +190,22 @@ public class AttachmentVideoUnitResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, file, keepFilename);
-        lectureRepository.save(lecture);
-        if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
-            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
-        }
-        attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedAttachmentVideoUnit));
+        try {
+            AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, file, keepFilename);
+            lectureRepository.save(lecture);
+            if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
+                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+            }
+            attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
+            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedAttachmentVideoUnit));
 
-        return ResponseEntity.created(new URI("/api/attachment-video-units/" + savedAttachmentVideoUnit.getId())).body(savedAttachmentVideoUnit);
+            log.info("AttachmentVideoUnit created successfully for lecture {}: ID {}", lectureId, savedAttachmentVideoUnit.getId());
+            return ResponseEntity.created(new URI("/api/attachment-video-units/" + savedAttachmentVideoUnit.getId())).body(savedAttachmentVideoUnit);
+        }
+        catch (Exception e) {
+            log.error("Failed to create AttachmentVideoUnit for lecture {}: {}", lectureId, e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
