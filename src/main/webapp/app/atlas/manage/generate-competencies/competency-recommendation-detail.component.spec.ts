@@ -1,22 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertService } from 'app/shared/service/alert.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MockProvider } from 'ng-mocks';
+import { FormControl, FormGroup } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { AlertService } from 'app/shared/service/alert.service';
+import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
 
 describe('CompetencyRecommendationDetailComponent', () => {
     let fixture: ComponentFixture<CompetencyRecommendationDetailComponent>;
@@ -24,20 +17,27 @@ describe('CompetencyRecommendationDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule],
-            declarations: [
-                CompetencyRecommendationDetailComponent,
-                ButtonComponent,
-                MockDirective(FeatureToggleDirective),
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
-                MarkdownEditorMonacoComponent,
-                TaxonomySelectComponent,
-                MockComponent(MonacoEditorComponent),
+            imports: [CompetencyRecommendationDetailComponent],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(MonacoEditorService),
             ],
-            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(AlertService), MockProvider(TranslateService), MockProvider(MonacoEditorService)],
         })
+            .overrideComponent(CompetencyRecommendationDetailComponent, {
+                set: {
+                    template: `
+                        <div [formGroup]="form()!">
+                          <div class="rotate-icon" (click)="toggle()"></div>
+                          <div id="editButton-{{ index() }}"><div class="jhi-btn" (click)="edit()"></div></div>
+                          <div id="saveButton-{{ index() }}"><div class="jhi-btn" (click)="save()"></div></div>
+                          <div id="deleteButton-{{ index() }}"><div class="jhi-btn" (click)="delete()"></div></div>
+                        </div>
+                    `,
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CompetencyRecommendationDetailComponent);
@@ -49,16 +49,19 @@ describe('CompetencyRecommendationDetailComponent', () => {
     });
 
     beforeEach(() => {
-        //initialize component
-        component.form = new FormGroup({
-            competency: new FormGroup({
-                title: new FormControl('Title' as string | undefined, { nonNullable: true }),
-                description: new FormControl('Description' as string | undefined, { nonNullable: true }),
-                taxonomy: new FormControl(CompetencyTaxonomy.ANALYZE as CompetencyTaxonomy | undefined, { nonNullable: true }),
+        // initialize inputs
+        fixture.componentRef.setInput(
+            'form',
+            new FormGroup({
+                competency: new FormGroup({
+                    title: new FormControl('Title' as string | undefined, { nonNullable: true }),
+                    description: new FormControl('Description' as string | undefined, { nonNullable: true }),
+                    taxonomy: new FormControl(CompetencyTaxonomy.ANALYZE as CompetencyTaxonomy | undefined, { nonNullable: true }),
+                }),
+                viewed: new FormControl(false, { nonNullable: true }),
             }),
-            viewed: new FormControl(false, { nonNullable: true }),
-        });
-        component.index = 0;
+        );
+        fixture.componentRef.setInput('index', 0);
     });
 
     afterEach(() => {
@@ -76,8 +79,8 @@ describe('CompetencyRecommendationDetailComponent', () => {
         const saveSpy = jest.spyOn(component, 'save');
 
         //component should not start out in edit mode
-        expect(component.isInEditMode).toBeFalse();
-        expect(component.form.controls.competency.disabled).toBeTrue();
+        expect(component.isInEditMode()).toBeFalse();
+        expect(component.form()!.controls.competency.disabled).toBeTrue();
 
         const editButton = fixture.debugElement.nativeElement.querySelector('#editButton-0 > .jhi-btn');
         editButton.click();

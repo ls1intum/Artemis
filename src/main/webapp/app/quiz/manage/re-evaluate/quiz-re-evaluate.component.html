@@ -94,7 +94,7 @@
                     <span jhiTranslate="artemisApp.quizExercise.questions"></span>
                 </h4>
             </div>
-            @for (question of quizExercise.quizQuestions; track question; let i = $index) {
+            @for (question of quizExercise.quizQuestions; track question.id; let i = $index) {
                 <div class="card mb-3" style="width: 100%">
                     @if (question.type === MULTIPLE_CHOICE) {
                         <div>
@@ -166,7 +166,7 @@
                             }
                         </ng-template>
                         <ng-template #warningTranslate>
-                            @for (warning of computeInvalidWarnings(); track warning) {
+                            @for (warning of invalidWarnings; track warning) {
                                 <div>
                                     @if ((warning.translateValues | json) !== '{}') {
                                         <p jhiTranslate="{{ warning.translateKey }}" [translateValues]="{ index: warning.translateValues.index }"></p>
@@ -193,7 +193,7 @@
                         <button
                             class="btn btn-warning"
                             (click)="resetAll()"
-                            [disabled]="!pendingChanges() || !isValidQuiz() || isSaving"
+                            [disabled]="!pendingChanges() || isSaving"
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.resetQuiz"
                         ></button>
                         <button class="btn btn-secondary" (click)="back()" jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"></button>

@@ -101,7 +101,8 @@
                 id="competencies"
                 [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                 [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                [ngModel]="programmingExercise()?.competencyLinks"
+                [exerciseDescription]="programmingExercise.problemStatement || programmingExercise.title"
+                [(ngModel)]="programmingExercise.competencyLinks"
                 name="competencyLinks"
             />
         </div>

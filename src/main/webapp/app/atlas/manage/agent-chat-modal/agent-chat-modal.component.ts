@@ -1,11 +1,24 @@
-import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import {
+    AfterViewChecked,
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    OnInit,
+    computed,
+    inject,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { AgentChatService } from './agent-chat.service';
 import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -13,7 +26,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-agent-chat-modal',
     standalone: true,
-    imports: [CommonModule, DatePipe, TranslateDirective, FontAwesomeModule, FormsModule, ArtemisTranslatePipe],
+    imports: [CommonModule, TranslateDirective, FontAwesomeModule, FormsModule, ArtemisTranslatePipe],
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,7 +49,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     currentMessage = signal('');
     isAgentTyping = signal(false);
     private shouldScrollToBottom = false;
-    private sessionId!: string;
+
+    // Event emitted when agent likely created/modified competencies
+    competencyChanged = output<void>();
 
     // Message validation
     readonly MAX_MESSAGE_LENGTH = 8000;
@@ -49,8 +64,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     });
 
     ngOnInit(): void {
-        this.sessionId = `course_${this.courseId}_session_${Date.now()}`;
-
         // Add a welcome message
         this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
     }
@@ -84,11 +97,17 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         // Show typing indicator
         this.isAgentTyping.set(true);
 
-        // Send message with session ID for continuity
-        this.agentChatService.sendMessage(message, this.courseId, this.sessionId).subscribe({
+        // Send message - backend will use courseId as conversationId for memory
+        this.agentChatService.sendMessage(message, this.courseId).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
-                this.addMessage(response, false);
+                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false);
+
+                // Emit event if competencies were modified so parent can refresh
+                if (response.competenciesModified) {
+                    this.competencyChanged.emit();
+                }
+
                 // Restore focus to input after agent responds - using Iris pattern
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
             },

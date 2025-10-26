@@ -91,6 +91,16 @@ describe('CourseCompetencyApiService', () => {
         await methodCall;
     });
 
+    it('should get course competency relations by course id (alias)', async () => {
+        const methodCall = courseCompetencyApiService.getCourseCompetencyRelationsByCourseId(courseId);
+        const response = httpClient.expectOne({
+            method: 'GET',
+            url: `${getBasePath(courseId)}/relations`,
+        });
+        response.flush([]);
+        await methodCall;
+    });
+
     it('should get course competencies by course id', async () => {
         const methodCall = courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId);
         const response = httpClient.expectOne({
@@ -98,6 +108,16 @@ describe('CourseCompetencyApiService', () => {
             url: `${getBasePath(courseId)}`,
         });
         response.flush([]);
+        await methodCall;
+    });
+
+    it('should get suggested competency relations', async () => {
+        const methodCall = courseCompetencyApiService.getSuggestedCompetencyRelations(courseId);
+        const response = httpClient.expectOne({
+            method: 'GET',
+            url: `${baseUrl}/courses/${courseId}/competencies/relations/suggest`,
+        });
+        response.flush({ relations: [] });
         await methodCall;
     });
 
