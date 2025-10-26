@@ -15,6 +15,8 @@ import { Router } from '@angular/router';
     templateUrl: './login-with-passkey.modal.html',
 })
 export class LoginWithPasskeyModal {
+    // TODO fix that modal appears after 1. login with passkey 2. logout 3. login with password (seems like a change detection issue)
+
     protected readonly ButtonType = ButtonType;
 
     protected readonly faKey = faKey;
