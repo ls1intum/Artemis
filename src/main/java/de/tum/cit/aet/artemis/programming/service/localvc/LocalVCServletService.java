@@ -50,7 +50,6 @@ import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -95,8 +94,6 @@ public class LocalVCServletService {
 
     private final RepositoryAccessService repositoryAccessService;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
@@ -129,16 +126,14 @@ public class LocalVCServletService {
     public static final String BUILD_USER_NAME = "buildjob_user";
 
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
-            ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
+            RepositoryAccessService repositoryAccessService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            AuxiliaryRepositoryService auxiliaryRepositoryService, ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
-        this.authorizationCheckService = authorizationCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.ciTriggerService = ciTriggerService;
@@ -238,8 +233,11 @@ public class LocalVCServletService {
         User user = authenticateUser(authorizationHeader, exercise, localVCRepositoryUri);
 
         // Check that offline IDE usage is allowed.
-        if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
-            throw new LocalVCForbiddenException();
+        try {
+            repositoryAccessService.checkHasAccessToOfflineIDEElseThrow(exercise, user);
+        }
+        catch (AccessForbiddenException e) {
+            throw new LocalVCForbiddenException(e);
         }
 
         try {
@@ -477,10 +475,7 @@ public class LocalVCServletService {
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 
-        boolean isAllowedRepository = repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
-                || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
-
-        return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return repositoryAccessService.checkHasAccessToForcePush(exercise, user, repositoryTypeOrUserName);
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
@@ -636,9 +631,12 @@ public class LocalVCServletService {
 
         // Students are not able to access Test or Aux repositories.
         // To save on db queries we do not check whether it is an Aux repo here, as we would need to fetch them first.
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        try {
+            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, user, repositoryTypeOrUserName);
+        }
+        catch (AccessForbiddenException e) {
             if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-                throw new LocalVCForbiddenException();
+                throw new LocalVCForbiddenException(e);
             }
             // The user is a student, and the repository is not a test repository
             return false;
