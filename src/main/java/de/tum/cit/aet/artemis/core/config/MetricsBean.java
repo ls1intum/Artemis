@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -108,11 +109,12 @@ public class MetricsBean {
 
     private final List<HealthContributor> healthContributors;
 
+    // the data source is optional as it is not used during testing
     private final Optional<HikariDataSource> hikariDataSource;
 
     private final Optional<DistributedDataAccessService> localCIDistributedDataAccessService;
 
-    private final Optional<BuildJobRepository> buildJobRepository;
+    private final BuildJobRepository buildJobRepository;
 
     /**
      * List that stores active usernames (users with a submission within the last 14 days) which is refreshed every 60 minutes.
@@ -179,13 +181,16 @@ public class MetricsBean {
     // NOTE: only active on scheduling node
     private MultiGauge activeAdminsGauge;
 
+    // NOTE: only active on scheduling node
+    private final AtomicLong missingBuildResultsGauge = new AtomicLong(0);
+
     private boolean scheduledMetricsEnabled = false;
 
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
             Optional<StudentExamApi> studentExamApi, Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, UserRepository userRepository,
             StatisticsRepository statisticsRepository, ProfileService profileService, Optional<DistributedDataAccessService> localCIBuildJobQueueService,
-            Optional<BuildJobRepository> buildJobRepository) {
+            BuildJobRepository buildJobRepository) {
         this.meterRegistry = meterRegistry;
         this.scheduler = scheduler;
         this.webSocketStats = webSocketStats;
@@ -250,6 +255,10 @@ public class MetricsBean {
 
             // Initial calculation is done in constructor to ensure the values are present before the first metrics are calculated
             calculateActiveUserMetrics();
+
+            if (profileService.isLocalCIActive()) {
+                registerMissingBuildResultsMetrics();
+            }
         }
 
         if (profileService.isLocalCIActive()) {
@@ -318,13 +327,9 @@ public class MetricsBean {
         Gauge.builder("artemis.global.localci.maxConcurrentBuilds", localCIDistributedDataAccessService, MetricsBean::extractMaxConcurrentBuilds).strongReference(true)
                 .description("Number of max concurrent builds").register(meterRegistry);
 
-        // Publish the number of results in the queue
+        // Publish the number of results in the result queue
         Gauge.builder("artemis.global.localci.resultsInQueue", localCIDistributedDataAccessService, MetricsBean::extractResultsInQueue).strongReference(true)
                 .description("Number of results waiting in the queue").register(meterRegistry);
-
-        // Publish the number of missing build results in the last 24h
-        Gauge.builder("artemis.global.localci.missingBuildResults24h", buildJobRepository, MetricsBean::extractMissingBuildResults).strongReference(true)
-                .description("Number of build jobs with missing results").register(meterRegistry);
     }
 
     private static int extractRunningBuilds(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
@@ -350,9 +355,10 @@ public class MetricsBean {
         return localCIDistributedDataAccessService.map(DistributedDataAccessService::getResultQueueSize).orElse(0);
     }
 
-    private static long extractMissingBuildResults(Optional<BuildJobRepository> buildJobRepository) {
-        return buildJobRepository
-                .map(jobRepository -> BuildJobsStatisticsDTO.of(jobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(1), null)).missingBuilds()).orElse(0L);
+    private long extractMissingBuildResults() {
+        // calculate build statistics in the last 24 hours for all courses by passing null as courseId
+        var buildResultStatistics = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(1), null);
+        return BuildJobsStatisticsDTO.of(buildResultStatistics).missingBuilds();
     }
 
     // This is ALWAYS active on all nodes
@@ -431,6 +437,11 @@ public class MetricsBean {
         activeAdminsGauge = MultiGauge.builder("artemis.users.admins.active").description("User logins of active admin accounts").register(meterRegistry);
     }
 
+    private void registerMissingBuildResultsMetrics() {
+        Gauge.builder("artemis.global.buildjobs.missing_results", missingBuildResultsGauge::get).description("Number of build jobs missing results in the last 24 hours")
+                .register(meterRegistry);
+    }
+
     /**
      * Calculate active users (active within the last 14 days) and store them in a List.
      * The calculation is performed every 60 minutes and should only be done on the scheduling node
@@ -473,16 +484,16 @@ public class MetricsBean {
 
         // Exercise metrics
         updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseGauge, cachedActiveUserNames,
-                (now, endDate, activeUserNamesUnused) -> exerciseRepository.countExercisesWithEndDateBetweenGroupByExerciseType(now, endDate));
+                (now, endDate, _) -> exerciseRepository.countExercisesWithEndDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierGauge, cachedActiveUserNames,
-                (now, endDate, activeUserNamesUnused) -> exerciseRepository.countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate));
+                (now, endDate, _) -> exerciseRepository.countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierActive14DaysGauge, cachedActiveUserNames,
                 exerciseRepository::countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType);
 
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseGauge, cachedActiveUserNames,
-                (now, endDate, activeUserNamesUnused) -> exerciseRepository.countExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
+                (now, endDate, _) -> exerciseRepository.countExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierGauge, cachedActiveUserNames,
-                (now, endDate, activeUserNamesUnused) -> exerciseRepository.countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
+                (now, endDate, _) -> exerciseRepository.countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierActive14DaysGauge, cachedActiveUserNames,
                 exerciseRepository::countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType);
 
@@ -497,6 +508,15 @@ public class MetricsBean {
         }
 
         log.debug("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
+    }
+
+    @Scheduled(fixedRate = 60 * 1000, initialDelay = 30 * 1000) // Every minute with an initial delay of 30 seconds
+    public void calculateMissingBuildResults() {
+        if (!scheduledMetricsEnabled || !profileService.isLocalCIActive()) {
+            return;
+        }
+        long missingBuildResults = extractMissingBuildResults();
+        missingBuildResultsGauge.set(missingBuildResults);
     }
 
     /**
