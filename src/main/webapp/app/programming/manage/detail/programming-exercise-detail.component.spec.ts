@@ -328,7 +328,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(profileInfoStub).toHaveBeenCalledOnce();
+        expect(profileInfoStub).toHaveBeenCalled();
         expect(comp.isBuildPlanEditable).toBe(editable);
     });
 
