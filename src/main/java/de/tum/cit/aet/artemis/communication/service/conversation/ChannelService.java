@@ -181,16 +181,6 @@ public class ChannelService {
     }
 
     /**
-     * Delete all channels associated with the given exercise id
-     *
-     * @param exerciseId the id of the exercise
-     */
-    public void deleteChannelForExerciseId(Long exerciseId) {
-        Channel exerciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
-        this.deleteChannel(exerciseChannel);
-    }
-
-    /**
      * Deletes the channel if it exists
      *
      * @param channel the channel to delete
