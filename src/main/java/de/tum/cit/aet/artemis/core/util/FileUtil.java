@@ -35,7 +35,6 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
@@ -885,7 +884,7 @@ public class FileUtil {
                     outputFile.getParentFile());
 
             try (InputStream input = Files.newInputStream(outputFile.toPath()); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
-                IOUtils.copy(input, fileItemOutputStream);
+                input.transferTo(fileItemOutputStream);
             }
             return new CommonsMultipartFile(fileItem);
         }

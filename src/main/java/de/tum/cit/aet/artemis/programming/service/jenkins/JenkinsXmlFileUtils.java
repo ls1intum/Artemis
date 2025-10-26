@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins;
 
 import java.io.IOException;
-import java.io.StringReader;
+import java.io.Reader;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Map;
@@ -66,7 +66,7 @@ public class JenkinsXmlFileUtils {
         try {
             final DocumentBuilderFactory domFactory = getDocumentBuilderFactory();
             final var builder = domFactory.newDocumentBuilder();
-            return builder.parse(new InputSource(new StringReader(configXmlText)));
+            return builder.parse(new InputSource(Reader.of(configXmlText)));
         }
         catch (IOException | ParserConfigurationException | SAXException e) {
             final var errorMessage = "Error loading template Jenkins build XML: " + e.getMessage();
