@@ -312,7 +312,7 @@ public class ChannelResource extends ConversationManagementResource {
 
         var usersToNotify = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
-        conversationService.deleteConversation(channel);
+        conversationService.deleteConversation(channel.getId());
 
         var course = channel.getCourse();
         var channelDeletedNotification = new ChannelDeletedNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), channel.getName());

@@ -9,12 +9,12 @@ artemis:
         docker-connection-uri: unix:///var/run/docker.sock
         # Set this to true if you want to specify the number of build that can run concurrently on this node. If false, the number will be determined based on system resources.
         specify-concurrent-builds: false
-        # The number of builds that can run concurrently on this node.
+        # The number of builds that can run concurrently on this build agent node.
         concurrent-build-size: 1
         # If true, the CI jobs will be executed asynchronously. If false, the CI jobs will be executed synchronously (e.g. for debugging and tests).
         asynchronous: true
         # The number of results that can be processed concurrently. This is used to speed up the processing of the results of the CI jobs. Adapt according to your available hardware resources and expected load on the CI system.
-        concurrent-result-processing-size: 4
+        concurrent-result-processing-size: 16
         # The prefix that is used for the Docker containers that are created by the local CI system.
         build-container-prefix: local-ci-
         # In case you need to use a proxy to access the internet from the Docker container (e.g., due to firewall constraints), set use-system-proxy to true and configure the proxy settings below.
