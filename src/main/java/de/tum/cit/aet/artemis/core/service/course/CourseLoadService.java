@@ -84,7 +84,10 @@ public class CourseLoadService {
         Set<Exercise> releasedExercises = exerciseRepository.findAllReleasedExercisesByCourseId(courseId, now);
         Set<Lecture> visibleLectures = new HashSet<>();
         if (lectureRepositoryApi.isPresent()) {
-            visibleLectures = lectureRepositoryApi.orElseThrow().findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
+            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+            /* TODO: #11479 - remove the commented out query OR comment back in and remove the alternative query (delete it from the repo since it is only used here) */
+            // visibleLectures = lectureRepositoryApi.orElseThrow().findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
+            visibleLectures = lectureRepositoryApi.orElseThrow().findAllByCourseIdWithEagerLectureUnits(courseId);
         }
         Set<Competency> competencies = new HashSet<>();
         if (competencyRepositoryApi.isPresent()) {
