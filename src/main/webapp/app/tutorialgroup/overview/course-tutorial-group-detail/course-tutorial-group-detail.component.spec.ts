@@ -50,6 +50,18 @@ describe('NewTutorialGroupDetail', () => {
         fixture.componentRef.setInput('course', { id: 1 } as Course);
     });
 
+    // at top of the test file
+    beforeAll(() => {
+        process.env.TZ = 'Europe/Berlin'; // pin TZ
+        jest.useFakeTimers();
+        // pick a winter date (no DST jump). Any fixed date works, just be consistent.
+        jest.setSystemTime(new Date('2025-01-14T10:00:00+01:00'));
+    });
+
+    afterAll(() => {
+        jest.useRealTimers();
+    });
+
     it('should display no conversation links if messaging disabled', () => {
         jest.spyOn(CourseModel, 'isMessagingEnabled').mockReturnValue(false);
         const raw: RawTutorialGroupDetailGroupDTO = {
@@ -297,7 +309,7 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should compute correct nextSession', () => {
-        const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
+        const nextSessionStart = dayjs('2025-01-15T13:00:00+01:00');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupDetailSessionDTO = {
             start: nextSessionStart.subtract(1, 'week').toISOString(),
@@ -350,7 +362,11 @@ describe('NewTutorialGroupDetail', () => {
         const nextSession = component.nextSession();
         expect(nextSession).toBeDefined();
         expect(nextSession!.date.endsWith(nextSessionStart.format('DD.MM.YYYY'))).toBeTrue();
-        expect(nextSession!.time).toBe('13:00-15:00');
+
+        // compute the expected string from the same source to avoid TZ drift
+        const expectedTime = `${nextSessionStart.format('HH:mm')}-${nextSessionEnd.format('HH:mm')}`;
+        expect(nextSession!.time).toBe(expectedTime);
+
         expect(nextSession!.location).toBe('01.05.13');
         expect(nextSession!.isCancelled).toBeFalse();
         expect(nextSession!.locationChanged).toBeFalse();

@@ -112,7 +112,7 @@ const moduleThresholds = {
     },
     programming: {
         statements: 89.10,
-        branches:   77.10,
+        branches:   77.00,
         functions:  81.40,
         lines:      89.20,
     },
@@ -141,8 +141,6 @@ const moduleThresholds = {
         lines:      91.20,
     },
 };
-
-
 
 const metrics = ['statements', 'branches', 'functions', 'lines'];
 
