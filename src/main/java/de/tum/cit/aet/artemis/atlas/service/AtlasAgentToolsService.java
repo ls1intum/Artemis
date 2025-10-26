@@ -26,16 +26,21 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 /**
- * Service providing LLM-callable tools for the Atlas Agent using Spring AI’s function calling API.
+ * Service providing LLM-callable tools for the Atlas Agent using Spring AI's function calling API.
+ * Methods annotated with {@link Tool} are automatically exposed as AI functions that can be invoked
+ * by large language models during conversations. When the LLM determines it needs data or wants to
+ * perform an action, it calls these methods, receives structured JSON responses, and uses that
+ * information to generate natural language answers.
  *
- * Each method annotated with {@link Tool} is automatically exposed as an AI “function” that can be
- * invoked by large language models during conversations. This allows the Atlas Agent to query or modify
- * course-related data such as competencies and exercises.
+ * Rationale: This service allows the Atlas Agent to autonomously retrieve course information and create
+ * competencies based on user conversations, enabling an interactive AI assistant for instructors.
  *
  * Main Responsibilities:
  * - Expose course-related data (competencies, exercises, descriptions) as AI-callable tools
  * - Create new competencies based on LLM-generated suggestions
  * - Track whether competencies were changed during a single AI interaction
+ *
+ * @see <a href="https://docs.spring.io/spring-ai/reference/api/tools.html">Spring AI Function Calling</a>
  */
 @Lazy
 @Service
