@@ -1,0 +1,36 @@
+.header-section {
+    margin-top: -10px;
+    margin-bottom: -10px;
+    align-items: center;
+}
+
+.button-class {
+    padding-bottom: 10px;
+}
+
+.main-body-section {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.leaderboard-section {
+    flex: 1;
+}
+
+.legend-section {
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    width: 300px;
+    position: sticky;
+    top: 1px;
+    align-self: flex-start;
+}
+
+@media (max-width: 900px) {
+    .legend-section {
+        position: static;
+        top: 1px;
+    }
+}

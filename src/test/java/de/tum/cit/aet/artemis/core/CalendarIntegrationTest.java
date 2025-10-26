@@ -90,7 +90,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    static final TypeReference<Map<String, List<CalendarEventDTO>>> EVENT_MAP_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventDTO>>>() {
+    static final TypeReference<Map<String, List<CalendarEventDTO>>> EVENT_MAP_RETURN_TYPE = new TypeReference<>() {
     };
 
     static final Comparator<ZonedDateTime> TIMESTAMP_COMPARATOR = Comparator.comparing(zdt -> zdt.toInstant().truncatedTo(ChronoUnit.MILLIS));
@@ -343,16 +343,36 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                         .isEqualTo(expectedResponse);
             }
 
+            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+            /* TODO: #11479 - remove the commented out code OR comment back in */
+            // @Test
+            // @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            // void shouldReturnNoEventForInvisibleLectureWithStartAndEndAsStudent() throws Exception {
+            // Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
+            // Long courseId = course.getId();
+            // String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+            // + TEST_LANGUAGE_STRING;
+            // Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+            // Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+            // assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR,
+            // ZonedDateTime.class).ignoringCollectionOrder().isEqualTo(expectedResponse);
+            // }
+
             @Test
             @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-            void shouldReturnNoEventForInvisibleLectureWithStartAndEndAsStudent() throws Exception {
-                Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
+            void shouldReturnCorrectEventsForVisibleLectureTakingLongerThanTwelveHoursAsStudent() throws Exception {
+                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE, PAST_DATE.plusDays(1));
                 Long courseId = course.getId();
-                String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
-                        + "&language=" + TEST_LANGUAGE_STRING;
+                String url = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(url, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.LECTURE, "Start: " + lecture.getTitle(), lecture.getStartDate(), null, null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.LECTURE, "End: " + lecture.getTitle(), lecture.getEndDate(), null, null, null);
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent1.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent1));
+                expectedResponse.put(expectedEvent2.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent2));
+
                 assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
                         .isEqualTo(expectedResponse);
             }

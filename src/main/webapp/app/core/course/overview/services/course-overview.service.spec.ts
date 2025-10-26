@@ -16,6 +16,7 @@ import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/s
 import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 
 describe('CourseOverviewService', () => {
     let courseOverviewService: CourseOverviewService;
@@ -552,5 +553,54 @@ describe('CourseOverviewService', () => {
 
         const icon = courseOverviewService.getChannelIcon(privateChannel);
         expect(icon).toBe(courseOverviewService.faLock);
+    });
+
+    describe('mapTutorialGroupToSidebarCardElement', () => {
+        it('should compute attendance from sessions (average attendance ratio)', () => {
+            const tutorialGroup = new TutorialGroup();
+            tutorialGroup.id = 1;
+            tutorialGroup.title = 'T01';
+            tutorialGroup.capacity = 10;
+            tutorialGroup.tutorialGroupSessions = [{ attendanceCount: 8 } as any, { attendanceCount: 6 } as any];
+            tutorialGroup.nextSession = { start: dayjs('2025-10-25T14:00:00'), end: dayjs('2025-10-25T16:00:00') };
+            const result = courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
+
+            expect(result.attendanceText).toBe('Ø 70%');
+            expect(result.attendanceChipColor).toBe('var(--yellow)');
+            expect(result.subtitleLeft).toBe('Oct 25, 2025');
+            expect(result.subtitleRight).toBe('14:00–16:00');
+        });
+
+        it('should compute attendance from registered users and capacity when no attendance data', () => {
+            const tutorialGroup = new TutorialGroup();
+            tutorialGroup.id = 2;
+            tutorialGroup.title = 'T02';
+            tutorialGroup.capacity = 20;
+            tutorialGroup.numberOfRegisteredUsers = 18;
+            tutorialGroup.nextSession = { start: dayjs('2025-10-30T10:00:00'), end: dayjs('2025-10-30T12:00:00') };
+            const result = courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
+
+            expect(result.attendanceText).toBe('18 / 20');
+            expect(result.attendanceChipColor).toBe('var(--red)');
+            expect(result.subtitleLeft).toBe('Oct 30, 2025');
+            expect(result.subtitleRight).toBe('10:00–12:00');
+        });
+
+        it.each([
+            [0.9, 'var(--red)'],
+            [0.8, 'var(--orange)'],
+            [0.7, 'var(--yellow)'],
+            [0.6, 'var(--green)'],
+        ])('should assign correct chip color for ratio %.2f', (ratio, expectedColor) => {
+            const tutorialGroup = new TutorialGroup();
+            tutorialGroup.id = 3;
+            tutorialGroup.title = 'TG Ratio Test';
+            tutorialGroup.capacity = 20;
+            tutorialGroup.tutorialGroupSessions = [{ attendanceCount: ratio * 20 } as any];
+            const result = courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
+
+            expect(result.attendanceChipColor).toBe(expectedColor);
+            expect(result.attendanceText).toBe(`Ø ${(ratio * 100).toFixed(0)}%`);
+        });
     });
 });

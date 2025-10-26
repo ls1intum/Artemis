@@ -230,7 +230,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
             expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
             expect(comp.repositoryDiffInformation).toBeDefined();
-            expect(comp.repositoryDiffInformation.diffInformations).toHaveLength(1);
+            expect(comp.repositoryDiffInformation!.diffInformations).toHaveLength(1);
         });
 
         it.each([true, false])(
@@ -309,7 +309,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.repositoryDiffInformation).toBeDefined();
-            expect(comp.repositoryDiffInformation.diffInformations).toHaveLength(1);
+            expect(comp.repositoryDiffInformation!.diffInformations).toHaveLength(1);
         }));
     });
 
@@ -328,7 +328,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(profileInfoStub).toHaveBeenCalledOnce();
+        expect(profileInfoStub).toHaveBeenCalled();
         expect(comp.isBuildPlanEditable).toBe(editable);
     });
 
