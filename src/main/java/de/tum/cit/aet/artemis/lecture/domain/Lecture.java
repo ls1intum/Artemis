@@ -48,6 +48,9 @@ public class Lecture extends DomainObject {
     @Column(name = "visible_date")
     private ZonedDateTime visibleDate;
 
+    @Column(name = "is_tutorial_lecture")
+    private boolean isTutorialLecture;
+
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
@@ -166,5 +169,13 @@ public class Lecture extends DomainObject {
             return true;
         }
         return visibleDate.isBefore(ZonedDateTime.now());
+    }
+
+    public boolean isTutorialLecture() {
+        return isTutorialLecture;
+    }
+
+    public void setTutorialLecture(boolean tutorialLecture) {
+        isTutorialLecture = tutorialLecture;
     }
 }

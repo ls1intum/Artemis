@@ -84,7 +84,7 @@ public class CourseLoadService {
         Set<Exercise> releasedExercises = exerciseRepository.findAllReleasedExercisesByCourseId(courseId, now);
         Set<Lecture> visibleLectures = new HashSet<>();
         if (lectureRepositoryApi.isPresent()) {
-            visibleLectures = lectureRepositoryApi.orElseThrow().findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
+            visibleLectures = lectureRepositoryApi.orElseThrow().findAllVisibleNonTutorialLecturesByCourseIdWithEagerLectureUnits(courseId, now);
         }
         Set<Competency> competencies = new HashSet<>();
         if (competencyRepositoryApi.isPresent()) {

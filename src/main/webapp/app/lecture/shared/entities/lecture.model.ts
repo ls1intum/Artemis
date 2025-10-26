@@ -17,7 +17,7 @@ export class Lecture implements BaseEntity {
     posts?: Post[];
     lectureUnits?: LectureUnit[];
     course?: Course;
-    isTutorialLecture?: boolean;
+    tutorialLecture?: boolean;
 
     // helper attribute
     channelName?: string;

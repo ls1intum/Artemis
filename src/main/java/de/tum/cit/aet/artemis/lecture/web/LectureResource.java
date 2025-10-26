@@ -191,10 +191,10 @@ public class LectureResource {
 
         Set<Lecture> lectures;
         if (withLectureUnits) {
-            lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
+            lectures = lectureRepository.findAllNonTutorialLecturesByCourseIdWithAttachmentsAndLectureUnits(courseId);
         }
         else {
-            lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
+            lectures = lectureRepository.findAllNonTutorialLecturesByCourseIdWithAttachments(courseId);
         }
         return ResponseEntity.ok().body(lectures);
     }
@@ -211,7 +211,8 @@ public class LectureResource {
         log.info("Getting all lectures with slides for course {}", courseId);
         long start = System.currentTimeMillis();
 
-        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId).stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
+        var lectures = lectureRepository.findAllNonTutorialLecturesByCourseIdWithAttachmentsAndLectureUnits(courseId).stream().filter(Lecture::isVisibleToStudents)
+                .collect(Collectors.toSet());
         Set<Long> attachmentVideoUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream())
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(DomainObject::getId).collect(Collectors.toSet());
 
@@ -315,7 +316,7 @@ public class LectureResource {
     public ResponseEntity<Lecture> importLecture(@PathVariable long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(sourceLectureId);
-        final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);
+        final var destinationCourse = courseRepository.findByIdElseThrow(courseId);
 
         Course course = sourceLecture.getCourse();
         if (course == null) {

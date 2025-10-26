@@ -538,7 +538,7 @@ public class CourseTestService {
             // assertThat(notificationRepo.findAll()).as("All notifications are deleted").isEmpty(); // TODO: Readd this and check only for notifications of course
             assertThat(examRepo.findByCourseId(course.getId())).as("All exams are deleted").isEmpty();
             assertThat(exerciseRepo.findAllExercisesByCourseId(course.getId())).as("All Exercises are deleted").isEmpty();
-            assertThat(lectureRepo.findAllByCourseIdWithAttachments(course.getId())).as("All Lectures are deleted").isEmpty();
+            assertThat(lectureRepo.findAllNonTutorialLecturesByCourseIdWithAttachments(course.getId())).as("All Lectures are deleted").isEmpty();
             assertThat(conversationRepository.findAllByCourseId(course.getId())).as("All Conversations are deleted").isEmpty();
         }
     }

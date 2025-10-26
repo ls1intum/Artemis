@@ -114,10 +114,12 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesAndPrerequisitesById(long courseId);
 
+    // TODO: treat this case
     // Note: we load attachments directly because otherwise, they will be loaded in subsequent DB calls due to the EAGER relationship
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
+    // TODO: treat this case
     /**
      * Returns an optional course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
      *
@@ -127,6 +129,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
+    // TODO: treat this case
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
 

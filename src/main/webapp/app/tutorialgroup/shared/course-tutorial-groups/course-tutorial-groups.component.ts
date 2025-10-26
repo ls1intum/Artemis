@@ -89,7 +89,7 @@ export class CourseTutorialGroupsComponent {
                 const tutorialGroups = updatedCourse.tutorialGroups ?? [];
                 this.tutorialGroups.set(tutorialGroups);
                 const lectures = updatedCourse.lectures ?? [];
-                const tutorialLectures = lectures.filter((lecture) => lecture.isTutorialLecture !== true);
+                const tutorialLectures = lectures.filter((lecture) => lecture.tutorialLecture !== true);
                 this.tutorialLectures.set(tutorialLectures);
             }
         });
@@ -110,7 +110,7 @@ export class CourseTutorialGroupsComponent {
             this.loadAndSetTutorialGroups(courseId);
         }
         if (cachedLectures !== undefined) {
-            this.tutorialLectures.set(cachedLectures.filter((lecture) => lecture.isTutorialLecture !== true));
+            this.tutorialLectures.set(cachedLectures.filter((lecture) => lecture.tutorialLecture !== true));
         } else {
             this.loadAndSetTutorialLectures(courseId);
         }
@@ -139,7 +139,7 @@ export class CourseTutorialGroupsComponent {
         this.lectureService.findAllByCourseId(courseId).subscribe({
             next: ({ body }) => {
                 const lectures = body ?? [];
-                const tutorialLectures = lectures.filter((lecture) => lecture.isTutorialLecture);
+                const tutorialLectures = lectures.filter((lecture) => lecture.tutorialLecture);
                 this.tutorialLectures.set(tutorialLectures);
                 this.updateCachedLectures(tutorialLectures, courseId);
             },

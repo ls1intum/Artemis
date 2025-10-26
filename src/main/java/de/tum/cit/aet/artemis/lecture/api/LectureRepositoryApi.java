@@ -42,8 +42,8 @@ public class LectureRepositoryApi extends AbstractLectureApi {
         return lectureRepository.findAllById(lectureIds);
     }
 
-    public Set<Lecture> findAllByCourseId(long courseId) {
-        return lectureRepository.findAllByCourseId(courseId);
+    public Set<Lecture> findAllNonTutorialLecturesByCourseId(long courseId) {
+        return lectureRepository.findAllNonTutorialLecturesByCourseId(courseId);
     }
 
     public Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
@@ -51,7 +51,7 @@ public class LectureRepositoryApi extends AbstractLectureApi {
     }
 
     public Optional<Lecture> findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
-        return lectureRepository.findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(title, courseId);
+        return lectureRepository.findUniqueNonTutorialLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(title, courseId);
     }
 
     public long countByCourseId(long courseId) {
@@ -66,7 +66,7 @@ public class LectureRepositoryApi extends AbstractLectureApi {
         lectureRepository.saveAll(lectures);
     }
 
-    public Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(long courseId, ZonedDateTime now) {
-        return lectureRepository.findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
+    public Set<Lecture> findAllVisibleNonTutorialLecturesByCourseIdWithEagerLectureUnits(long courseId, ZonedDateTime now) {
+        return lectureRepository.findAllVisibleNonTutorialLecturesByCourseIdWithEagerLectureUnits(courseId, now);
     }
 }

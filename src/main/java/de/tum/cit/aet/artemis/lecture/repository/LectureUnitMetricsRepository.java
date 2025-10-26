@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @Repository
 public interface LectureUnitMetricsRepository extends ArtemisJpaRepository<LectureUnit, Long> {
 
+    // TODO: okay like this?
     /**
      * Get the lecture unit information for all lecture units in a course.
      *
