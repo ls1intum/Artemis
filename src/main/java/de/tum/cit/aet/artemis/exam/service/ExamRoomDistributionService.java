@@ -78,10 +78,11 @@ public class ExamRoomDistributionService {
 
     private ExamDistributionCapacityDTO getDistributionCapacities(@NotNull Set<ExamRoom> examRooms, double reserveFactor) {
         final int numberOfDefaultUsableSeats = examRooms.stream()
-                .mapToInt(examRoom -> (int) (examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity() * (1 - reserveFactor))).sum();
+                .mapToInt(examRoom -> examRoomService.sizeAfterApplyingReserveFactor(examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity(), reserveFactor))
+                .sum();
 
         final int numberOfMaximumUsableSeats = examRooms.stream().map(examRoom -> examRoom.getLayoutStrategies().stream().max(Comparator.comparingInt(LayoutStrategy::getCapacity)))
-                .mapToInt(layoutStrategy -> layoutStrategy.map(strategy -> (int) (strategy.getCapacity() * (1 - reserveFactor))).orElse(0)).sum();
+                .mapToInt(layoutStrategy -> layoutStrategy.map(strategy -> examRoomService.sizeAfterApplyingReserveFactor(strategy.getCapacity(), reserveFactor)).orElse(0)).sum();
 
         return new ExamDistributionCapacityDTO(numberOfDefaultUsableSeats, numberOfMaximumUsableSeats);
     }
