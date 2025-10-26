@@ -1,7 +1,7 @@
 import { Component, inject, output } from '@angular/core';
 import { DialogModule } from 'primeng/dialog';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { faKey } from '@fortawesome/free-solid-svg-icons';
+import { faKey, faLock } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
@@ -22,6 +22,7 @@ export class LoginWithPasskeyModal {
     protected readonly ButtonType = ButtonType;
 
     protected readonly faKey = faKey;
+    protected readonly faLock = faLock;
 
     private readonly router = inject(Router);
     private readonly eventManager = inject(EventManager);

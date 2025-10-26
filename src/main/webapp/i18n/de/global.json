@@ -119,7 +119,8 @@
             },
             "admin": {
                 "main": "Server-Administration",
-                "loginWithPasskey": "Mit Passkey anmelden um auf Administrator-Funktionalitäten zuzugreifen",
+                "loginWithPasskey": "Mit Passkey anmelden um Administrator-Funktionalitäten zu nutzen",
+                "passkeyRestrictionExplanation": "Zum Schutz der Studierendendaten und zur Sicherstellung der Zuverlässigkeit von Artemis sind Administratoraktionen nur nach Passkey-Login verfügbar. Passkeys bieten eine schnelle und Phishing resistente Alternative zur Passwort-Authentifizierung.",
                 "upcomingExamsAndExercises": "Kommende Prüfungen & Übungen",
                 "userManagement": "Verwaltung von Nutzer:innen",
                 "organizationManagement": "Organisationsverwaltung",

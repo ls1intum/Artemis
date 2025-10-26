@@ -120,6 +120,7 @@
             "admin": {
                 "main": "Server Administration",
                 "loginWithPasskey": "Sign in with a passkey to use admin features",
+                "passkeyRestrictionExplanation": "To protect student data and ensure platform reliability, administrator actions require strong authentication with a passkey. Passkeys are a fast and phishing-resistant authentication alternative to passwords.",
                 "upcomingExamsAndExercises": "Upcoming exams & exercises",
                 "userManagement": "User management",
                 "organizationManagement": "Organization management",
