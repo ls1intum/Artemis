@@ -566,37 +566,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * @param quizExercise         the changed quiz exercise from the client
+     * @param quizExerciseDTO      the changed quiz exercise from the client
      * @param originalQuizExercise the original quiz exercise (with statistics)
      * @param files                the files that were uploaded
      * @return the updated quiz exercise with the changed statistics
      */
-    public QuizExercise reEvaluate(QuizExercise quizExercise, QuizExercise originalQuizExercise, @NotNull List<MultipartFile> files) throws IOException {
-        quizExercise.undoUnallowedChanges(originalQuizExercise);
-        validateQuizExerciseFiles(quizExercise, files, false);
-
-        boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
-
-        // update QuizExercise
-        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
-        quizExercise.reconnectJSONIgnoreAttributes();
-        handleDndQuizFileUpdates(quizExercise, originalQuizExercise, files);
-
-        // adjust existing results if an answer or a question was deleted and recalculate them
-        updateResultsOnQuizChanges(quizExercise);
-
-        QuizExercise savedQuizExercise = save(quizExercise);
-
-        if (updateOfResultsAndStatisticsNecessary) {
-            // make sure we have all objects available before updating the statistics to avoid lazy / proxy issues
-            savedQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
-            quizStatisticService.recalculateStatistics(savedQuizExercise);
-        }
-        // fetch the quiz exercise again to make sure the latest changes are included
-        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
-    }
-
-    public QuizExercise reEvaluateWithDTO(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NotNull List<MultipartFile> files) throws IOException {
+    public QuizExercise reEvaluate(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NotNull List<MultipartFile> files) throws IOException {
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalQuizExercise);
         applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
         boolean questionsChanged = applyQuizQuestionsFromDTOAndCheckIfChanged(quizExerciseDTO, originalQuizExercise);

@@ -139,7 +139,7 @@ public class QuizExerciseEvaluationResource {
 
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
 
-        originalQuizExercise = quizExerciseService.reEvaluateWithDTO(quizExercise, originalQuizExercise, nullsafeFiles);
+        originalQuizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise, nullsafeFiles);
         exerciseService.logUpdate(originalQuizExercise, originalQuizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         originalQuizExercise.validateScoreSettings();

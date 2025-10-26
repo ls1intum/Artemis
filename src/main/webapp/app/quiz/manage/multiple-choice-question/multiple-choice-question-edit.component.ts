@@ -21,6 +21,7 @@ import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-s
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OnInit, input } from '@angular/core';
 import { cloneDeep } from 'lodash-es';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -39,6 +40,7 @@ import { cloneDeep } from 'lodash-es';
         MultipleChoiceQuestionComponent,
         MultipleChoiceVisualQuestionComponent,
         ArtemisTranslatePipe,
+        NgClass,
     ],
 })
 export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, OnInit {

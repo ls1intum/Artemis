@@ -114,8 +114,8 @@
     }
 
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
-        <div class="question-options row" [hidden]="showPreview">
-            <div class="col-12 col-lg-4">
+        <div [ngClass]="reEvaluationInProgress() ? 'question-options row' : 'question-options'" [hidden]="showPreview">
+            <div [ngClass]="reEvaluationInProgress() ? 'col-12 col-lg-4' : ''">
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
                     <select
@@ -142,7 +142,7 @@
                     </div>
                 </div>
             }
-            <div class="col-12 col-lg-3">
+            <div [ngClass]="reEvaluationInProgress() ? 'col-12 col-lg-3' : ''">
                 <div class="form-group">
                     <div class="form-check custom-control custom-checkbox">
                         <input
