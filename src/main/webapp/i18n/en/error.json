@@ -146,6 +146,11 @@
         "wrongCourse": "The reaction does not belong to the selected course.",
         "reactionNotFound": "The reaction could not be found.",
         "missingAssociation": "The reaction must be associated with a post or an answer post.",
-        "emojiIdMissing": "emojiId must be set."
+        "emojiIdMissing": "emojiId must be set.",
+        "exampleSubmission": {
+            "isNull": "No example submission was provided.",
+            "submissionIsNull": "This example submission has no solution attached.",
+            "submissionIdMissing": "The submission must be saved before it can be converted."
+        }
     }
 }
