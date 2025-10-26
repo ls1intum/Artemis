@@ -1,15 +1,14 @@
 package de.tum.cit.aet.artemis.atlas.service.atlasml;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
+
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -33,7 +32,6 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsRespon
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -44,7 +42,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
  * Service for communicating with the AtlasML microservice.
  * Provides methods for suggesting and saving competencies.
  */
-@Profile(PROFILE_CORE)
 @Conditional(AtlasEnabled.class)
 @Service
 @Lazy
@@ -73,7 +70,7 @@ public class AtlasMLService {
 
     public AtlasMLService(@Qualifier("atlasmlRestTemplate") RestTemplate atlasmlRestTemplate,
             @Qualifier("shortTimeoutAtlasmlRestTemplate") RestTemplate shortTimeoutAtlasmlRestTemplate, AtlasMLRestTemplateConfiguration config,
-            CompetencyRepository competencyRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository, FeatureToggleService featureToggleService) {
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, FeatureToggleService featureToggleService) {
         this.atlasmlRestTemplate = atlasmlRestTemplate;
         this.shortTimeoutAtlasmlRestTemplate = shortTimeoutAtlasmlRestTemplate;
         this.config = config;
@@ -125,6 +122,7 @@ public class AtlasMLService {
             HttpEntity<SuggestCompetencyRequestDTO> entity = new HttpEntity<>(request, headers);
 
             // Get the raw response as String first to handle empty array responses
+            // TODO: please directly convert the response: the REST Template can handle empty responses
             ResponseEntity<String> response = atlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + SUGGEST_ENDPOINT, HttpMethod.POST, entity, String.class);
 
             String responseBody = response.getBody();
@@ -269,7 +267,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveCompetencies(List<Competency> competencies, OperationTypeDTO operationType) {
+    public boolean saveCompetencies(List<Competency> competencies, @NotNull OperationTypeDTO operationType) {
         if (!isAtlasMLFeatureEnabled("competencies save operation")) {
             return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
         }
@@ -280,8 +278,7 @@ public class AtlasMLService {
         }
 
         try {
-            OperationTypeDTO op = operationType != null ? operationType : OperationTypeDTO.UPDATE;
-            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromCompetencies(competencies, op);
+            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromCompetencies(competencies, operationType);
             saveCompetencies(request);
             return true;
         }
@@ -303,14 +300,13 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId, OperationTypeDTO operationType) {
+    public boolean saveExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId, @NotNull OperationTypeDTO operationType) {
         if (!isAtlasMLFeatureEnabled("exercise save operation")) {
             return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
         }
 
         try {
-            OperationTypeDTO op = operationType != null ? operationType : OperationTypeDTO.UPDATE;
-            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromExercise(exerciseId, title, description, competencyIds, courseId, op);
+            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromExercise(exerciseId, title, description, competencyIds, courseId, operationType);
             saveCompetencies(request);
             return true;
         }
@@ -328,7 +324,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExerciseWithCompetencies(Exercise exercise, OperationTypeDTO operationType) {
+    public boolean saveExerciseWithCompetencies(Exercise exercise, @NotNull OperationTypeDTO operationType) {
         if (!isAtlasMLFeatureEnabled("exercise with competencies save operation")) {
             return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
         }
@@ -378,7 +374,7 @@ public class AtlasMLService {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if the save operation was successful, false otherwise
      */
-    public boolean saveExerciseWithCompetenciesById(Long exerciseId, OperationTypeDTO operationType) {
+    public boolean saveExerciseWithCompetenciesById(Long exerciseId, @NotNull OperationTypeDTO operationType) {
         if (!isAtlasMLFeatureEnabled("exercise with competencies save operation")) {
             return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
         }
@@ -396,7 +392,7 @@ public class AtlasMLService {
             List<Long> competencyIds = links.stream().map(link -> link.getCompetency().getId()).toList();
 
             // Use the first link to get exercise details
-            Exercise exercise = links.get(0).getExercise();
+            Exercise exercise = links.getFirst().getExercise();
 
             // Ensure description is never null - use problemStatement or fallback to empty string
             String description = exercise.getProblemStatement();
@@ -410,22 +406,6 @@ public class AtlasMLService {
         catch (Exception e) {
             log.error("Failed to {} exercise with competencies for exercise id {}", operationType.value().toLowerCase(), exerciseId, e);
             return false;
-        }
-    }
-
-    /**
-     * Result class for competency suggestions.
-     */
-    public static class CompetencySuggestionResult {
-
-        private final List<Competency> competencies;
-
-        public CompetencySuggestionResult(List<Competency> competencies) {
-            this.competencies = competencies;
-        }
-
-        public List<Competency> getCompetencies() {
-            return competencies;
         }
     }
 

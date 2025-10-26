@@ -17,7 +17,6 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -351,8 +350,9 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     private MockMultipartFile loadFile(String path, String fileName) throws Exception {
         Path signingPath = ResourceUtils.getFile(path).toPath().resolve(fileName);
         File signingImage = signingPath.toFile();
-        InputStream input = Files.newInputStream(signingPath);
-        return new MockMultipartFile("file", signingImage.getName(), "image/png", IOUtils.toByteArray(input));
+        try (InputStream input = Files.newInputStream(signingPath)) {
+            return new MockMultipartFile("file", signingImage.getName(), "image/png", input.readAllBytes());
+        }
     }
 
     private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {

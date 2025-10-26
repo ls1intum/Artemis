@@ -3,6 +3,7 @@ import {
     ChangeDetectorRef,
     Component,
     OnChanges,
+    OnDestroy,
     SimpleChanges,
     ViewEncapsulation,
     computed,
@@ -25,6 +26,7 @@ import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programmin
 import { fromPairs, pickBy } from 'lodash-es';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
+import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { FileTypeService } from 'app/programming/shared/services/file-type.service';
 import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
@@ -51,7 +53,7 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     providers: [RepositoryFileService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CodeEditorMonacoComponent implements OnChanges {
+export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
     static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
     static readonly FILE_TIMEOUT = 10000;
@@ -122,6 +124,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     annotationsArray: Array<Annotation> = [];
+    private addFeedbackKeydownListener?: Disposable;
 
     constructor() {
         effect(() => {
@@ -158,6 +161,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.renderFeedbackWidgets();
             if (this.isTutorAssessment() && !this.readOnlyManualFeedback()) {
                 this.setupAddFeedbackButton();
+                this.setupAddFeedbackShortcut();
+            } else {
+                this.disposeAddFeedbackShortcut();
             }
             this.onFileLoad.emit(this.selectedFile()!);
         }
@@ -168,6 +174,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
 
         this.editor().layout();
+    }
+
+    ngOnDestroy(): void {
+        this.disposeAddFeedbackShortcut();
     }
 
     async selectFileInEditor(fileName: string | undefined): Promise<void> {
@@ -251,6 +261,37 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     setupAddFeedbackButton(): void {
         this.editor().setLineDecorationsHoverButton(CodeEditorMonacoComponent.CLASS_FEEDBACK_HOVER_BUTTON, (lineNumber) => this.addNewFeedback(lineNumber));
+    }
+
+    /**
+     * Registers a keyboard shortcut to add a new inline feedback at the current cursor line when pressing the '+' key.
+     * Includes Numpad '+' and Shift+'=' across layouts. Active only when tutor can edit manual feedback.
+     */
+    private setupAddFeedbackShortcut(): void {
+        this.disposeAddFeedbackShortcut();
+        this.addFeedbackKeydownListener = this.editor().onKeyDown((event: any) => {
+            const browserEvent = event?.browserEvent as KeyboardEvent | undefined;
+            const code = browserEvent?.code;
+            const key = browserEvent?.key;
+            const isPlus = key === '+' || code === 'NumpadAdd';
+            if (!isPlus) {
+                return;
+            }
+            if (!this.isTutorAssessment() || this.readOnlyManualFeedback()) {
+                return;
+            }
+            // Prevent Monaco from handling typing (avoids read-only message)
+            event.preventDefault?.();
+            const position = this.editor().getPosition();
+            if (position?.lineNumber) {
+                this.addNewFeedback(position.lineNumber);
+            }
+        });
+    }
+
+    private disposeAddFeedbackShortcut(): void {
+        this.addFeedbackKeydownListener?.dispose();
+        this.addFeedbackKeydownListener = undefined;
     }
 
     /**

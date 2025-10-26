@@ -6,6 +6,7 @@ import static org.apache.velocity.shaded.commons.io.FilenameUtils.getBaseName;
 import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.FileNameMap;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,7 +24,6 @@ import jakarta.validation.constraints.NotNull;
 
 import javax.activation.MimetypesFileTypeMap;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -277,7 +277,10 @@ public class FileResource {
                 // Load without project type if not found with project type
                 fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, "readme"));
             }
-            byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
+            byte[] fileContent;
+            try (InputStream inputStream = fileResource.getInputStream()) {
+                fileContent = inputStream.readAllBytes();
+            }
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
             return new ResponseEntity<>(fileContent, responseHeaders, HttpStatus.OK);
