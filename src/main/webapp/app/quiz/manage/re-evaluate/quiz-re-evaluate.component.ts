@@ -26,7 +26,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { ReEvaluateShortAnswerQuestionComponent } from './short-answer-question/re-evaluate-short-answer-question.component';
 import { JsonPipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MultipleChoiceComponent } from 'app/quiz/manage/re-evaluate/multiple-choice/multiple-choice.component';
+import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -45,7 +45,7 @@ import { MultipleChoiceComponent } from 'app/quiz/manage/re-evaluate/multiple-ch
         ReEvaluateShortAnswerQuestionComponent,
         JsonPipe,
         ArtemisTranslatePipe,
-        MultipleChoiceComponent,
+        ReEvaluateMultipleChoiceQuestionComponent,
     ],
 })
 export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {

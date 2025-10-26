@@ -1,6 +1,6 @@
 import { Component, ViewEncapsulation, effect, input, output } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash, faUndo, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash, faUndo, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -36,6 +36,7 @@ export class MultipleChoiceVisualQuestionComponent {
     faTrash = faTrash;
     faXmark = faXmark;
     faUndo = faUndo;
+    faBan = faBan;
 
     constructor() {
         effect(() => {
@@ -80,6 +81,14 @@ export class MultipleChoiceVisualQuestionComponent {
     resetAnswer(index: number) {
         this.question().answerOptions![index] = cloneDeep(this.backupQuestion.answerOptions![index]);
 
+        this.questionChanged.emit();
+    }
+
+    setInvalid(index: number) {
+        const answerOption = this.question().answerOptions![index];
+        if (!answerOption.invalid) {
+            answerOption.invalid = true;
+        }
         this.questionChanged.emit();
     }
 
