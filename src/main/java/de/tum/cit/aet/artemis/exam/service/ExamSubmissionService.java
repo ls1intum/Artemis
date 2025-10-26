@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 @Conditional(ExamEnabled.class)
 @Lazy
@@ -66,9 +65,7 @@ public class ExamSubmissionService {
      * @param exercise        the exercise for which a submission should be saved
      * @param user            the user that wants to submit
      * @param withGracePeriod whether the grace period should be taken into account or not
-     * @return true if it is not an exam of if it is an exam and the submission is in time and the exercise is part of
-     *         the user's student exam
-     *         TODO: Simplify this method and potentially usages of it by using {@link ProgrammingExerciseStudentParticipation#isLocked()}.
+     * @return true if it is not an exam of if it is an exam and the submission is in time and the exercise is part of the user's student exam
      */
     public boolean isAllowedToSubmitDuringExam(Exercise exercise, User user, boolean withGracePeriod) {
         if (!exercise.isExamExercise()) {
