@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -250,8 +251,17 @@ class AtlasAgentServiceTest {
 
         @BeforeEach
         void setUp() {
+            // Reset ThreadLocal state before each test to ensure clean state
+            AtlasAgentToolsService.resetCompetenciesModified();
+
             ObjectMapper objectMapper = new ObjectMapper();
             toolsService = new AtlasAgentToolsService(objectMapper, competencyRepository, courseRepository, exerciseRepository);
+        }
+
+        @AfterEach
+        void tearDown() {
+            // Clean up ThreadLocal to prevent memory leaks in test environment
+            AtlasAgentToolsService.cleanup();
         }
 
         @Test

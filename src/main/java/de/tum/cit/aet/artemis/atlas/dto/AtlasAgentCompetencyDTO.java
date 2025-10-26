@@ -1,14 +1,14 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 
 /**
  * DTO for Atlas Agent tool responses representing competency information.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasAgentCompetencyDTO(Long id, String title, String description, String taxonomy, Long courseId) {
+public record AtlasAgentCompetencyDTO(@NotNull Long id, @NotNull String title, @NotNull String description, @NotNull String taxonomy, @Nullable Long courseId) {
 
     /**
      * Creates an AtlasAgentCompetencyDTO from a Competency entity without courseId.
@@ -16,7 +16,7 @@ public record AtlasAgentCompetencyDTO(Long id, String title, String description,
      * @param competency the competency to convert
      * @return the DTO representation
      */
-    public static AtlasAgentCompetencyDTO of(Competency competency) {
+    public static AtlasAgentCompetencyDTO of(@NotNull Competency competency) {
         return new AtlasAgentCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(),
                 competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : "", null);
     }
@@ -28,7 +28,7 @@ public record AtlasAgentCompetencyDTO(Long id, String title, String description,
      * @param courseId   the course ID
      * @return the DTO representation
      */
-    public static AtlasAgentCompetencyDTO of(Competency competency, Long courseId) {
+    public static AtlasAgentCompetencyDTO of(@NotNull Competency competency, @NotNull Long courseId) {
         return new AtlasAgentCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(),
                 competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : "", courseId);
     }
