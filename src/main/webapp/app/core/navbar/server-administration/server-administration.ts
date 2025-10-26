@@ -109,7 +109,7 @@ export class ServerAdministration implements OnInit {
         this.isLoggedInWithPasskey.set(this.isLoggedInWithPasskeyGuard.isLoggedInWithPasskey());
     }
 
-    protected collapseNavbar() {
+    collapseNavbar() {
         this.collapseNavbarListener.emit();
     }
 
