@@ -15,7 +15,7 @@ import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-he
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
@@ -455,10 +455,16 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should call readInstruction', () => {
         const tutorParticipationServiceCreateStub = jest.spyOn(tutorParticipationService, 'create');
-        const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
+        const dto: TutorParticipationDTO = {
+            id: 1,
+            exerciseId: comp.exerciseId,
+            tutorId: 2,
+            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+        };
+
         tutorParticipationServiceCreateStub.mockImplementation(() => {
             expect(comp.isLoading).toBeTrue();
-            return of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() }));
+            return of(new HttpResponse({ body: dto, headers: new HttpHeaders() }));
         });
 
         expect(comp.tutorParticipation).toBeUndefined();
@@ -466,9 +472,12 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.readInstruction();
 
+        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledOnce();
+        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId);
+
         expect(comp.isLoading).toBeFalse();
 
-        expect(comp.tutorParticipation).toEqual(tutorParticipation);
+        expect(comp.tutorParticipation).toEqual(dto);
         expect(comp.tutorParticipationStatus).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
     });
 

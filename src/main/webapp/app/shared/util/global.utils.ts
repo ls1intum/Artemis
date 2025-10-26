@@ -1,5 +1,9 @@
+import { Signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { map } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateService } from '@ngx-translate/core';
 
 /**
  * Prepares a string for insertion into a regex.
@@ -115,3 +119,9 @@ export const onError = (alertService: AlertService, error: HttpErrorResponse, di
  * @return boolean
  */
 export const notUndefined = (anyValue: any): boolean => anyValue !== undefined;
+
+export function getCurrentLocaleSignal(translateService: TranslateService): Signal<string> {
+    return toSignal(translateService.onLangChange.pipe(map((event) => event.lang)), {
+        initialValue: translateService.currentLang,
+    });
+}
