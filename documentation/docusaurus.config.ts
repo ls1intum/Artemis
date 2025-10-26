@@ -105,6 +105,7 @@ const config: Config = {
                 routeBasePath: 'instructor',
                 sidebarPath: './sidebars.ts',
                 editUrl: EDIT_URL,
+                exclude: ['**/README.md'],
             },
         ],
         [
@@ -115,6 +116,7 @@ const config: Config = {
                 routeBasePath: 'staff',
                 sidebarPath: './sidebars.ts',
                 editUrl: EDIT_URL,
+                exclude: ['**/README.md'],
             },
         ],
         [
@@ -125,6 +127,7 @@ const config: Config = {
                 routeBasePath: 'admin',
                 sidebarPath: './sidebars.ts',
                 editUrl: EDIT_URL,
+                exclude: ['**/README.md'],
             },
         ],
     ],
@@ -187,11 +190,11 @@ const config: Config = {
                     items: [
                         {
                             label: 'Imprint',
-                            href: '/imprint',
+                            to: '/imprint',
                         },
                         {
                             label: 'About Us',
-                            href: '/about',
+                            to: '/about',
                         },
                     ],
                 },
