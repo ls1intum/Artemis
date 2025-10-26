@@ -1108,7 +1108,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
             // add a solution with a mapping onto spot number 0
             ShortAnswerSolution newSolution = new ShortAnswerSolution();
             newSolution.setText("text");
-            newSolution.setId(3L);
+            newSolution.setTempID(3L);
             shortAnswerQuestion.getSolutions().add(newSolution);
             ShortAnswerMapping newMapping = new ShortAnswerMapping();
             newMapping.setId(3L);

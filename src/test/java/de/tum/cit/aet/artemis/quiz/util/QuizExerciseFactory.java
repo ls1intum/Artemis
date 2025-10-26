@@ -166,6 +166,7 @@ public class QuizExerciseFactory {
         sa.setRandomizeOrder(true);
         // invoke some util methods
         sa.copyQuestionId();
+        sa.setRandomizeOrder(true);
         return sa;
     }
 
@@ -227,6 +228,7 @@ public class QuizExerciseFactory {
         dnd.setExplanation("Explanation");
         // invoke some util methods
 
+        dnd.setRandomizeOrder(true);
         dnd.copyQuestionId();
 
         return dnd;
@@ -254,6 +256,7 @@ public class QuizExerciseFactory {
         mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
+        mc.setRandomizeOrder(true);
 
         mc.copyQuestionId();
         return mc;
