@@ -2,7 +2,7 @@ import { Component, ElementRef, OnChanges, ViewChild, computed, inject, input, o
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faQuestionCircle, faTimes, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -13,9 +13,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { HttpClient } from '@angular/common/http';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { HttpClient, HttpEventType } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { DecimalPipe } from '@angular/common';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -118,23 +120,43 @@ function validJsonOrEmpty(control: AbstractControl): ValidationErrors | null {
         FormDateTimePickerComponent,
         CompetencySelectionComponent,
         ArtemisTranslatePipe,
-        ButtonComponent,
+        DecimalPipe,
     ],
 })
 export class AttachmentVideoUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faVideo = faVideo;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
+    // Video upload constants
+    protected readonly MAX_VIDEO_FILE_SIZE = 500 * 1024 * 1024; // 500 MB
+    protected readonly ALLOWED_VIDEO_FORMATS = '.mp4';
+
     private readonly http = inject(HttpClient);
+    private readonly lectureService = inject(LectureService);
+    private readonly alertService = inject(AlertService);
+
     canGenerateTranscript = signal(false);
     playlistUrl = signal<string | undefined>(undefined);
 
+    // Video upload state
+    videoFile = signal<File | undefined>(undefined);
+    videoFileName = signal<string | undefined>(undefined);
+    isUploading = signal<boolean>(false);
+    uploadProgress = signal<number>(0);
+    uploadStatus = signal<string>('Uploading video...');
+    uploadedVideoId = signal<string | undefined>(undefined);
+
+    // Computed: has a video been uploaded?
+    hasUploadedVideo = computed(() => !!this.uploadedVideoId());
+
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
+    lectureId = input<number | undefined>(undefined); // Required for video upload
 
     formSubmitted = output<AttachmentVideoUnitFormData>();
 
@@ -179,7 +201,17 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     readonly shouldShowTranscriptCheckbox = computed(() => !!this.playlistUrl());
 
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
+        // Form is valid if:
+        // 1. All form fields are valid
+        // 2. File is not too big
+        // 3. Date picker is valid
+        // 4. AND one of the following:
+        //    - Has an attachment file (fileName)
+        //    - Has a video URL (videoSourceSignal)
+        //    - Has uploaded a video to Nebula (uploadedVideoId)
+        const hasAttachmentOrVideo = !!this.fileName() || !!this.videoSourceSignal() || !!this.uploadedVideoId();
+
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && hasAttachmentOrVideo;
     });
 
     ngOnChanges() {
@@ -332,5 +364,144 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     cancelForm() {
         this.onCancel.emit();
+    }
+
+    /**
+     * Check if user has entered a video URL
+     */
+    hasVideoUrl(): boolean {
+        const videoSource = this.form.get('videoSource')?.value;
+        return !!videoSource && videoSource.trim().length > 0;
+    }
+
+    /**
+     * Handles video file selection for upload
+     */
+    onVideoUploadChange(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files?.length) {
+            this.videoFile.set(undefined);
+            this.videoFileName.set(undefined);
+            return;
+        }
+
+        const file = input.files[0];
+
+        // Validate file extension - only .mp4
+        if (!file.name.toLowerCase().endsWith('.mp4')) {
+            this.alertService.error('artemisApp.lecture.video.invalidFormat');
+            this.videoFile.set(undefined);
+            this.videoFileName.set(undefined);
+            input.value = '';
+            return;
+        }
+
+        // Validate file type
+        if (file.type !== 'video/mp4') {
+            this.alertService.error('artemisApp.lecture.video.invalidFormat');
+            this.videoFile.set(undefined);
+            this.videoFileName.set(undefined);
+            input.value = '';
+            return;
+        }
+
+        this.videoFile.set(file);
+        this.videoFileName.set(file.name);
+
+        // Check file size (500 MB)
+        if (file.size > this.MAX_VIDEO_FILE_SIZE) {
+            this.alertService.error('artemisApp.lecture.video.fileTooLarge', { size: '500 MB' });
+            this.videoFile.set(undefined);
+            this.videoFileName.set(undefined);
+            return;
+        }
+
+        // Upload video immediately to Nebula to avoid holding large files in browser memory
+        // If user changes the file or cancels, we'll delete/abort the previous upload
+        this.uploadVideoToStorage();
+    }
+
+    /**
+     * Checks if the video file is too large
+     */
+    isVideoFileTooBig(): boolean {
+        const file = this.videoFile();
+        return file !== undefined && file.size > this.MAX_VIDEO_FILE_SIZE;
+    }
+
+    /**
+     * Uploads the selected video to the Nebula Video Storage Service.
+     * This happens immediately when file is selected to:
+     * 1. Stream large files (up to 3GB) without holding in browser memory
+     * 2. Start transcoding early while user fills out the form
+     * 3. Show real-time upload progress
+     *
+     * If user changes the file or cancels, the previous upload can be deleted via the video_id.
+     */
+    private uploadVideoToStorage(): void {
+        const file = this.videoFile();
+        const currentLectureId = this.lectureId();
+
+        if (!file || !currentLectureId) {
+            this.alertService.error('artemisApp.lecture.video.uploadError');
+            return;
+        }
+
+        // If there's a previous upload, we should delete it
+        const previousVideoId = this.uploadedVideoId();
+        if (previousVideoId) {
+            // Delete the previous video from Nebula
+            this.lectureService.deleteVideo(currentLectureId).subscribe({
+                next: () => {
+                    // Previous video deleted before uploading new one
+                },
+                error: () => {
+                    // Failed to delete previous video, continuing with new upload
+                },
+            });
+        }
+
+        this.isUploading.set(true);
+        this.uploadProgress.set(0);
+        this.uploadStatus.set('Uploading video...');
+
+        this.lectureService.uploadVideo(currentLectureId, file).subscribe({
+            next: (event) => {
+                if (event.type === HttpEventType.UploadProgress && event.total) {
+                    // Update progress
+                    const progress = Math.round((100 * event.loaded) / event.total);
+                    this.uploadProgress.set(progress);
+
+                    if (progress < 100) {
+                        this.uploadStatus.set('Uploading video...');
+                    } else {
+                        this.uploadStatus.set('Processing video...');
+                    }
+                } else if (event.type === HttpEventType.Response && event.body) {
+                    // Upload complete
+                    this.uploadProgress.set(100);
+                    this.uploadStatus.set('Upload complete!');
+                    this.uploadedVideoId.set(event.body.videoId);
+                    // Store the playlist URL for submission (but don't show it in the form yet)
+                    if (event.body.playlistUrl) {
+                        this.playlistUrl.set(event.body.playlistUrl);
+                        this.canGenerateTranscript.set(true);
+                        // Do NOT set videoSource here - it will be set on submit
+                    }
+
+                    this.alertService.success('artemisApp.lecture.video.uploadSuccess');
+                    this.isUploading.set(false);
+                }
+            },
+            error: (error) => {
+                this.isUploading.set(false);
+                this.uploadProgress.set(0);
+                this.uploadedVideoId.set(undefined);
+                this.videoFile.set(undefined);
+                this.videoFileName.set(undefined);
+
+                this.alertService.error(error?.error?.message || 'artemisApp.lecture.video.uploadError');
+            },
+        });
     }
 }
