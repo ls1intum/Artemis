@@ -106,7 +106,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @AfterEach
     void tearDown() {
         var conversations = conversationRepository.findAllByCourseId(exampleCourseId);
-        conversations.forEach(conversation -> conversationService.deleteConversation(conversation));
+        conversations.forEach(conversation -> conversationService.deleteConversation(conversation.getId()));
     }
 
     @Override
