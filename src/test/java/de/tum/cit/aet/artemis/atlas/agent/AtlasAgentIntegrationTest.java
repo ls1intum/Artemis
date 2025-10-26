@@ -1,13 +1,26 @@
 package de.tum.cit.aet.artemis.atlas.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -31,10 +44,27 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private Course course;
 
+    private Map<String, List<Message>> chatMemoryStorage;
+
     @BeforeEach
     void setupTestScenario() {
         course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+
+        // Set up stateful mock for ChatMemory to actually store and retrieve messages
+        chatMemoryStorage = new HashMap<>();
+
+        doAnswer(invocation -> {
+            String sessionId = invocation.getArgument(0);
+            Message message = invocation.getArgument(1);
+            chatMemoryStorage.computeIfAbsent(sessionId, k -> new ArrayList<>()).add(message);
+            return null;
+        }).when(chatMemory).add(anyString(), any(Message.class));
+
+        when(chatMemory.get(anyString())).thenAnswer(invocation -> {
+            String sessionId = invocation.getArgument(0);
+            return chatMemoryStorage.getOrDefault(sessionId, new ArrayList<>());
+        });
     }
 
     @Test
@@ -193,6 +223,61 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
             boolean actualAvailability = atlasAgentService.isAvailable();
 
             assertThat(actualAvailability).as("Agent service should be available with tools").isTrue();
+        }
+    }
+
+    @Nested
+    class ConversationHistory {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturnEmptyHistoryWhenNoMessages() throws Exception {
+            request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isOk()).andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$").isEmpty());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturnHistoryAfterAddingMessages() throws Exception {
+            var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+            String sessionId = String.format("course_%d_user_%d", course.getId(), instructor.getId());
+
+            // Manually populate chat memory to test history retrieval
+            chatMemory.add(sessionId, new UserMessage("First user message"));
+            chatMemory.add(sessionId, new AssistantMessage("First assistant response"));
+
+            request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isOk()).andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$.length()").value(2)).andExpect(jsonPath("$[0].isUser").value(true)).andExpect(jsonPath("$[0].content").value("First user message"))
+                    .andExpect(jsonPath("$[1].isUser").value(false)).andExpect(jsonPath("$[1].content").value("First assistant response"));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturnMultipleMessagesInHistory() throws Exception {
+            var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+            String sessionId = String.format("course_%d_user_%d", course.getId(), instructor.getId());
+
+            // Manually populate chat memory with multiple conversation turns
+            chatMemory.add(sessionId, new UserMessage("Tell me about competencies"));
+            chatMemory.add(sessionId, new AssistantMessage("Competencies are learning objectives"));
+            chatMemory.add(sessionId, new UserMessage("How do I create them?"));
+            chatMemory.add(sessionId, new AssistantMessage("You can create them via the UI"));
+
+            request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isOk()).andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$.length()").value(4)).andExpect(jsonPath("$[0].isUser").value(true)).andExpect(jsonPath("$[1].isUser").value(false))
+                    .andExpect(jsonPath("$[2].isUser").value(true)).andExpect(jsonPath("$[3].isUser").value(false));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnForbiddenForStudentAccessingHistory() throws Exception {
+            request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void shouldReturnForbiddenForTutorAccessingHistory() throws Exception {
+            request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isForbidden());
         }
     }
 
