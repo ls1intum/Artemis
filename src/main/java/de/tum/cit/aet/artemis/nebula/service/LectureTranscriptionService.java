@@ -55,7 +55,7 @@ public class LectureTranscriptionService {
 
     public LectureTranscriptionService(LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi, LectureUnitRepositoryApi lectureUnitRepositoryApi,
             @Qualifier("nebulaRestTemplate") RestTemplate restTemplate, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
-            @Value("${artemis.nebula.secret}") String nebulaSecretToken) {
+            @Value("${artemis.nebula.secret-token}") String nebulaSecretToken) {
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.restTemplate = restTemplate;

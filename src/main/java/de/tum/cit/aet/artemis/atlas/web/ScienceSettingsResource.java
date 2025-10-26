@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 /**
  * REST controller for managing ScienceSettings.
  */
-
 @Conditional(AtlasEnabled.class)
 @Lazy
 @RestController

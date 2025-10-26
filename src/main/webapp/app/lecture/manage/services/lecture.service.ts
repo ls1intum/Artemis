@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
@@ -25,6 +25,10 @@ export class LectureService {
     create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
         return this.http.post<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+    }
+
+    createSeries(lectures: LectureSeriesCreateLectureDTO[], courseId: number): Observable<void> {
+        return this.http.post<void>(`api/lecture/courses/${courseId}/lectures`, lectures);
     }
 
     update(lecture: Lecture): Observable<EntityResponseType> {

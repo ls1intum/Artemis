@@ -11,7 +11,7 @@ export interface ExamRoomDTO {
     name: string;
     building: string;
     numberOfSeats: number;
-    layoutStrategies: ExamRoomLayoutStrategyDTO[];
+    layoutStrategies?: ExamRoomLayoutStrategyDTO[];
 }
 
 export interface ExamRoomDTOExtended extends ExamRoomDTO {
