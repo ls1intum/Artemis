@@ -352,6 +352,22 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         originalSolution.removeAll(solutionsToRemove);
+        for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
+            if (solutionDTO.id() == null && solutionDTO.tempID() == null) {
+                throw new BadRequestAlertException("A new short answer solution must have a tempID to identify it", ENTITY_NAME, "solutionTempIDMissing");
+            }
+            else if (solutionDTO.id() != null && solutionDTO.tempID() != null) {
+                throw new BadRequestAlertException("An existing short answer solution cannot have a tempID", ENTITY_NAME, "solutionTempIDExists");
+            }
+            if (solutionDTO.tempID() != null) {
+                ShortAnswerSolution newSolution = new ShortAnswerSolution();
+                newSolution.setTempID(solutionDTO.tempID());
+                newSolution.setText(solutionDTO.text());
+                newSolution.setInvalid(solutionDTO.invalid());
+                originalSolution.add(newSolution);
+                recalculationNecessary = true;
+            }
+        }
         return recalculationNecessary;
     }
 
@@ -394,13 +410,37 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
         Set<ShortAnswerMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
         for (var mappingDTO : saDTO.correctMappings()) {
-            boolean mappingExists = existingMappings.stream()
-                    .anyMatch(mapping -> mapping.getSpot().getId().equals(mappingDTO.spotId()) && mapping.getSolution().getId().equals(mappingDTO.solutionId()));
+            if (mappingDTO.solutionId() == null && mappingDTO.solutionTempID() == null) {
+                throw new BadRequestAlertException("The short answer mapping for spot id " + mappingDTO.spotId() + " has no solutionId or solutionTempID", ENTITY_NAME,
+                        "mappingSolutionIDMissing");
+            }
+            if (mappingDTO.solutionId() != null && mappingDTO.solutionTempID() != null) {
+                throw new BadRequestAlertException("The short answer mapping for spot id " + mappingDTO.spotId() + " has both solutionId and solutionTempID", ENTITY_NAME,
+                        "mappingSolutionIDExists");
+            }
+            boolean mappingExists;
+            if (mappingDTO.solutionTempID() != null) {
+                mappingExists = existingMappings.stream().anyMatch(
+                        mapping -> mapping.getSpot().getId().equals(mappingDTO.spotId()) && Objects.equals(mapping.getSolution().getTempID(), mappingDTO.solutionTempID()));
+            }
+            else {
+                mappingExists = existingMappings.stream()
+                        .anyMatch(mapping -> mapping.getSpot().getId().equals(mappingDTO.spotId()) && mapping.getSolution().getId().equals(mappingDTO.solutionId()));
+            }
             if (!mappingExists) {
                 ShortAnswerSpot spot = originalQuestion.getSpots().stream().filter(item -> item.getId().equals(mappingDTO.spotId())).findFirst()
                         .orElseThrow(() -> new BadRequestAlertException("The short answer spot with id " + mappingDTO.spotId() + " does not exist", ENTITY_NAME, "spotNotFound"));
-                ShortAnswerSolution solution = originalQuestion.getSolutions().stream().filter(item -> item.getId().equals(mappingDTO.solutionId())).findFirst().orElseThrow(
-                        () -> new BadRequestAlertException("The short answer solution with id " + mappingDTO.solutionId() + " does not exist", ENTITY_NAME, "solutionNotFound"));
+                ShortAnswerSolution solution;
+                if (mappingDTO.solutionTempID() != null) {
+                    solution = originalQuestion.getSolutions().stream().filter(item -> Objects.equals(item.getTempID(), mappingDTO.solutionTempID())).findFirst()
+                            .orElseThrow(() -> new BadRequestAlertException("The short answer solution with tempID " + mappingDTO.solutionTempID() + " does not exist", ENTITY_NAME,
+                                    "solutionNotFound"));
+                }
+                else {
+                    solution = originalQuestion.getSolutions().stream().filter(item -> item.getId().equals(mappingDTO.solutionId())).findFirst()
+                            .orElseThrow(() -> new BadRequestAlertException("The short answer solution with id " + mappingDTO.solutionId() + " does not exist", ENTITY_NAME,
+                                    "solutionNotFound"));
+                }
                 ShortAnswerMapping newMapping = new ShortAnswerMapping();
                 newMapping.setSpot(spot);
                 newMapping.setSolution(solution);

@@ -130,6 +130,7 @@ export interface ShortAnswerSpotReEvaluateDTO {
  */
 export interface ShortAnswerSolutionReEvaluateDTO {
     id?: number;
+    tempID?: number;
     text?: string;
     invalid?: boolean;
 }
@@ -139,6 +140,7 @@ export interface ShortAnswerSolutionReEvaluateDTO {
  */
 export interface ShortAnswerMappingReEvaluateDTO {
     solutionId?: number;
+    solutionTempID?: number;
     spotId?: number;
 }
 
@@ -304,11 +306,19 @@ function convertShortAnswerSpotToReEvaluateDTO(spot: ShortAnswerSpot): ShortAnsw
  * @returns The corresponding ShortAnswerSolutionReEvaluateDTO.
  */
 function convertShortAnswerSolutionToReEvaluateDTO(solution: ShortAnswerSolution): ShortAnswerSolutionReEvaluateDTO {
-    return {
-        id: solution.id,
-        text: solution.text,
-        invalid: solution.invalid,
-    };
+    if (!solution.id) {
+        return {
+            tempID: solution.tempID,
+            text: solution.text,
+            invalid: solution.invalid,
+        };
+    } else {
+        return {
+            id: solution.id,
+            text: solution.text,
+            invalid: solution.invalid,
+        };
+    }
 }
 
 /**
@@ -317,8 +327,15 @@ function convertShortAnswerSolutionToReEvaluateDTO(solution: ShortAnswerSolution
  * @returns The corresponding ShortAnswerMappingReEvaluateDTO.
  */
 function convertShortAnswerMappingToReEvaluateDTO(mapping: ShortAnswerMapping): ShortAnswerMappingReEvaluateDTO {
-    return {
-        solutionId: mapping.solution?.id,
-        spotId: mapping.spot?.id,
-    };
+    if (!mapping.solution?.id) {
+        return {
+            solutionTempID: mapping.solution?.tempID,
+            spotId: mapping.spot?.id,
+        };
+    } else {
+        return {
+            solutionId: mapping.solution?.id,
+            spotId: mapping.spot?.id,
+        };
+    }
 }

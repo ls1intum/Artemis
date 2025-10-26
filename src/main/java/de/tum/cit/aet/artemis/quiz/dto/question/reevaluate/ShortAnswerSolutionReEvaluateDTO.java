@@ -8,9 +8,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ShortAnswerSolutionReEvaluateDTO(@NotNull Long id, @NotBlank String text, @NotNull Boolean invalid) {
+public record ShortAnswerSolutionReEvaluateDTO(Long id, Long tempID, @NotBlank String text, @NotNull Boolean invalid) {
 
     public static ShortAnswerSolutionReEvaluateDTO of(ShortAnswerSolution shortAnswerSolution) {
-        return new ShortAnswerSolutionReEvaluateDTO(shortAnswerSolution.getId(), shortAnswerSolution.getText(), shortAnswerSolution.isInvalid());
+        return new ShortAnswerSolutionReEvaluateDTO(shortAnswerSolution.getId(), shortAnswerSolution.getTempID(), shortAnswerSolution.getText(), shortAnswerSolution.isInvalid());
     }
 }
