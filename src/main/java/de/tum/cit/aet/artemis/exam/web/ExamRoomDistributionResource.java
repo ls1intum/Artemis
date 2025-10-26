@@ -73,9 +73,13 @@ public class ExamRoomDistributionResource {
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId,
-            @RequestParam(defaultValue = "false") boolean useOnlyDefaultLayouts, @RequestParam(defaultValue = "0.0") double reserveFactor, @RequestBody Set<Long> examRoomIds) {
+            @RequestParam(defaultValue = "true") boolean useOnlyDefaultLayouts, @RequestParam(defaultValue = "0.0") double reserveFactor, @RequestBody Set<Long> examRoomIds) {
         log.debug("REST request to distribute students across rooms for exam : {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        if (reserveFactor < 0 || reserveFactor > 1) {
+            throw new BadRequestAlertException("Reserve factor outside of allowed range [0,1]", ENTITY_NAME, "reserveFactorOutOfRange");
+        }
 
         if (examRoomIds == null || examRoomIds.isEmpty()) {
             throw new BadRequestAlertException("You didn't specify any room IDs", ENTITY_NAME, "noRoomIDs");
