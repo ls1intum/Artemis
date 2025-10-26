@@ -31,22 +31,13 @@ export class LoginWithPasskeyModal {
     showModal: boolean = false;
 
     async signInWithPasskey() {
-        try {
-            await this.loginWithPasskey();
-        } catch (error) {
-            this.showModal = false;
-            throw error;
-        }
         this.showModal = false;
+        await this.webauthnService.loginWithPasskey();
+        this.handleLoginSuccess();
     }
 
     cancel() {
         this.showModal = false;
-    }
-
-    async loginWithPasskey() {
-        this.webauthnService.loginWithPasskey();
-        this.handleLoginSuccess();
     }
 
     private handleLoginSuccess() {

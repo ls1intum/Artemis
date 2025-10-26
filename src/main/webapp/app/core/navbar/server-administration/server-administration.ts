@@ -127,6 +127,6 @@ export class ServerAdministration implements OnInit {
     }
 
     onJustLoggedInWithPasskey(value: boolean) {
-        this.justLoggedInWithPasskey = false;
+        this.justLoggedInWithPasskey = value;
     }
 }
