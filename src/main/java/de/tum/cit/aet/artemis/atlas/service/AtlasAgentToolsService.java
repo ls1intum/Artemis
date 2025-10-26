@@ -53,6 +53,12 @@ public class AtlasAgentToolsService {
     /** Thread-safe flag tracking if competencies were modified during the current request. */
     private static final ThreadLocal<Boolean> competenciesModified = ThreadLocal.withInitial(() -> false);
 
+    /**
+     * @param objectMapper         Jackson object mapper for JSON serialization
+     * @param competencyRepository repository for competency data access
+     * @param courseRepository     repository for course data access
+     * @param exerciseRepository   repository for exercise data access
+     */
     public AtlasAgentToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
         this.objectMapper = objectMapper;
         this.competencyRepository = competencyRepository;
