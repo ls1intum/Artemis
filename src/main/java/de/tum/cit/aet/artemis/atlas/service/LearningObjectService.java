@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -9,12 +8,13 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
  * @see LectureUnit
  * @see Exercise
  */
-@Profile(PROFILE_CORE)
+@Conditional(AtlasEnabled.class)
 @Lazy
 @Service
 public class LearningObjectService {

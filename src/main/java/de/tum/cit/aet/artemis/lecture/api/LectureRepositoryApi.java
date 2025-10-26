@@ -66,6 +66,10 @@ public class LectureRepositoryApi extends AbstractLectureApi {
         lectureRepository.saveAll(lectures);
     }
 
+    public Set<Lecture> findAllNonTutorialLecturesByCourseIdWithEagerLectureUnits(long courseId) {
+        return lectureRepository.findAllNonTutorialLecturesByCourseIdWithEagerLectureUnits(courseId);
+    }
+
     public Set<Lecture> findAllVisibleNonTutorialLecturesByCourseIdWithEagerLectureUnits(long courseId, ZonedDateTime now) {
         return lectureRepository.findAllVisibleNonTutorialLecturesByCourseIdWithEagerLectureUnits(courseId, now);
     }
