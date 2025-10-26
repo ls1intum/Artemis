@@ -3,7 +3,8 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-const ARTEMIS_DOCUMENTATION_REPOSITORY_URL = 'https://github.com/ls1intum/Artemis/documentation';
+const ARTEMIS_DOCUMENTATION_REPOSITORY_URL = 'https://github.com/ls1intum/Artemis';
+const EDIT_URL = ARTEMIS_DOCUMENTATION_REPOSITORY_URL + '/tree/develop/documentation/';
 const PAGE_TITLE = 'Artemis Documentation';
 
 const config: Config = {
@@ -92,7 +93,7 @@ const config: Config = {
                 path: 'docs/student',
                 routeBasePath: 'student',
                 sidebarPath: './sidebars.ts',
-                editUrl: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
+                editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
         ],
@@ -103,7 +104,7 @@ const config: Config = {
                 path: 'docs/instructor',
                 routeBasePath: 'instructor',
                 sidebarPath: './sidebars.ts',
-                editUrl: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
+                editUrl: EDIT_URL,
             },
         ],
         [
@@ -113,7 +114,7 @@ const config: Config = {
                 path: 'docs/staff',
                 routeBasePath: 'staff',
                 sidebarPath: './sidebars.ts',
-                editUrl: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
+                editUrl: EDIT_URL,
             },
         ],
         [
@@ -123,7 +124,7 @@ const config: Config = {
                 path: 'docs/admin',
                 routeBasePath: 'admin',
                 sidebarPath: './sidebars.ts',
-                editUrl: ARTEMIS_DOCUMENTATION_REPOSITORY_URL,
+                editUrl: EDIT_URL,
             },
         ],
     ],
