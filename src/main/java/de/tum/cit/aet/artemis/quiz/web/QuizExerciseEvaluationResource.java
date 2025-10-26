@@ -117,7 +117,7 @@ public class QuizExerciseEvaluationResource {
      */
     @PutMapping(value = "quiz-exercises/{quizExerciseId}/re-evaluate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestPart("exercise") @Valid QuizExerciseReEvaluateDTO quizExercise,
+    public ResponseEntity<Void> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestPart("exercise") @Valid QuizExerciseReEvaluateDTO quizExercise,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to re-evaluate quiz exercise : {}", quizExerciseId);
         QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
@@ -143,7 +143,7 @@ public class QuizExerciseEvaluationResource {
         exerciseService.logUpdate(originalQuizExercise, originalQuizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         originalQuizExercise.validateScoreSettings();
-        return ResponseEntity.ok().body(originalQuizExercise);
+        return ResponseEntity.ok().build();
     }
 
     /**
