@@ -44,6 +44,7 @@ export class LoginWithPasskeyModal implements OnInit {
     }
 
     async setupPasskeyAndLogin() {
+        this.showModal = false;
         await addNewPasskey(this.accountService.userIdentity, this.webauthnApiService, this.alertService);
         this.alertService.success('artemisApp.userSettings.passkeySettingsPage.success.registration');
         await this.signInWithPasskey();
