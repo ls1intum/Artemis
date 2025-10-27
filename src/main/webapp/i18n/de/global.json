@@ -119,6 +119,7 @@
             },
             "admin": {
                 "main": "Server-Administration",
+                "loginWithPasskeyToUseAdminFeatures": "Mit Passkey anmelden um Admin-Funktionen zu nutzen",
                 "setupAndLoginWithPasskey": "Passkey registrieren & mit Passkey anmelden",
                 "passkeyRestrictionExplanation": "Zum Schutz der Studierendendaten und zur Sicherstellung der Zuverlässigkeit von Artemis sind Administratoraktionen nur nach Passkey-Login verfügbar.",
                 "upcomingExamsAndExercises": "Kommende Prüfungen & Übungen",
