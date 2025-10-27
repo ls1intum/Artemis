@@ -172,8 +172,17 @@ describe('FileUploadExerciseUpdateComponent', () => {
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
             const teamStub = { formValidChanges: new Subject(), formValid: true } as TeamConfigFormGroupComponent;
             comp.teamConfigFormGroupComponent = (() => teamStub) as any;
-            comp.bonusPoints = (() => ({ valueChanges: new Subject(), valid: true }) as NgModel) as any;
-            comp.points = (() => ({ valueChanges: new Subject(), valid: true }) as NgModel) as any;
+
+            const bonusPointsStub = {
+                valueChanges: new Subject(),
+                valid: true,
+            } as unknown as NgModel;
+            const pointsStub = {
+                valueChanges: new Subject(),
+                valid: true,
+            } as unknown as NgModel;
+            comp.bonusPoints = (() => bonusPointsStub) as any;
+            comp.points = (() => pointsStub) as any;
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
