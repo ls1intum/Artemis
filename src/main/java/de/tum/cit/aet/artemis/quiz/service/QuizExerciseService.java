@@ -164,7 +164,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private static boolean applyBaseQuizQuestionData(QuizExerciseReEvaluateDTO reEvaluateDTO, QuizExercise originalQuizExercise) {
         boolean recalculationNecessary = false;
         originalQuizExercise.setTitle(reEvaluateDTO.title());
-        if (originalQuizExercise.getIncludedInOverallScore().equals(reEvaluateDTO.includedInOverallScore())) {
+        if (!originalQuizExercise.getIncludedInOverallScore().equals(reEvaluateDTO.includedInOverallScore())) {
             recalculationNecessary = true;
             originalQuizExercise.setIncludedInOverallScore(reEvaluateDTO.includedInOverallScore());
         }
@@ -530,9 +530,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
         if (originalQuizExercise.getQuizQuestions().size() != newQuestions.size()) {
             questionsChanged = true;
-        }
-        if (questionsChanged) {
-            originalQuizExercise.setQuizQuestions(newQuestions);
         }
         originalQuizExercise.setQuizQuestions(newQuestions);
         return questionsChanged;
