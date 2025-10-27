@@ -160,10 +160,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param reEvaluateDTO        the DTO containing the new data
      * @param originalQuizExercise the original quiz exercise to apply the data to
      */
-    public static void applyBaseQuizQuestionData(QuizExerciseReEvaluateDTO reEvaluateDTO, QuizExercise originalQuizExercise) {
+    public static boolean applyBaseQuizQuestionData(QuizExerciseReEvaluateDTO reEvaluateDTO, QuizExercise originalQuizExercise) {
+        boolean recalculationNecessary = false;
         originalQuizExercise.setTitle(reEvaluateDTO.title());
-        originalQuizExercise.setIncludedInOverallScore(reEvaluateDTO.includedInOverallScore());
+        if (originalQuizExercise.getIncludedInOverallScore().equals(reEvaluateDTO.includedInOverallScore())) {
+            recalculationNecessary = true;
+            originalQuizExercise.setIncludedInOverallScore(reEvaluateDTO.includedInOverallScore());
+        }
         originalQuizExercise.setRandomizeQuestionOrder(reEvaluateDTO.randomizeQuestionOrder());
+        return recalculationNecessary;
     }
 
     private static boolean applyDropLocationsFromDTO(List<DropLocationReEvaluateDTO> dropLocationDTOs, List<DropLocation> originalDropLocations) {
@@ -299,6 +304,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 if (!originalAnswerOptionItem.isInvalid() && answerOptionDTOItem.invalid()) {
                     recalculationNecessary = true;
                     originalAnswerOptionItem.setInvalid(Boolean.TRUE);
+                }
+                originalAnswerOptionItem.setText(answerOptionDTOItem.text());
+                originalAnswerOptionItem.setHint(answerOptionDTOItem.hint());
+                originalAnswerOptionItem.setExplanation(answerOptionDTOItem.explanation());
+                if (originalAnswerOptionItem.isIsCorrect() != answerOptionDTOItem.isCorrect()) {
+                    recalculationNecessary = true;
+                    originalAnswerOptionItem.setIsCorrect(answerOptionDTOItem.isCorrect());
                 }
             }
         }
@@ -573,8 +585,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     public QuizExercise reEvaluate(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NotNull List<MultipartFile> files) throws IOException {
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalQuizExercise);
-        applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
-        boolean questionsChanged = applyQuizQuestionsFromDTOAndCheckIfChanged(quizExerciseDTO, originalQuizExercise);
+        boolean questionsChanged = applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
+        questionsChanged = applyQuizQuestionsFromDTOAndCheckIfChanged(quizExerciseDTO, originalQuizExercise) || questionsChanged;
         validateQuizExerciseFiles(originalQuizExercise, files, false);
         Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
         Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));

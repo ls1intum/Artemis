@@ -25,7 +25,8 @@ describe('QuizReEvaluateService', () => {
         files.set('test1', new Blob());
         files.set('test2', new Blob());
         service.reevaluate(quizExercise, files).subscribe((res) => {
-            expect(res.body).toEqual(quizExercise);
+            expect(res.body).toBeNull();
+            expect(res.ok).toBeTrue();
         });
 
         const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz/quiz-exercises/1/re-evaluate' });
@@ -36,7 +37,7 @@ describe('QuizReEvaluateService', () => {
         expect(formDataFiles).toBeArrayOfSize(2);
         expect(formDataFiles[0]).toBeInstanceOf(Blob);
         expect(formDataFiles[1]).toBeInstanceOf(Blob);
-        req.flush(quizExercise);
+        req.flush(null, { status: 200, statusText: 'OK' });
         tick();
     }));
 });
