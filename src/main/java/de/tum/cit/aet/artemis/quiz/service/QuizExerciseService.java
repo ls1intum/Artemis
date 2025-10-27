@@ -159,8 +159,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @param reEvaluateDTO        the DTO containing the new data
      * @param originalQuizExercise the original quiz exercise to apply the data to
+     * @return true if a recalculation of the scores is necessary, false otherwise
      */
-    public static boolean applyBaseQuizQuestionData(QuizExerciseReEvaluateDTO reEvaluateDTO, QuizExercise originalQuizExercise) {
+    private static boolean applyBaseQuizQuestionData(QuizExerciseReEvaluateDTO reEvaluateDTO, QuizExercise originalQuizExercise) {
         boolean recalculationNecessary = false;
         originalQuizExercise.setTitle(reEvaluateDTO.title());
         if (originalQuizExercise.getIncludedInOverallScore().equals(reEvaluateDTO.includedInOverallScore())) {

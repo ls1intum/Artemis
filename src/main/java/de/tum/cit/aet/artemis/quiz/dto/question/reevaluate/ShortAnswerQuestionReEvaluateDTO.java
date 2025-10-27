@@ -18,6 +18,12 @@ public record ShortAnswerQuestionReEvaluateDTO(@NotNull Long id, @NotBlank Strin
         @NotEmpty List<@Valid ShortAnswerSolutionReEvaluateDTO> solutions, @NotEmpty List<@Valid ShortAnswerMappingReEvaluateDTO> correctMappings)
         implements QuizQuestionReEvaluateDTO {
 
+    /**
+     * Creates a ShortAnswerQuestionReEvaluateDTO from the given ShortAnswerQuestion.
+     *
+     * @param shortAnswerQuestion the short answer question to convert
+     * @return the corresponding DTO
+     */
     public static ShortAnswerQuestionReEvaluateDTO of(ShortAnswerQuestion shortAnswerQuestion) {
         return new ShortAnswerQuestionReEvaluateDTO(shortAnswerQuestion.getId(), shortAnswerQuestion.getTitle(), shortAnswerQuestion.getText(),
                 shortAnswerQuestion.getScoringType(), shortAnswerQuestion.isRandomizeOrder(), shortAnswerQuestion.isInvalid(), shortAnswerQuestion.getSimilarityValue(),

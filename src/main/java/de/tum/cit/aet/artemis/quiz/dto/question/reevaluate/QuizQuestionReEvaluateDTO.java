@@ -14,6 +14,12 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
         @JsonSubTypes.Type(value = ShortAnswerQuestionReEvaluateDTO.class, name = "short-answer") })
 public sealed interface QuizQuestionReEvaluateDTO permits DragAndDropQuestionReEvaluateDTO, MultipleChoiceQuestionReEvaluateDTO, ShortAnswerQuestionReEvaluateDTO {
 
+    /**
+     * Creates a QuizQuestionReEvaluateDTO from the given QuizQuestion.
+     *
+     * @param quizQuestion the quiz question to convert
+     * @return the corresponding DTO
+     */
     static QuizQuestionReEvaluateDTO of(QuizQuestion quizQuestion) {
         return switch (quizQuestion) {
             case MultipleChoiceQuestion multipleChoiceQuestion -> MultipleChoiceQuestionReEvaluateDTO.of(multipleChoiceQuestion);

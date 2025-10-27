@@ -17,6 +17,14 @@ public record DragAndDropQuestionReEvaluateDTO(@NotNull Long id, @NotBlank Strin
         @NotNull Boolean randomizeOrder, @NotNull Boolean invalid, @NotEmpty List<@Valid DropLocationReEvaluateDTO> dropLocations,
         @NotEmpty List<@Valid DragItemReEvaluateDTO> dragItems, @NotEmpty List<@Valid DragAndDropMappingReEvaluateDTO> correctMappings) implements QuizQuestionReEvaluateDTO {
 
+    /**
+     * Builds a DragAndDropQuestionReEvaluateDTO from the given domain entity.
+     * Copies the question metadata (title, text, hint, explanation, scoring type, randomize order, invalid) and converts all drop locations, drag items, and correct mappings to
+     * their corresponding DTOs.
+     *
+     * @param dragAndDropQuestion the source DragAndDropQuestion to convert (must not be null)
+     * @return a DTO representing the provided drag-and-drop question
+     */
     public static DragAndDropQuestionReEvaluateDTO of(DragAndDropQuestion dragAndDropQuestion) {
         return new DragAndDropQuestionReEvaluateDTO(dragAndDropQuestion.getId(), dragAndDropQuestion.getTitle(), dragAndDropQuestion.getText(), dragAndDropQuestion.getHint(),
                 dragAndDropQuestion.getExplanation(), dragAndDropQuestion.getScoringType(), dragAndDropQuestion.isRandomizeOrder(), dragAndDropQuestion.isInvalid(),
