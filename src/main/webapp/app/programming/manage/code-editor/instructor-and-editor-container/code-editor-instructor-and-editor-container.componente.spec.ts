@@ -1,6 +1,6 @@
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
@@ -15,9 +15,9 @@ import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResp
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
-import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-exercise-status.component';
-import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -40,18 +40,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 MockProvider(ConsistencyCheckService),
                 MockProvider(ProfileService),
                 MockProvider(AlertService),
-                MockProvider(CodeEditorConflictStateService),
-                MockProvider(CodeEditorConflictStateService),
+                MockProvider(ParticipationService),
+                MockProvider(ProgrammingExerciseService),
+                MockProvider(CourseExerciseService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-            imports: [
-                CodeEditorInstructorAndEditorContainerComponent,
-                MockComponent(ProgrammingExerciseInstructorExerciseStatusComponent),
-                MockComponent(CodeEditorFileBrowserComponent),
-            ],
+            imports: [CodeEditorInstructorAndEditorContainerComponent],
             declarations: [],
         }).compileComponents();
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
@@ -67,34 +64,45 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     });
 
     it('runs full consistency check and shows success when no issues', () => {
-        jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-        jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+        const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
+        const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
         const successSpy = jest.spyOn(alertService, 'success');
 
         comp.checkConsistencies(programmingExercise);
         expect(consistencyCheckService.checkConsistencyForProgrammingExercise).toHaveBeenCalledWith(123);
         expect(artemisIntelligenceService.consistencyCheck).toHaveBeenCalledWith(123);
 
-        expect(successSpy).toHaveBeenCalled();
+        expect(check1Spy).toHaveBeenCalledOnce();
+        expect(check2Spy).toHaveBeenCalledOnce();
+        expect(successSpy).toHaveBeenCalledOnce();
     });
 
     it('error when first consistency check fails', () => {
-        jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([error1]));
+        const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([error1]));
+        const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
         const failSpy = jest.spyOn(alertService, 'error');
 
         comp.checkConsistencies(programmingExercise);
         expect(consistencyCheckService.checkConsistencyForProgrammingExercise).toHaveBeenCalledWith(123);
 
-        expect(failSpy).toHaveBeenCalled();
+        expect(check1Spy).toHaveBeenCalledOnce();
+        expect(check2Spy).not.toHaveBeenCalled();
+        expect(failSpy).toHaveBeenCalledOnce();
     });
 
     it('error when exercise id undefined', () => {
+        const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([error1]));
+        const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
         const failSpy = jest.spyOn(alertService, 'error');
+
         comp.checkConsistencies({ id: undefined } as any);
-        expect(failSpy).toHaveBeenCalled();
+
+        expect(check1Spy).not.toHaveBeenCalled();
+        expect(check2Spy).not.toHaveBeenCalled();
+        expect(failSpy).toHaveBeenCalledOnce();
     });
 
-    it('disables button when isLoading is true', () => {
+    it('check isLoading propagates correctly', () => {
         (artemisIntelligenceService as any).isLoading = () => true;
         expect(comp.isCheckingConsistency()).toBeTrue();
 
