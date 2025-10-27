@@ -62,7 +62,7 @@ public class AtlasAgentService {
             Map<String, String> variables = Map.of(); // No variables needed for this template
             String systemPrompt = templateService.render(resourcePath, variables);
 
-            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
+            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").build();
 
             ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message)).options(options);
 

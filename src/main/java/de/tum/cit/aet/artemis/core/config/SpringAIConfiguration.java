@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
-import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +23,6 @@ public class SpringAIConfiguration {
 
     /**
      * Default Chat Client for AI features.
-     * Uses the manually configured Azure OpenAI model if available.
      *
      * @param azureOpenAiChatModel the Azure OpenAI chat model to use (optional)
      * @return a configured ChatClient with default options, or null if model is not available
@@ -35,7 +33,7 @@ public class SpringAIConfiguration {
         if (azureOpenAiChatModel == null) {
             return null;
         }
-        return ChatClient.builder(azureOpenAiChatModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName("gpt-5-mini").temperature(1.0).build()).build();
+        return ChatClient.builder(azureOpenAiChatModel).build();
     }
 
     /**
