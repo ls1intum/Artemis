@@ -28,7 +28,12 @@ describe('ServerAdministrationComponent', () => {
                 MockDirective(MockHasAnyAuthorityDirective),
             ],
             providers: [provideHttpClient(), provideHttpClientTesting()],
-        }).compileComponents();
+        })
+            .overrideComponent(ServerAdministrationComponent, {
+                remove: { imports: [HasAnyAuthorityDirective] },
+                add: { imports: [MockHasAnyAuthorityDirective] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ServerAdministrationComponent);
         component = fixture.componentInstance;
