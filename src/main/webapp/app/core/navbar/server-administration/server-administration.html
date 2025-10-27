@@ -1,0 +1,142 @@
+<li *jhiHasAnyAuthority="'ROLE_ADMIN'" ngbDropdown class="nav-item dropdown pointer server-administration" display="dynamic" routerLinkActive="active">
+    @if (!isExamActive() && !isExamStarted()) {
+        <a class="jh-navbar nav-link dropdown-toggle py-0" ngbDropdownToggle id="admin-menu">
+            <span>
+                <fa-icon [icon]="faUserPlus" />
+                <span jhiTranslate="global.menu.admin.main"></span>
+            </span>
+        </a>
+    }
+    <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/upcoming-exams-and-exercises" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faBookOpen" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.upcomingExamsAndExercises"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/user-management" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faUser" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.userManagement"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/organization-management" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faUniversity" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.organizationManagement"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/system-notification-management" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faBell" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.systemNotifications"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/feature-toggles" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faToggleOn" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.featureToggles"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/user-statistics" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faEye" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.statistics"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/metrics" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faTachometerAlt" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.metrics"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/privacy-statement" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faLock" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.privacyStatement"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/imprint" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faStamp" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.imprint"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/health" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faHeart" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.health"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/configuration" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faList" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.configuration"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/audits" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faBell" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.audits"></span>
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" routerLink="/admin/logs" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faTasks" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.logs"></span>
+            </a>
+        </li>
+        @if (localCIActive()) {
+            <li>
+                <a class="dropdown-item" routerLink="/admin/build-queue" routerLinkActive="active" (click)="collapseNavbar()">
+                    <fa-icon [icon]="faList" [fixedWidth]="true" />
+                    <span jhiTranslate="artemisApp.buildQueue.title"></span>
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" routerLink="/admin/build-agents" routerLinkActive="active" (click)="collapseNavbar()">
+                    <fa-icon [icon]="faGears" [fixedWidth]="true" />
+                    <span jhiTranslate="artemisApp.buildAgents.title"></span>
+                </a>
+            </li>
+        }
+        @if (irisEnabled()) {
+            <li>
+                <a class="dropdown-item" routerLink="/admin/iris" routerLinkActive="active" (click)="collapseNavbar()">
+                    <fa-icon [icon]="faRobot" [fixedWidth]="true" />
+                    <span jhiTranslate="global.menu.admin.iris"></span>
+                </a>
+            </li>
+        }
+        @if (ltiEnabled()) {
+            <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faPuzzlePiece" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.lti"></span>
+            </a>
+        }
+        @if (standardizedCompetenciesEnabled()) {
+            <jhi-feature-overlay [enabled]="atlasEnabled()">
+                <li>
+                    <a class="dropdown-item" routerLink="/admin/standardized-competencies" routerLinkActive="active" (click)="collapseNavbar()">
+                        <fa-icon [icon]="faFlag" [fixedWidth]="true" />
+                        <span jhiTranslate="global.menu.admin.standardizedCompetencies"></span>
+                    </a>
+                </li>
+            </jhi-feature-overlay>
+        }
+        <li>
+            <a class="dropdown-item" routerLink="/admin/cleanup-service" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faBroom" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.cleanupService"></span>
+            </a>
+        </li>
+        @if (examEnabled()) {
+            <li>
+                <a class="dropdown-item" routerLink="/admin/exam-rooms" routerLinkActive="active" (click)="collapseNavbar()">
+                    <fa-icon [icon]="faThLarge" [fixedWidth]="true" />
+                    <span jhiTranslate="global.menu.admin.examRooms"></span>
+                </a>
+            </li>
+        }
+    </ul>
+</li>
