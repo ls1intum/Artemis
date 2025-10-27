@@ -56,6 +56,7 @@ describe('CompetencyManagementComponent', () => {
             imports: [NgbProgressbar],
             declarations: [
                 CompetencyManagementComponent,
+                MockHasAnyAuthorityDirective,
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(ImportAllCompetenciesComponent),
                 MockComponent(CompetencyManagementTableComponent),
