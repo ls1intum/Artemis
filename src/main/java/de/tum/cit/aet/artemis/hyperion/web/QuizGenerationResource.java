@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
-import de.tum.cit.aet.artemis.hyperion.service.quiz.ai.AiQuizGenerationService;
-import de.tum.cit.aet.artemis.hyperion.service.quiz.ai.dto.AiQuizGenerationRequestDTO;
-import de.tum.cit.aet.artemis.hyperion.service.quiz.ai.dto.AiQuizGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 
 @Conditional(HyperionEnabled.class)
 @Lazy

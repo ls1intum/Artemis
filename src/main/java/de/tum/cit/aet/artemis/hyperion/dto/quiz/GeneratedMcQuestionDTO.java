@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.service.quiz.ai.dto;
+package de.tum.cit.aet.artemis.hyperion.dto.quiz;
 
 import java.util.List;
 import java.util.Set;
@@ -9,5 +9,5 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record GeneratedMcQuestionDTO(@NotBlank String title, @NotBlank String text, @Size(max = 1000) String explanation, @Size(max = 500) String hint,
-        @Min(1) @Max(5) Integer difficulty, Set<String> tags, AiQuestionSubtype subtype, Set<Long> competencyIds, List<McOptionDTO> options, ValidationSummaryDTO validation) {
+        @Min(1) @Max(5) Integer difficulty, Set<String> tags, AiQuestionSubtype subtype, Set<Long> competencyIds, List<McOptionDTO> options) {
 }
