@@ -224,6 +224,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockComponent(ButtonComponent),
         MockComponent(ResultComponent),
         MockDirective(ExtensionPointDirective),
+        MockHasAnyAuthorityDirective,
         MockTranslateValuesDirective,
         MockComponent(AssessmentWarningComponent),
         MockPipe(ArtemisDatePipe),
