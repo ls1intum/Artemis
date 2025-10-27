@@ -309,14 +309,14 @@ public class ConversationService {
     }
 
     /**
-     * Delete a conversation
+     * Delete a conversation including all posts and participants
      *
-     * @param conversation the conversation to be deleted
+     * @param conversationId the id of the conversation to be deleted
      */
-    public void deleteConversation(Conversation conversation) {
-        this.postRepository.deleteAllByConversationId(conversation.getId());
-        this.conversationParticipantRepository.deleteAllByConversationId(conversation.getId());
-        this.conversationRepository.deleteById(conversation.getId());
+    public void deleteConversation(long conversationId) {
+        postRepository.deleteAllByConversationId(conversationId);
+        conversationParticipantRepository.deleteAllByConversationId(conversationId);
+        conversationRepository.deleteById(conversationId);
     }
 
     /**
