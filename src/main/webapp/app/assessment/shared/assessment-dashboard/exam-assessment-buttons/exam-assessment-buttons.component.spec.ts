@@ -117,7 +117,7 @@ describe('ExamAssessmentButtons', () => {
         studentExamOne.user = studentOne;
 
         TestBed.configureTestingModule({
-            declarations: [MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
+            declarations: [MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers,
         })
             .compileComponents()
