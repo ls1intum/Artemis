@@ -336,6 +336,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.lineDecorationsHoverButton?.dispose();
     }
 
+    /**
+     * Registers a keydown listener on the underlying Monaco editor and returns a disposable to remove it.
+     * Use this to intercept keys before the editor handles them (e.g., in read-only mode).
+     * @param listener The callback to invoke on keydown events while the editor is focused.
+     */
+    onKeyDown(listener: (event: monaco.IKeyboardEvent) => void): Disposable {
+        return this._editor.onKeyDown(listener);
+    }
+
     disposeWidgets() {
         this.lineWidgets.forEach((i) => {
             i.dispose();

@@ -420,7 +420,9 @@ public class CourseUtilService {
         programmingExercise.getCategories().add("Quiz");
         course1.addExercises(quizExercise);
 
-        Lecture lecture1 = LectureFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+        ZonedDateTime lecture1Start = ZonedDateTime.now().minusDays(1);
+        ZonedDateTime lecture1End = lecture1Start.plusHours(2);
+        Lecture lecture1 = LectureFactory.generateLecture(lecture1Start, lecture1End, course1);
         lecture1.setCourse(null);
         lecture1 = lectureRepo.save(lecture1); // Save early to receive lecture ID
         Attachment attachment1 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp, lecture1.getId(), false) : LectureFactory.generateAttachment(pastTimestamp);
@@ -429,7 +431,9 @@ public class CourseUtilService {
         lecture1.setCourse(course1);
         course1.addLectures(lecture1);
 
-        Lecture lecture2 = LectureFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+        ZonedDateTime lecture2Start = lecture1Start.plusWeeks(1);
+        ZonedDateTime lecture2End = lecture2Start.plusHours(2);
+        Lecture lecture2 = LectureFactory.generateLecture(lecture2Start, lecture2End, course1);
         lecture2.setCourse(null);
         lecture2 = lectureRepo.save(lecture2); // Save early to receive lecture ID
         Attachment attachment2 = withFiles ? LectureFactory.generateAttachmentWithFile(pastTimestamp, lecture2.getId(), false) : LectureFactory.generateAttachment(pastTimestamp);
