@@ -8,7 +8,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * DTO for Atlas Agent tool responses representing exercise information.
- * All fields are always included in JSON to ensure consistent LLM responses.
+ * Fields are included in JSON when non-empty to ensure concise LLM responses.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AtlasAgentExerciseDTO(@NotNull Long id, @NotNull String title, @NotNull String type, @NotNull Double maxPoints, @NotNull String releaseDate,

@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 
 /**
  * DTO for Atlas Agent tool responses representing competency information.
- * All fields are always included in JSON to ensure consistent LLM responses.
+ * Fields are included in JSON when non-empty to ensure concise LLM responses.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AtlasAgentCompetencyDTO(@NotNull Long id, @NotNull String title, @NotNull String description, @NotNull String taxonomy, @Nullable Long courseId) {

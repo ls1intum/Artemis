@@ -93,7 +93,7 @@ public class AtlasAgentToolsService {
      * @param courseId      ID of the course
      * @param title         title of the new competency
      * @param description   detailed description of the competency
-     * @param taxonomyLevel Bloom’s taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)
+     * @param taxonomyLevel Bloom's taxonomy level - see {@link CompetencyTaxonomy}
      * @return JSON response containing the created competency or an error message
      */
     @Tool(description = "Create a new competency for a course")
