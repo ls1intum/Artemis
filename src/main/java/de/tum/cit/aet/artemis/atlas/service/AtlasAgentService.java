@@ -133,4 +133,17 @@ public class AtlasAgentService {
     public boolean isAvailable() {
         return chatClient != null && chatMemory != null;
     }
+
+    /**
+     * Generates a unique session ID for a user's conversation in a specific course.
+     * This ensures each user has their own isolated chat history per course.
+     * Centralized generation prevents security risks from client-controlled session IDs.
+     *
+     * @param courseId the course ID
+     * @param userId   the user ID
+     * @return the generated session ID in format "course_{courseId}_user_{userId}"
+     */
+    public String generateSessionId(Long courseId, Long userId) {
+        return String.format("course_%d_user_%d", courseId, userId);
+    }
 }
