@@ -11,7 +11,15 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HyperionReviewAndRefineApiService } from 'app/openapi/api/hyperionReviewAndRefineApi.service';
 import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { formatArtifactType, humanizeCategory, isMatchingRepository, issuesForSelectedFile } from './consistency-check';
+import {
+    InlineConsistencyIssue,
+    formatArtifactType,
+    formatConsistencyCheckResults,
+    humanizeCategory,
+    isMatchingRepository,
+    issuesForSelectedFile,
+    severityToString,
+} from './consistency-check';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
@@ -313,6 +321,28 @@ describe('ArtemisIntelligenceService', () => {
 
             const res2 = issuesForSelectedFile('template_repository/src/Class2.java', undefined, mockIssues);
             expect(res2).toHaveLength(0);
+        });
+
+        it('format contains necessary information', () => {
+            const mockIssue: InlineConsistencyIssue = {
+                filePath: 'path',
+                type: ArtifactLocation.TypeEnum.TemplateRepository,
+                startLine: 1,
+                endLine: 3,
+                description: 'Example description',
+                suggestedFix: 'Example fix',
+                category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+                severity: ConsistencyIssue.SeverityEnum.Medium,
+            };
+
+            const res = formatConsistencyCheckResults(mockIssue);
+
+            expect(res).toContain(mockIssue.description);
+            expect(res).toContain(mockIssue.suggestedFix);
+            expect(res).toContain(humanizeCategory(mockIssue.category));
+            expect(res).toContain(severityToString(mockIssue.severity));
+            expect(res).toContain(String(mockIssue.startLine));
+            expect(res).toContain(String(mockIssue.endLine));
         });
     });
 

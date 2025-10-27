@@ -4,7 +4,7 @@ import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
-type InlineConsistencyIssue = {
+export type InlineConsistencyIssue = {
     filePath: string;
     type: ArtifactLocation.TypeEnum;
     startLine: number;
@@ -15,12 +15,23 @@ type InlineConsistencyIssue = {
     severity: ConsistencyIssue.SeverityEnum;
 };
 
+export function addCommentBoxes(
+    editor: MonacoEditorComponent,
+    issues: ConsistencyIssue[],
+    selectedFile: string | undefined,
+    selectedRepo: RepositoryType | 'PROBLEM_STATEMENT' | undefined,
+) {
+    for (const [index, issue] of issuesForSelectedFile(selectedFile, selectedRepo, issues).entries()) {
+        addCommentBox(editor, issue, index);
+    }
+}
+
 /**
  * Adds a comment box below a code line in Monaco.
  * @param editor Monaco editor wrapper component.
  * @param issue  Issue to render.
  */
-export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsistencyIssue) {
+export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsistencyIssue, id: number) {
     const node = document.createElement('div');
     node.className = 'alert alert-warning alert-dismissible text-start fade show';
     node.innerHTML = `
@@ -28,9 +39,7 @@ export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsis
       <div>${htmlForMarkdown(formatConsistencyCheckResults(issue))}</div>
     `;
 
-    // Place box beneath the line
-    const key = window.crypto.randomUUID().toString() ?? `${issue.startLine}-${issue.endLine}-${issue.category}-${window.btoa(issue.description).slice(0, 8)}`;
-    editor.addLineWidget(issue.endLine, `comment-${key}`, node);
+    editor.addLineWidget(issue.endLine, `comment-${id}`, node);
 }
 
 /**

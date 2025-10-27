@@ -78,7 +78,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { addCommentBox, issuesForSelectedFile } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -362,9 +362,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.monacoEditor.disposeWidgets();
 
             // Readd inconsistency issue comments, because all widgets got removed
-            for (const issue of issuesForSelectedFile('problem_statement.md', 'PROBLEM_STATEMENT', issues)) {
-                addCommentBox(this.monacoEditor, issue);
-            }
+            addCommentBoxes(this.monacoEditor, issues, 'problem_statement.md', 'PROBLEM_STATEMENT');
         }, 0);
     }
 
