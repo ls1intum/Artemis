@@ -16,10 +16,13 @@ import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockNgbModalService } from 'src/test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
     let component: MultipleChoiceQuestionEditComponent;
+    let modalService: NgbModal;
 
     const question: MultipleChoiceQuestion = {
         exportQuiz: false,
@@ -36,16 +39,19 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     };
 
     beforeEach(async () => {
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ThemeService, useClass: MockThemeService },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: ThemeService, useClass: MockThemeService },
             ],
-        });
+        }).compileComponents();
+
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
+        modalService = TestBed.inject(NgbModal);
         fixture.componentRef.setInput('question', question);
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
@@ -238,5 +244,63 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         component.prepareForSave();
         expect(parseQuestionStub).toHaveBeenCalledOnce();
         expect(component.markdownEditor()!['_markdown']).toBe('parsed-question');
+    });
+
+    it('should open modal', () => {
+        const content = {};
+        const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
+
+        component.open(content);
+
+        expect(modalSpy).toHaveBeenCalledExactlyOnceWith(content, { size: 'lg' });
+    });
+
+    it('should detect changes in visual mode', () => {
+        const emitSpy = jest.spyOn(component.questionUpdated, 'emit');
+        const detectChangesSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
+
+        component.changesInVisualMode();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(detectChangesSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should move up', () => {
+        const emitSpy = jest.spyOn(component.questionMoveUp, 'emit');
+
+        component.moveUp();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should move down', () => {
+        const emitSpy = jest.spyOn(component.questionMoveDown, 'emit');
+
+        component.moveDown();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should reset question title', () => {
+        component.backupQuestion = { ...question, title: 'backup-title' };
+        component.question().title = 'current-title';
+
+        component.resetQuestionTitle();
+
+        expect(component.question().title).toBe('backup-title');
+    });
+
+    it('should reset question', () => {
+        const backup = { ...question, title: 'backup-title', text: 'backup-text' };
+        component.backupQuestion = backup;
+        component.question().title = 'current-title';
+        component.question().text = 'current-text';
+        const detectChangesSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
+
+        component.resetQuestion();
+
+        expect(component.question().title).toBe('backup-title');
+        expect(component.question().text).toBe('backup-text');
+        expect(detectChangesSpy).toHaveBeenCalledOnce();
     });
 });

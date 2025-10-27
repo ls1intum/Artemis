@@ -664,4 +664,147 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(component.question().text).toBe(text);
     });
+
+    it('should get images from drop locations', fakeAsync(() => {
+        const q = component.question();
+        q.backgroundFilePath = 'bg.png';
+        component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
+        q.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
+        q.correctMappings = [];
+        q.dragItems = [];
+
+        const mockContext = {
+            drawImage: jest.fn(),
+            fillStyle: '',
+            fillRect: jest.fn(),
+        };
+
+        const mockCanvas = {
+            getContext: jest.fn().mockReturnValue(mockContext),
+            toDataURL: jest.fn().mockReturnValue('data:image/png;base64,cropped'),
+            width: 0,
+            height: 0,
+        } as any;
+
+        const canvasSpy = jest.spyOn(document, 'createElement').mockImplementation((tag) => {
+            if (tag === 'canvas') return mockCanvas;
+            return null as any;
+        });
+
+        const mockImage = {
+            onload: () => {},
+            src: '',
+            height: 200,
+            width: 200,
+        };
+
+        const imageSpy = jest.spyOn(global, 'Image' as any).mockImplementation(() => {
+            const img = mockImage;
+            Object.defineProperty(img, 'src', {
+                set(value: string) {
+                    setTimeout(() => img.onload(), 0);
+                },
+            });
+            return img;
+        });
+
+        const createImageDragItemSpy = jest.spyOn(component, 'createImageDragItemFromFile').mockImplementation((file: File) => {
+            const di = new DragItem();
+            di.pictureFilePath = file.name;
+            q.dragItems!.push(di);
+            return di;
+        });
+
+        const blankOutSpy = jest.spyOn(component, 'blankOutBackgroundImage').mockImplementation(() => {});
+
+        component.getImagesFromDropLocations();
+
+        tick();
+
+        expect(imageSpy).toHaveBeenCalledTimes(2);
+        expect(canvasSpy).toHaveBeenCalledTimes(2);
+        expect(mockCanvas.toDataURL).toHaveBeenCalledTimes(2);
+        expect(createImageDragItemSpy).toHaveBeenCalledTimes(2);
+        expect(q.dragItems).toBeArrayOfSize(2);
+        expect(q.correctMappings).toBeArrayOfSize(2);
+        expect(blankOutSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should blank out background image', fakeAsync(() => {
+        const q = component.question();
+        q.backgroundFilePath = 'bg.png';
+        component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
+        q.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
+
+        const mockContext = {
+            drawImage: jest.fn(),
+            fillStyle: '',
+            fillRect: jest.fn(),
+        };
+
+        const mockCanvas = {
+            getContext: jest.fn().mockReturnValue(mockContext),
+            toDataURL: jest.fn().mockReturnValue('data:image/png;base64,blanked'),
+            width: 0,
+            height: 0,
+        } as any;
+
+        const canvasSpy = jest.spyOn(document, 'createElement').mockImplementation((tag) => {
+            if (tag === 'canvas') return mockCanvas;
+            return null as any;
+        });
+
+        const mockImage = {
+            onload: () => {},
+            src: '',
+            height: 200,
+            width: 200,
+        };
+
+        const imageSpy = jest.spyOn(global, 'Image' as any).mockImplementation(() => {
+            const img = mockImage;
+            Object.defineProperty(img, 'src', {
+                set(value: string) {
+                    setTimeout(() => img.onload(), 0);
+                },
+            });
+            return img;
+        });
+
+        const setBackgroundSpy = jest.spyOn(component, 'setBackgroundFileFromFile').mockImplementation(() => {});
+
+        component.blankOutBackgroundImage();
+
+        tick();
+
+        expect(imageSpy).toHaveBeenCalledOnce();
+        expect(canvasSpy).toHaveBeenCalledOnce();
+        expect(mockContext.drawImage).toHaveBeenCalledOnce();
+        expect(mockContext.fillStyle).toBe('white');
+        expect(mockContext.fillRect).toHaveBeenCalledTimes(2);
+        expect(mockCanvas.toDataURL).toHaveBeenCalledOnce();
+        expect(setBackgroundSpy).toHaveBeenCalledExactlyOnceWith(expect.any(File));
+    }));
+
+    it('should convert data url to blob', () => {
+        const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
+
+        const blob = component.dataUrlToBlob(dataUrl);
+
+        expect(blob).toBeInstanceOf(Blob);
+        expect(blob.type).toBe('image/png');
+        expect(blob.size).toBeGreaterThan(0);
+    });
+
+    it('should convert data url to file', () => {
+        const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
+        const fileName = 'test.png';
+
+        const file = component.dataUrlToFile(dataUrl, fileName);
+
+        expect(file).toBeInstanceOf(File);
+        expect(file.name).toBe(fileName);
+        expect(file.type).toBe('image/png');
+        expect(file.size).toBeGreaterThan(0);
+    });
 });
