@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -42,7 +41,7 @@ describe('TextResultComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TextResultComponent, MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe)],
+            declarations: [TextResultComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

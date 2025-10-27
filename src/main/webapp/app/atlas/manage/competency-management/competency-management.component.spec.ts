@@ -12,7 +12,6 @@ import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstra
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';

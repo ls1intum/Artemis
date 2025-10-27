@@ -9,6 +9,7 @@ import { By } from '@angular/platform-browser';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 
 @Component({ template: '' })
 class MockEmptyComponent {}
@@ -22,9 +23,9 @@ describe('ServerAdministrationComponent', () => {
             imports: [
                 ServerAdministrationComponent,
                 TranslateModule.forRoot(),
-                MockDirective(HasAnyAuthorityDirective),
                 MockComponent(FeatureOverlayComponent),
                 RouterTestingModule.withRoutes([{ path: '**', component: MockEmptyComponent }]),
+                MockDirective(MockHasAnyAuthorityDirective),
             ],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();

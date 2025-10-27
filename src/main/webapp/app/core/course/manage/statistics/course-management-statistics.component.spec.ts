@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';

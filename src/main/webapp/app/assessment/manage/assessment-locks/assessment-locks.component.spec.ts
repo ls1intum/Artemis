@@ -4,7 +4,6 @@ import { AssessmentLocksComponent } from 'app/assessment/manage/assessment-locks
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
-import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
@@ -41,7 +40,7 @@ describe('AssessmentLocksComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot()],
-            declarations: [AssessmentLocksComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockHasAnyAuthorityDirective, MockPipe(ArtemisDatePipe)],
+            declarations: [AssessmentLocksComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockPipe(ArtemisDatePipe)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
