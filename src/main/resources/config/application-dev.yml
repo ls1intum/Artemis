@@ -148,5 +148,5 @@ helios:
 
 atlas:
     atlasml:
-        base-url: http://atlasml.aet.cit.tum.de
+        base-url: https://atlasml.aet.cit.tum.de
 

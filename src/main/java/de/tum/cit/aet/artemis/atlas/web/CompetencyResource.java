@@ -421,7 +421,7 @@ public class CompetencyResource {
      * @param operationType        the operation type (UPDATE or DELETE)
      * @param operationDescription the description of the operation for logging purposes
      */
-    private void notifyAtlasML(List<Competency> competencies, OperationTypeDTO operationType, String operationDescription) {
+    private void notifyAtlasML(List<Competency> competencies, @NotNull OperationTypeDTO operationType, String operationDescription) {
         try {
             atlasMLApi.saveCompetencies(competencies, operationType);
         }

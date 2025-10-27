@@ -4,13 +4,20 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20251023184348" author="maximiliansoelch">
         <!-- Remove duplicate entries in course_learner_profile table -->
-        <sql>
+        <sql dbms="mysql">
             DELETE t1
             FROM course_learner_profile t1
             JOIN course_learner_profile t2
               ON t1.learner_profile_id = t2.learner_profile_id
              AND t1.course_id = t2.course_id
              AND t1.id &gt; t2.id;
+        </sql>
+        <sql dbms="postgresql">
+            DELETE FROM course_learner_profile t1
+            USING course_learner_profile t2
+            WHERE t1.learner_profile_id = t2.learner_profile_id
+              AND t1.course_id = t2.course_id
+              AND t1.id &gt; t2.id;
         </sql>
 
         <!-- Add unique constraint to prevent future duplicates -->

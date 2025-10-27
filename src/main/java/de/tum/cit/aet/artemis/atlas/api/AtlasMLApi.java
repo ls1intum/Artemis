@@ -1,12 +1,11 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
+
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * API for interacting with the AtlasML microservice.
  * Provides methods for saving competencies and exercises to AtlasML for clustering and analysis.
  */
-@Profile(PROFILE_CORE)
 @Controller
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -41,7 +39,7 @@ public class AtlasMLApi extends AbstractAtlasApi {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if successful, false otherwise
      */
-    public boolean saveCompetencies(List<Competency> competencies, OperationTypeDTO operationType) {
+    public boolean saveCompetencies(List<Competency> competencies, @NotNull OperationTypeDTO operationType) {
         return atlasMLService.saveCompetencies(competencies, operationType);
     }
 
@@ -52,7 +50,7 @@ public class AtlasMLApi extends AbstractAtlasApi {
      * @param operationType the operation type (UPDATE or DELETE)
      * @return true if successful, false otherwise
      */
-    public boolean saveExerciseWithCompetencies(Exercise exercise, OperationTypeDTO operationType) {
+    public boolean saveExerciseWithCompetencies(Exercise exercise, @NotNull OperationTypeDTO operationType) {
         return atlasMLService.saveExerciseWithCompetencies(exercise, operationType);
     }
 

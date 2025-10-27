@@ -73,8 +73,7 @@ class AtlasMLServiceTest {
     void setUp() {
         lenient().when(config.getAtlasmlBaseUrl()).thenReturn("http://localhost:8000");
         lenient().when(config.getAtlasmlAuthToken()).thenReturn("secret-token");
-        atlasMLService = new AtlasMLService(atlasmlRestTemplate, shortTimeoutAtlasmlRestTemplate, config, competencyRepository, competencyExerciseLinkRepository,
-                featureToggleService);
+        atlasMLService = new AtlasMLService(atlasmlRestTemplate, shortTimeoutAtlasmlRestTemplate, config, competencyExerciseLinkRepository, featureToggleService);
     }
 
     @Test
