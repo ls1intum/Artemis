@@ -57,6 +57,13 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
     Channel findChannelByExerciseId(@Param("exerciseId") Long exerciseId);
 
     @Query("""
+            SELECT DISTINCT channel.id
+            FROM Channel channel
+            WHERE channel.exercise.id = :exerciseId
+            """)
+    Long findChannelIdByExerciseId(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
             SELECT DISTINCT channel
             FROM Channel channel
                 LEFT JOIN channel.conversationParticipants cp
