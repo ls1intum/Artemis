@@ -742,6 +742,13 @@
                     "improvement": "Verbesserungsempfehlung",
                     "inconsistencies": "Bitte überprüfe die FAQ auf inhaltliche Inkonsistenzen und passe es entsprechend an, damit es stimmig und klar verständlich ist."
                 }
+            },
+            "sharing": {
+                "import": "Programmieraufgabe aus der Austauschplattform importieren",
+                "export": "Exportieren in die Austauschplattform",
+                "error": {
+                    "export": "Kann Aufgabe nicht exportieren: {{ message }}"
+                }
             }
         },
         "error": {
