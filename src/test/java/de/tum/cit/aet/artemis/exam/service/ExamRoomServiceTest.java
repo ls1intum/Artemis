@@ -120,8 +120,8 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(uploadedRoomDTO.building()).isEqualTo("MI");
 
         ExamRoomLayoutStrategyDTO[] expectedLayoutStrategies = new ExamRoomLayoutStrategyDTO[] {
-                new ExamRoomLayoutStrategyDTO("default", LayoutStrategyType.RELATIVE_DISTANCE, 139),
-                new ExamRoomLayoutStrategyDTO("wide", LayoutStrategyType.RELATIVE_DISTANCE, 93), new ExamRoomLayoutStrategyDTO("narrow", LayoutStrategyType.RELATIVE_DISTANCE, 497),
+                new ExamRoomLayoutStrategyDTO("default", LayoutStrategyType.RELATIVE_DISTANCE, 136),
+                new ExamRoomLayoutStrategyDTO("wide", LayoutStrategyType.RELATIVE_DISTANCE, 90), new ExamRoomLayoutStrategyDTO("narrow", LayoutStrategyType.RELATIVE_DISTANCE, 257),
                 new ExamRoomLayoutStrategyDTO("corona", LayoutStrategyType.FIXED_SELECTION, 68) };
         assertThat(uploadedRoomDTO.layoutStrategies()).containsExactlyInAnyOrder(expectedLayoutStrategies);
     }
