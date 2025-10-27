@@ -286,4 +286,10 @@ export class LectureComponent implements OnInit, OnDestroy {
             },
         });
     }
+
+    navigateToLectureCreationPage(): void {
+        this.router.navigate(['course-management', this.courseId, 'lectures', 'new'], {
+            state: { existingLectures: this.lectures },
+        });
+    }
 }

@@ -10,9 +10,13 @@
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints primaryKey="true" nullable="false" />
             </column>
-            <column name="author_id" type="bigint">
+            <column name="author_id" type="bigint" >
+                <constraints nullable="false"/>
+
             </column>
             <column name="exercise_id" type="bigint">
+                <constraints nullable="false"/>
+
             </column>
             <column name="exercise_snapshot" type="json">
                 <constraints nullable="false" />
@@ -49,11 +53,11 @@
             baseColumnNames="author_id"
             baseTableName="exercise_version"
             constraintName="fk_exercise_version_author_id"
-            referencedColumnNames="id"
-            referencedTableName="jhi_user"
             deferrable="false"
             initiallyDeferred="false"
-            onDelete="SET NULL"
+            onDelete="RESTRICT"
+            referencedColumnNames="id"
+            referencedTableName="jhi_user"
             validate="true"
         />
 

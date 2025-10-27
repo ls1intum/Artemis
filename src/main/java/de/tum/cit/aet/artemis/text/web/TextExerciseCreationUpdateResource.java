@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -75,6 +77,8 @@ public class TextExerciseCreationUpdateResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final Optional<AtlasMLApi> atlasMLApi;
+
     private final TextExerciseRepository textExerciseRepository;
 
     private final UserRepository userRepository;
@@ -86,8 +90,10 @@ public class TextExerciseCreationUpdateResource {
     public TextExerciseCreationUpdateResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
-            Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<SlideApi> slideApi,
-            ExerciseVersionService exerciseVersionService) {
+            ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<IrisSettingsApi> irisSettingsApi, Optional<SlideApi> slideApi,
+
+            Optional<AtlasMLApi> atlasMLApi) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -97,18 +103,20 @@ public class TextExerciseCreationUpdateResource {
         this.exerciseService = exerciseService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.channelService = channelService;
+        this.exerciseVersionService = exerciseVersionService;
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsApi = irisSettingsApi;
         this.slideApi = slideApi;
-        this.exerciseVersionService = exerciseVersionService;
+        this.atlasMLApi = atlasMLApi;
     }
 
     /**
      * POST /text-exercises : Create a new textExercise.
      *
      * @param textExercise the textExercise to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new textExercise, or
+     * @return the ResponseEntity with status 201 (Created) and with body the new
+     *         textExercise, or
      *         with status 400 (Bad Request) if the textExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -144,7 +152,12 @@ public class TextExerciseCreationUpdateResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
         irisSettingsApi.ifPresent(api -> api.setEnabledForExerciseByCategories(result, new HashSet<>()));
+
+        // Notify AtlasML about the new text exercise
+        notifyAtlasML(result, OperationTypeDTO.UPDATE, "text exercise creation");
+
         exerciseVersionService.createExerciseVersion(result);
+
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + result.getId())).body(result);
     }
 
@@ -152,10 +165,13 @@ public class TextExerciseCreationUpdateResource {
      * PUT /text-exercises : Updates an existing textExercise.
      *
      * @param textExercise     the textExercise to update
-     * @param notificationText about the text exercise update that should be displayed for the
+     * @param notificationText about the text exercise update that should be
+     *                             displayed for the
      *                             student group
-     * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
-     *         with status 400 (Bad Request) if the textExercise is not valid, or with status 500 (Internal
+     * @return the ResponseEntity with status 200 (OK) and with body the updated
+     *         textExercise, or
+     *         with status 400 (Bad Request) if the textExercise is not valid, or
+     *         with status 500 (Internal
      *         Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -212,14 +228,22 @@ public class TextExerciseCreationUpdateResource {
     }
 
     /**
-     * PUT /text-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing textExercise.
+     * PUT /text-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an
+     * existing textExercise.
      *
      * @param exerciseId                                  of the exercise
-     * @param textExercise                                the textExercise to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
-     * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
-     *         with status 400 (Bad Request) if the textExercise is not valid, or with status 409 (Conflict)
-     *         if given exerciseId is not same as in the object of the request body, or with status 500
+     * @param textExercise                                the textExercise to
+     *                                                        re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that
+     *                                                        indicates whether the
+     *                                                        associated feedback should
+     *                                                        be deleted or not
+     * @return the ResponseEntity with status 200 (OK) and with body the updated
+     *         textExercise, or
+     *         with status 400 (Bad Request) if the textExercise is not valid, or
+     *         with status 409 (Conflict)
+     *         if given exerciseId is not same as in the object of the request body,
+     *         or with status 500
      *         (Internal Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -242,5 +266,25 @@ public class TextExerciseCreationUpdateResource {
 
         exerciseService.reEvaluateExercise(textExercise, deleteFeedbackAfterGradingInstructionUpdate);
         return updateTextExercise(textExercise, null);
+    }
+
+    /**
+     * Helper method to notify AtlasML about text exercise changes with consistent
+     * error handling.
+     *
+     * @param exercise             the exercise to save
+     * @param operationType        the operation type (UPDATE or DELETE)
+     * @param operationDescription the description of the operation for logging
+     *                                 purposes
+     */
+    private void notifyAtlasML(TextExercise exercise, OperationTypeDTO operationType, String operationDescription) {
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(exercise, operationType);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
+            }
+        });
     }
 }

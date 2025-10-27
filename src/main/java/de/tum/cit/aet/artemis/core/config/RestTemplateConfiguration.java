@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 
 /**
  * For now only provides a basic {@link org.springframework.web.client.RestTemplate RestTemplate} bean. Can be extended
@@ -61,6 +62,19 @@ public class RestTemplateConfiguration {
     @Profile(PROFILE_APOLLON)
     public RestTemplate apollonRestTemplate() {
         return createRestTemplate();
+    }
+
+    /**
+     * Creates a RestTemplate with short timeouts that can be used to communicate with the Sharing Platform.
+     * Just needed to have an independent rest template.
+     * Especially when mocked for tests.
+     *
+     * @return a RestTemplate with short timeouts for sharing platform integration
+     */
+    @Bean
+    @Conditional(SharingEnabled.class)
+    public RestTemplate sharingRestTemplate() {
+        return createShortTimeoutRestTemplate();
     }
 
     /**
