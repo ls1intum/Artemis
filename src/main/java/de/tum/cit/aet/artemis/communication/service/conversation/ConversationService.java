@@ -309,14 +309,14 @@ public class ConversationService {
     }
 
     /**
-     * Delete a conversation
+     * Delete a conversation including all posts and participants
      *
-     * @param conversation the conversation to be deleted
+     * @param conversationId the id of the conversation to be deleted
      */
-    public void deleteConversation(Conversation conversation) {
-        this.postRepository.deleteAllByConversationId(conversation.getId());
-        this.conversationParticipantRepository.deleteAllByConversationId(conversation.getId());
-        this.conversationRepository.deleteById(conversation.getId());
+    public void deleteConversation(long conversationId) {
+        postRepository.deleteAllByConversationId(conversationId);
+        conversationParticipantRepository.deleteAllByConversationId(conversationId);
+        conversationRepository.deleteById(conversationId);
     }
 
     /**
@@ -540,10 +540,12 @@ public class ConversationService {
      * @return true if the channel is visible to students
      */
     public boolean isChannelVisibleToStudents(@NotNull Channel channel) {
-        if (channel.getLecture() != null) {
-            return channel.getLecture().isVisibleToStudents();
-        }
-        else if (channel.getExercise() != null) {
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove the commented out code OR comment back in */
+        // if (channel.getLecture() != null) {
+        // return channel.getLecture().isVisibleToStudents();
+        // }
+        if (channel.getExercise() != null) {
             return channel.getExercise().isVisibleToStudents();
         }
         else if (channel.getExam() != null) {

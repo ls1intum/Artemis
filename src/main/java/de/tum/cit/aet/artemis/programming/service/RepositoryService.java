@@ -285,10 +285,9 @@ public class RepositoryService {
         if (file.isEmpty()) {
             throw new FileNotFoundException();
         }
-        InputStream inputStream = Files.newInputStream(file.get().toPath());
-        byte[] fileInBytes = org.apache.commons.io.IOUtils.toByteArray(inputStream);
-        inputStream.close();
-        return fileInBytes;
+        try (InputStream inputStream = Files.newInputStream(file.get().toPath())) {
+            return inputStream.readAllBytes();
+        }
     }
 
     /**
