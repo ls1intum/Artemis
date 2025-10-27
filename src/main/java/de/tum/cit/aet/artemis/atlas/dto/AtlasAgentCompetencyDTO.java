@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
  * Fields are included in JSON when non-empty to ensure concise LLM responses.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasAgentCompetencyDTO(@NotNull Long id, @NotNull String title, @NotNull String description, @NotNull String taxonomy, @Nullable Long courseId) {
+public record AtlasAgentCompetencyDTO(@NotNull Long id, @NotNull String title, @NotNull String description, @Nullable String taxonomy, @Nullable Long courseId) {
 
     /**
      * Creates an AtlasAgentCompetencyDTO from a Competency entity without courseId.
@@ -22,7 +22,7 @@ public record AtlasAgentCompetencyDTO(@NotNull Long id, @NotNull String title, @
      */
     public static AtlasAgentCompetencyDTO of(@NotNull Competency competency) {
         return new AtlasAgentCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(),
-                competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : "", null);
+                competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : null, null);
     }
 
     /**
@@ -34,6 +34,6 @@ public record AtlasAgentCompetencyDTO(@NotNull Long id, @NotNull String title, @
      */
     public static AtlasAgentCompetencyDTO of(@NotNull Competency competency, @NotNull Long courseId) {
         return new AtlasAgentCompetencyDTO(competency.getId(), competency.getTitle(), competency.getDescription(),
-                competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : "", courseId);
+                competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : null, courseId);
     }
 }
