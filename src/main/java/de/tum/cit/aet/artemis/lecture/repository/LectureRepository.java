@@ -38,6 +38,13 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+            WHERE lecture.course.id = :courseId AND lecture.id IN :ids
+            """)
+    Set<Lecture> findAllByCourseIdWithIdIn(@Param("courseId") long courseId, @Param("ids") Set<Long> ids);
+
+    @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO(
                 lecture.id,
                 lecture.title,
@@ -58,6 +65,14 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 AND (lecture.visibleDate IS NULL OR lecture.visibleDate <= :now)
             """)
     Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+            LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.course.id = :courseId
+            """)
+    Set<Lecture> findAllByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId);
 
     @Query("""
             SELECT lecture

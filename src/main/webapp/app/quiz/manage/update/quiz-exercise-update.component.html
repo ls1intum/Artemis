@@ -229,6 +229,7 @@
                                 id="competencies"
                                 [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                                 [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                                [exerciseDescription]="getEnhancedDescriptionForSuggestions()"
                                 [(ngModel)]="quizExercise.competencyLinks"
                                 (ngModelChange)="cacheValidation()"
                                 name="competencyLinks"

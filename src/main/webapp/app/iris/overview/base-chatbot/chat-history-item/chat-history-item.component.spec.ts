@@ -32,6 +32,14 @@ describe('ChatHistoryItemComponent', () => {
         } as unknown as IrisSessionDTO;
     }
 
+    function getTitledSessionMock(): IrisSessionDTO {
+        return {
+            id: 2,
+            creationDate: new Date('2023-10-15T14:23:00'),
+            title: 'New chat',
+        } as unknown as IrisSessionDTO;
+    }
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
@@ -44,6 +52,15 @@ describe('ChatHistoryItemComponent', () => {
         const expectedDate = datePipe.transform(component.session()!.creationDate, 'dd.MM.yy HH:mm');
         const historyItemLabel: HTMLElement = fixture.nativeElement.querySelector('.chat-history-text');
         expect(historyItemLabel.textContent).toContain(expectedDate);
+    });
+
+    it('should display session title when present, instead of the creation date', () => {
+        fixture.componentRef.setInput('session', getTitledSessionMock());
+        fixture.detectChanges();
+
+        const expectedTitle = 'New chat';
+        const historyItemLabel: HTMLElement = fixture.nativeElement.querySelector('.chat-history-text');
+        expect(historyItemLabel.textContent).toContain(expectedTitle);
     });
 
     it('should emit sessionClicked when item is clicked', () => {
@@ -89,6 +106,7 @@ describe('ChatHistoryItemComponent', () => {
     it('should render correct icon with correct tooltip and entity name for lecture session', () => {
         const session: IrisSessionDTO = {
             id: 1,
+            title: 'New chat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.LECTURE,
             entityId: 42,
@@ -100,6 +118,7 @@ describe('ChatHistoryItemComponent', () => {
     it('should render correct icon with correct tooltip and entity name for programming exercise session', () => {
         const session: IrisSessionDTO = {
             id: 2,
+            title: 'New chat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 77,
@@ -111,6 +130,7 @@ describe('ChatHistoryItemComponent', () => {
     it('should not render an icon and entity name for course session', () => {
         const session: IrisSessionDTO = {
             id: 3,
+            title: 'New chat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.COURSE,
             entityId: 123,
