@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.dto.quiz;
 
 import java.util.List;
 
-import org.springframework.lang.Nullable;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-public record AiQuizGenerationResponseDTO(List<GeneratedMcQuestionDTO> questions, @Nullable List<String> warnings) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record AiQuizGenerationResponseDTO(List<GeneratedMcQuestionDTO> questions, List<String> warnings) {
 }
