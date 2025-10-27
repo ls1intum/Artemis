@@ -40,7 +40,6 @@ describe('CourseManagementStatisticsComponent', () => {
                 MockComponent(StatisticsGraphComponent),
                 MockComponent(StatisticsAverageScoreGraphComponent),
                 MockComponent(DocumentationButtonComponent),
-                MockDirective(MockHasAnyAuthorityDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
             ],
