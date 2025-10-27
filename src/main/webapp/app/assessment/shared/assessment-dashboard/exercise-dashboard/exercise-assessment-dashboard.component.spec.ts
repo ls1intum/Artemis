@@ -42,6 +42,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';

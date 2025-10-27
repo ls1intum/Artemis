@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { StatisticsComponent } from 'app/core/admin/statistics/statistics.component';
@@ -17,7 +18,13 @@ describe('StatisticsComponent', () => {
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
-            declarations: [StatisticsComponent, MockComponent(StatisticsGraphComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+            declarations: [
+                StatisticsComponent,
+                MockComponent(StatisticsGraphComponent),
+                MockDirective(MockHasAnyAuthorityDirective),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+            ],
             providers: [provideRouter([]), LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

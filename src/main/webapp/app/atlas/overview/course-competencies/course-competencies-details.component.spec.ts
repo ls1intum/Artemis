@@ -20,6 +20,7 @@ import { Competency, CompetencyExerciseLink, CompetencyLectureUnitLink, Competen
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';

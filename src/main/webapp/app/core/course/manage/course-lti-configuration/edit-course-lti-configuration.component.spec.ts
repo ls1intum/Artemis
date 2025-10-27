@@ -15,6 +15,7 @@ import { Router } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -43,7 +44,7 @@ describe('Edit Course LTI Configuration Component', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [NgbNavModule, MockModule(ReactiveFormsModule)],
-            declarations: [EditCourseLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+            declarations: [EditCourseLtiConfigurationComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective)],
             providers: [
                 MockProvider(CourseManagementService),
                 { provide: Router, useValue: router },

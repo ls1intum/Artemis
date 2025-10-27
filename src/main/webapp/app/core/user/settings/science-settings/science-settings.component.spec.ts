@@ -6,6 +6,7 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { AlertService } from 'app/shared/service/alert.service';
 import { UrlSerializer } from '@angular/router';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
@@ -27,7 +28,7 @@ describe('ScienceSettingsComponent', () => {
         changed: false,
     };
 
-    const declarations = [ScienceSettingsComponent, MockPipe(ArtemisTranslatePipe)];
+    const declarations = [ScienceSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
     const providers = [
         MockProvider(AlertService),
         MockProvider(ScienceSettingsService),

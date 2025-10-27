@@ -3,6 +3,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { BehaviorSubject, of } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
@@ -59,6 +60,7 @@ describe('CourseExercisesComponent', () => {
                 SidebarComponent,
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(SidePanelComponent),
+                MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(SortByDirective),
                 TranslatePipeMock,
                 MockDirective(SortDirective),

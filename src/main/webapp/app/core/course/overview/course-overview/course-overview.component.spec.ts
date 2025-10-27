@@ -45,6 +45,7 @@ import { CourseAccessStorageService } from 'app/core/course/shared/services/cour
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
@@ -190,6 +191,7 @@ describe('CourseOverviewComponent', () => {
             imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule), FaIconComponent],
             declarations: [
                 CourseOverviewComponent,
+                MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortDirective),

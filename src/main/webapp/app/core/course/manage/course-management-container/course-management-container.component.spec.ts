@@ -14,6 +14,7 @@ import dayjs from 'dayjs/esm';
 import { CourseSidebarComponent } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -41,6 +42,7 @@ import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'a
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -190,6 +192,7 @@ describe('CourseManagementContainerComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: HasAnyAuthorityDirective, useClass: MockHasAnyAuthorityDirective },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
