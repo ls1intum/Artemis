@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.dto.quiz;
 
 import java.util.Map;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -11,7 +13,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AiQuizGenerationRequestDTO(@Size(max = 500) String topic, @NotNull @Size(min = 1, max = 10) Integer numberOfQuestions, @NotNull Language language,
+public record AiQuizGenerationRequestDTO(@Size(max = 500) String topic, @NotNull @Min(1) @Max(10) Integer numberOfQuestions, @NotNull Language language,
         @NotNull DifficultyLevel difficultyLevel, @NotNull AiQuestionSubtype requestedSubtype, @Size(max = 500) String promptHint) {
 
     public Map<String, String> toTemplateVariables() {
