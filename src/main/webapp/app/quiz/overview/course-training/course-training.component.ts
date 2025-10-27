@@ -12,10 +12,12 @@ import { FormsModule } from '@angular/forms';
 import { faCheck, faClock, faQuestion, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { AccordionModule } from 'primeng/accordion';
 import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-badge/league-badge.component';
 import dayjs from 'dayjs/esm';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LeagueIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/league-icon.component';
 
 @Component({
     selector: 'jhi-course-training',
@@ -27,9 +29,11 @@ import { ButtonModule } from 'primeng/button';
         FormsModule,
         FontAwesomeModule,
         ToggleSwitchModule,
-        AccordionModule,
         LeagueBadgeComponent,
         ButtonModule,
+        TooltipModule,
+        ArtemisTranslatePipe,
+        LeagueIconComponent,
     ],
     templateUrl: './course-training.component.html',
     styleUrl: './course-training.component.scss',

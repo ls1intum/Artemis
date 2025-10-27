@@ -66,6 +66,7 @@
         "papaparse": "5.5.3",
         "pdf-lib": "1.17.1",
         "pdfjs-dist": "5.4.296",
+        "primeicons": "^7.0.0",
         "primeng": "20.2.0",
         "rxjs": "7.8.2",
         "simple-statistics": "7.8.8",

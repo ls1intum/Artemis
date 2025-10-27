@@ -231,7 +231,6 @@
             "quizTrainingSettings": {
                 "quizTraining": "Quiz Training",
                 "leaderboardSettings": "Leaderboard Settings",
-                "leaderboardVisibility": "Show name in leaderboard",
                 "leaderboardVisibilityTooltip": "Determines if your name and results are shown in the Quiz Training leaderboard",
                 "leaderboardVisibilityInfo": "When enabled, your name will appear in the Quiz Training leaderboard. Disable this option if you don't want to appear in the leaderboard.",
                 "visitQuizTrainingFirst": "Please visit the Quiz Training mode first to enable leaderboard settings.",

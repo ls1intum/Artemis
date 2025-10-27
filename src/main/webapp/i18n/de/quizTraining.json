@@ -7,17 +7,16 @@
             "totalQuestions": "Gesamtanzahl an Fragen",
             "howItWorks": {
                 "title": "Wie das Training funktioniert",
-                "content": "Im Trainingsmodus kannst du alle für das Training freigegebenen Quiz-Fragen einzeln üben. Die Fragen werden mithilfe eines Wiederholungsalgorithmus (Spaced Repetition) ausgewählt, um deine Lernerfahrung zu optimieren. Falls aktuell keine Fragen fällig sind, kannst du trotzdem trainieren, aber deine Antworten beeinflussen weder deinen Leaderboard-Punktestand noch den Wiederholungsalgorithmus."
+                "content": "Übe Quiz-Fragen einzeln in einem Spaced-Repetition-System. Wenn keine Fragen fällig sind, kannst du trotzdem im ungewerteten Modus trainieren, was das Leaderboard nicht beeinflusst."
             },
             "leagues": {
                 "title": "Ligen und Ranglisten",
-                "content": "Du kannst an einem Leaderboard teilnehmen, das deinen Punktestand im Vergleich zu anderen Studenten zeigt. Es gibt 5 Ligen (Bronze, Silber, Gold, Diamant und Master), jede mit eigenem Leaderboard. Du kannst die Einstellungen für den Trainingsmodus in den Benutzereinstellungen ändern."
+                "content": "Du kannst auf einem Leaderboard gegen andere Studenten in der gleichen Liga antreten. Die Einstellungen für das Leaderboard können in den Benutzereinstellungen geändern werden."
             },
             "scoring": {
-                "title": "Punktesystem",
                 "content": "Beantworte Fragen richtig, um Punkte zu sammeln und in höhere Ligen aufzusteigen. Je öfter eine Frage am Stück richtig beantwortet wird, desto mehr Punkte erhältst du dafür."
             },
-            "showInLeaderboard": "Im Leaderboard anzeigen",
+            "showInLeaderboard": "Meinen Namen im Quiz Leaderboard anzeigen",
             "bronzeLeague": "Bronze Liga",
             "silverLeague": "Silber Liga",
             "goldLeague": "Gold Liga",
@@ -32,7 +31,13 @@
             "wrongQuestions": "falsche Antworten",
             "theQuizTraining": "Der Quiz Trainingsmodus",
             "save": "Speichern",
-            "infoButton": "Beschreibung anzeigen"
+            "infoButton": "Beschreibung anzeigen",
+            "bronze": "Bronze",
+            "silver": "Silver",
+            "gold": "Gold",
+            "diamond": "Diamond",
+            "master": "Master",
+            "leaderboardSetting": "Einstellungen für die Bestenliste"
         }
     }
 }

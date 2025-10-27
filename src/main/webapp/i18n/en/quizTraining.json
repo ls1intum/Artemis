@@ -7,17 +7,16 @@
             "totalQuestions": "Total questions",
             "howItWorks": {
                 "title": "How Training Works",
-                "content": "In the training mode, you can practice all quiz questions released for practice one question at a time. Questions are selected using a spaced repetition algorithm to optimize your learning experience. If there are currently no questions due, you can still train, but your answers will not affect your leaderboard score or the spaced repetition algorithm."
+                "content": "Practice quiz questions in a spaced repetition system one question at a time. If there are no questions due, you can still practice in the unrated mode, which will not affect the leaderboard."
             },
             "leagues": {
-                "title": "Leagues and Rankings",
-                "content": "You can participate in a leaderboard that shows your score compared to other students. There are 5 leagues (Bronze, Silver, Gold, Diamond, and Master), each with its own leaderboard. You can change the settings for the training mode in the user settings."
+                "title": "Leagues and Scoring",
+                "content": "You can participate in a leaderboard against other students in the same league. The settings for the leaderboard can be changed in the user settings."
             },
             "scoring": {
-                "title": "Scoring System",
                 "content": "Answer questions correctly to collect points and rank up to higher leagues. The more often a question is answered correctly in a row, the more points you earn for it."
             },
-            "showInLeaderboard": "Show in leaderboard",
+            "showInLeaderboard": "Show my name in the quiz leaderboard",
             "bronzeLeague": "Bronze league",
             "silverLeague": "Silver league",
             "goldLeague": "Gold league",
@@ -32,7 +31,14 @@
             "wrongQuestions": "wrong answers",
             "theQuizTraining": "The Quiz Training Mode",
             "save": "Save",
-            "infoButton": "View description"
+            "infoButton": "View description",
+            "allLeagues": "All leagues",
+            "bronze": "Bronze",
+            "silver": "Silver",
+            "gold": "Gold",
+            "diamond": "Diamond",
+            "master": "Master",
+            "leaderboardSetting": "Leaderboard Settings"
         }
     }
 }
