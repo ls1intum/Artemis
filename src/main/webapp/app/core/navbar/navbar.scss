@@ -41,6 +41,11 @@ a:not(.btn):hover {
 }
 
 .jh-navbar {
+    padding: 0.2em 1rem;
+}
+
+.jh-navbar,
+.server-administration {
     background-color: var(--artemis-dark);
     white-space: nowrap;
     padding: 0.2em 1rem;
