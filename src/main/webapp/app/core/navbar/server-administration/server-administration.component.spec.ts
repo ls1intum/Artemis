@@ -8,8 +8,12 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { Component } from '@angular/core';
 
-describe('ServerAdministration', () => {
+@Component({ template: '' })
+class MockEmptyComponent {}
+
+describe('ServerAdministrationComponent', () => {
     let component: ServerAdministrationComponent;
     let fixture: ComponentFixture<ServerAdministrationComponent>;
 
@@ -17,10 +21,10 @@ describe('ServerAdministration', () => {
         await TestBed.configureTestingModule({
             imports: [
                 ServerAdministrationComponent,
-                RouterTestingModule,
                 TranslateModule.forRoot(),
                 MockDirective(HasAnyAuthorityDirective),
                 MockComponent(FeatureOverlayComponent),
+                RouterTestingModule.withRoutes([{ path: '**', component: MockEmptyComponent }]),
             ],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
@@ -46,10 +50,14 @@ describe('ServerAdministration', () => {
         fixture.detectChanges();
 
         const dropdownItem = fixture.debugElement.query(By.css('a[routerLink]'));
-        if (dropdownItem) {
-            dropdownItem.triggerEventHandler('click', null);
-            expect(collapseNavbarSpy).toHaveBeenCalled();
-        }
+        expect(dropdownItem).toBeTruthy();
+
+        const mockClickEvent = {
+            button: 0, // Simulates a primary (left) mouse click
+            preventDefault: () => {},
+        };
+        dropdownItem.triggerEventHandler('click', mockClickEvent);
+        expect(collapseNavbarSpy).toHaveBeenCalled();
     });
 
     it('should handle input properties correctly', () => {
