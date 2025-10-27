@@ -18,7 +18,7 @@
             <column name="type" type="ENUM('USER', 'ASSISTANT', 'SYSTEM', 'TOOL')">
                 <constraints nullable="false"/>
             </column>
-            <column name="timestamp" type="datetime(3)">
+            <column name="timestamp" type="timestamp(3))">
                 <constraints nullable="false"/>
             </column>
         </createTable>
