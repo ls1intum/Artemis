@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.quiz.service.ai.dto;
+package de.tum.cit.aet.artemis.hyperion.service.quiz.ai.dto;
 
 public enum AiQuestionSubtype {
     MULTI_CORRECT,   // multiple-choice (>=1 correct)
