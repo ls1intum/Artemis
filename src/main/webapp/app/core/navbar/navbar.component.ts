@@ -79,20 +79,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faSignOutAlt = faSignOutAlt;
     protected readonly faChevronRight = faChevronRight;
 
-    private accountService = inject(AccountService);
-    private loginService = inject(LoginService);
-    private translateService = inject(TranslateService);
-    private profileService = inject(ProfileService);
-    private participationWebsocketService = inject(ParticipationWebsocketService);
-    private router = inject(Router);
-    private route = inject(ActivatedRoute);
-    private examParticipationService = inject(ExamParticipationService);
-    private serverDateService = inject(ArtemisServerDateService);
-    private alertService = inject(AlertService);
-    private exerciseService = inject(ExerciseService);
-    private entityTitleService = inject(EntityTitleService);
-    private titleService = inject(Title);
-    private featureToggleService = inject(FeatureToggleService);
+    private readonly accountService = inject(AccountService);
+    private readonly loginService = inject(LoginService);
+    private readonly translateService = inject(TranslateService);
+    private readonly profileService = inject(ProfileService);
+    private readonly participationWebsocketService = inject(ParticipationWebsocketService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly examParticipationService = inject(ExamParticipationService);
+    private readonly serverDateService = inject(ArtemisServerDateService);
+    private readonly alertService = inject(AlertService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly entityTitleService = inject(EntityTitleService);
+    private readonly titleService = inject(Title);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     inProduction: boolean;
     testServer: boolean;
