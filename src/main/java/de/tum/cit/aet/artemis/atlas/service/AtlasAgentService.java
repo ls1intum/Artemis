@@ -5,11 +5,13 @@ import java.util.concurrent.CompletableFuture;
 
 import jakarta.annotation.Nullable;
 
+import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,9 @@ public class AtlasAgentService {
     private final ChatMemory chatMemory;
 
     private final AtlasAgentToolsService atlasAgentToolsService;
+
+    @Value("${artemis.atlas.chat-model}")
+    private String chatModel;
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
             @Nullable ChatMemory chatMemory, @Nullable AtlasAgentToolsService atlasAgentToolsService) {
@@ -60,7 +65,9 @@ public class AtlasAgentService {
             Map<String, String> variables = Map.of();
             String systemPrompt = templateService.render(resourcePath, variables);
 
-            ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message));
+            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(chatModel).build();
+
+            ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message)).options(options);
 
             // Add chat memory advisor
             if (chatMemory != null) {

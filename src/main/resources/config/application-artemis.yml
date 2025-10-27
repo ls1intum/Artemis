@@ -89,6 +89,9 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
+  atlas:
+    enabled: false  # Set this to true to enable the atlas service on startup, requires Spring AI to be configured below.
+    chat-model: gpt-4o
 
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
@@ -126,7 +129,6 @@ spring:
         # deployment-name should match the Azure OpenAI deployment
         chat:
           options:
-            model: gpt-4o
             deployment-name: <azure_openai_deployment_name or openai_model_name>
             # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
             temperature: 1.0
