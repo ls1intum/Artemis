@@ -53,6 +53,7 @@ public class ZipFileService {
      * @throws IOException if an error occurred while zipping
      */
     public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
+        log.debug("Creating zip file at {} for paths: {}", zipFilePath, paths);
         try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
             for (var path : paths) {
                 if (Files.isReadable(path) && !Files.isDirectory(path)) {

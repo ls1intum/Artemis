@@ -124,7 +124,7 @@ public class CalendarSubscriptionService {
 
         String stableUniqueEventKey = calendarEventDTO.id() + "|" + artemisServerUrl;
         UUID uuid = UUID.nameUUIDFromBytes(stableUniqueEventKey.getBytes(StandardCharsets.UTF_8));
-        event.add(new Uid("urn:uuid:" + uuid.toString()));
+        event.add(new Uid("urn:uuid:" + uuid));
 
         if (calendarEventDTO.location() != null) {
             event.add(new Location(calendarEventDTO.location()));
