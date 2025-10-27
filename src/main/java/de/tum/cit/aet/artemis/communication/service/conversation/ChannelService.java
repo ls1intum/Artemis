@@ -187,7 +187,7 @@ public class ChannelService {
      */
     public void deleteChannel(@Nullable Channel channel) {
         if (channel != null) {
-            conversationService.deleteConversation(channel);
+            conversationService.deleteConversation(channel.getId());
         }
     }
 
@@ -467,5 +467,12 @@ public class ChannelService {
         }
 
         return createdChannel;
+    }
+
+    public void deleteChannelForExerciseId(long exerciseId) {
+        Long exerciseChannelId = channelRepository.findChannelIdByExerciseId(exerciseId);
+        if (exerciseChannelId != null) {
+            conversationService.deleteConversation(exerciseChannelId);
+        }
     }
 }
