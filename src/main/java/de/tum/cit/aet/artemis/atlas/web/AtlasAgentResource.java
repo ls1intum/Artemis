@@ -59,13 +59,6 @@ public class AtlasAgentResource {
     @PostMapping("courses/{courseId}/chat")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<AtlasAgentChatResponseDTO> sendChatMessage(@PathVariable Long courseId, @Valid @RequestBody AtlasAgentChatRequestDTO request) {
-
-        // Validate sessionId is provided
-        if (request.sessionId() == null || request.sessionId().isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(new AtlasAgentChatResponseDTO("Session ID is required for maintaining conversation context.", null, ZonedDateTime.now(), false, false));
-        }
-
         try {
             final var future = atlasAgentService.processChatMessage(request.message(), courseId, request.sessionId());
             final AgentChatResult result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
