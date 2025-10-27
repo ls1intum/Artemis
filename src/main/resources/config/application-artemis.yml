@@ -126,6 +126,7 @@ spring:
         # deployment-name should match the Azure OpenAI deployment
         chat:
           options:
+            model: gpt-4o
             deployment-name: <azure_openai_deployment_name or openai_model_name>
             # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
             temperature: 1.0

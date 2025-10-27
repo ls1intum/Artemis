@@ -5,7 +5,6 @@ import java.util.concurrent.CompletableFuture;
 
 import jakarta.annotation.Nullable;
 
-import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -57,14 +56,11 @@ public class AtlasAgentService {
     public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
         try {
 
-            // Load system prompt from external template
             String resourcePath = "/prompts/atlas/agent_system_prompt.st";
-            Map<String, String> variables = Map.of(); // No variables needed for this template
+            Map<String, String> variables = Map.of();
             String systemPrompt = templateService.render(resourcePath, variables);
 
-            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").build();
-
-            ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message)).options(options);
+            ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message));
 
             // Add chat memory advisor
             if (chatMemory != null) {
