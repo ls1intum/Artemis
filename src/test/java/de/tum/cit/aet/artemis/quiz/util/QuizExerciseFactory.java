@@ -166,7 +166,6 @@ public class QuizExerciseFactory {
         sa.setRandomizeOrder(true);
         // invoke some util methods
         sa.copyQuestionId();
-        sa.setRandomizeOrder(true);
         return sa;
     }
 
