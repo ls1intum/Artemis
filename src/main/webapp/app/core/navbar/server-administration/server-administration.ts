@@ -1,4 +1,4 @@
-import { Component, OnInit, input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -43,7 +43,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     templateUrl: './server-administration.html',
     styleUrl: '../navbar.scss',
 })
-export class ServerAdministration implements OnInit {
+export class ServerAdministration {
     protected readonly faUniversity = faUniversity;
     protected readonly faStamp = faStamp;
     protected readonly faTasks = faTasks;
