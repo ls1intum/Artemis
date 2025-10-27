@@ -4,11 +4,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ServerAdministrationComponent } from './server-administration.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 
 @Component({ template: '' })
 class MockEmptyComponent {}
@@ -22,7 +23,6 @@ describe('ServerAdministrationComponent', () => {
             imports: [
                 ServerAdministrationComponent,
                 TranslateModule.forRoot(),
-                MockDirective(HasAnyAuthorityDirective),
                 MockComponent(FeatureOverlayComponent),
                 RouterTestingModule.withRoutes([{ path: '**', component: MockEmptyComponent }]),
             ],
