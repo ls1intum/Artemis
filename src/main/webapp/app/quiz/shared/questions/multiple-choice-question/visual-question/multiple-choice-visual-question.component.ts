@@ -88,8 +88,8 @@ export class MultipleChoiceVisualQuestionComponent {
         const answerOption = this.question().answerOptions![index];
         if (!answerOption.invalid) {
             answerOption.invalid = true;
+            this.questionChanged.emit();
         }
-        this.questionChanged.emit();
     }
 
     toggleIsCorrect(answerOption: AnswerOption) {
