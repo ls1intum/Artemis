@@ -666,12 +666,12 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should get images from drop locations', fakeAsync(() => {
-        const q = component.question();
-        q.backgroundFilePath = 'bg.png';
+        const dragAndDropQuestion = component.question();
+        dragAndDropQuestion.backgroundFilePath = 'bg.png';
         component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
-        q.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
-        q.correctMappings = [];
-        q.dragItems = [];
+        dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
+        dragAndDropQuestion.correctMappings = [];
+        dragAndDropQuestion.dragItems = [];
 
         const mockContext = {
             drawImage: jest.fn(),
@@ -709,10 +709,10 @@ describe('DragAndDropQuestionEditComponent', () => {
         });
 
         const createImageDragItemSpy = jest.spyOn(component, 'createImageDragItemFromFile').mockImplementation((file: File) => {
-            const di = new DragItem();
-            di.pictureFilePath = file.name;
-            q.dragItems!.push(di);
-            return di;
+            const dragItem = new DragItem();
+            dragItem.pictureFilePath = file.name;
+            dragAndDropQuestion.dragItems!.push(dragItem);
+            return dragItem;
         });
 
         const blankOutSpy = jest.spyOn(component, 'blankOutBackgroundImage').mockImplementation(() => {});
@@ -725,16 +725,16 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(canvasSpy).toHaveBeenCalledTimes(2);
         expect(mockCanvas.toDataURL).toHaveBeenCalledTimes(2);
         expect(createImageDragItemSpy).toHaveBeenCalledTimes(2);
-        expect(q.dragItems).toBeArrayOfSize(2);
-        expect(q.correctMappings).toBeArrayOfSize(2);
+        expect(dragAndDropQuestion.dragItems).toBeArrayOfSize(2);
+        expect(dragAndDropQuestion.correctMappings).toBeArrayOfSize(2);
         expect(blankOutSpy).toHaveBeenCalledOnce();
     }));
 
     it('should blank out background image', fakeAsync(() => {
-        const q = component.question();
-        q.backgroundFilePath = 'bg.png';
+        const dragAndDropQuestion = component.question();
+        dragAndDropQuestion.backgroundFilePath = 'bg.png';
         component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
-        q.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
+        dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
 
         const mockContext = {
             drawImage: jest.fn(),

@@ -172,6 +172,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return recalculationNecessary;
     }
 
+    private static boolean shouldSetInvalid(boolean originalInvalid, boolean newInvalid, Long id, String itemType) {
+        if (originalInvalid && !newInvalid) {
+            throw new BadRequestAlertException("The " + itemType + " with id " + id + " is marked as invalid and cannot be set to valid again", ENTITY_NAME, null);
+        }
+        return !originalInvalid && newInvalid;
+    }
+
     private static boolean applyDropLocationsFromDTO(List<DropLocationReEvaluateDTO> dropLocationDTOs, List<DropLocation> originalDropLocations) {
         boolean recalculationNecessary = false;
         List<DropLocation> dropLocationsToRemove = new ArrayList<>();
@@ -183,11 +190,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
             else {
-                if (originalDropLocation.isInvalid() && !dropLocationDTO.invalid()) {
-                    throw new BadRequestAlertException("The drop location with id " + dropLocationDTO.id() + " is marked as invalid and cannot be set to valid again", ENTITY_NAME,
-                            "dropLocationInvalid");
-                }
-                if (!originalDropLocation.isInvalid() && dropLocationDTO.invalid()) {
+                if (shouldSetInvalid(originalDropLocation.isInvalid(), dropLocationDTO.invalid(), dropLocationDTO.id(), "drop location")) {
                     recalculationNecessary = true;
                     originalDropLocation.setInvalid(true);
                 }
@@ -208,19 +211,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
             else {
-                if (originalDragItem.isInvalid() && !dragItemDTO.invalid()) {
-                    throw new BadRequestAlertException("The drag item with id " + dragItemDTO.id() + " is marked as invalid and cannot be set to valid again", ENTITY_NAME,
-                            "dragItemInvalid");
-                }
-                if (!originalDragItem.isInvalid() && dragItemDTO.invalid()) {
+                if (shouldSetInvalid(originalDragItem.isInvalid(), dragItemDTO.invalid(), dragItemDTO.id(), "drag item")) {
                     recalculationNecessary = true;
                     originalDragItem.setInvalid(true);
                 }
                 if (dragItemDTO.text() == null && dragItemDTO.pictureFilePath() == null) {
-                    throw new BadRequestAlertException("The drag item with id " + dragItemDTO.id() + " has no text or picture", ENTITY_NAME, "dragItemNoTextOrPicture");
+                    throw new BadRequestAlertException("The drag item with id " + dragItemDTO.id() + " has no text or picture", ENTITY_NAME, null);
                 }
                 if (dragItemDTO.text() != null && dragItemDTO.pictureFilePath() != null) {
-                    throw new BadRequestAlertException("The drag item with id " + dragItemDTO.id() + " has both text and picture", ENTITY_NAME, "dragItemTextAndPicture");
+                    throw new BadRequestAlertException("The drag item with id " + dragItemDTO.id() + " has both text and picture", ENTITY_NAME, null);
                 }
                 originalDragItem.setText(dragItemDTO.text());
                 originalDragItem.setPictureFilePath(dragItemDTO.pictureFilePath());
@@ -248,10 +247,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     .anyMatch(mapping -> mapping.getDragItem().getId().equals(mappingDTO.dragItemId()) && mapping.getDropLocation().getId().equals(mappingDTO.dropLocationId()));
             if (!mappingExists) {
                 DragItem dragItem = originalQuestion.getDragItems().stream().filter(item -> item.getId().equals(mappingDTO.dragItemId())).findFirst()
-                        .orElseThrow(() -> new BadRequestAlertException("The drag item with id " + mappingDTO.dragItemId() + " does not exist", ENTITY_NAME, "dragItemNotFound"));
+                        .orElseThrow(() -> new BadRequestAlertException("The drag item with id " + mappingDTO.dragItemId() + " does not exist", ENTITY_NAME, null));
                 DropLocation dropLocation = originalQuestion.getDropLocations().stream().filter(location -> location.getId().equals(mappingDTO.dropLocationId())).findFirst()
-                        .orElseThrow(() -> new BadRequestAlertException("The drop location with id " + mappingDTO.dropLocationId() + " does not exist", ENTITY_NAME,
-                                "dropLocationNotFound"));
+                        .orElseThrow(() -> new BadRequestAlertException("The drop location with id " + mappingDTO.dropLocationId() + " does not exist", ENTITY_NAME, null));
                 DragAndDropMapping newMapping = new DragAndDropMapping();
                 newMapping.setDragItem(dragItem);
                 newMapping.setDropLocation(dropLocation);
@@ -273,11 +271,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             originalQuestion.setScoringType(dndDTO.scoringType());
         }
         originalQuestion.setRandomizeOrder(dndDTO.randomizeOrder());
-        if (originalQuestion.isInvalid() && !dndDTO.invalid()) {
-            throw new BadRequestAlertException("The drag and drop question with id " + dndDTO.id() + " is marked as invalid and cannot be set to valid again", ENTITY_NAME,
-                    "questionInvalid");
-        }
-        if (!originalQuestion.isInvalid() && dndDTO.invalid()) {
+        if (shouldSetInvalid(originalQuestion.isInvalid(), dndDTO.invalid(), dndDTO.id(), "drag and drop question")) {
             originalQuestion.setInvalid(Boolean.TRUE);
             recalculationNecessary = true;
         }
@@ -298,11 +292,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
             else {
-                if (originalAnswerOptionItem.isInvalid() && !answerOptionDTOItem.invalid()) {
-                    throw new BadRequestAlertException("The answer option with id " + answerOptionDTOItem.id() + " is marked as invalid and cannot be set to valid again",
-                            ENTITY_NAME, "answerOptionInvalid");
-                }
-                if (!originalAnswerOptionItem.isInvalid() && answerOptionDTOItem.invalid()) {
+                if (shouldSetInvalid(originalAnswerOptionItem.isInvalid(), answerOptionDTOItem.invalid(), answerOptionDTOItem.id(), "answer option")) {
                     recalculationNecessary = true;
                     originalAnswerOptionItem.setInvalid(Boolean.TRUE);
                 }
@@ -327,11 +317,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             originalQuestion.setScoringType(mcDTO.scoringType());
         }
         originalQuestion.setRandomizeOrder(mcDTO.randomizeOrder());
-        if (originalQuestion.isInvalid() && !mcDTO.invalid()) {
-            throw new BadRequestAlertException("The multiple choice question with id " + mcDTO.id() + " is marked as invalid and cannot be set to valid again", ENTITY_NAME,
-                    "questionInvalid");
-        }
-        if (!originalQuestion.isInvalid() && mcDTO.invalid()) {
+        if (shouldSetInvalid(originalQuestion.isInvalid(), mcDTO.invalid(), mcDTO.id(), "multiple choice question")) {
             originalQuestion.setInvalid(Boolean.TRUE);
             recalculationNecessary = true;
         }
@@ -354,11 +340,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
             else {
-                if (originalSolutionItem.isInvalid() && !solutionDTOItem.invalid()) {
-                    throw new BadRequestAlertException("The short answer solution with id " + solutionDTOItem.id() + " is marked as invalid and cannot be set to valid again",
-                            ENTITY_NAME, "solutionInvalid");
-                }
-                if (!originalSolutionItem.isInvalid() && solutionDTOItem.invalid()) {
+                if (shouldSetInvalid(originalSolutionItem.isInvalid(), solutionDTOItem.invalid(), solutionDTOItem.id(), "short answer solution")) {
                     recalculationNecessary = true;
                     originalSolutionItem.setInvalid(Boolean.TRUE);
                 }
@@ -367,10 +349,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         originalSolution.removeAll(solutionsToRemove);
         for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
             if (solutionDTO.id() == null && solutionDTO.tempID() == null) {
-                throw new BadRequestAlertException("A new short answer solution must have a tempID to identify it", ENTITY_NAME, "solutionTempIDMissing");
+                throw new BadRequestAlertException("A new short answer solution must have a tempID to identify it", ENTITY_NAME, null);
             }
             else if (solutionDTO.id() != null && solutionDTO.tempID() != null) {
-                throw new BadRequestAlertException("An existing short answer solution cannot have a tempID", ENTITY_NAME, "solutionTempIDExists");
+                throw new BadRequestAlertException("An existing short answer solution cannot have a tempID", ENTITY_NAME, null);
             }
             if (solutionDTO.tempID() != null) {
                 ShortAnswerSolution newSolution = new ShortAnswerSolution();
@@ -395,11 +377,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
             else {
-                if (originalSpot.isInvalid() && !spotDTO.invalid()) {
-                    throw new BadRequestAlertException("The short answer spot with id " + spotDTO.id() + " is marked as invalid and cannot be set to valid again", ENTITY_NAME,
-                            "spotInvalid");
-                }
-                if (!originalSpot.isInvalid() && spotDTO.invalid()) {
+                if (shouldSetInvalid(originalSpot.isInvalid(), spotDTO.invalid(), spotDTO.id(), "short answer spot")) {
                     recalculationNecessary = true;
                     originalSpot.setInvalid(Boolean.TRUE);
                 }
@@ -424,12 +402,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Set<ShortAnswerMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
         for (var mappingDTO : saDTO.correctMappings()) {
             if (mappingDTO.solutionId() == null && mappingDTO.solutionTempID() == null) {
-                throw new BadRequestAlertException("The short answer mapping for spot id " + mappingDTO.spotId() + " has no solutionId or solutionTempID", ENTITY_NAME,
-                        "mappingSolutionIDMissing");
+                throw new BadRequestAlertException("The short answer mapping for spot id " + mappingDTO.spotId() + " has no solutionId or solutionTempID", ENTITY_NAME, null);
             }
             if (mappingDTO.solutionId() != null && mappingDTO.solutionTempID() != null) {
-                throw new BadRequestAlertException("The short answer mapping for spot id " + mappingDTO.spotId() + " has both solutionId and solutionTempID", ENTITY_NAME,
-                        "mappingSolutionIDExists");
+                throw new BadRequestAlertException("The short answer mapping for spot id " + mappingDTO.spotId() + " has both solutionId and solutionTempID", ENTITY_NAME, null);
             }
             boolean mappingExists;
             if (mappingDTO.solutionTempID() != null) {
@@ -442,17 +418,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
             if (!mappingExists) {
                 ShortAnswerSpot spot = originalQuestion.getSpots().stream().filter(item -> item.getId().equals(mappingDTO.spotId())).findFirst()
-                        .orElseThrow(() -> new BadRequestAlertException("The short answer spot with id " + mappingDTO.spotId() + " does not exist", ENTITY_NAME, "spotNotFound"));
+                        .orElseThrow(() -> new BadRequestAlertException("The short answer spot with id " + mappingDTO.spotId() + " does not exist", ENTITY_NAME, null));
                 ShortAnswerSolution solution;
                 if (mappingDTO.solutionTempID() != null) {
-                    solution = originalQuestion.getSolutions().stream().filter(item -> Objects.equals(item.getTempID(), mappingDTO.solutionTempID())).findFirst()
-                            .orElseThrow(() -> new BadRequestAlertException("The short answer solution with tempID " + mappingDTO.solutionTempID() + " does not exist", ENTITY_NAME,
-                                    "solutionNotFound"));
+                    solution = originalQuestion.getSolutions().stream().filter(item -> Objects.equals(item.getTempID(), mappingDTO.solutionTempID())).findFirst().orElseThrow(
+                            () -> new BadRequestAlertException("The short answer solution with tempID " + mappingDTO.solutionTempID() + " does not exist", ENTITY_NAME, null));
                 }
                 else {
                     solution = originalQuestion.getSolutions().stream().filter(item -> item.getId().equals(mappingDTO.solutionId())).findFirst()
-                            .orElseThrow(() -> new BadRequestAlertException("The short answer solution with id " + mappingDTO.solutionId() + " does not exist", ENTITY_NAME,
-                                    "solutionNotFound"));
+                            .orElseThrow(() -> new BadRequestAlertException("The short answer solution with id " + mappingDTO.solutionId() + " does not exist", ENTITY_NAME, null));
                 }
                 ShortAnswerMapping newMapping = new ShortAnswerMapping();
                 newMapping.setSpot(spot);
@@ -473,11 +447,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             originalQuestion.setScoringType(shortAnswerQuestionDTO.scoringType());
         }
         originalQuestion.setRandomizeOrder(shortAnswerQuestionDTO.randomizeOrder());
-        if (originalQuestion.isInvalid() && !shortAnswerQuestionDTO.invalid()) {
-            throw new BadRequestAlertException("The short answer question with id " + shortAnswerQuestionDTO.id() + " is marked as invalid and cannot be set to valid again",
-                    ENTITY_NAME, "questionInvalid");
-        }
-        if (!originalQuestion.isInvalid() && shortAnswerQuestionDTO.invalid()) {
+        if (shouldSetInvalid(originalQuestion.isInvalid(), shortAnswerQuestionDTO.invalid(), shortAnswerQuestionDTO.id(), "short answer question")) {
             originalQuestion.setInvalid(Boolean.TRUE);
             recalculationNecessary = true;
         }
@@ -506,7 +476,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     DragAndDropQuestion originalQuestion = (DragAndDropQuestion) originalQuizExercise.getQuizQuestions().stream()
                             .filter(q -> q.getId().equals(dragAndDropQuestionReEvaluateDTO.id())).findFirst()
                             .orElseThrow(() -> new BadRequestAlertException("The drag and drop question with id " + dragAndDropQuestionReEvaluateDTO.id() + " does not exist",
-                                    ENTITY_NAME, "questionNotFound"));
+                                    ENTITY_NAME, null));
                     questionsChanged = applyDragAndDropQuestionFromDTO(dragAndDropQuestionReEvaluateDTO, originalQuestion) || questionsChanged;
                     newQuestions.add(originalQuestion);
                 }
@@ -514,7 +484,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     ShortAnswerQuestion originalQuestion = (ShortAnswerQuestion) originalQuizExercise.getQuizQuestions().stream()
                             .filter(q -> q.getId().equals(shortAnswerQuestionReEvaluateDTO.id())).findFirst()
                             .orElseThrow(() -> new BadRequestAlertException("The short answer question with id " + shortAnswerQuestionReEvaluateDTO.id() + " does not exist",
-                                    ENTITY_NAME, "questionNotFound"));
+                                    ENTITY_NAME, null));
                     questionsChanged = applyShortAnswerQuestionFromDTO(shortAnswerQuestionReEvaluateDTO, originalQuestion) || questionsChanged;
                     newQuestions.add(originalQuestion);
                 }
@@ -522,7 +492,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     MultipleChoiceQuestion originalQuestion = (MultipleChoiceQuestion) originalQuizExercise.getQuizQuestions().stream()
                             .filter(q -> q.getId().equals(multipleChoiceQuestionReEvaluateDTO.id())).findFirst()
                             .orElseThrow(() -> new BadRequestAlertException("The multiple choice question with id " + multipleChoiceQuestionReEvaluateDTO.id() + " does not exist",
-                                    ENTITY_NAME, "questionNotFound"));
+                                    ENTITY_NAME, null));
                     questionsChanged = applyMultipleChoiceQuestionFromDTO(multipleChoiceQuestionReEvaluateDTO, originalQuestion) || questionsChanged;
                     newQuestions.add(originalQuestion);
                 }
