@@ -219,8 +219,8 @@ describe('IrisSettingsUpdateComponent', () => {
 
         it('should set autoLectureIngestion and autoFaqIngestion flags', fakeAsync(() => {
             const settings = mockSettings();
-            settings.irisLectureIngestionSettings = { autoIngestOnLectureAttachmentUpload: false };
-            settings.irisFaqIngestionSettings = { autoIngestOnFaqCreation: false };
+            settings.irisLectureIngestionSettings = { autoIngestOnLectureAttachmentUpload: false, type: undefined as any, enabled: true };
+            settings.irisFaqIngestionSettings = { autoIngestOnFaqCreation: false, type: undefined as any, enabled: true };
             getGlobalSettingsSpy.mockReturnValue(of(settings));
             component.settingsType = IrisSettingsType.GLOBAL;
 
@@ -264,8 +264,8 @@ describe('IrisSettingsUpdateComponent', () => {
         beforeEach(() => {
             alertService = TestBed.inject(AlertService);
             component.irisSettings = mockSettings();
-            component.irisSettings.irisLectureIngestionSettings = { autoIngestOnLectureAttachmentUpload: true };
-            component.irisSettings.irisFaqIngestionSettings = { autoIngestOnFaqCreation: true };
+            component.irisSettings.irisLectureIngestionSettings = { autoIngestOnLectureAttachmentUpload: true, type: undefined as any, enabled: true };
+            component.irisSettings.irisFaqIngestionSettings = { autoIngestOnFaqCreation: true, type: undefined as any, enabled: true };
         });
 
         it('should set ingestion flags before saving', fakeAsync(() => {
@@ -359,7 +359,9 @@ describe('IrisSettingsUpdateComponent', () => {
             component.originalIrisSettings = mockSettings();
             component.isDirty = false;
 
-            component.irisSettings!.enabled = false;
+            if (component.irisSettings!.irisProgrammingExerciseChatSettings) {
+                component.irisSettings!.irisProgrammingExerciseChatSettings.enabled = false;
+            }
 
             component.ngDoCheck();
 
