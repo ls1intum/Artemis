@@ -40,10 +40,10 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         RouterLinkActive,
         RouterLink,
     ],
-    templateUrl: './server-administration.html',
+    templateUrl: './server-administration.component.html',
     styleUrl: '../navbar.scss',
 })
-export class ServerAdministration {
+export class ServerAdministrationComponent {
     protected readonly faUniversity = faUniversity;
     protected readonly faStamp = faStamp;
     protected readonly faTasks = faTasks;
