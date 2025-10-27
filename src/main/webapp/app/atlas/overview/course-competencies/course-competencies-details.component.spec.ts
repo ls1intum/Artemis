@@ -58,7 +58,6 @@ describe('CourseCompetenciesDetails', () => {
             declarations: [
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(MockHasAnyAuthorityDirective),
                 MockComponent(AttachmentVideoUnitComponent),
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(TextUnitComponent),
