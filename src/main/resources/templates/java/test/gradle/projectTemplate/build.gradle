@@ -5,10 +5,14 @@ plugins {
     id 'com.github.spotbugs' version '6.1.0'
     // %static-code-analysis-stop%
     id 'com.teamscale' version '34.2.1'
+    id 'java'
 }
 
-apply plugin: 'java'
-sourceCompatibility = 17
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
 version = '1.0.0'
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
@@ -19,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.13.0'
+    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0'
     implementation 'org.apache.commons:commons-lang3:3.18.0'
 
     // testImplementation(':${exerciseNamePomXml}')
@@ -158,7 +162,7 @@ pmd {
     ruleSets = ["$scaConfigDirectory/pmd-configuration.xml"]
     rulesMinimumPriority = 5
     ignoreFailures = true
-    toolVersion = '7.2.0'
+    toolVersion = '7.16.0'
     // exclude the test files
     pmdTest.enabled = false
     pmdMain.reports {

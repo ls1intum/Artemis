@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -58,6 +59,7 @@ import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -73,8 +75,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
-import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
+import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -90,6 +91,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -106,11 +108,17 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -183,6 +191,12 @@ public class ExamService {
     @Value("${artemis.course-archives-path}")
     private Path examArchivesDirPath;
 
+    private final QuizQuestionRepository quizQuestionRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
@@ -190,7 +204,9 @@ public class ExamService {
             CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
             AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
-            QuizResultService quizResultService, ExerciseRepository exerciseRepository) {
+            QuizResultService quizResultService, ExerciseRepository exerciseRepository, QuizQuestionRepository quizQuestionRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -215,6 +231,9 @@ public class ExamService {
         this.defaultObjectMapper = new ObjectMapper();
         this.quizResultService = quizResultService;
         this.exerciseRepository = exerciseRepository;
+        this.quizQuestionRepository = quizQuestionRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
     private static boolean isSecondCorrectionEnabled(Exam exam) {
@@ -292,8 +311,152 @@ public class ExamService {
             return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         }
         else {
-            return examRepository.findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(examId);
+            return findWithExerciseGroupsAndExercisesAndDetailsByIdElseThrow(examId);
         }
+    }
+
+    /**
+     * Loads an {@link Exam} with its exercise groups, exercises, and exercise-specific details.
+     * <p>
+     * For quiz exercises, this also loads and attaches their {@link QuizQuestion}s.
+     * For programming exercises, this loads and attaches template/solution participations along with
+     * the latest {@link Result} for each participation's latest submission.
+     *
+     * @param examId the id of the exam
+     * @return the fully populated exam
+     * @throws EntityNotFoundException if the exam does not exist
+     */
+    private Exam findWithExerciseGroupsAndExercisesAndDetailsByIdElseThrow(long examId) {
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+
+        Set<QuizExercise> quizExercises = getAllExercisesForExamByType(exam, QuizExercise.class);
+        Set<ProgrammingExercise> programmingExercises = getAllExercisesForExamByType(exam, ProgrammingExercise.class);
+
+        populateQuizQuestions(quizExercises);
+        populateProgrammingExerciseParticipationsAndResults(programmingExercises);
+
+        return exam;
+    }
+
+    /**
+     * Loads all {@link QuizQuestion}s for the provided quiz exercises and attaches them
+     * to their respective {@link QuizExercise}.
+     *
+     * @param quizExercises the quiz exercises to enrich
+     */
+    private void populateQuizQuestions(Set<QuizExercise> quizExercises) {
+        if (quizExercises == null || quizExercises.isEmpty()) {
+            return;
+        }
+
+        Set<Long> quizExerciseIds = quizExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
+
+        Set<QuizQuestion> quizQuestions = quizQuestionRepository.findAllByExerciseIds(quizExerciseIds);
+
+        Map<Long, List<QuizQuestion>> questionsByExerciseId = quizQuestions.stream().filter(q -> q.getExercise() != null && q.getExercise().getId() != null)
+                .collect(Collectors.groupingBy(q -> q.getExercise().getId()));
+
+        quizExercises.forEach(qe -> qe.setQuizQuestions(questionsByExerciseId.getOrDefault(qe.getId(), List.of())));
+    }
+
+    /**
+     * For each {@link ProgrammingExercise}:
+     * <ul>
+     * <li>Loads and attaches template and solution participations (with their latest submission).</li>
+     * <li>Loads the latest {@link Result} for each participation's latest submission and attaches it to the submission.</li>
+     * </ul>
+     *
+     * @param programmingExercises the programming exercises to enrich
+     */
+    private void populateProgrammingExerciseParticipationsAndResults(Set<ProgrammingExercise> programmingExercises) {
+        if (programmingExercises == null || programmingExercises.isEmpty()) {
+            return;
+        }
+
+        Set<Long> programmingExerciseIds = programmingExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
+
+        Set<TemplateProgrammingExerciseParticipation> templateParticipations = templateProgrammingExerciseParticipationRepository
+                .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
+
+        Set<SolutionProgrammingExerciseParticipation> solutionParticipations = solutionProgrammingExerciseParticipationRepository
+                .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
+
+        attachParticipationsToExercises(programmingExercises, templateParticipations, solutionParticipations);
+
+        Map<Long, Result> latestTemplateResults = loadLatestResultsBySubmissionIdForParticipations(templateParticipations);
+        Map<Long, Result> latestSolutionResults = loadLatestResultsBySubmissionIdForParticipations(solutionParticipations);
+
+        attachResultsToSubmissions(programmingExercises, latestTemplateResults, latestSolutionResults);
+    }
+
+    /**
+     * Attaches template and solution participations to their corresponding programming exercises.
+     */
+    private void attachParticipationsToExercises(Set<ProgrammingExercise> programmingExercises, Set<TemplateProgrammingExerciseParticipation> templateParticipations,
+            Set<SolutionProgrammingExerciseParticipation> solutionParticipations) {
+        Map<Long, TemplateProgrammingExerciseParticipation> templateByExerciseId = templateParticipations.stream()
+                .filter(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise() != null
+                        && templateProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
+                .collect(Collectors.toMap(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise().getId(),
+                        Function.identity(), (a, b) -> a));
+
+        Map<Long, SolutionProgrammingExerciseParticipation> solutionByExerciseId = solutionParticipations.stream()
+                .filter(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise() != null
+                        && solutionProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
+                .collect(Collectors.toMap(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise().getId(),
+                        Function.identity(), (a, b) -> a));
+
+        programmingExercises.forEach(exercise -> {
+            if (templateByExerciseId.containsKey(exercise.getId())) {
+                exercise.setTemplateParticipation(templateByExerciseId.get(exercise.getId()));
+            }
+            if (solutionByExerciseId.containsKey(exercise.getId())) {
+                exercise.setSolutionParticipation(solutionByExerciseId.get(exercise.getId()));
+            }
+        });
+    }
+
+    /**
+     * Attaches the latest results to submissions of both template and solution participations.
+     */
+    private void attachResultsToSubmissions(Set<ProgrammingExercise> programmingExercises, Map<Long, Result> latestTemplateResults, Map<Long, Result> latestSolutionResults) {
+        programmingExercises.forEach(ex -> {
+            if (ex.getSolutionParticipation() != null && ex.getSolutionParticipation().getSubmissions() != null) {
+                ex.getSolutionParticipation().getSubmissions().forEach(sub -> {
+                    Result result = latestSolutionResults.get(sub.getId());
+                    if (result != null) {
+                        sub.setResults(List.of(result));
+                    }
+                });
+            }
+            if (ex.getTemplateParticipation() != null && ex.getTemplateParticipation().getSubmissions() != null) {
+                ex.getTemplateParticipation().getSubmissions().forEach(sub -> {
+                    Result result = latestTemplateResults.get(sub.getId());
+                    if (result != null) {
+                        sub.setResults(List.of(result));
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Loads the latest {@link Result}s for the given set of participations and returns a map keyed by
+     * the corresponding submission id.
+     *
+     * @param participations the participations whose latest results should be loaded
+     * @return map of submission id -&gt; latest result
+     */
+    private Map<Long, Result> loadLatestResultsBySubmissionIdForParticipations(Set<? extends Participation> participations) {
+        if (participations == null || participations.isEmpty()) {
+            return Map.of();
+        }
+
+        Set<Long> participationIds = participations.stream().map(DomainObject::getId).collect(Collectors.toSet());
+
+        return resultRepository.findLatestResultsByParticipationIds(participationIds).stream()
+                .filter(result -> result.getSubmission() != null && result.getSubmission().getId() != null)
+                .collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity(), (r1, r2) -> r1));
     }
 
     /**
@@ -1400,11 +1563,13 @@ public class ExamService {
      *
      * @param courseId      the ID of the course
      * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @param language      the language that will be used add context information to titles (e.g. the title of an event representing the student review start will be prefixed with
+     *                          "Review Start: ")
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent) {
-        Set<ExamCalendarEventDTO> daos = examRepository.getExamCalendarEventDAOsForCourseId(courseId);
-        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent, Language language) {
+        Set<ExamCalendarEventDTO> dtos = examRepository.getExamCalendarEventDTOsForCourseId(courseId);
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
     }
 
     /**
@@ -1420,22 +1585,36 @@ public class ExamService {
      *
      * @param dto           the DTO for which to derive the events
      * @param userIsStudent indicates whether the logged-in user is student of the course associated to the exam
+     * @param language      the language that will be used add context information to titles (e.g. the title of an event representing the student review start will be prefixed with
+     *                          "Review Start: ")
      * @return the derived events
      */
-    private Set<CalendarEventDTO> deriveCalendarEventDTOs(ExamCalendarEventDTO dto, boolean userIsStudent) {
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(ExamCalendarEventDTO dto, boolean userIsStudent, Language language) {
         Set<CalendarEventDTO> events = new HashSet<>();
         boolean userIsCourseStaff = !userIsStudent;
         if (userIsCourseStaff || dto.visibleDate().isBefore(now())) {
-            events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, dto.title(), dto.startDate(), dto.endDate(), null,
+            events.add(new CalendarEventDTO("examStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.EXAM, dto.title(), dto.startDate(), dto.endDate(), null,
                     dto.examiner()));
             if (dto.publishResultsDate() != null) {
-                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.PUBLISH_RESULTS_DATE, dto.title(), dto.publishResultsDate(), null, null,
-                        null));
+                String publishResultsDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Results Release: ";
+                    case GERMAN -> "Veröffentlichung Ergebnisse: ";
+                };
+                events.add(new CalendarEventDTO("examPublishResultsEvent-" + dto.originEntityId(), CalendarEventType.EXAM, publishResultsDateTitlePrefix + dto.title(),
+                        dto.publishResultsDate(), null, null, null));
                 if (dto.studentReviewStart() != null) {
-                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_START_DATE, dto.title(), dto.studentReviewStart(), null,
-                            null, null));
-                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_END_DATE, dto.title(), dto.studentReviewEnd(), null,
-                            null, null));
+                    String studentReviewStartDateTitlePrefix = switch (language) {
+                        case ENGLISH -> "Review Start: ";
+                        case GERMAN -> "Einsicht Start: ";
+                    };
+                    events.add(new CalendarEventDTO("examReviewStartEvent-" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewStartDateTitlePrefix + dto.title(),
+                            dto.studentReviewStart(), null, null, null));
+                    String studentReviewEndDateTitlePrefix = switch (language) {
+                        case ENGLISH -> "Review End: ";
+                        case GERMAN -> "Einsicht Ende: ";
+                    };
+                    events.add(new CalendarEventDTO("examReviewEndEvent-" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewEndDateTitlePrefix + dto.title(),
+                            dto.studentReviewEnd(), null, null, null));
                 }
             }
         }

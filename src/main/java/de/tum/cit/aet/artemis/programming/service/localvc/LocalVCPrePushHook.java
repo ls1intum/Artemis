@@ -30,13 +30,9 @@ import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
  * Contains an onPreReceive method that is called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was
  * successful).
  */
-public class LocalVCPrePushHook implements PreReceiveHook {
+public record LocalVCPrePushHook(LocalVCServletService localVCServletService, User user) implements PreReceiveHook {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCPrePushHook.class);
-
-    private final LocalVCServletService localVCServletService;
-
-    private final User user;
 
     public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NotNull User user) {
         this.localVCServletService = localVCServletService;

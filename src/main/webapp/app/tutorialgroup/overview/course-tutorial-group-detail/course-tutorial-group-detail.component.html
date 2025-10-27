@@ -1,9 +1,226 @@
-<jhi-loading-indicator-container [isLoading]="(isLoading$ | async) ?? false">
-    <div class="row justify-content-center">
-        @if (tutorialGroup && course) {
-            <div class="col-12 p-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
-                <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course" />
-            </div>
+<div class="frame">
+    <div class="header">
+        <h1 id="page-title">{{ tutorialGroup().title }}</h1>
+        <div class="spacer"></div>
+        @if (messagingEnabled()) {
+            @let chatLink = tutorChatLink();
+            @if (chatLink) {
+                <a
+                    [routerLink]="chatLink.routerLink"
+                    [queryParams]="chatLink.queryParameters"
+                    pButton
+                    class="p-button-secondary p-button-sm"
+                    jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"
+                    data-testid="tutor-chat-link"
+                ></a>
+            } @else if (userIsNotTutor()) {
+                <button
+                    pButton
+                    class="p-button-secondary p-button-sm"
+                    (click)="createTutorChat()"
+                    jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"
+                    data-testid="tutor-chat-button"
+                ></button>
+            }
+            @let channelLink = groupChannelLink();
+            @if (channelLink) {
+                <a
+                    [routerLink]="channelLink.routerLink"
+                    [queryParams]="channelLink.queryParameters"
+                    pButton
+                    class="p-button-secondary p-button-sm"
+                    jhiTranslate="artemisApp.pages.tutorialGroupDetail.groupChannelLinkLabel"
+                    data-testid="group-channel-link"
+                ></a>
+            }
         }
     </div>
-</jhi-loading-indicator-container>
+    <hr />
+    <div class="card-row">
+        <section class="card narrow" aria-labelledby="tutor-card-title">
+            <h3 id="tutor-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.tutorCardTitle"></h3>
+            <div class="tutor-card-content">
+                <jhi-profile-picture
+                    imageSizeInRem="6"
+                    fontSizeInRem="2"
+                    imageId="tutor-profile-picture"
+                    defaultPictureId="tutor-default-profile-picture"
+                    [authorName]="tutorialGroup().teachingAssistantName"
+                    [imageUrl]="teachingAssistantImageUrl()"
+                />
+                <span aria-hidden="true">{{ tutorialGroup().teachingAssistantName }}</span>
+            </div>
+        </section>
+        <section class="card broad" aria-labelledby="general-info-card-title">
+            <h3 id="general-info-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.generalInfoCardTitle"></h3>
+            <div class="info-card-content" role="list">
+                <div class="spacer"></div>
+                <div class="info-stack">
+                    <div class="info-item" role="listitem" aria-labelledby="language-label" aria-describedby="language-value">
+                        <fa-icon [icon]="faFlag" aria-hidden="true" />
+                        <span class="info-label" id="date-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.language"></span>
+                        <span id="language-value">{{ tutorialGroupLanguage() }}</span>
+                    </div>
+                    <div class="info-item" role="listitem" aria-labelledby="capacity-label" aria-describedby="capacity-value">
+                        <fa-icon [icon]="faUsers" aria-hidden="true" />
+                        <span class="info-label" id="capacity-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.capacity"></span>
+                        <span id="capacity-value">{{ tutorialGroupCapacity() }}</span>
+                    </div>
+                </div>
+                <div class="info-stack">
+                    <div class="info-item" role="listitem" aria-labelledby="mode-label" aria-describedby="mode-value">
+                        <fa-icon [icon]="faTag" aria-hidden="true" />
+                        <span class="info-label" id="mode-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.mode"></span>
+                        <span jhiTranslate="{{ tutorialGroupMode() }}" id="mode-value"></span>
+                    </div>
+                    <div class="info-item" role="listitem" aria-labelledby="campus-label" aria-describedby="campus-value">
+                        <fa-icon [icon]="faBuildingColumns" aria-hidden="true" />
+                        <span class="info-label" id="campus-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.campus"></span>
+                        <span id="campus-value">{{ tutorialGroupCampus() }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <div class="card-row">
+        <section class="card narrow" aria-labelledby="attendance-card-title">
+            <h3 id="attendance-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h3>
+            @let attendancePercentage = averageAttendancePercentage();
+            @if (attendancePercentage) {
+                <div class="attendance-card-content">
+                    <span class="doughnut-chart-text">{{ attendancePercentage }}</span>
+                    <ngx-charts-pie-chart
+                        [view]="[122, 122]"
+                        [results]="pieChartData()"
+                        [scheme]="pieChartColors()"
+                        [doughnut]="true"
+                        [labels]="false"
+                        [legend]="false"
+                        [arcWidth]="0.3"
+                        aria-hidden="true"
+                    />
+                </div>
+            } @else {
+                <div class="disclaimer" data-testid="no-attendance-data-available-disclaimer">
+                    <fa-icon [icon]="faQuestion" size="2x" aria-hidden="true" />
+                    <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.disclaimerText.noAttendanceDataAvailable"></span>
+                </div>
+            }
+        </section>
+        <section class="card broad" aria-labelledby="next-session-card-title">
+            <h3 id="next-session-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.nextSessionCardTitle"></h3>
+            @let session = nextSession();
+            @if (session) {
+                <div class="info-card-content" role="list">
+                    <div class="info-stack">
+                        <div class="info-item" role="listitem" aria-labelledby="next-session-date-label" aria-describedby="next-session-date-value">
+                            <fa-icon [icon]="faCalendar" aria-hidden="true" />
+                            <span class="info-label" id="next-session-date-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.date"></span>
+                            <span [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-date-value">{{ session.date }}</span>
+                            @if (session.dateChanged) {
+                                <div class="change-indicator" aria-hidden="true"></div>
+                            }
+                        </div>
+                        <div class="info-item" role="listitem" aria-labelledby="next-session-time-label" aria-describedby="next-session-time-value">
+                            <fa-icon [icon]="faClock" aria-hidden="true" />
+                            <span class="info-label" id="next-session-time-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.time"></span>
+                            <span [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-time-value">{{ session.time }}</span>
+                            @if (session.timeChanged) {
+                                <div class="change-indicator" aria-hidden="true"></div>
+                            }
+                        </div>
+                    </div>
+                    <div class="info-stack">
+                        <div class="info-item" role="listitem" aria-labelledby="next-session-status-label" aria-describedby="next-session-status-indicator">
+                            <fa-icon [icon]="faCircleExclamation" aria-hidden="true" />
+                            <span class="info-label" id="next-session-status-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.status"></span>
+                            <jhi-course-tutorial-group-detail-session-status-indicator
+                                [isCancelled]="session.isCancelled"
+                                [locationChanged]="session.locationChanged"
+                                [timeChanged]="session.timeChanged"
+                                [dateChanged]="session.dateChanged"
+                                id="next-session-status-indicator"
+                            />
+                        </div>
+                        <div class="info-item" role="listitem" aria-labelledby="next-session-location-label" aria-describedby="next-session-location-value">
+                            <fa-icon [icon]="faMapPin" aria-hidden="true" />
+                            <span class="info-label" id="next-session-location-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.location"></span>
+                            <span [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-location-value">{{ session.location }}</span>
+                            @if (session.locationChanged) {
+                                <div class="change-indicator" aria-hidden="true"></div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            } @else {
+                <div class="disclaimer" data-testid="no-upcoming-session-disclaimer">
+                    <fa-icon [icon]="faCheck" size="2x" aria-hidden="true" />
+                    <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.disclaimerText.noUpcomingSession"></span>
+                </div>
+            }
+        </section>
+    </div>
+    <div class="list-controls-row">
+        <h2 jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionsListTitle"></h2>
+        <p-selectbutton
+            [options]="sessionListOptions()"
+            [ngModel]="selectedSessionListOption()"
+            (ngModelChange)="selectedSessionListOption.set($event)"
+            optionLabel="label"
+            optionValue="value"
+        />
+    </div>
+    @let sessions = tutorialGroupSessions();
+    @if (sessions) {
+        <table>
+            <thead>
+                <tr>
+                    <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.date"></th>
+                    <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.time"></th>
+                    <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.location"></th>
+                    <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.status"></th>
+                    <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.attendance"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (session of sessions; track session.date) {
+                    <tr>
+                        <td>
+                            <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                                {{ session.date }}
+                                @if (session.dateChanged) {
+                                    <div class="change-indicator" aria-hidden="true"></div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                                {{ session.time }}
+                                @if (session.timeChanged) {
+                                    <div class="change-indicator" aria-hidden="true"></div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                                {{ session.location }}
+                                @if (session.locationChanged) {
+                                    <div class="change-indicator" aria-hidden="true"></div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <jhi-course-tutorial-group-detail-session-status-indicator
+                                [isCancelled]="session.isCancelled"
+                                [locationChanged]="session.locationChanged"
+                                [timeChanged]="session.timeChanged"
+                                [dateChanged]="session.dateChanged"
+                            />
+                        </td>
+                        <td>{{ session.attendance }}</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

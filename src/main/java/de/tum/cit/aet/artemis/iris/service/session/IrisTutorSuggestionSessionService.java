@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -88,13 +89,13 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     private final UserRepository userRepository;
 
-    public IrisTutorSuggestionSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
-            IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService, IrisRateLimitService rateLimitService,
-            PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService,
+    public IrisTutorSuggestionSessionService(IrisSessionRepository irisSessionRepository, IrisMessageRepository irisMessageRepository, ObjectMapper objectMapper,
+            IrisMessageService irisMessageService, IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService,
+            IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, PyrisDTOService pyrisDTOService, PostRepository postRepository, UserRepository userRepository) {
-        super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisChatWebsocketService,
-                llmTokenUsageService);
+        super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
+                irisChatWebsocketService, llmTokenUsageService);
         this.irisSessionRepository = irisSessionRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.rateLimitService = rateLimitService;
@@ -244,7 +245,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         else {
             savedMessage = null;
             savedArtifact = null;
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), null, statusUpdate.tokens());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), null, null, statusUpdate.tokens());
         }
 
         AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);

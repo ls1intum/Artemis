@@ -2,43 +2,69 @@
     <div class="header">
         <span class="h3">{{ getMonthDescription() }}</span>
         <div class="spacer"></div>
-        <jhi-calendar-event-filter [variant]="CalendarEventFilterComponentVariant.DESKTOP" />
-        <button id="today-button" type="button" class="btn btn-outline-primary" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
-        <div class="btn-group" role="group">
-            <button
-                id="week-button"
-                class="btn"
-                [ngClass]="{
-                    'btn-primary selected': presentation() === 'week',
-                    'btn-outline-primary': presentation() !== 'week',
-                }"
-                (click)="presentation.set('week')"
-                jhiTranslate="artemisApp.calendar.weekButtonLabel"
-            ></button>
-
-            <button
-                id="month-button"
-                class="btn"
-                [ngClass]="{
-                    'btn-primary selected': presentation() === 'month',
-                    'btn-outline-primary': presentation() !== 'month',
-                }"
-                (click)="presentation.set('month')"
-                jhiTranslate="artemisApp.calendar.monthButtonLabel"
-            ></button>
-        </div>
-        <div class="btn-group" role="group" aria-label="Navigation controls">
-            <button id="previous-button" type="button" class="btn btn-outline-primary" (click)="goToPrevious()">
+        <p-multiSelect
+            [options]="filterOptions()"
+            [ngModel]="selectedFilterOptions()"
+            (ngModelChange)="onSelectionOptionsChange($event)"
+            optionLabel="name"
+            [placeholder]="filterComponentPlaceholder()"
+            [showHeader]="false"
+        >
+            <ng-template pTemplate="selectedItems">
+                @if (selectedFilterOptions().length) {
+                    <div class="chips-section">
+                        @for (optionWithMetadata of selectedFilterOptions(); track optionWithMetadata.option) {
+                            <div class="chip" [attr.data-testid]="'chip-' + optionWithMetadata.option">
+                                <div class="legend-circle" [class]="optionWithMetadata.colorClassName"></div>
+                                <span>{{ optionWithMetadata.name }}</span>
+                                <button class="remove-button" (click)="removeOption(optionWithMetadata.option); $event.stopPropagation()">
+                                    <fa-icon [icon]="faXmark" />
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+            </ng-template>
+        </p-multiSelect>
+        <p-selectbutton
+            [options]="presentationOptions()"
+            [ngModel]="selectedPresentation()"
+            (ngModelChange)="selectedPresentation.set($event)"
+            [unselectable]="true"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            id="presentation-select-button"
+        />
+        @let courseId = currentCourseId();
+        @let subscriptionToken = calendarSubscriptionToken();
+        @if (courseId && subscriptionToken) {
+            <div>
+                <button
+                    data-testid="subscribe-button"
+                    pButton
+                    size="small"
+                    outlined
+                    (click)="subscriptionPopover.open($event)"
+                    jhiTranslate="artemisApp.calendar.subscribeButtonLabel"
+                ></button>
+                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="courseId" #subscriptionPopover />
+            </div>
+        }
+        <button id="today-button" pButton size="small" outlined (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
+        <p-buttongroup>
+            <button id="previous-button" pButton size="small" outlined (click)="goToPrevious()">
                 <fa-icon [icon]="faChevronLeft" />
             </button>
-            <button id="next-button" type="button" class="btn btn-outline-primary" (click)="goToNext()">
+
+            <button id="next-button" pButton size="small" outlined (click)="goToNext()">
                 <fa-icon [icon]="faChevronRight" />
             </button>
-        </div>
+        </p-buttongroup>
     </div>
 
     <div class="calendar-presentation-container">
-        @if (presentation() === 'month') {
+        @if (selectedPresentation() === 'month') {
             <jhi-calendar-desktop-month-presentation [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
         } @else {
             <jhi-calendar-desktop-week-presentation [firstDayOfCurrentWeek]="firstDayOfCurrentWeek()" />

@@ -72,12 +72,12 @@
                         <fa-icon [icon]="faFileImport" />
                         <span jhiTranslate="artemisApp.lecture.import.label"></span>
                     </button>
-                    <a id="jh-create-entity" class="btn btn-primary btn-sm jh-create-entity create-lecture" [routerLink]="['new']">
+                    <a id="jh-create-entity" class="btn btn-primary btn-sm jh-create-entity create-lecture" (click)="navigateToLectureCreationPage()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
                     </a>
                     @if (lectureIngestionEnabled) {
-                        <button (click)="ingestLecturesInPyris()" class="btn btn-primary btn-sm jh-create-entity" id="backend-trigger-button">
+                        <button (click)="ingestLecturesInPyris()" class="btn btn-primary btn-sm jh-create-entity" id="ingest-trigger-button">
                             <fa-icon [icon]="faFileExport" />
                             <span jhiTranslate="artemisApp.lecture.home.ingestLecturesInPyrisLabel"></span>
                         </button>
@@ -104,10 +104,14 @@
                             <span jhiTranslate="artemisApp.lecture.description"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
+                        <!-- Lecture.visibleDate is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal -->
+                        <!-- TODO: #11479 - remove the commented out code OR comment back in -->
+                        <!--
                         <th jhiSortBy="visibleDate">
                             <span jhiTranslate="artemisApp.lecture.visibleDate"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
+                        -->
                         <th jhiSortBy="startDate">
                             <span jhiTranslate="artemisApp.lecture.startDate"></span>
                             <fa-icon [icon]="faSort" />
@@ -135,7 +139,11 @@
                                 <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
                             </td>
                             <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
+                            <!-- Lecture.visibleDate is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal -->
+                            <!-- TODO: #11479 - remove the commented out code OR comment back in -->
+                            <!--
                             <td>{{ lecture.visibleDate | artemisDate }}</td>
+                            -->
                             <td>{{ lecture.startDate | artemisDate }}</td>
                             <td>{{ lecture.endDate | artemisDate }}</td>
                             @if (lectureIngestionEnabled) {

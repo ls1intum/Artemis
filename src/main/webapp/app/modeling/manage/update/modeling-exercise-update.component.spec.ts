@@ -32,7 +32,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -57,7 +57,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
             ],
         }).compileComponents();
 
@@ -104,8 +104,8 @@ describe('ModelingExerciseUpdateComponent', () => {
 
                 const entity = { ...modelingExercise };
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
-                const calendarEventService = TestBed.inject(CalendarEventService);
-                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+                const calendarService = TestBed.inject(CalendarService);
+                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();
@@ -138,8 +138,8 @@ describe('ModelingExerciseUpdateComponent', () => {
 
                 const entity = { ...modelingExercise };
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
-                const calendarEventService = TestBed.inject(CalendarEventService);
-                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+                const calendarService = TestBed.inject(CalendarService);
+                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();
@@ -348,5 +348,156 @@ describe('ModelingExerciseUpdateComponent', () => {
 
         expect(comp.bonusPointsSubscription?.closed).toBeTrue();
         expect(comp.pointsSubscription?.closed).toBeTrue();
+    });
+
+    describe('handleEnterKeyNavigation', () => {
+        beforeEach(() => {
+            jest.spyOn(console, 'error').mockImplementation();
+            comp.ngOnInit();
+            fixture.detectChanges();
+        });
+
+        it('should prevent default and stop propagation', () => {
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
+        });
+
+        it('should not navigate when focused on TEXTAREA', () => {
+            const textarea = document.createElement('textarea');
+            document.body.appendChild(textarea);
+            textarea.focus();
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
+            document.body.removeChild(textarea);
+        });
+
+        it('should not navigate when focused on contentEditable element', () => {
+            const editableDiv = document.createElement('div');
+            editableDiv.contentEditable = 'true';
+            document.body.appendChild(editableDiv);
+            editableDiv.focus();
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
+            document.body.removeChild(editableDiv);
+        });
+
+        it('should return early when editFormEl is undefined', () => {
+            comp.editFormEl = undefined;
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
+        });
+
+        it('should not navigate when focused inside Apollon Editor', () => {
+            const mockApollon = document.createElement('div');
+            mockApollon.className = 'apollon-container';
+            const mockInput = document.createElement('input');
+            mockApollon.appendChild(mockInput);
+
+            const mockFormRoot = {
+                querySelector: jest.fn().mockReturnValue(mockApollon),
+                querySelectorAll: jest.fn().mockReturnValue([]),
+            };
+
+            comp.editFormEl = { nativeElement: mockFormRoot } as any;
+
+            Object.defineProperty(document, 'activeElement', {
+                writable: true,
+                configurable: true,
+                value: mockInput,
+            });
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(mockFormRoot.querySelector).toHaveBeenCalledWith('.apollon-container');
+        });
+
+        it('should move focus to next input when Enter is pressed', () => {
+            const input1 = document.createElement('input');
+            const input2 = document.createElement('input');
+
+            const mockFormRoot = {
+                querySelector: jest.fn().mockReturnValue(null),
+                querySelectorAll: jest.fn().mockReturnValue([input1, input2]),
+            };
+
+            comp.editFormEl = { nativeElement: mockFormRoot } as any;
+
+            Object.defineProperty(document, 'activeElement', {
+                writable: true,
+                configurable: true,
+                value: input1,
+            });
+
+            const focusSpy = jest.spyOn(input2, 'focus');
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(focusSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not focus next element if current is last', () => {
+            const input1 = document.createElement('input');
+            const input2 = document.createElement('input');
+
+            const mockFormRoot = {
+                querySelector: jest.fn().mockReturnValue(null),
+                querySelectorAll: jest.fn().mockReturnValue([input1, input2]),
+            };
+
+            comp.editFormEl = { nativeElement: mockFormRoot } as any;
+
+            Object.defineProperty(document, 'activeElement', {
+                writable: true,
+                configurable: true,
+                value: input2,
+            });
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
+        });
     });
 });

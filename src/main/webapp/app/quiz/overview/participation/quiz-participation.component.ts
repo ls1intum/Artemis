@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, OnDestroy, OnInit, inject, viewChildren } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, effect, inject, viewChild, viewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -99,6 +99,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     readonly shortAnswerQuestionComponents = viewChildren(ShortAnswerQuestionComponent);
 
+    quizHeader = viewChild<ElementRef>('quizHeader');
+    stepWizard = viewChild<ElementRef>('stepWizard');
+
     private routeAndDataSubscription: Subscription;
 
     runningTimeouts = new Array<any>(); // actually the function type setTimeout(): (handler: any, timeout?: any, ...args: any[]): number
@@ -159,6 +162,15 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     // Icons
     protected readonly faSync = faSync;
     protected readonly faCircleNotch = faCircleNotch;
+
+    constructor() {
+        effect(() => {
+            if (this.quizHeader() && this.stepWizard()) {
+                const headerHeight = this.quizHeader()!.nativeElement.offsetHeight;
+                this.stepWizard()!.nativeElement.style.top = `${headerHeight}px`;
+            }
+        });
+    }
 
     ngOnInit() {
         // set correct mode

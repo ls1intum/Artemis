@@ -32,4 +32,6 @@ Other Extension Services
    setup/text-assessment-analytics
    setup/apollon
    setup/hermes
+   setup/hyperion
    setup/aeolus
+   setup/sharing

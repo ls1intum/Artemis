@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, model } from '@angular/core';
 import { Course, CourseForImportDTO } from 'app/core/course/shared/entities/course.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 
@@ -60,7 +60,7 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
     //import relations by default
     protected importRelations = true;
 
-    @Input() public competencyType: CourseCompetencyType | 'courseCompetency' = CourseCompetencyType.COMPETENCY;
+    public competencyType = model<CourseCompetencyType | 'courseCompetency'>(CourseCompetencyType.COMPETENCY);
 
     constructor() {
         const pagingService = inject(CourseForImportDTOPagingService);

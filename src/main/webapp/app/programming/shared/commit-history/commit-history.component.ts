@@ -94,6 +94,9 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      * @private
      */
     private loadStudentParticipation() {
+        // TODO: re-implement this with a DTO: the server should combine all information needed for the commit history in one request and should NOT
+        //  send all submissions and results for the participation, as this is not needed for the commit history.
+        //  This is a performance issue, as the participation can have many submissions and results
         this.participationSub = this.programmingExerciseParticipationService
             .getStudentParticipationWithAllResults(this.repositoryId!)
             .pipe(

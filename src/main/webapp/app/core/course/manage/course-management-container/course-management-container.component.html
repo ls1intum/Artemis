@@ -4,19 +4,16 @@
         <mat-sidenav-container
             class="vw-100"
             [ngClass]="{
-                'sidenav-height-dev': !isProduction || isTestServer,
                 'container-closed': isNavbarCollapsed(),
             }"
         >
-            <mat-sidenav disableClose [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }" class="module-bg rounded-3" opened="true" mode="side">
+            <mat-sidenav disableClose class="module-bg rounded-3" opened="true" mode="side">
                 <jhi-course-sidebar
                     [course]="course()"
                     [courses]="courses()"
                     [sidebarItems]="sidebarItems()"
                     [courseActionItems]="[]"
                     [isNavbarCollapsed]="isNavbarCollapsed()"
-                    [isProduction]="isProduction"
-                    [isTestServer]="isTestServer"
                     [hasUnreadMessages]="hasUnreadMessages()"
                     [communicationRouteLoaded]="communicationRouteLoaded()"
                     (switchCourse)="switchCourse($event)"
@@ -24,11 +21,7 @@
                 />
             </mat-sidenav>
 
-            <mat-sidenav-content
-                [ngClass]="{
-                    'sidenav-height-dev': !isProduction || isTestServer,
-                }"
-            >
+            <mat-sidenav-content>
                 @if (course()) {
                     <jhi-course-title-bar [hasSidebar]="hasSidebar()" [isSidebarCollapsed]="isSidebarCollapsed()" [pageTitle]="pageTitle()" (toggleSidebar)="toggleSidebar()">
                         <div id="student-view-button">
@@ -65,8 +58,7 @@
                         id="course-body-container"
                         [ngClass]="{
                             'module-bg rounded rounded-3 scrollable-content': !hasSidebar(),
-                            'p-3': !hasSidebar() && !removePadding,
-                            'content-height-dev': !isProduction || isTestServer,
+                            'p-3': !hasSidebar() && !removePadding(),
                         }"
                     >
                         @if (!hasSidebar()) {

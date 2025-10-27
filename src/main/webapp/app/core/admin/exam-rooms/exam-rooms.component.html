@@ -1,128 +1,147 @@
-<div class="upload-container">
-    <h2><span jhiTranslate="artemisApp.examRooms.adminOverview.title"></span></h2>
-    <div class="mt-2">
-        <input id="roomDataFileSelect" type="file" style="display: none" (change)="onFileSelectedAcceptZip($event)" accept=".zip" />
-        <label for="roomDataFileSelect" class="btn btn-outline-primary">
-            @if (!hasSelectedFile()) {
-                {{ 'artemisApp.examRooms.adminOverview.uploadRoomData' | artemisTranslate }}
-            } @else {
-                {{ selectedFileName() }}
-            }
-        </label>
-        <button id="roomDataUpload" jhiTranslate="entity.action.save" class="btn btn-primary" (click)="upload()" [disabled]="!canUpload()"></button>
-    </div>
-    <div class="mt-2">
-        <button id="roomDataDeleteAll" jhiTranslate="artemisApp.examRooms.adminOverview.deleteAllExamRooms" class="btn btn-danger" (click)="clearExamRooms()"></button>
-        <button
-            id="roomDataDeleteOutdatedAndUnused"
-            jhiTranslate="artemisApp.examRooms.adminOverview.deleteExamRoomsSafe"
-            class="btn btn-warning"
-            (click)="deleteOutdatedAndUnusedExamRooms()"
-        ></button>
-    </div>
-
-    @if (isUploading()) {
-        <div jhiTranslate="entity.action.saving" class="text info"></div>
-    }
-    @if (hasUploadInformation()) {
-        <div class="card mt-4">
-            <h3 class="pt-2 ps-3"><span jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.title"></span></h3>
-            <ul>
-                <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.file"></strong> {{ uploadInformation()!.uploadedFileName }}</li>
-                <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.roomsUploaded"></strong> {{ uploadInformation()!.numberOfUploadedRooms }}</li>
-                <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.seatsUploaded"></strong> {{ uploadInformation()!.numberOfUploadedSeats }}</li>
-            </ul>
-        </div>
-    }
-    @if (isDeleting()) {
-        <div jhiTranslate="artemisApp.examRooms.adminOverview.deleting" class="text info"></div>
-    }
-    @if (hasDeletionInformation()) {
-        <div class="card mt-4">
-            <h3 class="pt-2 ps-3"><span jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.title"></span></h3>
-            <ul>
-                <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.roomsDeleted"></strong> {{ deletionInformation()!.numberOfDeletedExamRooms }}</li>
-            </ul>
-        </div>
-    }
-</div>
-<div class="info mt-4">
-    @if (hasOverview()) {
-        <h3>
-            <div jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.title"></div>
-        </h3>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalExamRooms"></span> {{ numberOf()!.examRooms }}</div>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalSeats"></span> {{ numberOf()!.examSeats }}</div>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalLayoutStrategies"></span> {{ numberOf()!.layoutStrategies }}</div>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueExamRooms"></span> {{ numberOf()!.uniqueExamRooms }}</div>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueSeats"></span> {{ numberOf()!.uniqueExamSeats }}</div>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueLayoutStrategies"></span> {{ numberOf()!.uniqueLayoutStrategies }}</div>
-        <div>
-            <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.distinctLayoutStrategyNames"></span>
-            {{ distinctLayoutStrategyNames() }}
-        </div>
-        <h4 class="mt-4"><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.examRoomsTitle"></span></h4>
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr jhiSort [(predicate)]="sortAttribute" [(ascending)]="ascending" (sortChange)="sortRows()">
-                        <th jhiSortBy="roomNumber">
-                            <!-- 1. Room number -->
-                            <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.roomNumber"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th jhiSortBy="name">
-                            <!-- 2. Room name -->
-                            <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.roomName"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th jhiSortBy="building">
-                            <!-- 3. Building -->
-                            <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.building"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th jhiSortBy="maxCapacity">
-                            <!-- 4. Max capacity -->
-                            <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.maxCapacity"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th>
-                            <!-- 5. Layout strategies -->
-                            <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.layoutStrategies"></span>
-                        </th>
-                    </tr>
-                </thead>
-                @if (hasExamRoomData()) {
-                    <tbody>
-                        @for (examRoom of examRoomData(); track examRoom.roomNumber) {
-                            <tr>
-                                <td>
-                                    <!-- 1. Room number -->
-                                    <span>{{ examRoom.roomNumber }}</span>
-                                </td>
-                                <td>
-                                    <!-- 2. Room name -->
-                                    <span>{{ examRoom.name }}</span>
-                                </td>
-                                <td>
-                                    <!-- 3. Building -->
-                                    <span>{{ examRoom.building }}</span>
-                                </td>
-                                <td>
-                                    <!-- 4. Max capacity -->
-                                    <span>{{ examRoom.maxCapacity }}</span>
-                                </td>
-                                <td>
-                                    <!-- 5. Layout strategies -->
-                                    <span>{{ examRoom.layoutStrategyNames }}</span>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
+<div class="module-bg p-3">
+    <div class="upload-container">
+        <h2><span jhiTranslate="artemisApp.examRooms.adminOverview.title"></span></h2>
+        <div class="mt-2">
+            <input id="roomDataFileSelect" type="file" style="display: none" (change)="onFileSelectedAcceptZip($event)" accept=".zip" />
+            <label for="roomDataFileSelect" class="btn btn-outline-primary">
+                @if (!hasSelectedFile()) {
+                    {{ 'artemisApp.examRooms.adminOverview.uploadRoomData' | artemisTranslate }}
+                } @else {
+                    {{ selectedFileName() }}
                 }
-            </table>
+            </label>
+            <button id="roomDataUpload" jhiTranslate="entity.action.save" class="btn btn-primary" (click)="upload()" [disabled]="!canUpload()"></button>
         </div>
-    } @else {
-        <p jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.missing"></p>
-    }
+        <div class="mt-2">
+            <button
+                id="roomDataDeleteOutdatedAndUnused"
+                jhiTranslate="artemisApp.examRooms.adminOverview.deleteExamRoomsSafe"
+                class="btn btn-warning"
+                (click)="deleteOutdatedAndUnusedExamRooms()"
+            ></button>
+        </div>
+
+        @if (isUploading()) {
+            <div jhiTranslate="entity.action.saving" class="text info"></div>
+        }
+        @if (hasUploadInformation()) {
+            <div class="card mt-4">
+                <h3 class="pt-2 ps-3"><span jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.title"></span></h3>
+                <ul>
+                    <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.file"></strong> {{ uploadInformation()!.uploadedFileName }}</li>
+                    <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.roomsUploaded"></strong> {{ uploadInformation()!.numberOfUploadedRooms }}</li>
+                    <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.seatsUploaded"></strong> {{ uploadInformation()!.numberOfUploadedSeats }}</li>
+                </ul>
+            </div>
+        }
+        @if (isDeleting()) {
+            <div jhiTranslate="artemisApp.examRooms.adminOverview.deleting" class="text info"></div>
+        }
+        @if (hasDeletionInformation()) {
+            <div class="card mt-4">
+                <h3 class="pt-2 ps-3"><span jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.title"></span></h3>
+                <ul>
+                    <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.roomsDeleted"></strong> {{ deletionInformation()!.numberOfDeletedExamRooms }}</li>
+                </ul>
+            </div>
+        }
+    </div>
+    <div class="info mt-4">
+        @if (hasOverview()) {
+            <h3>
+                <div jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.title"></div>
+            </h3>
+            <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalExamRooms"></span> {{ numberOf()!.examRooms }}</div>
+            <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalSeats"></span> {{ numberOf()!.examSeats }}</div>
+            <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalLayoutStrategies"></span> {{ numberOf()!.layoutStrategies }}</div>
+            <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueExamRooms"></span> {{ numberOf()!.uniqueExamRooms }}</div>
+            <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueSeats"></span> {{ numberOf()!.uniqueExamSeats }}</div>
+            <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueLayoutStrategies"></span> {{ numberOf()!.uniqueLayoutStrategies }}</div>
+            <div>
+                <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.distinctLayoutStrategyNames"></span>
+                {{ distinctLayoutStrategyNames() }}
+            </div>
+            <h4 class="mt-4"><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.examRoomsTitle"></span></h4>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr jhiSort [(predicate)]="sortAttribute" [(ascending)]="ascending" (sortChange)="sortRows()">
+                            <th jhiSortBy="id">
+                                <!-- 1. Room id -->
+                                <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.id"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="roomNumber">
+                                <!-- 2. Room number -->
+                                <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.roomNumber"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="name">
+                                <!-- 3. Room name -->
+                                <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.roomName"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="building">
+                                <!-- 4. Building -->
+                                <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.building"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="defaultCapacity">
+                                <!-- 5. Default capacity -->
+                                <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.defaultCapacity"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="maxCapacity">
+                                <!-- 6. Max capacity -->
+                                <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.maxCapacity"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th>
+                                <!-- 7. Layout strategies -->
+                                <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.layoutStrategies"></span>
+                            </th>
+                        </tr>
+                    </thead>
+                    @if (hasExamRoomData()) {
+                        <tbody>
+                            @for (examRoom of examRoomData(); track examRoom.id) {
+                                <tr>
+                                    <td>
+                                        <!-- 1. Room id -->
+                                        <span>{{ examRoom.id }}</span>
+                                    </td>
+                                    <td>
+                                        <!-- 2. Room number -->
+                                        <span>{{ examRoom.roomNumber }}</span>
+                                    </td>
+                                    <td>
+                                        <!-- 3. Room name -->
+                                        <span>{{ examRoom.name }}</span>
+                                    </td>
+                                    <td>
+                                        <!-- 4. Building -->
+                                        <span>{{ examRoom.building }}</span>
+                                    </td>
+                                    <td>
+                                        <!-- 5. Default capacity -->
+                                        <span>{{ examRoom.defaultCapacity }}</span>
+                                    </td>
+                                    <td>
+                                        <!-- 6. Max capacity -->
+                                        <span>{{ examRoom.maxCapacity }}</span>
+                                    </td>
+                                    <td>
+                                        <!-- 7. Layout strategies -->
+                                        <span>{{ examRoom.layoutStrategyNames }}</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    }
+                </table>
+            </div>
+        } @else {
+            <p jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.missing"></p>
+        }
+    </div>
 </div>

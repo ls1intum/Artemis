@@ -8,17 +8,18 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 
 class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
@@ -27,7 +28,13 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @BeforeEach
     void setup() {
         courseTestService.setup(TEST_PREFIX, this);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        userUtilService.createAndSaveUser("ab12cde");
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+    }
+
+    @AfterEach
+    void resetClock() {
+        TimeUtil.resetClock();
     }
 
     @Test
@@ -172,14 +179,11 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateOldMembersInCourse() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        var oldInstructorGroup = course.getInstructorGroupName();
         course.setInstructorGroupName("new-editor-group");
 
         changeUserGroup(TEST_PREFIX + "instructor1", Set.of(course.getTeachingAssistantGroupName()));
         changeUserGroup(TEST_PREFIX + "tutor1", Set.of(course.getTeachingAssistantGroupName(), "new-editor-group"));
         changeUserGroup(TEST_PREFIX + "tutor2", Set.of(course.getEditorGroupName()));
-
-        jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
 
         MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
@@ -191,7 +195,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testSetPermissionsForNewGroupMembersInCourse() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        String oldInstructorGroup = course.getInstructorGroupName();
 
         course.setInstructorGroupName("new-instructor-group");
         course.setEditorGroupName("new-editor-group");
@@ -209,60 +212,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
         user = userUtilService.createAndSaveUser("new-instructor");
         user.setGroups(Set.of("new-instructor-group"));
         userTestRepository.save(user);
-
-        jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
         MvcResult result = request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(course.getInstructorGroupName()).isEqualTo("new-instructor-group");
         assertThat(course.getEditorGroupName()).isEqualTo("new-editor-group");
         assertThat(course.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testSetPermissionsForNewGroupMembersInCourseFails() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setInstructorGroupName("new-instructor-group");
-
-        // Create editor in the course
-        User user = userUtilService.createAndSaveUser("new-editor");
-        user.setGroups(Set.of("new-instructor-group"));
-        userTestRepository.save(user);
-
-        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testSetPermissionsForNewGroupMembersInCourseMemberDoesntExist() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setInstructorGroupName("new-instructor-group");
-
-        // Create editor in the course
-        User user = userUtilService.createAndSaveUser("new-editor");
-        user.setGroups(Set.of("new-instructor-group"));
-        userTestRepository.save(user);
-
-        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testFailToUpdateOldMembersInCourse() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setInstructorGroupName("new-editor-group");
-
-        changeUserGroup(TEST_PREFIX + "tutor1", Set.of(course.getTeachingAssistantGroupName()));
-
-        var courseExercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course);
-        var exercise = courseExercise.stream().findFirst();
-        assertThat(exercise).isPresent();
-
-        var user = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().findFirst();
-        assertThat(user).isPresent();
-
-        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError());
     }
 
     /**
@@ -279,45 +234,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
         updatedUser.setGroups(groups);
 
         userTestRepository.save(updatedUser);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseGroupsFailsToGetUser() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setInstructorGroupName("new-instructor-group");
-
-        Optional<User> user = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1");
-        assertThat(user).isPresent();
-
-        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseGroupsFailsToRemoveOldMember() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setInstructorGroupName("new-instructor-group");
-
-        Optional<User> user = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1");
-        assertThat(user).isPresent();
-
-        var exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).stream().findFirst();
-        assertThat(exercise).isPresent();
-
-        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser() throws Exception {
-        courseTestService.testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseGroups_InExternalCiUserManagement_failToAddUser() throws Exception {
-        courseTestService.testUpdateCourseGroups_InExternalCiUserManagement_failToAddUser();
     }
 
     @Test
@@ -525,33 +441,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnenrollFromCourse() throws Exception {
         courseTestService.testUnenrollFromCourse();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testAddTutorAndInstructorToCourse_failsToAddUserToGroup() throws Exception {
-        courseTestService.testAddTutorAndEditorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
-        courseTestService.testRemoveTutorFromCourse_failsToRemoveUserFromGroup();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRemoveTutorFromCourse_removeUserGroupFails() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course = courseRepository.save(course);
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-
-        Optional<User> optionalTutor = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1");
-        assertThat(optionalTutor).isPresent();
-
-        User tutor = optionalTutor.get();
-
-        request.delete("/api/core/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -896,6 +785,7 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCourseManagementDetailData() throws Exception {
+        // This test uses a fixed clock to prevent flakiness related to weeks either included in the interval or not depending on the weekday.
         courseTestService.testGetCourseManagementDetailData();
     }
 
@@ -1056,7 +946,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetExistingExerciseDetails_asEditor() throws Exception {
-        String username = TEST_PREFIX + "tutor1";
         courseTestService.testGetExistingExerciseDetails_asEditor();
     }
 }

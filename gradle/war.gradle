@@ -23,3 +23,14 @@ war {
 jar {
     enabled = false
 }
+
+def assertNoticeInWar = { File war ->
+    def found = zipTree(war).matching { include 'META-INF/NOTICE' }.files
+    if (found.empty) {
+        throw new GradleException('META-INF/NOTICE is missing inside the built WAR. This file is needed to satisfy dependency licensing requirements!')
+    }
+}
+
+tasks.named('bootWar').configure {
+    doLast { assertNoticeInWar(archiveFile.get().asFile) }
+}

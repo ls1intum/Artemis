@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
-import static de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -38,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
 
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.
@@ -443,41 +443,12 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
 
-    // Note: we have to use left join here to avoid issues in the where clause, there can be at most one indirection (e.g. c1.editorGroupName) in the WHERE clause when using "OR"
-    // Multiple different indirection in the WHERE clause (e.g. pe.course.instructorGroupName and ex.course.instructorGroupName) would not work
-    @Query("""
-            SELECT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN pe.course c1
-                LEFT JOIN pe.exerciseGroup eg
-                LEFT JOIN eg.exam ex
-                LEFT JOIN ex.course c2
-            WHERE c1.instructorGroupName IN :groupNames
-                OR c1.editorGroupName IN :groupNames
-                OR c1.teachingAssistantGroupName IN :groupNames
-                OR c2.instructorGroupName IN :groupNames
-                OR c2.editorGroupName IN :groupNames
-                OR c2.teachingAssistantGroupName IN :groupNames
-            """)
-    List<ProgrammingExercise> findAllByInstructorOrEditorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
-
     @Query("""
             SELECT DISTINCT p.id
             FROM ProgrammingExercise p
             WHERE p.exerciseGroup.exam.id = :examId
             """)
     Set<Long> findProgrammingExerciseIdsByExamId(@Param("examId") long examId);
-
-    // Note: we have to use left join here to avoid issues in the where clause, see the explanation above
-    @Query("""
-            SELECT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN pe.exerciseGroup eg
-                LEFT JOIN eg.exam ex
-            WHERE pe.course = :course
-                OR ex.course = :course
-            """)
-    List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
     @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig", "gradingCriteria" })
     Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(long exerciseId);

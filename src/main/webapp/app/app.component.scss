@@ -5,6 +5,7 @@
 .sticky-top-navbar {
     position: sticky;
     top: 0;
+
     // Needs to be higher than the z-index of the sticky-top class
     z-index: 1030;
 }

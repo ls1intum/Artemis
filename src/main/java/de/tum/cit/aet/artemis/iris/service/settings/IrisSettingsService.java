@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettin
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTutorSuggestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisExerciseSettingsRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -81,9 +82,11 @@ public class IrisSettingsService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final IrisExerciseSettingsRepository irisExerciseSettingsRepository;
+
     public IrisSettingsService(IrisSettingsRepository irisSettingsRepository, IrisSubSettingsService irisSubSettingsService, AuthorizationCheckService authCheckService,
             ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, Optional<TextRepositoryApi> textRepositoryApi,
-            ExerciseRepository exerciseRepository) {
+            ExerciseRepository exerciseRepository, IrisExerciseSettingsRepository irisExerciseSettingsRepository) {
         this.irisSettingsRepository = irisSettingsRepository;
         this.irisSubSettingsService = irisSubSettingsService;
         this.authCheckService = authCheckService;
@@ -91,6 +94,7 @@ public class IrisSettingsService {
         this.objectMapper = objectMapper;
         this.textRepositoryApi = textRepositoryApi;
         this.exerciseRepository = exerciseRepository;
+        this.irisExerciseSettingsRepository = irisExerciseSettingsRepository;
     }
 
     /**
@@ -830,11 +834,10 @@ public class IrisSettingsService {
      * Delete the Iris settings for an exercise.
      * If no Iris settings for the exercise exist, nothing happens.
      *
-     * @param exercise The course to delete the Iris settings for
+     * @param exerciseId The exercise to delete the Iris settings for
      */
-    public void deleteSettingsFor(Exercise exercise) {
-        var irisExerciseSettingsOptional = irisSettingsRepository.findExerciseSettings(exercise.getId());
-        irisExerciseSettingsOptional.ifPresent(irisSettingsRepository::delete);
+    public void deleteSettingsForExercise(long exerciseId) {
+        irisExerciseSettingsRepository.deleteByExerciseId(exerciseId);
     }
 
     /**

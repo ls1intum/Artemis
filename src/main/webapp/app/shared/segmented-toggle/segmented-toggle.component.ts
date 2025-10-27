@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, model } from '@angular/core';
 import { NgClass } from '@angular/common';
 
 @Component({
@@ -9,12 +9,11 @@ import { NgClass } from '@angular/common';
     styleUrls: ['./segmented-toggle.component.scss'],
 })
 export class SegmentedToggleComponent<T> {
-    @Input() options: { label: string; value: T }[] = [];
-    @Input() selected: T;
-    @Output() selectedChange = new EventEmitter<T>();
+    options = input<{ label: string; value: T }[]>([]);
+    selected = model<T>();
+    maxLines = input(2);
 
     select(value: T) {
-        this.selected = value;
-        this.selectedChange.emit(value);
+        this.selected.set(value);
     }
 }

@@ -68,7 +68,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     readonly MINUTES_UNTIL_DELETION = 29;
 
     constructor() {
-        this.file = this.router.getCurrentNavigation()?.extras?.state?.file;
+        this.file = this.router.currentNavigation()?.extras?.state?.file;
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params]) => {
             this.lectureId = Number(params.get('lectureId'));
@@ -91,7 +91,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
             return;
         }
 
-        //regularly re-upload the file when it gets deleted in the backend
+        //regularly re-upload the file when it gets deleted in the server
         setTimeout(
             () => {
                 this.attachmentVideoUnitService

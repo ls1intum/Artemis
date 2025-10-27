@@ -1,5 +1,6 @@
 $result-element-size: 75px;
 $result-icon-size: 25px;
+
 .result-history-wrapper {
     display: flex;
     width: 100%;
@@ -43,6 +44,7 @@ $result-icon-size: 25px;
 
         &:last-child {
             flex: 1;
+
             .result-divider {
                 border-top: 1px dashed;
             }

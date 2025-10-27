@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -152,7 +153,7 @@ public class CourseStatsService {
         }
         long start = System.currentTimeMillis();
         List<StatisticsEntry> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
-        log.info("courseRepository.getActiveStudents took {} ms for exercises with ids {} between start {} and end {}", System.currentTimeMillis() - start, exerciseIds, startDate,
+        log.debug("courseRepository.getActiveStudents took {} ms for exercises with ids {} between start {} and end {}", System.currentTimeMillis() - start, exerciseIds, startDate,
                 endDate);
         List<StatisticsEntry> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
         List<Integer> result = new ArrayList<>(Collections.nCopies(length, 0));
@@ -363,8 +364,8 @@ public class CourseStatsService {
      * @return end date of the time span
      */
     public ZonedDateTime determineEndDateForActiveStudents(Course course) {
-        var endDate = ZonedDateTime.now();
-        if (course.getEndDate() != null && ZonedDateTime.now().isAfter(course.getEndDate())) {
+        var endDate = TimeUtil.now();
+        if (course.getEndDate() != null && TimeUtil.now().isAfter(course.getEndDate())) {
             endDate = course.getEndDate();
         }
         return endDate;

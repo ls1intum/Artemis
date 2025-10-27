@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -81,12 +83,14 @@ public class PyrisPipelineService {
 
     private final UserRepository userRepository;
 
+    private final FeatureToggleService featureToggleService;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, Optional<LearningMetricsApi> learningMetricsApi, StudentParticipationRepository studentParticipationRepository,
-            UserRepository userRepository, CourseLoadService courseLoadService) {
+            UserRepository userRepository, CourseLoadService courseLoadService, FeatureToggleService featureToggleService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.pyrisDTOService = pyrisDTOService;
@@ -95,6 +99,7 @@ public class PyrisPipelineService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.courseLoadService = courseLoadService;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -210,13 +215,17 @@ public class PyrisPipelineService {
         var api = learningMetricsApi.orElseThrow(() -> new AtlasNotPresentException(LearningMetricsApi.class));
 
         // @formatter:off
+        var lastMessageId = !session.getMessages().isEmpty() ? session.getMessages().getLast().getId() : null;
         executePipeline(
             "course-chat",
             variant,
             eventVariant,
-            pyrisJobService.addCourseChatJob(courseId, session.getId()), executionDto -> {
+            pyrisJobService.addCourseChatJob(courseId, session.getId(), lastMessageId), executionDto -> {
                 var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
                 var user = userRepository.findByIdElseThrow(studentId);
+                if (!featureToggleService.isFeatureEnabled(Feature.Memiris)) {
+                    user.setMemirisEnabled(false);
+                }
                 return new PyrisCourseChatPipelineExecutionDTO<>(
                     PyrisExtendedCourseDTO.of(fullCourse),
                     api.getStudentCourseMetrics(studentId, courseId),

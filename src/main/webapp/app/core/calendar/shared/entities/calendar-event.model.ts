@@ -11,24 +11,11 @@ export enum CalendarEventType {
     FileUploadExercise = 'FILE_UPLOAD_EXERCISE',
 }
 
-export enum CalendarEventSubtype {
-    StartDate = 'START_DATE',
-    EndDate = 'END_DATE',
-    StartAndEndDate = 'START_AND_END_DATE',
-    ReleaseDate = 'RELEASE_DATE',
-    DueDate = 'DUE_DATE',
-    PublishResultsDate = 'PUBLISH_RESULTS_DATE',
-    StudentReviewStartDate = 'STUDENT_REVIEW_START_DATE',
-    StudentReviewEndDate = 'STUDENT_REVIEW_END_DATE',
-    AssessmentDueDate = 'ASSESSMENT_DUE_DATE',
-}
-
 export class CalendarEvent {
     public id: string;
 
     constructor(
         public type: CalendarEventType,
-        public subtype: CalendarEventSubtype,
         public title: string,
         public startDate: Dayjs,
         public endDate?: Dayjs,
@@ -55,7 +42,6 @@ export class CalendarEvent {
 
 export interface CalendarEventDTO {
     type: string;
-    subtype: string;
     title: string;
     startDate: string;
     endDate?: string;

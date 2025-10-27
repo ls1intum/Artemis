@@ -742,6 +742,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     void updateExternalLLMUsageAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
 
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.memirisEnabled = :memirisEnabled
+            WHERE user.id = :userId
+            """)
+    void updateMemirisEnabled(@Param("userId") long userId, @Param("memirisEnabled") boolean memirisEnabled);
+
     @Query("""
             SELECT DISTINCT team.students AS student
             FROM Team team
@@ -1381,4 +1390,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
+
+    @Query("""
+            SELECT jhiUser
+            FROM CalendarSubscriptionTokenStore store
+                JOIN store.user jhiUser
+                LEFT JOIN FETCH jhiUser.groups
+                LEFT JOIN FETCH jhiUser.authorities
+            WHERE store.token = :token
+            """)
+    Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
 }

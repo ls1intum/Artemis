@@ -4,6 +4,7 @@
     0% {
         stroke-dashoffset: 100;
     }
+
     100% {
         stroke-dashoffset: 0;
     }
@@ -16,6 +17,7 @@ svg {
     .ring {
         transform-origin: 50%;
     }
+
     .progressbar {
         stroke-linecap: round;
 
@@ -31,6 +33,7 @@ svg {
             opacity: 0;
         }
     }
+
     circle {
         fill: none;
     }
@@ -41,8 +44,10 @@ svg {
         .background {
             stroke: var(--competency-rings-red-bg);
         }
+
         .progressbar {
             stroke: var(--competency-rings-red);
+
             &-anim {
                 animation-duration: 1.3s;
                 transition-duration: 1.3s;
@@ -56,8 +61,10 @@ svg {
         .background {
             stroke: var(--competency-rings-green-bg);
         }
+
         .progressbar {
             stroke: var(--competency-rings-green);
+
             &-anim {
                 animation-duration: 1s;
                 transition-duration: 1s;
