@@ -5,8 +5,7 @@ import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LectureService } from '../services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { onError } from 'app/shared/util/global.utils';
+import { getCurrentLocaleSignal, onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -28,6 +27,19 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
+import { TranslateService } from '@ngx-translate/core';
+
+export enum LectureCreationMode {
+    SINGLE = 'single',
+    SERIES = 'series',
+}
+
+interface CreateLectureOption {
+    label: string;
+    mode: LectureCreationMode;
+}
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -45,6 +57,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         LectureUpdateUnitsComponent,
         NgbTooltip,
         ArtemisTranslatePipe,
+        SelectButtonModule,
+        LectureSeriesCreateComponent,
     ],
 })
 export class LectureUpdateComponent implements OnInit, OnDestroy {
@@ -53,7 +67,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected readonly faSave = faSave;
     protected readonly faPuzzleProcess = faPuzzlePiece;
     protected readonly faBan = faBan;
-
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
@@ -62,71 +75,62 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
+    private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
 
-    titleSection = viewChild.required(LectureTitleChannelNameComponent);
-    lecturePeriodSection = viewChild.required(LectureUpdatePeriodComponent);
+    private subscriptions = new Subscription();
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    titleSection = viewChild(LectureTitleChannelNameComponent);
+    lecturePeriodSection = viewChild(LectureUpdatePeriodComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
-
     courseTitle = model<string>('');
+    courseId = signal<number | undefined>(undefined);
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit: Lecture;
+    existingLectures = signal<Lecture[]>([]);
     isEditMode = signal<boolean>(false);
     isSaving: boolean;
     isProcessing: boolean;
     processUnitMode: boolean;
-
     formStatusSections: FormSectionStatus[];
-
-    courses: Course[];
-
     domainActionsDescription = [new FormulaAction()];
     file: File;
     fileName: string;
     fileInputTouched = false;
-
     isNewlyCreatedExercise = false;
-
     isChangeMadeToTitleOrPeriodSection = false;
     shouldDisplayDismissWarning = true;
-
-    areSectionsValid = computed(() => {
-        return (
-            this.titleSection().titleChannelNameComponent().isValid() &&
-            this.lecturePeriodSection().isPeriodSectionValid() &&
-            (this.unitSection()?.isUnitConfigurationValid() ?? true)
-        );
-    });
-
-    private subscriptions = new Subscription();
+    areSectionsValid = computed(() => this.computeAreSectionsValid());
+    createLectureOptions = computed(() => this.computeCreateLectureOptions());
+    selectedCreateLectureOption = signal<LectureCreationMode>(LectureCreationMode.SINGLE);
+    isLectureSeriesCreationMode = computed(() => !this.isEditMode() && this.selectedCreateLectureOption() === LectureCreationMode.SERIES);
 
     constructor() {
         effect(() => {
-            if (this.titleSection().titleChannelNameComponent() && this.lecturePeriodSection()) {
+            if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) return;
+            const titleChannelNameComponent = this.titleSection()?.titleChannelNameComponent();
+            const lecturePeriodSection = this.lecturePeriodSection();
+            if (titleChannelNameComponent) {
                 this.subscriptions.add(
-                    this.titleSection()
-                        .titleChannelNameComponent()
-                        .titleChange.subscribe(() => {
-                            this.updateIsChangesMadeToTitleOrPeriodSection();
-                        }),
+                    titleChannelNameComponent.titleChange.subscribe(() => {
+                        this.updateIsChangesMadeToTitleOrPeriodSection();
+                    }),
                 );
                 this.subscriptions.add(
-                    this.titleSection()
-                        .titleChannelNameComponent()
-                        .channelNameChange.subscribe(() => {
-                            this.updateIsChangesMadeToTitleOrPeriodSection();
-                        }),
+                    titleChannelNameComponent.channelNameChange.subscribe(() => {
+                        this.updateIsChangesMadeToTitleOrPeriodSection();
+                    }),
                 );
-                this.subscriptions.add(
-                    this.lecturePeriodSection()!
-                        .periodSectionDatepickers()
-                        .forEach((datepicker: FormDateTimePickerComponent) => {
-                            datepicker.valueChange.subscribe(() => {
-                                this.updateIsChangesMadeToTitleOrPeriodSection();
-                            });
-                        }),
-                );
+            }
+            if (lecturePeriodSection) {
+                lecturePeriodSection.periodSectionDatepickers().forEach((datepicker: FormDateTimePickerComponent) => {
+                    const subscription = datepicker.valueChange.subscribe(() => {
+                        this.updateIsChangesMadeToTitleOrPeriodSection();
+                    });
+                    this.subscriptions.add(subscription);
+                });
             }
         });
 
@@ -142,6 +146,13 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
                 }
             }.bind(this),
         );
+
+        effect(() => {
+            if (this.selectedCreateLectureOption() === LectureCreationMode.SERIES) {
+                this.subscriptions.unsubscribe();
+                this.subscriptions = new Subscription();
+            }
+        });
     }
 
     ngOnInit() {
@@ -158,9 +169,17 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             }
         });
 
+        this.activatedRoute.parent!.paramMap.subscribe((parameterMap) => {
+            const courseIdAsString = parameterMap.get('courseId');
+            this.courseId.set(courseIdAsString ? Number(courseIdAsString) : undefined);
+        });
+
         this.isEditMode.set(!this.router.url.endsWith('/new'));
         this.lectureOnInit = cloneDeep(this.lecture());
         this.courseTitle.set(this.lecture().course?.title ?? '');
+
+        const existingLectures = (this.router.currentNavigation()?.extras.state?.['existingLectures'] ?? []) as Lecture[];
+        this.existingLectures.set(existingLectures);
     }
 
     ngOnDestroy() {
@@ -173,11 +192,11 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         updatedFormStatusSections.push(
             {
                 title: 'artemisApp.lecture.sections.title',
-                valid: this.titleSection().titleChannelNameComponent().isValid(),
+                valid: this.titleSection()?.titleChannelNameComponent().isValid() ?? false,
             },
             {
                 title: 'artemisApp.lecture.sections.period',
-                valid: Boolean(this.lecturePeriodSection().isPeriodSectionValid()),
+                valid: this.lecturePeriodSection()?.isPeriodSectionValid() ?? false,
             },
         );
 
@@ -341,5 +360,27 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         if (visibleDate && startDate?.isBefore(visibleDate)) {
             this.lecture().visibleDate = startDate.clone();
         }
+    }
+
+    private computeAreSectionsValid(): boolean {
+        const titleSection = this.titleSection();
+        const lecturePeriodSection = this.lecturePeriodSection();
+        const unitSection = this.unitSection();
+        if (titleSection && lecturePeriodSection) {
+            if (unitSection) {
+                return titleSection.titleChannelNameComponent().isValid() && lecturePeriodSection.isPeriodSectionValid() && unitSection.isUnitConfigurationValid();
+            } else {
+                return titleSection.titleChannelNameComponent().isValid() && lecturePeriodSection.isPeriodSectionValid();
+            }
+        }
+        return false;
+    }
+
+    private computeCreateLectureOptions(): CreateLectureOption[] {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.lecture.creationMode.singleLectureLabel'), mode: LectureCreationMode.SINGLE },
+            { label: this.translateService.instant('artemisApp.lecture.creationMode.lectureSeriesLabel'), mode: LectureCreationMode.SERIES },
+        ];
     }
 }

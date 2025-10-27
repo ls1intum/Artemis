@@ -23,10 +23,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizQuestionTraining } from 'app/quiz/overview/course-training/course-training-quiz/quiz-question-training.model';
 import { DialogModule } from 'primeng/dialog';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-course-training-quiz',
-    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective, DialogModule],
+    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective, DialogModule, ButtonModule],
     templateUrl: './course-training-quiz.component.html',
 })
 export class CourseTrainingQuizComponent {

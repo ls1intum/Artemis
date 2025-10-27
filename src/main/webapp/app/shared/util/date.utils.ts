@@ -79,3 +79,10 @@ export function isDateLessThanAWeekInTheFuture(date: dayjs.Dayjs, compareTime?: 
     const now = compareTime ?? dayjs();
     return date.isBetween(now.add(1, 'week'), now);
 }
+
+export function isFirstDateAfterOrEqualSecond(firstDate?: Date, secondDate?: Date): boolean {
+    if (!firstDate || !secondDate) {
+        return false;
+    }
+    return firstDate.getTime() >= secondDate.getTime();
+}
