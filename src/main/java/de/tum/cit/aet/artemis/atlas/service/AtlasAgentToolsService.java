@@ -55,45 +55,11 @@ public class AtlasAgentToolsService {
 
     private final ExerciseRepository exerciseRepository;
 
-    /** Thread-safe flag tracking if competencies were modified during the current request. */
-    private static final ThreadLocal<Boolean> competenciesModified = ThreadLocal.withInitial(() -> false);
-
-    /**
-     * @param objectMapper         Jackson object mapper for JSON serialization
-     * @param competencyRepository repository for competency data access
-     * @param courseRepository     repository for course data access
-     * @param exerciseRepository   repository for exercise data access
-     */
     public AtlasAgentToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository) {
         this.objectMapper = objectMapper;
         this.competencyRepository = competencyRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
-    }
-
-    /**
-     * Checks if any competencies were modified in the current thread.
-     *
-     * @return true if {@link #createCompetency} was called in the current thread
-     */
-    public static boolean wereCompetenciesModified() {
-        return competenciesModified.get();
-    }
-
-    /**
-     * Resets the modification flag for the current thread.
-     * Should be called at the beginning of every LLM request to ensure clean state.
-     */
-    public static void resetCompetenciesModified() {
-        competenciesModified.set(false);
-    }
-
-    /**
-     * Cleans up the ThreadLocal variable to prevent memory leaks in thread pool environments.
-     * Must be called in a finally block after processing a chat request.
-     */
-    public static void cleanup() {
-        competenciesModified.remove();
     }
 
     /**
@@ -127,7 +93,7 @@ public class AtlasAgentToolsService {
      * @param courseId      ID of the course
      * @param title         title of the new competency
      * @param description   detailed description of the competency
-     * @param taxonomyLevel Bloom’s taxonomy level
+     * @param taxonomyLevel Bloom’s taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)
      * @return JSON response containing the created competency or an error message
      */
     @Tool(description = "Create a new competency for a course")
@@ -148,7 +114,9 @@ public class AtlasAgentToolsService {
             competency.setTaxonomy(taxonomyLevel);
 
             Competency savedCompetency = competencyRepository.save(competency);
-            competenciesModified.set(true);
+
+            // Mark that a competency was created during this request
+            AtlasAgentService.markCompetencyCreated();
 
             record Response(boolean success, AtlasAgentCompetencyDTO competency) {
             }
@@ -194,14 +162,11 @@ public class AtlasAgentToolsService {
     }
 
     /**
-     * Instance-level wrapper for {@link #wereCompetenciesModified()} to ease mocking in tests.
+     * Convert object to JSON using Jackson ObjectMapper.
      *
-     * @return true if a competency was created during this request
+     * @param object the object to serialize
+     * @return JSON string representation
      */
-    public boolean wasCompetencyCreated() {
-        return wereCompetenciesModified();
-    }
-
     private String toJson(Object object) {
         try {
             return objectMapper.writeValueAsString(object);

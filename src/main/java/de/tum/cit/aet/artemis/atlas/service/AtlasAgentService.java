@@ -34,20 +34,19 @@ public class AtlasAgentService {
 
     private final ChatMemory chatMemory;
 
-    private final AtlasAgentToolsService atlasAgentToolsService;
+    private static final ThreadLocal<Boolean> competencyCreatedInCurrentRequest = ThreadLocal.withInitial(() -> false);
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
-            @Nullable ChatMemory chatMemory, @Nullable AtlasAgentToolsService atlasAgentToolsService) {
+            @Nullable ChatMemory chatMemory) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.toolCallbackProvider = toolCallbackProvider;
         this.chatMemory = chatMemory;
-        this.atlasAgentToolsService = atlasAgentToolsService;
     }
 
     /**
      * Process a chat message for the given course and return AI response with modification status.
-     * Uses ThreadLocal state tracking to detect competency modifications in a thread-safe manner.
+     * Uses ThreadLocal state tracking to detect competency modifications.
      *
      * @param message   The user's message
      * @param courseId  The course ID for context
@@ -56,12 +55,12 @@ public class AtlasAgentService {
      */
     public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
         try {
-            // Reset modification tracking for this request/thread
-            AtlasAgentToolsService.resetCompetenciesModified();
+            // Reset the flag at the start of each request
+            competencyCreatedInCurrentRequest.set(false);
 
             // Load system prompt from external template
             String resourcePath = "/prompts/atlas/agent_system_prompt.st";
-            Map<String, String> variables = Map.of(); // No variables needed for this template
+            Map<String, String> variables = Map.of();
             String systemPrompt = templateService.render(resourcePath, variables);
 
             AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
@@ -79,10 +78,10 @@ public class AtlasAgentService {
             }
 
             // Execute the chat (tools are executed internally by Spring AI)
-            String response = promptSpec.call().content();
+            String response = promptSpec.call().chatResponse().getResult().getOutput().getText();
 
-            // Check if competencies were modified during this request
-            boolean competenciesModified = atlasAgentToolsService != null && atlasAgentToolsService.wasCompetencyCreated();
+            // Check if competency was created during this request
+            boolean competenciesModified = competencyCreatedInCurrentRequest.get();
 
             String finalResponse = response != null && !response.trim().isEmpty() ? response : "I apologize, but I couldn't generate a response.";
 
@@ -94,8 +93,17 @@ public class AtlasAgentService {
         }
         finally {
             // Clean up ThreadLocal to prevent memory leaks
-            AtlasAgentToolsService.cleanup();
+            competencyCreatedInCurrentRequest.remove();
         }
+    }
+
+    /**
+     * Marks that a competency was created during the current request.
+     * This method is called by tool methods (e.g., createCompetency) to signal
+     * that a competency modification occurred during tool execution.
+     */
+    public static void markCompetencyCreated() {
+        competencyCreatedInCurrentRequest.set(true);
     }
 
     /**
