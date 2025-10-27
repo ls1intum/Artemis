@@ -75,7 +75,7 @@ export class ServerAdministration {
 
     collapseNavbarListener = output<void>();
 
-    protected collapseNavbar() {
+    collapseNavbar() {
         this.collapseNavbarListener.emit();
     }
 }
