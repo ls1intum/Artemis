@@ -1,6 +1,6 @@
-import { Component, DestroyRef, InputSignal, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, InputSignal, OutputEmitterRef, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgbActiveModal, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
@@ -11,20 +11,24 @@ import { StudentsRoomDistributionService } from 'app/exam/manage/students/room-d
 import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-students-room-distribution-dialog',
     templateUrl: './students-room-distribution-dialog.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule],
 })
 export class StudentsRoomDistributionDialogComponent {
-    private activeModal = inject(NgbActiveModal);
     private studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
     private destroyRef: DestroyRef = inject(DestroyRef);
 
     courseId: InputSignal<number> = input.required();
     exam: InputSignal<Exam> = input.required();
+
+    private isDialogVisible: WritableSignal<boolean> = signal(false);
+    onSave: OutputEmitterRef<void> = output();
 
     // Configurable options
     readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
@@ -44,14 +48,18 @@ export class StudentsRoomDistributionDialogComponent {
     protected readonly faThLarge = faThLarge;
 
     constructor() {
-        this.studentsRoomDistributionService.loadRoomData().subscribe(() => {
-            this.availableRooms = this.studentsRoomDistributionService.availableRooms();
-        });
-
         effect(() => {
             const selectedRoomIds: number[] = this.selectedRooms().map((room) => room.id);
             this.studentsRoomDistributionService.updateCapacityData(selectedRoomIds, this.reserveFactor()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
         });
+    }
+
+    get dialogVisible(): boolean {
+        return this.isDialogVisible();
+    }
+
+    set dialogVisible(value: boolean) {
+        this.isDialogVisible.set(value);
     }
 
     private computeSeatInfo(): CapacityDisplayDTO {
@@ -70,10 +78,22 @@ export class StudentsRoomDistributionDialogComponent {
     }
 
     /**
-     * Dismisses the dialog
+     * Opens the dialog
      */
-    clear(): void {
-        this.activeModal.dismiss('cancel');
+    openDialog(): void {
+        this.selectedRooms.set([]);
+        this.isDialogVisible.set(true);
+
+        this.studentsRoomDistributionService.loadRoomData().subscribe(() => {
+            this.availableRooms = this.studentsRoomDistributionService.availableRooms();
+        });
+    }
+
+    /**
+     * Closes the dialog
+     */
+    closeDialog(): void {
+        this.isDialogVisible.set(false);
     }
 
     /**
@@ -85,7 +105,8 @@ export class StudentsRoomDistributionDialogComponent {
             .distributeStudentsAcrossRooms(this.courseId(), this.exam().id!, selectedRoomIds, this.reserveFactor(), !this.allowNarrowLayouts())
             .subscribe({
                 next: () => {
-                    this.activeModal.close();
+                    this.closeDialog();
+                    this.onSave.emit();
                 },
             });
     }
@@ -157,9 +178,9 @@ export class StudentsRoomDistributionDialogComponent {
     /**
      * Formats the metadata of an exam room into a human-readable format for the dropdown search menu
      *
-     * @param room The exam room
+     * @param _room ignored exam room
      */
-    emptyStringFormatter(room: RoomForDistributionDTO): string {
+    emptyStringFormatter(_room: RoomForDistributionDTO): string {
         return '';
     }
 

@@ -22,11 +22,14 @@
                 <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (uploadDone)="reloadExamWithRegisteredUsers()" />
             }
             @if (!isTestExam) {
-                <jhi-students-room-distribution-button [courseId]="courseId" [exam]="exam" (distributionDone)="reloadExamWithRegisteredUsers()" />
+                <button class="btn btn-primary ms-auto" (click)="studentsRoomDistributionDialog.openDialog()">
+                    <fa-icon [icon]="faThLarge" />
+                    <span jhiTranslate="artemisApp.exam.examUsers.roomDistribute"></span>
+                </button>
             }
             @if (!isTestExam) {
                 <button
-                    class="btn btn btn-primary ms-auto"
+                    class="btn btn-primary ms-auto"
                     id="register-course-students"
                     (click)="registerAllStudentsFromCourse()"
                     title="{{ 'artemisApp.examManagement.examStudents.registerAllFromCourseTooltip' | artemisTranslate }}"
@@ -276,3 +279,5 @@
         </ng-template>
     </jhi-data-table>
 </div>
+
+<jhi-students-room-distribution-dialog [courseId]="courseId" [exam]="exam" (onSave)="reloadExamWithRegisteredUsers()" #studentsRoomDistributionDialog />
