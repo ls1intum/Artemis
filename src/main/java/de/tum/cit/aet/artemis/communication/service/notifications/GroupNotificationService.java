@@ -148,8 +148,8 @@ public class GroupNotificationService {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var recipients = userRepository.getUsersInCourse(course);
 
-        var newExerciseNotification = new NewExerciseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(), exercise.getExerciseNotificationTitle(),
-                exercise.getDifficulty() == null ? null : exercise.getDifficulty().toString(),
+        var newExerciseNotification = new NewExerciseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
+                exercise.getExerciseNotificationTitle(), exercise.getDifficulty() == null ? null : exercise.getDifficulty().toString(),
                 exercise.getReleaseDate() == null ? null : exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
                 exercise.getDueDate() == null ? null : exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")), exercise.getMaxPoints().longValue());
 
