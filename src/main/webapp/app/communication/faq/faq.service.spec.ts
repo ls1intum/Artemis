@@ -308,14 +308,14 @@ describe('Faq Service', () => {
         expect(() => CreateFaqDTO.toCreateFaqDto(f)).toThrow('The state should be present to create FAQ');
     });
 
-    it('should throw if id is missing when converting to upDateFaqDto', () => {
+    it('should throw if id is missing when converting to UpdateFaqDTO', () => {
         const f = new Faq();
         f.faqState = FaqState.ACCEPTED;
         f.questionTitle = 'Title';
         expect(() => UpdateFaqDTO.toUpdateDto(f)).toThrow('The id should be present to update FAQ');
     });
 
-    it('should throw if faqState is missing when converting to upDateFaqDto', () => {
+    it('should throw if faqState is missing when converting to UpdateFaqDTO', () => {
         const f = new Faq();
         f.id = 99;
         f.questionTitle = 'Title';
