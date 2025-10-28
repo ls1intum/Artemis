@@ -112,7 +112,7 @@ artemis:
   nebula: # The nebula module is used for llm features such as faq-rewriting and lecture transcription
     enabled: false
     url: <your-nebula-url>
-    secret: <your-secret>
+    secret-token: <your-secret>
 
 # Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
