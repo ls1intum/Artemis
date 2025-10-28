@@ -13,6 +13,7 @@ import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatem
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import {
     InlineConsistencyIssue,
+    addCommentBoxes,
     formatArtifactType,
     formatConsistencyCheckResults,
     humanizeCategory,
@@ -23,12 +24,17 @@ import {
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 describe('ArtemisIntelligenceService', () => {
     let httpMock: HttpTestingController;
     let service: ArtemisIntelligenceService;
     let websocketService: WebsocketService;
     let alertService: AlertService;
+
+    const monacoEditorComponent = {
+        addLineWidget: jest.fn(),
+    } as unknown as MonacoEditorComponent;
 
     const mockWebsocketService = {
         subscribe: jest.fn(),
@@ -274,6 +280,13 @@ describe('ArtemisIntelligenceService', () => {
             expect(isMatchingRepository(ArtifactLocation.TypeEnum.TestsRepository, RepositoryType.TESTS)).toBeTruthy();
         });
 
+        it('severity to string correct', () => {
+            expect(severityToString(ConsistencyIssue.SeverityEnum.Medium)).toBe('MEDIUM');
+            expect(severityToString(ConsistencyIssue.SeverityEnum.Low)).toBe('LOW');
+            expect(severityToString(ConsistencyIssue.SeverityEnum.High)).toBe('HIGH');
+            expect(severityToString(undefined as any)).toBe('UNKNOWN');
+        });
+
         it('humanized category correctly', () => {
             expect(humanizeCategory('IDENTIFIER_NAMING_INCONSISTENCY')).toBe('Identifier Naming Inconsistency');
             expect(humanizeCategory('VISIBILITY_MISMATCH')).toBe('Visibility Mismatch');
@@ -286,6 +299,7 @@ describe('ArtemisIntelligenceService', () => {
             expect(formatArtifactType(ArtifactLocation.TypeEnum.ProblemStatement)).toBe('Problem Statement');
             expect(formatArtifactType(ArtifactLocation.TypeEnum.SolutionRepository)).toBe('Solution');
             expect(formatArtifactType(ArtifactLocation.TypeEnum.TemplateRepository)).toBe('Template');
+            expect(formatArtifactType(undefined as any)).toBe('Other');
         });
 
         it('correct issues for selected files: problem statement', () => {
@@ -343,6 +357,11 @@ describe('ArtemisIntelligenceService', () => {
             expect(res).toContain(severityToString(mockIssue.severity));
             expect(res).toContain(String(mockIssue.startLine));
             expect(res).toContain(String(mockIssue.endLine));
+        });
+
+        it('addCommentBoxes calls correct functions', () => {
+            addCommentBoxes(monacoEditorComponent, mockIssues, 'problem_statement.md', 'PROBLEM_STATEMENT');
+            expect(monacoEditorComponent.addLineWidget).toHaveBeenCalledOnce();
         });
     });
 

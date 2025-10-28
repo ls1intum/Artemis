@@ -15,6 +15,13 @@ export type InlineConsistencyIssue = {
     severity: ConsistencyIssue.SeverityEnum;
 };
 
+/**
+ * Adds a comment boxes below code lines in Monaco based on the issues.
+ * @param editor       Monaco editor wrapper component.
+ * @param issues       Issues to render.
+ * @param selectedFile The currently selected file in the repo.
+ * @param selectedRepo The currently selected repository.
+ */
 export function addCommentBoxes(
     editor: MonacoEditorComponent,
     issues: ConsistencyIssue[],
@@ -30,6 +37,7 @@ export function addCommentBoxes(
  * Adds a comment box below a code line in Monaco.
  * @param editor Monaco editor wrapper component.
  * @param issue  Issue to render.
+ * @param id     The unique identifier for this comment.
  */
 export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsistencyIssue, id: number) {
     const node = document.createElement('div');
@@ -195,6 +203,6 @@ export function formatArtifactType(type: ArtifactLocation.TypeEnum): string {
         case ArtifactLocation.TypeEnum.TestsRepository:
             return 'Tests';
         default:
-            return type;
+            return 'Other';
     }
 }
