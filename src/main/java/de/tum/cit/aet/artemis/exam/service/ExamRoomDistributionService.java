@@ -78,11 +78,12 @@ public class ExamRoomDistributionService {
 
     private ExamDistributionCapacityDTO getDistributionCapacities(@NotNull Set<ExamRoom> examRooms, double reserveFactor) {
         final int numberOfDefaultUsableSeats = examRooms.stream()
-                .mapToInt(examRoom -> examRoomService.sizeAfterApplyingReserveFactor(examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity(), reserveFactor))
+                .mapToInt(examRoom -> examRoomService.getSizeAfterApplyingReserveFactor(examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity(), reserveFactor))
                 .sum();
 
         final int numberOfMaximumUsableSeats = examRooms.stream().map(examRoom -> examRoom.getLayoutStrategies().stream().max(Comparator.comparingInt(LayoutStrategy::getCapacity)))
-                .mapToInt(layoutStrategy -> layoutStrategy.map(strategy -> examRoomService.sizeAfterApplyingReserveFactor(strategy.getCapacity(), reserveFactor)).orElse(0)).sum();
+                .mapToInt(layoutStrategy -> layoutStrategy.map(strategy -> examRoomService.getSizeAfterApplyingReserveFactor(strategy.getCapacity(), reserveFactor)).orElse(0))
+                .sum();
 
         return new ExamDistributionCapacityDTO(numberOfDefaultUsableSeats, numberOfMaximumUsableSeats);
     }
@@ -102,37 +103,28 @@ public class ExamRoomDistributionService {
         final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 
         ExamDistributionCapacityDTO capacities = getDistributionCapacities(examRoomsForExam, reserveFactor);
+        int numberOfExamUsers = exam.getExamUsers().size();
 
-        boolean defaultLayoutsSuffice = verifyLayoutSizesSufficeOrElseThrowAndReturnIfDefaultLayoutsSuffice(useOnlyDefaultLayouts, exam, capacities);
+        boolean defaultLayoutsSuffice = capacities.combinedDefaultCapacity() >= numberOfExamUsers;
+        if (!defaultLayoutsSuffice && useOnlyDefaultLayouts) {
+            throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
+                    Map.of("numberOfUsableSeats", capacities.combinedDefaultCapacity(), "numberOfExamUsers", numberOfExamUsers));
+        }
+
+        boolean maxLayoutsSuffice = capacities.combinedMaximumCapacity() >= numberOfExamUsers;
+        if (!maxLayoutsSuffice) {
+            throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
+                    Map.of("numberOfUsableSeats", capacities.combinedMaximumCapacity(), "numberOfExamUsers", numberOfExamUsers));
+        }
 
         assignExamRoomsToExam(exam, examRoomsForExam);
+
         if (defaultLayoutsSuffice) {
             distributeExamUsersToDefaultUsableSeatsInRooms(exam, examRoomsForExam, reserveFactor);
         }
         else {
             distributeExamUsersToAnyUsableSeatsInRooms(exam, examRoomsForExam, reserveFactor);
         }
-    }
-
-    private static boolean verifyLayoutSizesSufficeOrElseThrowAndReturnIfDefaultLayoutsSuffice(boolean useOnlyDefaultLayouts, Exam exam, ExamDistributionCapacityDTO capacities) {
-        final int numberOfExamUsers = exam.getExamUsers().size();
-        boolean defaultLayoutsSuffice = true;
-
-        if (capacities.combinedDefaultCapacity() < numberOfExamUsers) {
-            if (useOnlyDefaultLayouts) {
-                throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
-                        Map.of("numberOfUsableSeats", capacities.combinedDefaultCapacity(), "numberOfExamUsers", numberOfExamUsers));
-            }
-
-            defaultLayoutsSuffice = false;
-
-            if (capacities.combinedMaximumCapacity() < numberOfExamUsers) {
-                throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
-                        Map.of("numberOfUsableSeats", capacities.combinedMaximumCapacity(), "numberOfExamUsers", numberOfExamUsers));
-            }
-        }
-
-        return defaultLayoutsSuffice;
     }
 
     /**
@@ -240,7 +232,7 @@ public class ExamRoomDistributionService {
         long roomId = roomIds.get(roomIndex);
         for (LayoutStrategy strategy : layoutsByRoom.get(roomId)) {
             current.put(roomId, strategy);
-            int newCapacity = currentCapacity + examRoomService.sizeAfterApplyingReserveFactor(strategy.getCapacity(), reserveFactor);
+            int newCapacity = currentCapacity + examRoomService.getSizeAfterApplyingReserveFactor(strategy.getCapacity(), reserveFactor);
 
             // pruning: if capacity already >= bestCapacity, no need to continue
             if (newCapacity < bestCapacity) {
@@ -248,7 +240,7 @@ public class ExamRoomDistributionService {
 
                 // update bestCapacity if best changed
                 if (best != null) {
-                    bestCapacity = best.values().stream().mapToInt(layoutStrategy -> examRoomService.sizeAfterApplyingReserveFactor(layoutStrategy.getCapacity(), reserveFactor))
+                    bestCapacity = best.values().stream().mapToInt(layoutStrategy -> examRoomService.getSizeAfterApplyingReserveFactor(layoutStrategy.getCapacity(), reserveFactor))
                             .sum();
                 }
             }

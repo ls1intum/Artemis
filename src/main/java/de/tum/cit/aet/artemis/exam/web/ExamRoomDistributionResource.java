@@ -110,17 +110,25 @@ public class ExamRoomDistributionResource {
     }
 
     /**
-     * POST /rooms/distribution-capacities : Retrieves information about the combined default and maximum capacities of
+     * GET /rooms/distribution-capacities : Retrieves information about the combined default and maximum capacities of
      * all selected rooms, respecting the given reserve factor
      *
      * @param reserveFactor how much percent of seats should remain unassigned. Defaults to 0%
      * @param examRoomIds   the ids of all the exam rooms we want to distribute the students to
      * @return 200 (OK) Capacity information
      */
-    @PostMapping("rooms/distribution-capacities")
+    @GetMapping("rooms/distribution-capacities")
     @EnforceAtLeastInstructor
-    public ResponseEntity<ExamDistributionCapacityDTO> getDistributionCapacities(@RequestParam double reserveFactor, @RequestBody Set<Long> examRoomIds) {
+    public ResponseEntity<ExamDistributionCapacityDTO> getDistributionCapacities(@RequestParam double reserveFactor, @RequestParam Set<Long> examRoomIds) {
         log.debug("REST request to get capacity data for a distribution to room ids '{}' with reserve factor {}", examRoomIds, reserveFactor);
+
+        if (reserveFactor < 0 || reserveFactor > 1) {
+            throw new BadRequestAlertException("Reserve factor outside of allowed range [0,1]", ENTITY_NAME, "reserveFactorOutOfRange");
+        }
+
+        if (examRoomIds == null || examRoomIds.isEmpty()) {
+            throw new BadRequestAlertException("You didn't specify any room IDs", ENTITY_NAME, "noRoomIDs");
+        }
 
         ExamDistributionCapacityDTO capacityInformation = examRoomDistributionService.getDistributionCapacitiesByIds(examRoomIds, reserveFactor);
         return ResponseEntity.ok(capacityInformation);

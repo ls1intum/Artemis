@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 
 /**
- * Spring Data JPA repository for the {@link de.tum.cit.aet.artemis.exam.domain.room.ExamRoom} entity.
+ * Spring Data JPA repository for the {@link ExamRoom} entity.
  */
 @Conditional(ExamEnabled.class)
 @Lazy

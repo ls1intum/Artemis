@@ -30,9 +30,9 @@ export class StudentsRoomDistributionButtonComponent {
     distributionDone: OutputEmitterRef<void> = output();
 
     // Icons
-    readonly faPlus = faPlus;
-    readonly faUpload = faUpload;
-    readonly faThLarge = faThLarge;
+    protected readonly faPlus = faPlus;
+    protected readonly faUpload = faUpload;
+    protected readonly faThLarge = faThLarge;
 
     /**
      * Open the room distribution dialog for assigning exam users to rooms

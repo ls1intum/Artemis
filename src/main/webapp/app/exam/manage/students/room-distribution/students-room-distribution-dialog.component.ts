@@ -1,8 +1,7 @@
 import { Component, InputSignal, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpResponse } from '@angular/common/http';
 import { NgbActiveModal, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, combineLatest, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs';
+import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -10,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentsRoomDistributionService } from 'app/exam/manage/students/room-distribution/students-room-distribution.service';
 import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
@@ -27,54 +25,46 @@ export class StudentsRoomDistributionDialogComponent {
     exam: InputSignal<Exam> = input.required();
 
     // Configurable options
-    readonly reserveFactorDefaultPercentage: number = 10;
-    private reservePercentage: WritableSignal<number> = signal(this.reserveFactorDefaultPercentage);
+    readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
+    private reservePercentage: WritableSignal<number> = signal(this.RESERVE_FACTOR_DEFAULT_PERCENTAGE);
     private reserveFactor: Signal<number> = computed(() => this.reservePercentage() / 100);
     allowNarrowLayouts: WritableSignal<boolean> = signal(false);
 
-    private availableRooms: WritableSignal<RoomForDistributionDTO[] | undefined> = signal(undefined);
+    private availableRooms: RoomForDistributionDTO[];
+    private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = this.studentsRoomDistributionService.capacityData;
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
-    private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = toSignal(
-        combineLatest([toObservable(this.selectedRooms), toObservable(this.reserveFactor)]).pipe(
-            switchMap(([rooms, reserveFactor]) => {
-                const ids = rooms.map((room) => room.id);
-                return this.studentsRoomDistributionService.getCapacityData(ids, reserveFactor).pipe(map((res) => res.body as ExamDistributionCapacityDTO));
-            }),
-        ),
-        { initialValue: { combinedDefaultCapacity: 0, combinedMaximumCapacity: 0 } as ExamDistributionCapacityDTO },
-    );
-    seatInfo: Signal<CapacityDisplayDTO> = computed(() => {
-        const totalStudents = this.exam().numberOfExamUsers ?? this.exam().examUsers?.length ?? 0;
-        let usableCapacity = this.allowNarrowLayouts() ? this.selectedRoomsCapacity().combinedMaximumCapacity : this.selectedRoomsCapacity().combinedDefaultCapacity;
+    seatInfo: Signal<CapacityDisplayDTO> = computed(() => this.computeSeatInfo());
+    canSeatAllStudents: Signal<boolean> = computed(() => this.seatInfo().usableCapacity >= this.seatInfo().totalStudents);
+
+    // Icons
+    protected readonly faBan = faBan;
+    protected readonly faThLarge = faThLarge;
+
+    constructor() {
+        this.studentsRoomDistributionService.loadRoomData().subscribe(() => {
+            this.availableRooms = this.studentsRoomDistributionService.availableRooms();
+        });
+
+        effect(() => {
+            const selectedRoomIds: number[] = this.selectedRooms().map((room) => room.id);
+            this.studentsRoomDistributionService.updateCapacityData(selectedRoomIds, this.reserveFactor()).subscribe();
+        });
+    }
+
+    private computeSeatInfo(): CapacityDisplayDTO {
+        const totalStudents: number = this.exam().numberOfExamUsers ?? this.exam().examUsers?.length ?? 0;
+        let usableCapacity: number = this.allowNarrowLayouts() ? this.selectedRoomsCapacity().combinedMaximumCapacity : this.selectedRoomsCapacity().combinedDefaultCapacity;
         if (usableCapacity > totalStudents) {
             usableCapacity = totalStudents;
         }
-        const percentage = totalStudents > 0 ? Math.min(100, Math.round((usableCapacity / totalStudents) * 100)) : 0;
+        const percentage: number = totalStudents > 0 ? Math.min(100, Math.round((usableCapacity / totalStudents) * 100)) : 0;
 
         return {
             totalStudents,
             usableCapacity,
             percentage,
         } as CapacityDisplayDTO;
-    });
-    canSeatAllStudents: Signal<boolean> = computed(() => this.seatInfo().usableCapacity >= this.seatInfo().totalStudents);
-
-    // Icons
-    faBan = faBan;
-    faThLarge = faThLarge;
-
-    constructor() {
-        effect(() => {
-            this.studentsRoomDistributionService.getRoomData().subscribe({
-                next: (result: HttpResponse<RoomForDistributionDTO[]>) => {
-                    this.availableRooms.set(result.body as RoomForDistributionDTO[]);
-                },
-                error: () => {
-                    this.availableRooms.set(undefined);
-                },
-            });
-        });
     }
 
     /**
@@ -112,20 +102,18 @@ export class StudentsRoomDistributionDialogComponent {
     private findAllMatchingRoomsForTerm = (term: string): RoomForDistributionDTO[] => {
         const trimmed = term.trim();
         if (!trimmed) {
-            return this.availableRooms() ?? [];
+            return this.availableRooms;
         }
 
         const tokens = trimmed.toLowerCase().split(/\s+/);
-        return (
-            this.availableRooms()?.filter((room) => {
-                const roomFields = [room.name, room.alternativeName, room.number, room.alternativeNumber, room.building].filter(Boolean).map((str) => str!.toLowerCase());
+        return this.availableRooms.filter((room) => {
+            const roomFields = [room.name, room.alternativeName, room.roomNumber, room.alternativeRoomNumber, room.building].filter(Boolean).map((str) => str!.toLowerCase());
 
-                // each token must match at least one field
-                return tokens.every((token) => {
-                    return roomFields.some((roomField) => this.isSubsequence(roomField, token));
-                });
-            }) ?? []
-        );
+            // each token must match at least one field
+            return tokens.every((token) => {
+                return roomFields.some((roomField) => this.isSubsequence(roomField, token));
+            });
+        });
     };
 
     /**
@@ -157,31 +145,42 @@ export class StudentsRoomDistributionDialogComponent {
      *
      * @param room The exam room
      */
-    formatter(room: RoomForDistributionDTO) {
+    formatter(room: RoomForDistributionDTO): string {
         const namePart = room.alternativeName ? `${room.name} (${room.alternativeName})` : room.name;
-        const numberPart = room.alternativeNumber ? `${room.number} (${room.alternativeNumber})` : room.number;
+        const numberPart = room.alternativeRoomNumber ? `${room.roomNumber} (${room.alternativeRoomNumber})` : room.roomNumber;
 
         return `${namePart} – ${numberPart} - [${room.building}]`;
     }
 
     /**
-     * Adds a room to the {@link selectedRooms} if it isn't included already
+     * Formats the metadata of an exam room into a human-readable format for the dropdown search menu
+     *
+     * @param room The exam room
+     */
+    alternative_formatter(room: RoomForDistributionDTO): string {
+        return '';
+    }
+
+    /**
+     * Adds a room to the {@link selectedRooms} and removes it from the {@link availableRooms} if it isn't included and removed already
      *
      * @param event An event containing a selected room
      */
-    onRoomSelected(event: { item: RoomForDistributionDTO }) {
+    onRoomSelected(event: { item: RoomForDistributionDTO }): void {
         if (this.selectedRooms().every((room) => room.id !== event.item.id)) {
             this.selectedRooms.update((rooms) => [...rooms, event.item]);
+            this.availableRooms.splice(this.availableRooms.indexOf(event.item), 1);
         }
     }
 
     /**
-     * Removes a room from the {@link selectedRooms}
+     * Removes a room from the {@link selectedRooms} and adds it back to the {@link availableRooms}
      *
      * @param room The room to remove
      */
-    removeSelectedRoom(room: RoomForDistributionDTO) {
+    removeSelectedRoom(room: RoomForDistributionDTO): void {
         this.selectedRooms.update((selectedRooms) => selectedRooms.filter((selectedRoom) => room.id !== selectedRoom.id));
+        this.availableRooms.push(room);
     }
 
     /**
@@ -226,6 +225,6 @@ export class StudentsRoomDistributionDialogComponent {
      * Toggles whether narrow layouts are allowed
      */
     toggleNarrowLayouts(): void {
-        this.allowNarrowLayouts.set(!this.allowNarrowLayouts());
+        this.allowNarrowLayouts.update((oldValue) => !oldValue);
     }
 }

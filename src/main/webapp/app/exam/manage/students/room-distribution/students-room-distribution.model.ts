@@ -1,7 +1,7 @@
 export interface RoomForDistributionDTO {
     id: number;
-    number: string;
-    alternativeNumber?: string;
+    roomNumber: string;
+    alternativeRoomNumber?: string;
     name: string;
     alternativeName?: string;
     building: string;

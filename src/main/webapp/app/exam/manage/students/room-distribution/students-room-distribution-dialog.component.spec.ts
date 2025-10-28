@@ -40,9 +40,9 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
     const rooms: RoomForDistributionDTO[] = [
-        { id: 1, number: '1', name: 'one', building: 'AA' },
-        { id: 2, number: '2', alternativeNumber: '002', name: 'two', building: 'AA' },
-        { id: 3, number: '3', alternativeNumber: '003', name: 'three', alternativeName: 'threeee', building: 'AA' },
+        { id: 1, roomNumber: '1', name: 'one', building: 'AA' },
+        { id: 2, roomNumber: '2', alternativeRoomNumber: '002', name: 'two', building: 'AA' },
+        { id: 3, roomNumber: '3', alternativeRoomNumber: '003', name: 'three', alternativeName: 'threeee', building: 'AA' },
     ] as RoomForDistributionDTO[];
 
     let ngbModal: NgbActiveModal;
@@ -102,7 +102,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     it('should request room data from the server on initial opening', () => {
         fixture.detectChanges();
 
-        expect(service.getRoomData).toHaveBeenCalledOnce();
+        expect(service.loadRoomData).toHaveBeenCalledOnce();
     });
 
     it('should show finish button after selecting a room', () => {
@@ -153,8 +153,8 @@ describe('StudentsRoomDistributionDialogComponent', () => {
             id: 1,
             name: 'A',
             alternativeName: 'Alt',
-            number: '101',
-            alternativeNumber: '102',
+            roomNumber: '101',
+            alternativeRoomNumber: '102',
             building: 'B',
         });
         expect(formatted).toBe('A (Alt) – 101 (102) - [B]');

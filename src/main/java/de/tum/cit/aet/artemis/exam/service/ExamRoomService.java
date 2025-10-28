@@ -389,12 +389,12 @@ public class ExamRoomService {
      * @param reserveFactor The reserve factor in range [0,1]
      * @return The size after applying the reserve factor
      */
-    public int sizeAfterApplyingReserveFactor(int originalSize, double reserveFactor) {
+    public int getSizeAfterApplyingReserveFactor(int originalSize, double reserveFactor) {
         return (int) (originalSize * (1 - reserveFactor));
     }
 
     private <T> List<T> applyReserveFactorToList(List<T> list, double reserveFactor) {
-        int numberOfIncludedElements = sizeAfterApplyingReserveFactor(list.size(), reserveFactor);
+        int numberOfIncludedElements = getSizeAfterApplyingReserveFactor(list.size(), reserveFactor);
         return list.subList(0, numberOfIncludedElements);
     }
 
