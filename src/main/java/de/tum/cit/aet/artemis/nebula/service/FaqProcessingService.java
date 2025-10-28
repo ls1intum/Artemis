@@ -46,8 +46,9 @@ public class FaqProcessingService {
     public FaqRewritingResponseDTO executeRewriting(User user, Course course, String toBeRewritten) {
         List<FaqDTO> faqDTOs = faqRepository.findAllByCourseIdAndFaqState(course.getId(), FaqState.ACCEPTED).stream().map(FaqDTO::new).toList();
         FaqRewritingDTO faqRewritingDTO = new FaqRewritingDTO(toBeRewritten, faqDTOs);
-        FaqRewritingResponseDTO response = nebulaConnectionService.executeFaqRewriting(faqRewritingDTO);
         log.info("Rewriting FAQ for user: {} in course: {} with text: {}", user.getLogin(), course.getTitle(), toBeRewritten);
+        FaqRewritingResponseDTO response = nebulaConnectionService.executeFaqRewriting(faqRewritingDTO);
+        log.info("Rewriting completed for user: {} in course: {} with the result: {}", user.getLogin(), course.getTitle(), response.rewrittenText());
         return response;
     }
 
@@ -62,8 +63,9 @@ public class FaqProcessingService {
     public FaqConsistencyResponseDTO executeConsistencyCheck(User user, Course course, String toBeChecked) {
         List<FaqDTO> faqDTOs = faqRepository.findAllByCourseIdAndFaqState(course.getId(), FaqState.ACCEPTED).stream().map(FaqDTO::new).toList();
         FaqConsistencyDTO faqConsistencyDTO = new FaqConsistencyDTO(toBeChecked, faqDTOs);
-        FaqConsistencyResponseDTO response = nebulaConnectionService.executeFaqConsistencyCheck(faqConsistencyDTO);
         log.info("Consistency check FAQ for user: {} in course: {} with text: {}", user.getLogin(), course.getTitle(), toBeChecked);
+        FaqConsistencyResponseDTO response = nebulaConnectionService.executeFaqConsistencyCheck(faqConsistencyDTO);
+        log.info("Consistency check completed for user: {} in course: {} with the result: {}", user.getLogin(), course.getTitle(), response.consistent());
         return response;
     }
 }

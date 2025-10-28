@@ -1,5 +1,5 @@
 export interface RewriteResult {
-    result: string;
+    rewrittenText: string;
     inconsistencies: string[] | undefined;
     suggestions: string[] | undefined;
     improvement: string | undefined;

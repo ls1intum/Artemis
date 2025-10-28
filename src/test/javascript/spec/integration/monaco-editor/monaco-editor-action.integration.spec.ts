@@ -445,7 +445,7 @@ describe('MonacoEditorActionIntegration', () => {
 
         expect(mockArtemisService.rewrite).toHaveBeenCalledTimes(1);
         expect(mockArtemisService.rewrite).toHaveBeenCalledWith(originalText, variant, courseId);
-        expect(comp.getText()).toBe(rewriteResult.result);
+        expect(comp.getText()).toBe(rewriteResult.rewrittenText);
     });
 
     it('should run FAQ consistency check and update provided signal', async () => {

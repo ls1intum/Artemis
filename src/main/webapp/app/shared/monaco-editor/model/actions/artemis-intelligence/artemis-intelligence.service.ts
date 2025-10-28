@@ -50,7 +50,7 @@ export class ArtemisIntelligenceService {
             return this.hyperionApiService.rewriteProblemStatement(contextId, request).pipe(
                 map(
                     (response: ProblemStatementRewriteResponse): RewriteResult => ({
-                        result: response.rewrittenText,
+                        rewrittenText: response.rewrittenText,
                         inconsistencies: undefined,
                         suggestions: undefined,
                         improvement: response.improved ? 'Text was improved' : 'Text was not improved',
