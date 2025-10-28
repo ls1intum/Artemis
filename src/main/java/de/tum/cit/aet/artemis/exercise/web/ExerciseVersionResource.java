@@ -68,7 +68,8 @@ public class ExerciseVersionResource {
     /**
      * GET version/:versionId : get a specific version of an exercise.
      *
-     * @param versionId the ID of the exercise version to retrieve
+     * @param exerciseId the ID of the exercise that the endpoint should access
+     * @param versionId  the ID of the exercise version to retrieve
      * @return the ResponseEntity with status 200 (OK) and the exercise snapshot in body
      */
     @GetMapping("{exerciseId}/version/{versionId}")
@@ -77,8 +78,8 @@ public class ExerciseVersionResource {
         log.debug("REST request to get snapshot for ExerciseVersion : {}", versionId);
         ExerciseVersion version = exerciseVersionRepository.findByIdElseThrow(versionId);
         if (!version.getExerciseId().equals(exerciseId)) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "exerciseVersion", "quizAlreadyVisible", "Quiz is already visible to students.")).build();
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "exerciseVersion", "exerciseVersionIdMismatch",
+                    "The requested exercise version does not belong to the provided exercise ID.")).build();
         }
         return ResponseEntity.ok(version.getExerciseSnapshot());
     }

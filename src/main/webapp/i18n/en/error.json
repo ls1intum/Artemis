@@ -151,6 +151,6 @@
             "submissionIsNull": "This example submission has no solution attached.",
             "submissionIdMissing": "The submission must be saved before it can be converted."
         },
-        "exerciseVersionIdMismatch": "The requested exercise version does not being to the provided exercise id."
+        "exerciseVersionIdMismatch": "The requested exercise version does not belong to the provided exercise ID."
     }
 }
