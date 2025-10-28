@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+    http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="20250521014500-add-jobid" author="goyal">
+        <addColumn tableName="lecture_transcription">
+            <column name="job_id" type="VARCHAR(255)">
+                <constraints nullable="true" unique="true"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="lecture_transcription" columnName="job_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20250521014500-mysql-status-enum" author="goyal">
+        <preConditions onFail="MARK_RAN"><dbms type="mysql,h2"/></preConditions>
+        <addColumn tableName="lecture_transcription">
+            <column name="transcription_status"
+                    type="ENUM('PENDING','PROCESSING','COMPLETED','FAILED')"
+                    defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="lecture_transcription" columnName="transcription_status"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20250521014500-pg-status-text" author="goyal">
+        <preConditions onFail="MARK_RAN"><dbms type="postgresql"/></preConditions>
+        <addColumn tableName="lecture_transcription">
+            <column name="transcription_status" type="TEXT" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="lecture_transcription" columnName="transcription_status"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
