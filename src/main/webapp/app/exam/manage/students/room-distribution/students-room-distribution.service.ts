@@ -1,6 +1,6 @@
 import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { Observable, catchError, map, throwError } from 'rxjs';
 import { ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 
 @Injectable({ providedIn: 'root' })
@@ -26,16 +26,19 @@ export class StudentsRoomDistributionService {
     /**
      * Sends a GET request to retrieve basic data about all exam rooms available for distribution and updates {@link availableRooms}.
      */
-    loadRoomData(): Observable<void> {
-        return this.http.get<RoomForDistributionDTO[]>(`${this.BASE_URL}/rooms/distribution-data`).pipe(
-            map((rooms: RoomForDistributionDTO[]) => {
-                this.availableRoomsInternal.set(rooms);
-            }),
-            catchError((error) => {
-                this.availableRoomsInternal.set(undefined);
-                return throwError(() => error);
-            }),
-        );
+    loadRoomData(): void {
+        this.http
+            .get<RoomForDistributionDTO[]>(`${this.BASE_URL}/rooms/distribution-data`)
+            .pipe(
+                map((rooms: RoomForDistributionDTO[]) => {
+                    this.availableRoomsInternal.set(rooms);
+                }),
+                catchError((error) => {
+                    this.availableRoomsInternal.set(undefined);
+                    return throwError(() => error);
+                }),
+            )
+            .subscribe();
     }
 
     /**
@@ -44,16 +47,16 @@ export class StudentsRoomDistributionService {
      * @param roomIds ids of the rooms
      * @param reserveFactor percentage of seats that should be left empty
      */
-    updateCapacityData(roomIds: number[], reserveFactor: number): Observable<void> {
+    updateCapacityData(roomIds: number[], reserveFactor: number): void {
         if (roomIds.length === 0) {
             this.capacityDataInternal.set(undefined);
-            return of();
+            return;
         }
 
         const requestUrl = `${this.BASE_URL}/rooms/distribution-capacities`;
         const params = new HttpParams().appendAll({ examRoomIds: roomIds }).set('reserveFactor', reserveFactor);
 
-        return this.http.get<ExamDistributionCapacityDTO>(requestUrl, { params }).pipe(
+        this.http.get<ExamDistributionCapacityDTO>(requestUrl, { params }).pipe(
             map((capacityData: ExamDistributionCapacityDTO) => {
                 this.capacityDataInternal.set(capacityData);
             }),

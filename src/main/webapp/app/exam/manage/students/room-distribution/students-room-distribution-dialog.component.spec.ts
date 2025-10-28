@@ -1,4 +1,4 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -22,20 +22,17 @@ import { StudentsRoomDistributionService } from 'app/exam/manage/students/room-d
 import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
     inputElement.value = value;
     inputElement.dispatchEvent(new Event('input'));
 }
 
-function convertBodyToHttpResponse<T>(body?: T): HttpResponse<T> {
-    return new HttpResponse<T>({ status: 200, body: body });
-}
-
 describe('StudentsRoomDistributionDialogComponent', () => {
     let component: StudentsRoomDistributionDialogComponent;
     let fixture: ComponentFixture<StudentsRoomDistributionDialogComponent>;
-    let service: StudentsRoomDistributionService;
+    let service: StudentsRoomDistributionService | MockStudentsRoomDistributionService;
 
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
@@ -44,8 +41,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         { id: 2, roomNumber: '2', alternativeRoomNumber: '002', name: 'two', building: 'AA' },
         { id: 3, roomNumber: '3', alternativeRoomNumber: '003', name: 'three', alternativeName: 'threeee', building: 'AA' },
     ] as RoomForDistributionDTO[];
-
-    let ngbModal: NgbActiveModal;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -60,36 +55,31 @@ describe('StudentsRoomDistributionDialogComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
+                provideNoopAnimations(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(StudentsRoomDistributionDialogComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', course.id);
         fixture.componentRef.setInput('exam', exam);
-        ngbModal = TestBed.inject(NgbActiveModal);
-        service = TestBed.inject(StudentsRoomDistributionService);
+        service = TestBed.inject(StudentsRoomDistributionService) as unknown as MockStudentsRoomDistributionService;
 
-        jest.spyOn(service, 'getRoomData').mockReturnValue(of(convertBodyToHttpResponse(rooms)));
+        jest.spyOn(service, 'loadRoomData').mockImplementation(() => {
+            (service as MockStudentsRoomDistributionService).availableRooms.set(rooms);
+        });
+
+        component.openDialog();
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should close dialog on pressing the close cross', () => {
-        const spyModalDismiss = jest.spyOn(ngbModal, 'dismiss');
-        fixture.detectChanges();
-        const button = fixture.debugElement.nativeElement.querySelector('#close-cross');
-        button.click();
-        expect(spyModalDismiss).toHaveBeenCalledOnce();
-    });
-
     it('should close the dialog on pressing the close button', () => {
-        const spyModalDismiss = jest.spyOn(ngbModal, 'dismiss');
         fixture.detectChanges();
-        const button = fixture.debugElement.nativeElement.querySelector('#cancel-button');
+        const button = document.body.querySelector('#cancel-button') as HTMLButtonElement;
         button.click();
-        expect(spyModalDismiss).toHaveBeenCalledOnce();
+        expect(component.dialogVisible).toBeFalse();
     });
 
     it('should not have selected rooms and no finish button displayed on open', () => {
@@ -137,7 +127,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should call distributeStudentsAcrossRooms with default arguments and close modal on finish', () => {
         const distributeSpy = jest.spyOn(service, 'distributeStudentsAcrossRooms');
-        const modalCloseSpy = jest.spyOn(ngbModal, 'close');
 
         component.pickSelectedRoom({ item: rooms[0] });
         fixture.detectChanges();
@@ -145,7 +134,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component.onFinish();
 
         expect(distributeSpy).toHaveBeenCalledWith(course.id, exam.id, [rooms[0].id], 0.1, true);
-        expect(modalCloseSpy).toHaveBeenCalled();
     });
 
     it('should format room name correctly', () => {

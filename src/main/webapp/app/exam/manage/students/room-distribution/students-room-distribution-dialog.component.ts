@@ -1,4 +1,4 @@
-import { Component, DestroyRef, InputSignal, OutputEmitterRef, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, InputSignal, OutputEmitterRef, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
@@ -10,7 +10,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentsRoomDistributionService } from 'app/exam/manage/students/room-distribution/students-room-distribution.service';
 import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 
@@ -22,8 +21,6 @@ import { ButtonModule } from 'primeng/button';
 })
 export class StudentsRoomDistributionDialogComponent {
     private studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
-    private destroyRef: DestroyRef = inject(DestroyRef);
-
     courseId: InputSignal<number> = input.required();
     exam: InputSignal<Exam> = input.required();
 
@@ -36,7 +33,7 @@ export class StudentsRoomDistributionDialogComponent {
     private reserveFactor: Signal<number> = computed(() => this.reservePercentage() / 100);
     allowNarrowLayouts: WritableSignal<boolean> = signal(false);
 
-    private availableRooms: RoomForDistributionDTO[] = [];
+    private availableRooms: Signal<RoomForDistributionDTO[]> = this.studentsRoomDistributionService.availableRooms;
     private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = this.studentsRoomDistributionService.capacityData;
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
@@ -50,7 +47,7 @@ export class StudentsRoomDistributionDialogComponent {
     constructor() {
         effect(() => {
             const selectedRoomIds: number[] = this.selectedRooms().map((room) => room.id);
-            this.studentsRoomDistributionService.updateCapacityData(selectedRoomIds, this.reserveFactor()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+            this.studentsRoomDistributionService.updateCapacityData(selectedRoomIds, this.reserveFactor());
         });
     }
 
@@ -84,9 +81,7 @@ export class StudentsRoomDistributionDialogComponent {
         this.selectedRooms.set([]);
         this.isDialogVisible.set(true);
 
-        this.studentsRoomDistributionService.loadRoomData().subscribe(() => {
-            this.availableRooms = this.studentsRoomDistributionService.availableRooms();
-        });
+        this.studentsRoomDistributionService.loadRoomData();
     }
 
     /**
@@ -125,19 +120,26 @@ export class StudentsRoomDistributionDialogComponent {
     private findAllMatchingRoomsForTerm = (term: string): RoomForDistributionDTO[] => {
         const trimmed = term.trim();
         if (!trimmed) {
-            return this.availableRooms;
+            return this.removeAllRoomsThatAreAlreadySelected(this.availableRooms());
         }
 
         const tokens = trimmed.toLowerCase().split(/\s+/);
-        return this.availableRooms.filter((room) => {
-            const roomFields = [room.name, room.alternativeName, room.roomNumber, room.alternativeRoomNumber, room.building].filter(Boolean).map((str) => str!.toLowerCase());
+        return this.removeAllRoomsThatAreAlreadySelected(
+            this.availableRooms().filter((room) => {
+                const roomFields = [room.name, room.alternativeName, room.roomNumber, room.alternativeRoomNumber, room.building].filter(Boolean).map((str) => str!.toLowerCase());
 
-            // each token must match at least one field
-            return tokens.every((token) => {
-                return roomFields.some((roomField) => this.isSubsequence(roomField, token));
-            });
-        });
+                // each token must match at least one field
+                return tokens.every((token) => {
+                    return roomFields.some((roomField) => this.isSubsequence(roomField, token));
+                });
+            }),
+        );
     };
+
+    private removeAllRoomsThatAreAlreadySelected(rooms: RoomForDistributionDTO[]): RoomForDistributionDTO[] {
+        const selectedIds = new Set(this.selectedRooms().map((room) => room.id));
+        return rooms.filter((room) => !selectedIds.has(room.id));
+    }
 
     /**
      * Returns true iff the subsequence is a subsequence of the string.
@@ -194,7 +196,6 @@ export class StudentsRoomDistributionDialogComponent {
 
         if (this.selectedRooms().every((room) => room.id !== selectedRoom.id)) {
             this.selectedRooms.update((rooms) => [...rooms, selectedRoom]);
-            this.availableRooms.splice(this.availableRooms.indexOf(selectedRoom), 1);
         }
     }
 
@@ -205,7 +206,6 @@ export class StudentsRoomDistributionDialogComponent {
      */
     removeSelectedRoom(room: RoomForDistributionDTO): void {
         this.selectedRooms.update((selectedRooms) => selectedRooms.filter((selectedRoom) => room.id !== selectedRoom.id));
-        this.availableRooms.push(room);
     }
 
     /**
