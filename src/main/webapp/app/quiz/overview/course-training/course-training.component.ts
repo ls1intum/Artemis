@@ -16,8 +16,7 @@ import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-b
 import dayjs from 'dayjs/esm';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LeagueIconComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/league/league-icon.component';
+import { QuizTrainingDialogComponent } from 'app/quiz/overview/course-training/quiz-training-dialog.component';
 
 @Component({
     selector: 'jhi-course-training',
@@ -32,8 +31,7 @@ import { LeagueIconComponent } from 'app/quiz/overview/course-training/course-tr
         LeagueBadgeComponent,
         ButtonModule,
         TooltipModule,
-        ArtemisTranslatePipe,
-        LeagueIconComponent,
+        QuizTrainingDialogComponent,
     ],
     templateUrl: './course-training.component.html',
     styleUrl: './course-training.component.scss',

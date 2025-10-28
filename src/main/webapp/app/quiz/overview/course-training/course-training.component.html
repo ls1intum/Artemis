@@ -1,56 +1,6 @@
 @if (!isLoading()) {
     <div>
-        <p-dialog [(visible)]="showDialog" [modal]="true" [closable]="false" [style]="{ width: '600px', height: 'auto' }" [appendTo]="'body'" [draggable]="false">
-            <ng-template pTemplate="header">
-                <h5 jhiTranslate="artemisApp.quizTraining.theQuizTraining"></h5>
-            </ng-template>
-            <h6 jhiTranslate="artemisApp.quizTraining.howItWorks.title"></h6>
-            <p jhiTranslate="artemisApp.quizTraining.howItWorks.content"></p>
-            <h6 jhiTranslate="artemisApp.quizTraining.leagues.title"></h6>
-            <p jhiTranslate="artemisApp.quizTraining.leagues.content"></p>
-            <div class="d-flex align-items-center">
-                <jhi-league-icon [class]="'small-icon'" [league]="'Bronze'" />
-                <p class="mb-0 ms-2" jhiTranslate="artemisApp.quizTraining.bronze"></p>
-                <p class="mb-0 ms-4">0 - 50</p>
-            </div>
-            <div class="mt-2 d-flex align-items-center">
-                <jhi-league-icon [class]="'small-icon'" [league]="'Silver'" />
-                <p class="mb-0 ms-2" jhiTranslate="artemisApp.quizTraining.silver"></p>
-                <p class="mb-0 ms-4">50 - 150</p>
-            </div>
-            <div class="mt-2 d-flex align-items-center">
-                <jhi-league-icon [class]="'small-icon'" [league]="'Gold'" />
-                <p class="mb-0 ms-2" jhiTranslate="artemisApp.quizTraining.gold"></p>
-                <p class="mb-0 ms-4">150 - 300</p>
-            </div>
-            <div class="mt-2 d-flex align-items-center">
-                <jhi-league-icon [class]="'small-icon'" [league]="'Diamond'" />
-                <p class="mb-0 ms-2" jhiTranslate="artemisApp.quizTraining.diamond"></p>
-                <p class="mb-0 ms-4">300 - 500</p>
-            </div>
-            <div class="mt-2 d-flex align-items-center">
-                <jhi-league-icon [class]="'small-icon'" [league]="'Master'" />
-                <p class="mb-0 ms-2" jhiTranslate="artemisApp.quizTraining.master"></p>
-                <p class="mb-0 ms-4">500+</p>
-            </div>
-            <p class="mt-3" jhiTranslate="artemisApp.quizTraining.scoring.content"></p>
-
-            <h6 class="mb-3" jhiTranslate="artemisApp.quizTraining.leaderboardSetting"></h6>
-            <div class="leaderboard-toggle d-flex align-items-center">
-                <p-toggleswitch [(ngModel)]="showInLeaderboard" />
-                <span class="ms-2" jhiTranslate="artemisApp.quizTraining.showInLeaderboard"></span>
-                <i
-                    class="pi pi-question-circle ms-2"
-                    [pTooltip]="'artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo' | artemisTranslate"
-                    tooltipPosition="right"
-                >
-                </i>
-            </div>
-
-            <ng-template pTemplate="footer">
-                <jhi-button [title]="'artemisApp.quizTraining.save'" (click)="onSaveDialog()" />
-            </ng-template>
-        </p-dialog>
+        <jhi-quiz-training-dialog [(visible)]="showDialog" [(showInLeaderboard)]="showInLeaderboard" [closable]="false" [showLeaderboardSettings]="true" (save)="onSaveDialog()" />
 
         @if (!isFirstVisit() && isDataLoaded()) {
             <div class="header-section d-flex">
@@ -106,41 +56,7 @@
                         <p-button (click)="showInfoDialog()" severity="secondary">
                             <span jhiTranslate="artemisApp.quizTraining.infoButton"></span>
                         </p-button>
-                        <p-dialog [(visible)]="displayInfoDialog" [modal]="true" [style]="{ width: '600px', height: 'auto' }" appendTo="body">
-                            <ng-template pTemplate="header">
-                                <h5 jhiTranslate="artemisApp.quizTraining.theQuizTraining"></h5>
-                            </ng-template>
-                            <h6 jhiTranslate="artemisApp.quizTraining.howItWorks.title"></h6>
-                            <p jhiTranslate="artemisApp.quizTraining.howItWorks.content"></p>
-                            <h6 jhiTranslate="artemisApp.quizTraining.leagues.title"></h6>
-                            <p jhiTranslate="artemisApp.quizTraining.leagues.content"></p>
-                            <div class="d-flex align-items-center">
-                                <jhi-league-icon [class]="'small-icon'" [league]="'Bronze'" />
-                                <p class="mb-0 ms-2" jhiTranslate="artemisApp.quizTraining.bronze"></p>
-                                <p class="mb-0 ms-4">0 - 50</p>
-                            </div>
-                            <div class="mt-2 d-flex align-items-center">
-                                <jhi-league-icon [class]="'small-icon'" [league]="'Silver'" />
-                                <p class="mb-0 ms-2" jhiTranslate="artemisApp.quizTraining.silver"></p>
-                                <p class="mb-0 ms-4">50 - 150</p>
-                            </div>
-                            <div class="mt-2 d-flex align-items-center">
-                                <jhi-league-icon [class]="'small-icon'" [league]="'Gold'" />
-                                <p class="mb-0 ms-2" jhiTranslate="artemisApp.quizTraining.gold"></p>
-                                <p class="mb-0 ms-4">150 - 300</p>
-                            </div>
-                            <div class="mt-2 d-flex align-items-center">
-                                <jhi-league-icon [class]="'small-icon'" [league]="'Diamond'" />
-                                <p class="mb-0 ms-2" jhiTranslate="artemisApp.quizTraining.diamond"></p>
-                                <p class="mb-0 ms-4">300 - 500</p>
-                            </div>
-                            <div class="mt-2 d-flex align-items-center">
-                                <jhi-league-icon [class]="'small-icon'" [league]="'Master'" />
-                                <p class="mb-0 ms-2" jhiTranslate="artemisApp.quizTraining.master"></p>
-                                <p class="mb-0 ms-4">500+</p>
-                            </div>
-                            <p class="mt-3" jhiTranslate="artemisApp.quizTraining.scoring.content"></p>
-                        </p-dialog>
+                        <jhi-quiz-training-dialog [(visible)]="displayInfoDialog" [closable]="true" [showLeaderboardSettings]="false" />
                     </div>
                 </div>
                 <div class="leaderboard-section">
