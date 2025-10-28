@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
-import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseVersionDTO;
+import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseVersionMetadataDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -424,14 +424,14 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         ExerciseVersion version2 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         assertThat(version2.getId()).isNotEqualTo(version1.getId());
 
-        List<ExerciseVersionDTO> response = request.get("/api/exercise/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.OK, new TypeReference<>() {
+        List<ExerciseVersionMetadataDTO> response = request.get("/api/exercise/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.OK, new TypeReference<>() {
         });
 
         assertThat(response).isNotNull();
         assertThat(response).hasSize(2);
 
-        ExerciseVersionDTO firstVersion = response.get(0);
-        ExerciseVersionDTO secondVersion = response.get(1);
+        ExerciseVersionMetadataDTO firstVersion = response.get(0);
+        ExerciseVersionMetadataDTO secondVersion = response.get(1);
 
         assertThat(firstVersion.id()).isEqualTo(version2.getId());
         assertThat(secondVersion.id()).isEqualTo(version1.getId());
@@ -449,7 +449,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetExerciseVersions_forbidden() throws Exception {
+    void testGetExerciseVersions_forbidden_forStudent() throws Exception {
         // `beforeEach` requires instructor access to run
         // Switch to student user and attempt to get snapshot
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -458,9 +458,19 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseVersions_forbidden_forInstructorNotInExercise() throws Exception {
+        // `beforeEach` requires instructor access to run;
+        // Switch to instructur user and attempt to get snapshot
+        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor", TEST_PREFIX + "bad_instructor");
+        userUtilService.changeUser(TEST_PREFIX + "bad_instructor");
+        request.get("/api/exercise/" + programmingExercise.getId() + "/versions?page=0&size=10", HttpStatus.FORBIDDEN, ArrayList.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExerciseSnapshot_returnsCompleteSnapshotData() throws Exception {
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
-        ExerciseSnapshotDTO snapshot = request.get("/api/exercise/version/" + version.getId(), HttpStatus.OK, ExerciseSnapshotDTO.class);
+        ExerciseSnapshotDTO snapshot = request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + version.getId(), HttpStatus.OK, ExerciseSnapshotDTO.class);
 
         assertThat(snapshot).isNotNull();
         assertThat(snapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(version.getExerciseSnapshot());
@@ -468,14 +478,41 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetExerciseSnapshot_forbiddenForStudent() throws Exception {
+    void testGetExerciseSnapshot_forbidden_forStudent() throws Exception {
         // `beforeEach` requires instructor access to run
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         Long versionId = version.getId();
 
         // Switch to student user and attempt to get snapshot
         userUtilService.changeUser(TEST_PREFIX + "student1");
-        request.get("/api/exercise/version/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
+        request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseSnapshot_forbidden_instructorNotInExercise() throws Exception {
+        // `beforeEach` requires instructor access to run
+        ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        Long versionId = version.getId();
+
+        // Switch to instructor user and attempt to get snapshot
+        userUtilService.addInstructor(TEST_PREFIX + "bad_instructor", TEST_PREFIX + "bad_instructor");
+        userUtilService.changeUser(TEST_PREFIX + "bad_instructor");
+        request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseSnapshot_badRequest_wrongExerciseId() throws Exception {
+        // `beforeEach` requires instructor access to run
+        ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        Long versionId = version.getId();
+
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+
+        // attempt to get snapshot with wrong exercise id
+        request.get("/api/exercise/" + newExercise.getId() + "/version/" + versionId, HttpStatus.BAD_REQUEST, ExerciseSnapshotDTO.class);
     }
 
 }

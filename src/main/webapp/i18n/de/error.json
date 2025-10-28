@@ -150,6 +150,7 @@
             "isNull": "Es wurde keine Beispielabgabe übermittelt.",
             "submissionIsNull": "Diese Beispielabgabe enthält keine Lösung.",
             "submissionIdMissing": "Die Abgabe muss zuerst gespeichert werden, bevor sie umgewandelt werden kann."
-        }
+        },
+        "exerciseVersionIdMismatch": "Die angeforderte Übungsversion gehört nicht zur angegebenen Übungs-ID."
     }
 }

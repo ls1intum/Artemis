@@ -14,7 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
-import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseVersionDTO;
+import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseVersionMetadataDTO;
 
 /**
  * Spring Data JPA repository for the ExerciseVersion entity.
@@ -44,7 +44,7 @@ public interface ExerciseVersionRepository extends ArtemisJpaRepository<Exercise
      * @return Paged ExerciseVersionDTO objects with user information
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseVersionDTO(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseVersionMetadataDTO(
                 ev.id,
                 u,
                 ev.createdDate
@@ -54,6 +54,6 @@ public interface ExerciseVersionRepository extends ArtemisJpaRepository<Exercise
             WHERE ev.exerciseId = :exerciseId
             ORDER BY ev.createdDate DESC
             """)
-    Page<ExerciseVersionDTO> findAllByExerciseIdOrderByCreatedDateDesc(@Param("exerciseId") Long exerciseId, Pageable pageable);
+    Page<ExerciseVersionMetadataDTO> findAllByExerciseIdOrderByCreatedDateDesc(@Param("exerciseId") Long exerciseId, Pageable pageable);
 
 }
