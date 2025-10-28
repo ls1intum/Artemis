@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 // @formatter:off
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record ExamRoomForAttendanceCheckerDTO(
-    @NotNull long id,
+    long id,
     @NotBlank String roomNumber,
     @Nullable String alternativeRoomNumber,
     @NotBlank String name,
@@ -85,10 +85,10 @@ record ExamUserWithExamRoomAndSeatDTO (
     @NotBlank @Size(max = 10) String registrationNumber,
     @Nullable @Email @Size(max = 100) String email,
     @Nullable String imageUrl,
-    @NotNull boolean didCheckImage,
-    @NotNull boolean didCheckName,
-    @NotNull boolean didCheckRegistrationNumber,
-    @NotNull boolean didCheckLogin,
+    boolean didCheckImage,
+    boolean didCheckName,
+    boolean didCheckRegistrationNumber,
+    boolean didCheckLogin,
     @Nullable String signingImagePath,
     @NotNull ExamUserLocationDTO plannedLocation,
     @Nullable ExamUserLocationDTO actualLocation
@@ -113,16 +113,17 @@ record ExamUserWithExamRoomAndSeatDTO (
 }
 
 /**
- * DTO containing all relevant information for the attendance checker app
+ * DTO containing all relevant information for the attendance checker app.
+ * This DTO and all its children are exclusively sent from the server to the client.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AttendanceCheckerAppExamInformationDTO(
-    @NotNull long examId,
+    long examId,
     @NotBlank String examTitle,
     @NotNull ZonedDateTime startDate,
     @NotNull ZonedDateTime endDate,
-    @NotNull boolean isTestExam,
-    @NotNull long courseId,
+    boolean isTestExam,
+    long courseId,
     @NotBlank String courseTitle,
     @NotNull Set<ExamRoomForAttendanceCheckerDTO> examRoomsUsedInExam,  // empty if legacy version
     @NotEmpty Set<ExamUserWithExamRoomAndSeatDTO> examUsersWithExamRoomAndSeat
