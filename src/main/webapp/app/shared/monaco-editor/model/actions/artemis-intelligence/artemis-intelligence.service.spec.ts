@@ -97,6 +97,12 @@ describe('ArtemisIntelligenceService', () => {
                     startLine: 1,
                     endLine: 2,
                 },
+                {
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'tests_repository/src/Class2.java',
+                    startLine: 1,
+                    endLine: 2,
+                },
             ],
         },
         {
@@ -112,8 +118,8 @@ describe('ArtemisIntelligenceService', () => {
                     endLine: 3,
                 },
                 {
-                    type: ArtifactLocation.TypeEnum.SolutionRepository,
-                    filePath: 'solution_repository/src/Class3.java',
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'tests_repository/src/Class3.java',
                     startLine: 1,
                     endLine: 3,
                 },
@@ -314,7 +320,7 @@ describe('ArtemisIntelligenceService', () => {
             expect(res[0].suggestedFix).toEqual(mockIssues[2].suggestedFix);
         });
 
-        it('correct issues for selected files: mixed', () => {
+        it('correct issues for selected files: template', () => {
             const res = issuesForSelectedFile('src/Class2.java', RepositoryType.TEMPLATE, mockIssues);
             expect(res).toHaveLength(1);
             expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.TemplateRepository);
@@ -324,9 +330,30 @@ describe('ArtemisIntelligenceService', () => {
             expect(res[0].severity).toEqual(mockIssues[1].severity);
             expect(res[0].description).toEqual(mockIssues[1].description);
             expect(res[0].suggestedFix).toEqual(mockIssues[1].suggestedFix);
+        });
 
-            const res2 = issuesForSelectedFile('template_repository/src/Class2.java', RepositoryType.TESTS, mockIssues);
-            expect(res2).toHaveLength(0);
+        it('correct issues for selected files: solution', () => {
+            const res = issuesForSelectedFile('src/Class1.java', RepositoryType.SOLUTION, mockIssues);
+            expect(res).toHaveLength(1);
+            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.SolutionRepository);
+            expect(res[0].startLine).toBe(1);
+            expect(res[0].endLine).toBe(1);
+            expect(res[0].category).toEqual(mockIssues[0].category);
+            expect(res[0].severity).toEqual(mockIssues[0].severity);
+            expect(res[0].description).toEqual(mockIssues[0].description);
+            expect(res[0].suggestedFix).toEqual(mockIssues[0].suggestedFix);
+        });
+
+        it('correct issues for selected files: tests', () => {
+            const res = issuesForSelectedFile('src/Class3.java', RepositoryType.TESTS, mockIssues);
+            expect(res).toHaveLength(1);
+            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.TestsRepository);
+            expect(res[0].startLine).toBe(1);
+            expect(res[0].endLine).toBe(3);
+            expect(res[0].description).toEqual(mockIssues[2].description);
+            expect(res[0].suggestedFix).toEqual(mockIssues[2].suggestedFix);
+            expect(res[0].category).toEqual(mockIssues[2].category);
+            expect(res[0].severity).toEqual(mockIssues[2].severity);
         });
 
         it('correct issues for selected files: undefined', () => {

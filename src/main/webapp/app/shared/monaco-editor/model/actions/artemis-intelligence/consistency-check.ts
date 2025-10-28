@@ -138,14 +138,14 @@ export function formatConsistencyCheckResults(issue: InlineConsistencyIssue): st
 
     let linePart = '';
     if (issue.startLine && issue.endLine) {
-        linePart = issue.startLine === issue.endLine ? `L${issue.startLine}` : `L${issue.startLine}-${issue.endLine}`;
+        linePart = issue.startLine === issue.endLine ? `(L${issue.startLine})` : `(L${issue.startLine}-${issue.endLine})`;
     } else if (issue.startLine) {
-        linePart = `L${issue.startLine}`;
+        linePart = `(L${issue.startLine})`;
     }
 
     const categoryRaw = issue.category || 'GENERAL';
     const category = humanizeCategory(categoryRaw);
-    md += `**[${severityToString(issue.severity)}] ${category} (${linePart})**\n\n`;
+    md += `**[${severityToString(issue.severity)}] ${category} ${linePart}**\n\n`;
     md += `${issue.description}\n\n`;
     if (issue.suggestedFix) {
         md += `**Suggested fix:** ${issue.suggestedFix}\n\n`;
