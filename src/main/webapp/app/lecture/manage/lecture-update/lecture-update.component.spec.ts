@@ -93,6 +93,7 @@ describe('LectureUpdateComponent', () => {
         const activatedRouteMock = {
             parent: {
                 data: of(parentData),
+                paramMap: of(convertToParamMap({ courseId: '1' })),
             },
             queryParams: of({}),
             snapshot: {
@@ -109,6 +110,9 @@ describe('LectureUpdateComponent', () => {
 
         lectureService = TestBed.inject(LectureService);
         router = TestBed.inject(Router);
+        jest.spyOn(router, 'currentNavigation').mockReturnValue({
+            extras: { state: { existingLectures: [] } },
+        } as any);
         TestBed.inject(ActivatedRoute);
     }
 

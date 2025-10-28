@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -52,14 +52,11 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     baseUrl: string;
     isEvaluatingQuizExercise: boolean;
 
-    @Input()
-    isDetailPage: boolean;
+    isDetailPage = input(false);
 
-    @Input()
-    quizExercise: QuizExercise;
+    quizExercise = input.required<QuizExercise>();
 
-    @Output()
-    loadQuizExercises = new EventEmitter();
+    loadQuizExercises = output<void>();
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -81,7 +78,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
     exportQuizExercise(exportAll: boolean) {
-        this.quizExerciseService.find(this.quizExercise.id!).subscribe((response: HttpResponse<QuizExercise>) => {
+        this.quizExerciseService.find(this.quizExercise().id!).subscribe((response: HttpResponse<QuizExercise>) => {
             const exercise = response.body!;
             this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });
@@ -91,15 +88,15 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * Deletes quiz exercise
      */
     deleteQuizExercise() {
-        this.quizExerciseService.delete(this.quizExercise.id!).subscribe({
+        this.quizExerciseService.delete(this.quizExercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Deleted an quizExercise',
                 });
                 this.dialogErrorSource.next('');
-                if (this.isDetailPage) {
-                    this.router.navigate(['course-management', this.quizExercise.course!.id, 'exercises']);
+                if (this.isDetailPage()) {
+                    this.router.navigate(['course-management', this.quizExercise().course!.id, 'exercises']);
                 }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -110,14 +107,14 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * Resets quiz exercise
      */
     resetQuizExercise() {
-        this.exerciseService.reset(this.quizExercise.id!).subscribe({
+        this.exerciseService.reset(this.quizExercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Reset an quizExercise',
                 });
                 this.dialogErrorSource.next('');
-                this.alertService.success('artemisApp.quizExercise.resetSuccessful', { title: this.quizExercise.title });
+                this.alertService.success('artemisApp.quizExercise.resetSuccessful', { title: this.quizExercise().title });
                 this.loadQuizExercises.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -126,7 +123,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
 
     evaluateQuizExercise() {
         this.isEvaluatingQuizExercise = true;
-        this.exerciseService.evaluateQuizExercise(this.quizExercise.id!).subscribe({
+        this.exerciseService.evaluateQuizExercise(this.quizExercise().id!).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.quizExercise.evaluateQuizExerciseSuccess');
                 this.isEvaluatingQuizExercise = false;
