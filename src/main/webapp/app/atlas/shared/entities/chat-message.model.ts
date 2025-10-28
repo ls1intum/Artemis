@@ -10,6 +10,8 @@ export interface ChatMessage {
     suggestedCompetencies?: CompetencyDraft[];
     competencyPreview?: CompetencyPreview;
     competencyCreated?: boolean;
+    planPending?: boolean;
+    planApproved?: boolean;
 }
 
 export interface CompetencyDraft {

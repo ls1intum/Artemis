@@ -33,12 +33,17 @@ public class AtlasAgentService {
         MAIN_AGENT, COMPETENCY_EXPERT
     }
 
-    private static final String DELEGATE_TO_COMPETENCY_EXPERT = "[DELEGATE_TO_COMPETENCY_EXPERT]";
+    private static final String DELEGATE_TO_COMPETENCY_EXPERT = "[DELEGATE_TO_COMPETENCY_EXPERT";
+
+    private static final String CREATE_APPROVED_COMPETENCY = "[CREATE_APPROVED_COMPETENCY]";
 
     private static final String RETURN_TO_MAIN_AGENT = "[RETURN_TO_MAIN_AGENT]";
 
     // Track which agent is active for each session
     private final Map<String, AgentType> sessionAgentMap = new ConcurrentHashMap<>();
+
+    // Track last preview response for each session (needed for creation approval)
+    private final Map<String, String> sessionLastPreviewMap = new ConcurrentHashMap<>();
 
     private final ChatClient chatClient;
 
@@ -88,14 +93,34 @@ public class AtlasAgentService {
 
             // Check for delegation markers and update session state
             if (response.contains(DELEGATE_TO_COMPETENCY_EXPERT)) {
-                sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
-                // Remove the marker from the response before returning to user
-                response = response.replace(DELEGATE_TO_COMPETENCY_EXPERT, "").trim();
+                // Extract brief from marker: [DELEGATE_TO_COMPETENCY_EXPERT:brief_content]
+                String brief = extractBriefFromDelegationMarker(response);
 
-                // Immediately invoke Competency Expert with the original user message
-                // This allows the expert to react to what the instructor already said
-                String expertResponse = processWithCompetencyExpert(message, courseId, sessionId);
-                response = response + "\n\n---\n\n" + expertResponse;
+                // Remove the entire delegation block from response
+                response = removeDelegationMarker(response).trim();
+
+                // Invoke Competency Expert with the extracted brief (inline execution)
+                String expertResponse = processWithCompetencyExpert(brief, courseId, sessionId);
+
+                // Store preview for potential creation approval
+                sessionLastPreviewMap.put(sessionId, expertResponse);
+
+                // Append expert's response (preview JSON)
+                response = response + "\n\n" + expertResponse;
+
+                // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
+            }
+            else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
+                // Instructor approved the preview, instruct Competency Expert to create
+                response = response.replace(CREATE_APPROVED_COMPETENCY, "").trim();
+
+                // Send creation command to Competency Expert (inline execution)
+                String creationResponse = processWithCompetencyExpert(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
+
+                // Append creation confirmation
+                response = response + "\n\n" + creationResponse;
+
+                // Stay on MAIN_AGENT for potential next competency creation
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
@@ -178,6 +203,57 @@ public class AtlasAgentService {
 
         // Execute the chat
         return promptSpec.call().content();
+    }
+
+    /**
+     * Extract the brief content from the delegation marker.
+     * Expected format: [DELEGATE_TO_COMPETENCY_EXPERT:brief_content]
+     *
+     * @param response The response containing the delegation marker
+     * @return The extracted brief content
+     */
+    private String extractBriefFromDelegationMarker(String response) {
+        int startIndex = response.indexOf(DELEGATE_TO_COMPETENCY_EXPERT);
+        if (startIndex == -1) {
+            return "";
+        }
+
+        // Find the colon after the marker
+        int colonIndex = response.indexOf(":", startIndex);
+        if (colonIndex == -1) {
+            return "";
+        }
+
+        // Find the closing bracket
+        int endIndex = response.indexOf("]", colonIndex);
+        if (endIndex == -1) {
+            return "";
+        }
+
+        // Extract the brief content between colon and closing bracket
+        return response.substring(colonIndex + 1, endIndex).trim();
+    }
+
+    /**
+     * Remove the delegation marker and its content from the response.
+     *
+     * @param response The response containing the delegation marker
+     * @return The response with the delegation marker removed
+     */
+    private String removeDelegationMarker(String response) {
+        int startIndex = response.indexOf(DELEGATE_TO_COMPETENCY_EXPERT);
+        if (startIndex == -1) {
+            return response;
+        }
+
+        // Find the closing bracket
+        int endIndex = response.indexOf("]", startIndex);
+        if (endIndex == -1) {
+            return response;
+        }
+
+        // Remove the entire delegation block
+        return response.substring(0, startIndex) + response.substring(endIndex + 1);
     }
 
     /**

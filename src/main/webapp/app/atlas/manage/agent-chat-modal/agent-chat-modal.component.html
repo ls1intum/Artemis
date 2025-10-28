@@ -23,6 +23,11 @@
                         @if (message.content) {
                             <div class="message-text">{{ message.content }}</div>
                         }
+                        @if (message.planPending && !message.planApproved) {
+                            <div class="plan-approval-container mt-2">
+                                <button type="button" class="btn btn-primary btn-sm" (click)="onApprovePlan(message)" [disabled]="isAgentTyping()">Approve Plan</button>
+                            </div>
+                        }
                         @if (message.competencyPreview) {
                             <div class="competency-preview-container mt-2">
                                 <jhi-competency-card [courseId]="courseId" [competency]="message.competencyPreview" [noProgressRings]="true" />

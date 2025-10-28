@@ -183,6 +183,42 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         });
     }
 
+    protected onApprovePlan(message: ChatMessage): void {
+        // Prevent duplicate approval
+        if (message.planApproved) {
+            return;
+        }
+
+        // Mark this message's plan as approved
+        this.messages = this.messages.map((msg) => (msg.id === message.id ? { ...msg, planApproved: true, planPending: false } : msg));
+        this.cdr.markForCheck();
+
+        // Send approval message to agent
+        this.addMessage('I approve the plan', true);
+        this.isAgentTyping.set(true);
+
+        // Send approval - backend will process it
+        this.agentChatService.sendMessage('I approve the plan', this.courseId).subscribe({
+            next: (response) => {
+                this.isAgentTyping.set(false);
+                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false);
+
+                // Emit event if competencies were modified
+                if (response.competenciesModified) {
+                    this.competencyChanged.emit();
+                }
+
+                // Restore focus to input
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+            },
+            error: () => {
+                this.isAgentTyping.set(false);
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+            },
+        });
+    }
+
     private addMessage(content: string, isUser: boolean): void {
         const message: ChatMessage = {
             id: this.generateMessageId(),
@@ -191,12 +227,19 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             timestamp: new Date(),
         };
 
-        // Try to parse JSON to detect competency preview
+        // Try to parse JSON to detect competency preview or plan pending
         if (!isUser) {
             const previewData = this.extractCompetencyPreview(content);
             if (previewData) {
                 message.competencyPreview = previewData.preview;
                 message.content = previewData.cleanedMessage;
+            }
+
+            // Detect plan pending marker
+            const planPendingData = this.extractPlanPending(content);
+            if (planPendingData) {
+                message.planPending = true;
+                message.content = planPendingData.cleanedMessage;
             }
         }
 
@@ -211,14 +254,48 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      */
     private extractCompetencyPreview(content: string): { preview: CompetencyPreview; cleanedMessage: string } | null {
         try {
-            // Pattern matches: ```json\n{...}\n``` or just {...}
-            const jsonMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```|\{[\s\S]*?"preview"[\s\S]*?\}/);
-            if (!jsonMatch) {
+            // Try to find JSON with "preview" key - need to match nested braces correctly
+            let jsonMatch: RegExpMatchArray | null = null;
+            let jsonString = '';
+
+            // First, try to find markdown-wrapped JSON
+            const markdownMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+            if (markdownMatch) {
+                jsonString = markdownMatch[1];
+                jsonMatch = markdownMatch;
+            } else {
+                // Try to find standalone JSON object with "preview" key
+                // Use a more robust approach: find opening brace, then match balanced braces
+                const previewIndex = content.indexOf('"preview"');
+                if (previewIndex !== -1) {
+                    // Search backwards for opening brace
+                    const startIndex = content.lastIndexOf('{', previewIndex);
+                    if (startIndex !== -1) {
+                        // Count braces to find matching closing brace
+                        let braceCount = 0;
+                        let endIndex = startIndex;
+                        for (let i = startIndex; i < content.length; i++) {
+                            if (content[i] === '{') braceCount++;
+                            if (content[i] === '}') {
+                                braceCount--;
+                                if (braceCount === 0) {
+                                    endIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                        if (endIndex > startIndex) {
+                            jsonString = content.substring(startIndex, endIndex + 1);
+                            jsonMatch = [jsonString]; // Fake match array
+                        }
+                    }
+                }
+            }
+
+            if (!jsonString || !jsonMatch) {
                 return null;
             }
 
-            // Extract the actual JSON (either from capture group or full match)
-            const jsonString = jsonMatch[1] || jsonMatch[0];
             const jsonData = JSON.parse(jsonString);
 
             // Check if this is a preview response
@@ -246,6 +323,20 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             // Not valid JSON or not a preview, just return null
         }
 
+        return null;
+    }
+
+    /**
+     * Detects [PLAN_PENDING] marker in agent responses.
+     * This marker indicates that the agent has proposed a plan and is awaiting approval.
+     */
+    private extractPlanPending(content: string): { cleanedMessage: string } | null {
+        const planPendingMarker = '[PLAN_PENDING]';
+        if (content.includes(planPendingMarker)) {
+            // Remove the marker from the message
+            const cleanedMessage = content.replace(planPendingMarker, '').trim();
+            return { cleanedMessage };
+        }
         return null;
     }
 

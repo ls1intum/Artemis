@@ -82,7 +82,6 @@ public class CompetencyExpertToolsService {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("preview", true);
         response.put("competency", competencyPreview);
-        response.put("message", "This is how the competency will appear to students. The card will display the icon, title, description, and taxonomy level as shown above.");
 
         return toJson(response);
     }
