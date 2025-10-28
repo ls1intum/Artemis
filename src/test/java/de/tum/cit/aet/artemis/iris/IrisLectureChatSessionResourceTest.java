@@ -94,10 +94,8 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
         // Given: User has multiple sessions
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         IrisLectureChatSession olderSession = new IrisLectureChatSession(lecture, user);
+        olderSession.setCreationDate(ZonedDateTime.now().minusMinutes(1));
         irisLectureChatSessionRepository.save(olderSession);
-
-        // Wait a bit to ensure different creation times
-        Thread.sleep(10);
 
         IrisLectureChatSession newerSession = new IrisLectureChatSession(lecture, user);
         newerSession = irisLectureChatSessionRepository.save(newerSession);
