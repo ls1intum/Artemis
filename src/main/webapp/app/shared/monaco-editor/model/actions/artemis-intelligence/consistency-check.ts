@@ -43,7 +43,7 @@ export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsis
     const node = document.createElement('div');
     node.className = 'alert alert-warning alert-dismissible text-start fade show';
     node.innerHTML = `
-      <h5 class='alert-heading'>Consistency Issue Found</h5>
+      <h5 class='alert-heading' jhiTranslate='artemisApp.consistencyCheck.issueHeading'>Consistency Issue Found</h5>
       <div>${htmlForMarkdown(formatConsistencyCheckResults(issue))}</div>
     `;
 

@@ -19,7 +19,8 @@
             "noInconsistencies": "No inconsistencies found",
             "inconsistenciesFound": "Following inconsistencies have been found",
             "inconsistenciesFoundAlert": "Inconsistencies have been found in this programming exercise. Please see the consistency check for more details.",
-            "checkFailedAlert": "The consistency check failed"
+            "checkFailedAlert": "The consistency check failed",
+            "issueHeading": "Consistency Issue Found"
         }
     }
 }
