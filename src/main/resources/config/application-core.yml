@@ -16,6 +16,11 @@ artemis:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
             ask-users-to-setup: true # if true, users who have not set up a passkey will be asked to do so
             token-validity-in-seconds-for-passkey: 15552000 # jwtToken is valid for 180 days when using passkey authentication
+    nebula: # The nebula module is used for llm features such as faq-rewriting and lecture transcription
+      enabled: false
+      url: <your-nebula-url>
+      secret-token: <your-secret>
+
 
 spring:
     liquibase:

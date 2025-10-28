@@ -46,7 +46,7 @@ public class NebulaConnectionService {
     @Value("${artemis.nebula.url}")
     private String nebulaUrl;
 
-    @Value("${artemis.nebula.secret}")
+    @Value("${artemis.nebula.secret-token}")
     private String nebulaSecretToken;
 
     public NebulaConnectionService(@Qualifier("nebulaRestTemplate") RestTemplate restTemplate, ObjectMapper objectMapper) {
