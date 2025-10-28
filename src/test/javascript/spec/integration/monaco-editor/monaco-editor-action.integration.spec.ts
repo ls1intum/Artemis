@@ -403,7 +403,7 @@ describe('MonacoEditorActionIntegration', () => {
         const rewrittenText = 'Rewritten text from service';
 
         const rewriteResult: RewriteResult = {
-            result: rewrittenText,
+            rewrittenText: rewrittenText,
             inconsistencies: undefined,
             suggestions: undefined,
             improvement: 'Text was improved',
@@ -428,7 +428,7 @@ describe('MonacoEditorActionIntegration', () => {
         const rewrittenText = 'Improved problem statement';
 
         const rewriteResult: RewriteResult = {
-            result: rewrittenText,
+            rewrittenText: rewrittenText,
             inconsistencies: undefined,
             suggestions: undefined,
             improvement: 'Text was improved',
