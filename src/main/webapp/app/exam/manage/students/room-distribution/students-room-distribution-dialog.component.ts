@@ -1,4 +1,4 @@
-import { Component, InputSignal, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, InputSignal, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
@@ -10,6 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentsRoomDistributionService } from 'app/exam/manage/students/room-distribution/students-room-distribution.service';
 import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-students-room-distribution-dialog',
@@ -20,6 +21,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 export class StudentsRoomDistributionDialogComponent {
     private activeModal = inject(NgbActiveModal);
     private studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
+    private destroyRef: DestroyRef = inject(DestroyRef);
 
     courseId: InputSignal<number> = input.required();
     exam: InputSignal<Exam> = input.required();
@@ -30,7 +32,7 @@ export class StudentsRoomDistributionDialogComponent {
     private reserveFactor: Signal<number> = computed(() => this.reservePercentage() / 100);
     allowNarrowLayouts: WritableSignal<boolean> = signal(false);
 
-    private availableRooms: RoomForDistributionDTO[];
+    private availableRooms: RoomForDistributionDTO[] = [];
     private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = this.studentsRoomDistributionService.capacityData;
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
@@ -48,7 +50,7 @@ export class StudentsRoomDistributionDialogComponent {
 
         effect(() => {
             const selectedRoomIds: number[] = this.selectedRooms().map((room) => room.id);
-            this.studentsRoomDistributionService.updateCapacityData(selectedRoomIds, this.reserveFactor()).subscribe();
+            this.studentsRoomDistributionService.updateCapacityData(selectedRoomIds, this.reserveFactor()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
         });
     }
 
@@ -157,7 +159,7 @@ export class StudentsRoomDistributionDialogComponent {
      *
      * @param room The exam room
      */
-    alternative_formatter(room: RoomForDistributionDTO): string {
+    emptyStringFormatter(room: RoomForDistributionDTO): string {
         return '';
     }
 
@@ -166,10 +168,12 @@ export class StudentsRoomDistributionDialogComponent {
      *
      * @param event An event containing a selected room
      */
-    onRoomSelected(event: { item: RoomForDistributionDTO }): void {
-        if (this.selectedRooms().every((room) => room.id !== event.item.id)) {
-            this.selectedRooms.update((rooms) => [...rooms, event.item]);
-            this.availableRooms.splice(this.availableRooms.indexOf(event.item), 1);
+    pickSelectedRoom(event: { item: RoomForDistributionDTO }): void {
+        const selectedRoom: RoomForDistributionDTO = event.item as RoomForDistributionDTO;
+
+        if (this.selectedRooms().every((room) => room.id !== selectedRoom.id)) {
+            this.selectedRooms.update((rooms) => [...rooms, selectedRoom]);
+            this.availableRooms.splice(this.availableRooms.indexOf(selectedRoom), 1);
         }
     }
 
@@ -216,9 +220,12 @@ export class StudentsRoomDistributionDialogComponent {
      *
      * @param focusEvent a focus event
      */
-    selectAllText(focusEvent: FocusEvent): void {
+    selectAllTextAndOpenDropdown(focusEvent: FocusEvent): void {
         const input = focusEvent.target as HTMLInputElement;
         setTimeout(() => input.select(), 0);
+
+        const fakeInputEvent = new Event('input', { bubbles: true });
+        input.dispatchEvent(fakeInputEvent);
     }
 
     /**

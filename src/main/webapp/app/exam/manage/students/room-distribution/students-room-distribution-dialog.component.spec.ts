@@ -107,7 +107,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should show finish button after selecting a room', () => {
         fixture.detectChanges();
-        component.onRoomSelected({ item: rooms[0] });
+        component.pickSelectedRoom({ item: rooms[0] });
         fixture.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
@@ -117,7 +117,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should remove selected room and hide finish button again', () => {
         fixture.detectChanges();
-        component.onRoomSelected({ item: rooms[0] });
+        component.pickSelectedRoom({ item: rooms[0] });
         fixture.detectChanges();
         expect(component.hasSelectedRooms()).toBeTrue();
 
@@ -130,8 +130,8 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should not be able to select same room twice', () => {
-        component.onRoomSelected({ item: rooms[0] });
-        component.onRoomSelected({ item: rooms[0] });
+        component.pickSelectedRoom({ item: rooms[0] });
+        component.pickSelectedRoom({ item: rooms[0] });
         expect(component.selectedRooms()).toEqual([rooms[0]]);
     });
 
@@ -139,7 +139,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const distributeSpy = jest.spyOn(service, 'distributeStudentsAcrossRooms');
         const modalCloseSpy = jest.spyOn(ngbModal, 'close');
 
-        component.onRoomSelected({ item: rooms[0] });
+        component.pickSelectedRoom({ item: rooms[0] });
         fixture.detectChanges();
 
         component.onFinish();
