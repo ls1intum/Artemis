@@ -45,6 +45,13 @@ public class Lecture extends DomainObject {
     @Column(name = "end_date")
     private ZonedDateTime endDate;
 
+    /**
+     * @deprecated This property is deprecated because it serves no practical purpose.
+     *             Lecture contents (such as units and attachments) now have their own release dates,
+     *             which control their visibility. There is no reason to hide when or if
+     *             a lecture itself will occur.
+     */
+    @Deprecated
     @Column(name = "visible_date")
     private ZonedDateTime visibleDate;
 
@@ -104,6 +111,14 @@ public class Lecture extends DomainObject {
         return visibleDate;
     }
 
+    /**
+     * @param visibleDate the visibleDate to set for this lecture
+     * @deprecated The visibleDate property of lectures is deprecated as it serves no practical purpose.
+     *             Lecture contents (such as units and attachments) now have their own release dates,
+     *             which control their visibility. There is no reason to hide when or if
+     *             a lecture itself will occur.
+     */
+    @Deprecated
     public void setVisibleDate(ZonedDateTime visibleDate) {
         this.visibleDate = visibleDate;
     }
@@ -144,6 +159,8 @@ public class Lecture extends DomainObject {
 
     @Override
     public String toString() {
+        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
+        /* TODO: #11479 - remove visibleDate from the string representation OR leave as is */
         return "Lecture{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", visibleDate='" + getVisibleDate() + "'"
                 + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + "}";
     }
@@ -157,10 +174,16 @@ public class Lecture extends DomainObject {
     }
 
     /**
-     * check if students are allowed to see this lecture
+     * check if students are allowed to see this lecture.
+     *
+     * @deprecated The visibleDate property of lectures is deprecated as it serves no practical purpose.
+     *             Lecture contents (such as units and attachments) now have their own release dates,
+     *             which control their visibility. There is no reason to hide when or if
+     *             a lecture itself will occur.
      *
      * @return true, if students are allowed to see this lecture, otherwise false
      */
+    @Deprecated
     public boolean isVisibleToStudents() {
         if (visibleDate == null) {  // no visible date means the lecture is visible to students
             return true;
