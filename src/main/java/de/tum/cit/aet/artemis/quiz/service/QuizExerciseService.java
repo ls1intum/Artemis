@@ -874,4 +874,19 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
         return result;
     }
+
+    /**
+     * Determines if the given quiz exercise is editable.
+     * A quiz exercise is considered editable if none of its associated quiz batches have started and the quiz has not ended.
+     *
+     * @param quizExercise the quiz exercise to check
+     * @return true if the quiz exercise is editable, false otherwise
+     */
+    public boolean isEditable(QuizExercise quizExercise) {
+        Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(quizExercise);
+        if (batches.stream().anyMatch(QuizBatch::isStarted)) {
+            return false;
+        }
+        return !quizExercise.isQuizEnded();
+    }
 }
