@@ -28,7 +28,7 @@ export class SidebarCardMediumComponent {
 
     emitStoreAndRefresh(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);
-        this.refreshChildComponent();
+        //this.refreshChildComponent();
     }
 
     emitPageChangeForExam() {
