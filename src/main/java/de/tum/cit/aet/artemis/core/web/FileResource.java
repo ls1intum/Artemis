@@ -6,6 +6,7 @@ import static org.apache.velocity.shaded.commons.io.FilenameUtils.getBaseName;
 import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.FileNameMap;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,7 +24,6 @@ import jakarta.validation.constraints.NotNull;
 
 import javax.activation.MimetypesFileTypeMap;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,8 +119,6 @@ public class FileResource {
 
     private final Optional<SlideApi> slideApi;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final UserRepository userRepository;
 
     private final Optional<ExamUserApi> examUserApi;
@@ -137,16 +135,14 @@ public class FileResource {
 
     public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService,
             ResourceLoaderService resourceLoaderService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi,
-            Optional<LectureAttachmentApi> lectureAttachmentApi, Optional<SlideApi> slideApi, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            Optional<ExamUserApi> examUserApi, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
-            Optional<LectureUnitApi> lectureUnitApi) {
+            Optional<LectureAttachmentApi> lectureAttachmentApi, Optional<SlideApi> slideApi, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
+            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureAttachmentApi = lectureAttachmentApi;
         this.slideApi = slideApi;
-        this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserApi = examUserApi;
@@ -277,7 +273,10 @@ public class FileResource {
                 // Load without project type if not found with project type
                 fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, "readme"));
             }
-            byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
+            byte[] fileContent;
+            try (InputStream inputStream = fileResource.getInputStream()) {
+                fileContent = inputStream.readAllBytes();
+            }
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
             return new ResponseEntity<>(fileContent, responseHeaders, HttpStatus.OK);
@@ -301,7 +300,7 @@ public class FileResource {
         log.debug("REST request to get background for drag and drop question : {}", questionId);
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         return responseEntityForFilePath(getActualPathFromPublicPathString(question.getBackgroundFilePath(), FilePathType.DRAG_AND_DROP_BACKGROUND));
     }
 
@@ -317,7 +316,7 @@ public class FileResource {
         log.debug("REST request to get file for drag item : {}", dragItemId);
         DragItem dragItem = dragItemRepository.findWithEagerQuestionByIdElseThrow(dragItemId);
         Course course = dragItem.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         if (dragItem.getPictureFilePath() == null) {
             throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
         }
@@ -352,7 +351,7 @@ public class FileResource {
 
         User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         // auth check - either the user that submitted the exercise or the requesting user is at least a tutor for the exercise
-        if (!usersOfTheSubmission.contains(requestingUser) && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        if (!usersOfTheSubmission.contains(requestingUser) && !authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException();
         }
 
@@ -484,10 +483,10 @@ public class FileResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Lecture lecture = api.findByIdElseThrow(lectureId);
 
-        authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        List<AttachmentVideoUnit> lectureAttachments = attachmentApi.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
-                .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
+        List<AttachmentVideoUnit> lectureAttachments = attachmentApi.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream().filter(
+                unit -> authorizationCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
                 .toList();
 
         unitApi.setCompletedForAllLectureUnits(lectureAttachments, user, true);
@@ -784,10 +783,10 @@ public class FileResource {
      */
     private void checkAttachmentAuthorizationOrThrow(Course course, Attachment attachment) {
         if (attachment.isVisibleToStudents()) {
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         }
         else {
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         }
     }
 
