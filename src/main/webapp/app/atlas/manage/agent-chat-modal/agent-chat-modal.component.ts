@@ -94,6 +94,10 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             return;
         }
 
+        // Invalidate any pending plan approvals when user sends a new message
+        // This means they're refining the plan or moving to a different topic
+        this.invalidatePendingPlanApprovals();
+
         // Add user message
         this.addMessage(message, true);
         this.currentMessage.set('');
@@ -338,6 +342,22 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             return { cleanedMessage };
         }
         return null;
+    }
+
+    /**
+     * Invalidates all pending plan approvals.
+     * Called when the user sends a new message (refining the plan) or when workflow moves forward.
+     * This disables the "Approve Plan" button for previous plan proposals.
+     */
+    private invalidatePendingPlanApprovals(): void {
+        this.messages = this.messages.map((msg) => {
+            // If a message has a pending plan that hasn't been approved yet, mark it as no longer pending
+            if (msg.planPending && !msg.planApproved) {
+                return { ...msg, planPending: false };
+            }
+            return msg;
+        });
+        this.cdr.markForCheck();
     }
 
     private generateMessageId(): string {
