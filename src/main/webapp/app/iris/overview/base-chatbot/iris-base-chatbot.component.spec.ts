@@ -40,6 +40,7 @@ import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-mess
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
@@ -85,7 +86,7 @@ describe('IrisBaseChatbotComponent', () => {
             providers: [
                 MockProvider(NgbModal),
                 LocalStorageService,
-                { provide: TranslateService, useValue: {} },
+                { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 { provide: HttpClient, useValue: {} },
                 { provide: AccountService, useValue: accountMock },
