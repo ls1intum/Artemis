@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismAccessApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -176,6 +177,19 @@ public class RepositoryAccessService {
             }
         }
         throw new AccessForbiddenException("You are not allowed to access the plagiarism result of this programming exercise.");
+    }
+
+    public void checkHasAccessToOfflineIDEElseThrow(ProgrammingExercise exercise, User user) throws AccessForbiddenException {
+        if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            throw new AccessForbiddenException();
+        }
+    }
+
+    public boolean checkHasAccessToForcePush(ProgrammingExercise exercise, User user, String repositoryTypeOrUserName) {
+        boolean isAllowedRepository = repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
+                || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
+
+        return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
 }
