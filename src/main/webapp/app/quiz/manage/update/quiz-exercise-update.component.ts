@@ -15,7 +15,7 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
-import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -48,7 +48,7 @@ import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/diffic
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { AiQuizGenerationModalComponent } from 'app/quiz/manage/ai-quiz-generation-modal/ai-quiz-generation-modal.component';
-import { AiGeneratedQuestionDTO, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.service';
+import { AiDifficultyLevel, AiGeneratedQuestionDTO, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
@@ -712,10 +712,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         return this.courseId ?? this.quizExercise?.course?.id ?? this.quizExercise?.exerciseGroup?.exam?.course?.id ?? undefined;
     }
 
-    openAiGeneration(): void {
+    generateQuizWithHyperion(): void {
         const courseId = this.courseIdForGeneration;
         if (!courseId) {
-            // Shouldn't happen on this page, but guard anyway
             this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.aiGeneration.noCourseContext'));
             return;
         }
@@ -724,23 +723,21 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         (modalRef.componentInstance as AiQuizGenerationModalComponent).courseId = courseId;
 
         modalRef.result
-            .then((result?: { questions: AiGeneratedQuestionDTO[] }) => {
+            .then((result?: { questions: AiGeneratedQuestionDTO[]; requestedDifficulty?: AiDifficultyLevel; requestedSubtype?: AiRequestedSubtype }) => {
                 const picked = result?.questions ?? [];
                 if (!picked.length) return;
 
+                this.applyAIDifficultyToForm(result?.requestedDifficulty);
+
                 const toAdd = picked.map((dto) => this.mapDtoToMcQuestion(dto));
                 const current = this.quizExercise.quizQuestions ?? [];
-
-                // Reassign to trigger change detection in children
                 this.quizExercise.quizQuestions = [...current, ...toAdd];
 
-                // Update validity & UI (OnPush)
                 this.cacheValidation();
                 this.changeDetector.detectChanges();
             })
             .catch(() => {});
     }
-
     private mapDtoToMcQuestion(dto: AiGeneratedQuestionDTO): MultipleChoiceQuestion {
         const q = new MultipleChoiceQuestion();
         q.title = dto.title || '';
@@ -751,6 +748,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         q.points = 1;
         q.scoringType = ScoringType.ALL_OR_NOTHING;
 
+        if (dto.difficulty != null) {
+            q.hint = (q.hint ? q.hint + '\n' : '') + `AI difficulty: ${dto.difficulty}`;
+        }
+
         q.answerOptions = (dto.options ?? []).map((o) => {
             const ao = new AnswerOption();
             ao.text = o.text;
@@ -760,5 +761,33 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         });
 
         return q;
+    }
+    private mapAiDifficultyToExerciseDifficulty(ai: AiDifficultyLevel): DifficultyLevel {
+        switch (ai) {
+            case AiDifficultyLevel.EASY:
+                return DifficultyLevel.EASY;
+            case AiDifficultyLevel.HARD:
+                return DifficultyLevel.HARD;
+            default:
+                return DifficultyLevel.MEDIUM;
+        }
+    }
+    private applyAIDifficultyToForm(aiDiff: AiDifficultyLevel | undefined): void {
+        if (!aiDiff) return;
+
+        const mapped = this.mapAiDifficultyToExerciseDifficulty(aiDiff);
+
+        // a) Update the underlying model
+        this.quizExercise.difficulty = mapped;
+
+        // b) If your editor uses a reactive form, also patch the control so the UI updates.
+        //    Adjust the form variable/control name to your file (common ones shown).
+        //    Only the existing one(s) will be defined; the others are no-ops.
+        (this as any).quizExerciseForm?.get?.('difficulty')?.setValue(mapped);
+        (this as any).exerciseForm?.get?.('difficulty')?.setValue(mapped);
+        (this as any).formGroup?.get?.('difficulty')?.setValue(mapped);
+
+        // c) Trigger CD to refresh the picker if using OnPush
+        this.changeDetector.detectChanges?.();
     }
 }

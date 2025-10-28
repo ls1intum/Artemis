@@ -17,7 +17,7 @@
                         id="ai-generate-button"
                         type="button"
                         class="btn btn-outline-primary btn-sm ms-2"
-                        (click)="openAiGeneration()"
+                        (click)="generateQuizWithHyperion()"
                         [disabled]="!courseIdForGeneration || !quizExercise?.isEditable"
                     >
                         <fa-icon [icon]="faPlus" class="me-1" />

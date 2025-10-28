@@ -25,7 +25,6 @@ export interface AiQuizGenerationRequest {
     promptHint?: string | null;
     difficultyLevel: AiDifficultyLevel;
     requestedSubtype: AiRequestedSubtype;
-    competencyIds: number[];
 }
 
 export interface AiGeneratedOptionDTO {
@@ -48,17 +47,18 @@ export interface AiGeneratedQuestionDTO {
 
 export interface AiQuizGenerationResponse {
     questions: AiGeneratedQuestionDTO[];
-    warnings: string[];
+    warnings?: string[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class AiQuizGenerationService {
     private readonly http = inject(HttpClient);
 
+    /**
+     * POST api/hyperion/quizzes/courses/{courseId}/generate
+     */
     generate(courseId: number, payload: AiQuizGenerationRequest): Observable<AiQuizGenerationResponse> {
-        // Using relative URL is consistent with your existing services;
-        // your auth interceptor will attach the Bearer token.
-        return this.http.post<AiQuizGenerationResponse>(`api/courses/${courseId}/ai/quiz/generate`, payload).pipe(
+        return this.http.post<AiQuizGenerationResponse>(`api/hyperion/quizzes/courses/${courseId}/generate`, payload).pipe(
             catchError((err: HttpErrorResponse) => {
                 const message = this.describe(err);
                 return of({ questions: [], warnings: [message] });
@@ -68,6 +68,7 @@ export class AiQuizGenerationService {
 
     private describe(err: HttpErrorResponse): string {
         if (err.status === 0) return 'Network error contacting the AI generation endpoint.';
+        if (err.status === 404) return 'AI generation is not available on this server (Hyperion disabled).';
         const server = (err.error && (err.error.error || err.error.title || err.error.message)) || (typeof err.error === 'string' ? err.error : null);
         return `Generation failed (HTTP ${err.status}).${server ? ` ${server}` : ''}`;
     }

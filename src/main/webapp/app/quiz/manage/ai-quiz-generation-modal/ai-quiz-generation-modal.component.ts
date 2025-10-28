@@ -1,4 +1,3 @@
-// src/main/webapp/app/quiz/manage/ai-quiz-generation-modal/ai-quiz-generation-modal.component.ts
 import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -26,11 +25,11 @@ import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 export class AiQuizGenerationModalComponent {
     @Input() courseId!: number;
 
-    // expose enums to the template
     AiLanguage = AiLanguage;
     AiDifficultyLevel = AiDifficultyLevel;
     AiRequestedSubtype = AiRequestedSubtype;
     faQuestionCircle = faQuestionCircle;
+
     formData: AiQuizGenerationRequest = {
         numberOfQuestions: 2,
         language: AiLanguage.ENGLISH,
@@ -38,7 +37,6 @@ export class AiQuizGenerationModalComponent {
         promptHint: '',
         difficultyLevel: AiDifficultyLevel.MEDIUM,
         requestedSubtype: AiRequestedSubtype.SINGLE_CORRECT,
-        competencyIds: [],
     };
 
     loading = false;
@@ -55,8 +53,9 @@ export class AiQuizGenerationModalComponent {
         [AiRequestedSubtype.TRUE_FALSE]: 'artemisApp.quizExercise.aiGeneration.subtypes.trueFalse',
     };
     subtypeLabelKey(subtype: AiRequestedSubtype | string): string {
-        return this.subtypeKeyMap[subtype] ?? 'artemisApp.quizExercise.aiGeneration.subtype.trueFalse';
+        return this.subtypeKeyMap[subtype] ?? 'artemisApp.quizExercise.aiGeneration.subtypes.single';
     }
+
     cancel(): void {
         this.activeModal.dismiss();
     }
@@ -78,7 +77,12 @@ export class AiQuizGenerationModalComponent {
 
     useInEditor(): void {
         const picked = this.generated.filter((_, i) => this.selected[i]);
-        this.activeModal.close({ questions: picked });
+        // return also the difficulty (and subtype, handy for future UX if needed)
+        this.activeModal.close({
+            questions: picked,
+            requestedDifficulty: this.formData.difficultyLevel,
+            requestedSubtype: this.formData.requestedSubtype,
+        });
     }
 
     get anySelected(): boolean {
