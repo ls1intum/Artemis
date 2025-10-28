@@ -56,15 +56,18 @@ export class StudentsRoomDistributionService {
         const requestUrl = `${this.BASE_URL}/rooms/distribution-capacities`;
         const params = new HttpParams().appendAll({ examRoomIds: roomIds }).set('reserveFactor', reserveFactor);
 
-        this.http.get<ExamDistributionCapacityDTO>(requestUrl, { params }).pipe(
-            map((capacityData: ExamDistributionCapacityDTO) => {
-                this.capacityDataInternal.set(capacityData);
-            }),
-            catchError((error) => {
-                this.capacityDataInternal.set(undefined);
-                return throwError(() => error);
-            }),
-        );
+        this.http
+            .get<ExamDistributionCapacityDTO>(requestUrl, { params })
+            .pipe(
+                map((capacityData: ExamDistributionCapacityDTO) => {
+                    this.capacityDataInternal.set(capacityData);
+                }),
+                catchError((error) => {
+                    this.capacityDataInternal.set(undefined);
+                    return throwError(() => error);
+                }),
+            )
+            .subscribe();
     }
 
     /**
