@@ -112,7 +112,7 @@ public class QuizExerciseEvaluationResource {
      * @param quizExerciseId the quiz id for the quiz that should be re-evaluated
      * @param quizExercise   the quizExercise to re-evaluate
      * @param files          the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
-     * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
+     * @return the ResponseEntity with status 200 (OK) , or with status 400 (Bad Request) if the quizExercise is not valid, or with
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
     @PutMapping(value = "quiz-exercises/{quizExerciseId}/re-evaluate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewEncapsulation, effect, inject, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewEncapsulation, computed, effect, inject, output, viewChild } from '@angular/core';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -64,14 +64,13 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     reEvaluationInProgress = input<boolean>(false);
     backupQuestion: MultipleChoiceQuestion;
 
-    /** Set default preview of the markdown editor as preview for the multiple choice question **/
-    get showPreview(): boolean {
+    readonly showPreview = computed(() => {
         const markdownEditor = this.markdownEditor();
         if (!markdownEditor || this.reEvaluationInProgress()) {
             return false;
         }
         return markdownEditor.inPreviewMode;
-    }
+    });
     showMultipleChoiceQuestionPreview = true;
     showMultipleChoiceQuestionVisual = true;
 

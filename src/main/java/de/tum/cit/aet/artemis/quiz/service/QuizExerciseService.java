@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -175,7 +176,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private static boolean shouldSetInvalid(boolean originalInvalid, boolean newInvalid, Long id, String itemType) {
         if (originalInvalid && !newInvalid) {
-            throw new BadRequestAlertException("The " + itemType + " with id " + id + " is marked as invalid and cannot be set to valid again", ENTITY_NAME, null);
+            throw new BadRequestException("The " + itemType + " with id " + id + " is marked as invalid and cannot be set to valid again");
         }
         return !originalInvalid && newInvalid;
     }
@@ -217,10 +218,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     originalDragItem.setInvalid(true);
                 }
                 if (dragItemDTO.text() == null && dragItemDTO.pictureFilePath() == null) {
-                    throw new BadRequestAlertException("The drag item with id " + dragItemDTO.id() + " has no text or picture", ENTITY_NAME, null);
+                    throw new BadRequestException("The drag item with id " + dragItemDTO.id() + " has no text or picture");
                 }
                 if (dragItemDTO.text() != null && dragItemDTO.pictureFilePath() != null) {
-                    throw new BadRequestAlertException("The drag item with id " + dragItemDTO.id() + " has both text and picture", ENTITY_NAME, null);
+                    throw new BadRequestException("The drag item with id " + dragItemDTO.id() + " has both text and picture");
                 }
                 originalDragItem.setText(dragItemDTO.text());
                 originalDragItem.setPictureFilePath(dragItemDTO.pictureFilePath());
@@ -248,9 +249,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     .anyMatch(mapping -> mapping.getDragItem().getId().equals(mappingDTO.dragItemId()) && mapping.getDropLocation().getId().equals(mappingDTO.dropLocationId()));
             if (!mappingExists) {
                 DragItem dragItem = originalQuestion.getDragItems().stream().filter(item -> item.getId().equals(mappingDTO.dragItemId())).findFirst()
-                        .orElseThrow(() -> new BadRequestAlertException("The drag item with id " + mappingDTO.dragItemId() + " does not exist", ENTITY_NAME, null));
+                        .orElseThrow(() -> new BadRequestException("The drag item with id " + mappingDTO.dragItemId() + " does not exist"));
                 DropLocation dropLocation = originalQuestion.getDropLocations().stream().filter(location -> location.getId().equals(mappingDTO.dropLocationId())).findFirst()
-                        .orElseThrow(() -> new BadRequestAlertException("The drop location with id " + mappingDTO.dropLocationId() + " does not exist", ENTITY_NAME, null));
+                        .orElseThrow(() -> new BadRequestException("The drop location with id " + mappingDTO.dropLocationId() + " does not exist"));
                 DragAndDropMapping newMapping = new DragAndDropMapping();
                 newMapping.setDragItem(dragItem);
                 newMapping.setDropLocation(dropLocation);
@@ -350,10 +351,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         originalSolution.removeAll(solutionsToRemove);
         for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
             if (solutionDTO.id() == null && solutionDTO.tempID() == null) {
-                throw new BadRequestAlertException("A new short answer solution must have a tempID to identify it", ENTITY_NAME, null);
+                throw new BadRequestException("A new short answer solution must have a tempID to identify it");
             }
             else if (solutionDTO.id() != null && solutionDTO.tempID() != null) {
-                throw new BadRequestAlertException("An existing short answer solution cannot have a tempID", ENTITY_NAME, null);
+                throw new BadRequestException("An existing short answer solution cannot have a tempID");
             }
             if (solutionDTO.tempID() != null) {
                 ShortAnswerSolution newSolution = new ShortAnswerSolution();
@@ -391,11 +392,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private static boolean addNewShortAnswerMappingFromDTO(ShortAnswerQuestion originalQuestion, ShortAnswerMappingReEvaluateDTO mappingDTO,
             Set<ShortAnswerMapping> existingMappings) {
         if (mappingDTO.solutionId() == null && mappingDTO.solutionTempID() == null) {
-            throw new BadRequestAlertException("The short answer mapping for spot id " + mappingDTO.spotId() + " has no solutionId or solutionTempID", ENTITY_NAME,
-                    "mappingSolutionIDMissing");
+            throw new BadRequestException("The short answer mapping for spot id " + mappingDTO.spotId() + " has no solutionId or solutionTempID");
         }
         if (mappingDTO.solutionId() != null && mappingDTO.solutionTempID() != null) {
-            throw new BadRequestAlertException("The short answer mapping for spot id " + mappingDTO.spotId() + " has both solutionId and solutionTempID", ENTITY_NAME, null);
+            throw new BadRequestException("The short answer mapping for spot id " + mappingDTO.spotId() + " has both solutionId and solutionTempID");
         }
         boolean mappingExists;
         if (mappingDTO.solutionTempID() != null) {
@@ -410,15 +410,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return false;
         }
         ShortAnswerSpot spot = originalQuestion.getSpots().stream().filter(item -> item.getId().equals(mappingDTO.spotId())).findFirst()
-                .orElseThrow(() -> new BadRequestAlertException("The short answer spot with id " + mappingDTO.spotId() + " does not exist", ENTITY_NAME, null));
+                .orElseThrow(() -> new BadRequestException("The short answer spot with id " + mappingDTO.spotId() + " does not exist"));
         ShortAnswerSolution solution;
         if (mappingDTO.solutionTempID() != null) {
             solution = originalQuestion.getSolutions().stream().filter(item -> Objects.equals(item.getTempID(), mappingDTO.solutionTempID())).findFirst()
-                    .orElseThrow(() -> new BadRequestAlertException("The short answer solution with tempID " + mappingDTO.solutionTempID() + " does not exist", ENTITY_NAME, null));
+                    .orElseThrow(() -> new BadRequestException("The short answer solution with tempID " + mappingDTO.solutionTempID() + " does not exist"));
         }
         else {
             solution = originalQuestion.getSolutions().stream().filter(item -> item.getId().equals(mappingDTO.solutionId())).findFirst()
-                    .orElseThrow(() -> new BadRequestAlertException("The short answer solution with id " + mappingDTO.solutionId() + " does not exist", ENTITY_NAME, null));
+                    .orElseThrow(() -> new BadRequestException("The short answer solution with id " + mappingDTO.solutionId() + " does not exist"));
         }
         ShortAnswerMapping newMapping = new ShortAnswerMapping();
         newMapping.setSpot(spot);
@@ -485,24 +485,21 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 case DragAndDropQuestionReEvaluateDTO dragAndDropQuestionReEvaluateDTO -> {
                     DragAndDropQuestion originalQuestion = (DragAndDropQuestion) originalQuizExercise.getQuizQuestions().stream()
                             .filter(q -> q.getId().equals(dragAndDropQuestionReEvaluateDTO.id())).findFirst()
-                            .orElseThrow(() -> new BadRequestAlertException("The drag and drop question with id " + dragAndDropQuestionReEvaluateDTO.id() + " does not exist",
-                                    ENTITY_NAME, null));
+                            .orElseThrow(() -> new BadRequestException("The drag and drop question with id " + dragAndDropQuestionReEvaluateDTO.id() + " does not exist"));
                     questionsChanged = applyDragAndDropQuestionFromDTO(dragAndDropQuestionReEvaluateDTO, originalQuestion) || questionsChanged;
                     newQuestions.add(originalQuestion);
                 }
                 case ShortAnswerQuestionReEvaluateDTO shortAnswerQuestionReEvaluateDTO -> {
                     ShortAnswerQuestion originalQuestion = (ShortAnswerQuestion) originalQuizExercise.getQuizQuestions().stream()
                             .filter(q -> q.getId().equals(shortAnswerQuestionReEvaluateDTO.id())).findFirst()
-                            .orElseThrow(() -> new BadRequestAlertException("The short answer question with id " + shortAnswerQuestionReEvaluateDTO.id() + " does not exist",
-                                    ENTITY_NAME, null));
+                            .orElseThrow(() -> new BadRequestException("The short answer question with id " + shortAnswerQuestionReEvaluateDTO.id() + " does not exist"));
                     questionsChanged = applyShortAnswerQuestionFromDTO(shortAnswerQuestionReEvaluateDTO, originalQuestion) || questionsChanged;
                     newQuestions.add(originalQuestion);
                 }
                 case MultipleChoiceQuestionReEvaluateDTO multipleChoiceQuestionReEvaluateDTO -> {
                     MultipleChoiceQuestion originalQuestion = (MultipleChoiceQuestion) originalQuizExercise.getQuizQuestions().stream()
                             .filter(q -> q.getId().equals(multipleChoiceQuestionReEvaluateDTO.id())).findFirst()
-                            .orElseThrow(() -> new BadRequestAlertException("The multiple choice question with id " + multipleChoiceQuestionReEvaluateDTO.id() + " does not exist",
-                                    ENTITY_NAME, null));
+                            .orElseThrow(() -> new BadRequestException("The multiple choice question with id " + multipleChoiceQuestionReEvaluateDTO.id() + " does not exist"));
                     questionsChanged = applyMultipleChoiceQuestionFromDTO(multipleChoiceQuestionReEvaluateDTO, originalQuestion) || questionsChanged;
                     newQuestions.add(originalQuestion);
                 }
