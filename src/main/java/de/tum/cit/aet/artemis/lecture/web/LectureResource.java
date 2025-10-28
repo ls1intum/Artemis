@@ -331,9 +331,6 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in and remove the alternative auth check following it */
-        // authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
         if (!authCheckService.isAtLeastStudentInCourse(lecture.getCourse(), userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException();
         }
