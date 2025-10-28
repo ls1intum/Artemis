@@ -37,7 +37,7 @@ export class SidebarCardMediumComponent {
         const currentUrl = this.router.url;
         const isNotTutorialLecturesRoute = !this.TUTORIAL_LECTURES_ROUTE_PATTERN.test(currentUrl);
         if (isNotTutorialLecturesRoute) {
-            this.refreshChildComponent();
+            //this.refreshChildComponent();
         }
     }
 

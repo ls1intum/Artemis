@@ -18,6 +18,7 @@ import { AccordionGroups, CollapseState, SidebarData, SidebarItemShowAlways, Tut
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-course-tutorial-groups',
@@ -29,19 +30,22 @@ export class CourseTutorialGroupsComponent {
         registeredGroups: { entityData: [] },
         furtherGroups: { entityData: [] },
         allGroups: { entityData: [] },
-        tutorialLectures: { entityData: [] },
+        currentTutorialLecture: { entityData: [] },
+        furtherTutorialLectures: { entityData: [] },
     };
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
         registeredGroups: false,
         allGroups: true,
         furtherGroups: true,
-        tutorialLectures: false,
+        currentTutorialLecture: false,
+        furtherTutorialLectures: true,
     };
     protected readonly DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         registeredGroups: false,
         allGroups: false,
         furtherGroups: false,
-        tutorialLectures: false,
+        currentTutorialLecture: true,
+        furtherTutorialLectures: false,
     };
 
     private router = inject(Router);
@@ -167,9 +171,15 @@ export class CourseTutorialGroupsComponent {
             }
             accordionGroups[tutorialGroupCategory].entityData.push(tutorialGroupCardItem);
         });
+
+        const now = dayjs();
+        const nonEndedLectures = tutorialLectures.filter((lecture) => lecture.startDate && lecture.endDate && lecture.endDate.isAfter(now));
+        const earliestNonEndedLecture =
+            nonEndedLectures.length === 0 ? undefined : nonEndedLectures.reduce((earliest, current) => (current.startDate!.isBefore(earliest.startDate!) ? current : earliest));
         tutorialLectures.forEach((tutorialLecture) => {
             const tutorialLectureCardItem = this.courseOverviewService.mapTutorialLectureToSidebarCardElement(tutorialLecture);
-            tutorialGroupCategory = 'tutorialLectures';
+            const isCurrentTutorialLecture = earliestNonEndedLecture ? tutorialLecture.id === earliestNonEndedLecture.id : false;
+            tutorialGroupCategory = isCurrentTutorialLecture ? 'currentTutorialLecture' : 'furtherTutorialLectures';
             accordionGroups[tutorialGroupCategory].entityData.push(tutorialLectureCardItem);
         });
         return accordionGroups;
