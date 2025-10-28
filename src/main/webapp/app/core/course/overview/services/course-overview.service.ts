@@ -342,7 +342,8 @@ export class CourseOverviewService {
     mapTutorialLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {
         return {
             title: lecture.title ?? '',
-            id: `tutorial-lectures/${lecture.id ?? ''}`,
+            id: lecture.id ?? '',
+            targetComponentSubRoute: 'tutorial-lectures',
             subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDate'),
             size: 'M',
             startDate: lecture.startDate,

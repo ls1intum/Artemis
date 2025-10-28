@@ -18,8 +18,8 @@
                 'border-danger': sidebarItem?.difficulty === DifficultyLevel.HARD,
                 'border-module': !sidebarItem?.difficulty,
             }"
-            [routerLink]="'./' + sidebarItem?.id"
-            (click)="emitStoreAndRefresh(sidebarItem.id)"
+            [routerLink]="sidebarItem?.targetComponentSubRoute ? ['./', sidebarItem.targetComponentSubRoute, sidebarItem.id] : ['./', sidebarItem.id]"
+            (click)="emitStoreAndRefresh()"
             [routerLinkActive]="'bg-selected border-selected'"
         >
             <jhi-sidebar-card-item

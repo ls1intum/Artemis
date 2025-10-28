@@ -61,6 +61,10 @@ export interface SidebarCardElement {
      */
     id: string | number;
     /**
+     * The subroute under which the component should be rendered that is opened once this sidebar card element is clicked
+     */
+    targetComponentSubRoute?: string;
+    /**
      * If set to true, the icons for quick actions will be displayed on the top right
      */
     quickActionIcons?: any;

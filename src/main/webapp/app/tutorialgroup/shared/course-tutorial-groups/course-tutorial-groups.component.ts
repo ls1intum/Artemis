@@ -1,7 +1,6 @@
 import { Component, Signal, effect, inject, signal } from '@angular/core';
-import { distinctUntilChanged, startWith, switchMap } from 'rxjs/operators';
-import { of } from 'rxjs';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { distinctUntilChanged } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { map } from 'rxjs/operators';
@@ -17,7 +16,6 @@ import { CourseOverviewService } from 'app/core/course/overview/services/course-
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AccordionGroups, CollapseState, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/shared/types/sidebar';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 
@@ -54,7 +52,6 @@ export class CourseTutorialGroupsComponent {
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
     private lectureService = inject(LectureService);
-    private updatedCourse: Signal<Course | undefined>;
 
     courseId = this.getCurrentCourseIdSignal();
     tutorialGroups = signal<TutorialGroup[]>([]);
@@ -65,7 +62,6 @@ export class CourseTutorialGroupsComponent {
 
     constructor() {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup');
-        this.updatedCourse = this.getUpdatedCourseSignal();
 
         effect(() => {
             const courseId = this.courseId();
@@ -80,17 +76,6 @@ export class CourseTutorialGroupsComponent {
             if (tutorialGroups.length > 0 || tutorialLectures.length > 0) {
                 this.prepareSidebarData(tutorialGroups, tutorialLectures);
                 this.navigateToTutorialGroup(tutorialGroups);
-            }
-        });
-
-        effect(() => {
-            const updatedCourse = this.updatedCourse();
-            if (updatedCourse !== undefined) {
-                const tutorialGroups = updatedCourse.tutorialGroups ?? [];
-                this.tutorialGroups.set(tutorialGroups);
-                const lectures = updatedCourse.lectures ?? [];
-                const tutorialLectures = lectures.filter((lecture) => lecture.tutorialLecture !== true);
-                this.tutorialLectures.set(tutorialLectures);
             }
         });
     }
@@ -223,14 +208,5 @@ export class CourseTutorialGroupsComponent {
             ),
             { initialValue: undefined },
         );
-    }
-
-    private getUpdatedCourseSignal(): Signal<Course | undefined> {
-        const updatedCourseObservable = toObservable(this.courseId).pipe(
-            distinctUntilChanged(),
-            switchMap((courseId) => (courseId === undefined ? of(undefined) : this.courseStorageService.subscribeToCourseUpdates(courseId))),
-            startWith(undefined),
-        );
-        return toSignal(updatedCourseObservable, { initialValue: undefined });
     }
 }

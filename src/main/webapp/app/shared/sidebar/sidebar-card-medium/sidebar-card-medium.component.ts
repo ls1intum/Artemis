@@ -13,12 +13,14 @@ import { SidebarCardElement, SidebarTypes } from 'app/shared/types/sidebar';
     imports: [NgClass, SidebarCardItemComponent, RouterLink, RouterLinkActive],
 })
 export class SidebarCardMediumComponent {
+    private readonly TUTORIAL_LECTURES_ROUTE_PATTERN = /\/courses\/\d+\/tutorial-groups\/tutorial-lectures(\/|$)/;
     private sidebarEventService = inject(SidebarEventService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private location = inject(Location);
 
-    DifficultyLevel = DifficultyLevel;
+    protected readonly DifficultyLevel = DifficultyLevel;
+
     @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
@@ -26,9 +28,17 @@ export class SidebarCardMediumComponent {
     /** Key used for grouping or categorizing sidebar items */
     @Input() groupKey?: string;
 
-    emitStoreAndRefresh(itemId: number | string) {
-        this.sidebarEventService.emitSidebarCardEvent(itemId);
-        this.refreshChildComponent();
+    emitStoreAndRefresh() {
+        const targetComponentSubRoute = this.sidebarItem.targetComponentSubRoute;
+        const sidebarItemId = this.sidebarItem.id;
+        const targetComponentRoute = targetComponentSubRoute ? targetComponentSubRoute + '/' + sidebarItemId : sidebarItemId;
+        this.sidebarEventService.emitSidebarCardEvent(targetComponentRoute);
+
+        const currentUrl = this.router.url;
+        const isNotTutorialLecturesRoute = !this.TUTORIAL_LECTURES_ROUTE_PATTERN.test(currentUrl);
+        if (isNotTutorialLecturesRoute) {
+            this.refreshChildComponent();
+        }
     }
 
     emitPageChangeForExam() {
@@ -36,11 +46,15 @@ export class SidebarCardMediumComponent {
     }
 
     refreshChildComponent(): void {
+        const targetComponentSubRoute = this.sidebarItem?.targetComponentSubRoute;
+        const itemId = this.sidebarItem?.id;
         this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
             if (this.itemSelected) {
-                this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route });
+                const pathSegments = targetComponentSubRoute ? ['./', targetComponentSubRoute, itemId] : ['./', itemId];
+                this.router.navigate(pathSegments, { relativeTo: this.route });
             } else {
-                this.router.navigate([this.location.path(), this.sidebarItem?.id], { replaceUrl: true });
+                const pathSegments = targetComponentSubRoute ? [this.location.path(), targetComponentSubRoute, itemId] : [this.location.path(), itemId];
+                this.router.navigate(pathSegments, { replaceUrl: true });
             }
         });
     }
