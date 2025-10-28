@@ -37,9 +37,7 @@ public class AtlasAgentService {
 
     private final AtlasAgentToolsService atlasAgentToolsService;
 
-    // gpt-4o here is the default value
-    // you can use another model by configuring value in application-artemis.yml file
-    @Value("${artemis.atlas.chat-model: gpt-4o}")
+    @Value("${artemis.atlas.chat-model:gpt-4o}")
     private String chatModel;
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
