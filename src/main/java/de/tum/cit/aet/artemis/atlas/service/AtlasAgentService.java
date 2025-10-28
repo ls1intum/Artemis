@@ -129,7 +129,7 @@ public class AtlasAgentService {
             }
 
             // Check if competency was created
-            boolean competenciesModified = competencyExpertToolsService != null && competencyExpertToolsService.wasCompetencyCreated();
+            boolean competenciesModified = competencyExpertToolsService != null && competencyExpertToolsService.wasCompetencyModified();
 
             String finalResponse = !response.trim().isEmpty() ? response : "I apologize, but I couldn't generate a response.";
 

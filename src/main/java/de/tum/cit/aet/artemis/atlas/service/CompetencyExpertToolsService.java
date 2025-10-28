@@ -42,6 +42,8 @@ public class CompetencyExpertToolsService {
     // Track which modification tools were called during this request
     private boolean competencyCreated = false;
 
+    private boolean competencyUpdated = false;
+
     public CompetencyExpertToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository) {
         this.objectMapper = objectMapper;
         this.competencyRepository = competencyRepository;
@@ -178,12 +180,82 @@ public class CompetencyExpertToolsService {
     }
 
     /**
+     * Tool for updating an existing competency.
+     * Allows modification of title, description, and taxonomy.
+     *
+     * @param competencyId  the ID of the competency to update
+     * @param title         the new title (required)
+     * @param description   the new description (required)
+     * @param taxonomyLevel the new taxonomy level (required)
+     * @return JSON response indicating success or error
+     */
+    @Tool(description = "Update an existing competency's title, description, and taxonomy")
+    public String updateCompetency(@ToolParam(description = "the ID of the competency to update") Long competencyId,
+            @ToolParam(description = "the new title of the competency") String title, @ToolParam(description = "the new description of the competency") String description,
+            @ToolParam(description = "the new taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)") CompetencyTaxonomy taxonomyLevel) {
+        try {
+            // Find the existing competency
+            Optional<Competency> competencyOptional = competencyRepository.findById(competencyId);
+            if (competencyOptional.isEmpty()) {
+                return toJson(Map.of("error", "Competency not found with ID: " + competencyId));
+            }
+
+            Competency competency = competencyOptional.get();
+
+            // Update the fields
+            competency.setTitle(title.trim());
+            competency.setDescription(description);
+            competency.setTaxonomy(taxonomyLevel);
+
+            // Save the updated competency
+            Competency updatedCompetency = competencyRepository.save(competency);
+
+            this.competencyUpdated = true;
+
+            // Prepare response
+            Map<String, Object> competencyData = new LinkedHashMap<>();
+            competencyData.put("id", updatedCompetency.getId());
+            competencyData.put("title", updatedCompetency.getTitle());
+            competencyData.put("description", updatedCompetency.getDescription());
+            competencyData.put("taxonomy", updatedCompetency.getTaxonomy() != null ? updatedCompetency.getTaxonomy().toString() : "");
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("success", true);
+            response.put("message", "Competency updated successfully");
+            response.put("competency", competencyData);
+
+            return toJson(response);
+        }
+        catch (Exception e) {
+            return toJson(Map.of("error", "Failed to update competency: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Check if any competency was created during this request.
      *
      * @return true if createCompetency was called during this request
      */
     public boolean wasCompetencyCreated() {
         return this.competencyCreated;
+    }
+
+    /**
+     * Check if any competency was updated during this request.
+     *
+     * @return true if updateCompetency was called during this request
+     */
+    public boolean wasCompetencyUpdated() {
+        return this.competencyUpdated;
+    }
+
+    /**
+     * Check if any competency was modified (created or updated) during this request.
+     *
+     * @return true if any modification tool was called
+     */
+    public boolean wasCompetencyModified() {
+        return this.competencyCreated || this.competencyUpdated;
     }
 
     /**
