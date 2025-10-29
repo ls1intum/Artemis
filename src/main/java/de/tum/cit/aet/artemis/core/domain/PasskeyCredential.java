@@ -90,6 +90,9 @@ public class PasskeyCredential extends AbstractAuditingEntity {
     @Column(name = "last_used")
     private Instant lastUsed;
 
+    @Column(name = "is_approved")
+    private boolean isApproved;
+
     public User getUser() {
         return user;
     }
@@ -184,6 +187,14 @@ public class PasskeyCredential extends AbstractAuditingEntity {
 
     public void setLastUsed(Instant lastUsed) {
         this.lastUsed = lastUsed;
+    }
+
+    public boolean isApproved() {
+        return isApproved;
+    }
+
+    public void setApproved(boolean approved) {
+        this.isApproved = approved;
     }
 
     /**
