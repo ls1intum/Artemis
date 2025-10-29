@@ -89,15 +89,16 @@ public class LocalQueue<T> implements DistributedQueue<T> {
     @Override
     public void clear() {
         lock.lock();
-        List<T> items = queue.stream().toList();
+        List<T> items;
         try {
+            items = queue.stream().toList();
             queue.clear();
         }
         finally {
             lock.unlock();
-            for (T item : items) {
-                notifyRemoved(item);
-            }
+        }
+        for (T item : items) {
+            notifyRemoved(item);
         }
     }
 
