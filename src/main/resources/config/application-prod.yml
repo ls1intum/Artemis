@@ -123,5 +123,5 @@ info:
 atlas:
   atlasml:
     enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
-    base-url: <your-nebula-url> # Required address to you own AtlasML instance
+    base-url: <your-atlasml-url> # Required address to you own AtlasML instance
     auth-token: <your-secret> # The secret used to authenticate Artemis against AtlasML
