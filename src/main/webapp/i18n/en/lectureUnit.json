@@ -155,7 +155,8 @@
                 "urlHelperPlaceholder": "You can enter a Video URL here and use the arrow to create the correct embeddable URL from it",
                 "urlHelperValidationError": "Automatic embed link generation is not possible for this URL",
                 "videoTranscription": "Video Transcription",
-                "videoTranscriptionPlaceholder": "Insert the transcription of the video here."
+                "videoTranscriptionPlaceholder": "Insert the transcription of the video here.",
+                "generateTranscriptLabel": "Generate transcript after saving"
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit Attachment Unit"
@@ -170,6 +171,10 @@
                 "question": "Do you really want to delete the attachment unit <strong>{{ title }}</strong>? The attachment will also be removed! You can not undo this action!",
                 "typeNameToConfirm": "Please enter the name of the attachment/video unit for confirmation.",
                 "buttonText": "Delete"
+            },
+            "transcription": {
+                "started": "Transcript generation started.",
+                "error": "Failed to start transcript generation."
             }
         },
         "exerciseUnit": {
