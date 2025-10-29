@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.competency;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -9,13 +11,23 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 
 class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
@@ -361,5 +373,48 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
         super.shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates();
+    }
+
+    @Nested
+    class AtlasMLFeatureToggle {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldAllowAtlasMLSuggestWhenFeatureEnabled() throws Exception {
+            featureToggleService.enableFeature(Feature.AtlasML);
+
+            var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
+            var mockedResponse = new SuggestCompetencyResponseDTO(List.of(new AtlasMLCompetencyDTO(1L, "Mocked", "Desc", 1L)));
+            atlasMLRequestMockProvider.enableMockingOfRequests();
+            atlasMLRequestMockProvider.mockSuggestCompetencies(requestBody, mockedResponse);
+
+            var response = request.postWithResponseBody("/api/atlas/competencies/suggest", requestBody, SuggestCompetencyResponseDTO.class, HttpStatus.OK);
+            // minimal assertion to ensure our mocked data is returned
+            assert response.competencies() != null && response.competencies().size() == 1;
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldBlockAtlasMLSuggestWhenFeatureDisabled() throws Exception {
+            featureToggleService.disableFeature(Feature.AtlasML);
+
+            var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
+            request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
+                    .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnMockedSuggestedRelationsWhenFeatureEnabled() throws Exception {
+            featureToggleService.enableFeature(Feature.AtlasML);
+
+            long courseId = course.getId();
+            var mockedRelations = new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "ASSUMES")));
+            atlasMLRequestMockProvider.enableMockingOfRequests();
+            atlasMLRequestMockProvider.mockSuggestCompetencyRelations(courseId, mockedRelations);
+
+            var response = request.get("/api/atlas/courses/" + courseId + "/competencies/relations/suggest", HttpStatus.OK, SuggestCompetencyRelationsResponseDTO.class);
+            assert response.relations() != null && response.relations().size() == 1;
+        }
     }
 }

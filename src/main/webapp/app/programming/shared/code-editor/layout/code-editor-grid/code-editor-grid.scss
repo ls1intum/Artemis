@@ -1,6 +1,6 @@
-/*!* ==========================================================================
-Code-Editor Layout Styles
-========================================================================== *!*/
+/* ==========================================================================
+   Code-Editor Layout
+   ========================================================================== */
 
 .editor-wrapper {
     display: grid;
@@ -28,6 +28,7 @@ Code-Editor Layout Styles
         &__content {
             display: flex;
             height: inherit;
+            min-width: 0; /* allow middle strip to shrink */
 
             .editor-sidebar-left {
                 flex: 0 1 auto;
@@ -43,6 +44,7 @@ Code-Editor Layout Styles
 
         .editor-center {
             flex: 1 1 auto;
+            min-width: 0; /* let center shrink */
 
             .card {
                 height: 100%;
@@ -75,7 +77,7 @@ Code-Editor Layout Styles
         flex-flow: column nowrap;
         height: 200px;
 
-        // Hide the grip lines if the editor-bottom content template is empty.
+        /* Hide grip when bottom area is empty */
         .rg-bottom-bottom {
             display: none;
         }
@@ -90,11 +92,11 @@ Code-Editor Layout Styles
     }
 }
 
-/*!* ==========================================================================
-Collapsable styling
-========================================================================== *!*/
+/* ==========================================================================
+   Collapsible styling
+   ========================================================================== */
 
-// File browser
+/* File browser */
 .editor-sidebar-left.collapsed--horizontal {
     flex: none !important;
 
@@ -134,10 +136,10 @@ Collapsable styling
         }
 
         #panel-symbol {
-            padding-right: 0 !important;
             position: absolute;
             top: 66%;
             left: 25%;
+            padding-right: 0 !important;
         }
 
         .bottom-icon {
@@ -176,7 +178,7 @@ Collapsable styling
     }
 }
 
-// Instructions
+/* Instructions (right pane) */
 .editor-sidebar-right.collapsed--horizontal {
     flex: none !important;
 
@@ -223,10 +225,10 @@ Collapsable styling
         }
 
         #panel-symbol {
-            padding-right: 0 !important;
             position: absolute;
             top: 18%;
             left: 40%;
+            padding-right: 0 !important;
         }
 
         .bottom-icon {
@@ -234,73 +236,24 @@ Collapsable styling
         }
     }
 
+    /* Hide status area when collapsed */
     .editable-instruction-container__status {
         display: none !important;
     }
-}
 
-.editor-sidebar-right:not(.collapsed--horizontal) {
-    .editable-instruction-container__status {
-        display: grid;
-        grid-template-columns: minmax(max-content, 1fr) minmax(max-content, 2fr);
-
-        > :not(:first-child) {
-            border-left: 1px solid rgba(0, 0, 0, 0.125);
-            padding-left: 20px;
-        }
-
-        &__item:not(:last-child) {
-            margin-right: 15px;
-        }
-
-        .instructions-status {
-            display: flex;
-            justify-content: center;
-        }
-    }
-}
-
-.editor-sidebar-right.collapsed--horizontal {
     .instructions__content {
         height: auto;
     }
-
-    .editable-instruction-container__status {
-        display: flex;
-        flex-flow: column;
-
-        > :not(:last-child) {
-            padding-bottom: 5px;
-        }
-
-        > :not(:first-child) {
-            padding-left: 0 !important;
-            padding-top: 5px;
-            border-top: 1px solid rgba(0, 0, 0, 0.125);
-            border-left: none !important;
-        }
-
-        span {
-            display: none !important;
-        }
-
-        .editable-instruction-container__status__testcase span,
-        .instructions-status span {
-            display: none !important;
-        }
-    }
 }
 
-// build-output
-.editor-bottom.collapsed--vertical {
-    .card-body {
-        display: none;
-    }
+/* Build output */
+.editor-bottom.collapsed--vertical .card-body {
+    display: none;
 }
 
-/*!* ==========================================================================
-Resizable drag elements
-========================================================================== *!*/
+/* ==========================================================================
+   Resizable drag elements
+   ========================================================================== */
 
 .rg-main-bottom,
 .rg-bottom-bottom,
@@ -320,8 +273,59 @@ Resizable drag elements
     cursor: col-resize;
     margin-left: 4px;
     margin-right: 4px;
+
+    /* easier to grab + avoid selecting editor text while dragging */
+    padding: 6px 6px;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: none;
+    z-index: 3;
 }
 
 .separator {
     margin: 5px;
+}
+
+/* ==========================================================================
+   Problem Statement (center) – keep content inside the card and allow shrink
+   ========================================================================== */
+
+/* allow all layers in the center to shrink instead of pushing the right pane */
+.editor-wrapper .editor-main .editor-center .instructions-wrapper,
+.editor-wrapper .editor-main .editor-center .instructions-wrapper__content,
+.editor-wrapper .editor-main .editor-center .editable-instruction-container,
+.editor-wrapper .editor-main .editor-center .editable-instruction-container > jhi-markdown-editor-monaco {
+    min-width: 0;
+}
+
+/* contain the markdown editor’s inner flow (it defaults to overflow: visible) */
+.editor-wrapper .editor-main .editor-center jhi-markdown-editor-monaco .markdown-editor-wrapper {
+    overflow: hidden !important;
+}
+
+/* vertical sizing for the editable-instructions stack */
+.editor-wrapper .editor-main .editor-center .instructions-wrapper {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-wrapper .editor-main .editor-center .instructions-wrapper__content {
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-wrapper .editor-main .editor-center .editable-instruction-container {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-wrapper .editor-main .editor-center .editable-instruction-container jhi-markdown-editor-monaco {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
 }

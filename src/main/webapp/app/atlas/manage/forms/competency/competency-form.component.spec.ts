@@ -36,6 +36,7 @@ describe('CompetencyFormComponent', () => {
         });
         competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
         competencyFormComponent = competencyFormComponentFixture.componentInstance;
+        competencyFormComponentFixture.componentRef.setInput('competency', new Competency());
 
         translateService = TestBed.inject(TranslateService);
     });
@@ -94,7 +95,7 @@ describe('CompetencyFormComponent', () => {
     }));
 
     it('should correctly set form values in edit mode', () => {
-        competencyFormComponent.isEditMode = true;
+        competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
         const textUnit = new TextUnit();
         textUnit.id = 1;
         const formData: CourseCompetencyFormData = {
@@ -106,8 +107,8 @@ describe('CompetencyFormComponent', () => {
             optional: true,
         };
         competencyFormComponentFixture.detectChanges();
-        competencyFormComponent.formData = formData;
-        competencyFormComponent.ngOnChanges();
+        competencyFormComponentFixture.componentRef.setInput('formData', formData);
+        competencyFormComponentFixture.detectChanges();
 
         expect(competencyFormComponent.titleControl?.value).toEqual(formData.title);
         expect(competencyFormComponent.descriptionControl?.value).toEqual(formData.description);
@@ -155,9 +156,8 @@ describe('CompetencyFormComponent', () => {
         const existingTitles = ['nameExisting'];
         const courseCompetencyService = TestBed.inject(CourseCompetencyService);
         jest.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
-        competencyFormComponent.isEditMode = true;
-        competencyFormComponent.formData.title = 'initialName';
-
+        competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
+        competencyFormComponentFixture.componentRef.setInput('formData', { title: 'initialName' } as CourseCompetencyFormData);
         competencyFormComponentFixture.detectChanges();
 
         const titleControl = competencyFormComponent.titleControl!;

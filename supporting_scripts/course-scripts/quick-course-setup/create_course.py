@@ -13,7 +13,7 @@ from manage_programming_exercise import create_programming_exercise
 
 # Load configuration
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(['../config.ini', 'config.ini'])
 
 # Constants from config file
 SERVER_URL: str = config.get('Settings', 'server_url')

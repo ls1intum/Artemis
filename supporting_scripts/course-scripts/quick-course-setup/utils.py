@@ -4,7 +4,7 @@ from logging_config import logging
 from typing import Dict, Any, List
 
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read(['../config.ini', 'config.ini'])
 
 SERVER_URL: str = config.get('Settings', 'server_url')
 ADMIN_USER: str = config.get('Settings', 'admin_user')

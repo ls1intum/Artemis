@@ -29,7 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -114,12 +116,14 @@ public class ModelingExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final Optional<AtlasMLApi> atlasMLApi;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi) {
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -137,6 +141,7 @@ public class ModelingExerciseResource {
         this.channelRepository = channelRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.atlasMLApi = atlasMLApi;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -174,6 +179,16 @@ public class ModelingExerciseResource {
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
+
+        // Notify AtlasML about the new modeling exercise
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about modeling exercise creation: {}", e.getMessage());
+            }
+        });
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
@@ -246,6 +261,16 @@ public class ModelingExerciseResource {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise)));
 
+        // Notify AtlasML about the modeling exercise update
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(updatedModelingExercise, OperationTypeDTO.UPDATE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about modeling exercise update: {}", e.getMessage());
+            }
+        });
+
         return ResponseEntity.ok(updatedModelingExercise);
     }
 
@@ -310,6 +335,15 @@ public class ModelingExerciseResource {
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        // Notify AtlasML about the modeling exercise deletion before actual deletion
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(modelingExercise, OperationTypeDTO.DELETE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about modeling exercise deletion: {}", e.getMessage());
+            }
+        });
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -347,6 +381,10 @@ public class ModelingExerciseResource {
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
         modelingExerciseRepository.save(newModelingExercise);
+
+        // Notify AtlasML about the imported exercise
+        atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newModelingExercise));
+
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(newModelingExercise);
     }
 

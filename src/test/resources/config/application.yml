@@ -30,6 +30,15 @@ artemis:
         debug: "7F:CB:99:74:19:30:15:4B:86:4B:8A:73:B0:09:94:52:19:F6:BD:90:6A:7C:16:B1:76:37:AF:74:B1:48:3B:6C"
 
     push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
+    sharing:
+        enabled: true
+        # the shared common secret (overwritten in tests)
+        apikey: <placeholder>
+        # a url used to force reinitialization of Sharing Platform configuration
+        # if not set, you have to wait for the next scheduled reinitialization request from the sharing platform
+        # (typically every 5 minutes), overridden in Tests
+        serverurl: http://localhost:9001
+        actionname: Export to Artemis@testInstance
 
     continuous-integration:
     # Defines the used docker images for certain programming languages
@@ -97,6 +106,14 @@ artemis:
     licenses:
         matlab:
             license-server: "1234@license-server"
+
+    # Nebula configuration for tests
+    nebula:
+        enabled: true
+        url: http://localhost:8080  # dummy URL for tests
+        secret-token: test-secret         # dummy secret for tests
+    tum-live:
+        api-base-url: https://mocke.tum.live/api/v2
 
 spring:
     application:

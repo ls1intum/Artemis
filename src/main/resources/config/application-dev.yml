@@ -140,3 +140,8 @@ artemis:
 helios:
   status:
     enabled: false
+
+atlas:
+    atlasml:
+        base-url: https://atlasml.aet.cit.tum.de
+
