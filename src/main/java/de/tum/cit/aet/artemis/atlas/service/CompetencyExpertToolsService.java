@@ -57,14 +57,16 @@ public class CompetencyExpertToolsService {
      * @param title         the competency title
      * @param description   the competency description
      * @param taxonomyLevel the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)
-     * @param competencyId  optional ID of existing competency (for updates)
+     * @param competencyId  optional ID of existing competency (for updates or view-only)
+     * @param viewOnly      optional flag to indicate view-only mode (no action buttons)
      * @return JSON representation of the competency preview (same format as the frontend receives)
      */
     @Tool(description = "REQUIRED: Display a visual competency card preview to the instructor. Must be called before creating/updating any competency. Returns formatted card data.")
     public String previewCompetency(@ToolParam(description = "the title of the competency") String title,
             @ToolParam(description = "the description of the competency") String description,
             @ToolParam(description = "the taxonomy level: REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, or CREATE") CompetencyTaxonomy taxonomyLevel,
-            @ToolParam(description = "optional: the ID of the competency being updated (omit for new competencies)", required = false) Long competencyId) {
+            @ToolParam(description = "optional: the ID of the competency being updated/viewed (omit for new competencies)", required = false) Long competencyId,
+            @ToolParam(description = "optional: set to true for view-only mode (no action buttons shown)", required = false) Boolean viewOnly) {
 
         // Create a preview competency object (without saving to database)
         Map<String, Object> competencyPreview = new LinkedHashMap<>();
@@ -87,9 +89,14 @@ public class CompetencyExpertToolsService {
         response.put("preview", true);
         response.put("competency", competencyPreview);
 
-        // Add competencyId OUTSIDE the competency object if this is an update
+        // Add competencyId OUTSIDE the competency object if this is an update/view
         if (competencyId != null) {
             response.put("competencyId", competencyId);
+        }
+
+        // Add viewOnly flag if this is view-only mode
+        if (viewOnly != null && viewOnly) {
+            response.put("viewOnly", true);
         }
 
         return toJson(response);

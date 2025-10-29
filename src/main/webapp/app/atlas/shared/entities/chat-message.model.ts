@@ -29,4 +29,5 @@ export interface CompetencyPreview {
     taxonomy: CompetencyTaxonomy;
     icon?: string;
     competencyId?: number; // Optional: present when updating existing competency
+    viewOnly?: boolean; // Optional: when true, no action buttons are shown
 }

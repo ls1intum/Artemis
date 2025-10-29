@@ -318,6 +318,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     taxonomy: jsonData.competency.taxonomy as any,
                     icon: jsonData.competency.icon,
                     competencyId: jsonData.competencyId, // Capture competencyId if present (for updates)
+                    viewOnly: jsonData.viewOnly, // Capture viewOnly flag if present (for view-only mode)
                 };
 
                 // Remove the entire JSON block (including markdown wrapper) from the message
