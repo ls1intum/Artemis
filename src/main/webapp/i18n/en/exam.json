@@ -38,7 +38,7 @@
                     "reserveFactor": "Reserved Seats %",
                     "reserveFactorTooltip": "The percentage of seats that should be reserved, i.e. not distributed to; applied to each room individually",
                     "allowNarrowLayouts": "Allow narrower layouts?",
-                    "allowNarrowLayoutsTooltip": "If enabled, allows Artemis to pack students more tightly together. Artemis tries to keep the number of students affected by this as low as possible.",
+                    "allowNarrowLayoutsTooltip": "If enabled, allows Artemis to seat students directly next to each other, if it is otherwise unable to seat all students",
                     "searchPlaceholder": "Search by room number, name, and/or building",
                     "number": "Number",
                     "name": "Name",

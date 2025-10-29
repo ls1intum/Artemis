@@ -38,7 +38,7 @@
                     "reserveFactor": "Reservierte Sitze %",
                     "reserveFactorTooltip": "Der Prozentsatz der Sitze, die reserviert werden sollten, d. h. nicht verteilt werden sollten; gilt für jeden Raum einzeln",
                     "allowNarrowLayouts": "Engere Layouts zulassen?",
-                    "allowNarrowLayoutsTooltip": "Wenn diese Option aktiviert ist, kann Artemis die Studenten enger zusammenpacken. Artemis versucht, die Anzahl der davon betroffenen Studenten so gering wie möglich zu halten.",
+                    "allowNarrowLayoutsTooltip": "Wenn diese Option aktiviert ist, kann Artemis die Studenten direkt nebeneinander platzieren, falls es sonst nicht möglich ist alle Studenten unterzubringen",
                     "searchPlaceholder": "Suche nach Zimmernummer, Name und/oder Gebäude",
                     "number": "Nummer",
                     "name": "Name",
