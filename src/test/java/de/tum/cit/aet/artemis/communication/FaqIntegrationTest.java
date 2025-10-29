@@ -60,7 +60,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         CreateFaqDTO create = new CreateFaqDTO(course1.getId(), "t", "a", Set.of(), FaqState.PROPOSED);
         request.postWithResponseBody("/api/communication/courses/" + faq.getCourse().getId() + "/faqs", create, FaqDTO.class, HttpStatus.FORBIDDEN);
 
-        UpdateFaqDTO update = new UpdateFaqDTO(faq.getId(), course1.getId(), "t", "a", Set.of("TestForbidden"), FaqState.PROPOSED);
+        UpdateFaqDTO update = new UpdateFaqDTO(faq.getId(), "t", "a", Set.of("TestForbidden"), FaqState.PROPOSED);
         request.putWithResponseBody("/api/communication/courses/" + faq.getCourse().getId() + "/faqs/" + update.id(), update, FaqDTO.class, HttpStatus.FORBIDDEN);
         request.delete("/api/communication/courses/" + faq.getCourse().getId() + "/faqs/" + this.faq.getId(), HttpStatus.FORBIDDEN);
         request.put("/api/communication/courses/" + course1.getId() + "/faqs/enable", null, HttpStatus.FORBIDDEN);
@@ -103,8 +103,11 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Set<String> newCategories = new HashSet<>();
         newCategories.add("Test");
         faq.setCategories(newCategories);
-        UpdateFaqDTO updated = new UpdateFaqDTO(faq.getId(), faq.getCourse().getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
-        FaqDTO returnedFaq = request.putWithResponseBody("/api/communication/courses/" + updated.courseId() + "/faqs/" + updated.id(), updated, FaqDTO.class, HttpStatus.OK);
+        Long courseId = faq.getCourse().getId();
+
+        UpdateFaqDTO updated = new UpdateFaqDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
+        FaqDTO returnedFaq = request.putWithResponseBody("/api/communication/courses/" + courseId + "/faqs/" + updated.id(), updated, FaqDTO.class, HttpStatus.OK);
+
         assertThat(returnedFaq.questionTitle()).isEqualTo("Updated");
         assertThat(returnedFaq.questionAnswer()).isEqualTo("Update");
         assertThat(returnedFaq.faqState()).isEqualTo(FaqState.PROPOSED);
@@ -117,7 +120,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
         faq.setQuestionTitle("Updated");
         faq.setFaqState(FaqState.PROPOSED);
-        UpdateFaqDTO dto = new UpdateFaqDTO(faq.getId() + 1, course1.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
+        UpdateFaqDTO dto = new UpdateFaqDTO(faq.getId() + 1, faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
         request.putWithResponseBody("/api/communication/courses/" + course1.getId() + "/faqs/" + (dto.id() - 1), dto, FaqDTO.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -127,8 +130,10 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
         faq.setQuestionTitle("Updated");
         faq.setFaqState(FaqState.ACCEPTED);
-        UpdateFaqDTO dto = new UpdateFaqDTO(faq.getId(), faq.getCourse().getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
-        request.putWithResponseBody("/api/communication/courses/" + dto.courseId() + "/faqs/" + dto.id(), dto, FaqDTO.class, HttpStatus.FORBIDDEN);
+        Long courseId = faq.getCourse().getId();
+
+        UpdateFaqDTO dto = new UpdateFaqDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
+        request.putWithResponseBody("/api/communication/courses/" + courseId + "/faqs/" + dto.id(), dto, FaqDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -137,8 +142,10 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
         faq.setQuestionTitle("Updated");
         faq.setFaqState(FaqState.ACCEPTED);
-        UpdateFaqDTO dto = new UpdateFaqDTO(faq.getId(), faq.getCourse().getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
-        FaqDTO returnedFaq = request.putWithResponseBody("/api/communication/courses/" + dto.courseId() + "/faqs/" + dto.id(), dto, FaqDTO.class, HttpStatus.OK);
+        Long courseId = faq.getCourse().getId();
+
+        UpdateFaqDTO dto = new UpdateFaqDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
+        FaqDTO returnedFaq = request.putWithResponseBody("/api/communication/courses/" + courseId + "/faqs/" + dto.id(), dto, FaqDTO.class, HttpStatus.OK);
         assertThat(returnedFaq.faqState()).isEqualTo(FaqState.ACCEPTED);
     }
 

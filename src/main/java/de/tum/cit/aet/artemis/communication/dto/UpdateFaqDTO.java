@@ -12,7 +12,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UpdateFaqDTO(@Positive long id, @Positive long courseId, @NotBlank String questionTitle, @Nullable String questionAnswer, @Nullable Set<String> categories,
-        @NotNull FaqState faqState) {
-
+public record UpdateFaqDTO(@Positive long id, @NotBlank String questionTitle, @Nullable String questionAnswer, @Nullable Set<String> categories, @NotNull FaqState faqState) {
 }

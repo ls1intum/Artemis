@@ -40,7 +40,6 @@ export class UpdateFaqDTO {
         public id: number,
         public faqState: FaqState,
         public questionTitle: string,
-        public courseId?: number,
         public categories?: FaqCategory[],
         public questionAnswer?: string,
     ) {}
@@ -53,6 +52,6 @@ export class UpdateFaqDTO {
             throw new Error('The state should be present to update FAQ');
         }
 
-        return new UpdateFaqDTO(faq.id, faq.faqState, faq.questionTitle ?? '', faq.course?.id, faq.categories, faq.questionAnswer);
+        return new UpdateFaqDTO(faq.id, faq.faqState, faq.questionTitle ?? '', faq.categories, faq.questionAnswer);
     }
 }
