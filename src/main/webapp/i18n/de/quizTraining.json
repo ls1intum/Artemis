@@ -1,0 +1,38 @@
+{
+    "artemisApp": {
+        "quizTraining": {
+            "noData": "keine Daten",
+            "dueNow": "Nächste Fragen jetzt fällig",
+            "nextQuestionsDue": "Nächste Fragen fällig in ",
+            "totalQuestions": "Gesamtanzahl an Fragen",
+            "howItWorks": {
+                "title": "Wie das Training funktioniert",
+                "content": "Im Trainingsmodus kannst du alle für das Training freigegebenen Quiz-Fragen einzeln üben. Die Fragen werden mithilfe eines Wiederholungsalgorithmus (Spaced Repetition) ausgewählt, um deine Lernerfahrung zu optimieren. Falls aktuell keine Fragen fällig sind, kannst du trotzdem trainieren, aber deine Antworten beeinflussen weder deinen Leaderboard-Punktestand noch den Wiederholungsalgorithmus."
+            },
+            "leagues": {
+                "title": "Ligen und Ranglisten",
+                "content": "Du kannst an einem Leaderboard teilnehmen, das deinen Punktestand im Vergleich zu anderen Studenten zeigt. Es gibt 5 Ligen (Bronze, Silber, Gold, Diamant und Master), jede mit eigenem Leaderboard. Du kannst die Einstellungen für den Trainingsmodus in den Benutzereinstellungen ändern."
+            },
+            "scoring": {
+                "title": "Punktesystem",
+                "content": "Beantworte Fragen richtig, um Punkte zu sammeln und in höhere Ligen aufzusteigen. Je öfter eine Frage am Stück richtig beantwortet wird, desto mehr Punkte erhältst du dafür."
+            },
+            "showInLeaderboard": "Im Leaderboard anzeigen",
+            "bronzeLeague": "Bronze Liga",
+            "silverLeague": "Silber Liga",
+            "goldLeague": "Gold Liga",
+            "diamondLeague": "Diamant Liga",
+            "masterLeague": "Master Liga",
+            "noLeague": "Keine Liga",
+            "rank": "Rang",
+            "student": "Student",
+            "score": "Punkte",
+            "scorecard": "Punktekarte",
+            "correctQuestions": "richtige Antworten",
+            "wrongQuestions": "falsche Antworten",
+            "theQuizTraining": "Der Quiz Trainingsmodus",
+            "save": "Speichern",
+            "infoButton": "Beschreibung anzeigen"
+        }
+    }
+}

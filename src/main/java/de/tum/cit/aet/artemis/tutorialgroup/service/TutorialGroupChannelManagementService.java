@@ -113,16 +113,14 @@ public class TutorialGroupChannelManagementService {
      * @param tutorialGroup the tutorial group of the channel to be deleted
      */
     public void deleteTutorialGroupChannel(TutorialGroup tutorialGroup) {
-        tutorialGroupRepository.getTutorialGroupWithChannel(tutorialGroup.getId()).ifPresentOrElse(tg -> {
-            if (tg.getTutorialGroupChannel() != null) {
-                var channel = tg.getTutorialGroupChannel();
-                tg.setTutorialGroupChannel(null);
-                tutorialGroupRepository.save(tg);
-                conversationService.deleteConversation(channel);
+        tutorialGroupRepository.getTutorialGroupWithChannel(tutorialGroup.getId()).ifPresentOrElse(tgroup -> {
+            if (tgroup.getTutorialGroupChannel() != null) {
+                var channel = tgroup.getTutorialGroupChannel();
+                tgroup.setTutorialGroupChannel(null);
+                tutorialGroupRepository.save(tgroup);
+                conversationService.deleteConversation(channel.getId());
             }
-            {
-                log.debug("Tutorial group with id {} does not have a channel, cannot delete channel", tutorialGroup.getId());
-            }
+            log.debug("Tutorial group with id {} does not have a channel, cannot delete channel", tutorialGroup.getId());
         }, () -> log.debug("Tutorial with id {} does not exist, cannot delete channel", tutorialGroup.getId()));
     }
 
