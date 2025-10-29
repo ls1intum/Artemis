@@ -53,7 +53,7 @@ describe('QuizExercise Generator', () => {
         jest.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
         jest.spyOn(ApollonEditor, 'exportModelAsSvg').mockResolvedValue({ svg: '<svg></svg>', clip: { width: 100, height: 100, x: 0, y: 0 } } as any);
-        const classDiagram: UMLModel = importDiagram({ id: 'diagram', title: 'Diagram', model: testClassDiagram } as {
+        const classDiagram: UMLModel = importDiagram({ id: 'diagram', title: 'Diagram', model: testClassDiagram } as unknown as {
             id: string;
             title: string;
             model: UMLModel;
@@ -72,11 +72,14 @@ describe('QuizExercise Generator', () => {
         expect(generatedQuestion.title).toEqual(exerciseTitle);
         expect(generatedQuestion.type).toEqual(QuizQuestionType.DRAG_AND_DROP);
         // create one DragItem for each interactive element
-        expect(generatedQuestion.dragItems.length).toBeGreaterThan(0);
+        expect(generatedQuestion.dragItems).toBeDefined();
+        expect(generatedQuestion.dragItems!.length).toBeGreaterThan(0);
         // each DragItem needs one DropLocation
-        expect(generatedQuestion.dropLocations).toHaveLength(generatedQuestion.dragItems.length);
+        expect(generatedQuestion.dropLocations).toBeDefined();
+        expect(generatedQuestion.dropLocations!).toHaveLength(generatedQuestion.dragItems!.length);
         // if there are no similar elements -> amount of correct mappings = interactive elements
-        expect(generatedQuestion.correctMappings).toHaveLength(generatedQuestion.dragItems.length);
+        expect(generatedQuestion.correctMappings).toBeDefined();
+        expect(generatedQuestion.correctMappings!).toHaveLength(generatedQuestion.dragItems!.length);
     });
 
     it('computeDropLocation with totalSize x and y coordinates', async () => {
@@ -118,7 +121,7 @@ describe('QuizExercise Generator', () => {
     it('generateDragAndDropItemForElement', async () => {
         jest.spyOn(SVGRendererAPI, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
 
-        const umlModel: UMLModel = importDiagram({ id: 'diagram', title: 'Diagram', model: testClassDiagram } as {
+        const umlModel: UMLModel = importDiagram({ id: 'diagram', title: 'Diagram', model: testClassDiagram } as unknown as {
             id: string;
             title: string;
             model: UMLModel;

@@ -467,7 +467,11 @@ describe('Example Modeling Submission Component', () => {
     it('should show assessment', () => {
         // GIVEN
         const model = {
-            version: '3.0.0',
+            id: 'test-id',
+            title: 'Test Diagram',
+            nodes: [],
+            edges: [],
+            version: '4.0.0',
             type: 'ClassDiagram',
             elements: {},
             relationships: {},

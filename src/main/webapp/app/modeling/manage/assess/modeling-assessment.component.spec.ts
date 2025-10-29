@@ -193,11 +193,12 @@ describe('ModelingAssessmentComponent', () => {
         const mockModel = makeMockModel();
         comp.umlModel = mockModel;
         comp.resultFeedbacks = [mockFeedbackWithGradingInstruction];
+        const assessments: any[] = Object.values(mockModel.assessments) as any[];
 
         expect(spy).toHaveBeenCalledWith('artemisApp.assessment.messages.removeAssessmentInstructionLink');
         expect(spy).toHaveBeenCalledWith('artemisApp.exercise.assessmentInstruction');
         expect(spy).toHaveBeenCalledWith('artemisApp.assessment.feedbackHint');
-        expect(Object.values(mockModel.assessments)[0].dropInfo.instruction).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
+        expect(assessments[0].dropInfo.instruction).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
 
         // toHaveBeenCalledTimes(5): 2 from calculateLabel() + 3 from calculateDropInfo()
         expect(spy).toHaveBeenCalledTimes(5);
@@ -247,13 +248,13 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.detectChanges();
         await fixture.whenStable();
-        await comp.apollonEditor!.nextRender;
+        await (comp.apollonEditor as any).nextRender;
         expect(comp.apollonEditor).not.toBeNull();
 
         const apollonModel = comp.apollonEditor!.model;
-        const highlightedElement = apollonModel.nodes.find((node) => node.id === 'elementId1');
-        const notHighlightedElement = apollonModel.nodes.find((node) => node.id === 'elementId2');
-        const relationship = apollonModel.edges.find((edge) => edge.id === 'relationshipId');
+        const highlightedElement = apollonModel.nodes.find((node: any) => node.id === 'elementId1');
+        const notHighlightedElement = apollonModel.nodes.find((node: any) => node.id === 'elementId2');
+        const relationship = apollonModel.edges.find((edge: any) => edge.id === 'relationshipId');
         expect(highlightedElement).not.toBeNull();
         expect(highlightedElement!.data.highlight).toBe('red');
         expect(notHighlightedElement).not.toBeNull();
@@ -268,7 +269,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set');
         await fixture.whenStable();
-        await comp.apollonEditor!.nextRender;
+        await (comp.apollonEditor as any).nextRender;
         await comp.ngOnChanges(changes);
         expect(apollonSpy).toHaveBeenCalledWith(newModel);
     });
@@ -282,14 +283,14 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.detectChanges();
         await fixture.whenStable();
-        await comp.apollonEditor!.nextRender;
+        await (comp.apollonEditor as any).nextRender;
         await comp.ngOnChanges(changes);
 
         expect(comp.apollonEditor).not.toBeNull();
         const apollonModel = comp.apollonEditor!.model;
-        const highlightedElement = apollonModel.nodes.find((node) => node.id === 'elementId2');
-        const notHighlightedElement = apollonModel.nodes.find((node) => node.id === 'elementId1');
-        const relationship = comp.apollonEditor!.model.edges.find((edge) => edge.id === 'relationshipId');
+        const highlightedElement = apollonModel.nodes.find((node: any) => node.id === 'elementId2');
+        const notHighlightedElement = apollonModel.nodes.find((node: any) => node.id === 'elementId1');
+        const relationship = comp.apollonEditor!.model.edges.find((edge: any) => edge.id === 'relationshipId');
 
         expect(highlightedElement).not.toBeNull();
         expect(highlightedElement!.data.highlight).toBe('green');
@@ -312,8 +313,7 @@ describe('ModelingAssessmentComponent', () => {
         await comp.ngOnChanges(changes);
         expect(comp.apollonEditor).toBeDefined();
 
-        await comp.apollonEditor!.nextRender;
-
+        await (comp.apollonEditor as any).nextRender;
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = Object.values(apollonModel.assessments);
         expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
@@ -333,7 +333,7 @@ describe('ModelingAssessmentComponent', () => {
 
         await comp.ngOnChanges(changes);
         await fixture.whenStable();
-        await comp.apollonEditor!.nextRender;
+        await (comp.apollonEditor as any).nextRender;
 
         expect(comp.apollonEditor).not.toBeNull();
 

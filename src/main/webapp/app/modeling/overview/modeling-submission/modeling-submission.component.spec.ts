@@ -4,7 +4,7 @@ import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { UMLDiagramType, UMLElement, UMLModel } from '@tumaet/apollon';
+import { ApollonEdge, ApollonNode, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -573,12 +573,13 @@ describe('ModelingSubmissionComponent', () => {
         createModelingSubmissionComponent();
 
         const model = <UMLModel>(<unknown>{
-            nodes: {
-                elementId1: <UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }),
-                elementId2: <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' }),
-            },
-            elements: [],
-            relationships: [],
+            version: '4.0.0',
+            id: 'model1',
+            title: 'Test model',
+            type: UMLDiagramType.ClassDiagram,
+            nodes: [{ id: 'elementId1', owner: 'ownerId1' } as Partial<ApollonNode>, { id: 'elementId2', owner: 'ownerId2' } as Partial<ApollonNode>],
+            edges: [] as ApollonEdge[],
+            assessments: {},
         });
         const currentModelStub = jest.spyOn(comp.modelingEditor, 'getCurrentModel').mockReturnValue(model as UMLModel);
         comp.explanation = 'Explanation Test';
@@ -619,14 +620,14 @@ describe('ModelingSubmissionComponent', () => {
         createModelingSubmissionComponent();
 
         const currentModel = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{
+            elements: [<any>(<unknown>{
                     owner: 'ownerId1',
                     id: 'elementId1',
-                }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+                }), <any>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
             version: 'version',
         });
         const unsavedModel = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' })],
+            elements: [<any>(<unknown>{ owner: 'ownerId1', id: 'elementId1' })],
             version: 'version',
         });
 

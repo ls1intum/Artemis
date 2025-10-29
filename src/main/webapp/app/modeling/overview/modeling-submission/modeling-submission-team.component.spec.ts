@@ -24,7 +24,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { UMLDiagramType, UMLElement, UMLModel } from '@tumaet/apollon';
+import { ApollonEdge, ApollonNode, UMLDiagramType, UMLModel, UMLModelElementType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
@@ -143,7 +143,7 @@ describe('ModelingSubmissionComponent', () => {
 
         // Force emit a patch
         jest.spyOn(comp.modelingEditor.onModelPatch, 'emit');
-        comp.modelingEditor.onModelPatch.emit([{ value: 'test', op: 'add', path: '/test' }]);
+        comp.modelingEditor.onModelPatch.emit(JSON.stringify([{ value: 'test', op: 'add', path: '/test' }]));
 
         // We have got it?
         expect(receiverMock).toHaveBeenCalled();
@@ -159,13 +159,15 @@ describe('ModelingSubmissionComponent', () => {
         comp.ngOnInit();
 
         const editorImportSpy = jest.spyOn(comp.modelingEditor, 'importPatch');
-        const submissionPatch = new SubmissionPatch([
-            {
-                op: 'replace',
-                path: '/elements/1/name',
-                value: 'john',
-            },
-        ]);
+        const submissionPatch = new SubmissionPatch(
+            JSON.stringify([
+                {
+                    op: 'replace',
+                    path: '/elements/1/name',
+                    value: 'john',
+                },
+            ]),
+        );
         comp.onReceiveSubmissionPatchFromTeam(submissionPatch);
 
         // We have got it?
@@ -393,13 +395,15 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should update submission with current values', () => {
         const model = <UMLModel>(<unknown>{
-            nodes: {
-                elementId1: <UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }),
-                elementId2: <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' }),
-            },
-            elements: [],
-            relationships: [],
+            version: '4.0.0',
+            id: 'model1',
+            title: 'Test model',
+            type: UMLDiagramType.ClassDiagram,
+            nodes: [{ id: 'elementId1', owner: 'ownerId1' } as Partial<ApollonNode>, { id: 'elementId2', owner: 'ownerId2' } as Partial<ApollonNode>],
+            edges: [] as ApollonEdge[],
+            assessments: {},
         });
+
         const currentModelStub = jest.spyOn(comp.modelingEditor, 'getCurrentModel').mockReturnValue(model as UMLModel);
         comp.explanation = 'Explanation Test';
         comp.updateSubmissionWithCurrentValues();
@@ -435,11 +439,11 @@ describe('ModelingSubmissionComponent', () => {
 
     it('should deactivate return true when there are unsaved changes', () => {
         const currentModel = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+            elements: [<UMLModelElementType>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLModelElementType>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
             version: 'version',
         });
         const unsavedModel = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' })],
+            elements: [<UMLModelElementType>(<unknown>{ owner: 'ownerId1', id: 'elementId1' })],
             version: 'version',
         });
 

@@ -91,7 +91,7 @@ describe('ApollonDiagramDetail Component', () => {
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
 
         // test
-        await fixture.componentInstance.apollonEditor?.nextRender;
+        await (fixture.componentInstance.apollonEditor as any)?.nextRender;
         await fixture.componentInstance.saveDiagram();
         expect(updateStub).toHaveBeenCalledOnce();
         // clear the set time interval
@@ -122,7 +122,7 @@ describe('ApollonDiagramDetail Component', () => {
         const emitSpy = jest.spyOn(fixture.componentInstance.closeEdit, 'emit');
 
         // test
-        await fixture.componentInstance.apollonEditor?.nextRender;
+        await (fixture.componentInstance.apollonEditor as any)?.nextRender;
         await fixture.componentInstance.generateExercise();
 
         expect(emitSpy).toHaveBeenCalledWith(generatedQuestion);
@@ -132,7 +132,15 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('validateGeneration', async () => {
-        const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: {}, relationships: {} } };
+        // Preserve runtime `interactive` if present, but ensure elements/relationships are empty for validation.
+        const nonInteractiveModel = {
+            ...model,
+            interactive: {
+                ...((model as any).interactive ?? {}),
+                elements: {},
+                relationships: {},
+            },
+        } as UMLModel & { interactive?: { elements?: Record<string, any>; relationships?: Record<string, any> } };
 
         // setup
         fixture.componentInstance.apollonDiagram = diagram;
@@ -140,7 +148,7 @@ describe('ApollonDiagramDetail Component', () => {
         const errorSpy = jest.spyOn(alertService, 'error');
 
         // test
-        await fixture.componentInstance.apollonEditor?.nextRender;
+        await (fixture.componentInstance.apollonEditor as any)?.nextRender;
         await fixture.componentInstance.generateExercise();
         expect(errorSpy).toHaveBeenCalledOnce();
 
@@ -159,7 +167,7 @@ describe('ApollonDiagramDetail Component', () => {
 
         // set selection
         const editor = fixture.componentInstance.apollonEditor! as any;
-        editor.getNodes = () => Object.fromEntries(Object.keys(model.elements).map((key) => [key, true]));
+        editor.getNodes = () => Object.fromEntries(Object.keys(model.nodes).map((key) => [key, true]));
         editor.getEdges = () => ({});
         const exportSpy = jest.spyOn(editor, 'exportAsSVG').mockResolvedValue({ svg: '<svg></svg>', clip: { width: 100, height: 100, x: 0, y: 0 } });
         fixture.detectChanges();

@@ -209,7 +209,11 @@ describe('ModelingExamSubmissionComponent', () => {
 
     it('should update the model on submission version change', async () => {
         const parsedModel = {
-            version: '3.0.0',
+            id: 'test-id',
+            title: 'Test Diagram',
+            nodes: [],
+            edges: [],
+            version: '4.0.0',
             type: 'ClassDiagram',
             size: { width: 220, height: 420 },
             interactive: { elements: {}, relationships: {} },

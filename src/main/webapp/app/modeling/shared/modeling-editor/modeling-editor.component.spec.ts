@@ -58,7 +58,7 @@ describe('ModelingEditorComponent', () => {
         const editor: ApollonEditor = component['apollonEditor'] as ApollonEditor;
         // Check that editor exists
         expect(editor).toBeDefined();
-        await editor.nextRender;
+        await (editor as any).nextRender;
 
         expect(editor.model.nodes).toHaveLength(classDiagram.nodes.length);
         expect(editor.model.edges).toHaveLength(classDiagram.edges.length);
@@ -86,14 +86,14 @@ describe('ModelingEditorComponent', () => {
         changedModel.edges = [];
         changedModel.assessments = {};
         // test
-        await component.apollonEditor?.nextRender;
+        await (component.apollonEditor as any)?.nextRender;
         component.ngOnChanges({
             umlModel: {
                 currentValue: changedModel,
                 previousValue: model,
             } as SimpleChange,
         });
-        await component.apollonEditor?.nextRender;
+        await (component.apollonEditor as any)?.nextRender;
         expect(component.umlModel).toEqual(changedModel);
         expect(component['apollonEditor']!.model.assessments).toEqual({});
     });

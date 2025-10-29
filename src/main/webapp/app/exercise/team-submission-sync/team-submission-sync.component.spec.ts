@@ -112,7 +112,7 @@ describe('Team Submission Sync Component', () => {
         component.receiveSubmissionPatch.subscribe(receiver);
 
         mockEmitter.next({
-            submissionPatch: { patch: [{ op: 'replace', path: '/text', value: 'new text' }] },
+            submissionPatch: { patch: JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]) },
             sender: currentUser.login!,
         });
 
@@ -128,7 +128,7 @@ describe('Team Submission Sync Component', () => {
         component.ngOnInit();
 
         const expectedTopic = '/topic/participations/3/team/text-submissions/patch';
-        const patch: SubmissionPatch = { patch: [{ op: 'replace', path: '/text', value: 'new text' }] };
+        const patch: SubmissionPatch = { patch: JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]) };
         mockEmitter.next(patch);
         expect(sendSpy).toHaveBeenCalledWith(expectedTopic, patch);
     });
