@@ -27,7 +27,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { IsLoggedInWithPasskeyGuard } from 'app/core/auth/is-logged-in-with-passkey/is-logged-in-with-passkey.guard';
-import { LoginWithPasskeyModal } from 'app/core/navbar/server-administration/login-with-passkey/login-with-passkey.modal';
+import { LoginWithPasskeyModalComponent } from 'app/core/navbar/server-administration/login-with-passkey/login-with-passkey-modal.component';
 
 @Component({
     selector: 'jhi-server-administration',
@@ -41,7 +41,7 @@ import { LoginWithPasskeyModal } from 'app/core/navbar/server-administration/log
         NgbDropdownToggle,
         RouterLinkActive,
         RouterLink,
-        LoginWithPasskeyModal,
+        LoginWithPasskeyModalComponent,
     ],
     templateUrl: './server-administration.component.html',
     styleUrl: '../navbar.scss',
@@ -70,7 +70,7 @@ export class ServerAdministrationComponent implements OnInit {
     private readonly isLoggedInWithPasskeyGuard = inject(IsLoggedInWithPasskeyGuard);
 
     adminMenuDropdown = viewChild.required<NgbDropdown>('adminMenuDropdown');
-    loginWithPasskeyModal = viewChild.required<LoginWithPasskeyModal>(LoginWithPasskeyModal);
+    loginWithPasskeyModal = viewChild.required<LoginWithPasskeyModalComponent>(LoginWithPasskeyModalComponent);
 
     isExamActive = input<boolean>(false);
     isExamStarted = input<boolean>(false);

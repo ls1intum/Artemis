@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LoginWithPasskeyModal } from './login-with-passkey.modal';
+import { LoginWithPasskeyModalComponent } from './login-with-passkey-modal.component';
 
 describe('LoginWithPasskeyModal', () => {
-    let component: LoginWithPasskeyModal;
-    let fixture: ComponentFixture<LoginWithPasskeyModal>;
+    let component: LoginWithPasskeyModalComponent;
+    let fixture: ComponentFixture<LoginWithPasskeyModalComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [LoginWithPasskeyModal],
+            imports: [LoginWithPasskeyModalComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(LoginWithPasskeyModal);
+        fixture = TestBed.createComponent(LoginWithPasskeyModalComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });

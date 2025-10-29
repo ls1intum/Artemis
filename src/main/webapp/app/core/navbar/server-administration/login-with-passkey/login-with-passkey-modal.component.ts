@@ -15,9 +15,9 @@ import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/weba
 @Component({
     selector: 'jhi-login-with-passkey-modal',
     imports: [DialogModule, TranslateDirective, FaIconComponent, ButtonComponent],
-    templateUrl: './login-with-passkey.modal.html',
+    templateUrl: './login-with-passkey-modal.component.html',
 })
-export class LoginWithPasskeyModal implements OnInit {
+export class LoginWithPasskeyModalComponent implements OnInit {
     // TODO fix that modal appears after 1. login with passkey 2. logout 3. login with password (seems like a change detection issue)
 
     protected readonly ButtonType = ButtonType;
