@@ -160,7 +160,7 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
                 log.warn("No listener found for UUID: {}", uuid);
                 return;
             }
-            notificationTopic.removeListener(listenerRegistrations.get(uuid));
+            notificationTopic.removeListener(listenerId);
             listenerRegistrations.remove(uuid);
         }
         catch (RedisConnectionException e) {
