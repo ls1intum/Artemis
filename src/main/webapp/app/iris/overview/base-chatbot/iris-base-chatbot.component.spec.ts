@@ -40,6 +40,7 @@ import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-mess
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 
@@ -77,7 +78,7 @@ describe('IrisBaseChatbotComponent', () => {
             providers: [
                 MockProvider(NgbModal),
                 LocalStorageService,
-                { provide: TranslateService, useValue: {} },
+                { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 { provide: HttpClient, useValue: {} },
                 { provide: AccountService, useClass: MockAccountService },
@@ -714,6 +715,74 @@ describe('IrisBaseChatbotComponent', () => {
         const clearChatSpy = jest.spyOn(chatService, 'clearChat').mockReturnValue();
         component.openNewSession();
         expect(clearChatSpy).toHaveBeenCalledOnce();
+    });
+
+    describe('search/filtering in chat history', () => {
+        const mockDate = new Date('2025-10-06T12:00:00.000Z');
+        const sessionToday: IrisSessionDTO = {
+            id: 1,
+            title: 'Greeting and study support',
+            creationDate: new Date('2025-10-06T10:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+        const sessionYesterday: IrisSessionDTO = {
+            id: 2,
+            title: 'Difference between strategy and bridge pattern',
+            creationDate: new Date('2025-10-05T10:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+        const sessionNoTitle: IrisSessionDTO = {
+            id: 3,
+            creationDate: new Date('2025-10-05T08:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        const sortedSessions = [sessionToday, sessionYesterday, sessionNoTitle];
+
+        beforeAll(() => {
+            jest.useFakeTimers();
+            jest.setSystemTime(mockDate);
+        });
+
+        afterAll(() => {
+            jest.useRealTimers();
+        });
+
+        beforeEach(() => {
+            component.chatSessions = [...sortedSessions];
+        });
+
+        it('filters by title (case-insensitive)', () => {
+            component.setSearchValue('greet');
+            const res = component.getSessionsBetween(0, 7);
+            expect(res.map((s) => s.id)).toEqual([1]);
+        });
+
+        it('matches when the term appears in the middle of the title', () => {
+            component.setSearchValue('strategy');
+            const res = component.getSessionsBetween(0, 7);
+            expect(res.map((s) => s.id)).toEqual([2]);
+        });
+
+        it('ignores sessions with null title when searching', () => {
+            component.setSearchValue('anything');
+            const res = component.getSessionsBetween(0, 7);
+            expect(res.some((s) => s.id === 3)).toBeFalse();
+        });
+
+        it('returns all sessions again when search is cleared', () => {
+            component.setSearchValue('greet');
+            expect(component.getSessionsBetween(0, 7)).toHaveLength(1);
+
+            component.setSearchValue(''); // clear
+            expect(component.getSessionsBetween(0, 7)).toHaveLength(3);
+        });
     });
 
     describe('getSessionsBetween', () => {
