@@ -4,7 +4,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockProvider } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
+import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('IrisLearnerProfileComponent', () => {
     let component: IrisLearnerProfileComponent;
@@ -34,6 +37,13 @@ describe('IrisLearnerProfileComponent', () => {
             imports: [IrisLearnerProfileComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                // Mock the IrisMemoriesHttpService to avoid HttpClient dependency in nested component
+                MockProvider(IrisMemoriesHttpService, {
+                    listUserMemories: jest.fn().mockReturnValue({ subscribe: () => {} } as any),
+                    getUserMemory: jest.fn(),
+                    deleteUserMemory: jest.fn(),
+                }),
                 { provide: AccountService, useClass: MockAccountService },
             ],
         }).compileComponents();
