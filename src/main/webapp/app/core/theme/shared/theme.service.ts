@@ -169,9 +169,15 @@ export class ThemeService {
      * @param theme the theme to apply
      */
     private applyTheme(theme: Theme) {
+        const html = document.documentElement;
+        if (theme === Theme.DARK) {
+            html.setAttribute('prime-ng-use-dark-theme', 'true');
+        } else {
+            html.setAttribute('prime-ng-use-dark-theme', 'false');
+        }
+
         // Get current <link> theme override
         const overrideTag = document.getElementById(THEME_OVERRIDE_ID);
-
         if (theme.isDefault) {
             // The default theme is always injected by Angular; therefore, we just need to remove
             // our theme override, if present

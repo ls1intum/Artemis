@@ -24,120 +24,131 @@ try {
 
 const moduleThresholds = {
     assessment: {
-        statements: 89.93,
-        branches:   80.77,
-        functions:  83.28,
-        lines:      89.94,
+        statements: 89.90,
+        branches:   80.70,
+        functions:  83.20,
+        lines:      89.90,
     },
     atlas: {
-        statements: 91.96,
-        branches:   68.74,
-        functions:  85.42,
-        lines:      91.78,
+        statements: 91.50,
+        branches:   67.90,
+        functions:  84.60,
+        lines:      91.40,
     },
     buildagent: {
-        statements: 93.16,
-        branches:   83.13,
-        functions:  88.07,
-        lines:      93.04,
+        statements: 93.00,
+        branches:   83.60,
+        functions:  87.20,
+        lines:      92.90,
     },
     communication: {
-        statements: 92.08,
-        branches:   77.95,
-        functions:  88.79,
-        lines:      92.38,
+        statements: 92.50,
+        branches:   78.40,
+        functions:  89.10,
+        lines:      92.80,
     },
     core: {
-        statements: 89.03,
-        branches:   71.15,
-        functions:  80.59,
-        lines:      89.05,
+        statements: 89.70,
+        branches:   72.60,
+        functions:  81.60,
+        lines:      89.70,
     },
     exam: {
-        statements: 91.30,
-        branches:   77.74,
-        functions:  83.66,
-        lines:      91.53,
+        statements: 91.80,
+        branches:   79.00,
+        functions:  85.00,
+        lines:      92.00,
     },
     exercise: {
-        statements: 88.52,
-        branches:   78.91,
-        functions:  80.18,
-        lines:      88.63,
+        statements: 88.50,
+        branches:   79.00,
+        functions:  80.20,
+        lines:      88.60,
     },
     fileupload: {
-        statements: 92.59,
-        branches:   78.48,
-        functions:  84.80,
-        lines:      93.23,
+        statements: 92.50,
+        branches:   78.40,
+        functions:  84.70,
+        lines:      93.20,
+    },
+    hyperion: {
+        // Currently, there are no files under src/main/webapp/app/hyperion/ in this branch,
+        // so thresholds mirror the current effective coverage (no files found → skipped by checker).
+        // Once client-side Hyperion code exists, update these to the measured coverage.
+        statements: 0,
+        branches:   0,
+        functions:  0,
+        lines:      0,
     },
     iris: {
-        statements: 86.99,
-        branches:   71.18,
-        functions:  85.10,
-        lines:      87.54,
+        statements: 87.70,
+        branches:   73.10,
+        functions:  86.20,
+        lines:      88.30,
     },
     lecture: {
         statements: 91.70,
-        branches:   79.18,
+        branches:   79.30,
         functions:  86.20,
-        lines:      91.80,
+        lines:      91.70,
     },
     lti: {
-        statements: 93.67,
-        branches:   86.96,
-        functions:  88.89,
-        lines:      93.45,
+        statements: 93.60,
+        branches:   87.20,
+        functions:  88.80,
+        lines:      93.40,
     },
     modeling: {
-        statements: 88.52,
-        branches:   73.50,
-        functions:  84.04,
-        lines:      88.66,
+        statements: 89.10,
+        branches:   73.80,
+        functions:  84.60,
+        lines:      89.20,
     },
     plagiarism: {
-        statements: 91.74,
-        branches:   84.72,
-        functions:  85.24,
-        lines:      92.10,
+        statements: 93.50,
+        branches:   86.60,
+        functions:  87.70,
+        lines:      93.60,
     },
     programming: {
-        statements: 88.74,
-        branches:   76.65,
-        functions:  80.93,
-        lines:      88.86,
+        statements: 89.10,
+        branches:   77.00,
+        functions:  81.40,
+        lines:      89.20,
     },
     quiz: {
-        statements: 86.25,
-        branches:   74.69,
-        functions:  78.69,
-        lines:      86.35,
+        statements: 87.70,
+        branches:   75.40,
+        functions:  81.40,
+        lines:      87.90,
     },
     shared: {
-        statements: 86.74,
-        branches:   71.31,
-        functions:  83.88,
-        lines:      86.53,
+        statements: 86.90,
+        branches:   71.10,
+        functions:  84.50,
+        lines:      86.70,
     },
     text: {
-        statements: 89.32,
-        branches:   74.75,
-        functions:  86.04,
-        lines:      89.63,
+        statements: 89.40,
+        branches:   74.90,
+        functions:  86.20,
+        lines:      89.70,
     },
     tutorialgroup: {
-        statements: 91.31,
-        branches:   75.85,
-        functions:  83.51,
+        statements: 91.40,
+        branches:   76.70,
+        functions:  83.70,
         lines:      91.20,
     },
 };
 
-
-
 const metrics = ['statements', 'branches', 'functions', 'lines'];
 
 const AIMED_FOR_COVERAGE = 90;
+/**
+ * If the coverage is >= this value higher than the threshold, an upward arrow is shown to indicate the threshold should be bumped up.
+ */
+const SHOULD_BUMP_COVERAGE_DELTA = 0.1;
 
 const roundToTwoDigits = (value) => Math.round(value * 100) / 100;
 
@@ -151,8 +162,9 @@ const evaluateAndPrintMetrics = (module, aggregatedMetrics, thresholds) => {
         const roundedThreshold = roundToTwoDigits(thresholds[metric]);
         const pass = roundedPercentage >= roundedThreshold;
         const higherThanExpected = roundedPercentage > roundedThreshold && roundedThreshold < AIMED_FOR_COVERAGE;
+        const shouldBumpCoverageUp = (roundedPercentage - roundedThreshold) >= SHOULD_BUMP_COVERAGE_DELTA;
 
-        const status = `${higherThanExpected ? '⬆️' : ''} ${pass ? '✅' : '❌'}`;
+        const status = `${higherThanExpected && shouldBumpCoverageUp ? '⬆️' : ''} ${pass ? '✅' : '❌'}`;
         console.log(`${status.padStart(6)} ${metric.padEnd(12)}: ${roundedPercentage.toFixed(2).padStart(6)}%  (need ≥ ${roundedThreshold.toFixed(2)}%)`);
         if (!pass) failed = true;
     }

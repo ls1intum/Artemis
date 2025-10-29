@@ -5,6 +5,7 @@
     background-color: var(--overview-light-background-color);
     border-radius: 3px;
 }
+
 .exam-container:hover {
     box-shadow: 0 2px 4px 0 #3e8acc;
 }
@@ -16,11 +17,14 @@
 
 .course-grid {
     display: grid;
+
     // cards can shrink to 350px
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    grid-gap: 1rem;
+    gap: 1rem;
     justify-items: center;
+
     // for 4 or less cards, we let each card shrink to 325px to display more cards in smaller screens, 1751px is the breakpoint for 4 cards
+
     @media screen and (max-width: 1751px) {
         grid-template-columns: repeat(auto-fill, minmax(325px, 1fr));
     }

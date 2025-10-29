@@ -70,7 +70,7 @@
     @if (!readOnly && !isFullScreen) {
         <div class="help-and-status">
             @if (!readOnly && showHelpButton) {
-                <button class="btn btn-warning" (click)="open(help)">
+                <button type="button" class="btn btn-warning" (click)="open(help)">
                     <fa-icon [icon]="farQuestionCircle" />&nbsp;
                     <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
                 </button>

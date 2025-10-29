@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
@@ -63,7 +64,6 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.exam.api.ExamLiveEventsApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -236,19 +236,19 @@ public class ExerciseService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         DueDateStat numberOfSubmissions;
-        DueDateStat totalNumberOfAssessments;
+        long numberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
             numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
-            totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId), 0L);
+            numberOfAssessments = programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId);
         }
         else {
             numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exerciseId);
-            totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
+            numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
-        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
+        stats.setTotalNumberOfAssessments(numberOfAssessments);
 
         final DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
         int numberOfCorrectionRounds = 1;
@@ -259,9 +259,11 @@ public class ExerciseService {
         }
         else {
             // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
-            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { new DueDateStat(numberOfAssessments, 0L) };
         }
 
+        // TODO: Refactor the usage of DueDateStats. For exam exercises, it has the meaning of first and second correction round instead of before and after due dat
+        // For course exercises, we do not seem to care about the number assessments of late submissions
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
         final DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
@@ -450,6 +452,16 @@ public class ExerciseService {
             exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
             exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipations(null));
         }
+    }
+
+    /**
+     * Find all example submissions for the given exercise.
+     *
+     * @param exercise the exercise for which example submissions should be found
+     * @return the example submissions for the given exercise
+     */
+    public Set<ExampleSubmission> findExampleSubmissionsForExercise(Exercise exercise) {
+        return exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
     }
 
     /**
@@ -816,11 +828,12 @@ public class ExerciseService {
      *
      * @param courseId      the ID of the course
      * @param userIsStudent indicates whether the logged-in user is a student
+     * @param language      the language that will be used add context information to titles (e.g. the title of a release event will be prefixed with "Release: ")
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromNonQuizExercises(long courseId, boolean userIsStudent) {
-        Set<NonQuizExerciseCalendarEventDTO> daos = exerciseRepository.getNonQuizExerciseCalendarEventsDAOsForCourseId(courseId);
-        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromNonQuizExercises(long courseId, boolean userIsStudent, Language language) {
+        Set<NonQuizExerciseCalendarEventDTO> dtos = exerciseRepository.getNonQuizExerciseCalendarEventsDTOsForCourseId(courseId);
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
     }
 
     /**
@@ -832,28 +845,44 @@ public class ExerciseService {
      * <li>One event representing the assessment due date if not null</li>
      * </ul>
      *
-     * The events are only derived given that either the exercise represented by a dao is visible to students or the logged-in user is a course
+     * The events are only derived given that either the exercise represented by a dto is visible to students or the logged-in user is a course
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
      *
-     * @param dao           the exam for which to derive the events
-     * @param userIsStudent indicates whether the logged-in user is a student of the course associated to the exercise represented by the dao
+     * @param dto           the exam for which to derive the events
+     * @param userIsStudent indicates whether the logged-in user is a student of the course associated to the exercise represented by the dto
+     * @param language      the language that will be used add context information to titles (e.g. the title of a release event will be prefixed with "Release: ")
      * @return the derived events
      */
-    private Set<CalendarEventDTO> deriveCalendarEventDTOs(NonQuizExerciseCalendarEventDTO dao, boolean userIsStudent) {
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(NonQuizExerciseCalendarEventDTO dto, boolean userIsStudent, Language language) {
         Set<CalendarEventDTO> events = new HashSet<>();
         boolean userIsCourseStaff = !userIsStudent;
-        if (userIsCourseStaff || dao.releaseDate() == null || dao.releaseDate().isBefore(now())) {
-            if (dao.releaseDate() != null) {
-                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.RELEASE_DATE, dao.title(), dao.releaseDate(), null, null, null));
+        if (userIsCourseStaff || dto.releaseDate() == null || dto.releaseDate().isBefore(now())) {
+            if (dto.releaseDate() != null) {
+                String releaseDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Release: ";
+                    case GERMAN -> "Veröffentlichung: ";
+                };
+                events.add(new CalendarEventDTO("exerciseReleaseEvent-" + dto.originEntityId(), dto.type(), releaseDateTitlePrefix + dto.title(), dto.releaseDate(), null, null,
+                        null));
             }
-            if (dao.startDate() != null) {
-                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.START_DATE, dao.title(), dao.startDate(), null, null, null));
+            if (dto.startDate() != null) {
+                String startDateTitlePrefix = "Start: ";
+                events.add(new CalendarEventDTO("exerciseStartEvent-" + dto.originEntityId(), dto.type(), startDateTitlePrefix + dto.title(), dto.startDate(), null, null, null));
             }
-            if (dao.dueDate() != null) {
-                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.DUE_DATE, dao.title(), dao.dueDate(), null, null, null));
+            if (dto.dueDate() != null) {
+                String dueDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Due: ";
+                    case GERMAN -> "Abgabefrist: ";
+                };
+                events.add(new CalendarEventDTO("exerciseDueEvent-" + dto.originEntityId(), dto.type(), dueDateTitlePrefix + dto.title(), dto.dueDate(), null, null, null));
             }
-            if (dao.assessmentDueDate() != null) {
-                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.ASSESSMENT_DUE_DATE, dao.title(), dao.assessmentDueDate(), null, null, null));
+            if (dto.assessmentDueDate() != null) {
+                String assessmentDueDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Assessment due: ";
+                    case GERMAN -> "Korrekturfrist: ";
+                };
+                events.add(new CalendarEventDTO("exerciseAssessmentDueEvent-" + dto.originEntityId(), dto.type(), assessmentDueDateTitlePrefix + dto.title(),
+                        dto.assessmentDueDate(), null, null, null));
             }
         }
         return events;

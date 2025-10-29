@@ -23,6 +23,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ApollonDiagramDetail Component', () => {
     let apollonDiagramService: ApollonDiagramService;
+    let courseService: CourseManagementService;
     let fixture: ComponentFixture<ApollonDiagramDetailComponent>;
 
     const course: Course = { id: 123 } as Course;
@@ -61,6 +62,7 @@ describe('ApollonDiagramDetail Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
                 apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
+                courseService = fixture.debugElement.injector.get(CourseManagementService);
                 alertService = fixture.debugElement.injector.get(AlertService);
                 modalService = fixture.debugElement.injector.get(NgbModal);
                 div = fixture.componentInstance.editorContainer().nativeElement;
@@ -183,14 +185,13 @@ describe('ApollonDiagramDetail Component', () => {
         expect(openModalSpy).toHaveBeenCalledOnce();
     });
 
-    it('ngOnInit', async () => {
-        const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram, status: 200, statusText: 'OK' });
+    it('detectChanges', async () => {
+        const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
+        jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
-        // test
-        fixture.componentInstance.ngOnInit();
+        fixture.detectChanges();
         expect(fixture.componentInstance.apollonDiagram).toEqual(diagram);
-        // clear the set time interval
         fixture.componentInstance.ngOnDestroy();
     });
 

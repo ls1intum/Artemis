@@ -35,7 +35,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     template: '',
@@ -116,7 +116,7 @@ describe('ExamUpdateComponent', () => {
                     }),
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: ProfileService, useClass: MockProfileService },
-                    MockProvider(CalendarEventService),
+                    MockProvider(CalendarService),
                 ],
             }).compileComponents();
 
@@ -211,8 +211,8 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should update', fakeAsync(() => {
-            const calendarEventService = TestBed.inject(CalendarEventService);
-            const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+            const calendarService = TestBed.inject(CalendarService);
+            const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
             const navigateSpy = jest.spyOn(router, 'navigate');
             fixture.detectChanges();

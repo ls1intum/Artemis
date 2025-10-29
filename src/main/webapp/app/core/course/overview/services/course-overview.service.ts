@@ -319,23 +319,70 @@ export class CourseOverviewService {
             startDate: lecture.startDate,
         };
     }
+
     mapTutorialGroupToSidebarCardElement(tutorialGroup: TutorialGroup): SidebarCardElement {
+        const [attendanceText, averageAttendanceRatio] = this.computeAttendanceChipData(tutorialGroup);
+        const attendanceChipColor = this.computeAttendanceChipColor(averageAttendanceRatio);
+        const [subtitleLeft, subtitleRight] = this.computeTutorialSidebarCardSubtitles(tutorialGroup.nextSession?.start, tutorialGroup.nextSession?.end);
         return {
             title: tutorialGroup.title ?? '',
             id: tutorialGroup.id ?? '',
             size: 'M',
-            subtitleLeft: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noUpcomingSession'),
-            subtitleRight: this.getUtilization(tutorialGroup),
+            subtitleLeft: subtitleLeft,
+            subtitleRight: subtitleRight,
+            attendanceText: attendanceText,
+            attendanceChipColor: attendanceChipColor,
         };
     }
 
-    getUtilization(tutorialGroup: TutorialGroup): string {
-        if (tutorialGroup.capacity && tutorialGroup.averageAttendance) {
-            const utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
-            return this.translate.instant('artemisApp.entities.tutorialGroup.utilization') + ': ' + utilization + '%';
-        } else {
-            return tutorialGroup?.averageAttendance ? 'Ø ' + this.translate.instant('artemisApp.entities.tutorialGroup.attendance') + ': ' + tutorialGroup.averageAttendance : '';
+    private computeAttendanceChipData(tutorialGroup: TutorialGroup): [attendanceText?: string, averageAttendanceRatio?: number] {
+        const capacity = tutorialGroup.capacity;
+        if (capacity === undefined) {
+            return [undefined, undefined];
         }
+        let averageAttendanceRatio: number | undefined = undefined;
+        let attendanceText: string | undefined = undefined;
+        const sessionsWithAttendance = tutorialGroup.tutorialGroupSessions?.filter((session) => session.attendanceCount !== undefined && session.attendanceCount !== null) ?? [];
+        if (sessionsWithAttendance.length !== 0) {
+            const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendanceCount!, 0) / sessionsWithAttendance.length;
+            averageAttendanceRatio = averageAttendance / capacity;
+            attendanceText = `Ø ${(averageAttendanceRatio * 100).toFixed(0)}%`;
+            return [attendanceText, averageAttendanceRatio];
+        } else {
+            const numberOfRegisteredUsers = tutorialGroup.numberOfRegisteredUsers;
+            if (numberOfRegisteredUsers) {
+                averageAttendanceRatio = numberOfRegisteredUsers / capacity;
+                attendanceText = numberOfRegisteredUsers + ' / ' + capacity;
+                return [attendanceText, averageAttendanceRatio];
+            }
+        }
+        return [undefined, undefined];
+    }
+
+    private computeAttendanceChipColor(averageAttendanceRatio?: number): string | undefined {
+        if (averageAttendanceRatio === undefined) {
+            return undefined;
+        }
+        if (averageAttendanceRatio >= 0.9) {
+            return 'var(--red)';
+        } else if (averageAttendanceRatio >= 0.8) {
+            return 'var(--orange)';
+        } else if (averageAttendanceRatio >= 0.7) {
+            return 'var(--yellow)';
+        } else {
+            return 'var(--green)';
+        }
+    }
+
+    private computeTutorialSidebarCardSubtitles(start?: dayjs.Dayjs, end?: dayjs.Dayjs): [string?, string?] {
+        const subtitleLeft = start?.format('MMM DD, YYYY');
+        if (!subtitleLeft) {
+            return [this.translate.instant('artemisApp.courseOverview.sidebar.noUpcomingSession'), undefined];
+        }
+        if (start && end) {
+            return [subtitleLeft, start.format('HH:mm') + '–' + end.format('HH:mm')];
+        }
+        return [undefined, undefined];
     }
 
     mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {

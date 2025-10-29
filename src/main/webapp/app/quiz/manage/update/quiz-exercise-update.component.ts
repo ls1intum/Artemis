@@ -46,7 +46,7 @@ import { JsonPipe, NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -87,7 +87,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private exerciseGroupService = inject(ExerciseGroupService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private modalService = inject(NgbModal);
-    private calendarEventService = inject(CalendarEventService);
+    private calendarService = inject(CalendarService);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
 
@@ -562,7 +562,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         } else if (isCreate) {
             this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route, skipLocationChange: true });
         }
-        this.calendarEventService.refresh();
+        this.calendarService.reloadEvents();
     }
 
     /**
@@ -665,5 +665,40 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     handleQuestionChanged() {
         this.cacheValidation();
+    }
+
+    /**
+     * Generate enhanced description for AtlasML suggestions by including quiz questions
+     * @returns Enhanced description combining title and quiz questions
+     */
+    getEnhancedDescriptionForSuggestions(): string {
+        if (!this.quizExercise) {
+            return '';
+        }
+
+        let description = this.quizExercise.title || '';
+
+        // Add quiz questions if they exist
+        if (this.quizExercise.quizQuestions && this.quizExercise.quizQuestions.length > 0) {
+            const questionTexts = this.quizExercise.quizQuestions
+                .map((question) => {
+                    const questionTitle = question.title || '';
+                    const questionText = question.text || '';
+                    return `${questionTitle} ${questionText}`.trim();
+                })
+                .filter((text) => text.length > 0)
+                .join(' ');
+
+            if (questionTexts) {
+                description = `${description} ${questionTexts}`.trim();
+            }
+        }
+
+        // Fallback to problem statement if available
+        if (!description && this.quizExercise.problemStatement) {
+            description = this.quizExercise.problemStatement;
+        }
+
+        return description;
     }
 }

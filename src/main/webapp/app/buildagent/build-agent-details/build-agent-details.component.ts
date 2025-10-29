@@ -5,7 +5,7 @@ import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, fa
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
+import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
@@ -60,7 +60,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly route = inject(ActivatedRoute);
-    private readonly buildQueueService = inject(BuildQueueService);
+    private readonly buildQueueService = inject(BuildOverviewService);
     private readonly alertService = inject(AlertService);
     private readonly modalService = inject(NgbModal);
 

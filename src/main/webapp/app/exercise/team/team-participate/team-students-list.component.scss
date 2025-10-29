@@ -9,7 +9,7 @@
 
     // show custom thinner scrollbar for Webkit-based browsers
     $size: 4px;
-    $thumb-color: #bbbbbb;
+    $thumb-color: #bbb;
 
     &::-webkit-scrollbar-track {
         border-radius: $size;

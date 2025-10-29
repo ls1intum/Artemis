@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -35,7 +35,7 @@ export enum State {
     encapsulation: ViewEncapsulation.None,
     imports: [NgClass, TranslateDirective, FormsModule, KeyValuePipe],
 })
-export class QuizQuestionListEditExistingComponent implements OnChanges {
+export class QuizQuestionListEditExistingComponent {
     private modalService = inject(NgbModal);
     private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
@@ -44,12 +44,12 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
     private alertService = inject(AlertService);
     private changeDetectorRef = inject(ChangeDetectorRef);
 
-    @Input() show: boolean;
-    @Input() courseId: number;
-    @Input() filePool: Map<string, { path?: string; file: File }>;
+    show = input<boolean>();
+    courseId = input<number>();
+    filePool = input<Map<string, { path?: string; file: File }>>();
 
-    @Output() onQuestionsAdded = new EventEmitter<Array<QuizQuestion>>();
-    @Output() onFilesAdded = new EventEmitter<Map<string, { path: string; file: File }>>();
+    onQuestionsAdded = output<Array<QuizQuestion>>();
+    onFilesAdded = output<Map<string, { path: string; file: File }>>();
 
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
@@ -71,17 +71,19 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
     importFile?: File;
     importFileName: string;
 
-    ngOnChanges() {
-        if (this.show) {
-            this.courseManagementService.getAllCoursesWithQuizExercises().subscribe((res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
-                this.changeDetectorRef.detectChanges();
-            });
-            this.examManagementService.findAllExamsAccessibleToUser(this.courseId!).subscribe((res: HttpResponse<Exam[]>) => {
-                this.exams = res.body!;
-                this.changeDetectorRef.detectChanges();
-            });
-        }
+    constructor() {
+        effect(() => {
+            if (this.show()) {
+                this.courseManagementService.getAllCoursesWithQuizExercises().subscribe((res: HttpResponse<Course[]>) => {
+                    this.courses = res.body!;
+                    this.changeDetectorRef.detectChanges();
+                });
+                this.examManagementService.findAllExamsAccessibleToUser(this.courseId()!).subscribe((res: HttpResponse<Exam[]>) => {
+                    this.exams = res.body!;
+                    this.changeDetectorRef.detectChanges();
+                });
+            }
+        });
     }
 
     setCurrentState(state: State) {
@@ -349,7 +351,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                     files.set(backgroundFile.name, { path: dndQuestion.backgroundFilePath!, file: backgroundFile });
                     dndQuestion.backgroundFilePath = backgroundFile.name;
                 } else {
-                    const backgroundFile = await this.fileService.getFile(dndQuestion.backgroundFilePath!, this.filePool);
+                    const backgroundFile = await this.fileService.getFile(dndQuestion.backgroundFilePath!, this.filePool());
                     files.set(backgroundFile.name, { path: dndQuestion.backgroundFilePath!, file: backgroundFile });
                     dndQuestion.backgroundFilePath = backgroundFile.name;
                 }
@@ -370,7 +372,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                             files.set(exportedDragItemFile.name, { path: dragItem.pictureFilePath, file: exportedDragItemFile });
                             dragItem.pictureFilePath = exportedDragItemFile.name;
                         } else {
-                            const dragItemFile = await this.fileService.getFile(dragItem.pictureFilePath, this.filePool);
+                            const dragItemFile = await this.fileService.getFile(dragItem.pictureFilePath, this.filePool());
                             files.set(dragItemFile.name, { path: dragItem.pictureFilePath, file: dragItemFile });
                             dragItem.pictureFilePath = dragItemFile.name;
                         }

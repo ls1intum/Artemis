@@ -9,7 +9,6 @@ artemis:
   repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
   data-export-path: ./data-exports                # a folder in which data exports are stored
   build-logs-path: ./build-logs                   # a folder in which build logs are stored
-  temp-path: ${java.io.tmpdir}                    # a folder in which temporary files are stored, e.g. for the programming exercise import from file
   bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
@@ -107,16 +106,24 @@ artemis:
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
 
+  nebula: # The nebula module is used for llm features such as faq-rewriting and lecture transcription
+    enabled: false
+    url: <your-nebula-url>
+    secret-token: <your-secret>
 
-# Configure Spring AI, if you want to use Hyperion
+# Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
   ai:
+    chat:
+      client:
+        enabled: #{${artemis.hyperion.enabled} or ${artemis.atlas.enabled}}
     # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
     azure:
       openai:
         api-key: <azure_openai_key>
         # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets endpoint automatically
         endpoint: <azure_openai_endpoint>
+        # deployment-name should match the Azure OpenAI deployment
         chat:
           options:
             deployment-name: <azure_openai_deployment_name or openai_model_name>

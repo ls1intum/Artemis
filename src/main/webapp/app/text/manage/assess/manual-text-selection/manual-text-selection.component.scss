@@ -20,43 +20,43 @@ span {
         top: 20px;
         left: 50%;
         position: absolute;
-        color: #ffffff;
+        color: #fff;
 
         &:hover {
             background-color: gold;
-            color: #000000;
+            color: #000;
         }
     }
 
     &__cta-link {
-        background-color: #333333;
-        border-radius: 5px 5px 5px 5px;
-        bottom: 0px;
-        box-shadow: 2px 2px 5px rgba(#000000, 30%);
-        color: #ffffff;
+        background-color: #333;
+        border-radius: 5px;
+        bottom: 0;
+        box-shadow: 2px 2px 5px rgba(#000, 30%);
+        color: #fff;
         cursor: pointer;
-        left: 0px;
-        padding: 11px 22px 10px 22px;
+        left: 0;
+        padding: 11px 22px 10px;
         position: absolute;
         transform: translateX(-50%);
         white-space: nowrap;
 
-        &:after {
+        &::after {
             bottom: -11px;
             font-size: 15px;
             left: 50%;
             line-height: 15px;
             content: '▼';
-            color: #333333;
+            color: #333;
             position: absolute;
             transform: translateX(-50%);
         }
 
         &:hover {
             background-color: gold;
-            color: #000000;
+            color: #000;
 
-            &:after {
+            &::after {
                 color: gold;
             }
         }

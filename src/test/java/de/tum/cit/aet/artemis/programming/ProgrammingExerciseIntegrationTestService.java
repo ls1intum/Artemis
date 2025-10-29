@@ -3,10 +3,10 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
-import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID;
-import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_REPOSITORY_URL;
-import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
-import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
+import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID;
+import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_SOLUTION_REPOSITORY_URL;
+import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
+import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.any;
@@ -27,6 +27,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -106,10 +107,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
+import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
@@ -118,6 +123,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -148,6 +154,9 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Value("${artemis.temp-path}")
     private Path tempPath;
+
+    @Value("${artemis.version-control.url}")
+    private URI localVCBaseUri;
 
     @Autowired
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
@@ -217,6 +226,15 @@ public class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private ProgrammingUtilTestService programmingUtilTestService;
+
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private Course course;
 
@@ -574,9 +592,9 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
-        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/10";
-        request.postWithResponseBodyFile(path, getOptions(), HttpStatus.BAD_REQUEST);
+    void testExportSubmissionsByParticipationIds_nonExistentParticipationId_notFound() throws Exception {
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + Long.MAX_VALUE;
+        request.postWithResponseBodyFile(path, getOptions(), HttpStatus.NOT_FOUND);
     }
 
     void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
@@ -1962,13 +1980,13 @@ public class ProgrammingExerciseIntegrationTestService {
         request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.FORBIDDEN, File.class);
     }
 
-    void testExportAuxiliaryRepositoryBadRequest() throws Exception {
+    void testExportAuxiliaryRepositoryUnprocessableEntity() throws Exception {
         AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
-        request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.BAD_REQUEST, File.class);
+        request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.UNPROCESSABLE_ENTITY, File.class);
     }
 
-    void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {
-        request.get(defaultExportInstructorAuxiliaryRepository(-1L, 1L), HttpStatus.NOT_FOUND, File.class);
+    void testExportAuxiliaryRepositoryExerciseAccessForbidden() throws Exception {
+        request.get(defaultExportInstructorAuxiliaryRepository(-1L, 1L), HttpStatus.FORBIDDEN, File.class);
     }
 
     void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
@@ -2243,5 +2261,80 @@ public class ProgrammingExerciseIntegrationTestService {
                 programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsSolutionRepositoryUri()),
                 programmingExercise.getSolutionBuildPlanId(), true, false);
+    }
+
+    /**
+     * Tests export of instructor repositories (template, solution, tests) with LocalVC server
+     */
+    public void exportInstructorRepositories_shouldReturnFile(RepositoryType repositoryType) throws Exception {
+        // Set up the exercise with problem statement for export
+        setupExerciseForExport();
+        var templateUrl = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + repositoryType.name();
+        String zip = request.get(templateUrl, HttpStatus.OK, String.class);
+        assertThat(zip).isNotNull();
+    }
+
+    /**
+     * Tests export of auxiliary repository with LocalVC server
+     */
+    public void exportInstructorAuxiliaryRepository_shouldReturnFile() throws Exception {
+        setupExerciseForExport();
+
+        var auxRepo = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(programmingExercise);
+
+        String projectKey = programmingExercise.getProjectKey();
+        String auxRepoName = programmingExercise.generateRepositoryName("auxrepo");
+        auxRepo.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + auxRepoName + ".git");
+        auxRepo = auxiliaryRepositoryRepository.save(auxRepo);
+
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, auxRepoName);
+
+        var url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
+        request.get(url, HttpStatus.OK, String.class);
+    }
+
+    /**
+     * Helper method to set up the exercise for export testing
+     */
+    private void setupExerciseForExport() throws IOException, GitAPIException, URISyntaxException {
+        // Add problem statement with embedded files (simplified version of generateProgrammingExerciseForExport)
+        String problemStatement = """
+                Problem statement
+                ![mountain.jpg](/api/core/files/markdown/test-image.jpg)
+                <img src="/api/core/files/markdown/test-image2.jpg" width="400">
+                """;
+        programmingExercise.setProblemStatement(problemStatement);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        if (programmingExercise.getTemplateParticipation() == null) {
+            programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        }
+        if (programmingExercise.getSolutionParticipation() == null) {
+            programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        }
+
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
+
+        String projectKey = programmingExercise.getProjectKey();
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
+
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + testsRepositorySlug + ".git");
+
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 }

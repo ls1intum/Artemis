@@ -33,6 +33,7 @@ artemis:
     version: #project.version#
     file-upload-path: uploads
     submission-export-path: exports
+    temp-path: ./tmp                                # a folder in which temporary files are stored, e.g. for the programming exercise import from file
     bcrypt-salt-rounds: 11 #default value, see application-artemis.yml for more information how to override and customize this value
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
@@ -67,11 +68,11 @@ artemis:
             images:
                 java:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-22"
+                    default: "ls1tum/artemis-maven-template:java17-25"
                     maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-22"
+                    default: "ls1tum/artemis-maven-template:java17-25"
                 empty:
                     default: "ubuntu:24.04"
                 python:
@@ -129,6 +130,12 @@ artemis:
         min: "2.0.0"
         recommended: "2.2.0"
 
+    # Nebula configuration for AI-powered features
+    nebula:
+        enabled: false
+        url: # Set this in production environment (e.g., https://nebula.example.com)
+        secret-token: # Set this in production environment
+
 
 
 management:
@@ -160,6 +167,8 @@ management:
             enabled: false # Disabled to prevent periodic health checks that lead to null pointer exceptions if the ldap is not configured or not active
         config:
             enabled: false # Disabled because we do not use a Spring Cloud Config Server
+        refresh:
+            enabled: false # Disabled because we do not use a refresh scope
     prometheus:
         # Prometheus is the default metrics server
         metrics:
@@ -187,6 +196,8 @@ spring:
         config:
             import-check:
                 enabled: false
+        refresh:
+            enabled: false # Not required in Artemis
     data:
         jpa:
             repositories:

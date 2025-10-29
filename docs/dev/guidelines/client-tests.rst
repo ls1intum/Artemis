@@ -2,13 +2,15 @@
 Client Tests
 ************
 
-**If you are new to client testing, it is highly recommended that you work through the** `testing part <https://angular.io/guide/testing>`_ **of the angular tutorial.**
+**If you are new to client testing, it is highly recommended that you work through the** `testing part <https://angular.dev/guide/testing>`_ **of the angular tutorial.**
 
 We use `Jest <https://jestjs.io>`__ as our client testing framework.
+For mocking Angular dependencies, we use `NgMocks <https://www.npmjs.com/package/ng-mocks/>`_ for mocking the dependencies of an angular component.
 
-There are different tools available to support client testing. We try to limit ourselves to Jest as much as possible. We use `NgMocks <https://www.npmjs.com/package/ng-mocks/>`_ for mocking the dependencies of an angular component.
+General Test Pattern
+====================
 
-The most basic test looks similar to this:
+The most basic test looks like this:
 
 .. code:: ts
 
@@ -42,17 +44,25 @@ The most basic test looks similar to this:
 
         it('should initialize', () => {
             someComponentFixture.detectChanges();
-            expect(SomeComponent).not.toBeUndefined();
+            expect(someComponent).not.toBeUndefined();
         });
     });
 
-Some guidelines:
+Guidelines Overview
+===================
 
-1. A component should be tested in isolation without any dependencies if possible. Do not simply import the whole production module. Only import real dependencies if it is essential for the test
-   that the real dependency is used. Instead, use mock pipes, mock directives and mock components that the component under test depends upon. A very useful technique is writing `stubs for child components <https://angular.io/guide/testing-components-scenarios#stubbing-unneeded-components>`_. This has the benefit of being able to test the interaction with the child components.
+The following sections outline **best practices** for writing client tests in Artemis.
 
-    Example of a bad test practice:
+1. Test Isolation
+=================
 
+* Always test a component in isolation.
+* Do not import entire production modules.
+* Use **mock pipes, directives, and components** where possible.
+* Only use real dependencies if absolutely necessary.
+* Prefer `stubs for child components <https://angular.dev/guide/testing/components-scenarios#stubbing-unneeded-components>`_.
+
+**Example: Bad practice**
     .. code:: ts
 
         describe('ParticipationSubmissionComponent', () => {
@@ -80,15 +90,15 @@ Some guidelines:
             });
         });
 
-    Running time: 313.931s:
+    Imports large modules → test runtime: 313.931s:
 
     .. code-block:: text
 
        PASS  src/test/javascript/spec/component/participation-submission/participation-submission.component.spec.ts (313.931 s, 625 MB heap size)
 
-    Example of a good test practice:
 
-        .. code:: ts
+**Example: Good practice**
+    .. code:: ts
 
             describe('ParticipationSubmissionComponent', () => {
                 ...
@@ -118,7 +128,7 @@ Some guidelines:
                 });
             });
 
-    Running time: 13.685s:
+    Mocks dependencies → test runtime: 13.685s:
 
     .. code-block:: text
 
@@ -126,7 +136,7 @@ Some guidelines:
 
     Now the whole testing suite is running **~25 times faster**!
 
-    Here are the improvements for the test above:
+Here are the improvements for the test above:
 
     * **Removed** production module imports:
 
@@ -148,13 +158,18 @@ Some guidelines:
         + MockComponent(ResultComponent)
         + MockComponent(FaIconComponent)
 
-    More examples on test speed improvement can be found in the `following PR <https://github.com/ls1intum/Artemis/pull/3879/files>`_.
+More examples on test speed improvement can be found in the `following PR <https://github.com/ls1intum/Artemis/pull/3879/files>`_.
 
-        *  Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for example converting dates to datejs instances),
-           and this logic is important for the component, do not mock the service methods, but mock the HTTP requests and responses from the API. This allows us to test the interaction
-           of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the `official angular documentation <https://angular.io/guide/http#testing-http-requests>`_.
 
-        .. code:: ts
+2. Mocking Rules
+================
+
+* **Services**:
+    * Mock services if they just return data from the server.
+    * If the service has important logic → keep the real service but mock **HTTP requests and responses** instead.
+    * This allows us to test the interaction of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the `official angular documentation <https://angular.dev/guide/http/testing>`_.
+
+    .. code:: ts
 
             import { provideHttpClient } from '@angular/common/http';
             import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
@@ -190,16 +205,24 @@ Some guidelines:
                 }));
             });
 
-2. Do not use ``NO_ERRORS_SCHEMA`` (`angular documentation <https://angular.io/guide/testing-components-scenarios#no_errors_schema>`_). This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
+* **Never use** ``NO_ERRORS_SCHEMA`` (`angular documentation <https://angular.dev/guide/testing/components-scenarios#noerrorsschema>`_). Use stubs/mocks instead.
 
-3. Calling `jest.restoreAllMocks()` ensures that all mocks created with Jest get reset after each test. This is important if they get defined across multiple tests. This will only work if the mocks were created with `jest.spyOn`. Manually assigning `jest.fn()` should be avoided with this configuration.
+* **Reset mocks** with ``jest.restoreAllMocks()`` in ``afterEach``.
+    * This is important if they get defined across multiple tests
+    * Only works if mocks are created with ``jest.spyOn``.
+    * Avoid manually assigning ``jest.fn()``.
 
-4. Make sure to have at least 80% line test coverage. Run ``npm test`` to create a coverage report. You can also simply `run the tests in IntelliJ IDEA with coverage activated <https://www.jetbrains.com/help/idea/running-test-with-coverage.html>`_.
 
-5. It is preferable to test a component through the interaction of the user with the template. This decouples the test from the concrete implementation used in the component.
-   For example, if you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click, and then assert that the data has been loaded and that the expected template changes have occurred.
+3. Coverage & Quality
+=====================
 
-    Here is an example of such a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/6e44346c77ce4c817e24269f0150b4118bc12f50/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L46>`_
+* Ensure at least **80% line coverage**.
+    * Run ``npm test`` for coverage report.
+    * Or `run the tests in IntelliJ IDEA with coverage activated <https://www.jetbrains.com/help/idea/running-test-with-coverage.html>`_.
+
+* Prefer **user-interaction tests** instead of testing internal methods directly.
+    * Example: If you have a component that loads and displays some data when the user clicks a button, you should query for that button, simulate a click, and then assert that the data has been loaded and that the expected template changes have occurred.
+    * Here is an example of such a test for `exercise-update-warning component <https://github.com/ls1intum/Artemis/blob/6e44346c77ce4c817e24269f0150b4118bc12f50/src/test/javascript/spec/component/shared/exercise-update-warning.component.spec.ts#L32-L46>`_
 
     .. code:: ts
 
@@ -216,7 +239,9 @@ Some guidelines:
             expect(emitSpy).toHaveBeenCalledOnce();
         });
 
-6. Do not remove the template during tests by making use of ``overrideTemplate()``. The template is a crucial part of a component and should not be removed during test. Do not do this:
+* **Do not** use ``overrideTemplate()`` to remove templates.
+    * The template is part of the component and must be tested.
+    * Do not do this:
 
     .. code:: ts
 
@@ -239,22 +264,33 @@ Some guidelines:
             });
         });
 
-7. Name the variables properly for test doubles:
+4. Naming Test Doubles
+======================
 
-    .. code:: ts
+Use clear terminology for test doubles:
 
-        const clearSpy = jest.spyOn(someComponent, 'clear');
-        const getNumberStub = jest.spyOn(someComponent, 'getNumber').mockReturnValue(42); // This always returns 42
+* ``Spy`` → observes calls, no replacement.
+* ``Mock`` → spy + returns custom values for specific inputs.
+* ``Stub`` → spy + returns fixed values regardless of input.
 
-    - `Spy`: Doesn't replace any functionality but records calls
-    - `Mock`: Spy + returns a specific implementation for a certain input
-    - `Stub`: Spy + returns a default implementation independent of the input parameters.
+Example:
 
-8. Try to make expectations as specific as possible. If you expect a specific result, compare to this result and do not compare to the absence of some arbitrary other value. This ensures that no faulty values you didn't expect can sneak in the codebase without the tests failing. For example :code:`toBe(5)` is better than :code:`not.toBeUndefined()`, which would also pass if the value wrongly changes to 6.
+.. code:: ts
 
-9. When expecting results use :code:`expect` for client tests. That call **must** be followed by another assertion statement like :code:`toBeTrue()`. It is best practice to use more specific expect statements rather than always expecting boolean values. It is also recommended to extract as much as possible from the `expect` statement.
+    const clearSpy = jest.spyOn(component, 'clear');
+    const getNumberStub = jest.spyOn(component, 'getNumber').mockReturnValue(42);
 
-    For example, instead of
+
+5. Expectations
+===============
+
+* Make expectations as **specific** as possible.
+  * ``expect(value).toBe(5)`` is better than ``expect(value).not.toBeUndefined()``.
+
+* Always follow ``expect`` with a matcher.
+    * Use meaningful, specific assertions instead of generic booleans.
+    * Extract as much as possible from the `expect` statement
+    * For example, instead of
 
     .. code:: ts
 
@@ -268,9 +304,9 @@ Some guidelines:
         expect(course).toBeUndefined();
         expect(courseList).toHaveLength(4);
 
-10. If you have minimized :code:`expect`, use the verification function that provides the most meaningful error message in case the verification fails. You can use verification functions from core `Jest <https://jestjs.io/docs/expect>`_ or from `Jest Extended <https://jest-extended.jestcommunity.dev/docs/matchers>`_.
+* If you have minimized :code:`expect`, use the verification function that provides the most meaningful error message in case the verification fails. Use matchers from `Jest <https://jestjs.io/docs/expect>`_ and `Jest Extended <https://jest-extended.jestcommunity.dev/docs/matchers>`_.
 
-11. For situations described below, only use the uniform solution to keep the codebase as consistent as possible.
+* Use a **uniform style** for common cases to keep the codebase as consistent as possible:
 
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | Situation                                              | Solution                                                        |

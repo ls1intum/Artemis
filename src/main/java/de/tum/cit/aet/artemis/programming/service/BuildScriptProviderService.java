@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -11,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.annotation.PostConstruct;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +77,10 @@ public class BuildScriptProviderService {
                 }
                 String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
                 String uniqueKey = directory + "_" + filename;
-                byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
+                byte[] fileContent;
+                try (InputStream inputStream = resource.getInputStream()) {
+                    fileContent = inputStream.readAllBytes();
+                }
                 String script = new String(fileContent, StandardCharsets.UTF_8);
                 if (!profileService.isLocalCIActive()) {
                     script = replacePlaceholders(script, null, null, null);
@@ -121,7 +124,10 @@ public class BuildScriptProviderService {
         if (!fileResource.exists()) {
             throw new IOException("File " + templateFileName + " not found");
         }
-        byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
+        byte[] fileContent;
+        try (InputStream inputStream = fileResource.getInputStream()) {
+            fileContent = inputStream.readAllBytes();
+        }
         String script = new String(fileContent, StandardCharsets.UTF_8);
         if (!profileService.isLocalCIActive()) {
             script = replacePlaceholders(script, null, null, null);

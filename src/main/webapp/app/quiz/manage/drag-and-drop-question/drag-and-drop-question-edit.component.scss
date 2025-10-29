@@ -3,6 +3,7 @@
 .edit-dnd-question {
     .drag-items {
         background: white !important;
+
         .drag-item {
             img {
                 max-height: 100%;
@@ -78,6 +79,7 @@
     .background-area {
         position: relative;
         margin: auto;
+
         @include user-select(none);
 
         img {
@@ -86,7 +88,9 @@
 
         .click-layer {
             cursor: crosshair !important;
+
             @include position-style(absolute, 0, 0, 0, 0, 1);
+
             width: 100%;
             height: 100%;
 
@@ -133,7 +137,7 @@
 
     .question-card-header {
         width: 100%;
-        padding: 15px 5px 5px 5px;
+        padding: 15px 5px 5px;
 
         .row {
             width: 100%;

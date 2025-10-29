@@ -188,6 +188,10 @@ public class IrisRequestMockProvider {
         mockPostRequest("/course-chat/run?event=jol", PyrisCourseChatPipelineExecutionDTO.class, responseConsumer);
     }
 
+    public void mockCourseChatResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
+        mockPostRequest("/course-chat/run", PyrisCourseChatPipelineExecutionDTO.class, responseConsumer);
+    }
+
     public void mockRunError(int httpStatus) {
         mockPostError(pipelinesApiURL.toString(), "/programming-exercise-chat/run", httpStatus);
     }

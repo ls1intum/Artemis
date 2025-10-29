@@ -75,9 +75,10 @@ public class FeatureToggleService {
         features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except the Science API and TutorSuggestions) are enabled once the system starts up
+        // This ensures that all features (except the Science API, TutorSuggestions, AtlasML, Memiris and AtlasAgent) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
-            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions) {
+            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.Memiris
+                    && feature != Feature.AtlasAgent) {
                 features.put(feature, true);
             }
         }
@@ -86,8 +87,20 @@ public class FeatureToggleService {
             features.put(Feature.Science, scienceEnabledOnStart);
         }
 
+        if (!features.containsKey(Feature.AtlasAgent)) {
+            features.put(Feature.AtlasAgent, false);
+        }
+
         if (!features.containsKey(Feature.TutorSuggestions)) {
             features.put(Feature.TutorSuggestions, false);
+        }
+
+        if (!features.containsKey(Feature.AtlasML)) {
+            features.put(Feature.AtlasML, false);
+        }
+
+        if (!features.containsKey(Feature.Memiris)) {
+            features.put(Feature.Memiris, false);
         }
     }
 
