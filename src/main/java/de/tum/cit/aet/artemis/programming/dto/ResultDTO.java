@@ -53,6 +53,23 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         return of(result, result.getFeedbacks());
     }
 
+    public static ResultDTO ofForComplaint(Result result) {
+        SubmissionDTO submissionDTO = null;
+        if (result.getSubmission() != null && Hibernate.isInitialized(result.getSubmission())) {
+            submissionDTO = SubmissionDTO.of(result.getSubmission(), false, null, null);
+        }
+
+        ParticipationDTO participationDTO = null;
+        if (result.getSubmission() != null && Hibernate.isInitialized(result.getSubmission()) && result.getSubmission().getParticipation() != null
+                && Hibernate.isInitialized(result.getSubmission().getParticipation())) {
+            participationDTO = ParticipationDTO.of(result.getSubmission().getParticipation());
+        }
+
+        return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO, participationDTO, List.of(),
+                result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(), result.getPassedTestCaseCount(),
+                result.getCodeIssueCount());
+    }
+
     /**
      * Converts a Result into a ResultDTO
      *
@@ -69,5 +86,13 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO,
                 ParticipationDTO.of(result.getSubmission().getParticipation()), feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(),
                 result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount());
+    }
+
+    /**
+     * Filters sensitive information from the result DTO for complaints
+     */
+    public ResultDTO filterSensitiveInformation() {
+        return new ResultDTO(this.id, this.completionDate, this.successful, this.score, this.rated, this.submission, null, this.feedbacks, this.assessmentType, this.hasComplaint,
+                this.exampleResult, this.testCaseCount, this.passedTestCaseCount, this.codeIssueCount);
     }
 }

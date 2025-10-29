@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
@@ -108,7 +109,7 @@ public class ComplaintResource {
      */
     @PostMapping("complaints")
     @EnforceAtLeastStudent
-    public ResponseEntity<Complaint> createComplaint(@RequestBody ComplaintRequestDTO complaint, Principal principal) throws URISyntaxException {
+    public ResponseEntity<ComplaintDTO> createComplaint(@RequestBody ComplaintRequestDTO complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
 
         if (complaintRepository.findByResultId(complaint.resultId()).isPresent()) {
@@ -136,11 +137,11 @@ public class ComplaintResource {
         }
         savedComplaint = complaintService.createComplaint(complaint, complaint.examId(), principal);
 
-        // Remove assessor information from client request
-        savedComplaint.getResult().filterSensitiveInformation();
+        ComplaintDTO complaintDTO = ComplaintDTO.of(savedComplaint);
+        complaintDTO = complaintDTO.withSensitiveInformationFiltered();
 
-        return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
+        return ResponseEntity.created(new URI("/api/complaints/" + complaintDTO.id()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, String.valueOf(complaintDTO.id()))).body(complaintDTO);
     }
 
     /**
@@ -152,7 +153,7 @@ public class ComplaintResource {
 
     @GetMapping(value = "complaints", params = { "submissionId" })
     @EnforceAtLeastStudent
-    public ResponseEntity<Complaint> getComplaintBySubmissionId(@RequestParam Long submissionId) {
+    public ResponseEntity<ComplaintDTO> getComplaintBySubmissionId(@RequestParam Long submissionId) {
         log.debug("REST request to get latest Complaint associated with a result of submission : {}", submissionId);
 
         Optional<Complaint> optionalComplaint = complaintRepository.findByResultSubmissionId(submissionId);
@@ -172,18 +173,17 @@ public class ComplaintResource {
         boolean isTeamParticipation = participation.getParticipant() instanceof Team;
         boolean isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner() != null ? team.getOwner().getLogin() : null).orElse(null));
 
+        ComplaintDTO complaintDTO = ComplaintDTO.of(complaint);
+
         if (!isAtLeastTutor) {
-            complaint.getResult().filterSensitiveInformation();
-            if (complaint.getComplaintResponse() != null) {
-                complaint.getComplaintResponse().setReviewer(null);
-            }
+            complaintDTO = complaintDTO.withResultAndComplaintResponseSensitiveInformationFiltered();
         }
         if (!isAtLeastInstructor && (!isTeamParticipation || !isTutorOfTeam)) {
-            complaint.filterSensitiveInformation();
+            complaintDTO = complaintDTO.withSensitiveInformationFiltered();
         }
         // hide participation + exercise + course which might include sensitive information
-        complaint.getResult().getSubmission().setParticipation(null);
-        return ResponseEntity.ok(complaint);
+        complaintDTO = complaintDTO.withResultAndComplaintResponseSensitiveInformationFiltered();
+        return ResponseEntity.ok(complaintDTO);
     }
 
     /**
@@ -197,12 +197,12 @@ public class ComplaintResource {
      */
     @GetMapping(value = "complaints", params = { "exerciseId" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Complaint>> getComplaintsForTestRunDashboard(Principal principal, @RequestParam Long exerciseId) {
+    public ResponseEntity<List<ComplaintDTO>> getComplaintsForTestRunDashboard(Principal principal, @RequestParam Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
-        responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, true, true);
-        return ResponseEntity.ok(responseComplaints);
+        List<ComplaintDTO> complaintDTOs = buildComplaintDTOsListForAssessor(responseComplaints, principal, true, true, true);
+        return ResponseEntity.ok(complaintDTOs);
     }
 
     /**
@@ -216,7 +216,7 @@ public class ComplaintResource {
      */
     @GetMapping(value = "complaints", params = { "courseId", "complaintType" })
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType,
+    public ResponseEntity<List<ComplaintDTO>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId, @RequestParam(required = false) boolean allComplaintsForTutor) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -245,7 +245,16 @@ public class ComplaintResource {
             filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
         }
 
-        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
+        List<Complaint> responseComplaints = getComplaintsByComplaintType(complaints, complaintType);
+
+        // Convert to DTOs and apply filtering
+        List<ComplaintDTO> complaintDTOs = responseComplaints.stream().map(ComplaintDTO::of).map(complaintDTO -> {
+            if (!isAtLeastInstructor) {
+                return complaintDTO.withSensitiveInformationFiltered();
+            }
+            return complaintDTO;
+        }).toList();
+        return ResponseEntity.ok(complaintDTOs);
     }
 
     /**
@@ -258,7 +267,7 @@ public class ComplaintResource {
      */
     @GetMapping(value = "complaints", params = { "exerciseId", "complaintType" })
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@RequestParam Long exerciseId, @RequestParam ComplaintType complaintType,
+    public ResponseEntity<List<ComplaintDTO>> getComplaintsByExerciseId(@RequestParam Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -283,7 +292,16 @@ public class ComplaintResource {
             filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
         }
 
-        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
+        List<Complaint> responseComplaints = getComplaintsByComplaintType(complaints, complaintType);
+
+        // Convert to DTOs and apply filtering
+        List<ComplaintDTO> complaintDTOs = responseComplaints.stream().map(ComplaintDTO::of).map(complaintDTO -> {
+            if (!isAtLeastInstructor) {
+                return complaintDTO.withSensitiveInformationFiltered();
+            }
+            return complaintDTO;
+        }).toList();
+        return ResponseEntity.ok(complaintDTOs);
     }
 
     /**
@@ -295,7 +313,7 @@ public class ComplaintResource {
      */
     @GetMapping(value = "complaints", params = { "courseId", "examId" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Complaint>> getComplaintsByCourseIdAndExamId(@RequestParam Long courseId, @RequestParam Long examId) {
+    public ResponseEntity<List<ComplaintDTO>> getComplaintsByCourseIdAndExamId(@RequestParam Long courseId, @RequestParam Long examId) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -303,7 +321,9 @@ public class ComplaintResource {
         List<Complaint> complaints = complaintService.getAllComplaintsByExamId(examId);
         filterOutUselessDataFromComplaints(complaints, false);
 
-        return ResponseEntity.ok(getComplaintsByComplaintType(complaints, ComplaintType.COMPLAINT));
+        List<Complaint> responseComplaints = getComplaintsByComplaintType(complaints, ComplaintType.COMPLAINT);
+        List<ComplaintDTO> complaintDTOs = responseComplaints.stream().map(ComplaintDTO::of).toList();
+        return ResponseEntity.ok(complaintDTOs);
     }
 
     /**
@@ -379,12 +399,12 @@ public class ComplaintResource {
         complaints.forEach(this::filterOutUselessDataFromComplaint);
     }
 
-    private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller, boolean isTestRun,
+    private List<ComplaintDTO> buildComplaintDTOsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller, boolean isTestRun,
             boolean isAtLeastInstructor) {
-        List<Complaint> responseComplaints = new ArrayList<>();
+        List<ComplaintDTO> responseComplaintDTOs = new ArrayList<>();
 
         if (complaints.isEmpty()) {
-            return responseComplaints;
+            return responseComplaintDTOs;
         }
 
         complaints.forEach(complaint -> {
@@ -394,16 +414,13 @@ public class ComplaintResource {
 
             if (assessor != null && (assessor.getLogin().equals(submissorName) == assessorSameAsCaller || isAtLeastInstructor)
                     && (student != null && assessor.getLogin().equals(student.getLogin())) == isTestRun) {
-                // Remove data about the student
-                StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
-                studentParticipation.setParticipant(null);
-                studentParticipation.setExercise(null);
-                complaint.setParticipant(null);
-
-                responseComplaints.add(complaint);
+                // Convert to DTO and apply filtering
+                ComplaintDTO complaintDTO = ComplaintDTO.of(complaint);
+                ComplaintDTO filteredDTO = complaintDTO.withSensitiveInformationFiltered();
+                responseComplaintDTOs.add(filteredDTO);
             }
         });
 
-        return responseComplaints;
+        return responseComplaintDTOs;
     }
 }

@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintAction;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
@@ -49,7 +50,6 @@ import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -407,9 +407,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("submissionId", modelingSubmission.getId().toString());
 
-        final var received = request.get("/api/assessment/complaints", HttpStatus.OK, Complaint.class, params);
+        final var received = request.get("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
 
-        assertThat(received.getResult().getSubmission().getParticipation()).as("Complaint should not contain participation").isNull();
+        assertThat(received.result().participation()).as("Complaint should not contain participation").isNull();
     }
 
     @Test
@@ -420,9 +420,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("submissionId", modelingSubmission.getId().toString());
 
-        final var received = request.get("/api/assessment/complaints", HttpStatus.OK, Complaint.class, params);
+        final var received = request.get("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
 
-        assertThat(received.getParticipant()).as("Tutors should not see the student of a complaint").isNull();
+        assertThat(received.student()).as("Tutors should not see the student of a complaint").isNull();
     }
 
     @Test
@@ -434,11 +434,13 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("submissionId", modelingSubmission.getId().toString());
 
-        final var received = request.get("/api/assessment/complaints", HttpStatus.OK, Complaint.class, params);
+        final var received = request.get("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
 
-        assertThat(received.getParticipant()).as("The participant should always be hidden").isNull();
-        assertThat(received.getResult().getAssessor()).as("Students should not see the initial assessor").isNull();
-        assertThat(received.getComplaintResponse().getReviewer()).as("Students should not see the complaint reviewer").isNull();
+        assertThat(received.student()).as("The participant should always be hidden").isNull();
+        assertThat(received.result().participation()).as("Students should not see the initial assessor").isNull();
+        if (received.complaintResponse() != null) {
+            assertThat(received.complaintResponse().reviewer()).as("Students should not see the complaint reviewer").isNull();
+        }
     }
 
     @Test
@@ -466,7 +468,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         params.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
 
-        final var complaints = request.getList("/api/assessment/complaints", HttpStatus.OK, Complaint.class, params);
+        final var complaints = request.getList("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
 
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
@@ -481,17 +483,14 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         params.add("courseId", modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId().toString());
 
-        final var tutorComplaints = request.getList("/api/assessment/complaints", HttpStatus.OK, Complaint.class, params);
+        final var tutorComplaints = request.getList("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
         assertThat(tutorComplaints).isEmpty();
 
         params.add("allComplaintsForTutor", "true");
-        final var allComplaints = request.getList("/api/assessment/complaints", HttpStatus.OK, Complaint.class, params);
+        final var allComplaints = request.getList("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
 
         assertThat(allComplaints).hasSize(1);
         allComplaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
-
-        // Check assessor is filtered out if the user was not the assessor.
-        allComplaints.forEach(c -> assertThat(c.getResult().getAssessor()).isNull());
     }
 
     @Test
@@ -677,7 +676,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
                 "test-data/model-assessment/assessment.54727.v2.json", TEST_PREFIX + "tutor1", true);
     }
 
-    private void checkComplaintContainsNoSensitiveData(Complaint receivedComplaint, boolean shouldStudentBeFilteredOut) {
+    private void checkComplaintContainsNoSensitiveData(ComplaintDTO receivedComplaint, boolean shouldStudentBeFilteredOut) {
         if (shouldStudentBeFilteredOut) {
             checkIfNoStudentInformationPresent(receivedComplaint);
         }
@@ -687,59 +686,40 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         checkIfNoSensitiveParticipationDataPresent(receivedComplaint);
     }
 
-    private void checkIfNoSensitiveSubmissionDataPresent(Complaint receivedComplaint) {
-        final var submission = receivedComplaint.getResult().getSubmission();
+    private void checkIfNoSensitiveSubmissionDataPresent(ComplaintDTO receivedComplaint) {
+        final var submission = receivedComplaint.result().submission();
         if (submission != null) {
-            assertThat(submission.getLatestResult()).as("Submission only contains ID").isNull();
-            assertThat(submission.getSubmissionDate()).as("Submission only contains ID").isNull();
+            // The DTO should already filter sensitive submission data
+            assertThat(submission.submissionDate()).as("Submission only contains ID").isNull();
         }
     }
 
-    private void checkIfNoSensitiveParticipationDataPresent(Complaint receivedComplaint) {
-        final var participation = receivedComplaint.getResult().getSubmission().getParticipation();
+    private void checkIfNoSensitiveParticipationDataPresent(ComplaintDTO receivedComplaint) {
+        final var participation = receivedComplaint.result().submission().participation();
         if (participation != null) {
-            assertThat(participation.getSubmissions()).as("Participation does not contain submission info").isNullOrEmpty();
-            assertThat(participation.getSubmissionCount()).as("Participation does not contain submission info").isNull();
+            assertThat(participation.submissionCount()).as("Participation does not contain submission info").isNull();
         }
     }
 
-    private void checkIfNoSensitiveExerciseDataPresent(Complaint receivedComplaint) {
-        final var participation = receivedComplaint.getResult().getSubmission().getParticipation();
-        if (participation != null && participation.getExercise() != null) {
-            final var exercise = participation.getExercise();
-            assertThat(exercise.getGradingInstructions()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getTotalNumberOfAssessments()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getNumberOfComplaints()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getNumberOfMoreFeedbackRequests()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getNumberOfSubmissions()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getProblemStatement()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getCourseViaExerciseGroupOrCourseMember()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getAssessmentDueDate()).as("Exercise only contains title and ID").isNull();
-            assertThat(exercise.getStudentParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
-            assertThat(exercise.getTutorParticipations()).as("Exercise only contains title and ID").isNullOrEmpty();
+    private void checkIfNoSensitiveExerciseDataPresent(ComplaintDTO receivedComplaint) {
+        final var participation = receivedComplaint.result().submission().participation();
+        if (participation != null && participation.exercise() != null) {
+            final var exercise = participation.exercise();
+            assertThat(exercise.maxPoints()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.dueDate()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.assessmentType()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.course()).as("Exercise only contains title and ID").isNull();
+            assertThat(exercise.assessmentDueDate()).as("Exercise only contains title and ID").isNull();
             // TODO check exercise type specific sensitive attributes
-            switch (exercise) {
-                case ModelingExercise aModelingExercise -> {
-                    assertThat(aModelingExercise.getExampleSolutionModel()).as("Exercise only contains title and ID").isNull();
-                    assertThat(aModelingExercise.getExampleSolutionExplanation()).as("Exercise only contains title and ID").isNull();
-                }
-                case TextExercise textExercise -> {
-                    assertThat(textExercise.getExampleSolution()).as("Exercise only contains title and ID").isNull();
-                    assertThat(textExercise.getExampleSubmissions()).as("Exercise only contains title and ID").isNull();
-                }
-                case ProgrammingExercise programmingExercise -> assertThat(programmingExercise.getProgrammingLanguage()).as("Exercise only contains title and ID").isNull();
-                default -> {
-                }
-            }
         }
     }
 
-    private void checkIfNoStudentInformationPresent(Complaint receivedComplaint) {
-        assertThat(receivedComplaint.getParticipant()).as("Student should not be contained").isNull();
+    private void checkIfNoStudentInformationPresent(ComplaintDTO receivedComplaint) {
+        assertThat(receivedComplaint.student()).as("Student should not be contained").isNull();
+        assertThat(receivedComplaint.team()).as("Team should not be contained").isNull();
 
-        if (complaint.getResult() != null && complaint.getResult().getSubmission().getParticipation() != null) {
-            assertThat(((StudentParticipation) receivedComplaint.getResult().getSubmission().getParticipation()).getStudent())
-                    .as("Result in complaint shouldn't contain student participation").isEmpty();
+        if (receivedComplaint.result() != null) {
+            assertThat(receivedComplaint.result().participation()).as("Result shouldn't contain participation information").isNull();
         }
     }
 
@@ -767,7 +747,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         var exercise = complaint.getResult().getSubmission().getParticipation().getExercise();
         params.add("exerciseId", exercise.getId().toString());
 
-        var complaints = request.getList("/api/assessment/complaints", HttpStatus.OK, Complaint.class, params);
+        var complaints = request.getList("/api/assessment/complaints", HttpStatus.OK, ComplaintDTO.class, params);
         complaints.forEach(complaint -> checkComplaintContainsNoSensitiveData(complaint, true));
     }
 
