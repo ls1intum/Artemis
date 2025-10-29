@@ -35,7 +35,9 @@ export class ComplaintResponseService {
      */
     isComplaintResponseLockedByOtherUser(complaintResponse: ComplaintResponse): boolean {
         return (
-            !!complaintResponse.isCurrentlyLocked && complaintResponse.submittedTime === undefined && complaintResponse.reviewer?.login !== this.accountService.userIdentity?.login
+            !!complaintResponse.isCurrentlyLocked &&
+            complaintResponse.submittedTime === undefined &&
+            complaintResponse.reviewer?.login !== this.accountService.userIdentity()?.login
         );
     }
 
@@ -45,7 +47,9 @@ export class ComplaintResponseService {
      */
     isComplaintResponseLockedByLoggedInUser(complaintResponse: ComplaintResponse): boolean {
         return (
-            !!complaintResponse.isCurrentlyLocked && complaintResponse.submittedTime === undefined && complaintResponse.reviewer?.login === this.accountService.userIdentity?.login
+            !!complaintResponse.isCurrentlyLocked &&
+            complaintResponse.submittedTime === undefined &&
+            complaintResponse.reviewer?.login === this.accountService.userIdentity()?.login
         );
     }
 
