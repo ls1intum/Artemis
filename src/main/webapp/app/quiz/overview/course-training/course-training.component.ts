@@ -209,8 +209,8 @@ export class CourseTrainingComponent {
             next: (response) => {
                 const settings = response.body;
                 if (settings) {
-                    this.showInLeaderboard = settings.showInLeaderboard!;
-                    this.initialShowInLeaderboard.set(settings.showInLeaderboard!);
+                    this.showInLeaderboard = settings.showInLeaderboard ?? true;
+                    this.initialShowInLeaderboard.set(settings.showInLeaderboard ?? true);
                 }
                 this.displayInfoDialog = true;
                 this.isLoading.set(false);

@@ -18,6 +18,6 @@ export class LeaderboardService {
     }
 
     getSettings(): Observable<HttpResponse<LeaderboardSettingsDTO>> {
-        return this.http.get(`api/quiz/leaderboard-settings`, { observe: 'response' });
+        return this.http.get<LeaderboardSettingsDTO>(`api/quiz/leaderboard-settings`, { observe: 'response' });
     }
 }
