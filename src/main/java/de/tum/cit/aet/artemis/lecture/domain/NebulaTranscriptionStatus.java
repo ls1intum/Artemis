@@ -30,13 +30,7 @@ public enum NebulaTranscriptionStatus {
     /**
      * The transcription job has failed with an error.
      */
-    ERROR("error"),
-
-    /**
-     * The transcription job ID was not found on Nebula (e.g., expired or invalid).
-     * Treat the same as an error on our side.
-     */
-    NOT_FOUND("not_found");
+    ERROR("error");
 
     private final String value;
 
@@ -85,7 +79,7 @@ public enum NebulaTranscriptionStatus {
      * @return true if status is ERROR
      */
     public boolean hasFailed() {
-        return this == ERROR || this == NOT_FOUND;
+        return this == ERROR;
     }
 
     /**
