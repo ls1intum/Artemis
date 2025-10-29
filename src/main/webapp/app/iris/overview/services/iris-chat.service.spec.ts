@@ -22,6 +22,7 @@ import {
     mockUserMessageWithContent,
     mockWebsocketServerMessage,
     mockWebsocketStatusMessage,
+    mockWebsocketStatusMessageWithInteralStage,
 } from 'test/helpers/sample/iris-sample-data';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import 'app/shared/util/array.extension';
@@ -229,6 +230,18 @@ describe('IrisChatService', () => {
 
         service.currentStages().subscribe((stages) => {
             expect(stages).toEqual(mockWebsocketStatusMessage.stages);
+        });
+        tick();
+    }));
+
+    it('should handle websocket status message with internal stages', fakeAsync(() => {
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessageWithInteralStage));
+        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
+
+        service.currentStages().subscribe((stages) => {
+            expect(stages).toEqual(mockWebsocketStatusMessageWithInteralStage.stages.filter((stage) => !stage.internal));
         });
         tick();
     }));
