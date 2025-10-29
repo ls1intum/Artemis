@@ -166,7 +166,7 @@ export class IrisChatService implements OnDestroy {
         const requiresAcceptance = this.sessionCreationIdentifier
             ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
             : true;
-        if (requiresAcceptance === false || this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
+        if (requiresAcceptance === false || this.accountService.userIdentity()?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
             this.getCurrentSessionOrCreate().subscribe({
                 ...this.handleNewSession(),
                 complete: () => this.loadChatSessions(),
@@ -480,7 +480,7 @@ export class IrisChatService implements OnDestroy {
             captureException(new Error('Could not load chat sessions, courseId is not set.'), {
                 extra: {
                     currentUrl: this.router.url,
-                    userId: this.accountService.userIdentity?.id,
+                    userId: this.accountService.userIdentity()?.id,
                     sessionCreationIdentifier: this.sessionCreationIdentifier,
                 },
                 tags: {
@@ -541,7 +541,7 @@ export class IrisChatService implements OnDestroy {
             captureException(new Error('Could not switch session, courseId is not set.'), {
                 extra: {
                     currentUrl: this.router.url,
-                    userId: this.accountService.userIdentity?.id,
+                    userId: this.accountService.userIdentity()?.id,
                     sessionId: this.sessionId,
                     sessionCreationIdentifier: this.sessionCreationIdentifier,
                 },
