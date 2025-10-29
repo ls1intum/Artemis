@@ -25,10 +25,10 @@ public class AtlasMLRestTemplateConfiguration {
 
     private static final int ATLASML_SHORT_READ_TIMEOUT = 10 * 1000; // 10 seconds
 
-    @Value("${atlas.atlasml.base-url:https://atlasml.aet.cit.tum.de}")
+    @Value("${atlas.atlasml.base-url}")
     private String atlasmlBaseUrl;
 
-    @Value("${atlas.atlasml.auth-token:}")
+    @Value("${atlas.atlasml.auth-token}")
     private String atlasmlAuthToken;
 
     /**
