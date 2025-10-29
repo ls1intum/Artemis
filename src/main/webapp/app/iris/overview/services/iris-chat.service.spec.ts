@@ -28,6 +28,7 @@ import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-mess
 import 'app/shared/util/array.extension';
 import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
@@ -241,7 +242,7 @@ describe('IrisChatService', () => {
         service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
 
         service.currentStages().subscribe((stages) => {
-            expect(stages).toEqual(mockWebsocketStatusMessageWithInteralStage.stages.filter((stage) => !stage.internal));
+            expect(stages).toEqual(mockWebsocketStatusMessageWithInteralStage.stages?.filter((stage: IrisStageDTO) => !stage.internal));
         });
         tick();
     }));
