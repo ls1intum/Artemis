@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -10,8 +11,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizTrainingLeaderboardRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -22,9 +25,13 @@ public class QuizTrainingService {
 
     private final QuizQuestionRepository quizQuestionRepository;
 
-    public QuizTrainingService(QuizQuestionProgressService quizQuestionProgressService, QuizQuestionRepository quizQuestionRepository) {
+    private final QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository;
+
+    public QuizTrainingService(QuizQuestionProgressService quizQuestionProgressService, QuizQuestionRepository quizQuestionRepository,
+            QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository) {
         this.quizQuestionProgressService = quizQuestionProgressService;
         this.quizQuestionRepository = quizQuestionRepository;
+        this.quizTrainingLeaderboardRepository = quizTrainingLeaderboardRepository;
     }
 
     /**
@@ -52,5 +59,11 @@ public class QuizTrainingService {
         }
 
         return SubmittedAnswerAfterEvaluationDTO.of(submittedAnswer);
+    }
+
+    public LeaderboardSettingDTO getLeaderboardSettings(long userId) {
+        Optional<Boolean> showInLeaderboardOptional = quizTrainingLeaderboardRepository.getShowInLeaderboard(userId);
+        Boolean showInLeaderboard = showInLeaderboardOptional.orElse(null);
+        return new LeaderboardSettingDTO(showInLeaderboard);
     }
 }

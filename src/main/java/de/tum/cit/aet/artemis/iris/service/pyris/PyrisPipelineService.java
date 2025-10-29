@@ -181,6 +181,7 @@ public class PyrisPipelineService {
                             latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
                             pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise),
                             new PyrisCourseDTO(course),
+                            session.getTitle(),
                             pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                             new PyrisUserDTO(user),
                             executionDto.settings(),
@@ -230,6 +231,7 @@ public class PyrisPipelineService {
                     PyrisExtendedCourseDTO.of(fullCourse),
                     api.getStudentCourseMetrics(studentId, courseId),
                     generateEventPayloadFromObjectType(eventDtoClass, eventObject), // get the event payload DTO
+                    session.getTitle(),
                     pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                     new PyrisUserDTO(user),
                     executionDto.settings(),

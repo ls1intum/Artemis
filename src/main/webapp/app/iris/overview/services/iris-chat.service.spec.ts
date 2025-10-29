@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
@@ -28,6 +28,7 @@ import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-mess
 import 'app/shared/util/array.extension';
 import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 
 describe('IrisChatService', () => {
@@ -245,6 +246,35 @@ describe('IrisChatService', () => {
             expect(stages).toEqual(mockWebsocketStatusMessageWithInteralStage.stages?.filter((stage: IrisStageDTO) => !stage.internal));
         });
         tick();
+    }));
+
+    it('should update session title from websocket STATUS payload', fakeAsync(() => {
+        const myTitle = 'My new session title';
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([{ id, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1 } as IrisSessionDTO]));
+
+        const wsPayloadWithTitle = {
+            type: IrisChatWebsocketPayloadType.STATUS,
+            stages: [],
+            sessionTitle: myTitle,
+        };
+        const wsSpy = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(
+            new Observable((subscriber) => {
+                setTimeout(() => {
+                    subscriber.next(wsPayloadWithTitle);
+                    subscriber.complete();
+                }, 0);
+            }),
+        );
+        service.switchTo(ChatServiceMode.COURSE, id);
+
+        expect(wsSpy).toHaveBeenCalledWith(id);
+        tick();
+
+        service.availableChatSessions().subscribe((sessions) => {
+            const current = sessions.find((s) => s.id === id);
+            expect(current?.title).toBe(myTitle);
+        });
     }));
 
     it('should handle websocket message', fakeAsync(() => {
