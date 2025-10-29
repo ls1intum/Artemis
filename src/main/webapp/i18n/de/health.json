@@ -28,6 +28,7 @@
             "athena": "Athena",
             "apollon": "Apollon Conversion Server",
             "pyris": "Pyris",
+            "atlasML": "AtlasML",
             "ssl": "SSL",
             "hermes": "Hermes Push Notifications",
             "sharing": "Sharing Plattform Connector"

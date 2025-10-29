@@ -12,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
  * Configuration for AtlasML RestTemplate.
  * Provides RestTemplate beans for communicating with the AtlasML microservice.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasMLEnabled.class)
 @Configuration
 @Lazy
 public class AtlasMLRestTemplateConfiguration {

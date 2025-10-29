@@ -22,7 +22,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasMLEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
  * Service for communicating with the AtlasML microservice.
  * Provides methods for suggesting and saving competencies.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasMLEnabled.class)
 @Service
 @Lazy
 public class AtlasMLService {
