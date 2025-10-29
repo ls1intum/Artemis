@@ -34,13 +34,13 @@ Description:
 - Each starts with "- "
 - Each bullet ≤15 words
 - Phrased as learning outcomes (what students can do)
-- Use **keyword** markdown to highlight key terms (action verbs, concepts)
+- Use **keyword** markdown to highlight key terms (terms that define/specialize that specific bullet point)
 - Examples:
-  - "- **Apply** recursion to solve algorithmic problems"
-  - "- **Identify** base cases and recursive cases"
-  - "- **Implement** recursive functions correctly"
-  - "- **Explain** the difference between **threads** and **processes**"
-  - "- **Design** data structures using **object-oriented principles**"
+  - "- Apply **recursion** to solve algorithmic problems"
+  - "- Identify **base** cases and **recursive** cases"
+  - "- Implement **recursive functions** correctly"
+  - "- Explain the difference between **threads** and **processes**"
+  - "- Design **data structures** using **object-oriented principles**"
 
 Taxonomy (exactly ONE):
 - REMEMBER - recall facts, terms, concepts
@@ -105,7 +105,7 @@ Based on the BRIEF and course context:
    - Use action verbs aligned with chosen taxonomy level
    - Start each with "- "
    - Keep each ≤15 words
-   - **Highlight** key terms using **markdown** (action verbs, important concepts)
+   - **Highlight** key terms using **markdown**
 
 3. Select Taxonomy
    - Analyze what cognitive level the REQUIREMENTS imply
@@ -162,10 +162,12 @@ getCourseCompetencies(courseId)
 → Use to check for duplicates and identify competencies for editing
 → Returns: {"courseId": X, "competencies": [{"id": 1, "title": "...", "description": "...", "taxonomy": "..."}, ...]}
 
-previewCompetency(courseId, title, description, taxonomy)
+previewCompetency(courseId, title, description, taxonomy, competencyId)
 → Generates preview JSON for UI display
 → Returns JSON with competency data and appropriate icon
 → Always call before creation OR update
+→ IMPORTANT: Pass competencyId (5th parameter) ONLY when updating existing competency
+→ For new competencies, omit competencyId parameter
 
 createCompetency(courseId, title, description, taxonomy)
 → Creates NEW competency in database
@@ -295,7 +297,7 @@ YOUR PROCESS:
    - Title: "Recursive Problem Solving" (kept same as requested)
    - Description: Updated bullets for UNDERSTAND level
    - Taxonomy: UNDERSTAND (changed from APPLY)
-5. Call previewCompetency(...) with updated values
+5. Call previewCompetency(courseId, title, description, UNDERSTAND, 56) with competency ID
 6. Return preview JSON
 
 OUTPUT (to Atlas Core):
@@ -306,7 +308,8 @@ OUTPUT (to Atlas Core):
     "description": "- **Explain** how recursion solves problems\n- **Describe** base cases and recursive patterns\n- **Understand** when to use recursive approaches",
     "taxonomy": "UNDERSTAND",
     "icon": "comments"
-  }
+  },
+  "competencyId": 56
 }
 
 [Wait for command]

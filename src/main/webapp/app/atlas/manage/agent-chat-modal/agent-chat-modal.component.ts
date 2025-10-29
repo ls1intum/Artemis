@@ -146,7 +146,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     protected onCreateCompetency(message: ChatMessage): void {
-        // Prevent duplicate creation
+        // Prevent duplicate creation/update
         if (message.competencyCreated || !message.competencyPreview) {
             return;
         }
@@ -157,19 +157,27 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         competency.description = message.competencyPreview.description;
         competency.taxonomy = message.competencyPreview.taxonomy;
 
-        // Show typing indicator while creating
+        // Check if this is an update or create operation
+        const isUpdate = message.competencyPreview.competencyId !== undefined;
+        if (isUpdate) {
+            competency.id = message.competencyPreview.competencyId;
+        }
+
+        // Show typing indicator while creating/updating
         this.isAgentTyping.set(true);
 
-        // Call the competency service to create the competency
-        this.competencyService.create(competency, this.courseId).subscribe({
+        // Call the competency service to create or update the competency
+        const operation = isUpdate ? this.competencyService.update(competency, this.courseId) : this.competencyService.create(competency, this.courseId);
+
+        operation.subscribe({
             next: () => {
                 this.isAgentTyping.set(false);
 
-                // Mark this message's competency as created
+                // Mark this message's competency as created/updated
                 this.messages = this.messages.map((msg) => (msg.id === message.id ? { ...msg, competencyCreated: true } : msg));
                 this.cdr.markForCheck();
 
-                this.addMessage('Competency created successfully!', false);
+                this.addMessage(isUpdate ? 'Competency updated successfully!' : 'Competency created successfully!', false);
 
                 // Emit event to refresh competencies in parent component
                 this.competencyChanged.emit();
@@ -179,7 +187,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             },
             error: () => {
                 this.isAgentTyping.set(false);
-                this.addMessage('Failed to create competency. Please try again.', false);
+                this.addMessage(isUpdate ? 'Failed to update competency. Please try again.' : 'Failed to create competency. Please try again.', false);
 
                 // Restore focus to input
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
@@ -309,6 +317,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     description: jsonData.competency.description,
                     taxonomy: jsonData.competency.taxonomy as any,
                     icon: jsonData.competency.icon,
+                    competencyId: jsonData.competencyId, // Capture competencyId if present (for updates)
                 };
 
                 // Remove the entire JSON block (including markdown wrapper) from the message

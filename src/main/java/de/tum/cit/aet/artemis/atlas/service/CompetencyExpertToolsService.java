@@ -57,12 +57,14 @@ public class CompetencyExpertToolsService {
      * @param title         the competency title
      * @param description   the competency description
      * @param taxonomyLevel the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)
+     * @param competencyId  optional ID of existing competency (for updates)
      * @return JSON representation of the competency preview (same format as the frontend receives)
      */
-    @Tool(description = "REQUIRED: Display a visual competency card preview to the instructor. Must be called before creating any competency. Returns formatted card data.")
+    @Tool(description = "REQUIRED: Display a visual competency card preview to the instructor. Must be called before creating/updating any competency. Returns formatted card data.")
     public String previewCompetency(@ToolParam(description = "the title of the competency") String title,
             @ToolParam(description = "the description of the competency") String description,
-            @ToolParam(description = "the taxonomy level: REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, or CREATE") CompetencyTaxonomy taxonomyLevel) {
+            @ToolParam(description = "the taxonomy level: REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, or CREATE") CompetencyTaxonomy taxonomyLevel,
+            @ToolParam(description = "optional: the ID of the competency being updated (omit for new competencies)", required = false) Long competencyId) {
 
         // Create a preview competency object (without saving to database)
         Map<String, Object> competencyPreview = new LinkedHashMap<>();
@@ -84,6 +86,11 @@ public class CompetencyExpertToolsService {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("preview", true);
         response.put("competency", competencyPreview);
+
+        // Add competencyId OUTSIDE the competency object if this is an update
+        if (competencyId != null) {
+            response.put("competencyId", competencyId);
+        }
 
         return toJson(response);
     }

@@ -39,7 +39,11 @@
                                     (click)="onCreateCompetency(message)"
                                     [disabled]="isAgentTyping() || message.competencyCreated"
                                 >
-                                    {{ message.competencyCreated ? 'Created' : 'Create' }}
+                                    @if (message.competencyCreated) {
+                                        {{ message.competencyPreview.competencyId ? 'Updated' : 'Created' }}
+                                    } @else {
+                                        {{ message.competencyPreview.competencyId ? 'Update' : 'Create' }}
+                                    }
                                 </button>
                             </div>
                         }

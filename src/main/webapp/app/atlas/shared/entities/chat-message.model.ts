@@ -28,4 +28,5 @@ export interface CompetencyPreview {
     description: string;
     taxonomy: CompetencyTaxonomy;
     icon?: string;
+    competencyId?: number; // Optional: present when updating existing competency
 }
