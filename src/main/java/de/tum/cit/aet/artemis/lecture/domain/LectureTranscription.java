@@ -5,6 +5,8 @@ import java.util.List;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -34,6 +36,17 @@ public class LectureTranscription extends DomainObject {
     @OneToOne
     @JoinColumn(name = "lecture_unit_id", unique = true)
     private LectureUnit lectureUnit;
+
+    /**
+     * The external transcription job ID from the transcription service (e.g., Nebula).
+     * Used to track and poll the status of the asynchronous transcription process.
+     */
+    @Column(name = "job_id", unique = true)
+    private String jobId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transcription_status", nullable = false)
+    private TranscriptionStatus transcriptionStatus = TranscriptionStatus.PENDING;
 
     public LectureTranscription() {
     }
@@ -68,8 +81,24 @@ public class LectureTranscription extends DomainObject {
         this.lectureUnit = lectureUnit;
     }
 
+    public String getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
+    }
+
+    public TranscriptionStatus getTranscriptionStatus() {
+        return transcriptionStatus;
+    }
+
+    public void setTranscriptionStatus(TranscriptionStatus transcriptionStatus) {
+        this.transcriptionStatus = transcriptionStatus;
+    }
+
     @Override
     public String toString() {
-        return "Transcription [language=" + language + ", segments=" + segments + "]";
+        return "Transcription [language=" + language + ", segments=" + segments + ", jobId=" + jobId + ", status=" + transcriptionStatus + "]";
     }
 }

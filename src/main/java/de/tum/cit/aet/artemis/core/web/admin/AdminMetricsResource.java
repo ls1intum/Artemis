@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas.web.admin;
+package de.tum.cit.aet.artemis.core.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 @Lazy
 @RestController
 @EnforceAdmin
-@RequestMapping("api/atlas/admin/metrics/")
+@RequestMapping("api/core/admin/metrics/")
 public class AdminMetricsResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminMetricsResource.class);

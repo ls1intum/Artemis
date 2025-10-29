@@ -110,11 +110,10 @@ describe('AttachmentVideoUnitsComponent', () => {
                         },
                     },
                 },
-                MockProvider(Router),
             ],
         }).compileComponents();
 
-        jest.spyOn(TestBed.inject(Router), 'getCurrentNavigation').mockReturnValue({
+        jest.spyOn(TestBed.inject(Router), 'currentNavigation').mockReturnValue({
             extras: {
                 state: {
                     file: new File([''], 'testFile.pdf', { type: 'application/pdf' }),
@@ -224,10 +223,16 @@ describe('AttachmentVideoUnitsComponent', () => {
     it('should navigate to previous state', fakeAsync(() => {
         attachmentVideoUnitsComponentFixture.detectChanges();
 
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        const previousState = jest.spyOn(attachmentVideoUnitsComponent, 'cancelSplit');
+        // ensure the method has valid data
+        attachmentVideoUnitsComponent.courseId = 42;
+        attachmentVideoUnitsComponent.lectureId = 1;
+
+        // stub navigate so no real routing happens
+        const navigateSpy = jest.spyOn(router, 'navigate').mockResolvedValue(true as any);
+
+        const cancelSpy = jest.spyOn(attachmentVideoUnitsComponent, 'cancelSplit');
         attachmentVideoUnitsComponent.cancelSplit();
-        expect(previousState).toHaveBeenCalledOnce();
+        expect(cancelSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledOnce();
     }));
 

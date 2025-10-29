@@ -1,6 +1,5 @@
-import 'zone.js';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
+import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git-diff-file/git-diff-file.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
@@ -78,7 +77,7 @@ describe('GitDiffFileComponent', () => {
 
     beforeAll(() => {
         try {
-            TestBed.initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
+            TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
         } catch (error) {
             // The environment is already initialized when running through the Angular CLI test harness.
         }
@@ -120,7 +119,7 @@ describe('GitDiffFileComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it.each(mockDiffInformations)('should handle $fileStatus file correctly', (diffInfo) => {
+    it.each(mockDiffInformations)('should handle $fileStatus file correctly', (diffInfo: DiffInformation) => {
         const setFileContentsStub = jest.fn();
         jest.spyOn(comp, 'monacoDiffEditor').mockReturnValue({ setFileContents: setFileContentsStub } as unknown as MonacoDiffEditorComponent);
         fixture.componentRef.setInput('diffInformation', diffInfo);
