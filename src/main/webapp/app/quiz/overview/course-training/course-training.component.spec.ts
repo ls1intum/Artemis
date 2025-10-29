@@ -3,11 +3,11 @@ import { CourseTrainingComponent } from './course-training.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockBuilder } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LeaderboardService } from './course-training-quiz/leaderboard/service/leaderboard-service';
-import { LeaderboardDTO, LeaderboardEntry } from './course-training-quiz/leaderboard/leaderboard-types';
+import { LeaderboardDTO, LeaderboardEntry, LeaderboardSettingsDTO } from './course-training-quiz/leaderboard/leaderboard-types';
 import { LocationStrategy, PathLocationStrategy } from '@angular/common';
 import dayjs from 'dayjs/esm';
 
@@ -57,6 +57,7 @@ describe('CourseTrainingComponent', () => {
 
         leaderboardService = TestBed.inject(LeaderboardService);
         jest.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockReturnValue(of(mockLeaderboardDTO));
+        jest.spyOn(leaderboardService, 'getSettings').mockReturnValue(of(new HttpResponse({ body: { showInLeaderboard: true } as LeaderboardSettingsDTO })));
 
         fixture = TestBed.createComponent(CourseTrainingComponent);
         component = fixture.componentInstance;
@@ -206,9 +207,55 @@ describe('CourseTrainingComponent', () => {
         expect(component.isLoading()).toBeFalse();
     });
 
-    it('should set displayInfoDialog to true', () => {
-        expect(component.displayInfoDialog).toBeFalsy();
+    it('should load settings and open info dialog', () => {
+        const getSettingsSpy = jest.spyOn(leaderboardService, 'getSettings');
+
         component.showInfoDialog();
+
+        expect(component.isLoading()).toBeFalse();
+        expect(getSettingsSpy).toHaveBeenCalled();
+        expect(component.showInLeaderboard).toBeTrue();
+        expect(component.initialShowInLeaderboard()).toBeTrue();
+        expect(component.displayInfoDialog).toBeTrue();
+    });
+
+    it('should handle error when loading settings for info dialog', () => {
+        jest.spyOn(leaderboardService, 'getSettings').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        component.displayInfoDialog = false;
+        component.isLoading.set(true);
+        component.showInfoDialog();
+
+        expect(component.isLoading()).toBeFalse();
+        expect(component.displayInfoDialog).toBeFalse();
+    });
+
+    it('should save info dialog settings and reload leaderboard', () => {
+        const updateSettingsSpy = jest.spyOn(leaderboardService, 'updateSettings').mockReturnValue(of(undefined));
+        const loadLeaderboardSpy = jest.spyOn(component, 'loadLeaderboard');
+
+        component.showInLeaderboard = false;
+        component.displayInfoDialog = true;
+        component.onSaveInfoDialog();
+
+        expect(updateSettingsSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                showInLeaderboard: false,
+            }),
+        );
+        expect(component.initialShowInLeaderboard()).toBeFalse();
+        expect(component.displayInfoDialog).toBeFalse();
+        expect(loadLeaderboardSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('should handle error when saving info dialog settings', () => {
+        jest.spyOn(leaderboardService, 'updateSettings').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+        component.displayInfoDialog = true;
+        component.isLoading.set(true);
+        component.onSaveInfoDialog();
+
+        expect(component.isLoading()).toBeFalse();
         expect(component.displayInfoDialog).toBeTrue();
     });
 });
