@@ -48,7 +48,7 @@ describe('StudentsRoomDistributionService', () => {
             expect(service.availableRooms()).toEqual(mockRooms);
         });
 
-        it('should reset availableRooms to undefined on error', () => {
+        it('should reset availableRooms to empty array on error', () => {
             service.loadRoomData();
 
             const req = httpMock.expectOne(`${BASE_URL}/rooms/distribution-data`);
