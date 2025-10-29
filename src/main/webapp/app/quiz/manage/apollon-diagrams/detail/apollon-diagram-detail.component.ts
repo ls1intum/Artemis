@@ -2,7 +2,6 @@ import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, 
 import { ActivatedRoute } from '@angular/router';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@tumaet/apollon';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-//import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { convertRenderedSVGToPNG } from '../exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
@@ -32,7 +31,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
-    //private languageHelper = inject(JhiLanguageHelper);
     private modalService = inject(NgbModal);
     private route = inject(ActivatedRoute);
 
@@ -112,15 +110,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                     this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
                 },
             });
-
-            /*this.languageHelper.language.subscribe(async (languageKey: string) => {
-                if (this.apollonEditor) {
-                    await this.apollonEditor.nextRender;
-                    this.apollonEditor.locale = languageKey as Locale;
-                }
-            });
-
-             */
         });
     }
 

@@ -7,14 +7,6 @@ import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { round } from 'app/shared/util/utils';
-/*import {
-    TutorialGroupUtilizationIndicatorComponent
-} from 'app/tutorialgroup/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
-import {
-    EditableField
-} from 'app/programming/manage/grading/configure/programming-exercise-configure-grading.component';
-
- */
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
 export const MAX_SIZE_UNIT = 200;

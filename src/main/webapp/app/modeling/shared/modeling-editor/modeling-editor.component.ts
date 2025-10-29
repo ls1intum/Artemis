@@ -6,7 +6,6 @@ import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-ico
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-// import { Patch } from '@tumaet/apollon';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, NgStyle } from '@angular/common';
@@ -105,9 +104,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             if (this.modelSubscription) {
                 this.apollonEditor.unsubscribe(this.modelSubscription);
             }
-            // if (this.modelPatchSubscription) {
-            //     this.apollonEditor.unsubscribeFromModelChangePatches(this.modelPatchSubscription);
-            // }
             this.apollonEditor.destroy();
             this.apollonEditor = undefined;
         }
@@ -160,7 +156,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             this.umlModel = changes.umlModel.currentValue;
             // Apollon doesn't need assessments in Modeling mode
             ModelingEditorComponent.removeAssessments(this.umlModel);
-            // this.apollonEditor.model = this.umlModel;
         }
     }
 

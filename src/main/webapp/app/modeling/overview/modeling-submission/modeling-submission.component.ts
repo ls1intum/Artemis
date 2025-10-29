@@ -380,7 +380,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private updateModelAndExplanation(): void {
         if (this.submission.model) {
             this.umlModel = JSON.parse(this.submission.model);
-            const nodes = this.umlModel.nodes ?? this.umlModel.elements ?? {};
+            const nodes = this.umlModel.nodes ?? {};
             this.hasElements = Array.isArray(nodes) ? nodes.length !== 0 : Object.values(nodes).length !== 0;
         }
         this.explanation = this.submission.explanationText ?? '';
@@ -742,7 +742,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         const umlModel = this.modelingEditor.getCurrentModel();
-        const nodes = umlModel.nodes ?? umlModel.elements ?? {};
+        const nodes = umlModel.nodes ?? {};
         this.hasElements = Array.isArray(nodes) ? nodes.length !== 0 : Object.values(nodes).length !== 0;
         const diagramJson = JSON.stringify(umlModel);
         if (this.submission && diagramJson) {

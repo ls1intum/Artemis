@@ -159,7 +159,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
         // Get the modelingExercise
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
-            // console.log('DEBUG modelingExercise,', JSON.stringify(modelingExercise));
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {
@@ -203,8 +202,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
                         if (this.isExamMode) {
                             // The target exerciseGroupId where we want to import into
-                            // const exerciseGroupId = params['exerciseGroupId'];
-                            // const examId = params['examId'];
                             const { exerciseGroupId, examId } = params;
 
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.modelingExercise.exerciseGroup = res.body!));
