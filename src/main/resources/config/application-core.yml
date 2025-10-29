@@ -1,6 +1,8 @@
 artemis:
     atlas:
         enabled: true
+        atlasml:
+            enabled: false
     hyperion:
         enabled: false
     exam:

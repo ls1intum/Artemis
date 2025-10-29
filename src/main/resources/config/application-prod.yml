@@ -122,5 +122,6 @@ info:
 
 atlas:
   atlasml:
-    # TODO: provide a local system for development
-    base-url: https://atlasml.aet.cit.tum.de
+    enabled: false # If disabled, no artifacts of the AtlasML service are accessible. This might impact the experience for instructors, i.e. some of the AI recommendations are not available.
+    base-url: <your-nebula-url> # Required address to you own AtlasML instance
+    auth-token: <your-secret> # The secret used to authenticate Artemis against AtlasML
