@@ -27,7 +27,8 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
 
     private final RTopic notificationTopic;
 
-    private final Map<UUID, Integer> listenerRegistrations = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> topicListenerRegistrations = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> queueListenerRegistrations = new ConcurrentHashMap<>();
 
     public RedissonDistributedQueue(RQueue<T> queue, RTopic notificationTopic) {
         this.queue = queue;
@@ -123,7 +124,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
             }
         });
         UUID uuid = UUID.randomUUID();
-        listenerRegistrations.put(uuid, registrationId);
+        topicListenerRegistrations.put(uuid, registrationId);
         return uuid;
     }
 
@@ -149,21 +150,29 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
         }
         int registrationId = queue.addListener(new RedissonQueueListener());
         UUID uuid = UUID.randomUUID();
-        listenerRegistrations.put(uuid, registrationId);
+        queueListenerRegistrations.put(uuid, registrationId);
         return uuid;
     }
 
     @Override
     public void removeListener(UUID uuid) {
         try {
-            Integer listenerId = listenerRegistrations.get(uuid);
+            Integer listenerId = topicListenerRegistrations.get(uuid);
+            if (listenerId != null) {
+                notificationTopic.removeListener(listenerId);
+                topicListenerRegistrations.remove(uuid);
+                log.debug("Removed topic listener for UUID: {}", uuid);
+                return;
+            }
+            listenerId = queueListenerRegistrations.get(uuid);
+
             if (listenerId == null) {
                 log.warn("No listener found for UUID: {}", uuid);
                 return;
             }
-            notificationTopic.removeListener(listenerId);
             queue.removeListener(listenerId);
-            listenerRegistrations.remove(uuid);
+            queueListenerRegistrations.remove(uuid);
+            log.debug("Removed queue listener for UUID: {}", uuid);
         }
         catch (RedisConnectionException e) {
             log.error("Could not remove listener due to Redis connection exception.", e);
