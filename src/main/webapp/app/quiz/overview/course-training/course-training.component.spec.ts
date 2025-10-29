@@ -181,7 +181,7 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should save leaderboard settings', () => {
-        const saveSpy = jest.spyOn(leaderboardService, 'initializeLeaderboardEntry').mockReturnValue(of(undefined));
+        const saveSpy = jest.spyOn(leaderboardService, 'updateSettings').mockReturnValue(of(undefined));
         const loadSpy = jest.spyOn(component, 'loadLeaderboard');
 
         component.showInLeaderboard = true;
@@ -198,7 +198,7 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should handle error when saving leaderboard settings', () => {
-        jest.spyOn(leaderboardService, 'initializeLeaderboardEntry').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        jest.spyOn(leaderboardService, 'updateSettings').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
         component.isLoading.set(true);
         component.onSaveDialog();

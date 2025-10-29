@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { LeaderboardDTO, LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
 import { Observable } from 'rxjs';
@@ -13,7 +13,11 @@ export class LeaderboardService {
         return this.http.get<LeaderboardDTO>(`api/quiz/courses/${courseId}/training/leaderboard`);
     }
 
-    initializeLeaderboardEntry(leaderboardSettings: LeaderboardSettingsDTO): Observable<void> {
+    updateSettings(leaderboardSettings: LeaderboardSettingsDTO): Observable<void> {
         return this.http.put<void>(`api/quiz/leaderboard-settings`, leaderboardSettings);
+    }
+
+    getSettings(): Observable<HttpResponse<LeaderboardSettingsDTO>> {
+        return this.http.get(`api/quiz/leaderboard-settings`, { observe: 'response' });
     }
 }

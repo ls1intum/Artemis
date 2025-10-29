@@ -59,6 +59,7 @@ export class CourseTrainingComponent {
     isLoading = signal<boolean>(false);
     isDataLoaded = signal<boolean>(false);
     currentTime = signal<string>('');
+    initialShowInLeaderboard = signal<boolean>(true);
 
     showDialog = true;
     showInLeaderboard = true;
@@ -188,7 +189,7 @@ export class CourseTrainingComponent {
         const leaderboardSettings = new LeaderboardSettingsDTO();
         leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
 
-        this.leaderboardService.initializeLeaderboardEntry(leaderboardSettings).subscribe({
+        this.leaderboardService.updateSettings(leaderboardSettings).subscribe({
             next: () => {
                 this.isFirstVisit.set(false);
                 const courseId = this.courseId();
@@ -203,6 +204,40 @@ export class CourseTrainingComponent {
     }
 
     showInfoDialog(): void {
-        this.displayInfoDialog = true;
+        this.isLoading.set(true);
+        this.leaderboardService.getSettings().subscribe({
+            next: (response) => {
+                const settings = response.body;
+                if (settings) {
+                    this.showInLeaderboard = settings.showInLeaderboard!;
+                    this.initialShowInLeaderboard.set(settings.showInLeaderboard!);
+                }
+                this.displayInfoDialog = true;
+                this.isLoading.set(false);
+            },
+            error: () => {
+                this.isLoading.set(false);
+            },
+        });
+    }
+
+    onSaveInfoDialog(): void {
+        this.isLoading.set(true);
+        const leaderboardSettings = new LeaderboardSettingsDTO();
+        leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
+
+        this.leaderboardService.updateSettings(leaderboardSettings).subscribe({
+            next: () => {
+                this.initialShowInLeaderboard.set(this.showInLeaderboard);
+                this.displayInfoDialog = false;
+                const courseId = this.courseId();
+                if (courseId !== undefined) {
+                    this.loadLeaderboard(courseId);
+                }
+            },
+            error: () => {
+                this.isLoading.set(false);
+            },
+        });
     }
 }

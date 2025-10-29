@@ -232,7 +232,7 @@
                 "quizTraining": "Quiz Training",
                 "leaderboardSettings": "Leaderboard Einstellungen",
                 "leaderboardVisibilityTooltip": "Bestimmt, ob dein Name und deine Ergebnisse im Quiz-Training Leaderboard angezeigt werden",
-                "leaderboardVisibilityInfo": "Wenn aktiviert, wird dein Name im Quiz-Training Leaderboard angezeigt. Deaktiviere diese Option, wenn du nicht im Leaderboard erscheinen möchtest.",
+                "leaderboardVisibilityInfo": "Wenn aktiviert, wird dein Name kursübergreifend im Quiz-Training Leaderboard angezeigt. Deaktiviere diese Option, wenn du nicht im Leaderboard erscheinen möchtest.",
                 "visitQuizTrainingFirst": "Bitte besuche zuerst den Quiz-Training Modus, um die Leaderboard-Einstellungen zu aktivieren.",
                 "updateSuccess": "Leaderboard-Einstellungen wurden erfolgreich aktualisiert."
             }

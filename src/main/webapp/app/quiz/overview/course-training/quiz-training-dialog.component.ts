@@ -1,4 +1,4 @@
-import { Component, input, model, output } from '@angular/core';
+import { Component, computed, input, model, output } from '@angular/core';
 import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -10,6 +10,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 
 @Component({
     selector: 'jhi-quiz-training-dialog',
+    styleUrl: 'course-training.component.scss',
     imports: [DialogModule, FormsModule, TranslateDirective, ToggleSwitchModule, TooltipModule, ArtemisTranslatePipe, LeagueIconComponent, ButtonComponent],
     templateUrl: './quiz-training-dialog.component.html',
 })
@@ -18,5 +19,15 @@ export class QuizTrainingDialogComponent {
     showInLeaderboard = model<boolean>(true);
     closable = input<boolean>(false);
     showLeaderboardSettings = input<boolean>(true);
+    initialShowInLeaderboard = input<boolean>(true);
+    disableSaveValidation = input<boolean>(false);
+
     save = output<void>();
+
+    saveDisabled = computed(() => {
+        if (this.disableSaveValidation()) {
+            return false;
+        }
+        return this.showInLeaderboard() === this.initialShowInLeaderboard();
+    });
 }

@@ -75,7 +75,7 @@ describe('LeaderboardService', () => {
                 showInLeaderboard: true,
             };
 
-            service.initializeLeaderboardEntry(mockSettings).subscribe((response) => {
+            service.updateSettings(mockSettings).subscribe((response) => {
                 expect(response).toBeNull();
             });
 

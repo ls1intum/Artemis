@@ -1,6 +1,13 @@
 @if (!isLoading()) {
     <div>
-        <jhi-quiz-training-dialog [(visible)]="showDialog" [(showInLeaderboard)]="showInLeaderboard" [closable]="false" [showLeaderboardSettings]="true" (save)="onSaveDialog()" />
+        <jhi-quiz-training-dialog
+            [(visible)]="showDialog"
+            [(showInLeaderboard)]="showInLeaderboard"
+            [closable]="false"
+            [showLeaderboardSettings]="true"
+            [disableSaveValidation]="true"
+            (save)="onSaveDialog()"
+        />
 
         @if (!isFirstVisit() && isDataLoaded()) {
             <div class="header-section d-flex">
@@ -56,7 +63,14 @@
                         <p-button (click)="showInfoDialog()" severity="secondary">
                             <span jhiTranslate="artemisApp.quizTraining.infoButton"></span>
                         </p-button>
-                        <jhi-quiz-training-dialog [(visible)]="displayInfoDialog" [closable]="true" [showLeaderboardSettings]="false" />
+                        <jhi-quiz-training-dialog
+                            [(visible)]="displayInfoDialog"
+                            [(showInLeaderboard)]="showInLeaderboard"
+                            [closable]="true"
+                            [showLeaderboardSettings]="true"
+                            [initialShowInLeaderboard]="initialShowInLeaderboard()"
+                            (save)="onSaveInfoDialog()"
+                        />
                     </div>
                 </div>
                 <div class="leaderboard-section">
