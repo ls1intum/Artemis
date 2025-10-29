@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -28,6 +29,7 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
+import de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnAuthenticationProvider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtBuilder;
@@ -49,6 +51,8 @@ public class TokenProvider {
     private static final String AUTHORITIES_KEY = "auth";
 
     private static final String AUTHENTICATION_METHOD = "auth-method";
+
+    private static final String IS_PASSKEY_SUPER_ADMIN_APPROVED = "is-passkey-approved";
 
     private static final String TOOLS_KEY = "tools";
 
@@ -142,11 +146,17 @@ public class TokenProvider {
             authenticationMethod = AuthenticationMethod.PASSKEY;
         }
 
+        boolean isPasskeyApproved = false;
+        if (authenticationMethod == AuthenticationMethod.PASSKEY && authentication.getDetails() instanceof Map<?, ?> details) {
+            isPasskeyApproved = Boolean.TRUE.equals(details.get(ArtemisWebAuthnAuthenticationProvider.IS_PASSKEY_APPROVED_KEY));
+        }
+
         // @formatter:off
         JwtBuilder jwtBuilder = Jwts.builder()
             .subject(authentication.getName())
             .claim(AUTHORITIES_KEY, authorities)
             .claim(AUTHENTICATION_METHOD, authenticationMethod)
+            .claim(IS_PASSKEY_SUPER_ADMIN_APPROVED, isPasskeyApproved)
             .issuedAt(issuedAt != null ? issuedAt : new Date());
         // @formatter:on
 
