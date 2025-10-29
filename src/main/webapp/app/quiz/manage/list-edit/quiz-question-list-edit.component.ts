@@ -161,7 +161,7 @@ export class QuizQuestionListEditComponent {
 
     async importApollonDragAndDropQuestion() {
         const modalRef: NgbModalRef = this.modalService.open(ApollonDiagramImportDialogComponent as Component, { size: 'xl', backdrop: 'static' });
-        modalRef.componentInstance.courseId = this.courseId();
+        modalRef.componentInstance.courseId = this.courseId;
 
         const question = await modalRef.result;
         if (question) {
