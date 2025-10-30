@@ -36,7 +36,7 @@ export class AgentChatService {
      * Format: course_{courseId}_user_{userId}
      */
     getSessionId(courseId: number): string {
-        const userId = this.accountService.userIdentity?.id;
+        const userId = this.accountService.userIdentity()?.id;
         if (!userId) {
             throw new Error('User must be authenticated to use agent chat');
         }
