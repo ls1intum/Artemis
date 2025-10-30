@@ -69,7 +69,7 @@ describe('LeaderboardService', () => {
         });
     });
 
-    describe('initializeLeaderboardEntry', () => {
+    describe('updateSettings', () => {
         it('should send PUT request with leaderboard settings to the correct URL', async () => {
             const mockSettings: LeaderboardSettingsDTO = {
                 showInLeaderboard: true,
@@ -87,16 +87,18 @@ describe('LeaderboardService', () => {
         });
     });
 
-    it('should call the correct URL and return leaderboard settings', async () => {
-        const mockSettings: LeaderboardSettingsDTO = { showInLeaderboard: true };
+    describe('getSettings', () => {
+        it('should call the correct URL and return leaderboard settings', async () => {
+            const mockSettings: LeaderboardSettingsDTO = { showInLeaderboard: true };
 
-        const promise = service.getSettings();
+            const promise = service.getSettings();
 
-        const req = httpMock.expectOne('api/quiz/leaderboard-settings');
-        expect(req.request.method).toBe('GET');
-        req.flush(mockSettings);
+            const req = httpMock.expectOne('api/quiz/leaderboard-settings');
+            expect(req.request.method).toBe('GET');
+            req.flush(mockSettings);
 
-        const settings = await promise;
-        expect(settings).toEqual(mockSettings);
+            const settings = await promise;
+            expect(settings).toEqual(mockSettings);
+        });
     });
 });
