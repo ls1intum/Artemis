@@ -34,3 +34,4 @@ Other Extension Services
    setup/hermes
    setup/hyperion
    setup/aeolus
+   setup/sharing

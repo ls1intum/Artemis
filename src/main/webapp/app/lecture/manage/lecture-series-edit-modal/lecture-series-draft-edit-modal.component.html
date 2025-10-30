@@ -1,0 +1,33 @@
+<p-dialog [header]="headerTitle()" [modal]="true" [visible]="show()" [closable]="false" [focusOnShow]="false" appendTo="body">
+    <div class="frame">
+        <div class="form-grid">
+            <label for="title" jhiTranslate="artemisApp.lecture.title"></label>
+            <input pInputText id="title" [pAutoFocus]="true" [ngModel]="title()" (ngModelChange)="this.title.set($event)" [invalid]="isTitleInvalid()" />
+            <label for="startDate" jhiTranslate="artemisApp.lecture.startDate"></label>
+            <p-datepicker
+                inputId="startDate"
+                [ngModel]="startDate() ?? null"
+                (ngModelChange)="startDate.set($event ?? undefined)"
+                [showTime]="true"
+                [hourFormat]="'24'"
+                [firstDayOfWeek]="1"
+                appendTo="body"
+            />
+            <label for="endDate" jhiTranslate="artemisApp.lecture.endDate"></label>
+            <p-datepicker
+                inputId="endDate"
+                [ngModel]="endDate() ?? null"
+                (ngModelChange)="endDate.set($event ?? undefined)"
+                [showTime]="true"
+                [hourFormat]="'24'"
+                [firstDayOfWeek]="1"
+                [invalid]="isEndDateInvalid()"
+                appendTo="body"
+            />
+        </div>
+        <div class="controls-section">
+            <button pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+            <button pButton size="small" [disabled]="areInputsInvalid()" (click)="save()" jhiTranslate="entity.action.save"></button>
+        </div>
+    </div>
+</p-dialog>
