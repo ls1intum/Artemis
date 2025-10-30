@@ -176,11 +176,6 @@ export class StudentsRoomDistributionDialogComponent {
         return `${namePart} – ${numberPart} - [${room.building}]`;
     }
 
-    /**
-     * Formats the metadata of an exam room into a human-readable format for the dropdown search menu
-     *
-     * @param _room ignored exam room
-     */
     emptyStringFormatter(_room: RoomForDistributionDTO): string {
         return '';
     }
@@ -207,11 +202,6 @@ export class StudentsRoomDistributionDialogComponent {
         this.selectedRooms.update((selectedRooms) => selectedRooms.filter((selectedRoom) => room.id !== selectedRoom.id));
     }
 
-    /**
-     * Handles a change of the reserve factor value.
-     *
-     * @param event an event with an input element
-     */
     handleReserveFactorInput(event: Event): void {
         const input: HTMLInputElement = event.target as HTMLInputElement;
 
@@ -235,11 +225,6 @@ export class StudentsRoomDistributionDialogComponent {
         input.value = `${this.reservePercentage()}`;
     }
 
-    /**
-     * Selects all the text from a given focus event
-     *
-     * @param focusEvent a focus event
-     */
     selectAllTextAndOpenDropdown(focusEvent: FocusEvent): void {
         const input = focusEvent.target as HTMLInputElement;
         setTimeout(() => input.select(), 0);
