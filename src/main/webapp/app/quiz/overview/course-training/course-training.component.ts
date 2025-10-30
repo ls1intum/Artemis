@@ -17,6 +17,8 @@ import dayjs from 'dayjs/esm';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { QuizTrainingDialogComponent } from 'app/quiz/overview/course-training/quiz-training-dialog.component';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-course-training',
@@ -40,6 +42,7 @@ export class CourseTrainingComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly leaderboardService = inject(LeaderboardService);
+    private readonly alertService = inject(AlertService);
 
     protected readonly faClock = faClock;
     protected readonly faQuestion = faQuestion;
@@ -158,23 +161,24 @@ export class CourseTrainingComponent {
         });
     }
 
-    loadLeaderboard(courseId: number): void {
+    async loadLeaderboard(courseId: number): Promise<void> {
         this.isLoading.set(true);
-        this.leaderboardService.getQuizTrainingLeaderboard(courseId).subscribe({
-            next: (leaderboard) => {
-                this.leaderboardEntries.set(leaderboard.leaderboardEntries);
-                this.currentUserEntry.set(leaderboard.currentUserEntry);
-                this.currentTime.set(leaderboard.currentTime);
-                this.isLoading.set(false);
-                this.isDataLoaded.set(true);
+        try {
+            const leaderboard = await this.leaderboardService.getQuizTrainingLeaderboard(courseId);
+            this.leaderboardEntries.set(leaderboard.leaderboardEntries);
+            this.currentUserEntry.set(leaderboard.currentUserEntry);
+            this.currentTime.set(leaderboard.currentTime);
+            this.isLoading.set(false);
+            this.isDataLoaded.set(true);
 
-                if (leaderboard.hasUserSetSettings) {
-                    this.showDialog = false;
-                    this.isFirstVisit.set(false);
-                }
-            },
-            error: () => this.isLoading.set(false),
-        });
+            if (leaderboard.hasUserSetSettings) {
+                this.showDialog = false;
+                this.isFirstVisit.set(false);
+            }
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
     }
 
     public navigateToTraining(): void {
@@ -184,60 +188,54 @@ export class CourseTrainingComponent {
         }
     }
 
-    onSaveDialog(): void {
+    async onSaveDialog(): Promise<void> {
         this.isLoading.set(true);
-        const leaderboardSettings = new LeaderboardSettingsDTO();
-        leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
-
-        this.leaderboardService.updateSettings(leaderboardSettings).subscribe({
-            next: () => {
-                this.isFirstVisit.set(false);
-                const courseId = this.courseId();
-                if (courseId !== undefined) {
-                    this.loadLeaderboard(courseId);
-                }
-            },
-            error: () => {
-                this.isLoading.set(false);
-            },
-        });
+        try {
+            const leaderboardSettings = new LeaderboardSettingsDTO();
+            leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
+            await this.leaderboardService.updateSettings(leaderboardSettings);
+            this.isFirstVisit.set(false);
+            this.isLoading.set(false);
+            const courseId = this.courseId();
+            if (courseId !== undefined) {
+                this.loadLeaderboard(courseId);
+            }
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
     }
 
-    showInfoDialog(): void {
-        this.isLoading.set(true);
-        this.leaderboardService.getSettings().subscribe({
-            next: (response) => {
-                const settings = response.body;
-                if (settings) {
-                    this.showInLeaderboard = settings.showInLeaderboard ?? true;
-                    this.initialShowInLeaderboard.set(settings.showInLeaderboard ?? true);
-                }
-                this.displayInfoDialog = true;
-                this.isLoading.set(false);
-            },
-            error: () => {
-                this.isLoading.set(false);
-            },
-        });
+    async showInfoDialog(): Promise<void> {
+        try {
+            const settings = await this.leaderboardService.getSettings();
+            if (settings) {
+                this.showInLeaderboard = settings.showInLeaderboard ?? true;
+                this.initialShowInLeaderboard.set(settings.showInLeaderboard ?? true);
+            }
+            this.isLoading.set(false);
+            this.displayInfoDialog = true;
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
     }
 
-    onSaveInfoDialog(): void {
-        this.isLoading.set(true);
+    async onSaveInfoDialog(): Promise<void> {
         const leaderboardSettings = new LeaderboardSettingsDTO();
         leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
-
-        this.leaderboardService.updateSettings(leaderboardSettings).subscribe({
-            next: () => {
-                this.initialShowInLeaderboard.set(this.showInLeaderboard);
-                this.displayInfoDialog = false;
-                const courseId = this.courseId();
-                if (courseId !== undefined) {
-                    this.loadLeaderboard(courseId);
-                }
-            },
-            error: () => {
-                this.isLoading.set(false);
-            },
-        });
+        try {
+            await this.leaderboardService.updateSettings(leaderboardSettings);
+            this.initialShowInLeaderboard.set(this.showInLeaderboard);
+            this.displayInfoDialog = false;
+            const courseId = this.courseId();
+            if (courseId !== undefined) {
+                this.loadLeaderboard(courseId);
+            }
+            this.isLoading.set(false);
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
     }
 }

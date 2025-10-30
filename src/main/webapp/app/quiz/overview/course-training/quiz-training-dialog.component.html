@@ -27,8 +27,6 @@
             <i class="pi pi-question-circle ms-2" [pTooltip]="'artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo' | artemisTranslate" tooltipPosition="right">
             </i>
         </div>
-    }
-    @if (showLeaderboardSettings()) {
         <ng-template pTemplate="footer">
             <jhi-button [title]="'artemisApp.quizTraining.save'" [disabled]="saveDisabled()" (onClick)="save.emit()" />
         </ng-template>
