@@ -82,7 +82,7 @@ artemis:
     name: Artemis
     email: artemis@xcit.tum.de
   rate-limiting:
-    enabled: true
+    enabled: false
     account-management-rpm: 5
     authentication-rpm: 30
   athena:
