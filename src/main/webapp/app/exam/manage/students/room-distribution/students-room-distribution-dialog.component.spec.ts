@@ -79,7 +79,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.detectChanges();
         const button = document.body.querySelector('#cancel-button') as HTMLButtonElement;
         button.click();
-        expect(component.dialogVisible).toBeFalse();
+        expect(component.dialogVisible()).toBeFalse();
     });
 
     it('should not have selected rooms and no finish button displayed on open', () => {
