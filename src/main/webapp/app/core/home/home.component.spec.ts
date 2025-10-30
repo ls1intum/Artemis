@@ -144,7 +144,7 @@ describe('HomeComponent', () => {
         it('should not open the modal if passkey feature is disabled', () => {
             component.isPasskeyEnabled = false;
             const openModalSpy = jest.spyOn(modalService, 'open');
-            accountService.userIdentity = { askToSetupPasskey: true } as User;
+            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
 
             component.openSetupPasskeyModal();
 
@@ -154,7 +154,7 @@ describe('HomeComponent', () => {
         it('should not open the modal if the user has already registered a passkey', () => {
             component.isPasskeyEnabled = true;
             const openModalSpy = jest.spyOn(modalService, 'open');
-            accountService.userIdentity = { askToSetupPasskey: false } as User;
+            accountService.userIdentity.set({ askToSetupPasskey: false } as User);
 
             component.openSetupPasskeyModal();
 
@@ -165,7 +165,7 @@ describe('HomeComponent', () => {
             component.isPasskeyEnabled = true;
             const openModalSpy = jest.spyOn(modalService, 'open');
 
-            accountService.userIdentity = { askToSetupPasskey: true } as User;
+            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
 
             component.openSetupPasskeyModal();
 
@@ -178,7 +178,7 @@ describe('HomeComponent', () => {
             futureDate.setDate(futureDate.getDate() + 1);
             localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate);
 
-            accountService.userIdentity = { askToSetupPasskey: true } as User;
+            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
             const openModalSpy = jest.spyOn(modalService, 'open');
 
             component.openSetupPasskeyModal();
@@ -192,7 +192,7 @@ describe('HomeComponent', () => {
             dateInPast.setDate(dateInPast.getDate() - 10);
             localStorageService.store(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, dateInPast);
 
-            accountService.userIdentity = { askToSetupPasskey: true } as User;
+            accountService.userIdentity.set({ askToSetupPasskey: true } as User);
             const openModalSpy = jest.spyOn(modalService, 'open');
 
             component.openSetupPasskeyModal();
