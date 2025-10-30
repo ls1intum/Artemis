@@ -265,6 +265,44 @@ describe('AttachmentVideoUnitComponent', () => {
         resolveSpy.mockRestore();
     }));
 
+    it('toggleCollapse(false): .m3u8 URL uses playlist directly without resolver', fakeAsync(() => {
+        const m3u8Url = 'https://example.com/video/playlist.m3u8';
+        component.lectureUnit().videoSource = m3u8Url;
+
+        const resolveSpy = jest
+            // @ts-ignore accessing private for test
+            .spyOn(component as any, 'resolveTumLivePlaylist')
+            .mockResolvedValue('should-not-be-called');
+
+        fixture.detectChanges();
+
+        // Act
+        component.toggleCollapse(false);
+
+        // The resolver should NOT be called for .m3u8 URLs
+        expect(resolveSpy).not.toHaveBeenCalled();
+
+        // The playlist URL should be set immediately
+        expect(component.playlistUrl()).toBe(m3u8Url);
+
+        // Let any pending microtasks finish
+        flushMicrotasks();
+
+        // Expect the transcript request
+        const req = httpMock.expectOne((r) => r.url.includes('/api/lecture/lecture-unit/') && r.url.endsWith('/transcript'));
+        expect(req.request.method).toBe('GET');
+        req.flush({ segments: [{ startTime: 0, endTime: 5, text: 'Direct HLS transcript', slideNumber: 1 }] });
+
+        // Allow firstValueFrom(...).then(...) to update signals
+        flushMicrotasks();
+
+        expect(component.transcriptSegments()).toHaveLength(1);
+        expect(component.hasTranscript()).toBeTrue();
+        expect(component.transcriptSegments()[0].text).toBe('Direct HLS transcript');
+
+        resolveSpy.mockRestore();
+    }));
+
     it('hasAttachment / hasVideo and getFileName() when no attachment', () => {
         // initial has attachment
         expect(component.hasAttachment()).toBeTrue();

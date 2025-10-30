@@ -76,7 +76,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
             const src = this.lectureUnit().videoSource;
             if (!src) return;
-            // Always try to resolve a TUM Live playlist.
+            //.m3u8 playlist URLs - use directly without resolver
+            if (src.includes('.m3u8')) {
+                this.playlistUrl.set(src);
+                this.fetchTranscript();
+                return;
+            }
+            // For non-playlist URLs (e.g., TUM Live), try to resolve a .m3u8 playlist
             this.resolveTumLivePlaylist(src).then((url) => {
                 if (url) {
                     this.playlistUrl.set(url);
