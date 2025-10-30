@@ -9,7 +9,9 @@ export interface ChatMessage {
     canCreateCompetencies?: boolean;
     suggestedCompetencies?: CompetencyDraft[];
     competencyPreview?: CompetencyPreview;
+    batchCompetencyPreview?: CompetencyPreview[]; // For batch operations (multiple competencies)
     competencyCreated?: boolean;
+    batchCreated?: boolean; // For batch creation/update completion
     planPending?: boolean;
     planApproved?: boolean;
 }

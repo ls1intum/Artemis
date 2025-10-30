@@ -49,6 +49,38 @@
                                 }
                             </div>
                         }
+                        @if (message.batchCompetencyPreview && message.batchCompetencyPreview.length > 0) {
+                            <div class="batch-competency-preview-container mt-2">
+                                <div class="mb-2">
+                                    <small class="text-muted">Preview: {{ message.batchCompetencyPreview.length }} competencies</small>
+                                </div>
+                                @for (comp of message.batchCompetencyPreview; track comp.title + comp.competencyId) {
+                                    <div class="mb-2">
+                                        <jhi-competency-card [courseId]="courseId" [competency]="comp" [noProgressRings]="true" />
+                                    </div>
+                                }
+                                @if (!message.batchCompetencyPreview[0]?.viewOnly) {
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm mt-2"
+                                        [class.btn-primary]="!message.batchCreated"
+                                        [class.btn-success]="message.batchCreated"
+                                        (click)="onCreateBatchCompetencies(message)"
+                                        [disabled]="isAgentTyping() || message.batchCreated"
+                                    >
+                                        @if (message.batchCreated) {
+                                            Completed ({{ message.batchCompetencyPreview.length }})
+                                        } @else {
+                                            {{
+                                                message.batchCompetencyPreview[0]?.competencyId
+                                                    ? 'Update All (' + message.batchCompetencyPreview.length + ')'
+                                                    : 'Create All (' + message.batchCompetencyPreview.length + ')'
+                                            }}
+                                        }
+                                    </button>
+                                }
+                            </div>
+                        }
                     </div>
                 </div>
             }

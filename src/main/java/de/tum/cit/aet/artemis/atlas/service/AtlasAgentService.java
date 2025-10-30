@@ -17,6 +17,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 
 /**
@@ -56,6 +59,8 @@ public class AtlasAgentService {
     private final ChatMemory chatMemory;
 
     private final CompetencyExpertToolsService competencyExpertToolsService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
             @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ChatMemory chatMemory,
@@ -99,8 +104,12 @@ public class AtlasAgentService {
                 // Remove the entire delegation block from response
                 response = removeDelegationMarker(response).trim();
 
-                // Invoke Competency Expert with the extracted brief (inline execution)
-                String expertResponse = processWithCompetencyExpert(brief, courseId, sessionId);
+                // Check if this is a batch operation - handle directly for determinism
+                String expertResponse;
+                // Single operation - let Competency Expert handle via LLM
+                expertResponse = processWithCompetencyExpert(brief, courseId, sessionId);
+                // Sanitize expert response to extract only clean JSON
+                expertResponse = sanitizeCompetencyExpertResponse(expertResponse);
 
                 // Store preview for potential creation approval
                 sessionLastPreviewMap.put(sessionId, expertResponse);
@@ -254,6 +263,78 @@ public class AtlasAgentService {
 
         // Remove the entire delegation block
         return response.substring(0, startIndex) + response.substring(endIndex + 1);
+    }
+
+    /**
+     * Sanitize Competency Expert response by extracting only clean JSON.
+     * This makes the system deterministic by removing any conversational text the LLM might add.
+     *
+     * @param response The raw response from Competency Expert
+     * @return Clean JSON string or original response if no JSON found
+     */
+    private String sanitizeCompetencyExpertResponse(String response) {
+        if (response == null || response.trim().isEmpty()) {
+            return response;
+        }
+
+        try {
+            // First, remove markdown code blocks if present
+            String cleaned = response.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
+
+            // Try to find JSON with "preview" or "batchPreview" keys
+            int previewIndex = Math.max(cleaned.indexOf("\"preview\""), cleaned.indexOf("\"batchPreview\""));
+
+            if (previewIndex == -1) {
+                // No preview JSON found - this might be an error message or success message
+                // Return original response
+                return response;
+            }
+
+            // Search backwards for the opening brace
+            int startIndex = cleaned.lastIndexOf('{', previewIndex);
+            if (startIndex == -1) {
+                return response;
+            }
+
+            // Count braces to find the matching closing brace
+            int braceCount = 0;
+            int endIndex = -1;
+            for (int i = startIndex; i < cleaned.length(); i++) {
+                if (cleaned.charAt(i) == '{') {
+                    braceCount++;
+                }
+                else if (cleaned.charAt(i) == '}') {
+                    braceCount--;
+                    if (braceCount == 0) {
+                        endIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (endIndex == -1 || endIndex <= startIndex) {
+                return response;
+            }
+
+            // Extract the JSON substring
+            String jsonString = cleaned.substring(startIndex, endIndex + 1);
+
+            // Validate it's proper JSON by trying to parse it
+            JsonNode jsonNode = objectMapper.readTree(jsonString);
+
+            // Check if it has the expected structure
+            if (jsonNode.has("preview") || jsonNode.has("batchPreview")) {
+                // Return the clean JSON string
+                return jsonString;
+            }
+
+            // JSON doesn't have expected structure
+            return response;
+        }
+        catch (Exception e) {
+            // Failed to parse or extract JSON - return original response
+            return response;
+        }
     }
 
     /**

@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -12,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -33,6 +36,68 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 @Conditional(AtlasEnabled.class)
 public class CompetencyExpertToolsService {
 
+    /**
+     * Wrapper class for competency operations.
+     * Used by tools to accept single or multiple competency operations.
+     */
+    public static class CompetencyOperation {
+
+        @JsonProperty
+        private Long competencyId; // null for create, set for update
+
+        @JsonProperty
+        private String title;
+
+        @JsonProperty
+        private String description;
+
+        @JsonProperty
+        private CompetencyTaxonomy taxonomy;
+
+        // Default constructor for Jackson
+        public CompetencyOperation() {
+        }
+
+        public CompetencyOperation(Long competencyId, String title, String description, CompetencyTaxonomy taxonomy) {
+            this.competencyId = competencyId;
+            this.title = title;
+            this.description = description;
+            this.taxonomy = taxonomy;
+        }
+
+        public Long getCompetencyId() {
+            return competencyId;
+        }
+
+        public void setCompetencyId(Long competencyId) {
+            this.competencyId = competencyId;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public CompetencyTaxonomy getTaxonomy() {
+            return taxonomy;
+        }
+
+        public void setTaxonomy(CompetencyTaxonomy taxonomy) {
+            this.taxonomy = taxonomy;
+        }
+    }
+
     private final ObjectMapper objectMapper;
 
     private final CompetencyRepository competencyRepository;
@@ -48,107 +113,6 @@ public class CompetencyExpertToolsService {
         this.objectMapper = objectMapper;
         this.competencyRepository = competencyRepository;
         this.courseRepository = courseRepository;
-    }
-
-    /**
-     * Tool for generating a preview of how a competency will look.
-     * Uses the same data structure as the student view competency cards.
-     *
-     * @param title         the competency title
-     * @param description   the competency description
-     * @param taxonomyLevel the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)
-     * @param competencyId  optional ID of existing competency (for updates or view-only)
-     * @param viewOnly      optional flag to indicate view-only mode (no action buttons)
-     * @return JSON representation of the competency preview (same format as the frontend receives)
-     */
-    @Tool(description = "REQUIRED: Display a visual competency card preview to the instructor. Must be called before creating/updating any competency. Returns formatted card data.")
-    public String previewCompetency(@ToolParam(description = "the title of the competency") String title,
-            @ToolParam(description = "the description of the competency") String description,
-            @ToolParam(description = "the taxonomy level: REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, or CREATE") CompetencyTaxonomy taxonomyLevel,
-            @ToolParam(description = "optional: the ID of the competency being updated/viewed (omit for new competencies)", required = false) Long competencyId,
-            @ToolParam(description = "optional: set to true for view-only mode (no action buttons shown)", required = false) Boolean viewOnly) {
-
-        // Create a preview competency object (without saving to database)
-        Map<String, Object> competencyPreview = new LinkedHashMap<>();
-        competencyPreview.put("title", title);
-        competencyPreview.put("description", description);
-        competencyPreview.put("taxonomy", taxonomyLevel.toString());
-
-        // Map taxonomy to icon representation (matching frontend getIcon function)
-        String iconName = switch (taxonomyLevel) {
-            case REMEMBER -> "brain";
-            case UNDERSTAND -> "comments";
-            case APPLY -> "pen-fancy";
-            case ANALYZE -> "magnifying-glass";
-            case EVALUATE -> "plus-minus";
-            case CREATE -> "cubes-stacked";
-        };
-        competencyPreview.put("icon", iconName);
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("preview", true);
-        response.put("competency", competencyPreview);
-
-        // Add competencyId OUTSIDE the competency object if this is an update/view
-        if (competencyId != null) {
-            response.put("competencyId", competencyId);
-        }
-
-        // Add viewOnly flag if this is view-only mode
-        if (viewOnly != null && viewOnly) {
-            response.put("viewOnly", true);
-        }
-
-        return toJson(response);
-    }
-
-    /**
-     * Tool for creating a new competency in a course.
-     * This is the creation tool available to the Competency Expert sub-agent.
-     *
-     * @param courseId      the course ID
-     * @param title         the competency title
-     * @param description   the competency description
-     * @param taxonomyLevel the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)
-     * @return JSON response indicating success or error
-     */
-    @Tool(description = "Create a new competency for a course")
-    public String createCompetency(@ToolParam(description = "the ID of the course") Long courseId, @ToolParam(description = "the title of the competency") String title,
-            @ToolParam(description = "the description of the competency") String description,
-            @ToolParam(description = "the taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)") CompetencyTaxonomy taxonomyLevel) {
-        try {
-
-            Optional<Course> courseOptional = courseRepository.findById(courseId);
-            if (courseOptional.isEmpty()) {
-                return toJson(Map.of("error", "Course not found with ID: " + courseId));
-            }
-
-            Course course = courseOptional.get();
-            Competency competency = new Competency();
-            competency.setTitle(title);
-            competency.setDescription(description);
-            competency.setCourse(course);
-            competency.setTaxonomy(taxonomyLevel);
-
-            Competency savedCompetency = competencyRepository.save(competency);
-
-            this.competencyCreated = true;
-            Map<String, Object> competencyData = new LinkedHashMap<>();
-            competencyData.put("id", savedCompetency.getId());
-            competencyData.put("title", savedCompetency.getTitle());
-            competencyData.put("description", savedCompetency.getDescription());
-            competencyData.put("taxonomy", savedCompetency.getTaxonomy() != null ? savedCompetency.getTaxonomy().toString() : "");
-            competencyData.put("courseId", courseId);
-
-            Map<String, Object> response = new LinkedHashMap<>();
-            response.put("success", true);
-            response.put("competency", competencyData);
-
-            return toJson(response);
-        }
-        catch (Exception e) {
-            return toJson(Map.of("error", "Failed to create competency: " + e.getMessage()));
-        }
     }
 
     /**
@@ -194,55 +158,165 @@ public class CompetencyExpertToolsService {
     }
 
     /**
-     * Tool for updating an existing competency.
-     * Allows modification of title, description, and taxonomy.
+     * Unified tool for previewing one or multiple competencies.
+     * Supports both single and batch operations.
      *
-     * @param competencyId  the ID of the competency to update
-     * @param title         the new title (required)
-     * @param description   the new description (required)
-     * @param taxonomyLevel the new taxonomy level (required)
-     * @return JSON response indicating success or error
+     * @param courseId     the course ID
+     * @param competencies list of competency operations (single or multiple)
+     * @param viewOnly     optional flag for view-only mode
+     * @return JSON response with single preview or batch preview
      */
-    @Tool(description = "Update an existing competency's title, description, and taxonomy")
-    public String updateCompetency(@ToolParam(description = "the ID of the competency to update") Long competencyId,
-            @ToolParam(description = "the new title of the competency") String title, @ToolParam(description = "the new description of the competency") String description,
-            @ToolParam(description = "the new taxonomy level (REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE)") CompetencyTaxonomy taxonomyLevel) {
-        try {
-            // Find the existing competency
-            Optional<Competency> competencyOptional = competencyRepository.findById(competencyId);
-            if (competencyOptional.isEmpty()) {
-                return toJson(Map.of("error", "Competency not found with ID: " + competencyId));
+    @Tool(description = "Preview one or multiple competencies before creating/updating. Pass a list with one item for single preview, or multiple items for batch preview.")
+    public String previewCompetencies(@ToolParam(description = "the ID of the course") Long courseId,
+            @ToolParam(description = "list of competency operations to preview") List<CompetencyOperation> competencies,
+            @ToolParam(description = "optional: set to true for view-only mode (no action buttons)", required = false) Boolean viewOnly) {
+
+        if (competencies == null || competencies.isEmpty()) {
+            return toJson(Map.of("error", "No competencies provided"));
+        }
+
+        List<Map<String, Object>> previews = new ArrayList<>();
+
+        for (CompetencyOperation comp : competencies) {
+            Map<String, Object> competencyPreview = new LinkedHashMap<>();
+            competencyPreview.put("title", comp.getTitle());
+            competencyPreview.put("description", comp.getDescription());
+            competencyPreview.put("taxonomy", comp.getTaxonomy().toString());
+
+            // Map taxonomy to icon
+            String iconName = switch (comp.getTaxonomy()) {
+                case REMEMBER -> "brain";
+                case UNDERSTAND -> "comments";
+                case APPLY -> "pen-fancy";
+                case ANALYZE -> "magnifying-glass";
+                case EVALUATE -> "plus-minus";
+                case CREATE -> "cubes-stacked";
+            };
+            competencyPreview.put("icon", iconName);
+
+            // Add competencyId if this is an update
+            if (comp.getCompetencyId() != null) {
+                competencyPreview.put("competencyId", comp.getCompetencyId());
             }
 
-            Competency competency = competencyOptional.get();
-
-            // Update the fields
-            competency.setTitle(title.trim());
-            competency.setDescription(description);
-            competency.setTaxonomy(taxonomyLevel);
-
-            // Save the updated competency
-            Competency updatedCompetency = competencyRepository.save(competency);
-
-            this.competencyUpdated = true;
-
-            // Prepare response
-            Map<String, Object> competencyData = new LinkedHashMap<>();
-            competencyData.put("id", updatedCompetency.getId());
-            competencyData.put("title", updatedCompetency.getTitle());
-            competencyData.put("description", updatedCompetency.getDescription());
-            competencyData.put("taxonomy", updatedCompetency.getTaxonomy() != null ? updatedCompetency.getTaxonomy().toString() : "");
-
-            Map<String, Object> response = new LinkedHashMap<>();
-            response.put("success", true);
-            response.put("message", "Competency updated successfully");
-            response.put("competency", competencyData);
-
-            return toJson(response);
+            previews.add(competencyPreview);
         }
-        catch (Exception e) {
-            return toJson(Map.of("error", "Failed to update competency: " + e.getMessage()));
+
+        Map<String, Object> response = new LinkedHashMap<>();
+
+        // Single item: return single preview format (backward compatible)
+        if (competencies.size() == 1) {
+            response.put("preview", true);
+            response.put("competency", previews.get(0));
+
+            if (competencies.get(0).getCompetencyId() != null) {
+                response.put("competencyId", competencies.get(0).getCompetencyId());
+            }
+
+            if (viewOnly != null && viewOnly) {
+                response.put("viewOnly", true);
+            }
         }
+        else {
+            // Multiple items: return batch preview format
+            response.put("batchPreview", true);
+            response.put("count", competencies.size());
+            response.put("competencies", previews);
+
+            if (viewOnly != null && viewOnly) {
+                response.put("viewOnly", true);
+            }
+        }
+
+        return toJson(response);
+    }
+
+    /**
+     * Unified tool for creating/updating one or multiple competencies.
+     * Supports both single and batch operations. Continues on partial failures.
+     *
+     * @param courseId     the course ID
+     * @param competencies list of competency operations (single or multiple)
+     * @return JSON response with success/failure summary
+     */
+    @Tool(description = "Create or update one or multiple competencies. Automatically detects create vs update based on competencyId presence.")
+    public String saveCompetencies(@ToolParam(description = "the ID of the course") Long courseId,
+            @ToolParam(description = "list of competency operations to save") List<CompetencyOperation> competencies) {
+
+        if (competencies == null || competencies.isEmpty()) {
+            return toJson(Map.of("error", "No competencies provided"));
+        }
+
+        Optional<Course> courseOptional = courseRepository.findById(courseId);
+        if (courseOptional.isEmpty()) {
+            return toJson(Map.of("error", "Course not found with ID: " + courseId));
+        }
+
+        Course course = courseOptional.get();
+        List<String> errors = new ArrayList<>();
+        int createCount = 0;
+        int updateCount = 0;
+
+        for (CompetencyOperation comp : competencies) {
+            try {
+                if (comp.getCompetencyId() == null) {
+                    // Create new competency
+                    Competency competency = new Competency();
+                    competency.setTitle(comp.getTitle());
+                    competency.setDescription(comp.getDescription());
+                    competency.setTaxonomy(comp.getTaxonomy());
+                    competency.setCourse(course);
+                    competencyRepository.save(competency);
+                    createCount++;
+                    this.competencyCreated = true;
+                }
+                else {
+                    // Update existing competency
+                    Optional<Competency> existing = competencyRepository.findById(comp.getCompetencyId());
+                    if (existing.isEmpty()) {
+                        errors.add("Competency not found with ID: " + comp.getCompetencyId());
+                        continue;
+                    }
+
+                    Competency competency = existing.get();
+                    competency.setTitle(comp.getTitle().trim());
+                    competency.setDescription(comp.getDescription());
+                    competency.setTaxonomy(comp.getTaxonomy());
+                    competencyRepository.save(competency);
+                    updateCount++;
+                    this.competencyUpdated = true;
+                }
+            }
+            catch (Exception e) {
+                errors.add("Failed to save '" + comp.getTitle() + "': " + e.getMessage());
+            }
+        }
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("success", errors.isEmpty());
+        response.put("created", createCount);
+        response.put("updated", updateCount);
+        response.put("failed", errors.size());
+
+        if (!errors.isEmpty()) {
+            response.put("errors", errors);
+        }
+
+        // Construct success message
+        List<String> messages = new ArrayList<>();
+        if (createCount > 0) {
+            messages.add(createCount + " competenc" + (createCount == 1 ? "y" : "ies") + " created");
+        }
+        if (updateCount > 0) {
+            messages.add(updateCount + " competenc" + (updateCount == 1 ? "y" : "ies") + " updated");
+        }
+        if (!errors.isEmpty()) {
+            messages.add(errors.size() + " failed");
+        }
+
+        response.put("message", String.join(", ", messages));
+
+        return toJson(response);
     }
 
     /**

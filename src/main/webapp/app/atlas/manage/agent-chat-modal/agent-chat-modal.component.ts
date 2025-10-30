@@ -239,12 +239,20 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             timestamp: new Date(),
         };
 
-        // Try to parse JSON to detect competency preview or plan pending
+        // Try to parse JSON to detect competency preview, batch preview, or plan pending
         if (!isUser) {
-            const previewData = this.extractCompetencyPreview(content);
-            if (previewData) {
-                message.competencyPreview = previewData.preview;
-                message.content = previewData.cleanedMessage;
+            // Try batch preview first
+            const batchPreviewData = this.extractBatchCompetencyPreview(content);
+            if (batchPreviewData) {
+                message.batchCompetencyPreview = batchPreviewData.previews;
+                message.content = batchPreviewData.cleanedMessage;
+            } else {
+                // Fall back to single preview
+                const previewData = this.extractCompetencyPreview(content);
+                if (previewData) {
+                    message.competencyPreview = previewData.preview;
+                    message.content = previewData.cleanedMessage;
+                }
             }
 
             // Detect plan pending marker
@@ -341,6 +349,79 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     /**
+     * Attempts to extract batch competency preview data from the agent's response.
+     * The backend returns JSON with "batchPreview" key when multiple competencies are generated.
+     */
+    private extractBatchCompetencyPreview(content: string): { previews: CompetencyPreview[]; cleanedMessage: string } | null {
+        try {
+            let jsonMatch: RegExpMatchArray | null = null;
+            let jsonString = '';
+
+            // First, try to find markdown-wrapped JSON
+            const markdownMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+            if (markdownMatch) {
+                jsonString = markdownMatch[1];
+                jsonMatch = markdownMatch;
+            } else {
+                // Try to find standalone JSON object with "batchPreview" key
+                const batchPreviewIndex = content.indexOf('"batchPreview"');
+                if (batchPreviewIndex !== -1) {
+                    const startIndex = content.lastIndexOf('{', batchPreviewIndex);
+                    if (startIndex !== -1) {
+                        let braceCount = 0;
+                        let endIndex = startIndex;
+                        for (let i = startIndex; i < content.length; i++) {
+                            if (content[i] === '{') braceCount++;
+                            if (content[i] === '}') {
+                                braceCount--;
+                                if (braceCount === 0) {
+                                    endIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                        if (endIndex > startIndex) {
+                            jsonString = content.substring(startIndex, endIndex + 1);
+                            jsonMatch = [jsonString];
+                        }
+                    }
+                }
+            }
+
+            if (!jsonString || !jsonMatch) {
+                return null;
+            }
+
+            const jsonData = JSON.parse(jsonString);
+
+            // Check if this is a batch preview response
+            if (jsonData.batchPreview === true && jsonData.competencies && Array.isArray(jsonData.competencies)) {
+                const previews: CompetencyPreview[] = jsonData.competencies.map((comp: any) => ({
+                    title: comp.title,
+                    description: comp.description,
+                    taxonomy: comp.taxonomy as any,
+                    icon: comp.icon,
+                    competencyId: comp.competencyId, // Capture competencyId if present
+                    viewOnly: jsonData.viewOnly, // Apply viewOnly to all if set
+                }));
+
+                // Remove the JSON block from the message
+                let cleanedMessage = content.replace(jsonMatch[0], '').trim();
+                cleanedMessage = cleanedMessage
+                    .replace(/```json\s*```/g, '')
+                    .replace(/\n{3,}/g, '\n\n')
+                    .trim();
+
+                return { previews, cleanedMessage };
+            }
+        } catch (e) {
+            // Not valid JSON or not a batch preview
+        }
+
+        return null;
+    }
+
+    /**
      * Detects [PLAN_PENDING] marker in agent responses.
      * This marker indicates that the agent has proposed a plan and is awaiting approval.
      */
@@ -352,6 +433,74 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             return { cleanedMessage };
         }
         return null;
+    }
+
+    /**
+     * Handles batch competency creation/update.
+     * Creates or updates all competencies in the batch preview.
+     */
+    protected onCreateBatchCompetencies(message: ChatMessage): void {
+        // Prevent duplicate creation
+        if (message.batchCreated || !message.batchCompetencyPreview || message.batchCompetencyPreview.length === 0) {
+            return;
+        }
+
+        // Show typing indicator
+        this.isAgentTyping.set(true);
+
+        // Build operations array
+        const operations = message.batchCompetencyPreview.map((preview) => {
+            const competency = new Competency();
+            competency.title = preview.title;
+            competency.description = preview.description;
+            competency.taxonomy = preview.taxonomy;
+            if (preview.competencyId !== undefined) {
+                competency.id = preview.competencyId;
+            }
+            return competency;
+        });
+
+        // Execute all operations
+        const promises = operations.map((competency) => {
+            const isUpdate = competency.id !== undefined;
+            const operation = isUpdate ? this.competencyService.update(competency, this.courseId) : this.competencyService.create(competency, this.courseId);
+            return operation.toPromise();
+        });
+
+        Promise.all(promises)
+            .then(() => {
+                this.isAgentTyping.set(false);
+
+                // Mark batch as created
+                this.messages = this.messages.map((msg) => (msg.id === message.id ? { ...msg, batchCreated: true } : msg));
+                this.cdr.markForCheck();
+
+                const count = operations.length;
+                const hasUpdates = operations.some((op) => op.id !== undefined);
+                const hasCreates = operations.some((op) => op.id === undefined);
+
+                let successMessage = '';
+                if (hasUpdates && hasCreates) {
+                    successMessage = `Successfully processed ${count} competencies!`;
+                } else if (hasUpdates) {
+                    successMessage = `Successfully updated ${count} ${count === 1 ? 'competency' : 'competencies'}!`;
+                } else {
+                    successMessage = `Successfully created ${count} ${count === 1 ? 'competency' : 'competencies'}!`;
+                }
+
+                this.addMessage(successMessage, false);
+
+                // Emit event to refresh competencies
+                this.competencyChanged.emit();
+
+                // Restore focus
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+            })
+            .catch(() => {
+                this.isAgentTyping.set(false);
+                this.addMessage('Failed to process some competencies. Please try again.', false);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+            });
     }
 
     /**
