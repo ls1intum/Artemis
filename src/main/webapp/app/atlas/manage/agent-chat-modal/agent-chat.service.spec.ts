@@ -3,20 +3,18 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-
 import { AgentChatService } from './agent-chat.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
 
 describe('AgentChatService', () => {
     let service: AgentChatService;
     let httpMock: HttpTestingController;
     let translateService: jest.Mocked<TranslateService>;
+    let accountService: AccountService;
 
     const mockTranslateService = {
         instant: jest.fn(),
-    };
-
-    const mockAccountService: { userIdentity: { id?: number; login: string } | null } = {
-        userIdentity: { id: 42, login: 'testuser' },
     };
 
     beforeEach(() => {
@@ -31,7 +29,7 @@ describe('AgentChatService', () => {
                 },
                 {
                     provide: AccountService,
-                    useValue: mockAccountService,
+                    useClass: MockAccountService,
                 },
             ],
         });
@@ -39,6 +37,9 @@ describe('AgentChatService', () => {
         service = TestBed.inject(AgentChatService);
         httpMock = TestBed.inject(HttpTestingController);
         translateService = TestBed.inject(TranslateService) as jest.Mocked<TranslateService>;
+        accountService = TestBed.inject(AccountService);
+
+        accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
 
         // Reset mocks
         jest.clearAllMocks();
@@ -155,7 +156,7 @@ describe('AgentChatService', () => {
             const message = 'Test';
 
             it('should generate sessionId with valid userId', () => {
-                mockAccountService.userIdentity = { id: 42, login: 'testuser' };
+                accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
                 const expectedSessionId = 'course_456_user_42';
 
                 service.sendMessage(message, courseId).subscribe();
@@ -172,14 +173,14 @@ describe('AgentChatService', () => {
                 });
             });
 
-            it('should throw error when userIdentity is null', () => {
-                mockAccountService.userIdentity = null;
+            it('should throw error when userIdentity is undefined', () => {
+                accountService.userIdentity.set(undefined);
 
                 expect(() => service.sendMessage(message, courseId)).toThrow('User must be authenticated to use agent chat');
             });
 
             it('should throw error when userIdentity.id is undefined', () => {
-                mockAccountService.userIdentity = { id: undefined, login: 'testuser' };
+                accountService.userIdentity.set({ id: undefined, login: 'testuser' } as User);
 
                 expect(() => service.sendMessage(message, courseId)).toThrow('User must be authenticated to use agent chat');
             });
@@ -190,7 +191,7 @@ describe('AgentChatService', () => {
             const message = 'Test message';
 
             it('should make POST request to correct URL', () => {
-                mockAccountService.userIdentity = { id: 42, login: 'testuser' };
+                accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
                 const expectedUrl = `api/atlas/agent/courses/${courseId}/chat`;
 
                 service.sendMessage(message, courseId).subscribe();
@@ -207,7 +208,7 @@ describe('AgentChatService', () => {
             });
 
             it('should send request with correct body structure', () => {
-                mockAccountService.userIdentity = { id: 99, login: 'user99' };
+                accountService.userIdentity.set({ id: 99, login: 'user99' } as User);
 
                 service.sendMessage(message, courseId).subscribe();
 
@@ -233,7 +234,7 @@ describe('AgentChatService', () => {
             const message = 'Test';
 
             it('should return error response object on catchError', () => {
-                mockAccountService.userIdentity = { id: 55, login: 'testuser' };
+                accountService.userIdentity.set({ id: 55, login: 'testuser' } as User);
                 mockTranslateService.instant.mockReturnValue('Translated error message');
                 let result: any;
 
