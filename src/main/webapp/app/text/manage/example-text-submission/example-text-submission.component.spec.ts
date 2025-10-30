@@ -36,6 +36,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
@@ -454,7 +455,13 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should read and understood', () => {
         // GIVEN
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: {} })));
+        const dto: TutorParticipationDTO = {
+            id: 1,
+            exerciseId: EXERCISE_ID,
+            tutorId: 3,
+            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+        };
+        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: dto })));
         const alertSpy = jest.spyOn(alertService, 'success');
 
         const router = TestBed.inject(Router);

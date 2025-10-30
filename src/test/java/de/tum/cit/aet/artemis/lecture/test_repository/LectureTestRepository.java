@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -32,4 +33,29 @@ public interface LectureTestRepository extends LectureRepository {
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithAttachmentsAndLectureUnitsAndCompletions(@Param("lectureId") long lectureId);
+
+    @Modifying
+    @Query("""
+            DELETE FROM Attachment a
+             WHERE a.attachmentVideoUnit.lecture.title = :title
+            """)
+    int deleteAttachmentsByLectureTitle(@Param("title") String title);
+
+    @Modifying
+    @Query("DELETE FROM Attachment a WHERE a.lecture.title = :title")
+    int deleteLectureLevelAttachments(@Param("title") String title);
+
+    @Modifying
+    @Query("""
+            DELETE FROM LectureUnit lu
+             WHERE lu.lecture.title = :title
+            """)
+    int deleteLectureUnitsByLectureTitle(@Param("title") String title);
+
+    @Modifying
+    @Query("""
+            DELETE FROM Lecture l
+             WHERE l.title = :title
+            """)
+    int deleteLecturesByTitle(@Param("title") String title);
 }

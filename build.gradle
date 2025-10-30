@@ -28,11 +28,11 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.16.0"
-
+    id "com.google.osdetector" version "1.7.3"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.4.4"
+version = "8.5.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -158,6 +158,8 @@ configurations.configureEach {
 
 dependencies {
 
+    // Required by Sharing Platform
+    implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
     // Required by Spring cloud
     implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
@@ -302,10 +304,16 @@ dependencies {
     implementation("io.netty:netty-resolver") { version { 	    		strictly netty_version } }
     implementation("io.netty:netty-resolver-dns") { version { 			strictly netty_version } }
     implementation("io.netty:netty-transport") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-transport-classes-epoll") { version {	        strictly netty_version } }
+    implementation("io.netty:netty-transport-classes-epoll") { version {strictly netty_version } }
     implementation("io.netty:netty-transport-native-epoll") { version {	strictly netty_version } }
     implementation("io.netty:netty-handler") { version { 				strictly netty_version } }
     implementation("io.netty:netty-handler-proxy") { version { 			strictly netty_version } }
+
+    // only load netty-resolver-dns-native-macos on macos systems
+    if (osdetector.os == 'osx') {
+        def classifier = (osdetector.arch == 'aarch_64') ? 'osx-aarch_64' : 'osx-x86_64'
+        runtimeOnly("io.netty:netty-resolver-dns-native-macos:${netty_version}:${classifier}") { version { strictly netty_version } }
+    }
 
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version {strictly "2.6.0" } }
@@ -440,9 +448,9 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 
-    implementation "com.google.errorprone:error_prone_annotations:2.42.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.43.0"
     // needed for OpenAPI generation
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -509,7 +517,7 @@ dependencies {
     testImplementation "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
 }
 
-// we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ":mockitoAgent" after it has been resolved
+// we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved
 apply from: "gradle/test.gradle"
 apply from: "gradle/openapi.gradle"
 

@@ -2,13 +2,16 @@ package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -19,6 +22,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardWithCurrentUserEntryDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizTrainingLeaderboardRepository;
@@ -40,6 +44,8 @@ public class QuizTrainingLeaderboardService {
 
     private static final int BRONZE_LEAGUE = 5;
 
+    private static final int DEFAULT_LEAGUE = 0; // Default league value used for the current user entry that is just used for the scorecard not the leaderboard itself
+
     public QuizTrainingLeaderboardService(QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository, CourseRepository courseRepository, UserRepository userRepository,
             QuizQuestionRepository quizQuestionRepository, QuizQuestionProgressRepository quizQuestionProgressRepository) {
         this.quizTrainingLeaderboardRepository = quizTrainingLeaderboardRepository;
@@ -56,14 +62,45 @@ public class QuizTrainingLeaderboardService {
      * @param courseId the id of the course
      * @return a list of leaderboard entry DTOs
      */
-    public List<LeaderboardEntryDTO> getLeaderboard(long userId, long courseId) {
+    public LeaderboardWithCurrentUserEntryDTO getLeaderboard(long userId, long courseId) {
         long totalQuestions = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
         int league;
         league = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).map(QuizTrainingLeaderboard::getLeague).orElse(BRONZE_LEAGUE);
 
+        var userLeaderboardEntryForCurrentCourse = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId);
+        boolean hasUserSetSettings = quizTrainingLeaderboardRepository.existsQuizTrainingLeaderboardByUser_Id(userId);
+
+        userLeaderboardEntryForCurrentCourse = initializeLeaderboardEntry(userId, courseId, userLeaderboardEntryForCurrentCourse, hasUserSetSettings);
+
+        QuizTrainingLeaderboard currentUserEntry = userLeaderboardEntryForCurrentCourse.orElseThrow();
+        ZonedDateTime currentTime = ZonedDateTime.now();
+
         List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdAndShowInLeaderboardTrueOrderByScoreDescUserAscId(league,
                 courseId);
-        return getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
+        List<LeaderboardEntryDTO> leaderboardEntryDTOs = getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
+        return new LeaderboardWithCurrentUserEntryDTO(leaderboardEntryDTOs, hasUserSetSettings, LeaderboardEntryDTO.of(currentUserEntry, DEFAULT_LEAGUE, league, totalQuestions),
+                currentTime);
+    }
+
+    private Optional<QuizTrainingLeaderboard> initializeLeaderboardEntry(long userId, long courseId, Optional<QuizTrainingLeaderboard> userLeaderboardEntryForCurrentCourse,
+            boolean hasUserSetSettings) {
+        try {
+            if (userLeaderboardEntryForCurrentCourse.isEmpty()) {
+                if (hasUserSetSettings) {
+                    boolean showInLeaderboard = quizTrainingLeaderboardRepository.findFirstByUser_Id(userId)
+                            .orElseThrow(() -> new IllegalStateException("Entry should exist but was not found")).isShowInLeaderboard();
+                    setInitialLeaderboardEntry(userId, courseId, showInLeaderboard);
+                }
+                else {
+                    setInitialLeaderboardEntry(userId, courseId, false);
+                }
+                userLeaderboardEntryForCurrentCourse = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId);
+            }
+        }
+        catch (DataIntegrityViolationException e) {
+            userLeaderboardEntryForCurrentCourse = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId);
+        }
+        return userLeaderboardEntryForCurrentCourse;
     }
 
     /**
@@ -91,11 +128,11 @@ public class QuizTrainingLeaderboardService {
      * and sets the visibility in the leaderboard according to the provided parameter.
      * </p>
      *
-     * @param userId             the ID of the user for whom the leaderboard entry is created
-     * @param courseId           the ID of the course for which the leaderboard entry is created
-     * @param shownInLeaderboard whether the user should be shown in the leaderboard
+     * @param userId            the ID of the user for whom the leaderboard entry is created
+     * @param courseId          the ID of the course for which the leaderboard entry is created
+     * @param showInLeaderboard whether the user should be shown in the leaderboard
      */
-    public void setInitialLeaderboardEntry(long userId, long courseId, boolean shownInLeaderboard) {
+    public void setInitialLeaderboardEntry(long userId, long courseId, boolean showInLeaderboard) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.findByIdElseThrow(userId);
         QuizTrainingLeaderboard leaderboardEntry = new QuizTrainingLeaderboard();
@@ -107,7 +144,7 @@ public class QuizTrainingLeaderboardService {
         leaderboardEntry.setAnsweredWrong(0);
         leaderboardEntry.setDueDate(ZonedDateTime.now());
         leaderboardEntry.setStreak(0);
-        leaderboardEntry.setShowInLeaderboard(shownInLeaderboard);
+        leaderboardEntry.setShowInLeaderboard(showInLeaderboard);
         quizTrainingLeaderboardRepository.save(leaderboardEntry);
     }
 
@@ -136,6 +173,13 @@ public class QuizTrainingLeaderboardService {
      * @return the earliest due date found or the current time if none exists
      */
     private ZonedDateTime findEarliestDueDate(long userId, long courseId) {
+        long totalQuestionCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
+        long progressCount = quizQuestionProgressRepository.countByUserIdAndCourseId(userId, courseId);
+
+        boolean hasUnansweredNewQuestions = totalQuestionCount > progressCount;
+        if (hasUnansweredNewQuestions) {
+            return ZonedDateTime.now().minusDays(1);
+        }
         return quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId).stream().map(QuizQuestionProgress::getProgressJson)
                 .map(QuizQuestionProgressData::getDueDate).filter(Objects::nonNull).min(ZonedDateTime::compareTo).orElse(ZonedDateTime.now());
     }
@@ -151,14 +195,36 @@ public class QuizTrainingLeaderboardService {
         double lastScore = answeredQuestion.getLastScore();
         int box = answeredQuestion.getBox();
 
-        // Preliminary formula for score calculation
-        double questionDelta = 2 * lastScore + box * lastScore;
+        boolean hadFailedAttemptToday = getHadFailedAttemptToday(answeredQuestion);
+
+        double questionDelta = Math.pow(2, box - 1) * lastScore;
+
+        boolean hasAnsweredCorrect = lastScore == 1.0;
+        if (hadFailedAttemptToday && hasAnsweredCorrect) {
+            questionDelta = 0;
+        }
 
         delta += (int) Math.round(questionDelta);
         return delta;
     }
 
-    public void updateShownInLeaderboard(long userId, boolean shownInLeaderboard) {
-        quizTrainingLeaderboardRepository.updateShownInLeaderboard(userId, shownInLeaderboard);
+    private boolean getHadFailedAttemptToday(QuizQuestionProgressData answeredQuestion) {
+        boolean hadFailedAttemptToday = false;
+        List<QuizQuestionProgressData.Attempt> attempts = answeredQuestion.getAttempts();
+
+        if (attempts != null && attempts.size() > 1) {
+            QuizQuestionProgressData.Attempt currentAttempt = attempts.getLast();
+            LocalDate currentDate = currentAttempt.getAnsweredAt().toLocalDate();
+
+            QuizQuestionProgressData.Attempt previousAttempt = attempts.get(attempts.size() - 2);
+            if (previousAttempt.getAnsweredAt().toLocalDate().equals(currentDate) && previousAttempt.getScore() < 1.0) {
+                hadFailedAttemptToday = true;
+            }
+        }
+        return hadFailedAttemptToday;
+    }
+
+    public void updateShowInLeaderboard(long userId, boolean showInLeaderboard) {
+        quizTrainingLeaderboardRepository.updateShowInLeaderboard(userId, showInLeaderboard);
     }
 }
