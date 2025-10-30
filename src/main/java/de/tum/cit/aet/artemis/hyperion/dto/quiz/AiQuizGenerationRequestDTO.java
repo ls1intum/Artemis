@@ -17,7 +17,7 @@ public record AiQuizGenerationRequestDTO(@Size(max = 500) String topic, @NotNull
         @NotNull DifficultyLevel difficultyLevel, @NotNull AiQuestionSubtype requestedSubtype, @Size(max = 500) String promptHint) {
 
     public Map<String, String> toTemplateVariables() {
-        return Map.of("topic", topic != null ? topic : "", "numberOfQuestions", String.valueOf(numberOfQuestions), "language", language.getShortName(), "difficultyLevel",
+        return Map.of("topic", topic != null ? topic : "", "numberOfQuestions", String.valueOf(numberOfQuestions), "language", language.toString(), "difficultyLevel",
                 difficultyLevel != null ? difficultyLevel.name() : "", "requestedSubtype", requestedSubtype != null ? requestedSubtype.name() : "", "promptHint",
                 promptHint != null ? promptHint : "");
     }
