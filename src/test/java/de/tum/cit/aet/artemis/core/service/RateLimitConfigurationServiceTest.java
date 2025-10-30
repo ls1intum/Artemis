@@ -41,37 +41,37 @@ class RateLimitConfigurationServiceTest {
 
     @Test
     void testGetEffectiveRpm_PublicType_WithCustomValue_ShouldReturnCustomValue() {
-        when(properties.getPublicRpm()).thenReturn(10);
+        when(properties.getAccountManagementRpm()).thenReturn(10);
 
-        int rpm = configurationService.getEffectiveRpm(RateLimitType.PUBLIC);
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT);
 
         assertThat(rpm).isEqualTo(10);
     }
 
     @Test
     void testGetEffectiveRpm_PublicType_WithNullValue_ShouldReturnDefault() {
-        when(properties.getPublicRpm()).thenReturn(null);
+        when(properties.getAccountManagementRpm()).thenReturn(null);
 
-        int rpm = configurationService.getEffectiveRpm(RateLimitType.PUBLIC);
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT);
 
-        assertThat(rpm).isEqualTo(RateLimitType.PUBLIC.getDefaultRpm()); // 5
+        assertThat(rpm).isEqualTo(RateLimitType.ACCOUNT_MANAGEMENT.getDefaultRpm()); // 5
     }
 
     @Test
     void testGetEffectiveRpm_LoginRelatedType_WithCustomValue_ShouldReturnCustomValue() {
-        when(properties.getLoginRelatedRpm()).thenReturn(50);
+        when(properties.getAuthenticationRpm()).thenReturn(50);
 
-        int rpm = configurationService.getEffectiveRpm(RateLimitType.LOGIN_RELATED);
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION);
 
         assertThat(rpm).isEqualTo(50);
     }
 
     @Test
     void testGetEffectiveRpm_LoginRelatedType_WithNullValue_ShouldReturnDefault() {
-        when(properties.getLoginRelatedRpm()).thenReturn(null);
+        when(properties.getAuthenticationRpm()).thenReturn(null);
 
-        int rpm = configurationService.getEffectiveRpm(RateLimitType.LOGIN_RELATED);
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION);
 
-        assertThat(rpm).isEqualTo(RateLimitType.LOGIN_RELATED.getDefaultRpm()); // 30
+        assertThat(rpm).isEqualTo(RateLimitType.AUTHENTICATION.getDefaultRpm()); // 30
     }
 }

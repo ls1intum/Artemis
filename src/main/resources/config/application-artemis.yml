@@ -82,9 +82,9 @@ artemis:
     name: Artemis
     email: artemis@xcit.tum.de
   rate-limiting:
-    enabled: false
-    public-rpm: 5
-    login-related-rpm: 30
+    enabled: true
+    account-management-rpm: 5
+    authentication-rpm: 30
   athena:
     url: http://localhost:5100
     secret: abcdef12345

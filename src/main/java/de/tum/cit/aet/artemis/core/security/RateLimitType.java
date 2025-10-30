@@ -7,16 +7,20 @@ package de.tum.cit.aet.artemis.core.security;
 public enum RateLimitType {
 
     /**
-     * Rate limit for public endpoints that don't require authentication.
+     * Rate limit for unauthenticated authentication endpoints,
+     * such as user registration and password reset requests.
+     * <p>
      * Default: 5 requests per minute per client.
      */
-    PUBLIC(5),
+    ACCOUNT_MANAGEMENT(5),
 
     /**
-     * Rate limit for login-related endpoints (authentication, password reset, registration).
+     * Rate limit for authenticated login endpoints,
+     * including REST and Git-based authentication.
+     * <p>
      * Default: 30 requests per minute per client.
      */
-    LOGIN_RELATED(30);
+    AUTHENTICATION(30);
 
     private final int defaultRpm;
 

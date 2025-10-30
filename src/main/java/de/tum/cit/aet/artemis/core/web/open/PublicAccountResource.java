@@ -98,7 +98,7 @@ public class PublicAccountResource {
      */
     @PostMapping("register")
     @EnforceNothing
-    @LimitRequestsPerMinute(type = RateLimitType.PUBLIC)
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
 
         if (accountService.isRegistrationDisabled()) {
@@ -219,7 +219,7 @@ public class PublicAccountResource {
      */
     @PostMapping("account/reset-password/init")
     @EnforceNothing
-    @LimitRequestsPerMinute(type = RateLimitType.PUBLIC)
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> requestPasswordReset(@RequestBody String mailUsername) {
         List<User> users = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
         if (!users.isEmpty()) {
@@ -253,7 +253,7 @@ public class PublicAccountResource {
      */
     @PostMapping("account/reset-password/finish")
     @EnforceNothing
-    @LimitRequestsPerMinute(type = RateLimitType.PUBLIC)
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (accountService.isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
             throw new PasswordViolatesRequirementsException();

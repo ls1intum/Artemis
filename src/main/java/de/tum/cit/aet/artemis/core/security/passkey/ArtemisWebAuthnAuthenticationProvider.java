@@ -59,7 +59,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         WebAuthnAuthenticationRequestToken webAuthnRequest = (WebAuthnAuthenticationRequestToken) authentication;
-        rateLimitService.enforcePerMinute(rateLimitService.resolveClientId(), RateLimitType.LOGIN_RELATED);
+        rateLimitService.enforcePerMinute(rateLimitService.resolveClientId(), RateLimitType.AUTHENTICATION);
         try {
             PublicKeyCredentialUserEntity userEntity = this.relyingPartyOperations.authenticate(webAuthnRequest.getWebAuthnRequest());
             String username = userEntity.getName();

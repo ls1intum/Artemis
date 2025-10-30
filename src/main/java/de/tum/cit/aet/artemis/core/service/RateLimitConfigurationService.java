@@ -43,8 +43,8 @@ public class RateLimitConfigurationService {
      */
     public int getEffectiveRpm(RateLimitType type) {
         return switch (type) {
-            case PUBLIC -> properties.getPublicRpm() != null ? properties.getPublicRpm() : type.getDefaultRpm();
-            case LOGIN_RELATED -> properties.getLoginRelatedRpm() != null ? properties.getLoginRelatedRpm() : type.getDefaultRpm();
+            case ACCOUNT_MANAGEMENT -> properties.getAccountManagementRpm() != null ? properties.getAccountManagementRpm() : type.getDefaultRpm();
+            case AUTHENTICATION -> properties.getAuthenticationRpm() != null ? properties.getAuthenticationRpm() : type.getDefaultRpm();
         };
     }
 }

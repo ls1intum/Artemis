@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.core.security.RateLimitType;
  * The value specifies the maximum number of requests for all nodes allowed per minute per client.
  *
  * <p>
- * You can either specify a fixed RPM value using {@link #value()} or use a predefined type
+ * You can either specify a fixed RPM value using {@link #type()} or use a predefined type
  * with {@link #type()} which allows for configuration-based overrides.
  * </p>
  */
@@ -27,5 +27,5 @@ public @interface LimitRequestsPerMinute {
      *
      * @return the rate limit type, or null if using fixed value
      */
-    RateLimitType type() default RateLimitType.PUBLIC;
+    RateLimitType type() default RateLimitType.AUTHENTICATION;
 }

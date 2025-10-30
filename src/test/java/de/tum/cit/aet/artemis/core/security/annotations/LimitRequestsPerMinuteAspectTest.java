@@ -51,7 +51,7 @@ class LimitRequestsPerMinuteAspectTest {
 
         aspect.checkRateLimit(joinPoint);
 
-        verify(rateLimitService).enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.PUBLIC);
+        verify(rateLimitService).enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.ACCOUNT_MANAGEMENT);
     }
 
     @Test
@@ -63,7 +63,7 @@ class LimitRequestsPerMinuteAspectTest {
 
         aspect.checkRateLimit(joinPoint);
 
-        verify(rateLimitService).enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.LOGIN_RELATED);
+        verify(rateLimitService).enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.AUTHENTICATION);
     }
 
     @Test
@@ -86,12 +86,12 @@ class LimitRequestsPerMinuteAspectTest {
 
         aspect.checkRateLimit(joinPoint);
 
-        verify(rateLimitService).enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.PUBLIC);
+        verify(rateLimitService).enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.ACCOUNT_MANAGEMENT);
     }
 
     public static class TestService {
 
-        @LimitRequestsPerMinute(type = RateLimitType.PUBLIC)
+        @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
         public void methodWithTypeBasedRateLimit() {
             // Test method
         }
@@ -106,7 +106,7 @@ class LimitRequestsPerMinuteAspectTest {
         }
     }
 
-    @LimitRequestsPerMinute(type = RateLimitType.LOGIN_RELATED)
+    @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
     public static class ClassWithRateLimit {
 
         public void methodInClassWithRateLimit() {

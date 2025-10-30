@@ -61,7 +61,7 @@ class RateLimitServiceTest {
     void testEnforcePerMinute_WhenRateLimitingDisabled_ShouldSkip() throws AddressStringException {
         when(configurationService.isRateLimitingEnabled()).thenReturn(false);
 
-        rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.PUBLIC);
+        rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.ACCOUNT_MANAGEMENT);
 
         // Verify no bucket operations were performed
         verify(proxyManager, never()).getProxy(anyString(), any());
@@ -70,13 +70,13 @@ class RateLimitServiceTest {
     @Test
     void testEnforcePerMinute_WhenWithinLimit_ShouldSucceed() throws AddressStringException {
         when(configurationService.isRateLimitingEnabled()).thenReturn(true);
-        when(configurationService.getEffectiveRpm(RateLimitType.PUBLIC)).thenReturn(5);
+        when(configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT)).thenReturn(5);
         when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
         when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
         when(consumptionProbe.isConsumed()).thenReturn(true);
         when(consumptionProbe.getRemainingTokens()).thenReturn(4L);
 
-        rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.PUBLIC);
+        rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.ACCOUNT_MANAGEMENT);
 
         verify(bucketProxy).tryConsumeAndReturnRemaining(1);
     }
@@ -84,25 +84,25 @@ class RateLimitServiceTest {
     @Test
     void testEnforcePerMinute_WhenExceedsLimit_ShouldThrowException() {
         when(configurationService.isRateLimitingEnabled()).thenReturn(true);
-        when(configurationService.getEffectiveRpm(RateLimitType.PUBLIC)).thenReturn(5);
+        when(configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT)).thenReturn(5);
         when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
         when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
         when(consumptionProbe.isConsumed()).thenReturn(false);
         when(consumptionProbe.getNanosToWaitForRefill()).thenReturn(30_000_000_000L);
 
-        assertThatThrownBy(() -> rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.PUBLIC))
+        assertThatThrownBy(() -> rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.ACCOUNT_MANAGEMENT))
                 .isInstanceOf(RateLimitExceededException.class);
     }
 
     @Test
     void testEnforcePerMinute_EvenIfSpringTestProfile_ShouldStillEnforce() throws AddressStringException {
         when(configurationService.isRateLimitingEnabled()).thenReturn(true);
-        when(configurationService.getEffectiveRpm(RateLimitType.PUBLIC)).thenReturn(5);
+        when(configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT)).thenReturn(5);
         when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
         when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
         when(consumptionProbe.isConsumed()).thenReturn(true);
 
-        rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.PUBLIC);
+        rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.ACCOUNT_MANAGEMENT);
 
         verify(bucketProxy).tryConsumeAndReturnRemaining(1);
     }

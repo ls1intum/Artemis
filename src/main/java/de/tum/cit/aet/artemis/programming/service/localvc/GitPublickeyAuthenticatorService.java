@@ -91,7 +91,7 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
             String ipString = ((InetSocketAddress) session.getRemoteAddress()).getHostString();
             final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
 
-            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.LOGIN_RELATED);
+            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
         }
         catch (RuntimeException e) {
             log.warn("Rate limit exceeded for SSH authentication from {}", session.getRemoteAddress(), e);

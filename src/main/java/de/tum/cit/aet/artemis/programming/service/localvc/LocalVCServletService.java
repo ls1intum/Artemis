@@ -238,7 +238,7 @@ public class LocalVCServletService {
 
         String ipString = getIpStringFromRequest(request);
         final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
-        rateLimitService.enforcePerMinute(ipAddress, RateLimitType.LOGIN_RELATED);
+        rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         log.debug("Parsed repository URI from request: {}", localVCRepositoryUri);

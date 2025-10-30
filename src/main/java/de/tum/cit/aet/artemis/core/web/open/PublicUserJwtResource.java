@@ -85,7 +85,7 @@ public class PublicUserJwtResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    @LimitRequestsPerMinute(type = RateLimitType.LOGIN_RELATED)
+    @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
     public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader(HttpHeaders.USER_AGENT) String userAgent,
             @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response, HttpServletRequest request) {
 
