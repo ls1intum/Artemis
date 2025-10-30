@@ -27,9 +27,9 @@ export interface AgentHistoryMessage {
     providedIn: 'root',
 })
 export class AgentChatService {
-    private http = inject(HttpClient);
-    private translateService = inject(TranslateService);
-    private accountService = inject(AccountService);
+    private readonly http = inject(HttpClient);
+    private readonly translateService = inject(TranslateService);
+    private readonly accountService = inject(AccountService);
 
     /**
      * Generates a unique session ID for the user's conversation in a specific course.
@@ -37,6 +37,8 @@ export class AgentChatService {
      */
     getSessionId(courseId: number): string {
         const userId = this.accountService.userIdentity?.id;
+    sendMessage(message: string, courseId: number): Observable<AgentChatResponse> {
+        const userId = this.accountService.userIdentity()?.id;
         if (!userId) {
             throw new Error('User must be authenticated to use agent chat');
         }

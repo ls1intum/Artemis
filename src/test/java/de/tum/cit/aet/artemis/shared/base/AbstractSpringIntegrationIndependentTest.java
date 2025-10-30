@@ -35,6 +35,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
@@ -43,6 +44,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
+import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
+import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -91,6 +94,25 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
 
     @MockitoBean
     protected ChatMemory chatMemory;
+    // Spy for lecture transcription tests to allow real method execution in service integration tests
+    @MockitoSpyBean
+    protected LectureTranscriptionService lectureTranscriptionService;
+
+    // Mock for TUM Live service used in Nebula transcription resource
+    @MockitoBean
+    protected TumLiveService tumLiveService;
+
+    // Mock RestTemplate for Nebula API calls
+    // Nebula is enabled in tests; we mock this bean to avoid real HTTP calls and control responses
+    @MockitoBean(name = "nebulaRestTemplate")
+    protected RestTemplate nebulaRestTemplate;
+
+    @BeforeEach
+    protected void setupSpringAIMocks() {
+        if (chatModel != null) {
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
+        }
+    }
 
     @AfterEach
     @Override
@@ -108,6 +130,13 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         if (chatMemory != null) {
             Mockito.reset(chatMemory);
         }
+        if (lectureTranscriptionService != null) {
+            Mockito.reset(lectureTranscriptionService);
+        }
+        if (tumLiveService != null) {
+            Mockito.reset(tumLiveService);
+        }
+        super.resetSpyBeans();
     }
 
     @Override
