@@ -207,7 +207,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         if (isChannelDTO(currentConversation)) {
             this.canPin = currentConversation.hasChannelModerationRights ?? false;
         } else if (isGroupChatDTO(currentConversation)) {
-            this.canPin = currentConversation.creator?.id === this.accountService.userIdentity?.id;
+            this.canPin = currentConversation.creator?.id === this.accountService.userIdentity()?.id;
         } else if (isOneToOneChatDTO(currentConversation)) {
             this.canPin = true;
         }
