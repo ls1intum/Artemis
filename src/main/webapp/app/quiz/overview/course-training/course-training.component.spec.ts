@@ -54,8 +54,8 @@ describe('CourseTrainingComponent', () => {
             ]);
 
         leaderboardService = TestBed.inject(LeaderboardService);
-        jest.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockReturnValue(of(mockLeaderboardDTO));
-        jest.spyOn(leaderboardService, 'getSettings').mockReturnValue(of(new HttpResponse({ body: { showInLeaderboard: true } as LeaderboardSettingsDTO })));
+        jest.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockResolvedValue(mockLeaderboardDTO);
+        jest.spyOn(leaderboardService, 'getSettings').mockResolvedValue({ showInLeaderboard: true } as LeaderboardSettingsDTO);
 
         fixture = TestBed.createComponent(CourseTrainingComponent);
         component = fixture.componentInstance;
