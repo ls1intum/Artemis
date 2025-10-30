@@ -30,6 +30,7 @@ import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-students-room-distribution-dialog',
+    standalone: true,
     templateUrl: './students-room-distribution-dialog.component.html',
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule],
