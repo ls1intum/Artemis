@@ -9,6 +9,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URL;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.mockito.MockitoAnnotations;
@@ -217,7 +218,7 @@ public class IrisRequestMockProvider {
     public void mockStatusResponses() throws JsonProcessingException {
         // @formatter:off
         PyrisHealthStatusDTO[] activeIrisStatusDTO = new PyrisHealthStatusDTO[] {
-            new PyrisHealthStatusDTO("model", PyrisHealthStatusDTO.ModelStatus.UP)
+            new PyrisHealthStatusDTO( Map.of("chat", new PyrisHealthStatusDTO.ModuleStatusDTO(true,  null, null)))
         };
 
         shortTimeoutMockServer

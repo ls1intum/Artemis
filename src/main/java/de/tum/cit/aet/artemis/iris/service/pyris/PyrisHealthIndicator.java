@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,22 +12,34 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
+
+// ...imports...
 
 @Component
 @Lazy
 @Profile(PROFILE_IRIS)
 public class PyrisHealthIndicator implements HealthIndicator {
 
+    private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // 🟢
+
+    private static final String RED_CIRCLE = "\uD83D\uDD34"; // 🔴
+
     @Value("${artemis.iris.health-ttl:30000}")
     private int CACHE_TTL;
 
     private final RestTemplate restTemplate;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String IRIS_URL_KEY = "url";
 
@@ -41,45 +54,73 @@ public class PyrisHealthIndicator implements HealthIndicator {
         this.restTemplate = restTemplate;
     }
 
-    /**
-     * Pings Iris at /health and checks if the service is available and what its status is.
-     * Always uses a new ping and does not use a cached result.
-     *
-     * @return The health status of Iris
-     */
     @Override
     public Health health() {
         return health(false);
     }
 
-    /**
-     * Ping Iris at /health and check if the service is available and what its status is.
-     * Offers an option to use a cached result to avoid spamming the service.
-     *
-     * @param useCache Whether to use the cached result or not
-     * @return The (cached) health status of Iris
-     */
     public Health health(boolean useCache) {
         if (useCache && cachedHealth != null && System.currentTimeMillis() - lastUpdated < CACHE_TTL) {
             return cachedHealth;
         }
 
-        ConnectorHealth health;
+        ConnectorHealth connectorHealth;
         var additionalInfo = new HashMap<String, Object>();
         additionalInfo.put(IRIS_URL_KEY, irisUrl);
+
         try {
-            PyrisHealthStatusDTO[] status = restTemplate.getForObject(irisUrl + "/api/v1/health/", PyrisHealthStatusDTO[].class);
-            var isUp = status != null;
-            health = new ConnectorHealth(isUp, additionalInfo, null);
+            ResponseEntity<PyrisHealthStatusDTO> response = restTemplate.getForEntity(irisUrl + "/api/v1/health/", PyrisHealthStatusDTO.class);
+
+            boolean overallUp = response.getStatusCode().is2xxSuccessful();
+
+            PyrisHealthStatusDTO body = response.getBody();
+            if (body != null && body.modules() != null) {
+                flattenModulesInto(additionalInfo, body.modules());
+            }
+
+            connectorHealth = new ConnectorHealth(overallUp, additionalInfo, null);
+        }
+        catch (HttpStatusCodeException e) {
+            try {
+                var parsed = objectMapper.readValue(e.getResponseBodyAsString(), PyrisHealthStatusDTO.class);
+                if (parsed != null && parsed.modules() != null) {
+                    flattenModulesInto(additionalInfo, parsed.modules());
+                }
+            }
+            catch (Exception ignore) {
+                /* body may be empty or not JSON */ }
+            connectorHealth = new ConnectorHealth(false, additionalInfo, null);
         }
         catch (RestClientException e) {
-            health = new ConnectorHealth(false, null, e);
+            connectorHealth = new ConnectorHealth(false, additionalInfo, null);
         }
 
-        var newHealth = health.asActuatorHealth();
+        var newHealth = connectorHealth.asActuatorHealth();
         cachedHealth = newHealth;
         lastUpdated = System.currentTimeMillis();
-
         return newHealth;
+    }
+
+    private static void flattenModulesInto(Map<String, Object> target, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) {
+        if (modules == null)
+            return;
+        modules.forEach((name, m) -> target.put(name, summarizeModule(m)));
+    }
+
+    private static String summarizeModule(PyrisHealthStatusDTO.ModuleStatusDTO m) {
+        boolean isHealthy = Boolean.TRUE.equals(m.healthy());
+        String icon = isHealthy ? GREEN_CIRCLE : RED_CIRCLE;
+
+        StringBuilder sb = new StringBuilder().append(icon).append(' ');
+        if (m.error() != null && !m.error().isBlank()) {
+            sb.append(m.error());
+            return sb.toString();
+        }
+        if (m.url() != null && !m.url().isBlank())
+            sb.append(m.url());
+        else
+            sb.append("up");
+
+        return sb.toString();
     }
 }
