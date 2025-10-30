@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
-import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 
 /**
  * Service implementation for managing exam rooms.
@@ -53,7 +52,7 @@ public class ExamRoomService {
 
     private final ObjectMapper objectMapper;
 
-    public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper, ExamUserRepository examUserRepository) {
+    public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper) {
         this.examRoomRepository = examRoomRepository;
         this.objectMapper = objectMapper;
     }

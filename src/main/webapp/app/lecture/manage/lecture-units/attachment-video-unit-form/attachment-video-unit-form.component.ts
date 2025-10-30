@@ -22,6 +22,7 @@ import { DecimalPipe } from '@angular/common';
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
+    playlistUrl?: string;
     transcriptionProperties?: TranscriptionProperties;
 }
 
@@ -35,6 +36,7 @@ export interface FormProperties {
     videoSource?: string;
     urlHelper?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
+    generateTranscript?: boolean;
     videoTranscription?: string;
 }
 
@@ -131,6 +133,10 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
+    private readonly http = inject(HttpClient);
+    canGenerateTranscript = signal(false);
+    playlistUrl = signal<string | undefined>(undefined);
+
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
 
@@ -182,10 +188,13 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
         videoTranscription: [undefined as string | undefined, [validJsonOrEmpty]],
+        generateTranscript: [false],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
+
+    readonly shouldShowTranscriptCheckbox = computed(() => !!this.playlistUrl());
 
     isFormValid = computed(() => {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
@@ -258,6 +267,34 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     }
 
     async submitForm() {
+
+    checkTumLivePlaylist(originalUrl: string): void {
+        const parsedUrl = new URL(originalUrl);
+
+        if (parsedUrl.host === 'live.rbg.tum.de') {
+            this.http
+                .get('api/nebula/video-utils/tum-live-playlist', {
+                    params: { url: originalUrl },
+                    responseType: 'text',
+                })
+                .subscribe({
+                    next: (playlist) => {
+                        this.canGenerateTranscript.set(true);
+                        this.playlistUrl.set(playlist);
+                    },
+                    error: (error) => {
+                        this.canGenerateTranscript.set(false);
+                        this.playlistUrl.set(undefined);
+                        this.form.get('generateTranscript')?.setValue(false);
+                    },
+                });
+        } else {
+            this.canGenerateTranscript.set(false);
+            this.playlistUrl.set(undefined);
+            this.form.get('generateTranscript')?.setValue(false);
+        }
+    }
+
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
 
@@ -413,6 +450,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
             formProperties,
             fileProperties,
             transcriptionProperties,
+            playlistUrl: this.playlistUrl(),
         });
     }
 
@@ -441,8 +479,12 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     setEmbeddedVideoUrl(event: any) {
         event.stopPropagation();
-        const embeddedUrl = this.extractEmbeddedUrl(this.urlHelperControl!.value);
+
+        const originalUrl = this.urlHelperControl!.value;
+        const embeddedUrl = this.extractEmbeddedUrl(originalUrl);
         this.videoSourceControl!.setValue(embeddedUrl);
+
+        this.checkTumLivePlaylist(originalUrl);
     }
 
     extractEmbeddedUrl(videoUrl: string) {
