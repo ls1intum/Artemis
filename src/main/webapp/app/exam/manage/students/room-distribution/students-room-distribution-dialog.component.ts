@@ -123,7 +123,9 @@ export class StudentsRoomDistributionDialogComponent {
             return this.removeAllRoomsThatAreAlreadySelected(this.availableRooms());
         }
 
-        const tokens = trimmed.toLowerCase().split(/\s+/);
+        const ANY_WHITESPACE: RegExp = /\s+/;
+        const tokens: string[] = trimmed.toLowerCase().split(ANY_WHITESPACE);
+
         return this.removeAllRoomsThatAreAlreadySelected(
             this.availableRooms().filter((room) => {
                 const roomFields = [room.name, room.alternativeName, room.roomNumber, room.alternativeRoomNumber, room.building].filter(Boolean).map((str) => str!.toLowerCase());
@@ -142,21 +144,24 @@ export class StudentsRoomDistributionDialogComponent {
     }
 
     /**
-     * Returns true iff the subsequence is a subsequence of the string.
-     * A string is a subsequence of another, if it matches the string, while allowing for omitted characters.
+     * Returns true if the subsequence is part of the string.
+     * A string is a subsequence of another, if it matches the other string, while allowing for omitted characters.
      *
-     * @param str A string
-     * @param subsequence A string that we want to check if it is a subsequence of {@code str}
+     * Essentially this functions performs the equivalent of inserting '.*' before and after each character of the
+     * subsequence, then using that modified subsequence as a regex expression to match against the token.
+     *
+     * @param token A string without any whitespace
+     * @param subsequence A string that we want to check if it is a subsequence of the token
      */
-    private isSubsequence(str: string, subsequence: string): boolean {
-        if (str.length < subsequence.length) {
+    private isSubsequence(token: string, subsequence: string): boolean {
+        if (token.length < subsequence.length) {
             return false;
         }
 
         let strIndex: number = 0;
         let subsequenceIndex: number = 0;
-        while (strIndex < str.length && subsequenceIndex < subsequence.length) {
-            if (str[strIndex] === subsequence[subsequenceIndex]) {
+        while (strIndex < token.length && subsequenceIndex < subsequence.length) {
+            if (token[strIndex] === subsequence[subsequenceIndex]) {
                 subsequenceIndex++;
             }
             strIndex++;
@@ -181,11 +186,6 @@ export class StudentsRoomDistributionDialogComponent {
         return '';
     }
 
-    /**
-     * Adds a room to the {@link selectedRooms} and removes it from the {@link availableRooms} if it isn't included and removed already
-     *
-     * @param event An event containing a selected room
-     */
     pickSelectedRoom(event: { item: RoomForDistributionDTO }): void {
         const selectedRoom: RoomForDistributionDTO = event.item as RoomForDistributionDTO;
 
@@ -194,11 +194,6 @@ export class StudentsRoomDistributionDialogComponent {
         }
     }
 
-    /**
-     * Removes a room from the {@link selectedRooms} and adds it back to the {@link availableRooms}
-     *
-     * @param room The room to remove
-     */
     removeSelectedRoom(room: RoomForDistributionDTO): void {
         this.selectedRooms.update((selectedRooms) => selectedRooms.filter((selectedRoom) => room.id !== selectedRoom.id));
     }
