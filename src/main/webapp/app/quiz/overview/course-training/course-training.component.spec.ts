@@ -173,6 +173,26 @@ describe('CourseTrainingComponent', () => {
         expect(dueIn.minutes).toBe(0);
     });
 
+    it('should return defaults when currentUserEntry is undefined', () => {
+        component.currentUserEntry.set(undefined);
+
+        expect(component.totalQuestions()).toBe(0);
+        expect(component.correctQuestions()).toBe(0);
+        expect(component.wrongQuestions()).toBe(0);
+        expect(component.leaderboardName()).toBe('');
+        expect(component.points()).toBe(0);
+    });
+
+    it('should return values from currentUserEntry when present', () => {
+        component.currentUserEntry.set(mockLeaderboardEntry);
+
+        expect(component.totalQuestions()).toBe(mockLeaderboardEntry.totalQuestions);
+        expect(component.correctQuestions()).toBe(mockLeaderboardEntry.answeredCorrectly);
+        expect(component.wrongQuestions()).toBe(mockLeaderboardEntry.answeredWrong);
+        expect(component.leaderboardName()).toBe(mockLeaderboardEntry.userName);
+        expect(component.points()).toBe(mockLeaderboardEntry.score);
+    });
+
     it('should save leaderboard settings', async () => {
         const saveSpy = jest.spyOn(leaderboardService, 'updateSettings').mockResolvedValue(undefined);
         const loadSpy = jest.spyOn(component, 'loadLeaderboard').mockResolvedValue(undefined);
