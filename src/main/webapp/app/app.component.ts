@@ -6,7 +6,6 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { LtiService } from 'app/shared/service/lti.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
@@ -33,7 +32,6 @@ export class AppComponent implements OnInit, OnDestroy {
     private themeService = inject(ThemeService);
     private document = inject<Document>(DOCUMENT);
     private renderer = inject(Renderer2);
-    private courseService = inject(CourseManagementService);
     private ltiService = inject(LtiService);
 
     private examStartedSubscription: Subscription;
@@ -50,8 +48,8 @@ export class AppComponent implements OnInit, OnDestroy {
     isTestServer = false;
     isExamStarted = false;
     isTestRunExam = false;
-    isCourseOverview = false;
     isShownViaLti = false;
+    usesModuleBackground = false;
 
     constructor() {
         this.setupErrorHandling().then(undefined);
@@ -69,6 +67,14 @@ export class AppComponent implements OnInit, OnDestroy {
             return this.getPageTitle(routeSnapshot.firstChild) || title;
         }
         return title;
+    }
+
+    private getDeepestSnapshot(route: ActivatedRouteSnapshot): ActivatedRouteSnapshot {
+        return route.firstChild ? this.getDeepestSnapshot(route.firstChild) : route;
+    }
+
+    private getDeepestUsesModuleBackground(root: ActivatedRouteSnapshot): boolean {
+        return this.getDeepestSnapshot(root).data?.['usesModuleBackground'] ?? false;
     }
 
     ngOnInit() {
@@ -96,6 +102,7 @@ export class AppComponent implements OnInit, OnDestroy {
             }
             if (event instanceof NavigationEnd) {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
+                this.usesModuleBackground = this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root);
             }
             if (event instanceof NavigationError && event.error.status === 404) {
                 // noinspection JSIgnoredPromiseFromCall
@@ -112,10 +119,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
         this.testRunSubscription = this.examParticipationService.testRunStarted$.subscribe((isStarted) => {
             this.isTestRunExam = isStarted;
-        });
-
-        this.courseOverviewSubscription = this.courseService.isCourseOverview$.subscribe((isPresent) => {
-            this.isCourseOverview = isPresent;
         });
 
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {

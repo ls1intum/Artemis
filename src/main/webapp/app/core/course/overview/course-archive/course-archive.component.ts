@@ -47,7 +47,6 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.loadArchivedCourses();
-        this.courseService.enableCourseOverviewBackground();
     }
 
     /**
@@ -85,7 +84,6 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.archiveCourseSubscription.unsubscribe();
-        this.courseService.disableCourseOverviewBackground();
     }
 
     setSearchValue(searchValue: string): void {

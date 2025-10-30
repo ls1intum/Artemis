@@ -12,20 +12,18 @@ type FeatureToggleState = {
 @Component({
     selector: 'jhi-feature-toggles',
     template: `
-        <div class="module-bg p-3">
-            <ngx-datatable class="bootstrap" [headerHeight]="50" [limit]="20" [columnMode]="'force'" [footerHeight]="50" [rowHeight]="'auto'" [rows]="availableToggles">
-                <ngx-datatable-column name="Name" prop="name">
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value }}
-                    </ng-template>
-                </ngx-datatable-column>
-                <ngx-datatable-column name="Active" prop="isActive">
-                    <ng-template ngx-datatable-cell-template let-row="row" let-value="value">
-                        <input class="form-check-input" type="checkbox" [checked]="value" (change)="onFeatureToggle($event, row)" />
-                    </ng-template>
-                </ngx-datatable-column>
-            </ngx-datatable>
-        </div>
+        <ngx-datatable class="bootstrap" [headerHeight]="50" [limit]="20" [columnMode]="'force'" [footerHeight]="50" [rowHeight]="'auto'" [rows]="availableToggles">
+            <ngx-datatable-column name="Name" prop="name">
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value }}
+                </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Active" prop="isActive">
+                <ng-template ngx-datatable-cell-template let-row="row" let-value="value">
+                    <input class="form-check-input" type="checkbox" [checked]="value" (change)="onFeatureToggle($event, row)" />
+                </ng-template>
+            </ngx-datatable-column>
+        </ngx-datatable>
     `,
     imports: [NgxDatatableModule],
 })
