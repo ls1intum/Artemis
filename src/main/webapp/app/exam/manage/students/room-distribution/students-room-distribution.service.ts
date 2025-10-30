@@ -12,7 +12,6 @@ export class StudentsRoomDistributionService {
     private availableRoomsInternal: WritableSignal<RoomForDistributionDTO[] | undefined> = signal(undefined);
     private capacityDataInternal: WritableSignal<ExamDistributionCapacityDTO | undefined> = signal(undefined);
 
-    // Signals that can be read by other components
     readonly availableRooms: Signal<RoomForDistributionDTO[]> = computed(() => this.availableRoomsInternal() ?? []);
     readonly capacityData: Signal<ExamDistributionCapacityDTO> = computed(
         () =>
