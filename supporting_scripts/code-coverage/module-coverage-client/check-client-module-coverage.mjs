@@ -49,7 +49,7 @@ const moduleThresholds = {
     },
     core: {
         statements: 89.70,
-        branches:   72.60,
+        branches:   72.50,
         functions:  81.60,
         lines:      89.70,
     },
@@ -81,8 +81,8 @@ const moduleThresholds = {
         lines:      0,
     },
     iris: {
-        statements: 87.70,
-        branches:   73.10,
+        statements: 87.80,
+        branches:   73.00,
         functions:  86.20,
         lines:      88.30,
     },

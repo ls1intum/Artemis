@@ -108,4 +108,5 @@ public class LectureTranscriptionResource {
 
         return ResponseEntity.ok(dto);
     }
+
 }
