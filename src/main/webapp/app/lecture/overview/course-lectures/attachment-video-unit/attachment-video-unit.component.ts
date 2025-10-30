@@ -50,11 +50,66 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
-    private readonly videoUrlAllowList = [
-        RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'),
-        RegExp('^https?://.+\\.m3u8($|\\?.*)'), // Allow both http and https, and .m3u8 ending
-        RegExp('^https?://localhost:8000/api/videos/.+/playlist\\.m3u8'), // Local video storage service URLs
-    ];
+    private readonly videoUrlAllowList = [RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'), RegExp('^https://.+\\.m3u8($|\\?.*)')];
+
+    /**
+     * Return the URL of the video source
+     */
+    readonly videoUrl = computed(() => {
+        const source = this.lectureUnit().videoSource;
+        if (!source) return undefined;
+        if (this.videoUrlAllowList.some((r) => r.test(source)) || !urlParser || urlParser.parse(source)) {
+            return source;
+        }
+        return undefined;
+    });
+
+    override toggleCollapse(isCollapsed: boolean): void {
+        super.toggleCollapse(isCollapsed);
+
+        if (!isCollapsed) {
+            this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
+
+            // reset stale state
+            this.transcriptSegments.set([]);
+            this.playlistUrl.set(undefined);
+
+            const src = this.lectureUnit().videoSource;
+            if (!src) return;
+            // Always try to resolve a TUM Live playlist.
+            this.resolveTumLivePlaylist(src).then((url) => {
+                if (url) {
+                    this.playlistUrl.set(url);
+                    this.fetchTranscript();
+                }
+            });
+        }
+    }
+
+    private async resolveTumLivePlaylist(pageUrl: string): Promise<string | undefined> {
+        const params = new HttpParams().set('url', pageUrl);
+        try {
+            const res = await firstValueFrom(this.http.get('/api/nebula/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(null))));
+            return (res || undefined) as string | undefined;
+        } catch {
+            return undefined;
+        }
+    }
+
+    private fetchTranscript(): void {
+        const id = this.lectureUnit().id;
+        const url = `/api/lecture/lecture-unit/${id}/transcript`;
+
+        void firstValueFrom(
+            this.http.get<{ segments: TranscriptSegment[] }>(url).pipe(
+                catchError((err) => {
+                    return of({ segments: [] });
+                }),
+            ),
+        ).then((res) => {
+            this.transcriptSegments.set(res.segments ?? []);
+        });
+    }
 
     /**
      * Return the URL of the video source
