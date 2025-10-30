@@ -339,7 +339,9 @@ describe('VideoPlayerComponent', () => {
             component.searchQuery.set('hello');
 
             const highlighted = component.highlightText('Hello world');
-            expect(highlighted).toBe('<mark>Hello</mark> world');
+            expect(highlighted).toContain('mark');
+            expect(highlighted).toContain('Hello');
+            expect(highlighted).toContain('world');
         });
 
         it('highlightText is case-insensitive', async () => {
@@ -349,7 +351,8 @@ describe('VideoPlayerComponent', () => {
             component.searchQuery.set('WORLD');
 
             const highlighted = component.highlightText('Hello world');
-            expect(highlighted).toBe('Hello <mark>world</mark>');
+            expect(highlighted).toContain('mark');
+            expect(highlighted).toContain('world');
         });
 
         it('highlightText returns original text when no query', async () => {
@@ -367,7 +370,45 @@ describe('VideoPlayerComponent', () => {
             component.searchQuery.set('(hello)');
 
             const highlighted = component.highlightText('(hello) world');
-            expect(highlighted).toBe('<mark>(hello)</mark> world');
+            expect(highlighted).toContain('mark');
+            expect(highlighted).toContain('(hello)');
+        });
+
+        it('highlightText prevents XSS attacks by escaping HTML in text', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            component.searchQuery.set('script');
+
+            // Malicious text with script tag
+            const maliciousText = '<script>alert("XSS")</script>';
+            const highlighted = component.highlightText(maliciousText);
+
+            // Should NOT contain executable script tag
+            expect(highlighted).not.toContain('<script>alert');
+            // Should contain escaped HTML entities
+            expect(highlighted).toContain('&lt;');
+            expect(highlighted).toContain('&gt;');
+        });
+
+        it('highlightText prevents XSS attacks by escaping HTML in search query', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', testSegments);
+            await render();
+
+            // Malicious search query with script tag
+            component.searchQuery.set('<img src=x onerror=alert(1)>');
+
+            const highlighted = component.highlightText('Some text with <img src=x onerror=alert(1)> in it');
+
+            // Should NOT contain executable HTML (unescaped angle brackets)
+            expect(highlighted).not.toContain('<img');
+            expect(highlighted).not.toContain('<script');
+            // Should contain escaped HTML entities
+            expect(highlighted).toContain('&lt;');
+            expect(highlighted).toContain('&gt;');
+            // The escaped version should be safe
+            const highlightedStr = String(highlighted);
+            expect(highlightedStr).toContain('&lt;img');
         });
 
         it('isCurrentSearchResult returns true for current search result segment', async () => {

@@ -1,6 +1,7 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, computed, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 // Lazy-load video.js at runtime; type-only import doesn't pull code into initial bundle.
@@ -57,11 +58,19 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Current search result index */
     currentSearchIndex = signal<number>(0);
 
+    /** Timestamp of last auto-scroll to prevent excessive scrolling */
+    private lastAutoScrollTime = 0;
+
+    /** Minimum delay (ms) between auto-scrolls during video playback */
+    private readonly AUTO_SCROLL_THROTTLE_MS = 1000;
+
     /** Icons for search UI */
     protected readonly faSearch = faSearch;
     protected readonly faChevronUp = faChevronUp;
     protected readonly faChevronDown = faChevronDown;
     protected readonly faTimes = faTimes;
+
+    private readonly sanitizer = inject(DomSanitizer);
 
     /** Filtered transcript segments based on search query */
     filteredSegments = computed(() => {
@@ -116,7 +125,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Updates the `currentSegmentIndex` signal based on playback time.
-     * Also scrolls the active transcript line into view smoothly.
+     * Scrolls the active transcript line into view, but throttled to prevent performance issues.
      */
     updateCurrentSegment(currentTime: number): void {
         const margin = 0.3; // tolerance
@@ -125,9 +134,15 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
         if (index !== -1 && index !== this.currentSegmentIndex()) {
             this.currentSegmentIndex.set(index);
-            const el = document.getElementById(`segment-${segments[index].startTime}`);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Throttle auto-scrolling to prevent excessive calls (performance optimization)
+            const now = Date.now();
+            if (now - this.lastAutoScrollTime >= this.AUTO_SCROLL_THROTTLE_MS) {
+                this.lastAutoScrollTime = now;
+                const el = document.getElementById(`segment-${segments[index].startTime}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
         }
     }
@@ -190,12 +205,31 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     }
 
     /** Highlight search matches in segment text */
-    highlightText(text: string): string {
+    highlightText(text: string): SafeHtml {
         const query = this.searchQuery().trim();
-        if (!query) return text;
+        if (!query) {
+            // Escape HTML entities in the text to prevent XSS
+            const escapedText = this.escapeHtml(text);
+            return this.sanitizer.sanitize(1, escapedText) || '';
+        }
 
-        const regex = new RegExp(`(${this.escapeRegExp(query)})`, 'gi');
-        return text.replace(regex, '<mark>$1</mark>');
+        // Escape HTML entities in both text and query to prevent XSS
+        const escapedText = this.escapeHtml(text);
+        const escapedQuery = this.escapeHtml(query);
+
+        // Use escaped query for regex matching
+        const regex = new RegExp(`(${this.escapeRegExp(escapedQuery)})`, 'gi');
+        const highlighted = escapedText.replace(regex, '<mark>$1</mark>');
+
+        // Sanitize the result to ensure only safe HTML is returned
+        return this.sanitizer.sanitize(1, highlighted) || '';
+    }
+
+    /** Escape HTML special characters to prevent XSS */
+    private escapeHtml(text: string): string {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     /** Escape special regex characters */
