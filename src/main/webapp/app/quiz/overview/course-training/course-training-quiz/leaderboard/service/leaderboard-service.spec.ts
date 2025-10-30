@@ -22,7 +22,7 @@ describe('LeaderboardService', () => {
     });
 
     describe('getQuizTrainingLeaderboard', () => {
-        it('should call the correct URL and return leaderboard data', fakeAsync(() => {
+        it('should call the correct URL and return leaderboard data', async () => {
             const courseId = 123;
             const mockEntries: LeaderboardEntry[] = [
                 {
@@ -58,32 +58,45 @@ describe('LeaderboardService', () => {
                 currentTime: '2023-06-15 12:00:00',
             };
 
-            service.getQuizTrainingLeaderboard(courseId).subscribe((data) => {
-                expect(data).toEqual(mockLeaderboardData);
-            });
+            const promise = service.getQuizTrainingLeaderboard(courseId);
 
             const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training/leaderboard`);
             expect(req.request.method).toBe('GET');
             req.flush(mockLeaderboardData);
-            tick();
-        }));
+
+            const data = await promise;
+            expect(data).toEqual(mockLeaderboardData);
+        });
     });
 
     describe('initializeLeaderboardEntry', () => {
-        it('should send PUT request with leaderboard settings to the correct URL', fakeAsync(() => {
+        it('should send PUT request with leaderboard settings to the correct URL', async () => {
             const mockSettings: LeaderboardSettingsDTO = {
                 showInLeaderboard: true,
             };
 
-            service.updateSettings(mockSettings).subscribe((response) => {
-                expect(response).toBeNull();
-            });
+            const promise = service.updateSettings(mockSettings);
 
             const req = httpMock.expectOne(`api/quiz/leaderboard-settings`);
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toEqual(mockSettings);
             req.flush(null);
-            tick();
-        }));
+
+            const response = await promise;
+            expect(response).toBeNull();
+        });
+    });
+
+    it('should call the correct URL and return leaderboard settings', async () => {
+        const mockSettings: LeaderboardSettingsDTO = { showInLeaderboard: true };
+
+        const promise = service.getSettings();
+
+        const req = httpMock.expectOne('api/quiz/leaderboard-settings');
+        expect(req.request.method).toBe('GET');
+        req.flush(mockSettings);
+
+        const settings = await promise;
+        expect(settings).toEqual(mockSettings);
     });
 });

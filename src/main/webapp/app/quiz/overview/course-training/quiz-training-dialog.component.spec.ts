@@ -1,15 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { QuizTrainingDialogComponent } from './quiz-training-dialog.component';
 import { MockBuilder } from 'ng-mocks';
+import { DialogModule } from 'primeng/dialog';
 
 describe('QuizTrainingDialogComponent', () => {
     let component: QuizTrainingDialogComponent;
     let fixture: ComponentFixture<QuizTrainingDialogComponent>;
-    let consoleErrorSpy: jest.SpyInstance;
 
     beforeEach(async () => {
-        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-        await MockBuilder(QuizTrainingDialogComponent);
+        await MockBuilder(QuizTrainingDialogComponent).keep(DialogModule);
 
         fixture = TestBed.createComponent(QuizTrainingDialogComponent);
         component = fixture.componentInstance;
@@ -17,7 +16,6 @@ describe('QuizTrainingDialogComponent', () => {
     });
 
     afterEach(() => {
-        consoleErrorSpy.mockRestore();
         jest.clearAllMocks();
     });
 

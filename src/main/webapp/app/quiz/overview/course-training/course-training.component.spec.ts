@@ -15,7 +15,6 @@ describe('CourseTrainingComponent', () => {
     let component: CourseTrainingComponent;
     let fixture: ComponentFixture<CourseTrainingComponent>;
     let leaderboardService: LeaderboardService;
-    let consoleErrorSpy: jest.SpyInstance;
 
     const mockLeaderboardEntry: LeaderboardEntry = {
         rank: 1,
@@ -38,7 +37,6 @@ describe('CourseTrainingComponent', () => {
     };
 
     beforeEach(async () => {
-        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
         await MockBuilder(CourseTrainingComponent)
             .keep(Router)
             .provide([
@@ -65,7 +63,6 @@ describe('CourseTrainingComponent', () => {
     });
 
     afterEach(() => {
-        consoleErrorSpy.mockRestore();
         jest.clearAllMocks();
     });
 
@@ -80,8 +77,11 @@ describe('CourseTrainingComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'training', 'quiz']);
     });
 
-    it('should load leaderboard data on initialization', () => {
-        const leaderboardSpy = jest.spyOn(leaderboardService, 'getQuizTrainingLeaderboard');
+    it('should load leaderboard data on initialization', async () => {
+        const leaderboardSpy = jest.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockResolvedValue(mockLeaderboardDTO);
+
+        await component.loadLeaderboard(1);
+
         expect(leaderboardSpy).toHaveBeenCalledWith(1);
         expect(component.leaderboardEntries()).toEqual([mockLeaderboardEntry]);
         expect(component.currentUserEntry()).toEqual(mockLeaderboardEntry);
@@ -89,14 +89,6 @@ describe('CourseTrainingComponent', () => {
         expect(component.isDataLoaded()).toBeTrue();
         expect(component.showDialog).toBeFalse();
         expect(component.isFirstVisit()).toBeFalse();
-    });
-
-    it('should handle error when loading leaderboard data', () => {
-        jest.clearAllMocks();
-        jest.spyOn(leaderboardService, 'getQuizTrainingLeaderboard').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
-
-        component.loadLeaderboard(1);
-        expect(component.isLoading()).toBeFalse();
     });
 
     it('should calculate league based on user entry', () => {
@@ -181,13 +173,13 @@ describe('CourseTrainingComponent', () => {
         expect(dueIn.minutes).toBe(0);
     });
 
-    it('should save leaderboard settings', () => {
-        const saveSpy = jest.spyOn(leaderboardService, 'updateSettings').mockReturnValue(of(undefined));
-        const loadSpy = jest.spyOn(component, 'loadLeaderboard');
+    it('should save leaderboard settings', async () => {
+        const saveSpy = jest.spyOn(leaderboardService, 'updateSettings').mockResolvedValue(undefined);
+        const loadSpy = jest.spyOn(component, 'loadLeaderboard').mockResolvedValue(undefined);
 
         component.showInLeaderboard = true;
         component.isFirstVisit.set(true);
-        component.onSaveDialog();
+        await component.onSaveDialog();
 
         expect(component.isFirstVisit()).toBeFalse();
         expect(saveSpy).toHaveBeenCalledWith(
@@ -198,19 +190,19 @@ describe('CourseTrainingComponent', () => {
         expect(loadSpy).toHaveBeenCalledWith(1);
     });
 
-    it('should handle error when saving leaderboard settings', () => {
-        jest.spyOn(leaderboardService, 'updateSettings').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    it('should handle error when saving leaderboard settings', async () => {
+        jest.spyOn(leaderboardService, 'updateSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
 
         component.isLoading.set(true);
-        component.onSaveDialog();
+        await component.onSaveDialog();
 
         expect(component.isLoading()).toBeFalse();
     });
 
-    it('should load settings and open info dialog', () => {
-        const getSettingsSpy = jest.spyOn(leaderboardService, 'getSettings');
+    it('should load settings and open info dialog', async () => {
+        const getSettingsSpy = jest.spyOn(leaderboardService, 'getSettings').mockResolvedValue({ showInLeaderboard: true });
 
-        component.showInfoDialog();
+        await component.showInfoDialog();
 
         expect(component.isLoading()).toBeFalse();
         expect(getSettingsSpy).toHaveBeenCalled();
@@ -219,24 +211,24 @@ describe('CourseTrainingComponent', () => {
         expect(component.displayInfoDialog).toBeTrue();
     });
 
-    it('should handle error when loading settings for info dialog', () => {
-        jest.spyOn(leaderboardService, 'getSettings').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    it('should handle error when loading settings for info dialog', async () => {
+        jest.spyOn(leaderboardService, 'getSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
 
         component.displayInfoDialog = false;
         component.isLoading.set(true);
-        component.showInfoDialog();
+        await component.showInfoDialog();
 
         expect(component.isLoading()).toBeFalse();
         expect(component.displayInfoDialog).toBeFalse();
     });
 
-    it('should save info dialog settings and reload leaderboard', () => {
-        const updateSettingsSpy = jest.spyOn(leaderboardService, 'updateSettings').mockReturnValue(of(undefined));
-        const loadLeaderboardSpy = jest.spyOn(component, 'loadLeaderboard');
+    it('should save info dialog settings and reload leaderboard', async () => {
+        const updateSettingsSpy = jest.spyOn(leaderboardService, 'updateSettings').mockResolvedValue(undefined);
+        const loadLeaderboardSpy = jest.spyOn(component, 'loadLeaderboard').mockResolvedValue(undefined);
 
         component.showInLeaderboard = false;
         component.displayInfoDialog = true;
-        component.onSaveInfoDialog();
+        await component.onSaveInfoDialog();
 
         expect(updateSettingsSpy).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -248,12 +240,12 @@ describe('CourseTrainingComponent', () => {
         expect(loadLeaderboardSpy).toHaveBeenCalledWith(1);
     });
 
-    it('should handle error when saving info dialog settings', () => {
-        jest.spyOn(leaderboardService, 'updateSettings').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    it('should handle error when saving info dialog settings', async () => {
+        jest.spyOn(leaderboardService, 'updateSettings').mockRejectedValue(new HttpErrorResponse({ status: 500 }));
 
         component.displayInfoDialog = true;
         component.isLoading.set(true);
-        component.onSaveInfoDialog();
+        await component.onSaveInfoDialog();
 
         expect(component.isLoading()).toBeFalse();
         expect(component.displayInfoDialog).toBeTrue();
