@@ -13,16 +13,18 @@
                         <h4 id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.quizExercise.home.importLabel"></h4>
                     }
                     <jhi-documentation-button [type]="documentationType" />
-                    <button
-                        id="ai-generate-button"
-                        type="button"
-                        class="btn btn-outline-primary btn-sm ms-2"
-                        (click)="generateQuizWithHyperion()"
-                        [disabled]="!courseIdForGeneration || !quizExercise?.isEditable"
-                    >
-                        <fa-icon [icon]="faPlus" class="me-1" />
-                        <span jhiTranslate="artemisApp.quizExercise.aiGeneration.button">Generate with AI</span>
-                    </button>
+                    @if (hyperionEnabled) {
+                        <button
+                            id="ai-generate-button"
+                            type="button"
+                            class="btn btn-outline-primary btn-sm ms-2"
+                            (click)="generateQuizWithHyperion()"
+                            [disabled]="!courseIdForGeneration || !quizExercise?.isEditable"
+                        >
+                            <fa-icon [icon]="faPlus" class="me-1" />
+                            <span jhiTranslate="artemisApp.quizExercise.aiGeneration.button"> Generate with AI </span>
+                        </button>
+                    }
                 </div>
                 <h4>
                     <span class="badge bg-info align-text-top float-end">

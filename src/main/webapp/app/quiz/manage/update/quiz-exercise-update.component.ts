@@ -42,7 +42,7 @@ import { CategorySelectorComponent } from 'app/shared/category-selector/category
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { JsonPipe, NgClass } from '@angular/common';
+import { AsyncPipe, JsonPipe, NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -51,6 +51,8 @@ import { AiQuizGenerationModalComponent } from 'app/quiz/manage/ai-quiz-generati
 import { AiDifficultyLevel, AiGeneratedQuestionDTO, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -77,6 +79,7 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
         NgClass,
         JsonPipe,
         ArtemisTranslatePipe,
+        AsyncPipe,
     ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
@@ -92,6 +95,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private modalService = inject(NgbModal);
     private calendarService = inject(CalendarService);
+    private profileService = inject(ProfileService);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
 
@@ -789,5 +793,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
         // c) Trigger CD to refresh the picker if using OnPush
         this.changeDetector.detectChanges?.();
+    }
+    get hyperionEnabled(): boolean {
+        return this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     }
 }
