@@ -13,7 +13,7 @@
         <jhi-tutorial-group-utilization-indicator [tutorialGroup]="tutorialGroup()" />
     </td>
     <td>{{ (tutorialGroup().numberOfRegisteredUsers ?? '') + ' / ' + (tutorialGroup().capacity ?? '') }}</td>
-    <td>{{ tutorialGroup().isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup().teachingAssistantName }}</td>
+    <td>{{ tutorialGroup().teachingAssistantName }}</td>
     <td>
         @if (tutorialGroup().tutorialGroupSchedule) {
             <span>

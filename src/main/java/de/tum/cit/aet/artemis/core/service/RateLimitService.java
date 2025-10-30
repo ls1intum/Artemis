@@ -33,6 +33,7 @@ public class RateLimitService {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitService.class);
 
+    // Bucket4J proxy that connects rate-limit buckets to Hazelcast for cluster-wide synchronization
     private final HazelcastProxyManager<String> proxyManager;
 
     private final Map<Integer, BucketConfiguration> perMinuteCfgCache = new ConcurrentHashMap<>();

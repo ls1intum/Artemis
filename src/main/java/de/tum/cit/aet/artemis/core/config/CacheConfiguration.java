@@ -362,6 +362,7 @@ public class CacheConfiguration {
     }
 
     private MapConfig initializeRateLimitBucketsMapConfig(JHipsterProperties jHipsterProperties) {
-        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount()).setTimeToLiveSeconds(0);
+        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
+                .setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
 }
