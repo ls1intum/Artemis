@@ -37,8 +37,6 @@ export class AgentChatService {
      */
     getSessionId(courseId: number): string {
         const userId = this.accountService.userIdentity?.id;
-    sendMessage(message: string, courseId: number): Observable<AgentChatResponse> {
-        const userId = this.accountService.userIdentity()?.id;
         if (!userId) {
             throw new Error('User must be authenticated to use agent chat');
         }
