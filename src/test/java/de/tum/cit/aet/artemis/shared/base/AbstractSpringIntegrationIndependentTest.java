@@ -265,11 +265,4 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         log.debug("Requested CI project {}", exercise.getProjectKey());
     }
 
-    @BeforeEach
-    protected void setupSpringAIMocks() {
-        if (chatModel != null) {
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
-        }
-    }
-
 }
