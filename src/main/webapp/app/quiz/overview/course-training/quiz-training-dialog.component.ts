@@ -15,6 +15,14 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
     templateUrl: './quiz-training-dialog.component.html',
 })
 export class QuizTrainingDialogComponent {
+    protected readonly leagues = [
+        { league: 'Bronze', translationKey: 'artemisApp.quizTraining.bronze', range: '0 - 50' },
+        { league: 'Silver', translationKey: 'artemisApp.quizTraining.silver', range: '50 - 150' },
+        { league: 'Gold', translationKey: 'artemisApp.quizTraining.gold', range: '150 - 300' },
+        { league: 'Diamond', translationKey: 'artemisApp.quizTraining.diamond', range: '300 - 500' },
+        { league: 'Master', translationKey: 'artemisApp.quizTraining.master', range: '500+' },
+    ];
+
     visible = model<boolean>(false);
     showInLeaderboard = model<boolean>(true);
     closable = input<boolean>(false);
