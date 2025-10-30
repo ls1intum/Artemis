@@ -30,12 +30,15 @@ import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
     let httpService: jest.Mocked<IrisChatHttpService>;
     let wsMock: jest.Mocked<IrisWebsocketService>;
     let routerMock: { url: string };
+    let accountService: AccountService;
 
     const id = 123;
     const courseId = 234;
@@ -46,9 +49,6 @@ describe('IrisChatService', () => {
     };
     const userMock = {
         acceptExternalLLMUsage: jest.fn(),
-    };
-    const accountMock = {
-        userIdentity: { externalLLMUsageAccepted: dayjs() },
     };
 
     beforeEach(() => {
@@ -61,7 +61,7 @@ describe('IrisChatService', () => {
                 MockProvider(IrisWebsocketService),
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: UserService, useValue: userMock },
-                { provide: AccountService, useValue: accountMock },
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useValue: routerMock },
             ],
         });
@@ -69,6 +69,9 @@ describe('IrisChatService', () => {
         service = TestBed.inject(IrisChatService);
         httpService = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
         wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
+        accountService = TestBed.inject(AccountService);
+
+        accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
 
         service.setCourseId(courseId);
     });
@@ -356,10 +359,7 @@ describe('IrisChatService', () => {
         }));
 
         it('should switch if LLM usage is not required for the mode', fakeAsync(() => {
-            Object.defineProperty(accountMock, 'userIdentity', {
-                get: jest.fn(() => ({ externalLLMUsageAccepted: undefined })),
-                configurable: true,
-            });
+            accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
             service['hasJustAcceptedExternalLLMUsage'] = false;
             service['sessionCreationIdentifier'] = 'tutor-suggestion/1';
 
@@ -380,10 +380,7 @@ describe('IrisChatService', () => {
         }));
 
         it('should switch if user has just accepted LLM usage', fakeAsync(() => {
-            Object.defineProperty(accountMock, 'userIdentity', {
-                get: jest.fn(() => ({ externalLLMUsageAccepted: undefined })),
-                configurable: true,
-            });
+            accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
             service['hasJustAcceptedExternalLLMUsage'] = true;
             service['sessionCreationIdentifier'] = 'course/1';
 
