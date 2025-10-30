@@ -1,4 +1,19 @@
-import { Component, InputSignal, OutputEmitterRef, Signal, ViewEncapsulation, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
+import {
+    Component,
+    InputSignal,
+    ModelSignal,
+    OutputEmitterRef,
+    Signal,
+    ViewEncapsulation,
+    WritableSignal,
+    computed,
+    effect,
+    inject,
+    input,
+    model,
+    output,
+    signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
@@ -20,15 +35,20 @@ import { ButtonModule } from 'primeng/button';
     imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule],
 })
 export class StudentsRoomDistributionDialogComponent {
-    private studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
+    readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
+
+    // Icons
+    protected readonly faBan = faBan;
+    protected readonly faThLarge = faThLarge;
+
+    private readonly studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
     courseId: InputSignal<number> = input.required();
     exam: InputSignal<Exam> = input.required();
 
-    private isDialogVisible: WritableSignal<boolean> = signal(false);
+    dialogVisible: ModelSignal<boolean> = model(false);
     onSave: OutputEmitterRef<void> = output();
 
     // Configurable options
-    readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
     private reservePercentage: WritableSignal<number> = signal(this.RESERVE_FACTOR_DEFAULT_PERCENTAGE);
     private reserveFactor: Signal<number> = computed(() => this.reservePercentage() / 100);
     allowNarrowLayouts: WritableSignal<boolean> = signal(false);
@@ -40,23 +60,11 @@ export class StudentsRoomDistributionDialogComponent {
     seatInfo: Signal<CapacityDisplayDTO> = computed(() => this.computeSeatInfo());
     canSeatAllStudents: Signal<boolean> = computed(() => this.seatInfo().usableCapacity >= this.seatInfo().totalStudents);
 
-    // Icons
-    protected readonly faBan = faBan;
-    protected readonly faThLarge = faThLarge;
-
     constructor() {
         effect(() => {
             const selectedRoomIds: number[] = this.selectedRooms().map((room) => room.id);
             this.studentsRoomDistributionService.updateCapacityData(selectedRoomIds, this.reserveFactor());
         });
-    }
-
-    get dialogVisible(): boolean {
-        return this.isDialogVisible();
-    }
-
-    set dialogVisible(value: boolean) {
-        this.isDialogVisible.set(value);
     }
 
     private computeSeatInfo(): CapacityDisplayDTO {
@@ -74,27 +82,18 @@ export class StudentsRoomDistributionDialogComponent {
         } as CapacityDisplayDTO;
     }
 
-    /**
-     * Opens the dialog
-     */
     openDialog(): void {
         this.selectedRooms.set([]);
-        this.isDialogVisible.set(true);
+        this.dialogVisible.set(true);
 
         this.studentsRoomDistributionService.loadRoomData();
     }
 
-    /**
-     * Closes the dialog
-     */
     closeDialog(): void {
-        this.isDialogVisible.set(false);
+        this.dialogVisible.set(false);
     }
 
-    /**
-     * Attempts a distribution and closes the dialog if successful
-     */
-    onFinish(): void {
+    attemptDistributeAndCloseDialog(): void {
         const selectedRoomIds = this.selectedRooms().map((room) => room.id);
         this.studentsRoomDistributionService
             .distributeStudentsAcrossRooms(this.courseId(), this.exam().id!, selectedRoomIds, this.reserveFactor(), !this.allowNarrowLayouts())
@@ -249,9 +248,6 @@ export class StudentsRoomDistributionDialogComponent {
         input.dispatchEvent(fakeInputEvent);
     }
 
-    /**
-     * Toggles whether narrow layouts are allowed
-     */
     toggleNarrowLayouts(): void {
         this.allowNarrowLayouts.update((oldValue) => !oldValue);
     }

@@ -389,7 +389,15 @@ public class ExamRoomService {
      * @return The size after applying the reserve factor
      */
     public int getSizeAfterApplyingReserveFactor(int originalSize, double reserveFactor) {
-        return (int) (originalSize * (1 - reserveFactor));
+        if (originalSize < 0) {
+            throw new IllegalArgumentException("originalSize must be non-negative");
+        }
+        if (!Double.isFinite(reserveFactor) || reserveFactor < 0.0 || reserveFactor > 1.0) {
+            throw new IllegalArgumentException("reserveFactor must be in [0,1]");
+        }
+
+        int result = (int) Math.floor(originalSize * (1.0 - reserveFactor));
+        return Math.max(0, result);
     }
 
     private <T> List<T> applyReserveFactorToList(List<T> list, double reserveFactor) {

@@ -17,17 +17,11 @@
             }
             @if (!isTestExam) {
                 <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" [examUserMode]="true" (importDone)="reloadExamWithRegisteredUsers()" />
-            }
-            @if (!isTestExam) {
                 <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (uploadDone)="reloadExamWithRegisteredUsers()" />
-            }
-            @if (!isTestExam) {
                 <button class="btn btn-primary ms-auto" (click)="studentsRoomDistributionDialog.openDialog()">
                     <fa-icon [icon]="faThLarge" />
                     <span jhiTranslate="artemisApp.exam.examUsers.roomDistribute"></span>
                 </button>
-            }
-            @if (!isTestExam) {
                 <button
                     class="btn btn-primary ms-auto"
                     id="register-course-students"

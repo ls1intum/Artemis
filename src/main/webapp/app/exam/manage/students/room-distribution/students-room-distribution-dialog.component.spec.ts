@@ -131,7 +131,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component.pickSelectedRoom({ item: rooms[0] });
         fixture.detectChanges();
 
-        component.onFinish();
+        component.attemptDistributeAndCloseDialog();
 
         expect(distributeSpy).toHaveBeenCalledWith(course.id, exam.id, [rooms[0].id], 0.1, true);
     });
