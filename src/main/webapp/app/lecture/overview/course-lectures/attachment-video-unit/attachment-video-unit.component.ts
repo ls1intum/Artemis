@@ -76,8 +76,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
             const src = this.lectureUnit().videoSource;
             if (!src) return;
-            //.m3u8 playlist URLs - use directly without resolver
-            if (src.includes('.m3u8')) {
+
+            // Direct .m3u8 playlist URLs - use without resolver
+            const url = new URL(src);
+            if (url.pathname.endsWith('.m3u8')) {
                 this.playlistUrl.set(src);
                 this.fetchTranscript();
                 return;
