@@ -61,7 +61,7 @@ export function getCredentialWithGracefullyHandlingAuthenticatorIssues(credentia
         // Authenticators, such as bitwarden, do not handle the credential generation properly; this is a workaround for it
         let fixedCredential = handleMalformedBitwardenCredential(credential);
 
-        const is1Password8Credential = (fixedCredential as unknown).response?.authenticatorData === '';
+        const is1Password8Credential = (fixedCredential as any).response?.authenticatorData === '';
         if (is1Password8Credential) {
             // eslint-disable-next-line no-undef
             console.warn('Bitwarden workaround did not succeed, attempting 1password8 workaround', error);
