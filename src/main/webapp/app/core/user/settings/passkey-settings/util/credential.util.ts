@@ -1,5 +1,5 @@
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
-import { getCredentialFromMalformedBitwardenObject } from 'app/core/user/settings/passkey-settings/util/bitwarden.util';
+import { getCredentialFromMalformedBitwardenObject } from 'app/core/user/settings/passkey-settings/util/bitwarden/bitwarden.util';
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 import { captureException } from '@sentry/angular';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -7,6 +7,8 @@ import { User } from 'app/core/user/user.model';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { getOS } from 'app/shared/util/os-detector.util';
 import { createCredentialOptions } from 'app/core/user/settings/passkey-settings/util/credential-option.util';
+import { getCredentialFromMalformed1Password8Object } from 'app/core/user/settings/passkey-settings/util/1password8/1password8.util';
+import { Malformed1Password8Credential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-credential';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
@@ -27,6 +29,14 @@ function handleMalformedBitwardenCredential(credential: Credential | null) {
     }
 }
 
+function handleMalformed1Password8Credential(credential: Credential | null) {
+    try {
+        const malformed1Password8Credential: Malformed1Password8Credential = credential as unknown as Malformed1Password8Credential;
+        return getCredentialFromMalformed1Password8Object(malformed1Password8Credential);
+    } catch (error) {
+        throw new InvalidCredentialError();
+    }
+}
 /**
  * <p>Handles credentials gracefully by attempting to stringify them. If the credential cannot
  * be stringified (e.g., due to issues with certain authenticators like Bitwarden), it attempts
@@ -47,8 +57,18 @@ export function getCredentialWithGracefullyHandlingAuthenticatorIssues(credentia
         captureException(error);
         // eslint-disable-next-line no-undef
         console.warn('Authenticator returned a malformed credential, attempting to fix it', error);
+
         // Authenticators, such as bitwarden, do not handle the credential generation properly; this is a workaround for it
-        return handleMalformedBitwardenCredential(credential);
+        let fixedCredential = handleMalformedBitwardenCredential(credential);
+
+        const is1Password8Credential = (fixedCredential as unknown).response?.authenticatorData === '';
+        if (is1Password8Credential) {
+            // eslint-disable-next-line no-undef
+            console.warn('Bitwarden workaround did not succeed, attempting 1password8 workaround', error);
+            fixedCredential = handleMalformed1Password8Credential(credential);
+        }
+
+        return fixedCredential;
     }
 }
 
