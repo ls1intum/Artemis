@@ -28,7 +28,7 @@ export class GroupChatService {
 
     removeUsersFromGroupChat(courseId: number, groupChatId: number, logins?: string[]): Observable<HttpResponse<void>> {
         // if no explicit login is give we assume self deregistration
-        const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
+        const userLogins = logins ? logins : [this.accountService.userIdentity()?.login];
         return this.http.post<void>(`${this.resourceUrl}${courseId}/group-chats/${groupChatId}/deregister`, userLogins, { observe: 'response' });
     }
 

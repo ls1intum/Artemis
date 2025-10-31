@@ -173,7 +173,7 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
      * @param referenceUserLogin login of the referenced user
      */
     onClickUserReference(referenceUserLogin: string | undefined) {
-        if (!this.hasClickedUserReference && referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity?.login) {
+        if (!this.hasClickedUserReference && referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity()?.login) {
             this.hasClickedUserReference = true;
             this.userReferenceClicked.emit(referenceUserLogin);
         }

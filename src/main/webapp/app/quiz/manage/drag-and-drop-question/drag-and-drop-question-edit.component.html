@@ -1,11 +1,11 @@
 <div class="edit-dnd-question" [hidden]="showPreview" (mousemove)="mouseMove($event)" (mouseup)="mouseUp()">
-    @if (!reEvaluationInProgress) {
+    @if (!reEvaluationInProgress()) {
         <div class="question-options card-header question-card-header">
             <button
                 class="btn question-collapse"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
                 [attr.aria-expanded]="!isQuestionCollapsed"
-                [attr.aria-controls]="'collapseQuestion' + questionIndex"
+                [attr.aria-controls]="'collapseQuestion' + questionIndex()"
             >
                 <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
             </button>
@@ -13,7 +13,7 @@
                 <input
                     class="form-control"
                     id="drag-and-drop-question-title"
-                    [(ngModel)]="question.title"
+                    [(ngModel)]="question().title"
                     (ngModelChange)="questionUpdated.emit()"
                     placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                 />
@@ -21,7 +21,7 @@
             <div class="question-card-header-inputs">
                 <div class="form-group question-score">
                     <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                    <input class="form-control" title="score" type="number" min="0" [max]="MAX_POINTS" [(ngModel)]="question.points" (ngModelChange)="questionUpdated.emit()" />
+                    <input class="form-control" title="score" type="number" min="0" [max]="MAX_POINTS" [(ngModel)]="question().points!" (ngModelChange)="questionUpdated.emit()" />
                 </div>
                 <div class="question-type">
                     <h3 class="mb-0"><span class="badge bg-warning align-text-top">DnD</span></h3>
@@ -29,7 +29,7 @@
             </div>
         </div>
     }
-    @if (reEvaluationInProgress) {
+    @if (reEvaluationInProgress()) {
         <div class="question-options card-header question-card-header-reevaluation">
             <div class="row">
                 <div class="col-3 col-lg-1 mt-1">
@@ -37,7 +37,7 @@
                         class="btn question-collapse"
                         (click)="isQuestionCollapsed = !isQuestionCollapsed"
                         [attr.aria-expanded]="!isQuestionCollapsed"
-                        [attr.aria-controls]="'collapseQuestion' + questionIndex"
+                        [attr.aria-controls]="'collapseQuestion' + questionIndex()"
                     >
                         <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
                     </button>
@@ -47,7 +47,7 @@
                         <div class="col-10 col-lg-11">
                             <input
                                 class="form-control"
-                                [(ngModel)]="question.title"
+                                [(ngModel)]="question().title"
                                 placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                                 attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                                 style="width: 100%"
@@ -104,12 +104,12 @@
             </div>
         </div>
     }
-    <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex }}">
-        @if (!reEvaluationInProgress) {
+    <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
+        @if (!reEvaluationInProgress()) {
             <div class="question-options">
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                    <select class="form-select" [(ngModel)]="question.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
+                    <select class="form-select" [(ngModel)]="question().scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
                         <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
                         <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
                         <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
@@ -120,13 +120,13 @@
                     <div class="form-check custom-control custom-checkbox">
                         <input
                             type="checkbox"
-                            id="{{ 'cbRandomizeOrderDnD' + questionIndex }}"
-                            [(ngModel)]="question.randomizeOrder"
+                            id="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
+                            [(ngModel)]="question().randomizeOrder"
                             class="form-check-input custom-control-input"
                         />
                         <label
                             class="form-check-label custom-control-label"
-                            for="{{ 'cbRandomizeOrderDnD' + questionIndex }}"
+                            for="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
                             jhiTranslate="artemisApp.dragAndDropQuestion.randomizeOrder"
                         ></label>
                     </div>
@@ -138,12 +138,12 @@
                 </div>
             </div>
         }
-        @if (reEvaluationInProgress) {
+        @if (reEvaluationInProgress()) {
             <div class="question-options" class="row align-items-center" style="width: 100%">
                 <div class="col-12 col-lg-4">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                        <select class="form-select" [(ngModel)]="question.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
+                        <select class="form-select" [(ngModel)]="question().scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
                             <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
                             <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
                             <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
@@ -154,7 +154,7 @@
                 <div class="col-12 col-lg-2">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                        <input class="form-control point-input" title="score" type="number" [value]="question.points" disabled style="width: 100%" />
+                        <input class="form-control point-input" title="score" type="number" [value]="question().points" disabled style="width: 100%" />
                     </div>
                 </div>
                 <div class="col-12 col-lg-3">
@@ -162,13 +162,13 @@
                         <div class="form-check custom-control custom-checkbox">
                             <input
                                 type="checkbox"
-                                id="{{ 'cbRandomizeOrderDnD' + questionIndex }}"
-                                [(ngModel)]="question.randomizeOrder"
+                                id="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
+                                [(ngModel)]="question().randomizeOrder"
                                 class="form-check-input custom-control-input"
                             />
                             <label
                                 class="form-check-label custom-control-label"
-                                for="{{ 'cbRandomizeOrderDnD' + questionIndex }}"
+                                for="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
                                 jhiTranslate="artemisApp.dragAndDropQuestion.randomizeOrder"
                             ></label>
                         </div>
@@ -178,14 +178,14 @@
                     <div class="col-8 form-group">
                         <button
                             class="btn btn-outline-secondary invalid-button"
-                            [hidden]="question.invalid"
-                            (click)="question.invalid = true"
+                            [hidden]="!!question().invalid"
+                            (click)="question().invalid = true"
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                         ></button>
                         <button
                             class="btn btn-outline-secondary invalid-button"
-                            [hidden]="!question.invalid"
-                            [disabled]="question.invalid"
+                            [hidden]="!question().invalid"
+                            [disabled]="!!question().invalid"
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
                         ></button>
                     </div>
@@ -198,7 +198,7 @@
             </div>
         }
         <div class="markupEditorArea">
-            @if (!reEvaluationInProgress) {
+            @if (!reEvaluationInProgress()) {
                 <div class="question-content">
                     <jhi-markdown-editor-monaco
                         #markdownEditor
@@ -244,35 +244,35 @@
         </div>
         <hr />
         <!--    TODO: Fix the background change for reevaluation -->
-        @if (!reEvaluationInProgress) {
+        @if (!reEvaluationInProgress()) {
             <div class="question-options row d-flex justify-content-start">
                 <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
                     <div class="input-group-prepend">
                         <button class="btn btn-outline-secondary" id="background-file-input-button" (click)="backgroundFileInput.click()">
                             <fa-icon [icon]="faPlus" />
-                            @if (!reEvaluationInProgress) {
+                            @if (!reEvaluationInProgress()) {
                                 <span jhiTranslate="artemisApp.dragAndDropQuestion.selectBackgroundPicture" class="no-flex-shrink"></span>
                             }
-                            @if (reEvaluationInProgress) {
+                            @if (reEvaluationInProgress()) {
                                 <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="no-flex-shrink"></span>
                             }
                         </button>
                     </div>
-                    <input #backgroundFileInput id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" [hidden]="true" (change)="setBackgroundFile($event)" />
+                    <input #backgroundFileInput id="backgroundFileInput{{ questionIndex() }}" type="file" accept="image/*" [hidden]="true" (change)="setBackgroundFile($event)" />
                 </div>
-                @if (reEvaluationInProgress) {
+                @if (reEvaluationInProgress()) {
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetBackground()">
                         <fa-icon [icon]="faUndo" />
                     </button>
                 }
             </div>
         }
-        @if (!question.backgroundFilePath) {
+        @if (!question().backgroundFilePath) {
             <div class="dnd-instructions">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundInstructions"></span>
             </div>
         }
-        @if (question.backgroundFilePath && !reEvaluationInProgress) {
+        @if (question().backgroundFilePath && !reEvaluationInProgress()) {
             <div class="dnd-instructions">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
             </div>
@@ -282,12 +282,12 @@
                 <div class="background-area">
                     <jhi-image
                         #backgroundImage
-                        [src]="addPublicFilePrefix(filePreviewPaths.get(question.backgroundFilePath!)) || ''"
+                        [src]="addPublicFilePrefix(filePreviewPaths.get(question().backgroundFilePath!)) || ''"
                         [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | artemisTranslate"
                         style="visibility: hidden"
                     />
-                    <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{ disabled: !question.backgroundFilePath }">
-                        @for (dropLocation of question.dropLocations; track dropLocation) {
+                    <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{ disabled: !question().backgroundFilePath }">
+                        @for (dropLocation of question().dropLocations ?? []; track dropLocation) {
                             <div
                                 id="drop-location"
                                 class="drop-location"
@@ -304,22 +304,22 @@
                             >
                                 <div class="dimensions">{{ dropLocation.width }}x{{ dropLocation.height }}</div>
                                 <div class="drop-location-buttons">
-                                    @if (reEvaluationInProgress && !dropLocation.invalid) {
+                                    @if (reEvaluationInProgress() && !dropLocation.invalid) {
                                         <div class="re-evaluate-button" title="Set invalid" (click)="dropLocation.invalid = true">
                                             <fa-icon [icon]="faBan" size="lg" />
                                         </div>
                                     }
-                                    @if (reEvaluationInProgress) {
+                                    @if (reEvaluationInProgress()) {
                                         <div class="re-evaluate-button" title="Reset" (click)="resetDropLocation(dropLocation)">
                                             <fa-icon [icon]="faUndo" size="lg" />
                                         </div>
                                     }
-                                    @if (!reEvaluationInProgress) {
+                                    @if (!reEvaluationInProgress()) {
                                         <div class="duplicate-button" title="Duplicate" (click)="duplicateDropLocation(dropLocation)">
                                             <fa-icon [icon]="faCopy" size="lg" />
                                         </div>
                                     }
-                                    <div [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'" title="Delete" (click)="deleteDropLocation(dropLocation)">
+                                    <div [ngClass]="reEvaluationInProgress() ? 're-evaluate-button' : 'delete-button'" title="Delete" (click)="deleteDropLocation(dropLocation)">
                                         <fa-icon [icon]="faTrash" size="lg" />
                                     </div>
                                 </div>
@@ -345,19 +345,19 @@
                 </div>
             </div>
             <hr />
-            @if (!question.dragItems || !question.dragItems.length) {
+            @if (!question().dragItems?.length) {
                 <div class="dnd-instructions">
                     <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemsInstructions"></span>
                 </div>
             }
-            @if (question.dragItems && question.dragItems.length) {
+            @if (question().dragItems?.length) {
                 <div class="dnd-instructions">
                     <span jhiTranslate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
                 </div>
             }
-            @if (question.dragItems && question.dragItems.length) {
+            @if (question().dragItems?.length) {
                 <div cdkDropList cdkDropListOrientation="horizontal" class="drag-items">
-                    @for (dragItem of question.dragItems; track dragItem; let i = $index) {
+                    @for (dragItem of question().dragItems ?? []; track dragItem; let i = $index) {
                         <div class="drag-item" id="drag-item-{{ i }}" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="dragItem">
                             @if (dragItem.pictureFilePath) {
                                 <div>
@@ -369,12 +369,12 @@
                                     <textarea id="drag-item-{{ i }}-text" [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                                 </div>
                             }
-                            @if (!reEvaluationInProgress) {
+                            @if (!reEvaluationInProgress()) {
                                 <div class="delete-button" title="Delete" (click)="deleteDragItem(dragItem)">
                                     <fa-icon [icon]="faTrash" size="lg" />
                                 </div>
                             }
-                            @if (reEvaluationInProgress) {
+                            @if (reEvaluationInProgress()) {
                                 <div class="delete-button">
                                     @if (dragItem.pictureFilePath) {
                                         <div class="re-evaluate-button" title="Change to Text Drag Item" (click)="changeToTextDragItem(dragItem)">
@@ -401,7 +401,7 @@
                             <div class="drag-handle drag-handle-wrapper" title="Move">
                                 <fa-icon [icon]="faBars" class="drag-handle" size="lg" />
                             </div>
-                            @if (reEvaluationInProgress) {
+                            @if (reEvaluationInProgress()) {
                                 <div class="dimensions">
                                     @if (dragItem.invalid) {
                                         <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
@@ -445,19 +445,19 @@
             }
         </div>
         <!--    TODO: Fix the item input for reevaluation -->
-        @if (!reEvaluationInProgress) {
+        @if (!reEvaluationInProgress()) {
             <div class="question-options row d-flex justify-content-start">
                 <div class="col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
                     <button class="btn btn-outline-secondary me-2" (click)="dragItemFileInput.click()">
                         <fa-icon [icon]="faPlus" />
-                        @if (reEvaluationInProgress) {
+                        @if (reEvaluationInProgress()) {
                             <span jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"></span>
                         }
-                        @if (!reEvaluationInProgress) {
+                        @if (!reEvaluationInProgress()) {
                             <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemPicture"></span>
                         }
                     </button>
-                    <input #dragItemFileInput id="dragItemFileInput{{ questionIndex }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
+                    <input #dragItemFileInput id="dragItemFileInput{{ questionIndex() }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
                     <button class="btn btn-outline-secondary me-2" id="add-text-drag-item" (click)="addTextDragItem()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
@@ -474,11 +474,11 @@
                 </div>
             </div>
         }
-        @if (!reEvaluationInProgress) {
+        @if (!reEvaluationInProgress()) {
             <hr />
             <div class="question-options">
-                <div ngbTooltip="{{ 'artemisApp.dragAndDropQuestion.disabledPreviewTooltip' | artemisTranslate }}" [disableTooltip]="!!question.backgroundFilePath">
-                    <button class="btn btn-outline-secondary" [disabled]="!question.backgroundFilePath" (click)="togglePreview()">
+                <div ngbTooltip="{{ 'artemisApp.dragAndDropQuestion.disabledPreviewTooltip' | artemisTranslate }}" [disableTooltip]="!!question().backgroundFilePath">
+                    <button class="btn btn-outline-secondary" [disabled]="!question().backgroundFilePath" (click)="togglePreview()">
                         <fa-icon [icon]="faEye" />
                         <span jhiTranslate="entity.action.preview"></span>
                     </button>
@@ -487,9 +487,9 @@
         }
     </div>
 </div>
-@if (!reEvaluationInProgress && showPreview) {
+@if (!reEvaluationInProgress() && showPreview) {
     <div class="preview-dnd-question">
-        <jhi-drag-and-drop-question [question]="question" [mappings]="[]" [questionIndex]="questionIndex" [filePreviewPaths]="filePreviewPaths" />
+        <jhi-drag-and-drop-question [question]="question()" [mappings]="[]" [questionIndex]="questionIndex()" [filePreviewPaths]="filePreviewPaths" />
         <hr />
         <div class="btn btn-outline-secondary" (click)="togglePreview()">
             <fa-icon [icon]="faPencilAlt" />

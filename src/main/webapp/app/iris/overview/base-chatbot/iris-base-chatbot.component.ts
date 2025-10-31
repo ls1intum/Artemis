@@ -43,6 +43,7 @@ import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { User } from 'app/core/user/user.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -112,6 +113,7 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
         HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
         NgClass,
+        SearchFilterComponent,
     ],
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -181,6 +183,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     hasActiveStage = false;
 
     isChatHistoryOpen = true;
+
+    searchValue = '';
 
     // User preferences
     user: User | undefined;
@@ -303,7 +307,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     checkIfUserAcceptedExternalLLMUsage(): void {
-        this.userAccepted = !!this.accountService.userIdentity?.externalLLMUsageAccepted;
+        this.userAccepted = !!this.accountService.userIdentity()?.externalLLMUsageAccepted;
         setTimeout(() => this.adjustTextareaRows(), 0);
     }
 
@@ -528,6 +532,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             return [];
         }
 
+        const source = this.getFilteredSessions();
+
         const today = new Date();
         const rangeEndDate = new Date(today);
         rangeEndDate.setDate(today.getDate() - daysAgoNewer);
@@ -540,7 +546,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             rangeStartDate.setHours(0, 0, 0, 0); // Set to the start of the 'daysAgoOlder' day
         }
 
-        return this.chatSessions.filter((session) => {
+        return source.filter((session) => {
             const sessionCreationDate = new Date(session.creationDate);
 
             const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
@@ -556,6 +562,17 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     openNewSession() {
         this.chatService.clearChat();
+    }
+
+    setSearchValue(searchValue: string) {
+        this.searchValue = searchValue.trim().toLowerCase();
+    }
+
+    private getFilteredSessions(): IrisSessionDTO[] {
+        if (!this.searchValue) {
+            return this.chatSessions;
+        }
+        return this.chatSessions.filter((s) => (s.title ?? '').toLowerCase().includes(this.searchValue));
     }
 
     private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {
