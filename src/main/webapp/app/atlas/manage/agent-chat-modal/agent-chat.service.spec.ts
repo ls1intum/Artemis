@@ -362,7 +362,7 @@ describe('AgentChatService', () => {
 
     describe('getSessionId', () => {
         it('should generate sessionId correctly with valid user', () => {
-            mockAccountService.userIdentity = { id: 42, login: 'testuser' };
+            accountService.userIdentity.set({ id: 42, login: 'testuser' });
             const courseId = 123;
 
             const sessionId = service.getSessionId(courseId);
@@ -371,7 +371,7 @@ describe('AgentChatService', () => {
         });
 
         it('should generate different sessionId for different courseId', () => {
-            mockAccountService.userIdentity = { id: 42, login: 'testuser' };
+            accountService.userIdentity.set({ id: 42, login: 'testuser' });
 
             const sessionId1 = service.getSessionId(100);
             const sessionId2 = service.getSessionId(200);
@@ -383,10 +383,10 @@ describe('AgentChatService', () => {
         it('should generate different sessionId for different userId', () => {
             const courseId = 123;
 
-            mockAccountService.userIdentity = { id: 10, login: 'user1' };
+            accountService.userIdentity.set({ id: 10, login: 'user1' });
             const sessionId1 = service.getSessionId(courseId);
 
-            mockAccountService.userIdentity = { id: 20, login: 'user2' };
+            accountService.userIdentity.set({ id: 20, login: 'user2' });
             const sessionId2 = service.getSessionId(courseId);
 
             expect(sessionId1).toBe('course_123_user_10');
@@ -394,13 +394,13 @@ describe('AgentChatService', () => {
         });
 
         it('should throw error when userIdentity is null', () => {
-            mockAccountService.userIdentity = null;
+            accountService.userIdentity.set(null);
 
             expect(() => service.getSessionId(123)).toThrow('User must be authenticated to use agent chat');
         });
 
         it('should throw error when userIdentity.id is undefined', () => {
-            mockAccountService.userIdentity = { id: undefined, login: 'testuser' };
+            accountService.userIdentity.set({ id: undefined, login: 'testuser' });
 
             expect(() => service.getSessionId(123)).toThrow('User must be authenticated to use agent chat');
         });
