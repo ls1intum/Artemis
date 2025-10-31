@@ -255,7 +255,7 @@ public abstract class BaseExercise extends DomainObject {
     /**
      * helper method to get an exercise title for use in notifications, i.e. not null or empty
      *
-     * @return the sanitized exercise title
+     * @return a non-empty title for the exercise
      **/
     @JsonIgnore
     public String getExerciseNotificationTitle() {
