@@ -227,7 +227,6 @@ dependencies {
     implementation "com.thoughtworks.qdox:qdox:2.2.0"
     implementation "io.sentry:sentry-logback:${sentry_version}"
     implementation "io.sentry:sentry-spring-boot-starter-jakarta:${sentry_version}"
-    // implementation "io.sentry:sentry-jdbc:${sentry_version}" // maybe in the future
 
     // NOTE: the following dependencies use the newer versions explicitly to avoid other dependencies to use older versions
     implementation "ch.qos.logback:logback-classic:${logback_version}"

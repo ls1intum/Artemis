@@ -116,7 +116,7 @@ public class TelemetrySendingService {
      */
     private TelemetryData buildTelemetryData(boolean sendAdminDetails) {
         TelemetryData telemetryData;
-        var dataSource = (datasourceUrl.startsWith("jdbc:p6spy:mysql") || datasourceUrl.startsWith("jdbc:mysql")) ? "mysql" : "postgresql";
+        var dataSource = datasourceUrl.startsWith("jdbc:mysql") ? "mysql" : "postgresql";
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
         String contact = null;
