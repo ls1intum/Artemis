@@ -7,16 +7,16 @@
             "totalQuestions": "Gesamtanzahl an Fragen",
             "howItWorks": {
                 "title": "Wie das Training funktioniert",
-                "content": "Übe Quiz-Fragen einzeln in einem Spaced-Repetition-System. Wenn keine Fragen fällig sind, kannst du trotzdem im ungewerteten Modus trainieren, was das Leaderboard nicht beeinflusst."
+                "content": "Übe Quiz-Fragen einzeln in einem Spaced-Repetition-System. Wenn keine Fragen fällig sind, kannst du trotzdem im ungewerteten Modus trainieren, was die Bestenliste nicht beeinflusst."
             },
             "leagues": {
                 "title": "Ligen und Ranglisten",
-                "content": "Du kannst auf einem Leaderboard gegen andere Studenten in der gleichen Liga antreten. Die Einstellungen für das Leaderboard können in den Benutzereinstellungen geändern werden."
+                "content": "Du kannst in einer Bestenliste gegen andere Studenten in der gleichen Liga antreten. Die Einstellungen für die Bestenliste können in den Benutzereinstellungen geändern werden."
             },
             "scoring": {
                 "content": "Beantworte Fragen richtig, um Punkte zu sammeln und in höhere Ligen aufzusteigen. Je öfter eine Frage am Stück richtig beantwortet wird, desto mehr Punkte erhältst du dafür."
             },
-            "showInLeaderboard": "Meinen Namen im Quiz Leaderboard anzeigen",
+            "showInLeaderboard": "Meinen Namen in der Quiz Bestenliste anzeigen",
             "bronzeLeague": "Bronze Liga",
             "silverLeague": "Silber Liga",
             "goldLeague": "Gold Liga",
