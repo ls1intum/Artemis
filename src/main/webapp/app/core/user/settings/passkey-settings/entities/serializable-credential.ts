@@ -24,7 +24,7 @@ export interface SerializableCredential {
     /**
      * The authenticator attachment modality
      */
-    authenticatorAttachment: AuthenticatorAttachment | null;
+    authenticatorAttachment: AuthenticatorAttachment | undefined;
 
     /**
      * Client extension results
