@@ -36,7 +36,9 @@ public class QuizGenerationResource {
     /**
      * POST /courses/{courseId}/generate : Generate an AI-based quiz for the given course.
      *
-     * @param courseId the id of the course
+     * @param courseId         the id of the course
+     * @param generationParams the parameters defining how the quiz should be generated
+     * @return the generated quiz in JSON format
      */
     @PostMapping("courses/{courseId}/generate")
     @EnforceAtLeastEditorInCourse

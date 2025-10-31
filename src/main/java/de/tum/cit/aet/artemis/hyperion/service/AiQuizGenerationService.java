@@ -33,6 +33,13 @@ public class AiQuizGenerationService {
         this.templateService = templateService;
     }
 
+    /**
+     * Generates an AI-based quiz for a given course using the specified generation parameters.
+     *
+     * @param courseId         the ID of the course for which the quiz should be generated
+     * @param generationParams the parameters that define how the quiz should be generated
+     * @return an {@link AiQuizGenerationResponseDTO} containing the generated quiz data
+     */
     public AiQuizGenerationResponseDTO generate(long courseId, AiQuizGenerationRequestDTO generationParams) {
         log.debug("Generating quiz for course {}", courseId);
 
