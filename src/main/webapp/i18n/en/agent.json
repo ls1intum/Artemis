@@ -10,7 +10,7 @@
                 "messageTooLong": "Message is too long. Please shorten your message.",
                 "you": "You",
                 "aiAssistant": "AI Assistant",
-                "authentication": "User must be authenticated to use agent chat"
+                "authentication": "You must be authenticated to use agent chat"
             }
         }
     }

@@ -10,7 +10,7 @@
                 "messageTooLong": "Die Nachricht ist zu lang. Bitte kürze deine Nachricht.",
                 "you": "Du",
                 "aiAssistant": "KI-Assistent",
-                "authentication": "Der Benutzer muss authentifiziert sein, um den Agenten-Chat zu nutzen."
+                "authentication": "Du musst authentifiziert sein, um den Agenten-Chat zu nutzen."
             }
         }
     }
