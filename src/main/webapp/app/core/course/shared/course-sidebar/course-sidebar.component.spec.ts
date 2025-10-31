@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -22,6 +21,7 @@ import { Course, CourseInformationSharingConfiguration } from 'app/core/course/s
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { BehaviorSubject } from 'rxjs';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 describe('CourseSidebarComponent', () => {
     let component: CourseSidebarComponent;
@@ -100,7 +100,6 @@ describe('CourseSidebarComponent', () => {
                 NgTemplateOutlet,
                 SlicePipe,
                 MockModule(NgbTooltipModule),
-                MockModule(BrowserAnimationsModule),
                 RouterLink,
                 RouterLinkActive,
                 CourseSidebarComponent,
@@ -113,10 +112,7 @@ describe('CourseSidebarComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
             ],
             declarations: [],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: ActivatedRoute, useValue: new MockActivatedRoute() }, provideTestAnimations()],
         }).compileComponents();
 
         // we have to set this up before we create the component because the signal is set up in the constructor

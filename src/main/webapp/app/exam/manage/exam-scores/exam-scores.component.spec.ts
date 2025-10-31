@@ -10,7 +10,6 @@ import {
     ExerciseResult,
     StudentResult,
 } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockProvider } from 'ng-mocks';
 import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -47,6 +46,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -265,7 +265,6 @@ describe('ExamScoresComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule],
             providers: [
                 MockProvider(GradingSystemService, {
                     findGradingScaleForExam: () => {
@@ -290,6 +289,7 @@ describe('ExamScoresComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideTestAnimations(),
             ],
         }).compileComponents();
 

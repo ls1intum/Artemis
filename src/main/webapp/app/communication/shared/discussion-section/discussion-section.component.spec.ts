@@ -44,10 +44,10 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 @Directive({
     selector: '[infinite-scroll]',
@@ -69,14 +69,7 @@ describe('DiscussionSectionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [
-                MockModule(FormsModule),
-                MockModule(ReactiveFormsModule),
-                MockModule(NgbTooltipModule),
-                DiscussionSectionComponent,
-                MockModule(BrowserAnimationsModule),
-                FaIconComponent,
-            ],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent, FaIconComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -95,6 +88,7 @@ describe('DiscussionSectionComponent', () => {
                 { provide: MetisService, useClass: MetisService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: CourseStorageService, useClass: CourseStorageService },
+                provideTestAnimations(),
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),

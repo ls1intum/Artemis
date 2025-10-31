@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -55,6 +56,7 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
         await TestBed.configureTestingModule({
             imports: [CourseCompetenciesRelationGraphComponent],
             providers: [
+                provideTestAnimations(),
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,

@@ -14,7 +14,7 @@ import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 
@@ -59,7 +59,7 @@ describe('CalendarMobileOverviewComponent', () => {
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
-                provideNoopAnimations(),
+                provideTestAnimations(),
             ],
         }).compileComponents();
 

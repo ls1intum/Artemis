@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -45,6 +44,7 @@ import { signal } from '@angular/core';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -70,7 +70,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
+            imports: [FaIconComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
@@ -82,6 +82,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
+                provideTestAnimations(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);

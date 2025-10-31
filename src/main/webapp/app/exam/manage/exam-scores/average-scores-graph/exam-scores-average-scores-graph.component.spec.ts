@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -13,6 +12,7 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { RouterModule } from '@angular/router';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;
@@ -52,7 +52,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule, RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([])],
             providers: [
                 MockProvider(CourseManagementService, {
                     find: () => {
@@ -65,6 +65,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
                     },
                 }),
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideTestAnimations(),
             ],
         }).compileComponents();
 

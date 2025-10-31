@@ -20,8 +20,25 @@ describe('Alert Service Test', () => {
     let service: AlertService;
     let eventManager: EventManager;
 
+    let fakeTimersActive = false;
+
+    const enableLegacyFakeTimers = () => {
+        jest.useFakeTimers({ legacyFakeTimers: true });
+        fakeTimersActive = true;
+    };
+
+    const disableLegacyFakeTimers = () => {
+        if (!fakeTimersActive) {
+            return;
+        }
+        jest.runOnlyPendingTimers();
+        jest.clearAllTimers();
+        jest.useRealTimers();
+        fakeTimersActive = false;
+    };
+
     beforeEach(() => {
-        jest.useFakeTimers();
+        enableLegacyFakeTimers();
         TestBed.configureTestingModule({
             imports: [
                 TranslateModule.forRoot({
@@ -48,9 +65,7 @@ describe('Alert Service Test', () => {
     });
 
     afterEach(() => {
-        jest.runOnlyPendingTimers();
-        jest.clearAllTimers();
-        jest.useRealTimers();
+        disableLegacyFakeTimers();
     });
 
     it('should produce a proper alert object and fetch it', () => {

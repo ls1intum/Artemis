@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 describe('CompetencyGraphComponent', () => {
     let component: CompetencyGraphComponent;
@@ -32,6 +33,7 @@ describe('CompetencyGraphComponent', () => {
         await TestBed.configureTestingModule({
             imports: [CompetencyGraphComponent],
             providers: [
+                provideTestAnimations(),
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,

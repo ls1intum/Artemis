@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
@@ -34,7 +34,6 @@ import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -53,6 +52,7 @@ import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-me
 import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -82,7 +82,7 @@ describe('PostComponent', () => {
         };
 
         return TestBed.configureTestingModule({
-            imports: [NgbTooltip, OverlayModule, MockModule(BrowserAnimationsModule)],
+            imports: [NgbTooltip, OverlayModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -96,6 +96,7 @@ describe('PostComponent', () => {
 
                 { provide: ConversationService, useClass: MockConversationService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                provideTestAnimations(),
             ],
             declarations: [
                 PostComponent,

@@ -14,6 +14,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 describe('ExerciseStatisticsComponent', () => {
     let fixture: ComponentFixture<ExerciseStatisticsComponent>;
@@ -54,6 +55,7 @@ describe('ExerciseStatisticsComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTestAnimations(),
             ],
         })
             .compileComponents()

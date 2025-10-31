@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -10,7 +10,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { FaqService } from 'app/communication/faq/faq.service';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FaqComponent } from 'app/communication/faq/faq.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
@@ -24,6 +23,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();
@@ -65,7 +65,6 @@ describe('FaqComponent', () => {
         } as unknown as ProfileInfo;
 
         TestBed.configureTestingModule({
-            imports: [MockModule(BrowserAnimationsModule)],
             declarations: [FaqComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -112,6 +111,7 @@ describe('FaqComponent', () => {
                     },
                 }),
                 provideHttpClient(),
+                provideTestAnimations(),
             ],
         })
             .compileComponents()

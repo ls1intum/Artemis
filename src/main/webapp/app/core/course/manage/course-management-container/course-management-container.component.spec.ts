@@ -6,7 +6,6 @@ import { Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
@@ -56,6 +55,7 @@ import { CourseSidebarService } from 'app/core/course/overview/services/course-s
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -164,7 +164,7 @@ describe('CourseManagementContainerComponent', () => {
         } as unknown as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
+            imports: [MockModule(MatSidenavModule), MockModule(NgbTooltipModule)],
             declarations: [
                 CourseManagementContainerComponent,
                 MockDirective(TranslateDirective),
@@ -195,6 +195,7 @@ describe('CourseManagementContainerComponent', () => {
                 { provide: HasAnyAuthorityDirective, useClass: MockHasAnyAuthorityDirective },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTestAnimations(),
             ],
         })
             .compileComponents()

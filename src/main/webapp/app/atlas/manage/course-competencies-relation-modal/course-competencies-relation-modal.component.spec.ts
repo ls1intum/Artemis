@@ -10,6 +10,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbActiveModalService } from 'test/helpers/mocks/service/mock-ngb-active-modal.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 describe('CourseCompetenciesRelationModalComponent', () => {
     let component: CourseCompetenciesRelationModalComponent;
@@ -55,6 +56,7 @@ describe('CourseCompetenciesRelationModalComponent', () => {
                         getCourseCompetencyRelationsByCourseId: jest.fn(),
                     },
                 },
+                provideTestAnimations(),
             ],
         }).compileComponents();
 

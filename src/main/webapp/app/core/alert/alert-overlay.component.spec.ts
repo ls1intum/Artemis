@@ -9,6 +9,22 @@ describe('Alert Overlay Component Tests', () => {
     let comp: AlertOverlayComponent;
     let fixture: ComponentFixture<AlertOverlayComponent>;
     let alertService: AlertService;
+    let fakeTimersActive = false;
+
+    const enableFakeTimers = () => {
+        jest.useFakeTimers({ legacyFakeTimers: true });
+        fakeTimersActive = true;
+    };
+
+    const disableFakeTimers = () => {
+        if (!fakeTimersActive) {
+            return;
+        }
+        jest.runOnlyPendingTimers();
+        jest.clearAllTimers();
+        jest.useRealTimers();
+        fakeTimersActive = false;
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -27,6 +43,7 @@ describe('Alert Overlay Component Tests', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        disableFakeTimers();
     });
 
     it('should call alertService.get on init', () => {
@@ -64,7 +81,7 @@ describe('Alert Overlay Component Tests', () => {
 
         fixture.detectChanges();
 
-        const btn = fixture.debugElement.query(By.css('.btn'));
+        const btn = fixture.debugElement.query(By.css('.alert-inner .btn'));
         expect(btn).not.toBeNull();
 
         btn.nativeElement.click();
@@ -74,7 +91,7 @@ describe('Alert Overlay Component Tests', () => {
     });
 
     it('should close the alert if the close icon is clicked', () => {
-        jest.useFakeTimers();
+        enableFakeTimers();
 
         comp.ngOnInit();
 
@@ -97,8 +114,7 @@ describe('Alert Overlay Component Tests', () => {
         expect(onClose).toHaveBeenCalledWith(alert);
         expect(onClose).toHaveBeenCalledOnce();
         expect(alertService.get()).toHaveLength(0);
-
-        jest.useRealTimers();
+        disableFakeTimers();
     });
 
     it('should not render the close icon if alert is not dismissible', () => {

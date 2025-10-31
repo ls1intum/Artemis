@@ -16,7 +16,7 @@ import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day
 import { CalendarDesktopOverviewComponent } from './calendar-desktop-overview.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 
 describe('CalendarDesktopOverviewComponent', () => {
@@ -50,7 +50,7 @@ describe('CalendarDesktopOverviewComponent', () => {
                 { provide: CalendarService, useValue: calendarServiceMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: TranslateService, useClass: MockTranslateService },
-                provideNoopAnimations(),
+                provideTestAnimations(),
             ],
         }).compileComponents();
 

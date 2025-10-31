@@ -7,7 +7,7 @@ import { LectureSeriesDraftEditModalComponent } from './lecture-series-draft-edi
 import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import { LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import dayjs from 'dayjs/esm';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideTestAnimations } from 'test/helpers/provide-test-animations';
 
 describe('LectureSeriesEditModal', () => {
     let component: LectureSeriesDraftEditModalComponent;
@@ -21,7 +21,7 @@ describe('LectureSeriesEditModal', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [LectureSeriesDraftEditModalComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideNoopAnimations()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideTestAnimations()],
         }).compileComponents();
 
         jest.spyOn(globalUtils, 'getCurrentLocaleSignal').mockReturnValue(signal('de'));
