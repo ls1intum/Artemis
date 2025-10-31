@@ -484,7 +484,7 @@ The table contains all annotations for the corresponding minimum role including 
 If, for some reason, you need to deviate from these rules, use ``@ManualConfig``. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
 
 Use the ``@Internal`` annotation to mark methods or classes that should only be accessed from trusted internal networks.
-Access to these endpoints is restricted based on the configured CIDR blocks in ``InternalAccessConfiguration`` (``artemis.security.internal.allowed-cidrs``).
+Access to these endpoints is restricted based on the configured `CIDR <https://de.wikipedia.org/wiki/Classless_Inter-Domain_Routing>`_ blocks (e.g ``127.0.0.0/8`` or ``fe80::/64``) in ``InternalAccessConfiguration`` (``artemis.security.internal.allowed-cidrs``).
 
 **Best Practices**
 
