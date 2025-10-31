@@ -1,3 +1,4 @@
+import { expect } from '@jest/globals';
 import { SerializableCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-credential';
 
 /**
@@ -12,7 +13,7 @@ export function expectBase64UrlFields(credential: SerializableCredential | undef
 
     fields.forEach((fieldPath) => {
         const value = getNestedValue(credential, fieldPath);
-        // eslint-disable-next-line no-undef
+
         expect(value).toMatch(base64UrlPattern);
     });
 }

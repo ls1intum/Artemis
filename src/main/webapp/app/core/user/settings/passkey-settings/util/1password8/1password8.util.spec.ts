@@ -1,6 +1,7 @@
 import { getCredentialFromMalformed1Password8Object } from './1password8.util';
 import { Malformed1Password8Credential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-credential';
 import { expectBase64UrlFields } from '../test.helpers';
+import { describe, expect, it } from '@jest/globals';
 
 describe('1Password8 Util', () => {
     function createArrayBuffer(values: number[]): ArrayBuffer {
