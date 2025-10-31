@@ -37,31 +37,41 @@ export class AgentChatService {
      */
     getSessionId(courseId: number): string {
         const userId = this.accountService.userIdentity()?.id;
-        if (!userId) {
-            throw new Error('User must be authenticated to use agent chat');
+        if (userId == undefined) {
+            throw new Error(this.translateService.instant('artemisApp.agent.chat.authentication'));
         }
         return `course_${courseId}_user_${userId}`;
     }
 
     sendMessage(message: string, courseId: number): Observable<AgentChatResponse> {
-        const sessionId = this.getSessionId(courseId);
-        const request: AgentChatRequest = {
-            message,
-            sessionId,
-        };
+        try {
+            const sessionId = this.getSessionId(courseId);
+            const request: AgentChatRequest = {
+                message,
+                sessionId,
+            };
 
-        return this.http.post<AgentChatResponse>(`api/atlas/agent/courses/${courseId}/chat`, request).pipe(
-            timeout(30000),
-            catchError(() => {
-                return of({
-                    message: this.translateService.instant('artemisApp.agent.chat.error'),
-                    sessionId,
-                    timestamp: new Date().toISOString(),
-                    success: false,
-                    competenciesModified: false,
-                });
-            }),
-        );
+            return this.http.post<AgentChatResponse>(`api/atlas/agent/courses/${courseId}/chat`, request).pipe(
+                timeout(30000),
+                catchError(() => {
+                    return of({
+                        message: this.translateService.instant('artemisApp.agent.chat.error'),
+                        sessionId,
+                        timestamp: new Date().toISOString(),
+                        success: false,
+                        competenciesModified: false,
+                    });
+                }),
+            );
+        } catch (error) {
+            return of({
+                message: this.translateService.instant('artemisApp.agent.chat.authentication'),
+                sessionId: '',
+                timestamp: new Date().toISOString(),
+                success: false,
+                competenciesModified: false,
+            });
+        }
     }
 
     /**

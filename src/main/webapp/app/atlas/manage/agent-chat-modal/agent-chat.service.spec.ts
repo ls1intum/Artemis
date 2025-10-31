@@ -173,16 +173,26 @@ describe('AgentChatService', () => {
                 });
             });
 
-            it('should throw error when userIdentity is undefined', () => {
+            it('should return error response when userIdentity is undefined', () => {
                 accountService.userIdentity.set(undefined);
 
-                expect(() => service.sendMessage(message, courseId)).toThrow('User must be authenticated to use agent chat');
+                let result: any;
+                service.sendMessage(message, courseId).subscribe((response) => {
+                    result = response;
+                });
+                expect(result.message).toBe(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
+                expect(result.success).toBeFalse();
             });
 
-            it('should throw error when userIdentity.id is undefined', () => {
+            it('should return error response when userIdentity.id is undefined', () => {
                 accountService.userIdentity.set({ id: undefined, login: 'testuser' } as User);
 
-                expect(() => service.sendMessage(message, courseId)).toThrow('User must be authenticated to use agent chat');
+                let result: any;
+                service.sendMessage(message, courseId).subscribe((response) => {
+                    result = response;
+                });
+                expect(result.message).toBe(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
+                expect(result.success).toBeFalse();
             });
         });
 
@@ -396,13 +406,13 @@ describe('AgentChatService', () => {
         it('should throw error when userIdentity is undefined', () => {
             accountService.userIdentity.set(undefined);
 
-            expect(() => service.getSessionId(123)).toThrow('User must be authenticated to use agent chat');
+            expect(() => service.getSessionId(123)).toThrow(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
         });
 
         it('should throw error when userIdentity.id is undefined', () => {
             accountService.userIdentity.set({ id: undefined, login: 'testuser' } as User);
 
-            expect(() => service.getSessionId(123)).toThrow('User must be authenticated to use agent chat');
+            expect(() => service.getSessionId(123)).toThrow(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
         });
     });
 });
