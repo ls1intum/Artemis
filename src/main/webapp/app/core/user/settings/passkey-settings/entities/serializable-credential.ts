@@ -11,9 +11,6 @@ export interface SerializableCredential {
      */
     type: PublicKeyCredentialType;
 
-    /**
-     * The credential ID as a string
-     */
     id: string;
 
     /**
@@ -21,14 +18,8 @@ export interface SerializableCredential {
      */
     rawId: string | undefined;
 
-    /**
-     * The authenticator attachment modality
-     */
     authenticatorAttachment: AuthenticatorAttachment | undefined;
 
-    /**
-     * Client extension results
-     */
     clientExtensionResults: AuthenticationExtensionsClientOutputs;
 
     /**
@@ -41,8 +32,8 @@ export interface SerializableCredential {
  * Serializable version of AuthenticatorResponse with all binary data
  * converted to base64url-encoded strings.
  *
- * This combines properties from both AuthenticatorAttestationResponse (registration)
- * and AuthenticatorAssertionResponse (login).
+ * This combines properties from both {@link AuthenticatorAttestationResponse} (registration)
+ * and {@link AuthenticatorAssertionResponse} (login).
  */
 export interface SerializableAuthenticatorResponse {
     /**
