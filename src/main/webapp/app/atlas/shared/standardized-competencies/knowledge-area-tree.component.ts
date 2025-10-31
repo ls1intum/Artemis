@@ -1,8 +1,7 @@
-import { NestedTreeControl } from '@angular/cdk/tree';
-import { Component, ContentChild, TemplateRef, input } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, EventEmitter, Output, TemplateRef, ViewChild, input } from '@angular/core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeAreaForTree, StandardizedCompetencyForTree } from 'app/atlas/shared/entities/standardized-competency.model';
-import { MatTreeModule, MatTreeNestedDataSource } from '@angular/material/tree';
+import { MatTree, MatTreeModule, MatTreeNestedDataSource } from '@angular/material/tree';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -14,9 +13,12 @@ import { CommonModule } from '@angular/common';
     styleUrls: ['./knowledge-area-tree.component.scss'],
     imports: [MatTreeModule, FaIconComponent, NgbCollapse, TranslateDirective, CommonModule],
 })
-export class KnowledgeAreaTreeComponent {
+export class KnowledgeAreaTreeComponent implements AfterViewInit {
     dataSource = input(new MatTreeNestedDataSource<KnowledgeAreaForTree>());
-    treeControl = input(new NestedTreeControl<KnowledgeAreaForTree>((node) => node.children));
+    childrenAccessor = input((node: KnowledgeAreaForTree) => node.children ?? []);
+
+    @ViewChild(MatTree) private matTree?: MatTree<KnowledgeAreaForTree>;
+    @Output() treeReady = new EventEmitter<KnowledgeAreaTreeComponent>();
 
     @ContentChild('knowledgeAreaTemplate') knowledgeAreaTemplate: TemplateRef<{ knowledgeArea: KnowledgeAreaForTree }>;
     @ContentChild('competencyTemplate') competencyTemplate: TemplateRef<{ competency: StandardizedCompetencyForTree; knowledgeArea: KnowledgeAreaForTree }>;
@@ -25,4 +27,28 @@ export class KnowledgeAreaTreeComponent {
     protected readonly faChevronRight = faChevronRight;
     //constants
     readonly trackBy = (_: number, node: KnowledgeAreaForTree) => node.id;
+
+    ngAfterViewInit() {
+        this.treeReady.emit(this);
+    }
+
+    isExpanded(node: KnowledgeAreaForTree) {
+        return !!this.matTree?.isExpanded(node);
+    }
+
+    expand(node: KnowledgeAreaForTree) {
+        this.matTree?.expand(node);
+    }
+
+    collapse(node: KnowledgeAreaForTree) {
+        this.matTree?.collapse(node);
+    }
+
+    collapseAll() {
+        this.matTree?.collapseAll();
+    }
+
+    expandAll() {
+        this.matTree?.expandAll();
+    }
 }

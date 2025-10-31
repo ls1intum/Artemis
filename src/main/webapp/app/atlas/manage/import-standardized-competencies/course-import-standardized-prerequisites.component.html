@@ -16,14 +16,14 @@
             class="me-1"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faMinimize"
-            (onClick)="treeControl.collapseAll()"
+            (onClick)="collapseTree()"
             tooltip="artemisApp.standardizedCompetency.manage.collapseButtonTooltip"
         />
-        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="treeControl.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
+        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="expandTree()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
     </div>
     @if (dataSource.data.length) {
         <div class="d-flex">
-            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource" [treeControl]="treeControl">
+            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource" (treeReady)="registerKnowledgeAreaTree($event)">
                 <ng-template let-competency="competency" #competencyTemplate>
                     <input type="checkbox" class="form-check-input me-2" (change)="toggleSelect(competency)" [(ngModel)]="competency.selected" />
                     <div class="d-flex align-items-center clickable" (click)="openCompetencyDetails(competency)">

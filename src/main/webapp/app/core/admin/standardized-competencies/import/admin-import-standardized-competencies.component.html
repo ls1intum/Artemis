@@ -23,7 +23,7 @@
             [translateValues]="{ competencies: importCount.competencies, knowledgeAreas: importCount.knowledgeAreas }"
         ></div>
         <div class="d-flex">
-            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource" [treeControl]="treeControl">
+            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource" (treeReady)="registerKnowledgeAreaTree($event)">
                 <ng-template let-competency="competency" let-knowledgeArea="knowledgeArea" #competencyTemplate>
                     <div class="d-flex align-items-center clickable" (click)="openCompetencyDetails(competency, knowledgeArea.title)">
                         <fa-icon

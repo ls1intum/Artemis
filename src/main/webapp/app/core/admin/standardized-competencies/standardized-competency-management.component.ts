@@ -99,7 +99,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
                 const knowledgeAreas = knowledgeAreasResponse.body!;
                 const knowledgeAreasForTree = knowledgeAreas.map((knowledgeArea) => convertToKnowledgeAreaForTree(knowledgeArea));
                 this.dataSource.data = knowledgeAreasForTree;
-                this.treeControl.dataNodes = knowledgeAreasForTree;
                 knowledgeAreasForTree.forEach((knowledgeArea) => {
                     this.addSelfAndDescendantsToMap(knowledgeArea);
                     this.addSelfAndDescendantsToSelectArray(knowledgeArea);
@@ -290,7 +289,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             this.refreshTree();
         } else {
             this.dataSource.data = this.dataSource.data.filter((ka) => ka.id !== knowledgeArea.id);
-            this.treeControl.dataNodes = this.dataSource.data;
         }
         const descendantIds = this.getIdsOfSelfAndAllDescendants(knowledgeArea);
         descendantIds.forEach((id) => this.knowledgeAreaMap.delete(id));
@@ -312,7 +310,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             this.refreshTree();
         } else {
             this.dataSource.data = this.insertBasedOnTitle(knowledgeAreaForTree, this.dataSource.data);
-            this.treeControl.dataNodes = this.dataSource.data;
         }
 
         this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
@@ -359,7 +356,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         this.knowledgeAreaMap.set(knowledgeArea.id!, knowledgeAreaForTree);
         this.knowledgeAreasForSelect = [];
         this.dataSource.data.forEach((knowledgeArea) => this.addSelfAndDescendantsToSelectArray(knowledgeArea));
-        this.treeControl.dataNodes = this.dataSource.data;
 
         // refresh tree if dataSource.data was not modified directly
         if (previousParent || parent) {
