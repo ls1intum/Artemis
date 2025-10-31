@@ -10,11 +10,11 @@ import de.tum.cit.aet.artemis.core.security.RateLimitType;
 /**
  * This annotation is used to limit the number of requests per minute for a specific endpoint or controller.
  * It can be used to prevent abuse and ensure fair usage of resources.
- * The value specifies the maximum number of requests for all nodes allowed per minute per client.
+ * The type specifies which rate limit category to apply, with RPM values configurable via application properties.
  *
  * <p>
- * You can either specify a fixed RPM value using {@link #type()} or use a predefined type
- * with {@link #type()} which allows for configuration-based overrides.
+ * Use {@link #type()} to specify a predefined rate limit type, which allows for configuration-based overrides
+ * of the default RPM values defined in {@link RateLimitType}.
  * </p>
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
@@ -23,9 +23,8 @@ public @interface LimitRequestsPerMinute {
 
     /**
      * Rate limit type that defines the default RPM and allows configuration overrides.
-     * If both value and type are specified, value takes precedence.
      *
-     * @return the rate limit type, or null if using fixed value
+     * @return the rate limit type
      */
     RateLimitType type() default RateLimitType.AUTHENTICATION;
 }

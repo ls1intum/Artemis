@@ -51,6 +51,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
     public ArtemisWebAuthnAuthenticationProvider(WebAuthnRelyingPartyOperations relyingPartyOperations, UserRepository userRepository, RateLimitService rateLimitService) {
         Assert.notNull(relyingPartyOperations, "relyingPartyOperations cannot be null");
         Assert.notNull(userRepository, "userRepository cannot be null");
+        Assert.notNull(rateLimitService, "rateLimitService cannot be null");
         this.relyingPartyOperations = relyingPartyOperations;
         this.userRepository = userRepository;
         this.rateLimitService = rateLimitService;

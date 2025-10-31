@@ -91,8 +91,20 @@ public class RateLimitService {
      * @return the cleaned client IP address
      */
     public IPAddress resolveClientId() {
-        final String ipString = getIpStringFromRequest(currentRequest());
-        return new IPAddressString(ipString).getAddress();
+        HttpServletRequest request = currentRequest();
+        if (request == null) {
+            log.warn("Unable to resolve HTTP request context for rate limiting");
+            return null;
+        }
+
+        final String ipString = getIpStringFromRequest(request);
+        IPAddress address = new IPAddressString(ipString).getAddress();
+
+        if (address == null) {
+            log.warn("Failed to parse IP address '{}' for rate limiting", ipString);
+        }
+
+        return address;
     }
 
     private HttpServletRequest currentRequest() {

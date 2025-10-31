@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
@@ -719,6 +720,9 @@ public class LocalVCServletService {
         }
         else if (exception instanceof LocalVCForbiddenException) {
             return HttpStatus.FORBIDDEN.value();
+        }
+        else if (exception instanceof RateLimitExceededException) {
+            return HttpStatus.TOO_MANY_REQUESTS.value();
         }
         else {
             log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage());
