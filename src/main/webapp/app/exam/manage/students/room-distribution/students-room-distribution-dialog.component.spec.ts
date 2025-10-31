@@ -18,7 +18,7 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
-import { StudentsRoomDistributionService } from 'app/exam/manage/students/room-distribution/students-room-distribution.service';
+import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';

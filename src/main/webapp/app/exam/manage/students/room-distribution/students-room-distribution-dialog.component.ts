@@ -22,7 +22,7 @@ import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { StudentsRoomDistributionService } from 'app/exam/manage/students/room-distribution/students-room-distribution.service';
+import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { DialogModule } from 'primeng/dialog';
