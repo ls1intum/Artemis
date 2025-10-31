@@ -339,7 +339,8 @@
                 "useInEditor": "In Editor übernehmen",
                 "untitled": "Ohne Titel",
                 "explanation": "Erläuterung",
-                "noCourseContext": "Kein Kurskontext gefunden."
+                "noCourseContext": "Kein Kurskontext gefunden.",
+                "promptHint": "Zusätzliche Instruktionen"
             }
         }
     }
