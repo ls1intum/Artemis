@@ -715,18 +715,20 @@ public class LocalVCServletService {
      * @return The HTTP status code.
      */
     public int getHttpStatusForException(Exception exception, String repositoryUri) {
-        if (exception instanceof LocalVCAuthException) {
-            return HttpStatus.UNAUTHORIZED.value();
-        }
-        else if (exception instanceof LocalVCForbiddenException) {
-            return HttpStatus.FORBIDDEN.value();
-        }
-        else if (exception instanceof RateLimitExceededException) {
-            return HttpStatus.TOO_MANY_REQUESTS.value();
-        }
-        else {
-            log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage());
-            return HttpStatus.INTERNAL_SERVER_ERROR.value();
+        switch (exception) {
+            case LocalVCAuthException _ -> {
+                return HttpStatus.UNAUTHORIZED.value();
+            }
+            case LocalVCForbiddenException _ -> {
+                return HttpStatus.FORBIDDEN.value();
+            }
+            case RateLimitExceededException _ -> {
+                return HttpStatus.TOO_MANY_REQUESTS.value();
+            }
+            default -> {
+                log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage());
+                return HttpStatus.INTERNAL_SERVER_ERROR.value();
+            }
         }
     }
 
