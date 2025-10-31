@@ -1,4 +1,5 @@
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
+import { SerializableCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-credential';
 import { encodeAsBase64Url } from 'app/shared/util/base64.util';
 
 /**
@@ -7,7 +8,7 @@ import { encodeAsBase64Url } from 'app/shared/util/base64.util';
  * @param rawObject - which can be a record of numbers, null, or undefined.
  * @returns A Base64-encoded string representation of the object, or undefined if the input is invalid.
  */
-function convertToBase64(rawObject: Record<string, number> | null | undefined): string | undefined {
+export function convertToBase64(rawObject: Record<string, number> | null | undefined): string | undefined {
     if (!rawObject || typeof rawObject !== 'object') {
         return undefined;
     }
@@ -31,15 +32,14 @@ function convertToBase64(rawObject: Record<string, number> | null | undefined): 
  *
  * <p><strong>We fix the issue by creating a serializable copy of the object with its properties converted into the correct format.</strong></p>
  */
-export function getCredentialFromMalformedBitwardenObject(malformedBitwardenCredential: MalformedBitwardenCredential | null): Credential | null {
+export function getCredentialFromMalformedBitwardenObject(malformedBitwardenCredential: MalformedBitwardenCredential | null): SerializableCredential | undefined {
     if (!malformedBitwardenCredential) {
-        return null;
+        return undefined;
     }
 
     return {
-        //@ts-expect-error authenticatorAttachment is a method in the (getAuthenticatorAttachment) object, but we return it as property here for simplicity, assuming that we only want to stringify it afterward anyway
-        authenticatorAttachment: malformedBitwardenCredential.authenticatorAttachment,
-        clientExtensionResults: malformedBitwardenCredential.getClientExtensionResults(),
+        authenticatorAttachment: malformedBitwardenCredential.authenticatorAttachment as AuthenticatorAttachment,
+        clientExtensionResults: malformedBitwardenCredential.getClientExtensionResults() as AuthenticationExtensionsClientOutputs,
         id: malformedBitwardenCredential.id,
         rawId: convertToBase64(malformedBitwardenCredential.rawId),
         response: {
@@ -54,6 +54,6 @@ export function getCredentialFromMalformedBitwardenObject(malformedBitwardenCred
             signature: convertToBase64(malformedBitwardenCredential.response.signature),
             userHandle: convertToBase64(malformedBitwardenCredential.response.userHandle),
         },
-        type: malformedBitwardenCredential.type,
+        type: malformedBitwardenCredential.type as PublicKeyCredentialType,
     };
 }

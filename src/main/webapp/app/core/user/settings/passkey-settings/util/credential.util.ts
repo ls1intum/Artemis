@@ -9,6 +9,7 @@ import { getOS } from 'app/shared/util/os-detector.util';
 import { createCredentialOptions } from 'app/core/user/settings/passkey-settings/util/credential-option.util';
 import { getCredentialFromMalformed1Password8Object } from 'app/core/user/settings/passkey-settings/util/1password8/1password8.util';
 import { Malformed1Password8Credential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-credential';
+import { SerializableCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-credential';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
@@ -20,19 +21,23 @@ const UserAbortedPasskeyCreationError = {
     name: 'NotAllowedError',
 };
 
-function handleMalformedBitwardenCredential(credential: Credential | null) {
+/**
+ * Generic handler for converting malformed credentials to serializable credentials.
+ *
+ * @param credential - The credential to convert
+ * @param converterFunction - The function to use for conversion
+ * @returns The converted serializable credential
+ * @throws InvalidCredentialError if the conversion fails
+ */
+function handleMalformedCredential<T>(credential: Credential | null, converterFunction: (credential: T) => SerializableCredential | undefined): SerializableCredential {
     try {
-        const malformedBitwardenCredential: MalformedBitwardenCredential = credential as unknown as MalformedBitwardenCredential;
-        return getCredentialFromMalformedBitwardenObject(malformedBitwardenCredential);
-    } catch (error) {
-        throw new InvalidCredentialError();
-    }
-}
-
-function handleMalformed1Password8Credential(credential: Credential | null) {
-    try {
-        const malformed1Password8Credential: Malformed1Password8Credential = credential as unknown as Malformed1Password8Credential;
-        return getCredentialFromMalformed1Password8Object(malformed1Password8Credential);
+        const malformedCredential = credential as unknown as T;
+        const serializableCredential = converterFunction(malformedCredential);
+        if (!serializableCredential) {
+            // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+            throw new InvalidCredentialError();
+        }
+        return serializableCredential;
     } catch (error) {
         throw new InvalidCredentialError();
     }
@@ -48,10 +53,15 @@ function handleMalformed1Password8Credential(credential: Credential | null) {
  *
  * @throws {@link InvalidCredentialError} if the credential cannot be processed.
  */
-export function getCredentialWithGracefullyHandlingAuthenticatorIssues(credential: Credential | null) {
+export function getCredentialWithGracefullyHandlingAuthenticatorIssues(credential: Credential | null): Credential | SerializableCredential {
     try {
         // properly returned credentials can be stringified
         JSON.stringify(credential);
+
+        if (!credential) {
+            // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+            throw new InvalidCredentialError();
+        }
         return credential;
     } catch (error) {
         captureException(error);
@@ -59,13 +69,14 @@ export function getCredentialWithGracefullyHandlingAuthenticatorIssues(credentia
         console.warn('Authenticator returned a malformed credential, attempting to fix it', error);
 
         // Authenticators, such as bitwarden, do not handle the credential generation properly; this is a workaround for it
-        let fixedCredential = handleMalformedBitwardenCredential(credential);
+        let fixedCredential = handleMalformedCredential<MalformedBitwardenCredential>(credential, getCredentialFromMalformedBitwardenObject);
 
-        const is1Password8Credential = (fixedCredential as any).response?.authenticatorData === '';
+        // 1Password8 returns empty string for authenticatorData when the Bitwarden workaround is applied
+        const is1Password8Credential = fixedCredential.response?.authenticatorData === '';
         if (is1Password8Credential) {
             // eslint-disable-next-line no-undef
             console.warn('Bitwarden workaround did not succeed, attempting 1password8 workaround', error);
-            fixedCredential = handleMalformed1Password8Credential(credential);
+            fixedCredential = handleMalformedCredential<Malformed1Password8Credential>(credential, getCredentialFromMalformed1Password8Object);
         }
 
         return fixedCredential;
@@ -85,10 +96,6 @@ export async function addNewPasskey(user: User | undefined, webauthnApiService: 
             publicKey: credentialOptions,
         });
         const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential);
-        if (!credential) {
-            // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
-            throw new InvalidCredentialError();
-        }
 
         await webauthnApiService.registerPasskey({
             publicKey: {

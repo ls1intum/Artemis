@@ -1,9 +1,10 @@
 import { encodeAsBase64Url } from 'app/shared/util/base64.util';
 import { Malformed1Password8Credential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-credential';
+import { SerializableCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-credential';
 
-export function getCredentialFromMalformed1Password8Object(malformed1Password8Credential: Malformed1Password8Credential) {
+export function getCredentialFromMalformed1Password8Object(malformed1Password8Credential: Malformed1Password8Credential | null): SerializableCredential | undefined {
     if (!malformed1Password8Credential) {
-        return null;
+        return undefined;
     }
 
     // Convert ArrayBuffers to base64url strings for JSON serialization
@@ -25,8 +26,8 @@ export function getCredentialFromMalformed1Password8Object(malformed1Password8Cr
     const userHandleBase64 = malformed1Password8Credential.response.userHandle ? encodeAsBase64Url(new Uint8Array(malformed1Password8Credential.response.userHandle)) : undefined;
 
     return {
-        authenticatorAttachment: malformed1Password8Credential.authenticatorAttachment,
-        clientExtensionResults: malformed1Password8Credential.getClientExtensionResults(),
+        authenticatorAttachment: malformed1Password8Credential.authenticatorAttachment as AuthenticatorAttachment,
+        clientExtensionResults: malformed1Password8Credential.getClientExtensionResults() as AuthenticationExtensionsClientOutputs,
         id: malformed1Password8Credential.id,
         rawId: rawIdBase64,
         response: {
@@ -39,6 +40,6 @@ export function getCredentialFromMalformed1Password8Object(malformed1Password8Cr
             signature: signatureBase64,
             userHandle: userHandleBase64,
         },
-        type: malformed1Password8Credential.type,
+        type: malformed1Password8Credential.type as PublicKeyCredentialType,
     };
 }
