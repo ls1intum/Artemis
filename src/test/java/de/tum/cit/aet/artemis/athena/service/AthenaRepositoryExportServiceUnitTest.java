@@ -85,7 +85,26 @@ class AthenaRepositoryExportServiceUnitTest {
     }
 
     @Test
+    void getStudentRepositoryFilesContentShouldThrowWhenSubmissionDoesNotBelongToExercise() {
+        long wrongExerciseId = 999L;
+        ProgrammingExercise wrongExercise = new ProgrammingExercise();
+        wrongExercise.setId(wrongExerciseId);
+        participation.setExercise(wrongExercise);
+
+        when(programmingExerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
+        when(programmingSubmissionRepository.findByIdElseThrow(SUBMISSION_ID)).thenReturn(programmingSubmission);
+        when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> athenaRepositoryExportService.getStudentRepositoryFilesContent(EXERCISE_ID, SUBMISSION_ID))
+                .withMessageContaining("Submission " + SUBMISSION_ID + " does not belong to exercise " + EXERCISE_ID)
+                .withMessageContaining("belongs to exercise " + wrongExerciseId)
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("error.submission.exercise.mismatch"));
+    }
+
+    @Test
     void getStudentRepositoryFilesContentShouldThrowWhenRepositoryUriMissing() {
+        participation.setExercise(programmingExercise);
+
         when(programmingExerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
         when(programmingSubmissionRepository.findByIdElseThrow(SUBMISSION_ID)).thenReturn(programmingSubmission);
         when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
@@ -96,6 +115,7 @@ class AthenaRepositoryExportServiceUnitTest {
 
     @Test
     void getStudentRepositoryFilesContentShouldUseLatestCommitWhenNoDeadline() throws IOException {
+        participation.setExercise(programmingExercise);
         participation.setRepositoryUri(new LocalVCRepositoryUri(URI.create("http://localhost"), "TEST", "TEST-student").getURI().toString());
 
         when(programmingExerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);

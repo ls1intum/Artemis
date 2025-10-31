@@ -93,13 +93,23 @@ public class AthenaRepositoryExportService {
 
         ProgrammingSubmission submission = programmingSubmissionRepository.findByIdElseThrow(submissionId);
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(submission.getParticipation().getId());
+
+        // Validate that the submission belongs to the requested exercise
+        Long submissionExerciseId = participation.getExercise().getId();
+        if (!submissionExerciseId.equals(exerciseId)) {
+            throw new BadRequestAlertException("Submission " + submissionId + " does not belong to exercise " + exerciseId + " (belongs to exercise " + submissionExerciseId + ")",
+                    ENTITY_NAME, "submissionExerciseMismatch");
+        }
+
         LocalVCRepositoryUri repoUri = participation.getVcsRepositoryUri();
         if (repoUri == null) {
             throw new BadRequestAlertException(
                     "Repository URI is null for student participation " + participation.getId() + ". This may indicate that the student repository has not been set up yet.",
-                    ENTITY_NAME, "error.invalid.student.repository.url");
+                    ENTITY_NAME, "invalid.student.repository.url");
         }
-        ZonedDateTime deadline = programmingExercise.getDueDate();
+
+        // Athena currently does not fully support individual due dates, therefore we use the exercise due date instead of the individual due date
+        ZonedDateTime deadline = participation.getExercise().getDueDate();
         if (deadline != null) {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(repoUri, deadline);
         }
@@ -123,7 +133,7 @@ public class AthenaRepositoryExportService {
         log.debug("Retrieving instructor repository file contents for exercise {}, repository type {}", exerciseId, repositoryType);
 
         if (!ATHENA_INSTRUCTOR_REPOSITORY_TYPES.contains(repositoryType)) {
-            throw new BadRequestAlertException("Invalid instructor repository type", ENTITY_NAME, "error.invalid.instructor.repository.type",
+            throw new BadRequestAlertException("Invalid instructor repository type", ENTITY_NAME, "invalid.instructor.repository.type",
                     Map.of("repositoryType", repositoryType, "validTypes", ATHENA_INSTRUCTOR_REPOSITORY_TYPES));
         }
 
@@ -133,7 +143,7 @@ public class AthenaRepositoryExportService {
 
         LocalVCRepositoryUri repoUri = programmingExercise.getRepositoryURI(repositoryType);
         if (repoUri == null) {
-            String errorKey = "error.invalid." + repositoryType.name().toLowerCase() + ".repository.url";
+            String errorKey = "invalid." + repositoryType.name().toLowerCase() + ".repository.url";
             throw new BadRequestAlertException("Repository URI is null for exercise " + exerciseId + " and repository type " + repositoryType + ". This may indicate that the "
                     + repositoryType.name().toLowerCase() + " repository has not been set up yet.", ENTITY_NAME, errorKey);
         }

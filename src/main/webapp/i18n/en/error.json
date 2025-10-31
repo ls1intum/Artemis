@@ -156,6 +156,13 @@
             "isNull": "No example submission was provided.",
             "submissionIsNull": "This example submission has no solution attached.",
             "submissionIdMissing": "The submission must be saved before it can be converted."
-        }
+        },
+        "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
+        "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
+        "submissionAlreadyHasAthenaResult": "Submission already has an Athena result.",
+        "missingFeedbackSuggestionModule": "Exercise does not have a feedback suggestion module configured.",
+        "examExerciseNoAccessToAthena": "Exam exercises do not have access to Athena.",
+        "noAccessToAthenaModule": "The exercise has no access to the selected Athena module.",
+        "athenaModuleChangeAfterDueDate": "Athena module cannot be changed after the due date has passed."
     }
 }

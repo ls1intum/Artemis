@@ -156,6 +156,13 @@
             "isNull": "Es wurde keine Beispielabgabe übermittelt.",
             "submissionIsNull": "Diese Beispielabgabe enthält keine Lösung.",
             "submissionIdMissing": "Die Abgabe muss zuerst gespeichert werden, bevor sie umgewandelt werden kann."
-        }
+        },
+        "submissionExerciseMismatch": "Die Abgabe gehört nicht zur angegebenen Aufgabe.",
+        "maxAthenaResultsReached": "Maximale Anzahl an KI-Feedback-Anfragen erreicht.",
+        "submissionAlreadyHasAthenaResult": "Die Abgabe hat bereits ein Athena-Ergebnis.",
+        "missingFeedbackSuggestionModule": "Die Aufgabe hat kein Feedback-Vorschlagsmodul konfiguriert.",
+        "examExerciseNoAccessToAthena": "Klausuraufgaben haben keinen Zugriff auf Athena.",
+        "noAccessToAthenaModule": "Die Aufgabe hat keinen Zugriff auf das ausgewählte Athena-Modul.",
+        "athenaModuleChangeAfterDueDate": "Das Athena-Modul kann nach Ablauf der Abgabefrist nicht mehr geändert werden."
     }
 }
