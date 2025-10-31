@@ -122,7 +122,8 @@ info:
 
 atlas:
   atlasml:
-    base-url: http://atlasml.aet.cit.tum.de/
+    # TODO: provide a local system for development
+    base-url: https://atlasml.aet.cit.tum.de
 
 # Overrides for sample rate and environment
 # To ensure consistency across all parts of the Sentry SDK, these settings need to be specified in the configuration files
