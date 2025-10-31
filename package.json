@@ -181,6 +181,7 @@
         "test:open-handles": "npm run prebuild && ng test --detect-open-handles",
         "test": "npm run prebuild && ng test --coverage --log-heap-usage -w=4",
         "testw8": "npm run prebuild && ng test --coverage --log-heap-usage -w=8",
+        "test:one": "npm run prebuild && ng test",
         "update": "ncu -i --format group",
         "webapp:build": "npm run clean-www && npm run prebuild -- --develop && ng build --configuration development",
         "webapp:prod": "npm run clean-www && npm run prebuild && cross-env NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production"
