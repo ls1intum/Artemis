@@ -107,7 +107,6 @@ The following sections outline **best practices** for writing client tests in Ar
                     await TestBed.configureTestingModule({
                         imports: [
                             ArtemisTestModule,
-                            RouterTestingModule,
                             NgxDatatableModule,
                             ParticipationSubmissionComponent,
                             MockComponent(UpdatingResultComponent),
