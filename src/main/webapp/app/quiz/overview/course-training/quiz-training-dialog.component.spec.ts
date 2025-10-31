@@ -2,13 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { QuizTrainingDialogComponent } from './quiz-training-dialog.component';
 import { MockBuilder } from 'ng-mocks';
 import { DialogModule } from 'primeng/dialog';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 describe('QuizTrainingDialogComponent', () => {
     let component: QuizTrainingDialogComponent;
     let fixture: ComponentFixture<QuizTrainingDialogComponent>;
 
     beforeEach(async () => {
-        await MockBuilder(QuizTrainingDialogComponent).keep(DialogModule);
+        await MockBuilder(QuizTrainingDialogComponent).keep(DialogModule).keep(FontAwesomeModule);
 
         fixture = TestBed.createComponent(QuizTrainingDialogComponent);
         component = fixture.componentInstance;

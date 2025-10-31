@@ -9,6 +9,7 @@ import { LeagueIconComponent } from 'app/quiz/overview/course-training/course-tr
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { LEAGUES } from 'app/quiz/overview/course-training/league-resource';
 
 @Component({
     selector: 'jhi-quiz-training-dialog',
@@ -18,13 +19,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 })
 export class QuizTrainingDialogComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
-    protected readonly leagues = [
-        { league: 'Bronze', translationKey: 'artemisApp.quizTraining.bronze', range: '0 - 50' },
-        { league: 'Silver', translationKey: 'artemisApp.quizTraining.silver', range: '50 - 150' },
-        { league: 'Gold', translationKey: 'artemisApp.quizTraining.gold', range: '150 - 300' },
-        { league: 'Diamond', translationKey: 'artemisApp.quizTraining.diamond', range: '300 - 500' },
-        { league: 'Master', translationKey: 'artemisApp.quizTraining.master', range: '500+' },
-    ];
+    protected readonly leagues = LEAGUES;
 
     visible = model<boolean>(false);
     showInLeaderboard = model<boolean>(true);
