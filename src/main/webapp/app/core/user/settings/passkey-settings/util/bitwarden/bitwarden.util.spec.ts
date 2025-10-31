@@ -1,5 +1,6 @@
 import { convertToBase64, getCredentialFromMalformedBitwardenObject } from './bitwarden.util';
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
+import { expectBase64UrlFields } from '../test.helpers';
 
 describe('Bitwarden Util', () => {
     describe('convertToBase64', () => {
@@ -133,12 +134,7 @@ describe('Bitwarden Util', () => {
         it('should encode all binary data as base64url strings', () => {
             const credential = getCredentialFromMalformedBitwardenObject(malformedCredential);
 
-            // All these fields should be base64url strings
-            expect(credential?.rawId).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.clientDataJSON).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.attestationObject).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.authenticatorData).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.publicKey).toMatch(/^[A-Za-z0-9_-]+$/);
+            expectBase64UrlFields(credential, ['rawId', 'response.clientDataJSON', 'response.attestationObject', 'response.authenticatorData', 'response.publicKey']);
         });
 
         it('should return undefined for a null input', () => {

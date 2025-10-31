@@ -1,5 +1,6 @@
 import { getCredentialFromMalformed1Password8Object } from './1password8.util';
 import { Malformed1Password8Credential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-credential';
+import { expectBase64UrlFields } from '../test.helpers';
 
 describe('1Password8 Util', () => {
     function createArrayBuffer(values: number[]): ArrayBuffer {
@@ -46,12 +47,7 @@ describe('1Password8 Util', () => {
         it('should encode all binary data as base64url strings', () => {
             const credential = getCredentialFromMalformed1Password8Object(malformedRegistrationCredential);
 
-            // All these fields should be base64url strings (only contain A-Z, a-z, 0-9, -, _)
-            expect(credential?.rawId).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.clientDataJSON).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.attestationObject).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.authenticatorData).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.publicKey).toMatch(/^[A-Za-z0-9_-]+$/);
+            expectBase64UrlFields(credential, ['rawId', 'response.clientDataJSON', 'response.attestationObject', 'response.authenticatorData', 'response.publicKey']);
         });
     });
 
@@ -98,11 +94,7 @@ describe('1Password8 Util', () => {
         it('should encode login credential binary data as base64url strings', () => {
             const credential = getCredentialFromMalformed1Password8Object(malformedLoginCredential);
 
-            expect(credential?.rawId).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.clientDataJSON).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.authenticatorData).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.signature).toMatch(/^[A-Za-z0-9_-]+$/);
-            expect(credential?.response.userHandle).toMatch(/^[A-Za-z0-9_-]+$/);
+            expectBase64UrlFields(credential, ['rawId', 'response.clientDataJSON', 'response.authenticatorData', 'response.signature', 'response.userHandle']);
         });
     });
 
