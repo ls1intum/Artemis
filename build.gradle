@@ -27,7 +27,7 @@ plugins {
     id "org.owasp.dependencycheck" version "12.1.8"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
-    id "org.openapi.generator" version "7.16.0"
+    id "org.openapi.generator" version "7.17.0"
     id "com.google.osdetector" version "1.7.3"
 }
 
@@ -42,7 +42,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.1.0"
+    gradleVersion = "9.2.0"
 }
 
 node {
@@ -216,7 +216,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2025.4"
+    implementation "net.sourceforge.plantuml:plantuml:1.2025.9"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
@@ -418,7 +418,7 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
     // Required by JPlag
-    implementation "com.ibm.icu:icu4j-charset:77.1"
+    implementation "com.ibm.icu:icu4j-charset:78.1"
     // Required by exam session service
     implementation "com.github.seancfoley:ipaddress:5.5.1"
 
@@ -491,7 +491,7 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.184"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.1.0"
+    testImplementation "org.gradle:gradle-tooling-api:9.2.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
