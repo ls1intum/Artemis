@@ -219,6 +219,8 @@ public class ModelingExerciseResource {
      *         status 500 (Internal Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    // TODO: change the request body to a DTO to support the new hibernate version 6.6
+    // NOTE: IMPORTANT we should NEVER call save on an entity retrieved from the client because it is unsafe and can lead to data loss
     @PutMapping("modeling-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise,
