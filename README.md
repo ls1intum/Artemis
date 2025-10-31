@@ -158,7 +158,8 @@ The following members of the project management team are responsible for specifi
 
 * [How to set up your local development environment](https://docs.artemis.cit.tum.de/dev/setup/)
 * [Server coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/)
-* [Client coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/)
+* [Client coding guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/)
+* [Design guidelines](https://ls1intum.github.io/ui-ux-guidelines/)
 * [Code Review Guidelines](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html#review-process)
 * [Performance Guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/performance/)
 

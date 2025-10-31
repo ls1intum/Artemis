@@ -359,7 +359,7 @@ describe('PostingReactionsBarComponent', () => {
         { type: ConversationType.ONE_TO_ONE },
     ])('should initialize user authority and reactions correctly with same user', (dto: ConversationDTO) => {
         jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(dto);
-        jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ id: 99 } as User);
+        accountService.userIdentity.set({ id: 99 } as User);
 
         reactionToDelete.user = { id: 99 } as User;
         post.reactions = [reactionToDelete];
