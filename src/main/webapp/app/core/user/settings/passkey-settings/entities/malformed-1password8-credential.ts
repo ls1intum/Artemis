@@ -10,6 +10,7 @@ export interface Malformed1Password8Credential {
         getPublicKey?: () => ArrayBuffer;
         getPublicKeyAlgorithm?: () => number;
         getTransports?: () => string[];
+
         // the following are only included in login credential
         authenticatorData?: ArrayBuffer;
         signature?: ArrayBuffer;
