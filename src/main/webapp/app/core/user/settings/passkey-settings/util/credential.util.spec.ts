@@ -1,24 +1,25 @@
-import { addNewPasskey, getCredentialWithGracefullyHandlingAuthenticatorIssues } from './credential.util';
+import { addNewPasskey, getLoginCredentialWithGracefullyHandlingAuthenticatorIssues, getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues } from './credential.util';
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
+import { afterEach, describe, expect, it, jest } from '@jest/globals';
 
 describe('credential util helper method', () => {
-    describe('getCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
+    describe('getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
         afterEach(() => {
             jest.restoreAllMocks();
         });
 
         it('should return the credential if it can be stringified', () => {
             const validCredential = { id: '123' } as unknown as Credential;
-            const result = getCredentialWithGracefullyHandlingAuthenticatorIssues(validCredential);
+            const result = getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(validCredential);
             expect(result).toEqual(validCredential);
         });
 
         /**
-         * we expect {@link getCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the console.warn method
+         * we expect {@link getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the console.warn method
          */
         it('should handle malformed Bitwarden credentials gracefully', () => {
             jest.spyOn(console, 'warn').mockImplementation(); // Suppress console warnings in the test
@@ -42,7 +43,7 @@ describe('credential util helper method', () => {
                 throw new TypeError('Illegal invocation');
             };
 
-            const result = getCredentialWithGracefullyHandlingAuthenticatorIssues(malformedCredential);
+            const result = getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(malformedCredential);
             expect(result).toEqual({
                 authenticatorAttachment: 'platform',
                 clientExtensionResults: {},
@@ -62,8 +63,42 @@ describe('credential util helper method', () => {
             });
         });
 
+        it('should throw InvalidCredentialError if credential is invalid', () => {
+            jest.spyOn(console, 'warn').mockImplementation();
+            expect(() => getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(null)).toThrow(InvalidCredentialError);
+        });
+
         /**
-         * we expect {@link getCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the console.warn method
+         * we expect {@link getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the console.warn method
+         */
+        it('should throw InvalidCredentialError if the credential cannot be processed', () => {
+            jest.spyOn(console, 'warn').mockImplementation(); // Suppress console warnings in the test
+            const malformedCredential = { id: 'mock-id' } as unknown as Credential;
+
+            // Mock the toJSON method to simulate an error
+            (malformedCredential as any).toJSON = () => {
+                throw new TypeError('Illegal invocation');
+            };
+
+            expect(() => {
+                getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(malformedCredential);
+            }).toThrow(InvalidCredentialError);
+        });
+    });
+
+    describe('getLoginCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('should return the credential if it can be stringified', () => {
+            const validCredential = { id: '123' } as unknown as Credential;
+            const result = getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(validCredential);
+            expect(result).toEqual(validCredential);
+        });
+
+        /**
+         * we expect {@link getLoginCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the console.warn method
          */
         it('should handle malformed Bitwarden credentials gracefully during login', () => {
             jest.spyOn(console, 'warn').mockImplementation(); // Suppress console warnings in the test
@@ -85,7 +120,7 @@ describe('credential util helper method', () => {
                 throw new TypeError('Illegal invocation');
             };
 
-            const result = getCredentialWithGracefullyHandlingAuthenticatorIssues(malformedCredential);
+            const result = getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(malformedCredential);
             expect(result).toEqual({
                 authenticatorAttachment: 'platform',
                 clientExtensionResults: {},
@@ -101,13 +136,13 @@ describe('credential util helper method', () => {
             });
         });
 
-        it('should return null if the credential is null', () => {
-            const result = getCredentialWithGracefullyHandlingAuthenticatorIssues(null);
-            expect(result).toBeNull();
+        it('should throw InvalidCredentialError if credential is invalid', () => {
+            jest.spyOn(console, 'warn').mockImplementation();
+            expect(() => getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(null)).toThrow(InvalidCredentialError);
         });
 
         /**
-         * we expect {@link getCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the console.warn method
+         * we expect {@link getLoginCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the console.warn method
          */
         it('should throw InvalidCredentialError if the credential cannot be processed', () => {
             jest.spyOn(console, 'warn').mockImplementation(); // Suppress console warnings in the test
@@ -119,7 +154,7 @@ describe('credential util helper method', () => {
             };
 
             expect(() => {
-                getCredentialWithGracefullyHandlingAuthenticatorIssues(malformedCredential);
+                getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(malformedCredential);
             }).toThrow(InvalidCredentialError);
         });
     });

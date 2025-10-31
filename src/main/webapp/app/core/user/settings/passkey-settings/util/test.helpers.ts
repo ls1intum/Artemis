@@ -1,14 +1,32 @@
 import { expect } from '@jest/globals';
-import { SerializableCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-credential';
+import { SerializableRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-registration-credential';
+import { SerializableLoginCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-login-credential';
 
 /**
- * Validates that specified fields in a credential contain valid base64url strings.
+ * Validates that specified fields in a registration credential contain valid base64url strings.
  * Base64url strings should only contain A-Z, a-z, 0-9, -, and _ characters.
  *
  * @param credential The credential object to validate
  * @param fields Array of field paths to check (e.g., ['rawId', 'response.clientDataJSON'])
  */
-export function expectBase64UrlFields(credential: SerializableCredential | undefined, fields: string[]): void {
+export function expectBase64UrlFieldsForRegistration(credential: SerializableRegistrationCredential | undefined, fields: string[]): void {
+    const base64UrlPattern = /^[A-Za-z0-9_-]+$/;
+
+    fields.forEach((fieldPath) => {
+        const value = getNestedValue(credential, fieldPath);
+
+        expect(value).toMatch(base64UrlPattern);
+    });
+}
+
+/**
+ * Validates that specified fields in a login credential contain valid base64url strings.
+ * Base64url strings should only contain A-Z, a-z, 0-9, -, and _ characters.
+ *
+ * @param credential The credential object to validate
+ * @param fields Array of field paths to check (e.g., ['rawId', 'response.clientDataJSON'])
+ */
+export function expectBase64UrlFieldsForLogin(credential: SerializableLoginCredential | undefined, fields: string[]): void {
     const base64UrlPattern = /^[A-Za-z0-9_-]+$/;
 
     fields.forEach((fieldPath) => {

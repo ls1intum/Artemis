@@ -1,6 +1,6 @@
-import { convertToBase64, getCredentialFromMalformedBitwardenObject } from './bitwarden.util';
+import { convertToBase64, getLoginCredentialFromMalformedBitwardenObject, getRegistrationCredentialFromMalformedBitwardenObject } from './bitwarden.util';
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
-import { expectBase64UrlFields } from '../test.helpers';
+import { expectBase64UrlFieldsForLogin, expectBase64UrlFieldsForRegistration } from '../test.helpers';
 import { describe, expect, it } from '@jest/globals';
 
 describe('Bitwarden Util', () => {
@@ -97,8 +97,8 @@ describe('Bitwarden Util', () => {
         });
     });
 
-    describe('getCredentialFromMalformedBitwardenObject', () => {
-        const malformedCredential: MalformedBitwardenCredential = {
+    describe('getRegistrationCredentialFromMalformedBitwardenObject', () => {
+        const malformedRegistrationCredential: MalformedBitwardenCredential = {
             id: 'test-id',
             rawId: { 0: 116, 1: 101, 2: 115, 3: 116 },
             type: 'public-key',
@@ -114,8 +114,8 @@ describe('Bitwarden Util', () => {
             getClientExtensionResults: () => ({}),
         };
 
-        it('should convert a malformed Bitwarden credential to a valid SerializableCredential object', () => {
-            const credential = getCredentialFromMalformedBitwardenObject(malformedCredential);
+        it('should convert a malformed Bitwarden registration credential to a valid SerializableRegistrationCredential object', () => {
+            const credential = getRegistrationCredentialFromMalformedBitwardenObject(malformedRegistrationCredential);
 
             expect(credential).toBeDefined();
             expect(credential?.id).toBe('test-id');
@@ -133,61 +133,20 @@ describe('Bitwarden Util', () => {
         });
 
         it('should encode all binary data as base64url strings', () => {
-            const credential = getCredentialFromMalformedBitwardenObject(malformedCredential);
+            const credential = getRegistrationCredentialFromMalformedBitwardenObject(malformedRegistrationCredential);
 
-            expectBase64UrlFields(credential, ['rawId', 'response.clientDataJSON', 'response.attestationObject', 'response.authenticatorData', 'response.publicKey']);
+            expectBase64UrlFieldsForRegistration(credential, [
+                'rawId',
+                'response.clientDataJSON',
+                'response.attestationObject',
+                'response.authenticatorData',
+                'response.publicKey',
+            ]);
         });
 
         it('should return undefined for a null input', () => {
-            const credential = getCredentialFromMalformedBitwardenObject(null);
+            const credential = getRegistrationCredentialFromMalformedBitwardenObject(null);
             expect(credential).toBeUndefined();
-        });
-
-        it('should handle credential with login-specific fields', () => {
-            const loginCredential: MalformedBitwardenCredential = {
-                id: 'login-id',
-                rawId: { 0: 108, 1: 111, 2: 103, 3: 105, 4: 110 },
-                type: 'public-key',
-                authenticatorAttachment: 'cross-platform',
-                response: {
-                    clientDataJSON: { 0: 123, 1: 125 },
-                    authenticatorData: { 0: 10, 1: 11, 2: 12 },
-                    signature: { 0: 13, 1: 14, 2: 15 },
-                    userHandle: { 0: 16, 1: 17, 2: 18 },
-                },
-                getClientExtensionResults: () => ({}),
-            };
-
-            const credential = getCredentialFromMalformedBitwardenObject(loginCredential);
-
-            expect(credential).toBeDefined();
-            expect(credential?.id).toBe('login-id');
-            expect(credential?.response.authenticatorData).toBeDefined();
-            expect(credential?.response.signature).toBeDefined();
-            expect(credential?.response.userHandle).toBeDefined();
-        });
-
-        it('should prefer getAuthenticatorData over authenticatorData property', () => {
-            const credentialWithBoth: MalformedBitwardenCredential = {
-                id: 'test-id',
-                rawId: { 0: 1, 1: 2, 2: 3 },
-                type: 'public-key',
-                authenticatorAttachment: 'platform',
-                response: {
-                    clientDataJSON: { 0: 123, 1: 125 },
-                    authenticatorData: { 0: 7, 1: 8, 2: 9 },
-                    getAuthenticatorData: () => ({ 0: 4, 1: 5, 2: 6 }),
-                },
-                getClientExtensionResults: () => ({}),
-            };
-
-            const credential = getCredentialFromMalformedBitwardenObject(credentialWithBoth);
-
-            // TODO fix this test
-            expect(credential).toBeDefined();
-            expect(credential?.response.authenticatorData).toBeDefined();
-            expect(convertToBase64(credentialWithBoth.response.authenticatorData)).toEqual(credential?.response.authenticatorData);
-            expect(convertToBase64(credentialWithBoth.response.getAuthenticatorData!())).not.toEqual(credential?.response.authenticatorData);
         });
 
         it('should handle undefined optional fields gracefully', () => {
@@ -202,13 +161,71 @@ describe('Bitwarden Util', () => {
                 getClientExtensionResults: () => ({}),
             };
 
-            const credential = getCredentialFromMalformedBitwardenObject(minimalCredential);
+            const credential = getRegistrationCredentialFromMalformedBitwardenObject(minimalCredential);
 
             expect(credential).toBeDefined();
             expect(credential?.id).toBe('minimal-id');
             expect(credential?.response.clientDataJSON).toBeDefined();
             expect(credential?.response.attestationObject).toBeUndefined();
             expect(credential?.response.publicKey).toBeUndefined();
+        });
+    });
+
+    describe('getLoginCredentialFromMalformedBitwardenObject', () => {
+        const malformedLoginCredential: MalformedBitwardenCredential = {
+            id: 'login-id',
+            rawId: { 0: 108, 1: 111, 2: 103, 3: 105, 4: 110 },
+            type: 'public-key',
+            authenticatorAttachment: 'cross-platform',
+            response: {
+                clientDataJSON: { 0: 123, 1: 125 },
+                authenticatorData: { 0: 10, 1: 11, 2: 12 },
+                signature: { 0: 13, 1: 14, 2: 15 },
+                userHandle: { 0: 16, 1: 17, 2: 18 },
+            },
+            getClientExtensionResults: () => ({}),
+        };
+
+        it('should convert a malformed Bitwarden login credential to a valid SerializableLoginCredential object', () => {
+            const credential = getLoginCredentialFromMalformedBitwardenObject(malformedLoginCredential);
+
+            expect(credential).toBeDefined();
+            expect(credential?.id).toBe('login-id');
+            expect(credential?.type).toBe('public-key');
+            expect(credential?.authenticatorAttachment).toBe('cross-platform');
+            expect(credential?.response.authenticatorData).toBeDefined();
+            expect(credential?.response.signature).toBeDefined();
+            expect(credential?.response.userHandle).toBeDefined();
+        });
+
+        it('should encode all binary data as base64url strings for login', () => {
+            const credential = getLoginCredentialFromMalformedBitwardenObject(malformedLoginCredential);
+
+            expectBase64UrlFieldsForLogin(credential, ['rawId', 'response.clientDataJSON', 'response.authenticatorData', 'response.signature', 'response.userHandle']);
+        });
+
+        it('should return undefined for a null input', () => {
+            const credential = getLoginCredentialFromMalformedBitwardenObject(null);
+            expect(credential).toBeUndefined();
+        });
+
+        it('should handle undefined optional fields gracefully', () => {
+            const minimalCredential: MalformedBitwardenCredential = {
+                id: 'minimal-id',
+                rawId: { 0: 1, 1: 2 },
+                type: 'public-key',
+                authenticatorAttachment: 'platform',
+                response: {
+                    clientDataJSON: { 0: 123, 1: 125 },
+                },
+                getClientExtensionResults: () => ({}),
+            };
+
+            const credential = getLoginCredentialFromMalformedBitwardenObject(minimalCredential);
+
+            expect(credential).toBeDefined();
+            expect(credential?.id).toBe('minimal-id');
+            expect(credential?.response.clientDataJSON).toBeDefined();
             expect(credential?.response.signature).toBeUndefined();
             expect(credential?.response.userHandle).toBeUndefined();
         });

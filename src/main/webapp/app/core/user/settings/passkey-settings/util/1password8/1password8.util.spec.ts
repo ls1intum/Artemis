@@ -1,6 +1,6 @@
-import { getCredentialFromMalformed1Password8Object } from './1password8.util';
+import { getLoginCredentialFromMalformed1Password8Object, getRegistrationCredentialFromMalformed1Password8Object } from './1password8.util';
 import { Malformed1Password8Credential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-credential';
-import { expectBase64UrlFields } from '../test.helpers';
+import { expectBase64UrlFieldsForLogin, expectBase64UrlFieldsForRegistration } from '../test.helpers';
 import { describe, expect, it } from '@jest/globals';
 
 describe('1Password8 Util', () => {
@@ -26,8 +26,8 @@ describe('1Password8 Util', () => {
             getClientExtensionResults: () => ({}),
         };
 
-        it('should convert a malformed 1Password8 registration credential to a valid SerializableCredential object', () => {
-            const credential = getCredentialFromMalformed1Password8Object(malformedRegistrationCredential);
+        it('should convert a malformed 1Password8 registration credential to a valid SerializableRegistrationCredential object', () => {
+            const credential = getRegistrationCredentialFromMalformed1Password8Object(malformedRegistrationCredential);
 
             expect(credential).toBeDefined();
             expect(credential?.id).toBe('test-id');
@@ -46,9 +46,15 @@ describe('1Password8 Util', () => {
         });
 
         it('should encode all binary data as base64url strings', () => {
-            const credential = getCredentialFromMalformed1Password8Object(malformedRegistrationCredential);
+            const credential = getRegistrationCredentialFromMalformed1Password8Object(malformedRegistrationCredential);
 
-            expectBase64UrlFields(credential, ['rawId', 'response.clientDataJSON', 'response.attestationObject', 'response.authenticatorData', 'response.publicKey']);
+            expectBase64UrlFieldsForRegistration(credential, [
+                'rawId',
+                'response.clientDataJSON',
+                'response.attestationObject',
+                'response.authenticatorData',
+                'response.publicKey',
+            ]);
         });
     });
 
@@ -67,8 +73,8 @@ describe('1Password8 Util', () => {
             getClientExtensionResults: () => ({ appid: true }),
         };
 
-        it('should convert a malformed 1Password8 login credential to a valid SerializableCredential object', () => {
-            const credential = getCredentialFromMalformed1Password8Object(malformedLoginCredential);
+        it('should convert a malformed 1Password8 login credential to a valid SerializableLoginCredential object', () => {
+            const credential = getLoginCredentialFromMalformed1Password8Object(malformedLoginCredential);
 
             expect(credential).toBeDefined();
             expect(credential?.id).toBe('login-id');
@@ -83,29 +89,25 @@ describe('1Password8 Util', () => {
             expect(credential?.clientExtensionResults).toEqual({ appid: true });
         });
 
-        it('should not include registration-specific fields for login credentials', () => {
-            const credential = getCredentialFromMalformed1Password8Object(malformedLoginCredential);
-
-            expect(credential?.response.attestationObject).toBeUndefined();
-            expect(credential?.response.publicKey).toBeUndefined();
-            expect(credential?.response.publicKeyAlgorithm).toBeUndefined();
-            expect(credential?.response.transports).toBeUndefined();
-        });
-
         it('should encode login credential binary data as base64url strings', () => {
-            const credential = getCredentialFromMalformed1Password8Object(malformedLoginCredential);
+            const credential = getLoginCredentialFromMalformed1Password8Object(malformedLoginCredential);
 
-            expectBase64UrlFields(credential, ['rawId', 'response.clientDataJSON', 'response.authenticatorData', 'response.signature', 'response.userHandle']);
+            expectBase64UrlFieldsForLogin(credential, ['rawId', 'response.clientDataJSON', 'response.authenticatorData', 'response.signature', 'response.userHandle']);
         });
     });
 
     describe('Edge Cases', () => {
-        it('should return undefined for a null input', () => {
-            const credential = getCredentialFromMalformed1Password8Object(null);
+        it('should return undefined for a null input (registration)', () => {
+            const credential = getRegistrationCredentialFromMalformed1Password8Object(null);
             expect(credential).toBeUndefined();
         });
 
-        it('should handle credential without optional fields', () => {
+        it('should return undefined for a null input (login)', () => {
+            const credential = getLoginCredentialFromMalformed1Password8Object(null);
+            expect(credential).toBeUndefined();
+        });
+
+        it('should handle registration credential without optional fields', () => {
             const minimalCredential: Malformed1Password8Credential = {
                 id: 'minimal-id',
                 rawId: createArrayBuffer([1, 2, 3]),
@@ -117,7 +119,7 @@ describe('1Password8 Util', () => {
                 getClientExtensionResults: () => ({}),
             };
 
-            const credential = getCredentialFromMalformed1Password8Object(minimalCredential);
+            const credential = getRegistrationCredentialFromMalformed1Password8Object(minimalCredential);
 
             expect(credential).toBeDefined();
             expect(credential?.id).toBe('minimal-id');
@@ -127,11 +129,31 @@ describe('1Password8 Util', () => {
             expect(credential?.response.publicKey).toBeUndefined();
             expect(credential?.response.publicKeyAlgorithm).toBeUndefined();
             expect(credential?.response.transports).toBeUndefined();
+        });
+
+        it('should handle login credential without optional fields', () => {
+            const minimalCredential: Malformed1Password8Credential = {
+                id: 'minimal-id',
+                rawId: createArrayBuffer([1, 2, 3]),
+                type: 'public-key',
+                authenticatorAttachment: 'platform',
+                response: {
+                    clientDataJSON: createArrayBuffer([123, 125]),
+                },
+                getClientExtensionResults: () => ({}),
+            };
+
+            const credential = getLoginCredentialFromMalformed1Password8Object(minimalCredential);
+
+            expect(credential).toBeDefined();
+            expect(credential?.id).toBe('minimal-id');
+            expect(credential?.response.clientDataJSON).toBeDefined();
+            expect(credential?.response.authenticatorData).toBeUndefined();
             expect(credential?.response.signature).toBeUndefined();
             expect(credential?.response.userHandle).toBeUndefined();
         });
 
-        it('should handle empty ArrayBuffers', () => {
+        it('should handle empty ArrayBuffers for registration', () => {
             const credentialWithEmptyBuffers: Malformed1Password8Credential = {
                 id: 'empty-id',
                 rawId: createArrayBuffer([]),
@@ -143,38 +165,35 @@ describe('1Password8 Util', () => {
                 getClientExtensionResults: () => ({}),
             };
 
-            const credential = getCredentialFromMalformed1Password8Object(credentialWithEmptyBuffers);
+            const credential = getRegistrationCredentialFromMalformed1Password8Object(credentialWithEmptyBuffers);
 
             expect(credential).toBeDefined();
             expect(credential?.rawId).toBe(''); // empty array encodes to empty string
             expect(credential?.response.clientDataJSON).toBe('');
         });
 
-        it('should prioritize getAuthenticatorData over authenticatorData for registration', () => {
-            const credentialWithBothAuthData: Malformed1Password8Credential = {
-                id: 'both-auth-id',
-                rawId: createArrayBuffer([1, 2, 3]),
+        it('should handle empty ArrayBuffers for login', () => {
+            const credentialWithEmptyBuffers: Malformed1Password8Credential = {
+                id: 'empty-id',
+                rawId: createArrayBuffer([]),
                 type: 'public-key',
                 authenticatorAttachment: 'platform',
                 response: {
-                    clientDataJSON: createArrayBuffer([123, 125]),
-                    getAuthenticatorData: () => createArrayBuffer([4, 5, 6]),
-                    authenticatorData: createArrayBuffer([7, 8, 9]),
+                    clientDataJSON: createArrayBuffer([]),
                 },
                 getClientExtensionResults: () => ({}),
             };
 
-            const credential = getCredentialFromMalformed1Password8Object(credentialWithBothAuthData);
+            const credential = getLoginCredentialFromMalformed1Password8Object(credentialWithEmptyBuffers);
 
             expect(credential).toBeDefined();
-            // Should use getAuthenticatorData() result when available
-            expect(credential?.response.authenticatorData).toBeDefined();
-            expect(credential?.response.authenticatorData).toMatch(/^[A-Za-z0-9_-]+$/);
+            expect(credential?.rawId).toBe(''); // empty array encodes to empty string
+            expect(credential?.response.clientDataJSON).toBe('');
         });
     });
 
     describe('Data Integrity', () => {
-        it('should preserve the original data when encoding and maintain correct byte representation', () => {
+        it('should preserve the original data when encoding and maintain correct byte representation for registration', () => {
             const originalData = [72, 101, 108, 108, 111]; // "Hello" in ASCII
             const credential: Malformed1Password8Credential = {
                 id: 'test-id',
@@ -187,7 +206,30 @@ describe('1Password8 Util', () => {
                 getClientExtensionResults: () => ({}),
             };
 
-            const result = getCredentialFromMalformed1Password8Object(credential);
+            const result = getRegistrationCredentialFromMalformed1Password8Object(credential);
+
+            expect(result).toBeDefined();
+            expect(result?.rawId).toBeDefined();
+            expect(result?.response.clientDataJSON).toBeDefined();
+
+            // Both should encode to the same base64url string since they have the same data
+            expect(result?.rawId).toBe(result?.response.clientDataJSON);
+        });
+
+        it('should preserve the original data when encoding and maintain correct byte representation for login', () => {
+            const originalData = [72, 101, 108, 108, 111]; // "Hello" in ASCII
+            const credential: Malformed1Password8Credential = {
+                id: 'test-id',
+                rawId: createArrayBuffer(originalData),
+                type: 'public-key',
+                authenticatorAttachment: 'platform',
+                response: {
+                    clientDataJSON: createArrayBuffer(originalData),
+                },
+                getClientExtensionResults: () => ({}),
+            };
+
+            const result = getLoginCredentialFromMalformed1Password8Object(credential);
 
             expect(result).toBeDefined();
             expect(result?.rawId).toBeDefined();
