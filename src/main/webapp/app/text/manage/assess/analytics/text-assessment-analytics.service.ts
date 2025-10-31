@@ -73,7 +73,7 @@ export class TextAssessmentAnalytics {
      */
     private subscribeToRouteParameters() {
         this.route.params.subscribe((params) => {
-            this.userId = this.accountService.userIdentity ? Number(this.accountService.userIdentity.id) : this.INVALID_VALUE;
+            this.userId = this.accountService.userIdentity() ? Number(this.accountService.userIdentity()?.id) : this.INVALID_VALUE;
             this.courseId = Number(params['courseId']);
             this.textExerciseId = Number(params['exerciseId']);
             this.participationId = Number(params['participationId']);

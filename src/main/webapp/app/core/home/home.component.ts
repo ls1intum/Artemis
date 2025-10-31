@@ -107,7 +107,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             return;
         }
 
-        if (!this.accountService.userIdentity?.askToSetupPasskey) {
+        if (!this.accountService.userIdentity()?.askToSetupPasskey) {
             return;
         }
 

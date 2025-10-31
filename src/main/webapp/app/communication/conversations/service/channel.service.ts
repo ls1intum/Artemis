@@ -58,7 +58,7 @@ export class ChannelService {
     }
     deregisterUsersFromChannel(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {
         // if no explicit login is give we assume self deregistration
-        const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
+        const userLogins = logins ? logins : [this.accountService.userIdentity()?.login];
         return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/deregister`, userLogins, { observe: 'response' });
     }
 
@@ -71,7 +71,7 @@ export class ChannelService {
         logins?: string[],
     ): Observable<HttpResponse<void>> {
         // if no explicit login is give we assume self registration (will be ignored on the server if any of the addAll booleans is true)
-        const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
+        const userLogins = logins ? logins : [this.accountService.userIdentity()?.login];
 
         let params = new HttpParams();
         if (addAllStudents) {
@@ -89,13 +89,13 @@ export class ChannelService {
 
     grantChannelModeratorRole(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {
         // if no explicit login is give we assume trying to grant channel moderator role to self
-        const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
+        const userLogins = logins ? logins : [this.accountService.userIdentity()?.login];
         return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/grant-channel-moderator`, userLogins, { observe: 'response' });
     }
 
     revokeChannelModeratorRole(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {
         // if no explicit login is give we assume trying to revoke channel moderator role from self
-        const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
+        const userLogins = logins ? logins : [this.accountService.userIdentity()?.login];
         return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/revoke-channel-moderator`, userLogins, { observe: 'response' });
     }
 
