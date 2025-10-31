@@ -64,7 +64,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
 
         PyrisCompetencyRecommendationDTO expected = new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND);
         List<PyrisCompetencyRecommendationDTO> recommendations = List.of(expected, expected, expected);
-        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Generating Competencies", 10, PyrisStageState.DONE, null, false));
+        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Generating Competencies", 10, PyrisStageState.DONE, null));
 
         // In the real system, this would be triggered by Pyris via a REST call to the Artemis server
         String jobId = "testJobId";

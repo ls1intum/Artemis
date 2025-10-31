@@ -32,7 +32,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { CourseIrisSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -127,7 +127,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     isAfterAssessmentDueDate: boolean;
     examMode = false;
     isGeneratingFeedback = false;
-    irisSettings?: IrisSettings;
+    irisSettings?: CourseIrisSettingsDTO;
 
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;
@@ -207,11 +207,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     private loadIrisSettings(): void {
         // only load the settings if Iris is available and this is not an exam exercise
-        if (this.profileService.isProfileActive(PROFILE_IRIS) && !this.examMode) {
-            this.route.params.subscribe((params) => {
-                this.irisSettingsService.getCombinedExerciseSettings(params['exerciseId']).subscribe((irisSettings) => {
-                    this.irisSettings = irisSettings;
-                });
+        if (this.profileService.isProfileActive(PROFILE_IRIS) && !this.examMode && this.course?.id) {
+            this.irisSettingsService.getCourseSettings(this.course.id).subscribe((response) => {
+                this.irisSettings = response;
             });
         }
     }

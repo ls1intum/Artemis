@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ControlCenterComponent } from './control-center.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -49,8 +48,6 @@ describe('ControlCenterComponent', () => {
         const irisEnabledComponent = fixture.debugElement.query(By.directive(IrisEnabledComponent));
         expect(irisEnabledComponent).toBeTruthy();
         expect(irisEnabledComponent.componentInstance.course).toEqual(course);
-        expect(irisEnabledComponent.componentInstance.irisSubSettingsType).toEqual(IrisSubSettingsType.ALL);
-        expect(irisEnabledComponent.componentInstance.showCustomButton).toBeTrue();
     });
 
     it('should display the robot icon', () => {

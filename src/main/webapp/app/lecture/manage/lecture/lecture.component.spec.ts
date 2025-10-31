@@ -318,14 +318,20 @@ describe('Lecture', () => {
         const settingsSubject = new Subject<any>();
 
         jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(lectureSubject.asObservable());
-        jest.spyOn(TestBed.inject(IrisSettingsService), 'getCombinedCourseSettings').mockReturnValue(settingsSubject.asObservable());
+        jest.spyOn(TestBed.inject(IrisSettingsService), 'getCourseSettings').mockReturnValue(settingsSubject.asObservable());
 
         // Set up test data
         const lectures = [lectureToIngest];
         const enabledSettings = {
-            irisLectureIngestionSettings: {
+            courseId: 1,
+            settings: {
                 enabled: true,
+                customInstructions: '',
+                variant: { id: 'DEFAULT' },
+                rateLimit: { requests: 100, timeframeHours: 24 },
             },
+            effectiveRateLimit: { requests: 100, timeframeHours: 24 },
+            applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
         };
 
         return {

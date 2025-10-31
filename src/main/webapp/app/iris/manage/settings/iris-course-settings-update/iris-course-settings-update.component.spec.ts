@@ -4,12 +4,9 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
-import { mockSettings } from 'test/helpers/mocks/iris/mock-settings';
+import { mockVariants } from 'test/helpers/mocks/iris/mock-settings';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
-import { By } from '@angular/platform-browser';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -17,6 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseIrisSettingsDTO, IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 
 describe('IrisCourseSettingsUpdateComponent Component', () => {
     let comp: IrisCourseSettingsUpdateComponent;
@@ -27,12 +25,26 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
     const route = { params: routeParamsSubject.asObservable() } as ActivatedRoute;
     let paramsSpy: jest.SpyInstance;
     let getSettingsSpy: jest.SpyInstance;
-    let getParentSettingsSpy: jest.SpyInstance;
+    let getVariantsSpy: jest.SpyInstance;
+
+    const mockSettings: IrisCourseSettingsDTO = {
+        enabled: true,
+        customInstructions: 'Test instructions',
+        variant: { id: 'DEFAULT' },
+        rateLimit: { requests: 100, timeframeHours: 24 },
+    };
+
+    const mockResponse: CourseIrisSettingsDTO = {
+        courseId: 1,
+        settings: mockSettings,
+        effectiveRateLimit: { requests: 100, timeframeHours: 24 },
+        applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockJhiTranslateDirective],
-            declarations: [IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, MockComponent(IrisCommonSubSettingsUpdateComponent), MockComponent(ButtonComponent)],
+            declarations: [IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, MockComponent(ButtonComponent)],
             providers: [
                 provideRouter([]),
                 MockProvider(IrisSettingsService),
@@ -52,9 +64,8 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
                 routeParamsSubject.next({ courseId: 1 });
                 paramsSpy = jest.spyOn(route!.params, 'subscribe');
 
-                const irisSettings = mockSettings();
-                getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(irisSettings));
-                getParentSettingsSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings').mockReturnValue(of(irisSettings));
+                getSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockResponse));
+                getVariantsSpy = jest.spyOn(irisSettingsService, 'getVariants').mockReturnValue(of(mockVariants()));
             });
         fixture = TestBed.createComponent(IrisCourseSettingsUpdateComponent);
         comp = fixture.componentInstance;
@@ -74,9 +85,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(comp.courseId).toBe(1);
         expect(comp.settingsUpdateComponent).toBeTruthy();
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
-        expect(getParentSettingsSpy).toHaveBeenCalledOnce();
-
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(8);
+        expect(getVariantsSpy).toHaveBeenCalledOnce();
     });
 
     it('Can deactivate correctly', () => {
@@ -90,13 +99,14 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
 
     it('Saves settings correctly', () => {
         fixture.detectChanges();
-        const irisSettings = mockSettings();
-        irisSettings.id = undefined;
-        const irisSettingsSaved = mockSettings();
-        const setSettingsSpy = jest.spyOn(irisSettingsService, 'setCourseSettings').mockReturnValue(of(new HttpResponse<IrisSettings>({ body: irisSettingsSaved })));
-        comp.settingsUpdateComponent!.irisSettings = irisSettings;
-        comp.settingsUpdateComponent!.saveIrisSettings();
-        expect(setSettingsSpy).toHaveBeenCalledWith(1, irisSettings);
-        expect(comp.settingsUpdateComponent!.irisSettings).toEqual(irisSettingsSaved);
+        const updatedSettings = { ...mockSettings, enabled: false };
+        const updatedResponse: CourseIrisSettingsDTO = { ...mockResponse, settings: updatedSettings };
+        const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse<CourseIrisSettingsDTO>({ body: updatedResponse })));
+
+        comp.settingsUpdateComponent!.settings = updatedSettings;
+        comp.settingsUpdateComponent!.saveSettings();
+
+        expect(updateSpy).toHaveBeenCalledWith(1, updatedSettings);
+        expect(comp.settingsUpdateComponent!.settings).toEqual(updatedSettings);
     });
 });

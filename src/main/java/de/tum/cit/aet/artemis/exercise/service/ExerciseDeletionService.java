@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -70,13 +69,11 @@ public class ExerciseDeletionService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final Optional<IrisSettingsApi> irisSettingsApi;
-
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
+            Optional<CompetencyProgressApi> competencyProgressApi) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -89,7 +86,6 @@ public class ExerciseDeletionService {
         this.textApi = textApi;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
-        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -146,8 +142,6 @@ public class ExerciseDeletionService {
         lectureUnitApi.ifPresent(api -> api.removeLectureUnitFromExercise(exerciseId));
 
         // delete all iris settings for this exercise
-        irisSettingsApi.ifPresent(api -> api.deleteSettingsForExercise(exerciseId));
-
         // delete all plagiarism results belonging to this exercise
         plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exerciseId));
 

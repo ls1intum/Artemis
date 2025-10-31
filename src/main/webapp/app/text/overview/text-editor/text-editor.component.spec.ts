@@ -45,8 +45,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { CourseIrisSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -472,11 +472,23 @@ describe('TextEditorComponent', () => {
     });
 
     it('should load Iris settings when Iris profile is active and not in exam mode', fakeAsync(() => {
-        const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
-        const mockIrisSettings = { id: 123 } as IrisSettings;
-        jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(mockIrisSettings));
+        // Set up course with ID
+        comp.course = { id: 123 } as any;
+
+        const mockIrisSettings = {
+            courseId: 123,
+            settings: {
+                enabled: true,
+                customInstructions: '',
+                variant: { id: 'DEFAULT' },
+                rateLimit: { requests: 100, timeframeHours: 24 },
+            },
+            effectiveRateLimit: { requests: 100, timeframeHours: 24 },
+            applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
+        } as CourseIrisSettingsDTO;
+        jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockIrisSettings));
 
         route.params = of({ exerciseId: '456' });
 
@@ -485,8 +497,8 @@ describe('TextEditorComponent', () => {
         comp['loadIrisSettings']();
         tick();
 
-        expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCombinedExerciseSettings).toHaveBeenCalledWith('456');
+        expect(profileService.isProfileActive).toHaveBeenCalledWith(PROFILE_IRIS);
+        expect(irisSettingsService.getCourseSettings).toHaveBeenCalledWith(123);
         expect(comp.irisSettings).toEqual(mockIrisSettings);
 
         flush();
@@ -496,7 +508,7 @@ describe('TextEditorComponent', () => {
         const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
-        jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings');
+        jest.spyOn(irisSettingsService, 'getCourseSettings');
 
         route.params = of({ exerciseId: '456' });
 
@@ -506,7 +518,7 @@ describe('TextEditorComponent', () => {
         tick();
 
         expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCombinedExerciseSettings).not.toHaveBeenCalled();
+        expect(irisSettingsService.getCourseSettings).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
 
         flush();
@@ -516,7 +528,7 @@ describe('TextEditorComponent', () => {
         const profileInfo = { activeProfiles: ['no-iris'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
-        jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings');
+        jest.spyOn(irisSettingsService, 'getCourseSettings');
 
         route.params = of({ exerciseId: '456' });
 
@@ -526,7 +538,7 @@ describe('TextEditorComponent', () => {
         tick();
 
         expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCombinedExerciseSettings).not.toHaveBeenCalled();
+        expect(irisSettingsService.getCourseSettings).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
 
         flush();

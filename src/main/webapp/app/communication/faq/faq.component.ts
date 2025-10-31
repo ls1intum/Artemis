@@ -113,8 +113,8 @@ export class FaqComponent implements OnInit, OnDestroy {
         });
         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
         if (this.irisEnabled) {
-            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                this.faqIngestionEnabled = settings?.irisFaqIngestionSettings?.enabled || false;
+            this.irisSettingsService.getCourseSettings(this.courseId).subscribe((response) => {
+                this.faqIngestionEnabled = response?.settings?.enabled || false;
             });
         }
     }

@@ -1,6 +1,6 @@
 <div class="container">
-    <jhi-course-title-bar-title *titleBarTitle title="artemisApp.iris.settings.title.course" />
+    <jhi-course-title-bar-title *titleBarTitle title="artemisApp.iris.settings.title" />
     @if (courseId) {
-        <jhi-iris-settings-update [settingsType]="COURSE" [courseId]="courseId!" />
+        <jhi-iris-settings-update [courseId]="courseId!" />
     }
 </div>

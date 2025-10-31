@@ -62,8 +62,8 @@ import { ProblemStatementComponent } from 'app/core/course/overview/exercise-det
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ScienceService } from 'app/shared/science/science.service';
+import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
@@ -421,27 +421,35 @@ describe('CourseExerciseDetailsComponent', () => {
                 id: 42,
                 type: ExerciseType.PROGRAMMING,
                 studentParticipations: [],
-                course: {},
+                course: { id: 1 },
                 submissionPolicy: submissionPolicy,
             } as unknown as ProgrammingExercise;
 
-            const fakeSettings = {} as any as IrisSettings;
+            const fakeSettings = mockCourseSettings(1, true);
 
-            getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise, irisSettings: fakeSettings } }));
+            getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise } }));
 
             const profileService = TestBed.inject(ProfileService);
             jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles } as any as ProfileInfo);
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(activeProfiles.includes(PROFILE_IRIS));
+
+            const irisSettingsService = TestBed.inject(IrisSettingsService);
+            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(fakeSettings));
 
             // Act
             comp.ngOnInit();
             tick();
 
             if (activeProfiles.includes(PROFILE_IRIS)) {
-                // Should have called getCombinedProgrammingExerciseSettings if 'iris' is active
-                expect(comp.irisSettings).toBe(fakeSettings);
+                // Should have called getCourseSettings if 'iris' is active
+                expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
+                expect(comp.irisEnabled).toBeTrue();
+                expect(comp.irisChatEnabled).toBeTrue();
             } else {
-                // Should not have called getCombinedProgrammingExerciseSettings if 'iris' is not active
-                expect(comp.irisSettings).toBeUndefined();
+                // Should not have called getCourseSettings if 'iris' is not active
+                expect(getCourseSettingsSpy).not.toHaveBeenCalled();
+                expect(comp.irisEnabled).toBeFalse();
+                expect(comp.irisChatEnabled).toBeFalse();
             }
         }),
     );

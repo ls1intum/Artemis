@@ -31,9 +31,9 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { MAX_RESULT_HISTORY_LENGTH, ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -109,6 +109,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private readonly cdr = inject(ChangeDetectorRef);
     private readonly scienceService = inject(ScienceService);
+    private irisSettingsService = inject(IrisSettingsService);
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
@@ -148,8 +149,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     submissionPolicy?: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
-    irisSettings?: IrisSettings;
+    irisEnabled = false;
+    irisChatEnabled = false;
     paramsSubscription: Subscription;
+    private irisSettingsSubscription?: Subscription;
     instructorActionItems: InstructorActionItem[] = [];
     exerciseIcon: IconProp;
     numberOfPracticeResults: number;
@@ -188,7 +191,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     loadExercise() {
-        this.irisSettings = undefined;
         this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
         this.updateStudentParticipations();
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(
@@ -218,8 +220,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
             this.submissionPolicy = programmingExercise.submissionPolicy;
 
-            if (this.profileService.isProfileActive(PROFILE_IRIS)) {
-                this.irisSettings = newExerciseDetails.irisSettings;
+            this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+            if (this.irisEnabled && !this.exercise.exerciseGroup && this.courseId) {
+                this.irisSettingsSubscription = this.irisSettingsService.getCourseSettings(this.courseId).subscribe((response) => {
+                    this.irisChatEnabled = response?.settings?.enabled ?? false;
+                });
             }
         }
 
@@ -549,6 +554,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.teamAssignmentUpdateListener?.unsubscribe();
         this.submissionSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();
+        this.irisSettingsSubscription?.unsubscribe();
     }
 
     protected readonly hasResults = hasResults;

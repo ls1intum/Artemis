@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -57,7 +56,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Service
 @Profile(PROFILE_IRIS)
 @Lazy
-public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionService<IrisTutorSuggestionSession> implements IrisRateLimitedFeatureInterface {
+public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionService<IrisTutorSuggestionSession> {
 
     private static final Logger log = LoggerFactory.getLogger(IrisTutorSuggestionSessionService.class);
 
@@ -137,7 +136,6 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     public void requestAndHandleResponse(IrisTutorSuggestionSession session, Optional<String> event) {
         var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
-        var variant = "default";
         var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
         var postDTO = new PostDTO(post, null);
 
@@ -146,10 +144,14 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
             throw new IllegalStateException("Course not found for session " + chatSession.getId());
         }
 
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisTutorSuggestionSettings();
+        var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
             throw new ConflictException("Tutor Suggestions are not enabled for this course", "Iris", "irisDisabled");
         }
+        var variant = settings.variant().jsonValue();
+
+        var user = userRepository.findByIdElseThrow(session.getUserId());
+        rateLimitService.checkRateLimitElseThrow(chatSession, user);
 
         var conversation = post.getConversation();
         if (conversation == null) {
@@ -171,7 +173,6 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                 switch (exercise.getExerciseType()) {
                     case PROGRAMMING -> {
                         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                        var user = userRepository.findByIdElseThrow(session.getUserId());
                         var latestSubmission = getLatestSubmissionIfExists(programmingExercise, user);
                         PyrisSubmissionDTO pyrisSubmissionDTO = latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null);
                         PyrisProgrammingExerciseDTO pyrisProgrammingExerciseDTO = pyrisDTOService.toPyrisProgrammingExerciseDTO(programmingExercise);
@@ -192,8 +193,8 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     }
 
     @Override
-    public void checkRateLimit(User user) {
-        rateLimitService.checkRateLimitElseThrow(user);
+    public void checkRateLimit(User user, IrisTutorSuggestionSession session) {
+        rateLimitService.checkRateLimitElseThrow(session, user);
     }
 
     @Override
@@ -208,7 +209,10 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     @Override
     public void checkIsFeatureActivatedFor(IrisTutorSuggestionSession irisSession) {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, post.getCoursePostingBelongsTo());
+        var course = post.getCoursePostingBelongsTo();
+        if (course != null) {
+            irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
+        }
     }
 
     /**

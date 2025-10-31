@@ -10,6 +10,7 @@ import {
     IrisTutorSuggestionSubSettings,
 } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { IrisGlobalSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { CourseIrisSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 
 export function mockSettings() {
     const mockChatSettings = new IrisProgrammingExerciseChatSubSettings();
@@ -75,4 +76,21 @@ export function mockVariants() {
             description: 'Model 2 Description',
         },
     ] as IrisVariant[];
+}
+
+/**
+ * Creates a mock CourseIrisSettingsDTO for the new simplified course-level API
+ */
+export function mockCourseSettings(courseId: number = 1, enabled: boolean = true): CourseIrisSettingsDTO {
+    return {
+        courseId,
+        settings: {
+            enabled,
+            customInstructions: 'Test instructions',
+            variant: { id: 'DEFAULT' },
+            rateLimit: { requests: 100, timeframeHours: 24 },
+        },
+        effectiveRateLimit: { requests: 100, timeframeHours: 24 },
+        applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
+    };
 }

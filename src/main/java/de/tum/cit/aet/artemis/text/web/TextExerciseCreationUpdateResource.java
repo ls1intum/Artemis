@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.text.web;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
-import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -73,8 +71,6 @@ public class TextExerciseCreationUpdateResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final Optional<IrisSettingsApi> irisSettingsApi;
-
     private final Optional<SlideApi> slideApi;
 
     private final Optional<AtlasMLApi> atlasMLApi;
@@ -91,9 +87,7 @@ public class TextExerciseCreationUpdateResource {
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<IrisSettingsApi> irisSettingsApi, Optional<SlideApi> slideApi,
-
-            Optional<AtlasMLApi> atlasMLApi) {
+            Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -106,7 +100,6 @@ public class TextExerciseCreationUpdateResource {
         this.exerciseVersionService = exerciseVersionService;
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
-        this.irisSettingsApi = irisSettingsApi;
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
     }
@@ -150,8 +143,6 @@ public class TextExerciseCreationUpdateResource {
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(textExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
-
-        irisSettingsApi.ifPresent(api -> api.setEnabledForExerciseByCategories(result, new HashSet<>()));
 
         // Notify AtlasML about the new text exercise
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "text exercise creation");
@@ -222,7 +213,6 @@ public class TextExerciseCreationUpdateResource {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise)));
 
-        irisSettingsApi.ifPresent(api -> api.setEnabledForExerciseByCategories(textExercise, textExerciseBeforeUpdate.getCategories()));
         exerciseVersionService.createExerciseVersion(updatedTextExercise);
         return ResponseEntity.ok(updatedTextExercise);
     }

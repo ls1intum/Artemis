@@ -48,8 +48,8 @@ export class LectureDetailComponent implements OnInit {
             this.getLectureDetailSections();
             this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
             if (this.irisEnabled && this.lecture.course?.id) {
-                this.irisSettingsService.getCombinedCourseSettings(this.lecture.course?.id).subscribe((settings) => {
-                    this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+                this.irisSettingsService.getCourseSettings(this.lecture.course?.id).subscribe((response) => {
+                    this.lectureIngestionEnabled = response?.settings?.enabled || false;
                 });
             }
         });

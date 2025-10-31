@@ -1,185 +1,352 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
-import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings, IrisSettings, IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
-import { mockSettings, mockVariants } from 'test/helpers/mocks/iris/mock-settings';
+import { CourseIrisSettingsDTO, IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { firstValueFrom, of } from 'rxjs';
-import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { of, throwError } from 'rxjs';
 import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('IrisSettingsUpdateComponent', () => {
     let component: IrisSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisSettingsUpdateComponent>;
-    let getVariantsSpy: jest.SpyInstance;
-    let getGlobalSettingsSpy: jest.SpyInstance;
-    let getCombinedCourseSettingsSpy: jest.SpyInstance;
-    let getUncombinedCourseSettingsSpy: jest.SpyInstance;
-    let getUncombinedExerciseSettingsSpy: jest.SpyInstance;
-    let setGlobalSettingsSpy: jest.SpyInstance;
-    let setCourseSettingsSpy: jest.SpyInstance;
-    let setExerciseSettingsSpy: jest.SpyInstance;
+    let irisSettingsService: IrisSettingsService;
+    let alertService: AlertService;
+    let accountService: AccountService;
+
+    const mockSettings: IrisCourseSettingsDTO = {
+        enabled: true,
+        customInstructions: 'Test instructions',
+        variant: { id: 'DEFAULT' },
+        rateLimit: { requests: 100, timeframeHours: 24 },
+    };
+
+    const mockResponse: CourseIrisSettingsDTO = {
+        courseId: 1,
+        settings: mockSettings,
+        effectiveRateLimit: { requests: 100, timeframeHours: 24 },
+        applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
+    };
+
+    const mockVariants = [{ id: 'DEFAULT' }, { id: 'ADVANCED' }];
 
     beforeEach(() => {
-        const irisSettingsServiceMock = {
-            getGlobalSettings: jest.fn().mockReturnValue(of({} as IrisGlobalSettings)),
-            getCombinedCourseSettings: jest.fn().mockReturnValue(of({} as IrisCourseSettings)),
-            getUncombinedCourseSettings: jest.fn().mockReturnValue(of({} as IrisCourseSettings)),
-            getUncombinedExerciseSettings: jest.fn().mockReturnValue(of({} as IrisExerciseSettings)),
-            setGlobalSettings: jest.fn().mockReturnValue(of(new HttpResponse({ body: {} as IrisGlobalSettings }))),
-            setCourseSettings: jest.fn().mockReturnValue(of(new HttpResponse({ body: {} as IrisCourseSettings }))),
-            setExerciseSettings: jest.fn().mockReturnValue(of(new HttpResponse({ body: {} as IrisExerciseSettings }))),
-        };
-
         TestBed.configureTestingModule({
-            imports: [MockJhiTranslateDirective, IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, IrisCommonSubSettingsUpdateComponent, FaIconComponent],
+            imports: [MockJhiTranslateDirective, IrisSettingsUpdateComponent],
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [
-                MockProvider(IrisSettingsService, irisSettingsServiceMock),
+                MockProvider(IrisSettingsService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(IrisSettingsUpdateComponent);
-                component = fixture.componentInstance;
-                const irisSettingsService = TestBed.inject(IrisSettingsService);
-                getVariantsSpy = jest.spyOn(irisSettingsService, 'getVariantsForFeature').mockReturnValue(of(mockVariants()));
+        }).compileComponents();
 
-                getGlobalSettingsSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings');
-                getCombinedCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
-                getUncombinedCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings');
-                getUncombinedExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedExerciseSettings');
+        fixture = TestBed.createComponent(IrisSettingsUpdateComponent);
+        component = fixture.componentInstance;
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        alertService = TestBed.inject(AlertService);
+        accountService = TestBed.inject(AccountService);
 
-                setGlobalSettingsSpy = jest.spyOn(irisSettingsService, 'setGlobalSettings');
-                setCourseSettingsSpy = jest.spyOn(irisSettingsService, 'setCourseSettings');
-                setExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'setExerciseSettings');
-            });
+        // Setup default mocks
+        jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockResponse));
+        jest.spyOn(irisSettingsService, 'getVariants').mockReturnValue(of(mockVariants as any));
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
     });
 
-    it('should display the checkbox for lecture ingestion when settingsType is COURSE', fakeAsync(() => {
-        component.irisSettings = mockSettings();
-        component.settingsType = IrisSettingsType.COURSE;
-        fixture.detectChanges();
-        tick();
-        fixture.detectChanges();
-        const lectureIngestionElement = fixture.debugElement.query(By.css('jhi-iris-common-sub-settings-update'));
-        const checkboxElement = fixture.debugElement.query(By.css('input[type="checkbox"]#autoLectureIngestion'));
-        const labelElement = fixture.debugElement.query(By.css('label[for="autoLectureIngestion"]'));
-        const globalSettingsElement = fixture.debugElement.query(By.css('jhi-iris-global-autoupdate-settings-update'));
-        expect(globalSettingsElement).toBeFalsy();
-        expect(lectureIngestionElement).not.toBeNull();
-        expect(checkboxElement).toBeTruthy();
-        expect(labelElement).toBeTruthy();
-        expect(getVariantsSpy).toHaveBeenCalled();
-    }));
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
 
-    describe('loadParentIrisSettingsObservable', () => {
-        it('should call getGlobalSettings for COURSE', async () => {
-            component.settingsType = IrisSettingsType.COURSE;
+    it('should create', () => {
+        expect(component).toBeDefined();
+    });
 
-            const result = await firstValueFrom(component.loadParentIrisSettingsObservable());
+    describe('ngOnInit', () => {
+        it('should load settings and variants', fakeAsync(() => {
+            component.courseId = 1;
+            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings');
+            const getVariantsSpy = jest.spyOn(irisSettingsService, 'getVariants');
 
-            expect(getGlobalSettingsSpy).toHaveBeenCalledOnce();
-            expect(result).toEqual({});
-        });
+            component.ngOnInit();
+            tick();
 
-        it('should call getCombinedCourseSettings for EXERCISE', async () => {
-            component.settingsType = IrisSettingsType.EXERCISE;
-            component.courseId = 10;
+            expect(getCourseSettingsSpy).toHaveBeenCalledOnce();
+            expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
+            expect(getVariantsSpy).toHaveBeenCalledOnce();
+            expect(component.settings).toEqual(mockSettings);
+            expect(component.effectiveRateLimit).toEqual({ requests: 100, timeframeHours: 24 });
+            expect(component.applicationDefaults).toEqual({ requests: 50, timeframeHours: 12 });
+            expect(component.availableVariants).toEqual(mockVariants);
+            expect(component.isDirty).toBeFalse();
+        }));
 
-            const result = await firstValueFrom(component.loadParentIrisSettingsObservable());
-
-            expect(getCombinedCourseSettingsSpy).toHaveBeenCalledOnce();
-            expect(getCombinedCourseSettingsSpy).toHaveBeenCalledWith(10);
-            expect(result).toEqual({});
+        it('should set isAdmin based on account service', () => {
+            expect(component.isAdmin).toBeTrue(); // Default mock returns true
         });
     });
 
-    describe('loadIrisSettingsObservable', () => {
-        it('should call getGlobalSettings for GLOBAL', async () => {
-            component.settingsType = IrisSettingsType.GLOBAL;
+    describe('loadSettings', () => {
+        it('should show error if no courseId', fakeAsync(() => {
+            const alertSpy = jest.spyOn(alertService, 'error');
+            component.courseId = undefined as any;
 
-            const result = await firstValueFrom(component.loadIrisSettingsObservable());
+            component.loadSettings();
+            tick();
 
-            expect(getGlobalSettingsSpy).toHaveBeenCalledOnce();
-            expect(result).toEqual({});
-        });
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.error.noCourseId');
+        }));
 
-        it('should call getUncombinedCourseSettings for COURSE', async () => {
-            component.settingsType = IrisSettingsType.COURSE;
-            component.courseId = 20;
+        it('should show error if response is undefined', fakeAsync(() => {
+            jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(undefined));
+            const alertSpy = jest.spyOn(alertService, 'error');
+            component.courseId = 1;
 
-            const result = await firstValueFrom(component.loadIrisSettingsObservable());
+            component.loadSettings();
+            tick();
 
-            expect(getUncombinedCourseSettingsSpy).toHaveBeenCalledOnce();
-            expect(getUncombinedCourseSettingsSpy).toHaveBeenCalledWith(20);
-            expect(result).toEqual({});
-        });
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.error.noSettings');
+        }));
 
-        it('should call getUncombinedExerciseSettings for EXERCISE', async () => {
-            component.settingsType = IrisSettingsType.EXERCISE;
-            component.exerciseId = 30;
+        it('should handle load error', fakeAsync(() => {
+            jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(throwError(() => new Error('Load failed')));
+            const alertSpy = jest.spyOn(alertService, 'error');
+            component.courseId = 1;
 
-            const result = await firstValueFrom(component.loadIrisSettingsObservable());
+            component.loadSettings();
+            tick();
 
-            expect(getUncombinedExerciseSettingsSpy).toHaveBeenCalledOnce();
-            expect(getUncombinedExerciseSettingsSpy).toHaveBeenCalledWith(30);
-            expect(result).toEqual({});
-        });
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.error.load');
+            expect(component.isLoading).toBeFalse();
+        }));
+
+        it('should set loading states correctly', fakeAsync(() => {
+            component.courseId = 1;
+
+            component.loadSettings();
+            // isLoading is set synchronously before the async call
+            tick(); // Wait for async operations
+            expect(component.isLoading).toBeFalse();
+        }));
     });
 
-    describe('saveIrisSettingsObservable', () => {
+    describe('loadVariants', () => {
+        it('should load variants successfully', fakeAsync(() => {
+            component.loadVariants();
+            tick();
+
+            expect(component.availableVariants).toEqual(mockVariants);
+        }));
+
+        it('should handle variant load error silently', fakeAsync(() => {
+            jest.spyOn(irisSettingsService, 'getVariants').mockReturnValue(throwError(() => new Error('Variants failed')));
+
+            component.loadVariants();
+            tick();
+
+            // Should not crash or show alert
+            expect(component.availableVariants).toEqual([]);
+        }));
+    });
+
+    describe('saveSettings', () => {
         beforeEach(() => {
-            component.irisSettings = {} as IrisSettings;
+            component.courseId = 1;
+            component.ngOnInit();
+            fixture.detectChanges();
         });
 
-        it('should call setGlobalSettings for GLOBAL', async () => {
-            component.settingsType = IrisSettingsType.GLOBAL;
+        it('should save settings as admin', fakeAsync(() => {
+            jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            component.isAdmin = true;
+            const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+            const alertSpy = jest.spyOn(alertService, 'success');
+            tick();
 
-            const httpResponse = await firstValueFrom(component.saveIrisSettingsObservable());
+            const updatedSettings = { ...mockSettings, enabled: false };
+            component.settings = updatedSettings;
 
-            expect(setGlobalSettingsSpy).toHaveBeenCalledOnce();
-            expect(setGlobalSettingsSpy).toHaveBeenCalledWith({});
-            expect(httpResponse.body).toEqual({});
+            component.saveSettings();
+            tick();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(updateSpy).toHaveBeenCalledWith(1, updatedSettings);
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.success');
+            expect(component.isDirty).toBeFalse();
+            expect(component.isSaving).toBeFalse();
+        }));
+
+        it('should not allow non-admins to change variant', fakeAsync(() => {
+            jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+            component.isAdmin = false;
+            const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+            tick();
+
+            // Try to change variant as non-admin
+            component.settings = { ...mockSettings, variant: { id: 'ADVANCED' } };
+
+            component.saveSettings();
+            tick();
+
+            // Variant should be restored to original
+            const callArgs = updateSpy.mock.calls[0];
+            expect(callArgs[1].variant).toEqual({ id: 'DEFAULT' });
+        }));
+
+        it('should not allow non-admins to change rate limits', fakeAsync(() => {
+            jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+            component.isAdmin = false;
+            const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+            tick();
+
+            // Try to change rate limits as non-admin
+            component.settings = { ...mockSettings, rateLimit: { requests: 200, timeframeHours: 48 } };
+
+            component.saveSettings();
+            tick();
+
+            // Rate limits should be restored to original
+            const callArgs = updateSpy.mock.calls[0];
+            expect(callArgs[1].rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
+        }));
+
+        it('should handle save error with message', fakeAsync(() => {
+            const errorResponse = new HttpErrorResponse({
+                status: 400,
+                error: { message: 'Custom error message' },
+            });
+            jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(throwError(() => errorResponse));
+            const alertSpy = jest.spyOn(alertService, 'error');
+            tick();
+
+            component.saveSettings();
+            tick();
+
+            expect(alertSpy).toHaveBeenCalledWith('Custom error message');
+            expect(component.isSaving).toBeFalse();
+        }));
+
+        it('should handle save error without message', fakeAsync(() => {
+            jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(throwError(() => new Error('Save failed')));
+            const alertSpy = jest.spyOn(alertService, 'error');
+            tick();
+
+            component.saveSettings();
+            tick();
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.error.save');
+            expect(component.isSaving).toBeFalse();
+        }));
+
+        it('should do nothing if no courseId', () => {
+            const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings');
+            component.courseId = undefined as any;
+
+            component.saveSettings();
+
+            expect(updateSpy).not.toHaveBeenCalled();
         });
 
-        it('should call setCourseSettings for COURSE', async () => {
-            component.settingsType = IrisSettingsType.COURSE;
-            component.courseId = 40;
+        it('should do nothing if no settings', () => {
+            const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings');
+            component.settings = undefined;
 
-            const httpResponse = await firstValueFrom(component.saveIrisSettingsObservable());
+            component.saveSettings();
 
-            expect(setCourseSettingsSpy).toHaveBeenCalledOnce();
-            expect(setCourseSettingsSpy).toHaveBeenCalledWith(40, {});
-            expect(httpResponse.body).toEqual({});
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('setEnabled', () => {
+        it('should toggle enabled state', () => {
+            component.settings = { ...mockSettings, enabled: true };
+
+            component.setEnabled(false);
+            expect(component.settings.enabled).toBeFalse();
+
+            component.setEnabled(true);
+            expect(component.settings.enabled).toBeTrue();
         });
 
-        it('should call setExerciseSettings for EXERCISE', async () => {
-            component.settingsType = IrisSettingsType.EXERCISE;
-            component.exerciseId = 50;
+        it('should do nothing if settings are undefined', () => {
+            component.settings = undefined;
+            expect(() => component.setEnabled(true)).not.toThrow();
+        });
+    });
 
-            const httpResponse = await firstValueFrom(component.saveIrisSettingsObservable());
+    describe('getCustomInstructionsLength', () => {
+        it('should return length of custom instructions', () => {
+            component.settings = { ...mockSettings, customInstructions: 'Test' };
+            expect(component.getCustomInstructionsLength()).toBe(4);
 
-            expect(setExerciseSettingsSpy).toHaveBeenCalledOnce();
-            expect(setExerciseSettingsSpy).toHaveBeenCalledWith(50, {});
-            expect(httpResponse.body).toEqual({});
+            component.settings = { ...mockSettings, customInstructions: 'Hello World' };
+            expect(component.getCustomInstructionsLength()).toBe(11);
+        });
+
+        it('should return 0 if custom instructions are undefined', () => {
+            component.settings = { ...mockSettings, customInstructions: undefined };
+            expect(component.getCustomInstructionsLength()).toBe(0);
+        });
+
+        it('should return 0 if settings are undefined', () => {
+            component.settings = undefined;
+            expect(component.getCustomInstructionsLength()).toBe(0);
+        });
+    });
+
+    describe('dirty checking', () => {
+        it('should detect changes and set isDirty', fakeAsync(() => {
+            component.courseId = 1;
+            component.ngOnInit();
+            tick();
+
+            expect(component.isDirty).toBeFalse();
+
+            // Make a change
+            component.settings!.enabled = false;
+            component.ngDoCheck();
+
+            expect(component.isDirty).toBeTrue();
+        }));
+
+        it('should not mark as dirty if no changes', fakeAsync(() => {
+            component.courseId = 1;
+            component.ngOnInit();
+            tick();
+
+            expect(component.isDirty).toBeFalse();
+
+            component.ngDoCheck();
+
+            expect(component.isDirty).toBeFalse();
+        }));
+    });
+
+    describe('canDeactivate', () => {
+        it('should allow deactivation when not dirty', () => {
+            component.isDirty = false;
+            expect(component.canDeactivate()).toBeTrue();
+        });
+
+        it('should prevent deactivation when dirty', () => {
+            component.isDirty = true;
+            expect(component.canDeactivate()).toBeFalse();
+        });
+    });
+
+    describe('CUSTOM_INSTRUCTIONS_MAX_LENGTH', () => {
+        it('should be set to 2048', () => {
+            expect(component.CUSTOM_INSTRUCTIONS_MAX_LENGTH).toBe(2048);
         });
     });
 });

@@ -122,10 +122,9 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
     void sendOneMessageWithCustomInstructions() throws Exception {
         // Set custom instructions for text exercise chat
         String testCustomInstructions = "Please focus on text formatting and grammar.";
-        var exerciseSettings = irisSettingsService.getRawIrisSettingsFor(exercise);
-        exerciseSettings.getIrisTextExerciseChatSettings().setCustomInstructions(testCustomInstructions);
-        exerciseSettings.getIrisTextExerciseChatSettings().setEnabled(true);
-        irisSettingsService.saveIrisSettings(exerciseSettings);
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var currentSettings = irisSettingsService.getSettingsForCourse(course);
+        configureCourseSettings(course, testCustomInstructions, currentSettings.variant());
 
         // Prepare session and message
         var irisSession = createSessionForUser("student1");
@@ -300,10 +299,8 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
             pipelineDone.set(true);
         });
 
-        var globalSettings = irisSettingsService.getGlobalSettings();
-        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(1);
-        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(10);
-        irisSettingsService.saveIrisSettings(globalSettings);
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        configureCourseRateLimit(course, 1, 10);
 
         try {
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, HttpStatus.CREATED);
@@ -318,9 +315,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         }
         finally {
             // Reset to not interfere with other tests
-            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(null);
-            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(null);
-            irisSettingsService.saveIrisSettings(globalSettings);
+            configureCourseRateLimit(course, null, null);
         }
     }
 
@@ -348,7 +343,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/text-exercise-chat/runs/" + jobId + "/status",
+        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/text-exercise-chat/runs/" + jobId + "/status",
                 new PyrisTextExerciseChatStatusUpdateDTO(result, stages, sessionTitle), HttpStatus.OK, headers);
     }
 }

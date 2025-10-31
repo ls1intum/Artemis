@@ -1,7 +1,6 @@
 import { Component, input } from '@angular/core';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
@@ -14,7 +13,6 @@ import { CardWrapperComponent } from 'app/shared/card-wrapper/card-wrapper.compo
     templateUrl: './control-center.component.html',
 })
 export class ControlCenterComponent {
-    protected readonly IrisSubSettingsType = IrisSubSettingsType;
     protected readonly faRobot = faRobot;
     course = input.required<Course>();
     irisEnabled = input.required<boolean>();

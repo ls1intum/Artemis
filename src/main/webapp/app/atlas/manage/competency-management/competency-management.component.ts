@@ -115,8 +115,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     private async loadIrisEnabled() {
         try {
-            const combinedCourseSettings = await firstValueFrom(this.irisSettingsService.getCombinedCourseSettings(this.courseId()));
-            this.irisCompetencyGenerationEnabled.set(combinedCourseSettings?.irisCompetencyGenerationSettings?.enabled ?? false);
+            const courseSettings = await firstValueFrom(this.irisSettingsService.getCourseSettings(this.courseId()));
+            this.irisCompetencyGenerationEnabled.set(courseSettings?.settings?.enabled ?? false);
         } catch (error) {
             this.alertService.error(error);
         }

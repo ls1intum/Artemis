@@ -20,7 +20,8 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { CourseIrisSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 
 const mockLecture = {
     title: 'Test Lecture',
@@ -117,16 +118,12 @@ describe('LectureDetailComponent', () => {
         const profileInfoResponse = {
             activeProfiles: [PROFILE_IRIS],
         } as ProfileInfo;
-        const irisSettingsResponse = {
-            irisLectureIngestionSettings: {
-                enabled: true,
-            },
-        } as IrisCourseSettings;
+        const irisSettingsResponse = mockCourseSettings(mockLecture.course!.id, true);
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
-        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
+        jest.spyOn(irisSettingsService, 'getCourseSettings').mockImplementation(() => of(irisSettingsResponse));
         mockActivatedRoute.data = of({ lecture: mockLecture }); // Update the ActivatedRoute mock data
         component.ngOnInit();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(component.lecture.course?.id);
+        expect(irisSettingsService.getCourseSettings).toHaveBeenCalledWith(component.lecture.course?.id);
         expect(component.lectureIngestionEnabled).toBeTrue();
     });
 });

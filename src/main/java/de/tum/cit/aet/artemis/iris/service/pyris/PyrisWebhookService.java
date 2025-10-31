@@ -85,7 +85,7 @@ public class PyrisWebhookService {
     }
 
     private boolean lectureIngestionEnabled(Course course) {
-        return irisSettingsService.getCombinedIrisSettingsFor(course, true).irisLectureIngestionSettings().enabled();
+        return irisSettingsService.getSettingsForCourse(course).enabled();
     }
 
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
@@ -169,8 +169,8 @@ public class PyrisWebhookService {
             return;
         }
 
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course.get(), false).irisLectureIngestionSettings();
-        if (!settings.enabled() || !settings.autoIngest()) {
+        var settings = irisSettingsService.getSettingsForCourse(course.get());
+        if (!settings.enabled()) {
             return;
         }
         for (AttachmentVideoUnit attachmentVideoUnit : newAttachmentVideoUnits) {
@@ -237,8 +237,8 @@ public class PyrisWebhookService {
     private String executeLectureAdditionWebhook(PyrisLectureUnitWebhookDTO toUpdateAttachmentVideoUnit, Course course) {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentVideoUnit.courseId(), toUpdateAttachmentVideoUnit.lectureId(),
                 toUpdateAttachmentVideoUnit.lectureUnitId());
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisLectureIngestionSettings();
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.variant().jsonValue());
         PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentVideoUnit,
                 toUpdateAttachmentVideoUnit.lectureUnitId(), settingsDTO, List.of());
         pyrisConnectorService.executeLectureAdditionWebhook(executionDTO);
@@ -304,8 +304,7 @@ public class PyrisWebhookService {
     }
 
     private boolean faqIngestionEnabled(Course course) {
-        var settings = irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings();
-        return settings != null && settings.isEnabled();
+        return irisSettingsService.getSettingsForCourse(course).enabled();
     }
 
     /**
@@ -315,9 +314,9 @@ public class PyrisWebhookService {
      */
     public void autoUpdateFaqInPyris(Faq newFaq) {
         var course = newFaq.getCourse();
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisFaqIngestionSettings();
+        var settings = irisSettingsService.getSettingsForCourse(course);
 
-        if (settings.enabled() && settings.autoIngest()) {
+        if (settings.enabled()) {
             addFaq(newFaq);
         }
     }
@@ -346,8 +345,8 @@ public class PyrisWebhookService {
 
     private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, Course course) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(toUpdateFaq.courseId(), toUpdateFaq.faqId());
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisFaqIngestionSettings();
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.variant().jsonValue());
         PyrisWebhookFaqIngestionExecutionDTO executionDTO = new PyrisWebhookFaqIngestionExecutionDTO(toUpdateFaq, settingsDTO, List.of());
         pyrisConnectorService.executeFaqAdditionWebhook(toUpdateFaq, executionDTO);
         return jobToken;

@@ -93,8 +93,8 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
                     return;
                 }
                 if (course?.id && post) {
-                    this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(course.id).subscribe((settings) => {
-                        this.irisEnabled = !!settings?.irisTutorSuggestionSettings?.enabled;
+                    this.irisSettingsSubscription = this.irisSettingsService.getCourseSettings(course.id).subscribe((response) => {
+                        this.irisEnabled = !!response?.settings?.enabled;
                         if (this.irisEnabled) {
                             this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
                             this.subscribeToIrisActivation();
