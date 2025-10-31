@@ -9,12 +9,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PyrisHealthStatusDTO(Map<String, ModuleStatusDTO> modules) {
 
+    public enum ServiceStatus {
+        UP, WARN, DEGRADED, DOWN
+    }
+
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ModuleStatusDTO(Boolean healthy, String url, String error) {
+    public record ModuleStatusDTO(ServiceStatus status, String error, String metaData) {
 
-        public boolean isHealthy() {
-            return Boolean.TRUE.equals(healthy);
+        public boolean isUp() {
+            return status != ServiceStatus.DOWN;
         }
     }
 }

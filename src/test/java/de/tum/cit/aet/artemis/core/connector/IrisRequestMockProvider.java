@@ -218,7 +218,16 @@ public class IrisRequestMockProvider {
     public void mockStatusResponses() throws JsonProcessingException {
         // @formatter:off
         PyrisHealthStatusDTO[] activeIrisStatusDTO = new PyrisHealthStatusDTO[] {
-            new PyrisHealthStatusDTO( Map.of("chat", new PyrisHealthStatusDTO.ModuleStatusDTO(true,  null, null)))
+            new PyrisHealthStatusDTO(
+                Map.of(
+                    "weaviate",
+                    new PyrisHealthStatusDTO.ModuleStatusDTO(
+                        PyrisHealthStatusDTO.ServiceStatus.UP,
+                        null,
+                        null
+                    )
+                )
+            )
         };
 
         shortTimeoutMockServer

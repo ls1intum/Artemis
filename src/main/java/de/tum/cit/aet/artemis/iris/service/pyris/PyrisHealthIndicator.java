@@ -32,6 +32,10 @@ public class PyrisHealthIndicator implements HealthIndicator {
 
     private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // 🟢
 
+    private static final String YELLOW_CIRCLE = "\uD83D\uDFE1"; // 🟡
+
+    private static final String ORANGE_CIRCLE = "\uD83D\uDFE0"; // 🟠
+
     private static final String RED_CIRCLE = "\uD83D\uDD34"; // 🔴
 
     @Value("${artemis.iris.health-ttl:30000}")
@@ -92,6 +96,8 @@ public class PyrisHealthIndicator implements HealthIndicator {
             connectorHealth = new ConnectorHealth(false, additionalInfo, null);
         }
         catch (RestClientException e) {
+            String icon = iconFor(PyrisHealthStatusDTO.ServiceStatus.DOWN);
+            additionalInfo.put("error", icon + " Connection to Pyris failed");
             connectorHealth = new ConnectorHealth(false, additionalInfo, null);
         }
 
@@ -108,19 +114,25 @@ public class PyrisHealthIndicator implements HealthIndicator {
     }
 
     private static String summarizeModule(PyrisHealthStatusDTO.ModuleStatusDTO m) {
-        boolean isHealthy = Boolean.TRUE.equals(m.healthy());
-        String icon = isHealthy ? GREEN_CIRCLE : RED_CIRCLE;
+        String icon = iconFor(m.status());
 
         StringBuilder sb = new StringBuilder().append(icon).append(' ');
         if (m.error() != null && !m.error().isBlank()) {
             sb.append(m.error());
             return sb.toString();
         }
-        if (m.url() != null && !m.url().isBlank())
-            sb.append(m.url());
-        else
-            sb.append("up");
+        if (m.metaData() != null && !m.metaData().isBlank())
+            sb.append(m.metaData());
 
         return sb.toString();
+    }
+
+    private static String iconFor(PyrisHealthStatusDTO.ServiceStatus status) {
+        return switch (status) {
+            case UP -> GREEN_CIRCLE;
+            case WARN -> YELLOW_CIRCLE;
+            case DEGRADED -> ORANGE_CIRCLE;
+            case DOWN -> RED_CIRCLE;
+        };
     }
 }
