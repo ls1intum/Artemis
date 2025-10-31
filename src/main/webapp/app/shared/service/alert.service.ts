@@ -46,12 +46,14 @@ interface AlertInternal extends AlertBase {
     close: () => void;
     isOpen: boolean;
     openedAt?: dayjs.Dayjs;
+    isClosing: boolean;
 }
 
 export type Alert = Readonly<AlertInternal>;
 
 const DEFAULT_TIMEOUT = 15000;
 const DEFAULT_DISMISSIBLE = true;
+const CLOSE_ANIMATION_DURATION_IN_MS = 200;
 
 @Injectable({
     providedIn: 'root',
@@ -159,6 +161,7 @@ export class AlertService {
             onClose: alert.onClose,
             dismissible: alert.dismissible,
             isOpen: false,
+            isClosing: false,
         } as AlertInternal;
 
         if (!alert.disableTranslation && (alert.translationKey || alert.message)) {
@@ -192,15 +195,30 @@ export class AlertService {
         alertInternal.message = this.sanitizer.sanitize(SecurityContext.HTML, alertInternal.message ?? '') ?? '';
         alertInternal.timeout = alertInternal.timeout ?? DEFAULT_TIMEOUT;
         alertInternal.dismissible = alertInternal.dismissible ?? DEFAULT_DISMISSIBLE;
-        alertInternal.close = () => {
-            alertInternal.isOpen = false;
+        const removeAlert = () => {
             const alertIndex = this.alerts.indexOf(alertInternal);
             if (alertIndex >= 0) {
                 this.alerts.splice(alertIndex, 1);
+                alertInternal.isClosing = false;
                 if (alertInternal.onClose) {
                     alertInternal.onClose(alertInternal);
                 }
             }
+        };
+
+        alertInternal.close = () => {
+            if (alertInternal.isClosing) {
+                return;
+            }
+
+            alertInternal.isOpen = false;
+            alertInternal.isClosing = true;
+
+            this.ngZone.runOutsideAngular(() => {
+                setTimeout(() => {
+                    this.ngZone.run(removeAlert);
+                }, CLOSE_ANIMATION_DURATION_IN_MS);
+            });
         };
         if (alertInternal.action) {
             alertInternal.action = {

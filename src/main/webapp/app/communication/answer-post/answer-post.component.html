@@ -65,7 +65,7 @@
         <ng-container #createEditAnswerPostContainer />
     </div>
     @if (!isDeleted) {
-        <div class="post-content-padding post-reactions-bar" [ngClass]="{ 'is-saved': posting.isSaved && isConsecutive() }" @fade>
+        <div class="post-content-padding post-reactions-bar fade-animation" [ngClass]="{ 'is-saved': posting.isSaved && isConsecutive() }">
             <jhi-posting-reactions-bar
                 [isReadOnlyMode]="isReadOnlyMode()"
                 [posting]="posting"

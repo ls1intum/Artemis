@@ -22,7 +22,9 @@
     height: 150px;
     background-color: var(--iris-client-chat-background);
     cursor: pointer;
-    transition: all 0.1s ease-in-out;
+    transition:
+        transform 0.3s ease,
+        opacity 0.3s ease;
     overflow-y: hidden;
     overflow-wrap: break-word;
     padding: 10px;
@@ -30,6 +32,10 @@
     border-radius: var(--r);
     border-bottom-right-radius: 0;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: bottom right;
+    pointer-events: none;
 
     &:hover {
         transform: scale(1.05);
@@ -38,6 +44,12 @@
             text-decoration: underline;
         }
     }
+}
+
+.message-bubble-visible {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
 }
 
 .content-overflow {

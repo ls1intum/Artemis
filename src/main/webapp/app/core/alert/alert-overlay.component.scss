@@ -12,11 +12,20 @@
     padding: 20px;
     overflow: hidden;
 
+    .alert-animation {
+        animation: alert-enter 0.3s cubic-bezier(0.2, 1.22, 0.64, 1) forwards;
+    }
+
     .alert-wrap {
         width: 100%;
-        overflow: visible;
+        overflow: hidden;
         position: relative;
         margin-bottom: 15px;
+        z-index: 500;
+
+        &.alert-leave {
+            animation: alert-leave 0.2s ease-in forwards;
+        }
 
         .alert-inner {
             width: 100%;
@@ -81,7 +90,25 @@
 
     .dismiss-all {
         width: 100%;
-        margin-bottom: 15px;
+        margin-bottom: 0;
+        max-height: 0;
+        opacity: 0;
+        transform: translateX(120%);
+        pointer-events: none;
+        overflow: hidden;
+        transition:
+            transform 0.3s cubic-bezier(0.2, 1.22, 0.64, 1),
+            max-height 0.3s ease-in-out,
+            margin-bottom 0.3s ease-in-out,
+            opacity 0.2s ease-in-out;
+
+        &.dismiss-visible {
+            max-height: 80px;
+            margin-bottom: 15px;
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
 
         .btn {
             pointer-events: all;
@@ -117,6 +144,51 @@
 
         100% {
             width: 0;
+        }
+    }
+
+    @keyframes alert-enter {
+        0% {
+            transform: translateX(120%);
+            max-height: 0;
+            margin-bottom: 0;
+            opacity: 0;
+        }
+
+        60% {
+            transform: translateX(0);
+        }
+
+        100% {
+            transform: translateX(0);
+            max-height: 500px;
+            margin-bottom: 15px;
+            opacity: 1;
+        }
+    }
+
+    @keyframes alert-leave {
+        0% {
+            transform: translateX(0);
+            max-height: 500px;
+            margin-bottom: 15px;
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateX(120%);
+            max-height: 0;
+            margin-bottom: 0;
+            opacity: 0;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .alert-animation,
+        .alert-wrap.alert-leave,
+        .dismiss-all {
+            animation: none !important;
+            transition: none !important;
         }
     }
 }

@@ -106,3 +106,23 @@
     visibility: visible;
     opacity: 1;
 }
+
+.fade-animation {
+    animation: fade-in 0.3s ease-in forwards;
+}
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fade-animation {
+        animation: none !important;
+    }
+}

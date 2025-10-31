@@ -1,11 +1,5 @@
 @if (!chatOpen) {
-    <div
-        #chatBubble
-        class="message-bubble"
-        (click)="handleButtonClick()"
-        [ngClass]="{ 'content-overflow': this.isOverflowing }"
-        [@expandAnimation]="newIrisMessage ? 'visible' : 'hidden'"
-    >
+    <div #chatBubble class="message-bubble" (click)="handleButtonClick()" [ngClass]="{ 'content-overflow': this.isOverflowing, 'message-bubble-visible': !!newIrisMessage }">
         @if (newIrisMessage) {
             <span [innerHTML]="newIrisMessage | htmlForMarkdown"></span>
             @if (this.isOverflowing) {

@@ -41,6 +41,11 @@
     align-items: stretch;
 }
 
+.suggestions-animation {
+    animation: iris-suggestion-enter 0.3s ease-in-out forwards;
+    animation-delay: 0.5s;
+}
+
 .suggestion-button {
     background-color: var(--iris-suggestion-background);
     color: var(--bs-body-color);
@@ -166,6 +171,17 @@
     justify-content: center;
     flex: 1;
     gap: 8px;
+}
+
+:host {
+    .message-animation {
+        overflow: hidden;
+        animation: iris-message-enter 0.3s cubic-bezier(0.2, 1.22, 0.64, 1) forwards;
+
+        &.message-animation-disabled {
+            animation: none !important;
+        }
+    }
 }
 
 :host {
@@ -503,4 +519,35 @@ cdk-global-scrollblock {
 .is-collapsed .btn-sidebar-collapse-chevron {
     transform: rotateZ(0deg);
     transition: transform 0.2s 0.3s ease-in-out;
+}
+
+@keyframes iris-message-enter {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes iris-suggestion-enter {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .suggestions-animation,
+    :host .message-animation {
+        animation: none !important;
+    }
 }

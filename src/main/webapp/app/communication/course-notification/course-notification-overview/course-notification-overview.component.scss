@@ -131,3 +131,30 @@ $overlay-offset-top: 2.8rem;
     align-items: center;
     justify-content: space-between;
 }
+
+.notification-wrap-animation {
+    animation: notification-fade-in 0.2s ease-in-out forwards;
+}
+
+.fade-in-delayed {
+    opacity: 0;
+    animation: notification-fade-in 0.2s ease-in-out 0.4s forwards;
+}
+
+@keyframes notification-fade-in {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .notification-wrap-animation,
+    .fade-in-delayed {
+        animation: none !important;
+        opacity: 1 !important;
+    }
+}

@@ -1,13 +1,11 @@
-@if ((alerts?.length ?? 0) >= 2) {
-    <div class="dismiss-all" @alertAnimation>
-        <div class="btn btn-secondary" (click)="alertService.closeAll()">
-            <fa-icon [icon]="times" />
-            <span jhiTranslate="artemisApp.alerts.dismissAll"></span>
-        </div>
+<div class="dismiss-all" [class.dismiss-visible]="(alerts?.length ?? 0) >= 2">
+    <div class="btn btn-secondary" (click)="alertService.closeAll()">
+        <fa-icon [icon]="times" />
+        <span jhiTranslate="artemisApp.alerts.dismissAll"></span>
     </div>
-}
+</div>
 @for (alert of alerts; track alert) {
-    <div class="alert-wrap" @alertAnimation>
+    <div class="alert-wrap alert-animation" [class.alert-leave]="!alert.isOpen">
         <div class="alert-inner" [ngClass]="alert.type.containerClassName">
             <div class="left">
                 <fa-icon [icon]="alert.type.icon" size="2x" />

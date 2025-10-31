@@ -16,10 +16,12 @@ describe('Alert Service Test', () => {
         message: 'Hello Jhipster',
         timeout: 3000,
     };
+    const CLOSE_ANIMATION_DELAY = 200;
     let service: AlertService;
     let eventManager: EventManager;
 
     beforeEach(() => {
+        jest.useFakeTimers();
         TestBed.configureTestingModule({
             imports: [
                 TranslateModule.forRoot({
@@ -45,6 +47,12 @@ describe('Alert Service Test', () => {
         eventManager = TestBed.inject(EventManager);
     });
 
+    afterEach(() => {
+        jest.runOnlyPendingTimers();
+        jest.clearAllTimers();
+        jest.useRealTimers();
+    });
+
     it('should produce a proper alert object and fetch it', () => {
         expect(service.addAlert(alertSample)).toEqual(expect.objectContaining(alertSampleWithId as Alert));
         expect(service.get()).toHaveLength(1);
@@ -64,6 +72,7 @@ describe('Alert Service Test', () => {
 
         expect(service.get()).toHaveLength(3);
         alert1.close?.();
+        jest.advanceTimersByTime(CLOSE_ANIMATION_DELAY);
         expect(service.get()).toHaveLength(2);
         expect(service.get()[0]).toEqual(
             expect.objectContaining({
@@ -73,6 +82,7 @@ describe('Alert Service Test', () => {
         );
         expect(alert1.onClose).toHaveBeenCalledOnce();
         alert2.close?.();
+        jest.advanceTimersByTime(CLOSE_ANIMATION_DELAY);
         expect(service.get()).toHaveLength(1);
         expect(service.get()[0]).toEqual(
             expect.objectContaining({
@@ -83,19 +93,19 @@ describe('Alert Service Test', () => {
         expect(alert2.onClose).toHaveBeenCalledOnce();
 
         alert0.close?.();
+        jest.advanceTimersByTime(CLOSE_ANIMATION_DELAY);
         expect(service.get()).toHaveLength(0);
         expect(alert0.onClose).toHaveBeenCalledOnce();
     });
 
     it('should close an alert on timeout correctly', () => {
-        jest.useFakeTimers();
-
         const alert = { type: AlertType.INFO, message: 'Hello Jhipster info', onClose: jest.fn() } as AlertCreationProperties;
         service.addAlert(alert);
 
         expect(service.get()).toHaveLength(1);
 
         jest.advanceTimersByTime(16000);
+        jest.advanceTimersByTime(CLOSE_ANIMATION_DELAY);
 
         expect(service.get()).toHaveLength(0);
         expect(alert.onClose).toHaveBeenCalledOnce();
@@ -110,6 +120,7 @@ describe('Alert Service Test', () => {
         alerts.forEach((alert) => service.addAlert(alert));
         expect(service.get()).toHaveLength(3);
         service.closeAll();
+        jest.advanceTimersByTime(CLOSE_ANIMATION_DELAY);
         expect(service.get()).toHaveLength(0);
         alerts.forEach((alert) => expect(alert.onClose).toHaveBeenCalledOnce());
     });
