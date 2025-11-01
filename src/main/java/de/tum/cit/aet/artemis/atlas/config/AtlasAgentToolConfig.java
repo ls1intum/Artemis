@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.config;
 
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +24,7 @@ public class AtlasAgentToolConfig {
      * @return ToolCallbackProvider that exposes the main agent tools to Spring AI
      */
     @Bean
+    @Qualifier("mainAgentToolCallbackProvider")
     public ToolCallbackProvider mainAgentToolCallbackProvider(AtlasAgentToolsService toolsService) {
         return MethodToolCallbackProvider.builder().toolObjects(toolsService).build();
     }
@@ -35,6 +37,7 @@ public class AtlasAgentToolConfig {
      * @return ToolCallbackProvider that exposes the competency expert tools to Spring AI
      */
     @Bean
+    @Qualifier("competencyExpertToolCallbackProvider")
     public ToolCallbackProvider competencyExpertToolCallbackProvider(CompetencyExpertToolsService expertToolsService) {
         return MethodToolCallbackProvider.builder().toolObjects(expertToolsService).build();
     }

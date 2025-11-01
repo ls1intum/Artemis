@@ -273,6 +273,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * The backend returns JSON when the previewCompetency tool is called.
      */
     private extractCompetencyPreview(content: string): { preview: CompetencyPreview; cleanedMessage: string } | null {
+        if (!content) {
+            return null;
+        }
         try {
             // Try to find JSON with "preview" key - need to match nested braces correctly
             let jsonMatch: RegExpMatchArray | null = null;
@@ -353,6 +356,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * The backend returns JSON with "batchPreview" key when multiple competencies are generated.
      */
     private extractBatchCompetencyPreview(content: string): { previews: CompetencyPreview[]; cleanedMessage: string } | null {
+        if (!content) {
+            return null;
+        }
         try {
             let jsonMatch: RegExpMatchArray | null = null;
             let jsonString = '';
@@ -426,6 +432,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * This marker indicates that the agent has proposed a plan and is awaiting approval.
      */
     private extractPlanPending(content: string): { cleanedMessage: string } | null {
+        if (!content) {
+            return null;
+        }
         const planPendingMarker = '[PLAN_PENDING]';
         if (content.includes(planPendingMarker)) {
             // Remove the marker from the message

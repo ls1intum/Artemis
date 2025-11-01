@@ -36,11 +36,11 @@ public class AtlasAgentService {
         MAIN_AGENT, COMPETENCY_EXPERT
     }
 
-    private static final String DELEGATE_TO_COMPETENCY_EXPERT = "[DELEGATE_TO_COMPETENCY_EXPERT";
+    private static final String DELEGATE_TO_COMPETENCY_EXPERT = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%";
 
     private static final String CREATE_APPROVED_COMPETENCY = "[CREATE_APPROVED_COMPETENCY]";
 
-    private static final String RETURN_TO_MAIN_AGENT = "[RETURN_TO_MAIN_AGENT]";
+    private static final String RETURN_TO_MAIN_AGENT = "%%ARTEMIS_RETURN_TO_MAIN_AGENT%%";
 
     // Track which agent is active for each session
     private final Map<String, AgentType> sessionAgentMap = new ConcurrentHashMap<>();
@@ -101,9 +101,6 @@ public class AtlasAgentService {
                 // Extract brief from marker: [DELEGATE_TO_COMPETENCY_EXPERT:brief_content]
                 String brief = extractBriefFromDelegationMarker(response);
 
-                // Remove the entire delegation block from response
-                response = removeDelegationMarker(response).trim();
-
                 // Check if this is a batch operation - handle directly for determinism
                 String expertResponse;
                 // Single operation - let Competency Expert handle via LLM
@@ -114,8 +111,9 @@ public class AtlasAgentService {
                 // Store preview for potential creation approval
                 sessionLastPreviewMap.put(sessionId, expertResponse);
 
-                // Append expert's response (preview JSON)
-                response = response + "\n\n" + expertResponse;
+                // Replace entire response with just the clean JSON
+                // This ensures no unwanted text (like "Let me draft..." or brief content) leaks through
+                response = expertResponse;
 
                 // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
             }
@@ -266,11 +264,12 @@ public class AtlasAgentService {
     }
 
     /**
-     * Sanitize Competency Expert response by extracting only clean JSON.
+     * Sanitize Competency Expert response by extracting, validating, and re-serializing clean JSON.
      * This makes the system deterministic by removing any conversational text the LLM might add.
+     * Guarantees that only valid preview JSON reaches the client.
      *
      * @param response The raw response from Competency Expert
-     * @return Clean JSON string or original response if no JSON found
+     * @return Clean, validated JSON string or error message if no valid JSON found
      */
     private String sanitizeCompetencyExpertResponse(String response) {
         if (response == null || response.trim().isEmpty()) {
@@ -278,18 +277,36 @@ public class AtlasAgentService {
         }
 
         try {
-            // First, remove markdown code blocks if present
-            String cleaned = response.replaceAll("```json\\s*", "").replaceAll("```\\s*", "");
+            // Step 1: Remove markdown code blocks if present
+            String cleaned = response.replaceAll("```json\\s*", "").replaceAll("```\\s*", "").trim();
 
-            // Try to find JSON with "preview" or "batchPreview" keys
+            // Step 2: Try multiple strategies to find JSON
+
+            // Strategy A: Try parsing the entire response as JSON first
+            try {
+                JsonNode jsonNode = objectMapper.readTree(cleaned);
+                if (isValidPreviewJson(jsonNode)) {
+                    // Re-serialize to ensure clean output with no extra whitespace or formatting issues
+                    return objectMapper.writeValueAsString(jsonNode);
+                }
+            }
+            catch (Exception e) {
+                // Not pure JSON, continue to next strategy
+            }
+
+            // Strategy B: Find JSON with "preview" or "batchPreview" keys
             int previewIndex = Math.max(cleaned.indexOf("\"preview\""), cleaned.indexOf("\"batchPreview\""));
 
             if (previewIndex == -1) {
-                // No preview JSON found - this might be an error message or success message
-                // Return original response
+                // No preview JSON found - check if this is a success/error message
+                // For non-preview responses (like "Competency created successfully"), return as-is
+                if (!cleaned.startsWith("{")) {
+                    return cleaned;
+                }
                 return response;
             }
 
+            // Strategy C: Extract JSON by finding matching braces
             // Search backwards for the opening brace
             int startIndex = cleaned.lastIndexOf('{', previewIndex);
             if (startIndex == -1) {
@@ -319,13 +336,12 @@ public class AtlasAgentService {
             // Extract the JSON substring
             String jsonString = cleaned.substring(startIndex, endIndex + 1);
 
-            // Validate it's proper JSON by trying to parse it
+            // Parse, validate, and re-serialize to guarantee clean output
             JsonNode jsonNode = objectMapper.readTree(jsonString);
 
-            // Check if it has the expected structure
-            if (jsonNode.has("preview") || jsonNode.has("batchPreview")) {
-                // Return the clean JSON string
-                return jsonString;
+            if (isValidPreviewJson(jsonNode)) {
+                // Re-serialize the JSON to ensure it's perfectly clean
+                return objectMapper.writeValueAsString(jsonNode);
             }
 
             // JSON doesn't have expected structure
@@ -333,8 +349,29 @@ public class AtlasAgentService {
         }
         catch (Exception e) {
             // Failed to parse or extract JSON - return original response
+            // In production, you might want to log this error
             return response;
         }
+    }
+
+    /**
+     * Validates that a JSON node has the expected preview structure.
+     *
+     * @param jsonNode The JSON node to validate
+     * @return true if the JSON has valid preview structure, false otherwise
+     */
+    private boolean isValidPreviewJson(JsonNode jsonNode) {
+        if (jsonNode == null || !jsonNode.isObject()) {
+            return false;
+        }
+
+        // Check for single preview structure: {"preview": true, "competency": {...}}
+        if (jsonNode.has("preview") && jsonNode.get("preview").isBoolean() && jsonNode.has("competency")) {
+            return true;
+        }
+
+        // Check for batch preview structure: {"batchPreview": true, "count": N, "competencies": [...]}
+        return jsonNode.has("batchPreview") && jsonNode.get("batchPreview").isBoolean() && jsonNode.has("competencies") && jsonNode.get("competencies").isArray();
     }
 
     /**

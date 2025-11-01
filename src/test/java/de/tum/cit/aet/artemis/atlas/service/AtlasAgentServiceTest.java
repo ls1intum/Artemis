@@ -89,7 +89,7 @@ class AtlasAgentServiceTest {
 
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
-        assertThat(chatResult.message()).isEqualTo("I apologize, but I couldn't generate a response.");
+        assertThat(chatResult.message()).isEqualTo("I apologize, but I'm having trouble processing your request right now. Please try again later.");
         assertThat(chatResult.competenciesModified()).isFalse();
     }
 

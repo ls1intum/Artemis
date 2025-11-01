@@ -46,7 +46,7 @@ describe('AgentChatModalComponent', () => {
         } as any;
 
         mockTranslateService = {
-            instant: jest.fn(),
+            instant: jest.fn((key: string) => key), // Default: return the key itself
         } as any;
 
         mockChangeDetectorRef = {
