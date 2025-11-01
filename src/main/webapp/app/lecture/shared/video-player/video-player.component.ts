@@ -75,19 +75,25 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     private readonly sanitizer = inject(DomSanitizer);
 
     /** Filtered transcript segments based on search query */
-    filteredSegments = computed(() => {
-        const query = this.searchQuery().toLowerCase().trim();
-        if (!query) {
-            return this.transcriptSegments();
-        }
-        return this.transcriptSegments().filter((segment) => segment.text.toLowerCase().includes(query));
-    });
+    filteredSegments = computed(() => this.computeFilteredSegments());
 
     /** Total number of search results */
     searchResultsCount = computed(() => this.filteredSegments().length);
 
     /** Check if search is active */
     isSearchActive = computed(() => this.searchQuery().length > 0);
+
+    /**
+     * Computes the filtered transcript segments based on the current search query.
+     * Returns all segments if no search query is active, otherwise returns only matching segments.
+     */
+    private computeFilteredSegments(): TranscriptSegment[] {
+        const query = this.searchQuery().toLowerCase().trim();
+        if (!query) {
+            return this.transcriptSegments();
+        }
+        return this.transcriptSegments().filter((segment) => segment.text.toLowerCase().includes(query));
+    }
 
     ngAfterViewInit(): void {
         const elRef = this.videoRef();
