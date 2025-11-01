@@ -318,22 +318,6 @@ public class ScheduleService {
     }
 
     /**
-     * Schedule a set of tasks for the given Exercise for the provided ExerciseLifecycle at the given times.
-     *
-     * @param exercise  Exercise
-     * @param lifecycle ExerciseLifecycle
-     * @param tasks     Runnable tasks to be executed at the associated ZonedDateTimes, must be a mutable set
-     * @param name      Name of the task
-     */
-    public void scheduleExerciseTask(Exercise exercise, ExerciseLifecycle lifecycle, Set<Pair<ZonedDateTime, Runnable>> tasks, String name) {
-        // check if already scheduled for exercise. if so, cancel.
-        // no exercise should be scheduled more than once.
-        cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);
-        Set<ScheduledFuture<?>> scheduledTasks = exerciseLifecycleService.scheduleMultipleTasks(exercise, lifecycle, tasks);
-        addScheduledExerciseTasks(exercise, lifecycle, scheduledTasks, name);
-    }
-
-    /**
      * Schedule a task for the given Slide for the provided SlideLifecycle.
      *
      * @param slide     Slide
@@ -429,17 +413,6 @@ public class ScheduleService {
     public void cancelAllScheduledParticipationTasks(Long exerciseId, Long participationId) {
         for (final ParticipationLifecycle lifecycle : ParticipationLifecycle.values()) {
             cancelScheduledTaskForParticipationLifecycle(exerciseId, participationId, lifecycle);
-        }
-    }
-
-    /**
-     * Cancels all scheduled tasks for all {@link SlideLifecycle SlideLifecycles} for the given slide.
-     *
-     * @param slideId of the slide itself.
-     */
-    public void cancelAllScheduledSlideTasks(Long slideId) {
-        for (final SlideLifecycle lifecycle : SlideLifecycle.values()) {
-            cancelScheduledTaskForSlideLifecycle(slideId, lifecycle);
         }
     }
 

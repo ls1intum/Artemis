@@ -153,6 +153,28 @@
                     "programmingExercise": "This chat is related to a programming exercise.",
                     "lecture": "This chat is related to a lecture."
                 }
+            },
+            "memories": {
+                "title": "Memories",
+                "loadingList": "Loading memories...",
+                "empty": "No memories found.",
+                "delete": "Delete",
+                "deleting": "Deleting...",
+                "details": {
+                    "loading": "Loading details...",
+                    "learnings": "Learnings",
+                    "connections": "Connections",
+                    "reference": "Reference",
+                    "memories": "Memories",
+                    "weight": "Weight",
+                    "none": "None",
+                    "noDetails": "No details available."
+                },
+                "error": {
+                    "loadFailed": "Failed to load memories.",
+                    "deleteFailed": "Failed to delete memory.",
+                    "detailsLoadFailed": "Failed to load memory details."
+                }
             }
         }
     }

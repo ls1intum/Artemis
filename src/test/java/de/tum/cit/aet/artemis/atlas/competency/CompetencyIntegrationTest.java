@@ -378,6 +378,13 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     @Nested
     class AtlasMLFeatureToggle {
 
+        @BeforeEach
+        void setupNestedMocks() {
+            // Reset mock server to clear any previous test's requests, then add expectations
+            atlasMLRequestMockProvider.reset();
+            atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+        }
+
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldAllowAtlasMLSuggestWhenFeatureEnabled() throws Exception {
@@ -385,7 +392,8 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
 
             var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
             var mockedResponse = new SuggestCompetencyResponseDTO(List.of(new AtlasMLCompetencyDTO(1L, "Mocked", "Desc", 1L)));
-            atlasMLRequestMockProvider.enableMockingOfRequests();
+
+            // Add mock for this specific test (mockSaveCompetenciesAny is already set by @BeforeEach)
             atlasMLRequestMockProvider.mockSuggestCompetencies(requestBody, mockedResponse);
 
             var response = request.postWithResponseBody("/api/atlas/competencies/suggest", requestBody, SuggestCompetencyResponseDTO.class, HttpStatus.OK);
@@ -410,7 +418,8 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
 
             long courseId = course.getId();
             var mockedRelations = new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "ASSUMES")));
-            atlasMLRequestMockProvider.enableMockingOfRequests();
+
+            // Add mock for this specific test (mockSaveCompetenciesAny is already set by @BeforeEach)
             atlasMLRequestMockProvider.mockSuggestCompetencyRelations(courseId, mockedRelations);
 
             var response = request.get("/api/atlas/courses/" + courseId + "/competencies/relations/suggest", HttpStatus.OK, SuggestCompetencyRelationsResponseDTO.class);

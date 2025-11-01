@@ -17,3 +17,29 @@ export class MemirisMemory {
         this.deleted = deleted;
     }
 }
+
+export interface MemirisLearningDTO {
+    id: string;
+    title: string;
+    content: string;
+    reference?: string;
+    memories: string[];
+}
+
+export interface MemirisMemoryConnectionDTO {
+    id: string;
+    connectionType: string;
+    memories: string[]; // Related memory IDs
+    description?: string;
+    weight?: number;
+}
+
+export interface MemirisMemoryWithRelationsDTO {
+    id: string;
+    title: string;
+    content: string;
+    sleptOn: boolean;
+    deleted: boolean;
+    learnings: MemirisLearningDTO[];
+    connections: MemirisMemoryConnectionDTO[];
+}
