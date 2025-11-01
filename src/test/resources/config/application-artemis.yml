@@ -76,8 +76,6 @@ artemis:
         destination: http://localhost:8081
     plagiarism-checks:
         plagiarism-results-limit: 100
-    tum-live:
-        api-base-url: http://mocketumlive.api
 
 info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service
