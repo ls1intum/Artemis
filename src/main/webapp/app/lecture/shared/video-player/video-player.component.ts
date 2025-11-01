@@ -1,7 +1,7 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, SecurityContext, computed, inject, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 // Lazy-load video.js at runtime; type-only import doesn't pull code into initial bundle.
@@ -221,12 +221,12 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     }
 
     /** Highlight search matches in segment text */
-    highlightText(text: string): SafeHtml {
+    highlightText(text: string): string {
         const query = this.searchQuery().trim();
         if (!query) {
             // Escape HTML entities in the text to prevent XSS
             const escapedText = this.escapeHtml(text);
-            return this.sanitizer.sanitize(1, escapedText) || '';
+            return this.sanitizer.sanitize(SecurityContext.HTML, escapedText) || '';
         }
 
         // Escape HTML entities in both text and query to prevent XSS
@@ -238,7 +238,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         const highlighted = escapedText.replace(regex, '<mark>$1</mark>');
 
         // Sanitize the result to ensure only safe HTML is returned
-        return this.sanitizer.sanitize(1, highlighted) || '';
+        return this.sanitizer.sanitize(SecurityContext.HTML, highlighted) || '';
     }
 
     /** Escape HTML special characters to prevent XSS */
