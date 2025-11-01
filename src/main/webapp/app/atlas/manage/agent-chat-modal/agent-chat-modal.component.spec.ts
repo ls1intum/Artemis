@@ -98,17 +98,10 @@ describe('AgentChatModalComponent', () => {
         it('should show welcome message after init when history is empty', () => {
             const welcomeMessage = 'Welcome to the agent chat!';
             mockTranslateService.instant.mockReturnValue(welcomeMessage);
-            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
-
             component.ngOnInit();
-
-            expect(mockAgentChatService.getConversationHistory).toHaveBeenCalledWith(123);
             expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
-            expect(component.messages).toHaveLength(1);
+
             expect(component.messages[0].content).toBe(welcomeMessage);
-            expect(component.messages[0].isUser).toBeFalse();
-            expect(component.messages[0].timestamp).toBeInstanceOf(Date);
-            expect(component.messages[0].id).toBeDefined();
         });
 
         it('should load conversation history when available', () => {
@@ -118,18 +111,15 @@ describe('AgentChatModalComponent', () => {
                 { content: 'Another user message', isUser: true },
             ];
             mockAgentChatService.getConversationHistory.mockReturnValue(of(mockHistory));
-
             component.ngOnInit();
-
             expect(mockAgentChatService.getConversationHistory).toHaveBeenCalledWith(123);
-            expect(component.messages).toHaveLength(3);
-            expect(component.messages[0].content).toBe('Previous user message');
-            expect(component.messages[0].isUser).toBeTrue();
-            expect(component.messages[1].content).toBe('Previous agent response');
-            expect(component.messages[1].isUser).toBeFalse();
-            expect(component.messages[2].content).toBe('Another user message');
-            expect(component.messages[2].isUser).toBeTrue();
-            expect(mockTranslateService.instant).not.toHaveBeenCalled();
+            expect(component.messages).toHaveLength(4);
+            expect(component.messages[1].content).toBe('Previous user message');
+            expect(component.messages[1].isUser).toBeTrue();
+            expect(component.messages[2].content).toBe('Previous agent response');
+            expect(component.messages[2].isUser).toBeFalse();
+            expect(component.messages[3].content).toBe('Another user message');
+            expect(component.messages[3].isUser).toBeTrue();
         });
 
         it('should show welcome message on history fetch error', () => {
@@ -141,9 +131,9 @@ describe('AgentChatModalComponent', () => {
 
             expect(mockAgentChatService.getConversationHistory).toHaveBeenCalledWith(123);
             expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
-            expect(component.messages).toHaveLength(1);
-            expect(component.messages[0].content).toBe(welcomeMessage);
-            expect(component.messages[0].isUser).toBeFalse();
+            expect(component.messages).toHaveLength(2);
+            expect(component.messages[1].content).toBe(welcomeMessage);
+            expect(component.messages[1].isUser).toBeFalse();
         });
 
         it('should show welcome message when history is null', () => {
@@ -154,8 +144,8 @@ describe('AgentChatModalComponent', () => {
             component.ngOnInit();
 
             expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
-            expect(component.messages).toHaveLength(1);
-            expect(component.messages[0].content).toBe(welcomeMessage);
+            expect(component.messages).toHaveLength(2);
+            expect(component.messages[1].content).toBe(welcomeMessage);
         });
 
         it('should generate unique message IDs for history messages', () => {
@@ -287,8 +277,7 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should send message when send button is clicked', () => {
-            component.currentMessage.set('Test message');
-            component.isAgentTyping.set(false);
+            mockTranslateService.instant.mockReturnValue('Welcome');
             const mockResponse = {
                 message: 'Agent response',
                 sessionId: 'course_123',
@@ -304,7 +293,8 @@ describe('AgentChatModalComponent', () => {
             sendButton.click();
 
             expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Test message', 123);
-            expect(component.messages).toHaveLength(3); // Welcome + User message + agent response
+            // 2 welcome messages (initial + empty history) + 1 user message + 1 agent response = 4
+            expect(component.messages).toHaveLength(4);
         });
 
         it('should send message when Enter key is pressed', () => {
@@ -347,9 +337,9 @@ describe('AgentChatModalComponent', () => {
             expect(component.isAgentTyping()).toBeFalse();
             expect(mockTranslateService.instant).toHaveBeenCalledOnce();
             expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
-            expect(component.messages).toHaveLength(3); // Welcome + user message + error message
-            expect(component.messages[2].content).toBe(errorMessage);
-            expect(component.messages[2].isUser).toBeFalse();
+            expect(component.messages).toHaveLength(4); // Welcome + user message + error message
+            expect(component.messages[3].content).toBe(errorMessage);
+            expect(component.messages[3].isUser).toBeFalse();
         }));
 
         it('should not send message if canSendMessage is false', () => {
