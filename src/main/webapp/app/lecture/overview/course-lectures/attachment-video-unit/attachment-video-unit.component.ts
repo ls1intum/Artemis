@@ -55,7 +55,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     /**
      * Return the URL of the video source
      */
-    readonly videoUrl = computed(() => {
+    readonly videoUrl = computed(() => this.computeVideoUrl());
+
+    /**
+     * Computes the video URL based on the video source.
+     * Returns undefined if the source is invalid or doesn't match the allow list.
+     */
+    private computeVideoUrl(): string | undefined {
         const source = this.lectureUnit().videoSource;
         if (!source) {
             return undefined;
@@ -64,7 +70,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return source;
         }
         return undefined;
-    });
+    }
 
     override toggleCollapse(isCollapsed: boolean): void {
         super.toggleCollapse(isCollapsed);
