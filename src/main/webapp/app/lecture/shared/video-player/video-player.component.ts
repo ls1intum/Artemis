@@ -10,12 +10,14 @@ import type videojs from 'video.js';
 type VideoJsPlayer = ReturnType<typeof videojs>;
 
 // cache the dynamically loaded module
-let _videojsFn: any;
+let videoJsPlayerFactory: any;
 function loadVideoJs(): Promise<any /* typeof videojs */> {
-    if (_videojsFn) return Promise.resolve(_videojsFn);
+    if (videoJsPlayerFactory) {
+        return Promise.resolve(videoJsPlayerFactory);
+    }
     return import('video.js').then((mod) => {
-        _videojsFn = (mod as any).default ?? mod;
-        return _videojsFn;
+        videoJsPlayerFactory = (mod as any).default ?? mod;
+        return videoJsPlayerFactory;
     });
 }
 
@@ -118,7 +120,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /** Seek the video to the given time and resume playback. */
     seekTo(seconds: number): void {
-        if (!this.player) return;
+        if (!this.player) {
+            return;
+        }
         this.player.currentTime(seconds);
         this.player.play();
     }
@@ -175,7 +179,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Navigate to next search result */
     nextSearchResult(): void {
         const total = this.searchResultsCount();
-        if (total === 0) return;
+        if (total === 0) {
+            return;
+        }
 
         const nextIndex = (this.currentSearchIndex() + 1) % total;
         this.currentSearchIndex.set(nextIndex);
@@ -185,7 +191,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Navigate to previous search result */
     previousSearchResult(): void {
         const total = this.searchResultsCount();
-        if (total === 0) return;
+        if (total === 0) {
+            return;
+        }
 
         const prevIndex = (this.currentSearchIndex() - 1 + total) % total;
         this.currentSearchIndex.set(prevIndex);
@@ -195,7 +203,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Scroll to a specific search result */
     private scrollToSearchResult(index: number): void {
         const filtered = this.filteredSegments();
-        if (index < 0 || index >= filtered.length) return;
+        if (index < 0 || index >= filtered.length) {
+            return;
+        }
 
         const segment = filtered[index];
         const el = document.getElementById(`segment-${segment.startTime}`);
@@ -239,7 +249,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /** Check if segment matches current search result */
     isCurrentSearchResult(segment: TranscriptSegment): boolean {
-        if (!this.isSearchActive()) return false;
+        if (!this.isSearchActive()) {
+            return false;
+        }
         const filtered = this.filteredSegments();
         const currentIndex = this.currentSearchIndex();
         return filtered[currentIndex]?.startTime === segment.startTime;

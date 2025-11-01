@@ -57,7 +57,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      */
     readonly videoUrl = computed(() => {
         const source = this.lectureUnit().videoSource;
-        if (!source) return undefined;
+        if (!source) {
+            return undefined;
+        }
         if (this.videoUrlAllowList.some((r) => r.test(source)) || !urlParser || urlParser.parse(source)) {
             return source;
         }
@@ -75,7 +77,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.playlistUrl.set(undefined);
 
             const src = this.lectureUnit().videoSource;
-            if (!src) return;
+            if (!src) {
+                return;
+            }
 
             // Direct .m3u8 playlist URLs - use without resolver
             const url = new URL(src);

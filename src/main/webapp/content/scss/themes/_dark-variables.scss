@@ -664,8 +664,8 @@ $pastel-teal: lighten($teal, 15%);
 $calendar-loading-overlay-background: transparentize($module-bg, 0.5);
 
 // Video Player
-$transcript-active-bg: #1e3a8a;
-$transcript-active-text: #ffffff;
+$transcript-active-bg: darken($primary, 20%);
+$transcript-active-text: $white;
 $calendar-day-badge-selected: $gray-700;
 
 // Quiz Training
