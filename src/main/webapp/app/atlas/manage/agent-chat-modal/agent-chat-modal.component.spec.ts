@@ -171,9 +171,10 @@ describe('AgentChatModalComponent', () => {
             component.ngOnInit();
             const afterTime = new Date();
 
-            expect(component.messages[0].timestamp).toBeInstanceOf(Date);
-            expect(component.messages[0].timestamp.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
-            expect(component.messages[0].timestamp.getTime()).toBeLessThanOrEqual(afterTime.getTime());
+            expect(component.messages).toHaveLength(2); // welcome + history
+            expect(component.messages[1].timestamp).toBeInstanceOf(Date);
+            expect(component.messages[1].timestamp.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
+            expect(component.messages[1].timestamp.getTime()).toBeLessThanOrEqual(afterTime.getTime());
         });
     });
 
