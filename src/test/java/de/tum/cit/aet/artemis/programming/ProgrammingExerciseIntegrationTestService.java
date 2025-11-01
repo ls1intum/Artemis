@@ -620,6 +620,25 @@ public class ProgrammingExerciseIntegrationTestService {
         return request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
     }
 
+    // Test for #11550: Export all repositories fails with "No repos exported" error
+    void testExportSubmissionsByStudentLogins_exportAllParticipants() throws Exception {
+        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
+        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath2, null);
+        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+
+        // Use "ALL" as participant identifier and set exportAllParticipants to true
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participant-identifiers/ALL";
+        var exportOptions = new RepositoryExportOptionsDTO(true, false, false, null, false, true, true, true, false);
+
+        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        // Verify that all student repositories were exported
+        List<Path> entries = unzipExportedFile();
+        assertThat(entries).anyMatch(entry -> entry.toString().contains("student1")).anyMatch(entry -> entry.toString().contains("student2"));
+    }
+
     private RepositoryExportOptionsDTO getOptions() {
         return new RepositoryExportOptionsDTO(false, true, false, null, false, true, true, true, true);
     }

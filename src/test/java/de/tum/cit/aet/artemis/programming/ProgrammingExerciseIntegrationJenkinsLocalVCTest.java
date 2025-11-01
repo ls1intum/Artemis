@@ -116,6 +116,12 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
         programmingExerciseIntegrationTestService.testExportSubmissionsByStudentLogins();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportSubmissionsByStudentLogins_exportAllParticipants() throws Exception {
+        programmingExerciseIntegrationTestService.testExportSubmissionsByStudentLogins_exportAllParticipants();
+    }
+
     // TODO: enable or remove the test
     @Disabled
     @Test
