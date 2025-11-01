@@ -55,7 +55,7 @@ describe('MonacoEditorComponent', () => {
         fixture.detectChanges();
         comp.textChanged.subscribe(valueCallbackStub);
         comp.setText(singleLineText);
-        expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith(singleLineText);
+        expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith({ text: singleLineText, fileName: expect.any(String) });
     });
 
     it('should only send a notification once per delay interval', fakeAsync(() => {
@@ -68,7 +68,7 @@ describe('MonacoEditorComponent', () => {
         tick(1);
         comp.setText(singleLineText);
         tick(delay);
-        expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith(singleLineText);
+        expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith({ text: singleLineText, fileName: expect.any(String) });
     }));
 
     it('should be set to readOnly depending on the input', () => {

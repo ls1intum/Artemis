@@ -27,6 +27,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -36,6 +37,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -46,6 +51,7 @@ import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -54,16 +60,25 @@ import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
+import de.tum.cit.aet.artemis.lecture.api.SlideApi;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
@@ -93,10 +108,24 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final ExerciseService exerciseService;
 
+    private final UserRepository userRepository;
+
+    private final QuizBatchRepository quizBatchRepository;
+
+    private final ChannelService channelService;
+
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
+    private final Optional<SlideApi> slideApi;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService) {
+            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
+            ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<SlideApi> slideApi) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -106,6 +135,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.exerciseService = exerciseService;
+        this.userRepository = userRepository;
+        this.quizBatchRepository = quizBatchRepository;
+        this.channelService = channelService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
+        this.competencyProgressApi = competencyProgressApi;
+        this.slideApi = slideApi;
     }
 
     /**
@@ -475,6 +510,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizPointStatistic.setQuiz(quizExercise);
         }
 
+        // Set released for practice to false if not set already
+        if (quizExercise.isIsOpenForPractice() == null) {
+            quizExercise.setIsOpenForPractice(Boolean.FALSE);
+        }
+
         // make sure the pointers in the statistics are correct
         quizExercise.recalculatePointCounters();
 
@@ -535,6 +575,138 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         return newQuizExercise;
+    }
+
+    /**
+     * Performs the update of a quiz exercise, including validations, file handling, saving, logging,
+     * notifications, and asynchronous updates. This method uses the original quiz for comparisons
+     * (e.g., to detect changes or prevent invalid modifications) and applies updates from the provided
+     * updated quiz exercise.
+     *
+     * @param originalQuiz     the original quiz exercise loaded from the database, used for comparisons
+     *                             and checks (e.g., to verify if the quiz has started or for file change detection).
+     * @param updatedQuiz      the quiz exercise object containing the updated values to be applied and saved.
+     * @param files            the list of multipart files for drag-and-drop question updates (may be null or empty).
+     * @param notificationText optional text to include in notifications sent about the exercise update.
+     * @return the updated and saved quiz exercise.
+     * @throws IOException              if an error occurs during file handling or updates.
+     * @throws BadRequestAlertException if the updated quiz is invalid (e.g., fails validation checks,
+     *                                      quiz has already started, or conversion between exam/course types).
+     */
+    public QuizExercise performUpdate(QuizExercise originalQuiz, QuizExercise updatedQuiz, List<MultipartFile> files, String notificationText) throws IOException {
+
+        if (!updatedQuiz.isValid()) {
+            throw new BadRequestAlertException("The quiz exercise is not valid", ENTITY_NAME, "invalidQuiz");
+        }
+
+        updatedQuiz.validateGeneralSettings();
+
+        updatedQuiz.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // Check if quiz has already started
+        Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
+        if (batches.stream().anyMatch(QuizBatch::isStarted)) {
+            throw new BadRequestAlertException("The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.", ENTITY_NAME, "quizHasStarted");
+        }
+
+        updatedQuiz.reconnectJSONIgnoreAttributes();
+
+        // don't allow changing batches except in synchronized mode as the client doesn't have the full list and saving the exercise could otherwise end up deleting a bunch
+        if (updatedQuiz.getQuizMode() != QuizMode.SYNCHRONIZED || updatedQuiz.getQuizBatches() == null || updatedQuiz.getQuizBatches().size() > 1) {
+            updatedQuiz.setQuizBatches(batches);
+        }
+
+        handleDndQuizFileUpdates(updatedQuiz, originalQuiz, files);
+
+        Channel updatedChannel = channelService.updateExerciseChannel(originalQuiz, updatedQuiz);
+
+        updatedQuiz = save(updatedQuiz);
+        exerciseService.logUpdate(updatedQuiz, updatedQuiz.getCourseViaExerciseGroupOrCourseMember(), user);
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, updatedQuiz, notificationText);
+        if (updatedChannel != null) {
+            updatedQuiz.setChannelName(updatedChannel.getName());
+        }
+        QuizExercise finalQuizExercise = updatedQuiz;
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(finalQuizExercise)));
+        slideApi.ifPresent(api -> api.handleDueDateChange(originalQuiz, finalQuizExercise));
+        return updatedQuiz;
+    }
+
+    /**
+     * Merges the properties of the QuizExerciseFromEditorDTO into the QuizExercise domain object.
+     *
+     * @param quizExercise              The QuizExercise domain object to be updated
+     * @param quizExerciseFromEditorDTO The DTO containing the properties to be merged into the domain object.
+     */
+    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO) {
+        if (quizExerciseFromEditorDTO.title() != null) {
+            quizExercise.setTitle(quizExerciseFromEditorDTO.title());
+        }
+        if (quizExerciseFromEditorDTO.channelName() != null) {
+            quizExercise.setChannelName(quizExerciseFromEditorDTO.channelName());
+        }
+        if (quizExerciseFromEditorDTO.categories() != null) {
+            quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
+        }
+        if (quizExerciseFromEditorDTO.competencyLinks() != null) {
+            quizExercise.getCompetencyLinks().clear();
+            quizExercise.getCompetencyLinks().addAll(quizExerciseFromEditorDTO.competencyLinks());
+        }
+        if (quizExerciseFromEditorDTO.difficulty() != null) {
+            quizExercise.setDifficulty(quizExerciseFromEditorDTO.difficulty());
+        }
+        if (quizExerciseFromEditorDTO.duration() != null) {
+            quizExercise.setDuration(quizExerciseFromEditorDTO.duration());
+        }
+        if (quizExerciseFromEditorDTO.randomizeQuestionOrder() != null) {
+            quizExercise.setRandomizeQuestionOrder(quizExerciseFromEditorDTO.randomizeQuestionOrder());
+        }
+        if (quizExerciseFromEditorDTO.quizMode() != null) {
+            quizExercise.setQuizMode(quizExerciseFromEditorDTO.quizMode());
+        }
+        if (quizExerciseFromEditorDTO.quizBatches() != null) {
+            quizExercise.getQuizBatches().clear();
+            quizExercise.getQuizBatches().addAll(quizExerciseFromEditorDTO.quizBatches());
+        }
+        if (quizExerciseFromEditorDTO.releaseDate() != null) {
+            quizExercise.setReleaseDate(quizExerciseFromEditorDTO.releaseDate());
+        }
+        if (quizExerciseFromEditorDTO.startDate() != null) {
+            quizExercise.setStartDate(quizExerciseFromEditorDTO.startDate());
+        }
+        if (quizExerciseFromEditorDTO.dueDate() != null) {
+            quizExercise.setDueDate(quizExerciseFromEditorDTO.dueDate());
+        }
+        if (quizExerciseFromEditorDTO.includedInOverallScore() != null) {
+            quizExercise.setIncludedInOverallScore(quizExerciseFromEditorDTO.includedInOverallScore());
+        }
+        if (quizExerciseFromEditorDTO.quizQuestions() != null) {
+            quizExercise.setQuizQuestions(quizExerciseFromEditorDTO.quizQuestions());
+        }
+    }
+
+    /**
+     * Creates a copy of the quiz exercise with all fields that are necessary to compare the updated
+     * quiz exercise with the original one.
+     *
+     * @param quizExercise the quiz exercise to copy
+     * @return a copy of the quiz exercise with all fields required for an update.
+     */
+    public QuizExercise copyFieldsForUpdate(QuizExercise quizExercise) {
+        QuizExercise copy = new QuizExercise();
+        BeanUtils.copyProperties(quizExercise, copy);
+        if (!quizExercise.isExamExercise()) {
+            copy.setCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
+        }
+        copy.setExerciseGroup(quizExercise.getExerciseGroup());
+        copy.setQuizQuestions(quizExercise.getQuizQuestions());
+        copy.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
+        copy.setCompetencyLinks(quizExercise.getCompetencyLinks());
+        copy.setQuizBatches(quizExercise.getQuizBatches());
+        copy.setGradingCriteria(quizExercise.getGradingCriteria());
+        return copy;
     }
 
     /**
@@ -630,5 +802,76 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         return events;
+    }
+
+    /**
+     * Resolves the mappings in DragAndDrop and ShortAnswer questions within the given QuizExercise.
+     * <p>
+     * This method iterates through all questions in the quiz exercise. For DragAndDropQuestions and ShortAnswerQuestions,
+     * it replaces the temporary objects in the correct mappings with the actual objects from the question's collections,
+     * matching them by their temporary IDs (tempID).
+     * <p>
+     * If a mapping cannot be resolved (i.e., no matching object found for a tempID), a BadRequestAlertException is thrown.
+     *
+     * @param quizExercise the QuizExercise containing the questions to process
+     * @throws BadRequestAlertException if any mapping cannot be resolved due to invalid tempIDs
+     */
+    public void resolveQuizQuestionMappings(QuizExercise quizExercise) throws BadRequestAlertException {
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion dnd) {
+                Map<Long, DragItem> idToDragItem = dnd.getDragItems().stream().collect(Collectors.toMap(DragItem::getTempID, Function.identity()));
+                Map<Long, DropLocation> idToDropLocation = dnd.getDropLocations().stream().collect(Collectors.toMap(DropLocation::getTempID, Function.identity()));
+                for (DragAndDropMapping mapping : dnd.getCorrectMappings()) {
+                    Long dragItemTempId = mapping.getDragItem().getTempID();
+                    Long dropLocationTempId = mapping.getDropLocation().getTempID();
+                    DragItem dragItem = idToDragItem.get(dragItemTempId);
+                    DropLocation dropLocation = idToDropLocation.get(dropLocationTempId);
+                    if (dragItem == null || dropLocation == null) {
+                        throw new BadRequestAlertException("Could not resolve drag and drop mappings", ENTITY_NAME, "invalidMappings");
+                    }
+                    mapping.setDragItem(dragItem);
+                    mapping.setDropLocation(dropLocation);
+                }
+            }
+            else if (question instanceof ShortAnswerQuestion sa) {
+                Map<Long, ShortAnswerSpot> idToSpot = sa.getSpots().stream().collect(Collectors.toMap(ShortAnswerSpot::getTempID, Function.identity()));
+                Map<Long, ShortAnswerSolution> idToSolution = sa.getSolutions().stream().collect(Collectors.toMap(ShortAnswerSolution::getTempID, Function.identity()));
+                for (ShortAnswerMapping mapping : sa.getCorrectMappings()) {
+                    Long spotTempId = mapping.getSpot().getTempID();
+                    Long solutionTempId = mapping.getSolution().getTempID();
+                    ShortAnswerSpot spot = idToSpot.get(spotTempId);
+                    ShortAnswerSolution solution = idToSolution.get(solutionTempId);
+                    if (spot == null || solution == null) {
+                        throw new BadRequestAlertException("Could not resolve short answer mappings", ENTITY_NAME, "invalidMappings");
+                    }
+                    mapping.setSpot(spot);
+                    mapping.setSolution(solution);
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates a new quiz exercise, handling validation, file processing, saving, and related updates.
+     *
+     * @param quizExercise the quiz exercise domain object to create
+     * @param files        the files for drag and drop questions (optional)
+     * @param isExam       true if creating for an exam, false for a course
+     * @return the created and saved quiz exercise
+     * @throws IOException if there is an error handling the files
+     */
+    public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam) throws IOException {
+        resolveQuizQuestionMappings(quizExercise);
+        if (!quizExercise.isValid()) {
+            throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
+        }
+        quizExercise.validateGeneralSettings();
+        handleDndQuizFileCreation(quizExercise, files);
+        QuizExercise result = save(quizExercise);
+        if (!isExam) {
+            channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
+        }
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
+        return result;
     }
 }

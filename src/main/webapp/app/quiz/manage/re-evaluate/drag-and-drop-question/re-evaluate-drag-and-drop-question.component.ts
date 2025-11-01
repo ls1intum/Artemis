@@ -1,13 +1,14 @@
-import { Component, EventEmitter, Input, Output, viewChild } from '@angular/core';
+import { Component, viewChild } from '@angular/core';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragAndDropQuestionEditComponent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
+import { input, output } from '@angular/core';
 
 @Component({
     selector: 'jhi-re-evaluate-drag-and-drop-question',
     template: `
         <jhi-drag-and-drop-question-edit
-            [question]="question"
-            [questionIndex]="questionIndex"
+            [question]="question()"
+            [questionIndex]="questionIndex()"
             [reEvaluationInProgress]="true"
             [filePool]="fileMap"
             (questionUpdated)="questionUpdated.emit()"
@@ -33,19 +34,13 @@ export class ReEvaluateDragAndDropQuestionComponent {
 
     readonly dragAndDropQuestionEditComponent = viewChild.required(DragAndDropQuestionEditComponent);
 
-    @Input()
-    question: DragAndDropQuestion;
-    @Input()
-    questionIndex: number;
+    question = input.required<DragAndDropQuestion>();
+    questionIndex = input.required<number>();
 
-    @Output()
-    questionUpdated = new EventEmitter<void>();
-    @Output()
-    questionDeleted = new EventEmitter<void>();
-    @Output()
-    questionMoveUp = new EventEmitter<void>();
-    @Output()
-    questionMoveDown = new EventEmitter<void>();
+    questionUpdated = output<void>();
+    questionDeleted = output<void>();
+    questionMoveUp = output<void>();
+    questionMoveDown = output<void>();
 
     fileMap = new Map<string, { path?: string; file: File }>();
 

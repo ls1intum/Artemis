@@ -233,6 +233,11 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     }
 
     @JsonIgnore
+    public List<Result> getAutomaticResults() {
+        return results.stream().filter(result -> result != null && (result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    @JsonIgnore
     public List<Result> getManualResults() {
         return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaBased()).collect(Collectors.toCollection(ArrayList::new));
     }

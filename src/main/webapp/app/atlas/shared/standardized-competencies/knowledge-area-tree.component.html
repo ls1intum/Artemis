@@ -1,19 +1,19 @@
-<mat-tree [dataSource]="dataSource" [treeControl]="treeControl" [trackBy]="trackBy" class="card w-100">
+<mat-tree [dataSource]="dataSource()" [treeControl]="treeControl()" [trackBy]="trackBy" class="card w-100">
     <mat-nested-tree-node *matTreeNodeDef="let knowledgeArea" [class.d-none]="!knowledgeArea.isVisible">
         <div class="card tree-card">
             <div class="d-flex align-items-center clickable me-2" matTreeNodeToggle>
                 <div class="me-2">
-                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="treeControl.isExpanded(knowledgeArea)" />
+                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="treeControl().isExpanded(knowledgeArea)" />
                 </div>
                 <h5 class="mb-0">{{ knowledgeArea.title }}</h5>
             </div>
-            <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate" [ngTemplateOutletContext]="{ knowledgeArea: knowledgeArea }" />
+            <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate()" [ngTemplateOutletContext]="{ knowledgeArea: knowledgeArea }" />
         </div>
-        <div [ngbCollapse]="!treeControl.isExpanded(knowledgeArea)" class="tree-indent">
+        <div [ngbCollapse]="!treeControl().isExpanded(knowledgeArea)" class="tree-indent">
             <ng-container matTreeNodeOutlet />
             @for (competency of knowledgeArea.competencies; track competency.id) {
                 <div class="card tree-card" [class.d-none]="!competency.isVisible">
-                    <ng-container [ngTemplateOutlet]="competencyTemplate" [ngTemplateOutletContext]="{ competency: competency, knowledgeArea: knowledgeArea }" />
+                    <ng-container [ngTemplateOutlet]="competencyTemplate()" [ngTemplateOutletContext]="{ competency: competency, knowledgeArea: knowledgeArea }" />
                 </div>
             }
             @if (!knowledgeArea.children?.length && !knowledgeArea.competencies?.length) {

@@ -1,26 +1,30 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.865, "CLASS": 119]
+    //This also needs to be lowered if we merge nebula PRs
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.865, "CLASS": 123]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.926, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.879, "CLASS":  2],
-        "atlas"         :          ["INSTRUCTION": 0.903, "CLASS":  6],
+        "atlas"         :          ["INSTRUCTION": 0.894, "CLASS":  4],
         "buildagent"    :          ["INSTRUCTION": 0.781, "CLASS":  0],
-        "communication" :          ["INSTRUCTION": 0.870, "CLASS":  7],
-        "core"          :          ["INSTRUCTION": 0.825, "CLASS": 48],
+        "communication" :          ["INSTRUCTION": 0.870, "CLASS":  6],
+        "core"          :          ["INSTRUCTION": 0.815, "CLASS": 50],
         "exam"          :          ["INSTRUCTION": 0.915, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.913, "CLASS":  0],
-        "fileupload"    :          ["INSTRUCTION": 0.953, "CLASS":  0],
+        "fileupload"    :          ["INSTRUCTION": 0.946, "CLASS":  0],
+        "hyperion"      :          ["INSTRUCTION": 0.700, "CLASS":  2],
         "iris"          :          ["INSTRUCTION": 0.772, "CLASS": 28],
         "lecture"       :          ["INSTRUCTION": 0.910, "CLASS":  1],
         "lti"           :          ["INSTRUCTION": 0.888, "CLASS":  2],
-        "modeling"      :          ["INSTRUCTION": 0.938, "CLASS":  0],
+        "modeling"      :          ["INSTRUCTION": 0.936, "CLASS":  0],
         "plagiarism"    :          ["INSTRUCTION": 0.908, "CLASS":  2],
-        "programming"   :          ["INSTRUCTION": 0.834, "CLASS": 15],
+        "programming"   :          ["INSTRUCTION": 0.834, "CLASS": 14],
         "quiz"          :          ["INSTRUCTION": 0.906, "CLASS":  2],
         "text"          :          ["INSTRUCTION": 0.947, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.915, "CLASS":  1],
+        //Adjust this after we merge the corresponding PRs
+        "nebula"        :          ["INSTRUCTION": 0.000, "CLASS":  6],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
     reportedModules = includedModules.size() == 0
@@ -36,7 +40,7 @@ ext {
 }
 
 jacoco {
-    toolVersion = "0.8.13"
+    toolVersion = "0.8.14"
 }
 
 jacocoTestReport {

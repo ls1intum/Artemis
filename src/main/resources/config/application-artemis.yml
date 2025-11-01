@@ -106,21 +106,24 @@ artemis:
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
 
+  nebula: # The nebula module is used for llm features such as faq-rewriting and lecture transcription
+    enabled: false
+    url: <your-nebula-url>
+    secret-token: <your-secret>
 
-# Configure Spring AI, if you want to use Hyperion
+# Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
   ai:
-    model:
-      chat: none #disable any spring ai interaction
     chat:
       client:
-        enabled: ${artemis.hyperion.enabled} # Enable the chat client if hyperion is enabled
+        enabled: #{${artemis.hyperion.enabled} or ${artemis.atlas.enabled}}
     # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
     azure:
       openai:
         api-key: <azure_openai_key>
         # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets endpoint automatically
         endpoint: <azure_openai_endpoint>
+        # deployment-name should match the Azure OpenAI deployment
         chat:
           options:
             deployment-name: <azure_openai_deployment_name or openai_model_name>

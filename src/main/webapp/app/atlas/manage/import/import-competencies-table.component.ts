@@ -1,4 +1,4 @@
-import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef } from '@angular/core';
+import { Component, TemplateRef, contentChild, input, model } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
@@ -15,23 +15,17 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     templateUrl: './import-competencies-table.component.html',
     imports: [SortDirective, SortByDirective, FaIconComponent, TranslateDirective, NgTemplateOutlet, NgbPagination, HtmlForMarkdownPipe],
 })
-export class ImportCompetenciesTableComponent implements OnInit {
-    @Input() content: SearchResult<Competency>;
-    @Input() search: PageableSearch;
-    @Input() displayPagination = true;
+export class ImportCompetenciesTableComponent {
+    content = input.required<SearchResult<Competency>>();
+    search = model.required<PageableSearch>();
+    displayPagination = input<boolean>(true);
 
-    @Output() searchChange = new EventEmitter<PageableSearch>();
+    buttonsTemplate = contentChild(TemplateRef<any>);
 
-    @ContentChild(TemplateRef) buttonsTemplate: TemplateRef<any>;
-
-    ascending: boolean;
+    ascending = false;
 
     // Icons
     readonly faSort = faSort;
-
-    ngOnInit() {
-        this.ascending = this.search.sortingOrder === SortingOrder.ASCENDING;
-    }
 
     /**
      * Callback function for when the user navigates through the page results
@@ -39,8 +33,7 @@ export class ImportCompetenciesTableComponent implements OnInit {
      * @param pageNumber The current page number
      */
     onPageChange(pageNumber: number) {
-        this.search.page = pageNumber;
-        this.searchChange.emit(this.search);
+        this.search.update((search) => ({ ...search, page: pageNumber }));
     }
 
     /**
@@ -48,8 +41,11 @@ export class ImportCompetenciesTableComponent implements OnInit {
      * @param change an object containing the column to sort by and boolean if the sort is ascending
      */
     onSortChange(change: { predicate: string; ascending: boolean }) {
-        this.search.sortedColumn = change.predicate;
-        this.search.sortingOrder = change.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
-        this.searchChange.emit(this.search);
+        this.search.update((search) => ({
+            ...search,
+            sortedColumn: change.predicate,
+            sortingOrder: change.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+        }));
+        this.ascending = change.ascending;
     }
 }

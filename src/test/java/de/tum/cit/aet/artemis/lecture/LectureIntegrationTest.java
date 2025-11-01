@@ -6,11 +6,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +24,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -36,6 +42,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
@@ -90,28 +97,33 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private Lecture lecture1;
 
+    private Lecture lecture2;
+
     private AttachmentVideoUnit attachmentVideoUnit;
 
     private Competency competency;
 
+    @Autowired
+    private PlatformTransactionManager txManager;
+
     @BeforeEach
     void initTestCase() throws Exception {
+        String title = "Lecture 1";
+        new TransactionTemplate(txManager).execute(status -> {
+            lectureRepository.deleteAttachmentsByLectureTitle(title);
+            lectureRepository.deleteLectureLevelAttachments(title);
+            lectureRepository.deleteLectureUnitsByLectureTitle(title);
+            lectureRepository.deleteLecturesByTitle(title);
+            return null;
+        });
+
         int numberOfTutors = 2;
         userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
-        var lecture = this.course1.getLectures().stream().findFirst().orElseThrow();
-        lecture.setTitle("Lecture " + new Random().nextInt()); // needed for search by title
-        Channel channel = new Channel();
-        channel.setCourse(course1);
-        channel.setIsAnnouncementChannel(false);
-        channel.setIsPublic(true);
-        channel.setIsArchived(false);
-        channel.setName("lecture-channel");
-        lecture.setTitle("Lecture " + lecture.getId()); // needed for search by title
-        lecture1 = lectureRepository.save(lecture);
-        channel.setLecture(this.lecture1);
-        channelRepository.save(channel);
+
+        createChannelsForLectures();
+
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
 
         // Add users that are not in the course
@@ -146,6 +158,34 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
+    }
+
+    private void createChannelsForLectures() {
+        List<Lecture> lectures = this.course1.getLectures().stream().toList();
+
+        Lecture firstLecture = lectures.getFirst();
+        firstLecture.setTitle("Lecture 1");
+        Channel firstChannel = new Channel();
+        firstChannel.setCourse(course1);
+        firstChannel.setIsAnnouncementChannel(false);
+        firstChannel.setIsPublic(true);
+        firstChannel.setIsArchived(false);
+        firstChannel.setName("lecture-lecture-1");
+        this.lecture1 = lectureRepository.save(firstLecture);
+        firstChannel.setLecture(this.lecture1);
+        channelRepository.save(firstChannel);
+
+        Lecture lastLecture = lectures.getLast();
+        lastLecture.setTitle("Lecture 2");
+        Channel secondChannel = new Channel();
+        secondChannel.setCourse(course1);
+        secondChannel.setIsAnnouncementChannel(false);
+        secondChannel.setIsPublic(true);
+        secondChannel.setIsArchived(false);
+        secondChannel.setName("lecture-lecture-2");
+        this.lecture2 = lectureRepository.save(lastLecture);
+        secondChannel.setLecture(this.lecture2);
+        channelRepository.save(secondChannel);
     }
 
     @Test
@@ -479,5 +519,77 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Channel channel = channelRepository.findChannelByLectureId(lecture.getId());
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo("lecture-" + lecture.getTitle().toLowerCase().replaceAll("[-\\s]+", "-")); // default name of imported lecture channel
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateLectureSeriesShouldReturnForbiddenIfCourseDoesNotExist() throws Exception {
+        ZoneId timezone = ZoneId.of("Europe/Berlin");
+        ZonedDateTime startLecture1 = ZonedDateTime.of(1989, 11, 9, 18, 53, 0, 0, timezone);
+        ZonedDateTime endLecture1 = startLecture1.plusHours(1);
+        String titleLecture1 = "Requirements Engineering";
+        LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleLecture1, startLecture1, endLecture1);
+
+        request.postWithoutResponseBody("/api/lecture/courses/-1/lectures", List.of(dto1), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCreateLectureSeriesShouldReturnForbiddenIfUserNotAtLeastInstructor() throws Exception {
+        ZoneId timezone = ZoneId.of("Europe/Berlin");
+        ZonedDateTime startLecture1 = ZonedDateTime.of(1989, 11, 9, 18, 53, 0, 0, timezone);
+        ZonedDateTime endLecture1 = startLecture1.plusHours(1);
+        String titleLecture1 = "Requirements Engineering";
+        LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleLecture1, startLecture1, endLecture1);
+
+        request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateLectureSeriesAndCorrectLectureAndChannelNames() throws Exception {
+        ZonedDateTime startNewLecture1 = lecture1.getStartDate().minusDays(3);
+        ZonedDateTime endNewLecture1 = startNewLecture1.plusHours(1);
+        String titleNewLecture1 = "Requirements";
+        ZonedDateTime startNewLecture2 = startNewLecture1.plusWeeks(1);
+        ZonedDateTime endNewLecture2 = startNewLecture2.plusHours(1);
+        String titleNewLecture2 = "Modeling";
+        LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleNewLecture1, startNewLecture1, endNewLecture1);
+        LectureSeriesCreateLectureDTO dto2 = new LectureSeriesCreateLectureDTO(titleNewLecture2, startNewLecture2, endNewLecture2);
+
+        request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1, dto2), HttpStatus.NO_CONTENT);
+
+        List<Lecture> lectures = lectureRepository.findAllByCourseId(course1.getId()).stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
+        assertThat(lectures).hasSize(4);
+        Lecture firstLecture = lectures.getFirst();
+        Lecture secondLecture = lectures.get(1);
+        Lecture thirdLecture = lectures.get(2);
+        Lecture fourthLecture = lectures.get(3);
+
+        assertThat(firstLecture.getTitle()).isEqualTo(titleNewLecture1);
+        assertThat(firstLecture.getStartDate().toInstant()).isEqualTo(startNewLecture1.toInstant());
+        assertThat(firstLecture.getEndDate().toInstant()).isEqualTo(endNewLecture1.toInstant());
+        assertThat(secondLecture.getId()).isEqualTo(lecture1.getId());
+        assertThat(secondLecture.getTitle()).isEqualTo("Lecture 2");
+        assertThat(thirdLecture.getTitle()).isEqualTo(titleNewLecture2);
+        assertThat(thirdLecture.getStartDate().toInstant()).isEqualTo(startNewLecture2.toInstant());
+        assertThat(thirdLecture.getEndDate().toInstant()).isEqualTo(endNewLecture2.toInstant());
+        assertThat(fourthLecture.getId()).isEqualTo(lecture2.getId());
+        assertThat(fourthLecture.getTitle()).isEqualTo("Lecture 4");
+
+        Set<Channel> channels = channelRepository.findLectureChannelsByCourseId(course1.getId());
+
+        assertThat(channels.stream().map(Channel::getLecture).collect(Collectors.toSet())).containsExactlyInAnyOrderElementsOf(lectures);
+
+        Map<Long, Channel> lectureIdToChannelMap = channels.stream().collect(Collectors.toMap(channel -> channel.getLecture().getId(), Function.identity()));
+        Channel firstLectureChannel = lectureIdToChannelMap.get(firstLecture.getId());
+        Channel secondLectureChannel = lectureIdToChannelMap.get(secondLecture.getId());
+        Channel thirdLectureChannel = lectureIdToChannelMap.get(thirdLecture.getId());
+        Channel fourthLectureChannel = lectureIdToChannelMap.get(fourthLecture.getId());
+
+        assertThat(firstLectureChannel.getName()).isEqualTo("lecture-requirements");
+        assertThat(secondLectureChannel.getName()).isEqualTo("lecture-lecture-2");
+        assertThat(thirdLectureChannel.getName()).isEqualTo("lecture-modeling");
+        assertThat(fourthLectureChannel.getName()).isEqualTo("lecture-lecture-4");
     }
 }

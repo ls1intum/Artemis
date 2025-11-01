@@ -47,7 +47,7 @@
                     "friendly": "Friendly"
                 },
                 "profileSaved": "Feedback learner profile saved",
-                "invalidRange": "Values must be true or false",
+                "invalidRange": "Values must be between 1 and 3",
                 "error": "Feedback learner profile could not be saved",
                 "setPreferencesButton": "Set your feedback preferences",
                 "replayOnboardingButton": "Replay onboarding"

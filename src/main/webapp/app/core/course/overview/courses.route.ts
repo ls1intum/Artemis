@@ -272,8 +272,8 @@ export const routes: Routes = [
                     {
                         path: ':tutorialGroupId',
                         loadComponent: () =>
-                            import('app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component').then(
-                                (m) => m.CourseTutorialGroupDetailComponent,
+                            import('app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component').then(
+                                (m) => m.CourseTutorialGroupDetailContainerComponent,
                             ),
                         data: {
                             authorities: [Authority.USER],
@@ -334,7 +334,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.TRAINING,
-                loadComponent: () => import('app/core/course/overview/course-training/course-training.component').then((m) => m.CourseTrainingComponent),
+                loadComponent: () => import('app/quiz/overview/course-training/course-training.component').then((m) => m.CourseTrainingComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.training',
@@ -345,7 +345,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.TRAINING_QUIZ,
-                loadComponent: () => import('app/quiz/overview/course-training-quiz/course-training-quiz.component').then((m) => m.CourseTrainingQuizComponent),
+                loadComponent: () => import('app/quiz/overview/course-training/course-training-quiz/course-training-quiz.component').then((m) => m.CourseTrainingQuizComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.training',

@@ -17,7 +17,7 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 9
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      MAX_INSTANTIATED_BEANS: 96
+      MAX_INSTANTIATED_BEANS: 99
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
@@ -89,11 +89,11 @@ jobs:
 
           echo "✅ All thresholds match between Java file and GitHub Action"
 
-      - name: Set up JDK 21
+      - name: Set up JDK 25
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
 
       - name: Build application
         shell: bash

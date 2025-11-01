@@ -3,13 +3,18 @@
     class="instructions-wrapper card collapsable-card"
     [ngStyle]="collapsed ? (isAssessmentMode ? { height: '200px' } : { height: '250px' }) : { height: '100%' }"
 >
-    <div class="card-header d-flex justify-content-left text-white bg-primary" (click)="toggleEditorCollapse($event)">
+    <div class="card-header d-flex justify-content-left text-white bg-primary" (click)="!disableCollapse() && toggleEditorCollapse($event)">
         <h3 class="card-title">
             @if (!collapsed) {
                 <span>
                     <fa-icon [icon]="farListAlt" />
                     @if (!isAssessmentMode) {
-                        <span class="ms-2" jhiTranslate="artemisApp.exercise.problemStatement"></span>
+                        @if (!isEditor()) {
+                            <span class="header" jhiTranslate="artemisApp.exercise.problemStatement"></span>
+                        }
+                        @if (isEditor()) {
+                            <span class="header" jhiTranslate="artemisApp.exercise.problemStatementEditor"></span>
+                        }
                     }
                     @if (isAssessmentMode) {
                         <span class="ms-2" jhiTranslate="artemisApp.exercise.instructions"></span>
@@ -18,23 +23,32 @@
             }
             @if (collapsed) {
                 <span class="collapsed-instructions-card">
-                    <fa-icon class="top-icon" [icon]="faChevronLeft" />
+                    @if (!disableCollapse()) {
+                        <fa-icon class="top-icon" [icon]="faChevronLeft" />
+                    }
                     <fa-icon [icon]="farListAlt" class="fa-rotate-90" id="panel-symbol" />
                     @if (!isAssessmentMode) {
-                        <span class="header" jhiTranslate="artemisApp.exercise.problemStatement"></span>
+                        @if (!isEditor()) {
+                            <span class="header" jhiTranslate="artemisApp.exercise.problemStatement"></span>
+                        }
+                        @if (isEditor()) {
+                            <span class="header" jhiTranslate="artemisApp.exercise.problemStatementEditor"></span>
+                        }
                     }
                     @if (isAssessmentMode) {
                         <span class="header" jhiTranslate="artemisApp.exercise.instructions"></span>
                     }
-                    <fa-icon class="bottom-icon" [icon]="faChevronLeft" />
+                    @if (!disableCollapse()) {
+                        <fa-icon class="bottom-icon" [icon]="faChevronLeft" />
+                    }
                 </span>
             }
         </h3>
-        @if (!collapsed) {
+        @if (!collapsed && !disableCollapse()) {
             <fa-icon class="ms-auto clickable" [icon]="faChevronRight" />
         }
     </div>
-    <div style="display: contents" [hidden]="collapsed">
+    <div class="instructions-wrapper__content" [hidden]="collapsed">
         <ng-content />
     </div>
     <!-- Required for resizing; don't remove empty span -->

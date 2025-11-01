@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject } from '@angular/core';
+import { Component, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -23,38 +23,26 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class MultipleChoiceQuestionComponent {
     private artemisMarkdown = inject(ArtemisMarkdownService);
 
-    _question: MultipleChoiceQuestion;
-
-    @Input()
-    set question(question: MultipleChoiceQuestion) {
-        this._question = question;
-        this.watchCollection();
-    }
-    get question(): MultipleChoiceQuestion {
-        return this._question;
-    }
+    question = input.required<MultipleChoiceQuestion>();
     // TODO: Map vs. Array --> consistency
-    @Input()
-    selectedAnswerOptions: AnswerOption[];
-    @Input()
-    clickDisabled: boolean;
-    @Input()
-    showResult: boolean;
-    @Input()
-    questionIndex: number;
-    @Input()
-    score: number;
-    @Input()
-    forceSampleSolution: boolean;
-    @Input()
-    fnOnSelection: any;
-    @Input()
-    submittedResult: Result;
-    @Input()
-    quizQuestions: QuizQuestion[] | undefined;
+    selectedAnswerOptions = input.required<AnswerOption[]>();
+    _selectedAnswerOptions: AnswerOption[] = [];
+    clickDisabled = input<boolean>(false);
+    showResult = input<boolean>(false);
+    questionIndex = input<number>(0);
+    score = input<number>(0);
+    forceSampleSolution = input<boolean>(false);
+    fnOnSelection = input<any>();
+    submittedResult = input<Result>();
+    quizQuestions = input<QuizQuestion[] | undefined>();
 
-    @Output()
-    selectedAnswerOptionsChange = new EventEmitter<AnswerOption[]>();
+    selectedAnswerOptionsChange = output<AnswerOption[]>();
+
+    constructor() {
+        effect(() => {
+            this.watchCollection();
+        });
+    }
 
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
 
@@ -72,10 +60,10 @@ export class MultipleChoiceQuestionComponent {
      */
     watchCollection(): void {
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
-        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
-        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.question.hint);
-        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.question.explanation);
-        this.renderedQuestion.renderedSubElements = this.question.answerOptions!.map((answerOption) => {
+        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.question().text);
+        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.question().hint);
+        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.question().explanation);
+        this.renderedQuestion.renderedSubElements = (this.question().answerOptions ?? []).map((answerOption) => {
             const renderedAnswerOption = new RenderedQuizQuestionMarkDownElement();
             renderedAnswerOption.text = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.text);
             renderedAnswerOption.hint = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.hint);
@@ -89,26 +77,28 @@ export class MultipleChoiceQuestionComponent {
      * @param answerOption The answer option to toggle
      */
     toggleSelection(answerOption: AnswerOption): void {
-        if (this.clickDisabled) {
+        if (this.clickDisabled()) {
             // Do nothing
+            this._selectedAnswerOptions = this.selectedAnswerOptions();
             return;
         }
         if (this.isAnswerOptionSelected(answerOption)) {
-            this.selectedAnswerOptions = this.selectedAnswerOptions.filter((selectedAnswerOption) => {
+            this._selectedAnswerOptions = this.selectedAnswerOptions().filter((selectedAnswerOption) => {
                 if (answerOption.id) {
                     return selectedAnswerOption.id !== answerOption.id;
                 }
                 return selectedAnswerOption !== answerOption;
             });
         } else if (this.isSingleChoice) {
-            this.selectedAnswerOptions = [answerOption];
+            this._selectedAnswerOptions = [answerOption];
         } else {
-            this.selectedAnswerOptions.push(answerOption);
+            this._selectedAnswerOptions.push(answerOption);
         }
-        this.selectedAnswerOptionsChange.emit(this.selectedAnswerOptions);
+        this.selectedAnswerOptionsChange.emit(this._selectedAnswerOptions);
         /** Only execute the onSelection function if we received such input **/
-        if (this.fnOnSelection) {
-            this.fnOnSelection();
+        const fnOnSelectionFn = this.fnOnSelection();
+        if (fnOnSelectionFn && typeof fnOnSelectionFn === 'function') {
+            fnOnSelectionFn();
         }
     }
 
@@ -118,7 +108,7 @@ export class MultipleChoiceQuestionComponent {
      */
     isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
-            this.selectedAnswerOptions.findIndex((selectedAnswerOption) => {
+            this.selectedAnswerOptions().findIndex((selectedAnswerOption) => {
                 if (answerOption.id) {
                     return selectedAnswerOption.id === answerOption.id;
                 }
@@ -128,6 +118,6 @@ export class MultipleChoiceQuestionComponent {
     }
 
     get isSingleChoice() {
-        return this.question.singleChoice;
+        return this.question().singleChoice;
     }
 }

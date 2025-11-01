@@ -1,0 +1,123 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    container-type: inline-size;
+    container-name: frame;
+
+    p:first-of-type {
+        margin-top: 1.5rem;
+    }
+
+    p {
+        margin-bottom: 0;
+    }
+
+    .enumerator {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 1.3rem;
+        height: 1.3rem;
+        border-radius: 0.3rem;
+
+        &.primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        &.secondary {
+            background-color: var(--body-bg);
+        }
+
+        &.edited {
+            background-color: var(--warning);
+            color: black;
+        }
+    }
+
+    .input-row {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+
+        @container frame (max-width: 810px) {
+            flex-wrap: wrap;
+        }
+
+        .initial-lecture-delete-button {
+            flex-shrink: 0;
+
+            &:hover {
+                color: var(--danger);
+            }
+        }
+
+        .long-lecture-warning {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--warning);
+
+            .warning-text {
+                font-size: 0.75rem;
+            }
+        }
+    }
+
+    h3 {
+        margin: 0;
+    }
+
+    .draft-card {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        gap: 0.5rem;
+        background-color: var(--body-bg);
+        border-radius: 0.5rem;
+
+        .draft-title {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .card-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+    }
+
+    .save-and-cancel-section {
+        display: flex;
+        justify-content: end;
+        gap: 1rem;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: delayLoading 0s 0.5s forwards;
+        opacity: 0;
+    }
+
+    .primary-on-hover:hover {
+        color: var(--primary);
+    }
+}
+
+@keyframes delayLoading {
+    to {
+        opacity: 1;
+    }
+}
