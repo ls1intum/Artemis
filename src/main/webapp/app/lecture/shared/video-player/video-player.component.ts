@@ -1,7 +1,6 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, SecurityContext, computed, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 // Lazy-load video.js at runtime; type-only import doesn't pull code into initial bundle.
@@ -71,8 +70,6 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     protected readonly faChevronUp = faChevronUp;
     protected readonly faChevronDown = faChevronDown;
     protected readonly faTimes = faTimes;
-
-    private readonly sanitizer = inject(DomSanitizer);
 
     /** Filtered transcript segments based on search query */
     filteredSegments = computed(() => this.computeFilteredSegments());
@@ -222,23 +219,24 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /** Highlight search matches in segment text */
     highlightText(text: string): string {
+        // Escape HTML entities FIRST to prevent XSS attacks
+        const escapedText = this.escapeHtml(text);
+
         const query = this.searchQuery().trim();
         if (!query) {
-            // Escape HTML entities in the text to prevent XSS
-            const escapedText = this.escapeHtml(text);
-            return this.sanitizer.sanitize(SecurityContext.HTML, escapedText) || '';
+            return escapedText;
         }
 
-        // Escape HTML entities in both text and query to prevent XSS
-        const escapedText = this.escapeHtml(text);
+        // Escape the query as well to prevent XSS in search terms
         const escapedQuery = this.escapeHtml(query);
 
         // Use escaped query for regex matching
         const regex = new RegExp(`(${this.escapeRegExp(escapedQuery)})`, 'gi');
         const highlighted = escapedText.replace(regex, '<mark>$1</mark>');
 
-        // Sanitize the result to ensure only safe HTML is returned
-        return this.sanitizer.sanitize(SecurityContext.HTML, highlighted) || '';
+        // Safe to return: all user content is escaped, only <mark> tags are intentional HTML
+        // Angular's [innerHTML] will preserve <mark> while keeping escaped HTML entities safe
+        return highlighted;
     }
 
     /** Escape HTML special characters to prevent XSS */
