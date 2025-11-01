@@ -28,6 +28,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
     private final RTopic notificationTopic;
 
     private final Map<UUID, Integer> topicListenerRegistrations = new ConcurrentHashMap<>();
+
     private final Map<UUID, Integer> queueListenerRegistrations = new ConcurrentHashMap<>();
 
     public RedissonDistributedQueue(RQueue<T> queue, RTopic notificationTopic) {
