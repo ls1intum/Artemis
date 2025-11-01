@@ -5,8 +5,8 @@ import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lectu
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
-import { HttpClient } from '@angular/common/http';
-import { HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import {
     faDownload,
     faFile,
@@ -31,7 +31,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/video-player/video-player.component';
 import { firstValueFrom, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
@@ -45,6 +45,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
     private readonly http = inject(HttpClient);
+    private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
@@ -115,17 +116,20 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private fetchTranscript(): void {
-        const id = this.lectureUnit().id;
-        const url = `/api/lecture/lecture-unit/${id}/transcript`;
+        const id = this.lectureUnit().id!;
 
         void firstValueFrom(
-            this.http.get<{ segments: TranscriptSegment[] }>(url).pipe(
-                catchError((err) => {
-                    return of({ segments: [] });
+            this.lectureTranscriptionService.getTranscription(id).pipe(
+                map((dto) => {
+                    if (!dto || !dto.segments) {
+                        return [];
+                    }
+                    // Filter and map to ensure all required fields are present
+                    return dto.segments.filter((seg): seg is TranscriptSegment => seg.startTime != null && seg.endTime != null && seg.text != null) as TranscriptSegment[];
                 }),
             ),
-        ).then((res) => {
-            this.transcriptSegments.set(res.segments ?? []);
+        ).then((segments) => {
+            this.transcriptSegments.set(segments);
         });
     }
 

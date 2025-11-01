@@ -9,6 +9,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ScienceService } from 'app/shared/science/science.service';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { of } from 'rxjs';
 import {
     IconDefinition,
     faFile,
@@ -31,6 +34,7 @@ describe('AttachmentVideoUnitComponent', () => {
     let scienceService: ScienceService;
     let fileService: FileService;
     let httpMock: HttpTestingController;
+    let lectureTranscriptionService: LectureTranscriptionService;
 
     let component: AttachmentVideoUnitComponent;
     let fixture: ComponentFixture<AttachmentVideoUnitComponent>;
@@ -56,12 +60,14 @@ describe('AttachmentVideoUnitComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FileService, useClass: MockFileService },
                 MockProvider(ScienceService),
+                MockProvider(LectureTranscriptionService),
             ],
         }).compileComponents();
 
         scienceService = TestBed.inject(ScienceService);
         fileService = TestBed.inject(FileService);
         httpMock = TestBed.inject(HttpTestingController);
+        lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
 
         fixture = TestBed.createComponent(AttachmentVideoUnitComponent);
         component = fixture.componentInstance;
@@ -193,6 +199,13 @@ describe('AttachmentVideoUnitComponent', () => {
 
         (component as any).resolveTumLivePlaylist = jest.fn().mockResolvedValue(playlist);
 
+        const mockTranscriptDTO: LectureTranscriptionDTO = {
+            lectureUnitId: 1,
+            language: 'en',
+            segments: [{ startTime: 0, endTime: 2, text: 'Hello world', slideNumber: 3 }],
+        };
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(mockTranscriptDTO));
+
         component.transcriptSegments.set([{ startTime: 0, endTime: 1, text: 'old', slideNumber: 1 }]);
         component.playlistUrl.set('stale.m3u8');
 
@@ -208,14 +221,6 @@ describe('AttachmentVideoUnitComponent', () => {
         // Let the resolveTumLivePlaylist promise run (this triggers fetchTranscript)
         flushMicrotasks();
 
-        // Expect the transcript request
-        const req = httpMock.expectOne((r) => r.url.includes('/api/lecture/lecture-unit/') && r.url.endsWith('/transcript'));
-        expect(req.request.method).toBe('GET');
-        req.flush({ segments: [{ startTime: 0, endTime: 2, text: 'Hello world', slideNumber: 3 }] });
-
-        // Allow firstValueFrom(...).then(...) to update signals
-        flushMicrotasks();
-
         expect(component.playlistUrl()).toBe(playlist);
         expect(component.transcriptSegments()).toHaveLength(1);
         expect(component.hasTranscript()).toBeTrue();
@@ -224,19 +229,16 @@ describe('AttachmentVideoUnitComponent', () => {
     it('fetchTranscript: handles server error and keeps segments empty', fakeAsync(() => {
         fixture.detectChanges();
 
+        // Mock service to return undefined (simulating error)
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+
         // Call the private method directly to isolate error handling
         (component as any).fetchTranscript();
-
-        const req = httpMock.expectOne((r) => r.url.includes('/api/lecture/lecture-unit/') && r.url.endsWith('/transcript'));
-        expect(req.request.method).toBe('GET');
-
-        // Simulate server error; catchError turns it into { segments: [] }
-        req.flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
 
         // Let the Promise chain settle
         flushMicrotasks();
 
-        // Component state remains empty; no console expectations anymore
+        // Component state remains empty
         expect(component.transcriptSegments()).toEqual([]);
         expect(component.hasTranscript()).toBeFalse();
     }));
@@ -251,13 +253,15 @@ describe('AttachmentVideoUnitComponent', () => {
             .spyOn(component as any, 'resolveTumLivePlaylist')
             .mockResolvedValue(undefined);
 
+        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription');
+
         component.toggleCollapse(false);
 
         // Let the Promise chain finish
         flushMicrotasks();
 
-        // Ensure no transcript HTTP was made
-        httpMock.expectNone((r) => r.url.includes('/api/lecture/lecture-unit/') && r.url.endsWith('/transcript'));
+        // Ensure no transcript service call was made
+        expect(getTranscriptionSpy).not.toHaveBeenCalled();
 
         expect(component.playlistUrl()).toBeUndefined();
         expect(component.hasTranscript()).toBeFalse();
@@ -274,6 +278,13 @@ describe('AttachmentVideoUnitComponent', () => {
             .spyOn(component as any, 'resolveTumLivePlaylist')
             .mockResolvedValue('should-not-be-called');
 
+        const mockTranscriptDTO: LectureTranscriptionDTO = {
+            lectureUnitId: 1,
+            language: 'en',
+            segments: [{ startTime: 0, endTime: 5, text: 'Direct HLS transcript', slideNumber: 1 }],
+        };
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(mockTranscriptDTO));
+
         fixture.detectChanges();
 
         // Act
@@ -286,14 +297,6 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.playlistUrl()).toBe(m3u8Url);
 
         // Let any pending microtasks finish
-        flushMicrotasks();
-
-        // Expect the transcript request
-        const req = httpMock.expectOne((r) => r.url.includes('/api/lecture/lecture-unit/') && r.url.endsWith('/transcript'));
-        expect(req.request.method).toBe('GET');
-        req.flush({ segments: [{ startTime: 0, endTime: 5, text: 'Direct HLS transcript', slideNumber: 1 }] });
-
-        // Allow firstValueFrom(...).then(...) to update signals
         flushMicrotasks();
 
         expect(component.transcriptSegments()).toHaveLength(1);
