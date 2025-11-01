@@ -51,7 +51,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
-    private readonly videoUrlAllowList = [RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'), RegExp('^https://.+\\.m3u8($|\\?.*)')];
+    private readonly videoUrlAllowList = [RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$')];
 
     /**
      * Return the URL of the video source
@@ -95,13 +95,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.fetchTranscript();
                 return;
             }
-            // For non-playlist URLs (e.g., TUM Live), try to resolve a .m3u8 playlist
-            this.resolveTumLivePlaylist(src).then((url) => {
-                if (url) {
-                    this.playlistUrl.set(url);
-                    this.fetchTranscript();
-                }
-            });
+            // For non-playlist URLs, try to resolve a .m3u8 playlist (only for validated TUM Live URLs)
+            if (this.videoUrlAllowList.some((pattern) => pattern.test(src))) {
+                this.resolveTumLivePlaylist(src).then((url) => {
+                    if (url) {
+                        this.playlistUrl.set(url);
+                        this.fetchTranscript();
+                    }
+                });
+            }
         }
     }
 
