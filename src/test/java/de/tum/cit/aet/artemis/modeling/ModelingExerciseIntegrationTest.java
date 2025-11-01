@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
@@ -242,7 +243,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var params = new LinkedMultiValueMap<String, String>();
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
-        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", createdModelingExercise, ModelingExercise.class,
+        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(createdModelingExercise);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", updateModelingExerciseDTO, ModelingExercise.class,
                 HttpStatus.OK, params);
         assertThat(returnedModelingExercise.getGradingCriteria()).hasSameSizeAs(gradingCriteria);
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise);
@@ -255,7 +257,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateModelingExerciseWrongCourseId_asInstructor() throws Exception {
         // use an arbitrary course id that was not yet stored on the server to get a bad request in the PUT call
         ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(Long.MAX_VALUE, classExercise.getId());
-        request.put("/api/modeling/modeling-exercises", modelingExercise, HttpStatus.CONFLICT);
+        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(modelingExercise);
+        request.put("/api/modeling/modeling-exercises", updateModelingExerciseDTO, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -269,7 +272,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var params = new LinkedMultiValueMap<String, String>();
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
-        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class,
+        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(modelingExercise);
+        ModelingExercise returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", updateModelingExerciseDTO, ModelingExercise.class,
                 HttpStatus.OK, params);
 
         verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise);
@@ -288,8 +292,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // Assign new course to the modeling exercise.
         createdModelingExercise.setCourse(newCourse);
 
+        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(createdModelingExercise);
         // Modeling exercise update with the new course should fail.
-        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling/modeling-exercises", createdModelingExercise, ModelingExercise.class,
+        ModelingExercise returnedModelingExercise = request.putWithResponseBody("/api/modeling/modeling-exercises", updateModelingExerciseDTO, ModelingExercise.class,
                 HttpStatus.CONFLICT);
         assertThat(returnedModelingExercise).isNull();
     }
@@ -382,7 +387,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         }
 
         classExercise.setDueDate(ZonedDateTime.now().plusHours(12));
-        request.put("/api/modeling/modeling-exercises", classExercise, HttpStatus.OK);
+        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(classExercise);
+        request.put("/api/modeling/modeling-exercises", updateModelingExerciseDTO, HttpStatus.OK);
 
         {
             final var participations = studentParticipationRepository.findByExerciseId(classExercise.getId());
@@ -883,8 +889,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         gradingCriteria.removeIf(criterion -> criterion != toUpdate);
         classExercise.setGradingCriteria(gradingCriteria);
 
+        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(classExercise);
         ModelingExercise updatedModelingExercise = request.putWithResponseBody(
-                "/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", classExercise, ModelingExercise.class, HttpStatus.OK);
+                "/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", updateModelingExerciseDTO, ModelingExercise.class,
+                HttpStatus.OK);
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedModelingExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(updatedModelingExercise.getGradingCriteria(), instruction -> instruction.getCredits() == 3)).isPresent();
         assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
@@ -903,8 +911,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         gradingCriteria.removeIf(criterion -> criterion.getTitle() == null);
         classExercise.setGradingCriteria(gradingCriteria);
 
+        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(classExercise);
         ModelingExercise updatedModelingExercise = request.putWithResponseBody(
-                "/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", classExercise, ModelingExercise.class, HttpStatus.OK);
+                "/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", updateModelingExerciseDTO, ModelingExercise.class,
+                HttpStatus.OK);
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedModelingExercise);
         assertThat(updatedModelingExercise.getGradingCriteria()).hasSize(2);
         assertThat(updatedResults.getFirst().getScore()).isZero();
@@ -928,7 +938,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseToBeConflicted.setId(123456789L);
         modelingExerciseRepository.save(modelingExerciseToBeConflicted);
 
-        request.put("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate", modelingExerciseToBeConflicted, HttpStatus.CONFLICT);
+        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(modelingExerciseToBeConflicted);
+        request.put("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate", updateModelingExerciseDTO, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -1003,7 +1014,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // Update
         var created = modelingExerciseRepository.findByCourseIdWithCategories(classExercise.getCourseViaExerciseGroupOrCourseMember().getId()).getFirst();
         created.setTitle("AtlasML Update");
-        request.putWithResponseBody("/api/modeling/modeling-exercises", created, ModelingExercise.class, HttpStatus.OK);
+        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(created);
+        request.putWithResponseBody("/api/modeling/modeling-exercises", updateModelingExerciseDTO, ModelingExercise.class, HttpStatus.OK);
 
         // Delete
         request.delete("/api/modeling/modeling-exercises/" + created.getId(), HttpStatus.OK);

@@ -797,6 +797,12 @@ public class AuthorizationCheckService {
         }
     }
 
+    public void checkGivenExerciseIdSameForExerciseInRequestBodyIdElseThrow(Long exerciseId, Long exerciseInRequestBodyId) {
+        if (!exerciseId.equals(exerciseInRequestBodyId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
+        }
+    }
+
     public void checkIsAllowedToAssessExerciseElseThrow(Exercise exercise, User user, Long resultId) {
         if (!isAllowedToAssessExercise(exercise, user, resultId)) {
             throw new AccessForbiddenException("You are not allowed to assess this exercise!");
