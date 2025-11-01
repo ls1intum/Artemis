@@ -139,7 +139,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
             assertThatExceptionOfType(BadRequestAlertException.class).as("Should throw BadRequestAlertException for invalid repository type: " + invalidRepositoryType)
                     .isThrownBy(() -> athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), invalidRepositoryType))
                     .withMessageContaining("Invalid instructor repository type")
-                    .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("error.invalid.instructor.repository.type"));
+                    .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("invalid.instructor.repository.type"));
         }
     }
 

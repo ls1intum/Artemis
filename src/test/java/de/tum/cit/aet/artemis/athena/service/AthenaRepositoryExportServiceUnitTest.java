@@ -98,7 +98,7 @@ class AthenaRepositoryExportServiceUnitTest {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> athenaRepositoryExportService.getStudentRepositoryFilesContent(EXERCISE_ID, SUBMISSION_ID))
                 .withMessageContaining("Submission " + SUBMISSION_ID + " does not belong to exercise " + EXERCISE_ID)
                 .withMessageContaining("belongs to exercise " + wrongExerciseId)
-                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("error.submission.exercise.mismatch"));
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("submissionExerciseMismatch"));
     }
 
     @Test
