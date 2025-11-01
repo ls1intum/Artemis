@@ -93,7 +93,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
     @Override
     public void removeAll(Collection<T> items) {
         for (T item : items) {
-            if (queue.remove(item)) {
+            while (queue.remove(item)) {
                 publishSafely(QueueItemEvent.removed(item));
             }
         }
