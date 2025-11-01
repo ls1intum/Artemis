@@ -145,6 +145,8 @@ describe('AgentChatModalComponent', () => {
 
             expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
             expect(component.messages).toHaveLength(2);
+            expect(component.messages[0].content).toBe(welcomeMessage);
+            expect(component.messages[0].isUser).toBeFalse();
             expect(component.messages[1].content).toBe(welcomeMessage);
         });
 
