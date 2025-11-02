@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -81,6 +82,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestionStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
+import de.tum.cit.aet.artemis.quiz.dto.CompetencyExerciseLinkFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForCourseDTO;
@@ -322,9 +324,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private QuizExercise updateQuizExerciseWithFiles(QuizExercise quizExercise, List<String> fileNames, HttpStatus expectedStatus, MultiValueMap<String, String> params)
             throws Exception {
         QuizExerciseFromEditorDTO dto = new QuizExerciseFromEditorDTO(quizExercise.getTitle(), quizExercise.getChannelName(), quizExercise.getCategories(),
-                quizExercise.getCompetencyLinks(), quizExercise.getDifficulty(), quizExercise.getDuration(), quizExercise.isRandomizeQuestionOrder(), quizExercise.getQuizMode(),
-                quizExercise.getQuizBatches(), quizExercise.getReleaseDate(), quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getIncludedInOverallScore(),
-                quizExercise.getQuizQuestions());
+                quizExercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkFromEditorDTO::of).collect(Collectors.toSet()), quizExercise.getDifficulty(),
+                quizExercise.getDuration(), quizExercise.isRandomizeQuestionOrder(), quizExercise.getQuizMode(), quizExercise.getQuizBatches(), quizExercise.getReleaseDate(),
+                quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getIncludedInOverallScore(), quizExercise.getQuizQuestions());
 
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PATCH, "/api/quiz/quiz-exercises/" + quizExercise.getId());
         if (params != null) {
