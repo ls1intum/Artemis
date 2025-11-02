@@ -128,14 +128,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<SlideApi> slideApi;
 
-    private final CourseCompetencyRepository courseCompetencyRepository;
+    private final Optional<CourseCompetencyRepository> courseCompetencyRepository;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi, CourseCompetencyRepository courseCompetencyRepository) {
+            Optional<SlideApi> slideApi, Optional<CourseCompetencyRepository> courseCompetencyRepository) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -654,6 +654,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return The updated set of competency exercise links
      */
     private Set<CompetencyExerciseLink> updateCompetencyExerciseLinks(QuizExercise quizExercise, Set<CompetencyExerciseLinkFromEditorDTO> competencies, Course course) {
+        if (courseCompetencyRepository.isEmpty()) {
+            return Set.of();
+        }
+        CourseCompetencyRepository courseCompetencyRepository = this.courseCompetencyRepository.get();
         Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
         Set<Long> competencyIds = competencies.stream().map(CompetencyExerciseLinkFromEditorDTO::competencyId).collect(Collectors.toSet());
         Set<CourseCompetency> foundCompetencies = courseCompetencyRepository.findByIdInAndCourseId(competencyIds, course.getId());
