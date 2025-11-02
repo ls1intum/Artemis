@@ -20,6 +20,13 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
         @Nullable ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, @NotNull IncludedInOverallScore includedInOverallScore,
         @Nullable Set<QuizBatchForCourseDTO> quizBatches) {
 
+    /**
+     * Converts a QuizExercise to a QuizExerciseForCourseDTO
+     *
+     * @param quizExercise The quiz exercise to convert
+     * @param isEditable   Whether the quiz exercise is editable
+     * @return The converted QuizExerciseForCourseDTO
+     */
     public static QuizExerciseForCourseDTO of(QuizExercise quizExercise, boolean isEditable) {
         Set<QuizBatchForCourseDTO> batches = null;
         if (quizExercise.getQuizBatches() != null) {
@@ -37,34 +44,47 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
         if (o == null || getClass() != o.getClass())
             return false;
         QuizExerciseForCourseDTO that = (QuizExerciseForCourseDTO) o;
-        if (id != that.id)
+        if (id != that.id) {
             return false;
-        if (quizStarted != that.quizStarted)
+        }
+        if (quizStarted != that.quizStarted) {
             return false;
-        if (quizEnded != that.quizEnded)
+        }
+        if (quizEnded != that.quizEnded) {
             return false;
-        if (isEditable != that.isEditable)
+        }
+        if (isEditable != that.isEditable) {
             return false;
-        if (duration != that.duration)
+        }
+        if (duration != that.duration) {
             return false;
-        if (Double.compare(that.maxPoints, maxPoints) != 0)
+        }
+        if (Double.compare(that.maxPoints, maxPoints) != 0) {
             return false;
-        if (!title.equals(that.title))
+        }
+        if (!title.equals(that.title)) {
             return false;
-        if (!Objects.equals(releaseDate, that.releaseDate))
+        }
+        if (!Objects.equals(releaseDate, that.releaseDate)) {
             return false;
-        if (!Objects.equals(startDate, that.startDate))
+        }
+        if (!Objects.equals(startDate, that.startDate)) {
             return false;
-        if (!Objects.equals(dueDate, that.dueDate))
+        }
+        if (!Objects.equals(dueDate, that.dueDate)) {
             return false;
-        if (!includedInOverallScore.equals(that.includedInOverallScore))
+        }
+        if (!includedInOverallScore.equals(that.includedInOverallScore)) {
             return false;
+        }
         boolean thisBatchesEmpty = quizBatches == null || quizBatches.isEmpty();
         boolean thatBatchesEmpty = that.quizBatches == null || that.quizBatches.isEmpty();
-        if (thisBatchesEmpty && thatBatchesEmpty)
+        if (thisBatchesEmpty && thatBatchesEmpty) {
             return true;
-        if (thisBatchesEmpty != thatBatchesEmpty)
+        }
+        if (thisBatchesEmpty != thatBatchesEmpty) {
             return false;
+        }
         return quizBatches.equals(that.quizBatches);
     }
 

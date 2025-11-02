@@ -882,6 +882,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * Creates the appropriate DTO for a student based on the quiz state and batch.
      *
      * @param quizExercise the quiz exercise to map
+     * @param batch        the optional quiz batch associated with the student
      * @return the mapped DTO (QuizExerciseWithoutQuestionsDTO, QuizExerciseWithQuestionsDTO, or QuizExerciseWithSolutionsDTO)
      */
     public Object createQuizExerciseDTOForStudent(QuizExercise quizExercise, Optional<QuizBatch> batch) {
