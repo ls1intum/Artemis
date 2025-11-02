@@ -10,7 +10,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.zip.ZipFile;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -383,16 +381,11 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         // Add Git repo for export
         programmingExerciseUtilService.createGitRepository();
 
-        // Get exports from endpoint
+        // Test that the deprecated endpoint forwards successfully (returns 200 OK)
+        // The actual ZIP file functionality is tested via the internal endpoints in AthenaInternalResourceIntegrationTest
         var authHeaders = new HttpHeaders();
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
-        var repoZip = request.getFile("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, new LinkedMultiValueMap<>(),
-                authHeaders, null);
-
-        // Check that ZIP contains file
-        try (var zipFile = new ZipFile(repoZip)) {
-            assertThat(zipFile.size()).as("zip file contains files").isGreaterThan(0);
-        }
+        request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, Object.class, authHeaders);
     }
 
     @ParameterizedTest

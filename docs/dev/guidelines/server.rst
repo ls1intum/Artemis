@@ -483,6 +483,15 @@ The table contains all annotations for the corresponding minimum role including 
 
 If, for some reason, you need to deviate from these rules, use ``@ManualConfig``. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
 
+Use the ``@Internal`` annotation to mark methods or classes that should only be accessed from trusted internal networks.
+Access to these endpoints is restricted based on the configured `CIDR <https://de.wikipedia.org/wiki/Classless_Inter-Domain_Routing>`_ blocks (e.g ``127.0.0.0/8`` or ``fe80::/64``) in ``InternalAccessConfiguration`` (``artemis.security.internal.allowed-cidrs``).
+
+**Best Practices**
+
+* Annotate only endpoints that must not be exposed externally (e.g. for Edutelligence).
+* Requests are validated against the client IP using Spring’s IpAddressMatcher.
+* Unauthorized requests from outside the allowed CIDRs will be rejected.
+
 Tool-Based Authorization Annotations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 To enforce minimal access for external tools, Artemis provides an additional annotation ``@AllowedTools``.
