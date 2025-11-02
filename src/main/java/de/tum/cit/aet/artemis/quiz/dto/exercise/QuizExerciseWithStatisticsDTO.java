@@ -31,6 +31,12 @@ public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQu
         QuizPointStatisticDTO quizPointStatistic, Set<CompetencyExerciseLinkDTO> competencyLinks, Set<GradingCriterionDTO> gradingCriteria, String channelName,
         Boolean testRunParticipationsExist) {
 
+    /**
+     * Converts a QuizExercise entity to a QuizExerciseWithStatisticsDTO
+     *
+     * @param quizExercise the QuizExercise entity
+     * @return the corresponding QuizExerciseWithStatisticsDTO
+     */
     public static QuizExerciseWithStatisticsDTO of(QuizExercise quizExercise) {
         List<QuizQuestionWithStatisticsDTO> questionDTOs = quizExercise.getQuizQuestions().stream().map(QuizQuestionWithStatisticsDTO::of).collect(Collectors.toList());
         Set<String> categories = quizExercise.getCategories();

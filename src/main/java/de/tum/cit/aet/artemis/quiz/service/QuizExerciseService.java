@@ -678,6 +678,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @param quizExercise              The QuizExercise domain object to be updated
      * @param quizExerciseFromEditorDTO The DTO containing the properties to be merged into the domain object.
+     * @param course                    The course the quiz exercise belongs to
      */
     public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO, Course course) {
         if (quizExerciseFromEditorDTO.title() != null) {

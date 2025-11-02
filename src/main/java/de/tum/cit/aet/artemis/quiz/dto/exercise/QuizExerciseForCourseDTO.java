@@ -40,10 +40,12 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
+        }
         QuizExerciseForCourseDTO that = (QuizExerciseForCourseDTO) o;
         if (id != that.id) {
             return false;
@@ -100,17 +102,22 @@ record QuizBatchForCourseDTO(long id, @Nullable String password, boolean started
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
+        }
         QuizBatchForCourseDTO that = (QuizBatchForCourseDTO) o;
-        if (id != that.id)
+        if (id != that.id) {
             return false;
-        if (started != that.started)
+        }
+        if (started != that.started) {
             return false;
-        if (ended != that.ended)
+        }
+        if (ended != that.ended) {
             return false;
+        }
         return Objects.equals(password, that.password);
     }
 }

@@ -22,6 +22,12 @@ public record QuizQuestionStatisticDTO(Long id, Integer participantsRated, Integ
         @Nullable @JsonUnwrapped DragAndDropQuestionStatisticDTO dragAndDropQuestionStatisticDTO,
         @Nullable @JsonUnwrapped ShortAnswerQuestionStatisticDTO shortAnswerQuestionStatisticDTO, String type) {
 
+    /**
+     * Converts a QuizQuestionStatistic entity to a QuizQuestionStatisticDTO.
+     *
+     * @param quizQuestionStatistic the entity to convert
+     * @return the converted DTO
+     */
     public static QuizQuestionStatisticDTO of(QuizQuestionStatistic quizQuestionStatistic) {
         MultipleChoiceQuestionStatisticDTO multipleChoiceQuestionStatisticDTO = null;
         DragAndDropQuestionStatisticDTO dragAndDropQuestionStatisticDTO = null;
