@@ -129,3 +129,12 @@ spring:
             deployment-name: <azure_openai_deployment_name or openai_model_name>
             # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
             temperature: 1.0
+  # data:
+    # Redis configuration, in case `artemis.continuous-integration.data-store` is set to `Redis`
+    # redis:
+      # host: # hostname or IP
+      # port: 6379
+      # username: # username
+      # password: # password
+      # client-name *must* be unique for each Artemis instance and *must* start with `artemis`
+      # client-name: # artemis-...

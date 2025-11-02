@@ -324,6 +324,10 @@ dependencies {
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     // Required for Hibernate multi node caching
     runtimeOnly "com.hazelcast:hazelcast-hibernate53:5.2.0"
+    // alternative for Hazelcast
+    implementation "org.redisson:redisson:${redisson_version}"
+    implementation "org.redisson:redisson-spring-boot-starter:${redisson_version}"
+
 
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
     implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
@@ -493,7 +497,7 @@ dependencies {
     testImplementation "org.gradle:gradle-tooling-api:9.2.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
-
+    testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
