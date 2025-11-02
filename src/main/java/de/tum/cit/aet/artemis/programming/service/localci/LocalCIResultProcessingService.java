@@ -378,7 +378,7 @@ public class LocalCIResultProcessingService {
 
         @Override
         public void itemRemoved(ResultQueueItem item) {
-            log.debug("Result of removed from queue");
+            log.debug("Result removed from queue");
         }
     }
 

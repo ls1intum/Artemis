@@ -660,7 +660,7 @@ public class SharedQueueProcessingService {
      * <li>Defensive against Hazelcast lifecycle/availability issues.</li>
      * </ul>
      */
-    public class QueuedBuildJobItemListener implements QueueItemListener<BuildJobQueueItem> {
+    private class QueuedBuildJobItemListener implements QueueItemListener<BuildJobQueueItem> {
 
         @Override
         public void itemAdded(BuildJobQueueItem item) {
