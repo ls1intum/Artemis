@@ -1,0 +1,14 @@
+.frame {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+
+    .long-lecture-warning {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--warning);
+        margin-bottom: 1rem;
+        gap: 0.5rem;
+    }
+}

@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
@@ -33,6 +34,9 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ExamRoomTestRepository examRoomRepository;
 
+    @Autowired
+    private UserUtilService userUtilService;
+
     private static final String STUDENT_LOGIN = TEST_PREFIX + "student1";
 
     private static final String TUTOR_LOGIN = TEST_PREFIX + "tutor1";
@@ -47,14 +51,8 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static ExpectedRoom singleNoLayoutsExpectedRoom;
 
-    // @formatter:off
-    record ExpectedRoom (
-        String roomNumber,
-        String alternativeRoomNumber,
-        String name,
-        String alternativeName,
-        String building
-    ) {
+    record ExpectedRoom(String roomNumber, String alternativeRoomNumber, String name, String alternativeName, String building) {
+
         public ExpectedRoom(String roomNumber, String alternativeRoomNumber, String name, String alternativeName, String building) {
             this.roomNumber = roomNumber;
             this.alternativeRoomNumber = roomNumber.equals(alternativeRoomNumber) ? null : alternativeRoomNumber;
@@ -63,7 +61,6 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             this.building = building;
         }
     }
-    // @formatter:on
 
     @BeforeAll
     static void beforeAll() {
@@ -285,8 +282,8 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(newestRoomNames).contains(expectedNewRoomNames);  // we want to test the subset containment
         // because `newestRoomNames` could contain older rooms we didn't upload in the latest run
 
-        var newestUniqueExamRoomsFromDb = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream().map(er -> new ExamRoomDTO(er.getRoomNumber(),
-                er.getName(), er.getBuilding(), er.getSeats().size(),
+        var newestUniqueExamRoomsFromDb = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream().map(er -> new ExamRoomDTO(er.getId(),
+                er.getRoomNumber(), er.getName(), er.getBuilding(), er.getSeats().size(),
                 // Because of the INCLUDE.NON_EMPTY on the admin overview, we need to map to null on empty lists
                 er.getLayoutStrategies().isEmpty() ? null
                         : er.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
@@ -334,7 +331,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
 
         var adminOverview = request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomAdminOverviewDTO.class);
-        validateAdminOverview(adminOverview, 64 + 1, 16_141 + 528, 224 + 4, ExamRoomZipFiles.singleExamRoomName);
+        validateAdminOverview(adminOverview, 59 + 1, 14_589 + 528, 212 + 4, ExamRoomZipFiles.singleExamRoomName);
     }
 
     /* Tests for the DELETE /exam-rooms/outdated-and-unused endpoint */
@@ -391,7 +388,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         var deletionSummary = request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
         validateDeletionSummary(deletionSummary, 0);
-        validateDbStoredElementCounts(64, 16_141, 224);
+        validateDbStoredElementCounts(59, 14_589, 212);
     }
 
     @Test
@@ -405,7 +402,8 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(examRoomRepository.count()).isPositive();
 
         var deletionSummary = request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
-        validateDeletionSummary(deletionSummary, 64 * (ITERATIONS - 1));
-        validateDbStoredElementCounts(64, 16_141, 224);
+        validateDeletionSummary(deletionSummary, 59 * (ITERATIONS - 1));
+        validateDbStoredElementCounts(59, 14_589, 212);
     }
+
 }
