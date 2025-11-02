@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -100,6 +101,30 @@ public class QuizExerciseRetrievalResource {
         }
 
         return ResponseEntity.ok(quizExerciseDTOs);
+    }
+
+    /**
+     * GET /:examId/quiz-exercises : get all the quiz exercises of an exam.
+     *
+     * @param examId id of the exam of which all exercises should be fetched
+     * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
+     */
+    @GetMapping("exams/{examId}/quiz-exercises")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<QuizExercise>> getQuizExercisesForExam(@PathVariable Long examId) {
+        log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
+        List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
+        Course course = quizExercises.getFirst().getCourseViaExerciseGroupOrCourseMember();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        for (QuizExercise quizExercise : quizExercises) {
+            quizExercise.setQuizQuestions(null);
+            // not required in the returned json body
+            quizExercise.setStudentParticipations(null);
+            quizExercise.setCourse(null);
+            quizExercise.setExerciseGroup(null);
+        }
+        return ResponseEntity.ok(quizExercises);
     }
 
     /**
