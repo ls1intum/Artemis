@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.annotation.Nullable;
 import jakarta.ws.rs.BadRequestException;
@@ -112,9 +113,27 @@ public class IrisSessionService {
      * @throws BadRequestException If the session type is invalid
      */
     public <S extends IrisSession> void requestMessageFromIris(S session) {
+        requestMessageFromIris(session, Map.of());
+    }
+
+    /**
+     * Sends a request to Iris to get a message for the given session with uncommitted file changes.
+     * It decides which Iris subsystem should handle it based on the session type.
+     *
+     * @param session          The session to get a message for
+     * @param uncommittedFiles The uncommitted files from the client (working copy)
+     * @param <S>              The type of the session
+     * @throws BadRequestException If the session type is invalid or if uncommitted files are provided for unsupported session types
+     */
+    public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles) {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
-            chatWrapper.requestAndHandleResponse(wrapper.irisSession);
+            if (!uncommittedFiles.isEmpty() && session instanceof IrisProgrammingExerciseChatSession programmingSession) {
+                irisExerciseChatSessionService.requestAndHandleResponseWithUncommittedChanges(programmingSession, uncommittedFiles);
+            }
+            else {
+                chatWrapper.requestAndHandleResponse(wrapper.irisSession);
+            }
         }
         else {
             throw new BadRequestException("Invalid Iris session type " + session.getClass().getSimpleName());
