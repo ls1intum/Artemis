@@ -79,7 +79,7 @@ export class CourseTutorialGroupsComponent {
             const tutorialLectures = this.tutorialLectures();
             if (tutorialGroups.length > 0 || tutorialLectures.length > 0) {
                 this.prepareSidebarData(tutorialGroups, tutorialLectures);
-                this.navigateToTutorialGroup(tutorialGroups);
+                this.navigateToGroupOrLesson(tutorialGroups);
             }
         });
     }
@@ -185,15 +185,16 @@ export class CourseTutorialGroupsComponent {
         return accordionGroups;
     }
 
-    private navigateToTutorialGroup(tutorialGroups: TutorialGroup[]) {
+    private navigateToGroupOrLesson(tutorialGroups: TutorialGroup[]) {
         const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(tutorialGroups);
-        const lastSelectedTutorialGroup = this.getLastSelectedTutorialGroup();
+        const lastSelectedSubRoute = this.getLastSelectedSubRoute();
         const tutorialGroupId = this.activatedRoute.firstChild?.snapshot.params.tutorialGroupId;
         const lectureId = this.activatedRoute.firstChild?.snapshot.params.lectureId;
-        if (!tutorialGroupId && lastSelectedTutorialGroup) {
-            this.router.navigate([lastSelectedTutorialGroup], { relativeTo: this.activatedRoute, replaceUrl: true });
+        const nothingSelected = !tutorialGroupId && !lectureId;
+        if (nothingSelected && lastSelectedSubRoute) {
+            this.router.navigate([lastSelectedSubRoute], { relativeTo: this.activatedRoute, replaceUrl: true });
             this.itemSelected.set(true);
-        } else if (!tutorialGroupId && upcomingTutorialGroup) {
+        } else if (nothingSelected && upcomingTutorialGroup) {
             this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
             this.itemSelected.set(true);
         } else if (tutorialGroupId || lectureId) {
@@ -203,7 +204,7 @@ export class CourseTutorialGroupsComponent {
         }
     }
 
-    private getLastSelectedTutorialGroup(): string | undefined {
+    private getLastSelectedSubRoute(): string | undefined {
         return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.tutorialGroup.byCourse.' + this.courseId());
     }
 
