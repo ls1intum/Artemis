@@ -111,20 +111,18 @@ public class QuizExerciseRetrievalResource {
      */
     @GetMapping("exams/{examId}/quiz-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<QuizExercise>> getQuizExercisesForExam(@PathVariable Long examId) {
+    public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForExam(@PathVariable Long examId) {
         log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
+        List<QuizExerciseForCourseDTO> quizExerciseDTOs = new ArrayList<>();
         Course course = quizExercises.getFirst().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         for (QuizExercise quizExercise : quizExercises) {
-            quizExercise.setQuizQuestions(null);
-            // not required in the returned json body
-            quizExercise.setStudentParticipations(null);
-            quizExercise.setCourse(null);
-            quizExercise.setExerciseGroup(null);
+            boolean isEditable = false;
+            quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable));
         }
-        return ResponseEntity.ok(quizExercises);
+        return ResponseEntity.ok(quizExerciseDTOs);
     }
 
     /**
