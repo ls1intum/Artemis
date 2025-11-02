@@ -22,7 +22,7 @@ export class ExternalLlmUsageSettingsComponent implements OnInit {
 
     private updateExternalLLMUsageAccepted() {
         this.externalLLMUsageAccepted.set(
-            this.accountService.userIdentity?.externalLLMUsageAccepted ? dayjs(this.accountService.userIdentity.externalLLMUsageAccepted) : undefined,
+            this.accountService.userIdentity()?.externalLLMUsageAccepted ? dayjs(this.accountService.userIdentity()?.externalLLMUsageAccepted) : undefined,
         );
     }
 

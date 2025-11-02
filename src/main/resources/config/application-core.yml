@@ -9,6 +9,16 @@ artemis:
         enabled: true
     text:
         enabled: true
+    sharing:
+        enabled: false
+        # the shared common secret
+        apikey: <placeholder>
+        # a url used to force reinitialization of Sharing Platform configuration
+        # if not set, you have to wait for the next scheduled reinitialization request from the sharing platform
+        # (typically every 5 minutes)
+        serverurl: http://localhost:9001
+        actionname: Export to Artemis@testInstance
+
     tutorialgroup:
         enabled: true
     user-management:
@@ -16,7 +26,6 @@ artemis:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
             ask-users-to-setup: true # if true, users who have not set up a passkey will be asked to do so
             token-validity-in-seconds-for-passkey: 15552000 # jwtToken is valid for 180 days when using passkey authentication
-
 spring:
     liquibase:
         enabled: true

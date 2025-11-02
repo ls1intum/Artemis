@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.aeolus;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
@@ -9,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.annotation.PostConstruct;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -86,7 +86,10 @@ public class AeolusTemplateService {
                 String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
                 Optional<ProjectType> optionalProjectType = extractProjectType(filename);
                 String uniqueKey = directory + "_" + filename;
-                byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
+                byte[] fileContent;
+                try (InputStream inputStream = resource.getInputStream()) {
+                    fileContent = inputStream.readAllBytes();
+                }
                 String script = new String(fileContent, StandardCharsets.UTF_8);
                 if (!profileService.isLocalCIActive()) {
                     script = buildScriptProviderService.replacePlaceholders(script, null, null, null);

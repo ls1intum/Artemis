@@ -1,0 +1,82 @@
+<div class="agent-chat-modal">
+    <!-- Header -->
+    <div class="modal-header border-bottom bg-light">
+        <div class="d-flex align-items-center">
+            <fa-icon [icon]="robotIcon" class="text-primary me-2 fs-5" />
+            <h4 class="modal-title mb-0 text-body" jhiTranslate="artemisApp.agent.chat.title"></h4>
+        </div>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="modal-body p-0">
+        <div class="messages-container" #messagesContainer>
+            @for (message of messages; track message.id) {
+                <div class="message-wrapper" [class.user-message]="message.isUser" [class.agent-message]="!message.isUser">
+                    <div class="message-content">
+                        <div class="message-header">
+                            <fa-icon [icon]="message.isUser ? userIcon : robotIcon" [class.text-primary]="message.isUser" [class.text-success]="!message.isUser" class="me-2" />
+                            <span class="message-sender">
+                                {{ message.isUser ? ('artemisApp.agent.chat.you' | artemisTranslate) : ('artemisApp.agent.chat.aiAssistant' | artemisTranslate) }}
+                            </span>
+                        </div>
+                        <div class="message-text">{{ message.content }}</div>
+                    </div>
+                </div>
+            }
+
+            <!-- Typing Indicator -->
+            @if (isAgentTyping()) {
+                <div class="message-wrapper agent-message">
+                    <div class="message-content typing-indicator">
+                        <div class="message-header">
+                            <fa-icon [icon]="robotIcon" class="text-success me-2" />
+                            <span class="message-sender" jhiTranslate="artemisApp.agent.chat.aiAssistant"></span>
+                        </div>
+                        <div class="typing-animation">
+                            <span jhiTranslate="artemisApp.agent.chat.typing"></span>
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="modal-footer border-top bg-light">
+        <div class="input-container w-100">
+            <div class="d-flex">
+                <textarea
+                    #messageInput
+                    class="form-control message-input"
+                    [ngModel]="currentMessage()"
+                    (ngModelChange)="currentMessage.set($event)"
+                    (keypress)="onKeyPress($event)"
+                    (input)="onTextareaInput()"
+                    placeholder="Type your message here..."
+                    [disabled]="isAgentTyping()"
+                    rows="1"
+                ></textarea>
+                <button type="button" class="btn btn-primary send-button ms-2" (click)="sendMessage()" [disabled]="!canSendMessage()" aria-label="Send">
+                    <fa-icon [icon]="sendIcon" />
+                </button>
+            </div>
+            <div class="d-flex justify-content-between mt-1">
+                <small class="text-body-secondary" jhiTranslate="artemisApp.agent.chat.inputHint"></small>
+                <small class="text-end" [class.text-danger]="isMessageTooLong()" [class.text-body-secondary]="!isMessageTooLong()">
+                    {{ currentMessageLength() }} / {{ MAX_MESSAGE_LENGTH }}
+                </small>
+            </div>
+            @if (isMessageTooLong()) {
+                <small class="text-danger mt-1 d-block">
+                    <span jhiTranslate="artemisApp.agent.chat.messageTooLong"></span>
+                </small>
+            }
+        </div>
+    </div>
+</div>
