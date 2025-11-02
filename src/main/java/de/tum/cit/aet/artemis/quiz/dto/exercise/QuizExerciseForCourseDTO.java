@@ -14,11 +14,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean quizStarted, boolean quizEnded, boolean isEditable, int duration, double maxPoints,
         @Nullable ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, @NotNull IncludedInOverallScore includedInOverallScore,
-        @Nullable Set<QuizBatchForCourseDTO> quizBatches) {
+        @Nullable Set<QuizBatchForCourseDTO> quizBatches, @NotNull QuizMode quizMode) {
 
     /**
      * Converts a QuizExercise to a QuizExerciseForCourseDTO
@@ -34,7 +35,7 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
         }
         return new QuizExerciseForCourseDTO(quizExercise.getId(), quizExercise.getTitle(), quizExercise.isQuizStarted(), quizExercise.isQuizEnded(), isEditable,
                 quizExercise.getDuration(), quizExercise.getMaxPoints(), quizExercise.getReleaseDate(), quizExercise.getStartDate(), quizExercise.getDueDate(),
-                quizExercise.getIncludedInOverallScore(), batches);
+                quizExercise.getIncludedInOverallScore(), batches, quizExercise.getQuizMode());
     }
 
     @Override
