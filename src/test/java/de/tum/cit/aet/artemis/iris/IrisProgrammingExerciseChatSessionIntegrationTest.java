@@ -251,6 +251,54 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         assertThat(updatedSession).isNotNull();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateMessage_legacyFormat() throws Exception {
+        // Test that old frontend format (direct IrisMessage) still works
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockTextMessage(session);
+
+        // Send in legacy format (just the message, no wrapper)
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateMessage_newFormatWithUncommittedFiles() throws Exception {
+        // Test new format with uncommitted files
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockTextMessage(session);
+
+        var uncommittedFiles = Map.of("src/Main.java", "public class Main { // uncommitted }", "src/Utils.java", "public class Utils { }");
+
+        // Create request DTO in new format
+        var requestBody = Map.of("message", message, "uncommittedFiles", uncommittedFiles);
+
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestBody, IrisMessage.class, HttpStatus.CREATED);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateMessage_newFormatWithoutUncommittedFiles() throws Exception {
+        // Test new format but without uncommitted files (should work)
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockTextMessage(session);
+
+        // New format but uncommittedFiles is empty/omitted
+        var requestBody = Map.of("message", message);
+
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestBody, IrisMessage.class, HttpStatus.CREATED);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isNotNull();
+    }
+
     private static String exerciseChatUrl(long sessionId) {
         return "/api/iris/programming-exercise-chat/" + sessionId + "/sessions";
     }
