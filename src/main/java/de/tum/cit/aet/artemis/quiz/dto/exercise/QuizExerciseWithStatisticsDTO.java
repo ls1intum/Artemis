@@ -38,7 +38,7 @@ public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQu
      * @return the corresponding QuizExerciseWithStatisticsDTO
      */
     public static QuizExerciseWithStatisticsDTO of(QuizExercise quizExercise) {
-        List<QuizQuestionWithStatisticsDTO> questionDTOs = quizExercise.getQuizQuestions().stream().map(QuizQuestionWithStatisticsDTO::of).collect(Collectors.toList());
+        List<QuizQuestionWithStatisticsDTO> questionDTOs = quizExercise.getQuizQuestions().stream().map(QuizQuestionWithStatisticsDTO::of).toList();
         Set<String> categories = quizExercise.getCategories();
         QuizPointStatisticDTO quizPointStatisticDTO = null;
         if (quizExercise.getQuizPointStatistic() != null) {
