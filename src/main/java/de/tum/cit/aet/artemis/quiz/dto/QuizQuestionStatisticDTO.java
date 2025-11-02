@@ -20,26 +20,30 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpotCounter;
 public record QuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
         @Nullable @JsonUnwrapped MultipleChoiceQuestionStatisticDTO multipleChoiceQuestionStatisticDTO,
         @Nullable @JsonUnwrapped DragAndDropQuestionStatisticDTO dragAndDropQuestionStatisticDTO,
-        @Nullable @JsonUnwrapped ShortAnswerQuestionStatisticDTO shortAnswerQuestionStatisticDTO) {
+        @Nullable @JsonUnwrapped ShortAnswerQuestionStatisticDTO shortAnswerQuestionStatisticDTO, String type) {
 
     public static QuizQuestionStatisticDTO of(QuizQuestionStatistic quizQuestionStatistic) {
         MultipleChoiceQuestionStatisticDTO multipleChoiceQuestionStatisticDTO = null;
         DragAndDropQuestionStatisticDTO dragAndDropQuestionStatisticDTO = null;
         ShortAnswerQuestionStatisticDTO shortAnswerQuestionStatisticDTO = null;
+        String type = null;
 
         if (quizQuestionStatistic instanceof MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic) {
             multipleChoiceQuestionStatisticDTO = MultipleChoiceQuestionStatisticDTO.of(multipleChoiceQuestionStatistic);
+            type = "multiple-choice";
         }
         else if (quizQuestionStatistic instanceof DragAndDropQuestionStatistic dragAndDropQuestionStatistic) {
             dragAndDropQuestionStatisticDTO = DragAndDropQuestionStatisticDTO.of(dragAndDropQuestionStatistic);
+            type = "drag-and-drop";
         }
         else if (quizQuestionStatistic instanceof ShortAnswerQuestionStatistic shortAnswerQuestionStatistic) {
             shortAnswerQuestionStatisticDTO = ShortAnswerQuestionStatisticDTO.of(shortAnswerQuestionStatistic);
+            type = "short-answer";
         }
 
         return new QuizQuestionStatisticDTO(quizQuestionStatistic.getId(), quizQuestionStatistic.getParticipantsRated(), quizQuestionStatistic.getParticipantsUnrated(),
                 quizQuestionStatistic.getRatedCorrectCounter(), quizQuestionStatistic.getUnRatedCorrectCounter(), multipleChoiceQuestionStatisticDTO,
-                dragAndDropQuestionStatisticDTO, shortAnswerQuestionStatisticDTO);
+                dragAndDropQuestionStatisticDTO, shortAnswerQuestionStatisticDTO, type);
     }
 }
 
