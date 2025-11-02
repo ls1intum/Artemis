@@ -295,7 +295,7 @@ describe('AgentChatModalComponent', () => {
             sendButton.click();
 
             expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Test message', 123);
-            // 2 welcome messages (initial + empty history) + 1 user message + 1 agent response = 4
+            //  welcome messages + 1 user message + 1 agent response = 3
             expect(component.messages).toHaveLength(3);
         });
 
