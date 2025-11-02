@@ -12,12 +12,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.collection.ItemEvent;
-import com.hazelcast.collection.ItemListener;
-import com.hazelcast.map.listener.EntryAddedListener;
-import com.hazelcast.map.listener.EntryRemovedListener;
-import com.hazelcast.map.listener.EntryUpdatedListener;
-
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
@@ -27,6 +21,12 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryAddedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryRemovedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryUpdatedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
 
 /**
  * Central event listener and recovery coordinator for the LocalCI subsystem.
@@ -123,9 +123,10 @@ public class LocalCIEventListenerService {
     @PostConstruct
     public void init() {
         log.info("Registering LocalCI event listeners for build job queue, processing jobs, and build agent information.");
-        distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
-        distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener(), true);
-        distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), true);
+        distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
+        distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener());
+        distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener());
+        distributedDataAccessService.getDistributedDockerImageCleanupInfo().addListener(new DockerImageCleanupInfoListener());
     }
 
     /**
@@ -166,26 +167,16 @@ public class LocalCIEventListenerService {
      *
      * @see LocalCIQueueWebsocketService#sendQueuedJobsOverWebsocket(long)
      */
-    private class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {
+    private class QueuedBuildJobItemListener implements QueueItemListener<BuildJobQueueItem> {
 
-        /**
-         * On enqueue of a new job, broadcasts the updated queue state for the affected course.
-         *
-         * @param event Hazelcast item event (contains the {@link BuildJobQueueItem})
-         */
         @Override
-        public void itemAdded(ItemEvent<BuildJobQueueItem> event) {
-            localCIQueueWebsocketService.sendQueuedJobsOverWebsocket(event.getItem().courseId());
+        public void itemAdded(BuildJobQueueItem item) {
+            localCIQueueWebsocketService.sendQueuedJobsOverWebsocket(item.courseId());
         }
 
-        /**
-         * On dequeue/removal, broadcasts the updated queue state for the affected course.
-         *
-         * @param event Hazelcast item event (contains the removed {@link BuildJobQueueItem})
-         */
         @Override
-        public void itemRemoved(ItemEvent<BuildJobQueueItem> event) {
-            localCIQueueWebsocketService.sendQueuedJobsOverWebsocket(event.getItem().courseId());
+        public void itemRemoved(BuildJobQueueItem item) {
+            localCIQueueWebsocketService.sendQueuedJobsOverWebsocket(item.courseId());
         }
     }
 
@@ -217,32 +208,25 @@ public class LocalCIEventListenerService {
      * @see LocalCIQueueWebsocketService#sendProcessingJobsOverWebsocket(long)
      * @see ProgrammingMessagingService#notifyUserAboutSubmissionProcessing(SubmissionProcessingDTO, long, long)
      */
-    private class ProcessingBuildJobItemListener implements EntryAddedListener<Long, BuildJobQueueItem>, EntryRemovedListener<Long, BuildJobQueueItem> {
+    private class ProcessingBuildJobItemListener implements MapEntryListener<String, BuildJobQueueItem> {
 
-        /**
-         * Marks the job as {@link BuildStatus#BUILDING}, pushes UI updates, and notifies the user.
-         *
-         * @param event Hazelcast entry event with the job entering processing
-         */
         @Override
-        public void entryAdded(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
-            log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
-            localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.getValue().courseId());
-            buildJobRepository.updateBuildJobStatusWithBuildStartDate(event.getValue().id(), BuildStatus.BUILDING, event.getValue().jobTimingInfo().buildStartDate());
-            notifyUserAboutBuildProcessing(event.getValue().exerciseId(), event.getValue().participationId(), event.getValue().buildConfig().assignmentCommitHash(),
-                    event.getValue().jobTimingInfo().submissionDate(), event.getValue().jobTimingInfo().buildStartDate(),
-                    event.getValue().jobTimingInfo().estimatedCompletionDate());
+        public void entryAdded(MapEntryAddedEvent<String, BuildJobQueueItem> event) {
+            log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.value());
+            localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.value().courseId());
+            buildJobRepository.updateBuildJobStatusWithBuildStartDate(event.value().id(), BuildStatus.BUILDING, event.value().jobTimingInfo().buildStartDate());
+            notifyUserAboutBuildProcessing(event.value().exerciseId(), event.value().participationId(), event.value().buildConfig().assignmentCommitHash(),
+                    event.value().jobTimingInfo().submissionDate(), event.value().jobTimingInfo().buildStartDate(), event.value().jobTimingInfo().estimatedCompletionDate());
         }
 
-        /**
-         * Pushes UI updates to reflect that the job left the processing set (completed/failed/cancelled).
-         *
-         * @param event Hazelcast entry event with the job leaving processing
-         */
         @Override
-        public void entryRemoved(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
-            log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.getOldValue());
-            localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.getOldValue().courseId());
+        public void entryRemoved(MapEntryRemovedEvent<String, BuildJobQueueItem> event) {
+            log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.oldValue());
+            localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.oldValue().courseId());
+        }
+
+        @Override
+        public void entryUpdated(MapEntryUpdatedEvent<String, BuildJobQueueItem> event) {
         }
     }
 
@@ -272,47 +256,50 @@ public class LocalCIEventListenerService {
      * @see LocalCIQueueWebsocketService#sendBuildAgentInformationOverWebsocket(String)
      * @see LocalCIEventListenerService#notifyAdminAboutAgentPausing(BuildAgentInformation)
      */
-    private class BuildAgentListener
-            implements EntryAddedListener<String, BuildAgentInformation>, EntryRemovedListener<String, BuildAgentInformation>, EntryUpdatedListener<String, BuildAgentInformation> {
+    private class BuildAgentListener implements MapEntryListener<String, BuildAgentInformation> {
 
-        /**
-         * Announces a newly discovered build agent to connected clients.
-         *
-         * @param event Hazelcast entry event with the added agent info
-         */
         @Override
-        public void entryAdded(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent added: {}", event.getValue());
-            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.getValue().buildAgent().name());
+        public void entryAdded(MapEntryAddedEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent added: {}", event.value());
+            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.value().buildAgent().name());
         }
 
-        /**
-         * Announces that a build agent left the cluster.
-         *
-         * @param event Hazelcast entry event with the removed agent info
-         */
         @Override
-        public void entryRemoved(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent removed: {}", event.getOldValue());
-            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.getOldValue().buildAgent().name());
+        public void entryRemoved(MapEntryRemovedEvent<String, BuildAgentInformation> event) {
+            BuildAgentInformation oldValue = event.oldValue();
+            log.debug("Build agent removed: {}", oldValue);
+            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(oldValue.buildAgent().name());
         }
 
-        /**
-         * Broadcasts updated agent status and notifies administrators on transition to {@code SELF_PAUSED}.
-         *
-         * @param event Hazelcast entry event with previous and current agent info
-         */
         @Override
-        public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-            BuildAgentInformation oldValue = event.getOldValue();
-            BuildAgentInformation newValue = event.getValue();
-
+        public void entryUpdated(MapEntryUpdatedEvent<String, BuildAgentInformation> event) {
+            BuildAgentInformation oldValue = event.oldValue();
+            BuildAgentInformation newValue = event.value();
             log.debug("Build agent updated: {}", newValue);
             localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(newValue.buildAgent().name());
+
             if (oldValue != null && oldValue.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED
                     && newValue.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED) {
                 notifyAdminAboutAgentPausing(newValue);
             }
+        }
+    }
+
+    private static class DockerImageCleanupInfoListener implements MapListener {
+
+        @Override
+        public void entryAdded() {
+            log.debug("Docker image cleanup info added");
+        }
+
+        @Override
+        public void entryRemoved() {
+            log.debug("Docker image cleanup info removed");
+        }
+
+        @Override
+        public void entryUpdated() {
+            log.debug("Docker image cleanup info updated");
         }
     }
 
