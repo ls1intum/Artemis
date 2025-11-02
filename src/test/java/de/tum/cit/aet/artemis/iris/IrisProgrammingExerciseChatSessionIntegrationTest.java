@@ -45,6 +45,9 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
     @Autowired
     private IrisMessageRepository irisMessageRepository;
 
+    @Autowired
+    private de.tum.cit.aet.artemis.iris.service.IrisSessionService irisSessionService;
+
     private ProgrammingExercise exercise;
 
     @BeforeEach
@@ -193,6 +196,59 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         request.delete(url, HttpStatus.OK);
         assertThat(irisExerciseChatSessionRepository.findAll().stream().anyMatch(s -> Objects.equals(s.getId(), irisSession.getId()))).isFalse();
         assertThat(irisMessageRepository.findAllBySessionId(irisSession.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequestMessageFromIris_withUncommittedFiles() {
+        // Arrange
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockTextMessage(session);
+        irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+
+        var uncommittedFiles = Map.of("src/Main.java", "public class Main { /* uncommitted changes */ }", "src/Utils.java", "public class Utils { /* new file */ }");
+
+        // Act - Call service method with uncommitted files
+        irisSessionService.requestMessageFromIris(session, uncommittedFiles);
+
+        // Assert - Verify the session was processed (Pyris is mocked by AbstractIrisIntegrationTest)
+        // The fact that this doesn't throw an exception means the flow works
+        var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(updatedSession).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequestMessageFromIris_withEmptyUncommittedFiles() {
+        // Arrange
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockTextMessage(session);
+        irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+
+        var uncommittedFiles = Map.<String, String>of(); // Empty map
+
+        // Act - Call service method with empty uncommitted files
+        irisSessionService.requestMessageFromIris(session, uncommittedFiles);
+
+        // Assert - Verify the session was processed normally
+        var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(updatedSession).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequestMessageFromIris_backwardCompatibility() {
+        // Arrange
+        var session = createSessionForUser("student1");
+        var message = createDefaultMockTextMessage(session);
+        irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+
+        // Act - Call original method without uncommitted files (backward compatibility)
+        irisSessionService.requestMessageFromIris(session);
+
+        // Assert - Verify the session was processed normally
+        var updatedSession = irisExerciseChatSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(updatedSession).isNotNull();
     }
 
     private static String exerciseChatUrl(long sessionId) {
