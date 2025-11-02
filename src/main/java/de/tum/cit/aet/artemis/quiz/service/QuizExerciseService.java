@@ -690,7 +690,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
         }
         if (quizExerciseFromEditorDTO.competencyLinks() != null) {
-            updateCompetencyExerciseLinks(quizExercise, quizExerciseFromEditorDTO.competencyLinks(), course);
+            quizExercise.setCompetencyLinks(updateCompetencyExerciseLinks(quizExercise, quizExerciseFromEditorDTO.competencyLinks(), course));
         }
         if (quizExerciseFromEditorDTO.difficulty() != null) {
             quizExercise.setDifficulty(quizExerciseFromEditorDTO.difficulty());

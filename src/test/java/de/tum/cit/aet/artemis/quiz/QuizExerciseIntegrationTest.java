@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -323,10 +324,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
      */
     private QuizExercise updateQuizExerciseWithFiles(QuizExercise quizExercise, List<String> fileNames, HttpStatus expectedStatus, MultiValueMap<String, String> params)
             throws Exception {
-        QuizExerciseFromEditorDTO dto = new QuizExerciseFromEditorDTO(quizExercise.getTitle(), quizExercise.getChannelName(), quizExercise.getCategories(),
-                quizExercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkFromEditorDTO::of).collect(Collectors.toSet()), quizExercise.getDifficulty(),
-                quizExercise.getDuration(), quizExercise.isRandomizeQuestionOrder(), quizExercise.getQuizMode(), quizExercise.getQuizBatches(), quizExercise.getReleaseDate(),
-                quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getIncludedInOverallScore(), quizExercise.getQuizQuestions());
+        Set<CompetencyExerciseLinkFromEditorDTO> competencyLinks = null;
+        if (Hibernate.isInitialized(quizExercise.getCompetencyLinks())) {
+            competencyLinks = quizExercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkFromEditorDTO::of).collect(Collectors.toSet());
+        }
+        QuizExerciseFromEditorDTO dto = new QuizExerciseFromEditorDTO(quizExercise.getTitle(), quizExercise.getChannelName(), quizExercise.getCategories(), competencyLinks,
+                quizExercise.getDifficulty(), quizExercise.getDuration(), quizExercise.isRandomizeQuestionOrder(), quizExercise.getQuizMode(), quizExercise.getQuizBatches(),
+                quizExercise.getReleaseDate(), quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getIncludedInOverallScore(), quizExercise.getQuizQuestions());
 
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PATCH, "/api/quiz/quiz-exercises/" + quizExercise.getId());
         if (params != null) {

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
@@ -32,8 +34,14 @@ public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQu
     public static QuizExerciseWithStatisticsDTO of(QuizExercise quizExercise) {
         List<QuizQuestionWithStatisticsDTO> questionDTOs = quizExercise.getQuizQuestions().stream().map(QuizQuestionWithStatisticsDTO::of).collect(Collectors.toList());
         Set<String> categories = quizExercise.getCategories();
-        QuizPointStatisticDTO quizPointStatisticDTO = QuizPointStatisticDTO.of(quizExercise.getQuizPointStatistic());
-        Set<CompetencyExerciseLinkDTO> competencyExerciseLinkDTOs = quizExercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkDTO::of).collect(Collectors.toSet());
+        QuizPointStatisticDTO quizPointStatisticDTO = null;
+        if (quizExercise.getQuizPointStatistic() != null) {
+            quizPointStatisticDTO = QuizPointStatisticDTO.of(quizExercise.getQuizPointStatistic());
+        }
+        Set<CompetencyExerciseLinkDTO> competencyExerciseLinkDTOs = null;
+        if (Hibernate.isInitialized(quizExercise.getCompetencyLinks())) {
+            competencyExerciseLinkDTOs = quizExercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkDTO::of).collect(Collectors.toSet());
+        }
         Set<GradingCriterionDTO> gradingCriterionDTOs = quizExercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
 
         return new QuizExerciseWithStatisticsDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise), questionDTOs, categories, quizPointStatisticDTO, competencyExerciseLinkDTOs,
@@ -45,7 +53,11 @@ public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQu
 record QuizQuestionWithStatisticsDTO(@JsonUnwrapped QuizQuestionWithSolutionDTO question, QuizQuestionStatisticDTO quizQuestionStatistic) {
 
     public static QuizQuestionWithStatisticsDTO of(QuizQuestion quizQuestion) {
-        return new QuizQuestionWithStatisticsDTO(QuizQuestionWithSolutionDTO.of(quizQuestion), QuizQuestionStatisticDTO.of(quizQuestion.getQuizQuestionStatistic()));
+        QuizQuestionStatisticDTO quizQuestionStatisticDTO = null;
+        if (quizQuestion.getQuizQuestionStatistic() != null) {
+            quizQuestionStatisticDTO = QuizQuestionStatisticDTO.of(quizQuestion.getQuizQuestionStatistic());
+        }
+        return new QuizQuestionWithStatisticsDTO(QuizQuestionWithSolutionDTO.of(quizQuestion), quizQuestionStatisticDTO);
     }
 }
 
