@@ -89,7 +89,7 @@ public class QuizExerciseRetrievalResource {
      */
     @GetMapping("courses/{courseId}/quiz-exercises")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForCourse(@PathVariable long courseId) {
         log.info("REST request to get all quiz exercises for the course with id : {}", courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
@@ -111,7 +111,7 @@ public class QuizExerciseRetrievalResource {
      */
     @GetMapping("exams/{examId}/quiz-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForExam(@PathVariable Long examId) {
+    public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForExam(@PathVariable long examId) {
         log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
         List<QuizExerciseForCourseDTO> quizExerciseDTOs = new ArrayList<>();
@@ -120,6 +120,7 @@ public class QuizExerciseRetrievalResource {
 
         for (QuizExercise quizExercise : quizExercises) {
             boolean isEditable = false;
+            quizExercise.setQuizBatches(null);
             quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable));
         }
         return ResponseEntity.ok(quizExerciseDTOs);
@@ -133,7 +134,7 @@ public class QuizExerciseRetrievalResource {
      */
     @GetMapping("quiz-exercises/{quizExerciseId}")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
+    public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -160,21 +161,19 @@ public class QuizExerciseRetrievalResource {
      */
     @GetMapping("quiz-exercises/{quizExerciseId}/for-student")
     @EnforceAtLeastStudent
-    public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
+    public ResponseEntity<?> getQuizExerciseForStudent(@PathVariable long quizExerciseId) {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeCourseExercise(quizExercise, user)) {
             throw new AccessForbiddenException();
         }
-        quizExercise.setQuizBatches(null); // remove proxy and load batches only if required
+        quizExercise.setQuizBatches(null);
         var batch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
         log.info("Found batch {} for user {}", batch.orElse(null), user.getLogin());
         quizExercise.setQuizBatches(batch.stream().collect(Collectors.toSet()));
-        // filter out information depending on quiz state
-        quizExercise.applyAppropriateFilterForStudents(batch.orElse(null));
-
-        return ResponseEntity.ok(quizExercise);
+        Object dto = quizExerciseService.createQuizExerciseDTOForStudent(quizExercise, batch);
+        return ResponseEntity.ok(dto);
     }
 
     /**
