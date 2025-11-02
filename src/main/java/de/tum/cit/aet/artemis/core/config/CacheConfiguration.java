@@ -95,10 +95,6 @@ public class CacheConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
 
-    private final Optional<GitProperties> gitProperties;
-
-    private final Optional<BuildProperties> buildProperties;
-
     private final ServerProperties serverProperties;
 
     // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
@@ -120,11 +116,8 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    public CacheConfiguration(ApplicationContext applicationContext, Optional<GitProperties> gitProperties, Optional<BuildProperties> buildProperties,
-            ServerProperties serverProperties, Optional<Registration> registration, Environment env) {
+    public CacheConfiguration(ApplicationContext applicationContext, ServerProperties serverProperties, Optional<Registration> registration, Environment env) {
         this.applicationContext = applicationContext;
-        this.gitProperties = gitProperties;
-        this.buildProperties = buildProperties;
         this.serverProperties = serverProperties;
         this.registration = registration;
         this.env = env;
@@ -334,8 +327,8 @@ public class CacheConfiguration {
     }
 
     @Bean
-    public KeyGenerator keyGenerator() {
-        return new PrefixedKeyGenerator(this.gitProperties.orElse(null), this.buildProperties.orElse(null));
+    public KeyGenerator keyGenerator(GitProperties gitProperties, BuildProperties buildProperties) {
+        return new PrefixedKeyGenerator(gitProperties, buildProperties);
     }
 
     // config for files in the files system

@@ -29,15 +29,58 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.li
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
 
 /**
- * Central listener service for handling LocalCI events.
- * This service listens for changes in build jobs and build agents, ensuring that job states are updated correctly
- * and notifications are sent to users. It registers event listeners for build job queues and processing jobs,
- * handling transitions such as a job starting or finishing.
- * The service also periodically checks for lost or stuck jobs, marking them as missing if necessary.
- * This helps recover from issues like CI agent crashes, network disruptions, or application restarts
- * that might cause inconsistencies in job tracking. WebSocket updates are triggered to provide real-time
- * feedback to users.
- * New event listeners should be added here to ensure consistent handling of CI-related events.
+ * Central event listener and recovery coordinator for the LocalCI subsystem.
+ *
+ * <p>
+ * <strong>Overview</strong>
+ * </p>
+ * This service wires together all Hazelcast-based event listeners relevant to LocalCI operation.
+ * It ensures that build job states, build agent information, and result processing remain consistent
+ * across the distributed cluster — even under transient network issues, node restarts, or CI agent failures.
+ *
+ * <p>
+ * <strong>Responsibilities</strong>
+ * </p>
+ * <ul>
+ * <li>Registers distributed listeners for:
+ * <ul>
+ * <li>Queued build jobs — updates user-facing WebSocket state when jobs are added or removed.</li>
+ * <li>Processing build jobs — updates status, timestamps, and triggers user notifications when builds start or complete.</li>
+ * <li>Build agent information — tracks agent availability and notifies administrators when an agent pauses itself after repeated failures.</li>
+ * </ul>
+ * </li>
+ * <li>Provides a periodic safety task that reprocesses any unhandled build results still present in the distributed queue
+ * (e.g., if transient network load or node interruptions caused missed listener events).</li>
+ * <li>Ensures real-time feedback through WebSocket broadcasts to instructors and students.</li>
+ * </ul>
+ *
+ * <p>
+ * <strong>Fault Tolerance and Recovery</strong>
+ * </p>
+ * <ul>
+ * <li>Detects and marks "lost" or "stuck" jobs that may occur after build agent crashes or Hazelcast disconnects.</li>
+ * <li>Processes leftover result queue entries periodically to ensure no build results are stranded.</li>
+ * <li>Sends targeted email alerts when a build agent self-pauses due to consecutive failures.</li>
+ * </ul>
+ *
+ * <p>
+ * <strong>Concurrency & Lifecycle</strong>
+ * </p>
+ * <ul>
+ * <li>All Hazelcast listeners run asynchronously and must remain lightweight.</li>
+ * <li>The scheduled fallback mechanism runs every 10 seconds to minimize perceived delays.</li>
+ * <li>Listeners are registered during {@link PostConstruct} initialization — {@code @EventListener} cannot be used
+ * since the bean is {@code @Lazy} and operates under the "localci & scheduling" profile.</li>
+ * </ul>
+ *
+ * <p>
+ * <strong>Extension Guidelines</strong>
+ * </p>
+ * <ul>
+ * <li>Any new LocalCI-related Hazelcast topic, queue, or map should register its listener here to ensure consistent cluster behavior.</li>
+ * <li>New event types should integrate both with {@link LocalCIQueueWebsocketService} (for real-time updates)
+ * and with persistence or recovery logic as appropriate.</li>
+ * </ul>
  */
 @Lazy
 @Service
@@ -88,11 +131,11 @@ public class LocalCIEventListenerService {
 
     /**
      * Processes the queued results from the distributed build result queue every minute.
-     * This is a fallback mechanism to ensure that no results are left unprocessed in the queue e.g. if listener events are lost
-     * under high system load or network hiccups.
-     * Runs every minute so results are not stuck int the queue so long that they appear to be lost.
+     * This is a fallback mechanism to ensure that no results are left unprocessed in the queue e.g. if listener events are lost under high system load or network hiccups.
+     * Runs every 10s so results are not stuck int the queue so long that they appear to be lost.
      */
-    @Scheduled(fixedRate = 60 * 1000)
+    // TODO: we should add this on all core nodes, not only on the primary scheduling one
+    @Scheduled(fixedRate = 10 * 1000) // every 10 seconds
     public void processQueuedResults() {
         final int initialSize = distributedDataAccessService.getResultQueueSize();
         log.info("Scheduled task found {} queued results in the Hazelcast distributed build result queue. Will process these results now.", initialSize);
@@ -109,6 +152,21 @@ public class LocalCIEventListenerService {
         }
     }
 
+    /**
+     * Listener for the distributed *queued build jobs* collection.
+     *
+     * <p>
+     * <strong>Purpose</strong>: Push real-time queue size/state updates to clients
+     * when items are added or removed.
+     * </p>
+     *
+     * <p>
+     * <strong>Threading</strong>: Keep callbacks lightweight; heavy work is handled
+     * elsewhere. Safe to call WebSocket updates directly.
+     * </p>
+     *
+     * @see LocalCIQueueWebsocketService#sendQueuedJobsOverWebsocket(long)
+     */
     private class QueuedBuildJobItemListener implements QueueItemListener<BuildJobQueueItem> {
 
         @Override
@@ -122,6 +180,34 @@ public class LocalCIEventListenerService {
         }
     }
 
+    /**
+     * Listener for the distributed *processing jobs* map.
+     *
+     * <p>
+     * <strong>Purpose</strong>:
+     * <ul>
+     * <li>When a job transitions to processing, update UI and persist status/timestamps.</li>
+     * <li>When a job leaves processing, update UI accordingly.</li>
+     * </ul>
+     * </p>
+     *
+     * <p>
+     * <strong>Side effects</strong>:
+     * <ul>
+     * <li>WebSocket broadcast to clients for the affected course.</li>
+     * <li>Persist job status to {@code BUILDING} with start time.</li>
+     * <li>User notification that the submission is being processed.</li>
+     * </ul>
+     * </p>
+     *
+     * <p>
+     * <strong>Threading</strong>: Keep operations brief; no blocking or long-running work.
+     * </p>
+     *
+     * @see BuildJobRepository#updateBuildJobStatusWithBuildStartDate(String, BuildStatus, java.time.ZonedDateTime)
+     * @see LocalCIQueueWebsocketService#sendProcessingJobsOverWebsocket(long)
+     * @see ProgrammingMessagingService#notifyUserAboutSubmissionProcessing(SubmissionProcessingDTO, long, long)
+     */
     private class ProcessingBuildJobItemListener implements MapEntryListener<String, BuildJobQueueItem> {
 
         @Override
@@ -144,6 +230,32 @@ public class LocalCIEventListenerService {
         }
     }
 
+    /**
+     * Listener for the distributed *build agent information* map.
+     *
+     * <p>
+     * <strong>Purpose</strong>:
+     * <ul>
+     * <li>Broadcast agent presence and status changes to the UI.</li>
+     * <li>Notify administrators when an agent self-pauses due to consecutive failures.</li>
+     * </ul>
+     * </p>
+     *
+     * <p>
+     * <strong>Behavior</strong>:
+     * <ul>
+     * <li>{@code entryAdded}/{@code entryRemoved}: push current agent roster/status.</li>
+     * <li>{@code entryUpdated}: push updated status; if transition → {@code SELF_PAUSED}, notify admin.</li>
+     * </ul>
+     * </p>
+     *
+     * <p>
+     * <strong>Threading</strong>: Work is lightweight (broadcast + optional email enqueue).
+     * </p>
+     *
+     * @see LocalCIQueueWebsocketService#sendBuildAgentInformationOverWebsocket(String)
+     * @see LocalCIEventListenerService#notifyAdminAboutAgentPausing(BuildAgentInformation)
+     */
     private class BuildAgentListener implements MapEntryListener<String, BuildAgentInformation> {
 
         @Override

@@ -19,34 +19,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import {
-    faBars,
-    faBell,
-    faBook,
-    faBookOpen,
-    faBroom,
-    faChevronRight,
-    faCog,
-    faEye,
-    faFlag,
-    faGears,
-    faHeart,
-    faList,
-    faLock,
-    faPuzzlePiece,
-    faRobot,
-    faSignOutAlt,
-    faStamp,
-    faTachometerAlt,
-    faTasks,
-    faThLarge,
-    faThList,
-    faToggleOn,
-    faUniversity,
-    faUser,
-    faUserPlus,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBars, faBook, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faThLarge, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -59,11 +32,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActiveMenuDirective } from './active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { ServerAdministrationComponent } from 'app/core/navbar/server-administration/server-administration.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -88,9 +61,9 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
         SystemNotificationComponent,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
-        FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
+        ServerAdministrationComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -98,43 +71,28 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faThLarge = faThLarge;
     protected readonly faThList = faThList;
     protected readonly faUser = faUser;
-    protected readonly faBell = faBell;
-    protected readonly faUniversity = faUniversity;
-    protected readonly faEye = faEye;
     protected readonly faCog = faCog;
     protected readonly faWrench = faWrench;
     protected readonly faLock = faLock;
-    protected readonly faStamp = faStamp;
     protected readonly faFlag = faFlag;
     protected readonly faBook = faBook;
-    protected readonly faTasks = faTasks;
-    protected readonly faList = faList;
-    protected readonly faRobot = faRobot;
-    protected readonly faHeart = faHeart;
-    protected readonly faTachometerAlt = faTachometerAlt;
-    protected readonly faToggleOn = faToggleOn;
-    protected readonly faBookOpen = faBookOpen;
-    protected readonly faUserPlus = faUserPlus;
     protected readonly faSignOutAlt = faSignOutAlt;
-    protected readonly faGears = faGears;
-    protected readonly faPuzzlePiece = faPuzzlePiece;
     protected readonly faChevronRight = faChevronRight;
-    protected readonly faBroom = faBroom;
 
-    private accountService = inject(AccountService);
-    private loginService = inject(LoginService);
-    private translateService = inject(TranslateService);
-    private profileService = inject(ProfileService);
-    private participationWebsocketService = inject(ParticipationWebsocketService);
-    private router = inject(Router);
-    private route = inject(ActivatedRoute);
-    private examParticipationService = inject(ExamParticipationService);
-    private serverDateService = inject(ArtemisServerDateService);
-    private alertService = inject(AlertService);
-    private exerciseService = inject(ExerciseService);
-    private entityTitleService = inject(EntityTitleService);
-    private titleService = inject(Title);
-    private featureToggleService = inject(FeatureToggleService);
+    private readonly accountService = inject(AccountService);
+    private readonly loginService = inject(LoginService);
+    private readonly translateService = inject(TranslateService);
+    private readonly profileService = inject(ProfileService);
+    private readonly participationWebsocketService = inject(ParticipationWebsocketService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly examParticipationService = inject(ExamParticipationService);
+    private readonly serverDateService = inject(ArtemisServerDateService);
+    private readonly alertService = inject(AlertService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly entityTitleService = inject(EntityTitleService);
+    private readonly titleService = inject(Title);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     inProduction: boolean;
     testServer: boolean;

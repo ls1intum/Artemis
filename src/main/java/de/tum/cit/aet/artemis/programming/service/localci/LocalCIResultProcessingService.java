@@ -343,12 +343,37 @@ public class LocalCIResultProcessingService {
         }
     }
 
+    /**
+     * Listener that reacts to new build results added to the distributed result queue.
+     *
+     * <p>
+     * <strong>Responsibilities</strong>:
+     * </p>
+     * <ul>
+     * <li>Trigger asynchronous post-processing of build results when a new {@link ResultQueueItem} arrives.</li>
+     * <li>Keep the Hazelcast event thread lightweight by delegating all work to {@link #processResultAsync()}.</li>
+     * <li>Log concise, context-rich messages for observability while avoiding excessive output.</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Notes</strong>:
+     * </p>
+     * <ul>
+     * <li>Never perform blocking or long-running operations in the event callback.</li>
+     * <li>All exceptions are caught and logged defensively to prevent listener crashes.</li>
+     * </ul>
+     */
     public class ResultQueueListener implements QueueItemListener<ResultQueueItem> {
 
         @Override
         public void itemAdded(ResultQueueItem item) {
-            log.info("Result of build job with id {} added to queue. Will process one result async now", item.buildJobQueueItem().id());
-            processResultAsync();
+            try {
+                log.info("Result of build job with id {} added to queue. Will process one result async now", item.buildJobQueueItem().id());
+                processResultAsync();
+            }
+            catch (Exception e) {
+                log.error("Error handling itemAdded event in ResultQueueListener", e);
+            }
         }
 
         @Override
