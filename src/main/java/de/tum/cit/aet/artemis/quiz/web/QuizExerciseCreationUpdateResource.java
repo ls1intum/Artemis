@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
@@ -57,9 +58,6 @@ public class QuizExerciseCreationUpdateResource {
 
     private static final String ENTITY_NAME = "quizExercise";
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private final QuizExerciseService quizExerciseService;
 
     private final CourseService courseService;
@@ -71,6 +69,9 @@ public class QuizExerciseCreationUpdateResource {
     private final Optional<AtlasMLApi> atlasMLApi;
 
     private final QuizExerciseRepository quizExerciseRepository;
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi) {
@@ -153,21 +154,24 @@ public class QuizExerciseCreationUpdateResource {
      */
     @PatchMapping(value = "quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<QuizExercise> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExerciseFromEditorDTO quizExerciseFromEditorDTO,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
-            throws IOException {
+    public ResponseEntity<QuizExerciseWithStatisticsDTO> updateQuizExercise(@PathVariable Long exerciseId,
+            @RequestPart("exercise") @Valid QuizExerciseFromEditorDTO quizExerciseFromEditorDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @RequestParam(value = "notificationText", required = false) String notificationText) throws IOException {
         log.info("REST request to patch quiz exercise : {}", exerciseId);
         QuizExercise quizBase = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizBase);
 
         QuizExercise originalQuiz = quizExerciseService.copyFieldsForUpdate(quizBase);
 
-        quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO);
+        quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO, course);
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files, notificationText);
 
         // Notify AtlasML about the quiz exercise update
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");
 
-        return ResponseEntity.ok(result);
+        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
+
+        return ResponseEntity.ok(resultDTO);
     }
 
     /**

@@ -38,6 +38,9 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -51,6 +54,7 @@ import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.CalendarEventType;
@@ -76,6 +80,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.CompetencyExerciseLinkFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
@@ -123,12 +128,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<SlideApi> slideApi;
 
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi) {
+            Optional<SlideApi> slideApi, CourseCompetencyRepository courseCompetencyRepository) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -144,6 +151,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
     /**
@@ -638,12 +646,40 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
+     * Method to update competency exercise links for a quiz exercise.
+     *
+     * @param quizExercise The quiz exercise to update the competency links for
+     * @param competencies The competency links from the editor DTO
+     * @param course       The course the quiz exercise belongs to
+     * @return The updated set of competency exercise links
+     */
+    private Set<CompetencyExerciseLink> updateCompetencyExerciseLinks(QuizExercise quizExercise, Set<CompetencyExerciseLinkFromEditorDTO> competencies, Course course) {
+        Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
+        Set<Long> competencyIds = competencies.stream().map(CompetencyExerciseLinkFromEditorDTO::competencyId).collect(Collectors.toSet());
+        Set<CourseCompetency> foundCompetencies = courseCompetencyRepository.findByIdInAndCourseId(competencyIds, course.getId());
+        for (CompetencyExerciseLinkFromEditorDTO dto : competencies) {
+            Optional<CourseCompetency> matchingCompetency = foundCompetencies.stream().filter(c -> c.getId().equals(dto.competencyId())).findFirst();
+            if (matchingCompetency.isPresent()) {
+                CompetencyExerciseLink link = new CompetencyExerciseLink();
+                link.setCompetency(matchingCompetency.get());
+                link.setWeight(dto.weight());
+                link.setExercise(quizExercise);
+                updatedLinks.add(link);
+            }
+            else {
+                throw new InternalServerErrorException("Competency with id " + dto.competencyId() + " not found in course " + course.getId());
+            }
+        }
+        return updatedLinks;
+    }
+
+    /**
      * Merges the properties of the QuizExerciseFromEditorDTO into the QuizExercise domain object.
      *
      * @param quizExercise              The QuizExercise domain object to be updated
      * @param quizExerciseFromEditorDTO The DTO containing the properties to be merged into the domain object.
      */
-    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO) {
+    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO, Course course) {
         if (quizExerciseFromEditorDTO.title() != null) {
             quizExercise.setTitle(quizExerciseFromEditorDTO.title());
         }
@@ -654,8 +690,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
         }
         if (quizExerciseFromEditorDTO.competencyLinks() != null) {
-            quizExercise.getCompetencyLinks().clear();
-            quizExercise.getCompetencyLinks().addAll(quizExerciseFromEditorDTO.competencyLinks());
+            updateCompetencyExerciseLinks(quizExercise, quizExerciseFromEditorDTO.competencyLinks(), course);
         }
         if (quizExerciseFromEditorDTO.difficulty() != null) {
             quizExercise.setDifficulty(quizExerciseFromEditorDTO.difficulty());
