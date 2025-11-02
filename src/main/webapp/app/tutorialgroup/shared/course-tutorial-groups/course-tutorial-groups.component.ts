@@ -99,7 +99,7 @@ export class CourseTutorialGroupsComponent {
             this.loadAndSetTutorialGroups(courseId);
         }
         if (cachedLectures !== undefined) {
-            this.tutorialLectures.set(cachedLectures.filter((lecture) => lecture.tutorialLecture !== true));
+            this.tutorialLectures.set(cachedLectures.filter((lecture) => lecture.tutorialLecture));
         } else {
             this.loadAndSetTutorialLectures(courseId);
         }
