@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SidebarEventService } from '../service/sidebar-event.service';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { Location, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { SidebarCardItemComponent } from '../sidebar-card-item/sidebar-card-item.component';
 import { SidebarCardElement, SidebarTypes } from 'app/shared/types/sidebar';
 
@@ -13,11 +13,9 @@ import { SidebarCardElement, SidebarTypes } from 'app/shared/types/sidebar';
     imports: [NgClass, SidebarCardItemComponent, RouterLink, RouterLinkActive],
 })
 export class SidebarCardMediumComponent {
-    private readonly TUTORIAL_LECTURES_ROUTE_PATTERN = /\/courses\/\d+\/tutorial-groups\/tutorial-lectures(\/|$)/;
     private sidebarEventService = inject(SidebarEventService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
-    private location = inject(Location);
 
     protected readonly DifficultyLevel = DifficultyLevel;
 
@@ -33,12 +31,7 @@ export class SidebarCardMediumComponent {
         const sidebarItemId = this.sidebarItem.id;
         const targetComponentRoute = targetComponentSubRoute ? targetComponentSubRoute + '/' + sidebarItemId : sidebarItemId;
         this.sidebarEventService.emitSidebarCardEvent(targetComponentRoute);
-
-        const currentUrl = this.router.url;
-        const isNotTutorialLecturesRoute = !this.TUTORIAL_LECTURES_ROUTE_PATTERN.test(currentUrl);
-        if (isNotTutorialLecturesRoute) {
-            //this.refreshChildComponent();
-        }
+        this.refreshChildComponent();
     }
 
     emitPageChangeForExam() {
@@ -53,7 +46,7 @@ export class SidebarCardMediumComponent {
                 const pathSegments = targetComponentSubRoute ? ['./', targetComponentSubRoute, itemId] : ['./', itemId];
                 this.router.navigate(pathSegments, { relativeTo: this.route });
             } else {
-                const pathSegments = targetComponentSubRoute ? [this.location.path(), targetComponentSubRoute, itemId] : [this.location.path(), itemId];
+                const pathSegments = targetComponentSubRoute ? [this.router.url, targetComponentSubRoute, itemId] : [this.router.url, itemId];
                 this.router.navigate(pathSegments, { replaceUrl: true });
             }
         });
