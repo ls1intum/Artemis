@@ -85,7 +85,7 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
         if (thisBatchesEmpty != thatBatchesEmpty) {
             return false;
         }
-        return quizBatches.equals(that.quizBatches);
+        return Objects.equals(quizBatches, that.quizBatches);
     }
 
 }
