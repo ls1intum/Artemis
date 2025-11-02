@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PLATFORM_ID } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
@@ -47,6 +48,7 @@ describe('CalendarEventsPerDaySectionComponent', () => {
                     provide: CalendarService,
                     useFactory: () => new MockCalendarService(mockMap),
                 },
+                { provide: PLATFORM_ID, useValue: 'browser' },
                 provideTestAnimations(),
             ],
         }).compileComponents();
@@ -118,26 +120,32 @@ describe('CalendarEventsPerDaySectionComponent', () => {
 
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
+        const primengPopover = popoverComponent.popover();
+        expect(primengPopover).toBeDefined();
 
         examEventCell.nativeElement.click();
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(popoverComponent.isOpen()).toBeTrue();
+        expect(primengPopover!.overlayVisible).toBeTrue();
     });
 
-    it('should close popover', () => {
+    it('should close popover', async () => {
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
+        const primengPopover = popoverComponent.popover();
+        expect(primengPopover).toBeDefined();
+        const hideSpy = jest.spyOn(primengPopover!, 'hide');
         const closeSpy = jest.spyOn(popoverComponent, 'close');
 
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         examEventCell.nativeElement.click();
         fixture.detectChanges();
 
-        const infoColumn = fixture.debugElement.query(By.css('.info-column'));
-        infoColumn.nativeElement.click();
+        primengPopover!.hide();
         fixture.detectChanges();
-        expect(popoverComponent.isOpen()).toBeFalse();
+        await fixture.whenStable();
+        expect(hideSpy).toHaveBeenCalledOnce();
+        expect(primengPopover!.overlayVisible).toBeFalse();
 
         examEventCell.nativeElement.click();
         fixture.detectChanges();
@@ -146,6 +154,8 @@ describe('CalendarEventsPerDaySectionComponent', () => {
         expect(closeButton).toBeTruthy();
         closeButton.click();
         fixture.detectChanges();
+        await fixture.whenStable();
         expect(closeSpy).toHaveBeenCalledOnce();
+        expect(hideSpy).toHaveBeenCalledTimes(2);
     });
 });
