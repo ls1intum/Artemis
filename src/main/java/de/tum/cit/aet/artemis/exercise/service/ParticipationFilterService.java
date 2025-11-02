@@ -126,7 +126,7 @@ public class ParticipationFilterService {
      */
     private StudentParticipation findStudentParticipationForSingleParticipationExercises(Set<StudentParticipation> participations) {
         if (participations.size() > 1) {
-            throw new IllegalArgumentException("There cannot be more than one participation per student for non-programming or non-quiz exercises");
+            throw new IllegalArgumentException("Only one participation per student is allowed for exercises other than programming or quiz.");
         }
         return participations.iterator().next();
     }
