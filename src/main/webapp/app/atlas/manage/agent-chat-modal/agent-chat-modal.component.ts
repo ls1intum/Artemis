@@ -68,15 +68,10 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         // Load previous conversation history
         this.agentChatService.getConversationHistory(this.courseId).subscribe({
             next: (history) => {
-                if (history && history.length > 0) {
-                    // Load messages from history
-                    history.forEach((msg) => {
-                        this.addMessage(msg.content, msg.isUser);
-                    });
-                } else {
-                    // No history - show welcome message
-                    this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
-                }
+                // Load messages from history
+                history.forEach((msg) => {
+                    this.addMessage(msg.content, msg.isUser);
+                });
             },
             error: () => {
                 // On error, just show welcome message

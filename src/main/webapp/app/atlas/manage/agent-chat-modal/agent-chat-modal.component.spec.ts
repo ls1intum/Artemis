@@ -144,10 +144,9 @@ describe('AgentChatModalComponent', () => {
             component.ngOnInit();
 
             expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
-            expect(component.messages).toHaveLength(2);
+            expect(component.messages).toHaveLength(1);
             expect(component.messages[0].content).toBe(welcomeMessage);
             expect(component.messages[0].isUser).toBeFalse();
-            expect(component.messages[1].content).toBe(welcomeMessage);
         });
 
         it('should generate unique message IDs for history messages', () => {
@@ -297,7 +296,7 @@ describe('AgentChatModalComponent', () => {
 
             expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Test message', 123);
             // 2 welcome messages (initial + empty history) + 1 user message + 1 agent response = 4
-            expect(component.messages).toHaveLength(4);
+            expect(component.messages).toHaveLength(3);
         });
 
         it('should send message when Enter key is pressed', () => {
@@ -340,13 +339,13 @@ describe('AgentChatModalComponent', () => {
             expect(component.isAgentTyping()).toBeFalse();
             expect(mockTranslateService.instant).toHaveBeenCalledOnce();
             expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
-            expect(component.messages).toHaveLength(4); // Welcome + user message + error message
-            expect(component.messages[3].content).toBe(errorMessage);
-            expect(component.messages[3].isUser).toBeFalse();
+            expect(component.messages).toHaveLength(3); // Welcome + user message + error message
+            expect(component.messages[2].content).toBe(errorMessage);
+            expect(component.messages[2].isUser).toBeFalse();
         }));
 
         it('should not send message if canSendMessage is false', () => {
-            component.currentMessage.set(''); // Makes canSendMessage false
+            component.currentMessage.set('');
             fixture.detectChanges();
 
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
