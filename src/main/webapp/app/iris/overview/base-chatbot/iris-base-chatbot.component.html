@@ -101,6 +101,10 @@
                         <h6 jhiTranslate="artemisApp.iris.chatHistory.title"></h6>
                     </div>
 
+                    <div class="px-2 mt-2 mb-3">
+                        <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
+                    </div>
+
                     @let todaySessions = getSessionsBetween(0, 0);
                     @if (todaySessions.length > 0) {
                         <div class="chat-history-label">
