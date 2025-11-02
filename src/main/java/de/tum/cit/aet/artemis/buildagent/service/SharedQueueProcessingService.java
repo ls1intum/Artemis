@@ -49,7 +49,38 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
- * Includes functionality for processing build jobs from the shared build job queue.
+ * Orchestrates consumption of build jobs from the shared (Hazelcast) queue on this node.
+ *
+ * <p>
+ * <strong>Responsibilities</strong>
+ * </p>
+ * <ul>
+ * <li>Observe the distributed build queue and dequeue when local capacity allows.</li>
+ * <li>Submit jobs to the local executor via {@link BuildJobManagementService} and track completion.</li>
+ * <li>Publish {@link ResultQueueItem}s to the distributed result queue (unless paused).</li>
+ * <li>Maintain per-node liveness/telemetry and clean up state for offline nodes.</li>
+ * <li>Provide controlled pause/resume with a grace period and safe cancellation/requeue.</li>
+ * </ul>
+ *
+ * <p>
+ * <strong>Concurrency model</strong>
+ * </p>
+ * <ul>
+ * <li>{@link #availabilityAndDequeueLock} serializes the decision to dequeue + register a processing job
+ * to avoid races with concurrent availability checks and listener-driven triggers.</li>
+ * <li>{@link #agentStateTransitionLock} serializes pause/resume transitions across:
+ * listener lifecycle, scheduler lifecycle, result publication gating, and cancellation/requeue.</li>
+ * <li>Operational counters/flags use {@link AtomicInteger}/{@link AtomicBoolean} for non-blocking reads.</li>
+ * </ul>
+ *
+ * <p>
+ * <strong>Failure handling</strong>
+ * </p>
+ * <ul>
+ * <li>Rejected submissions: requeue with bounded retries, update agent info.</li>
+ * <li>Job failures/timeouts/cancellations: map to {@link BuildStatus}, collect logs, publish result, update telemetry.</li>
+ * <li>Repeated failures: auto-pause after configurable threshold.</li>
+ * </ul>
  */
 @Profile(PROFILE_BUILDAGENT)
 @Lazy(false)
@@ -77,14 +108,24 @@ public class SharedQueueProcessingService {
     private final DistributedDataAccessService distributedDataAccessService;
 
     /**
-     * Lock for operations on single instance.
+     * Serializes availability checks with dequeue+registration of a processing job.
+     * <p>
+     * Prevents races among timer-driven checks and queue event callbacks that could:
+     * (a) over-dequeue beyond local capacity or (b) register inconsistent processing state.
+     * </p>
      */
-    private final ReentrantLock instanceLock = new ReentrantLock();
+    private final ReentrantLock availabilityAndDequeueLock = new ReentrantLock();
 
     /**
-     * Lock for pausing and resuming the build agent.
+     * Serializes agent state transitions (pause/resume) and their side effects:
+     * <ul>
+     * <li>Listener attach/detach</li>
+     * <li>Scheduler start/stop</li>
+     * <li>Result publication gating ({@link #processResults})</li>
+     * <li>Graceful wait for jobs, then cancellation + requeue</li>
+     * </ul>
      */
-    private final ReentrantLock pauseResumeLock = new ReentrantLock();
+    private final ReentrantLock agentStateTransitionLock = new ReentrantLock();
 
     private UUID listenerId;
 
@@ -220,7 +261,7 @@ public class SharedQueueProcessingService {
      */
     private void checkAvailabilityAndProcessNextBuild() {
         if (distributedDataAccessService.noDataMemberInClusterAvailable() || distributedDataAccessService.getDistributedBuildJobQueue() == null) {
-            log.debug("There are only lite member in the cluster. Not processing build jobs.");
+            log.warn("There are only lite member in the cluster. Not processing build jobs.");
             return;
         }
         // Check conditions before acquiring the lock to avoid unnecessary locking
@@ -238,7 +279,7 @@ public class SharedQueueProcessingService {
             return;
         }
         BuildJobQueueItem buildJob = null;
-        instanceLock.lock();
+        availabilityAndDequeueLock.lock();
         try {
             // Recheck conditions after acquiring the lock to ensure they are still valid
             if (!nodeIsAvailable() || distributedDataAccessService.getDistributedBuildJobQueue().isEmpty() || isPaused.get()) {
@@ -277,7 +318,7 @@ public class SharedQueueProcessingService {
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
         }
         finally {
-            instanceLock.unlock();
+            availabilityAndDequeueLock.unlock();
         }
     }
 
@@ -441,13 +482,24 @@ public class SharedQueueProcessingService {
         localProcessingJobs.decrementAndGet();
     }
 
+    /**
+     * Transition the agent to <em>paused</em>:
+     * <ol>
+     * <li>Mark paused and stop listener & scheduler.</li>
+     * <li>Update cluster-visible agent info.</li>
+     * <li>Gracefully wait up to {@code pauseGracePeriodSeconds} for running jobs.</li>
+     * <li>On timeout: gate result publication, cancel running jobs, requeue them, then close services.</li>
+     * </ol>
+     *
+     * @param dueToFailures whether this pause was triggered by repeated failures
+     */
     private void pauseBuildAgent(boolean dueToFailures) {
         if (isPaused.get()) {
             log.info("Build agent is already paused");
             return;
         }
 
-        pauseResumeLock.lock();
+        agentStateTransitionLock.lock();
         try {
             log.info("Pausing build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 
@@ -483,7 +535,7 @@ public class SharedQueueProcessingService {
             buildAgentConfiguration.closeBuildAgentServices();
         }
         finally {
-            pauseResumeLock.unlock();
+            agentStateTransitionLock.unlock();
         }
     }
 
@@ -504,13 +556,22 @@ public class SharedQueueProcessingService {
         log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod);
     }
 
+    /**
+     * Transition the agent back to <em>running</em>:
+     * <ol>
+     * <li>Open services, clear failure counter, resume result publication.</li>
+     * <li>Cleanup Docker containers.</li>
+     * <li>Re-attach listener and restart scheduler.</li>
+     * <li>Trigger immediate availability check.</li>
+     * </ol>
+     */
     private void resumeBuildAgent() {
         if (!isPaused.get()) {
             log.info("Build agent is already running");
             return;
         }
 
-        pauseResumeLock.lock();
+        agentStateTransitionLock.lock();
         try {
             log.info("Resuming build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
             isPaused.set(false);
@@ -530,14 +591,17 @@ public class SharedQueueProcessingService {
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
         }
         finally {
-            pauseResumeLock.unlock();
+            agentStateTransitionLock.unlock();
         }
 
         checkAvailabilityAndProcessNextBuild();
     }
 
     /**
-     * Checks whether the node has at least one thread available for a new build job.
+     * Returns whether at least one thread is available and the executor queue is empty.
+     * <p>
+     * Ensures we do not over-dequeue beyond configured pool capacity.
+     * </p>
      */
     private boolean nodeIsAvailable() {
         var buildExecutorService = buildAgentConfiguration.getBuildExecutor();
@@ -590,13 +654,35 @@ public class SharedQueueProcessingService {
         return throwable.getCause() instanceof TimeoutException || throwable.getMessage().equals(timeoutMsg);
     }
 
+    /**
+     * Lightweight listener that reacts to changes in the distributed build queue.
+     *
+     * <p>
+     * <strong>Design</strong>:
+     * <ul>
+     * <li>Does not perform any heavy work on the Hazelcast event thread.</li>
+     * <li>Simply triggers {@code checkAvailabilityAndProcessNextBuild()}, which
+     * handles locking and capacity checks.</li>
+     * <li>Logs compact, high-signal messages to avoid log spam at scale.</li>
+     * <li>Defensive against Hazelcast lifecycle/availability issues.</li>
+     * </ul>
+     */
     public class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {
 
         @Override
         public void itemAdded(ItemEvent<BuildJobQueueItem> event) {
-            log.debug("CIBuildJobQueueItem added to queue: {}", event.getItem());
-            log.debug("Current queued items: {}", distributedDataAccessService.getQueuedJobsSize());
-            checkAvailabilityAndProcessNextBuild();
+            try {
+                log.debug("CIBuildJobQueueItem added to queue: {}", event.getItem());
+                log.debug("Current queued items: {}", distributedDataAccessService.getQueuedJobsSize());
+                checkAvailabilityAndProcessNextBuild();
+            }
+            catch (HazelcastInstanceNotActiveException e) {
+                log.warn("Ignoring itemAdded: Hazelcast instance not active anymore");
+            }
+            catch (Exception e) {
+                // Never let listener exceptions bubble up and destabilize the Hazelcast thread
+                log.error("Error handling itemAdded event", e);
+            }
         }
 
         @Override
