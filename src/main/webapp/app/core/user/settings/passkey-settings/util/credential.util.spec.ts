@@ -19,10 +19,10 @@ describe('credential util helper method', () => {
         });
 
         /**
-         * we expect {@link getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the console.warn method
+         * we expect {@link getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the `console.warn` method
          */
         it('should handle malformed Bitwarden credentials gracefully', () => {
-            jest.spyOn(console, 'warn').mockImplementation(); // Suppress console warnings in the test
+            jest.spyOn(console, 'warn').mockImplementation(() => {}); // Suppress console warnings in the test
             const malformedCredential: MalformedBitwardenCredential = {
                 id: 'mock-id',
                 rawId: { 0: 1, 1: 2, 2: 3 },
@@ -64,15 +64,15 @@ describe('credential util helper method', () => {
         });
 
         it('should throw InvalidCredentialError if credential is invalid', () => {
-            jest.spyOn(console, 'warn').mockImplementation();
+            jest.spyOn(console, 'warn').mockImplementation(() => {});
             expect(() => getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(null)).toThrow(InvalidCredentialError);
         });
 
         /**
-         * we expect {@link getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the console.warn method
+         * we expect {@link getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the `console.warn` method
          */
         it('should throw InvalidCredentialError if the credential cannot be processed', () => {
-            jest.spyOn(console, 'warn').mockImplementation(); // Suppress console warnings in the test
+            jest.spyOn(console, 'warn').mockImplementation(() => {}); // Suppress console warnings in the test
             const malformedCredential = { id: 'mock-id' } as unknown as Credential;
 
             // Mock the toJSON method to simulate an error
@@ -98,10 +98,10 @@ describe('credential util helper method', () => {
         });
 
         /**
-         * we expect {@link getLoginCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the console.warn method
+         * we expect {@link getLoginCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the `console.warn` method
          */
         it('should handle malformed Bitwarden credentials gracefully during login', () => {
-            jest.spyOn(console, 'warn').mockImplementation(); // Suppress console warnings in the test
+            jest.spyOn(console, 'warn').mockImplementation(() => {}); // Suppress console warnings in the test
             const malformedCredential: MalformedBitwardenCredential = {
                 id: 'mock-id',
                 rawId: { 0: 1, 1: 2, 2: 3 },
@@ -137,15 +137,15 @@ describe('credential util helper method', () => {
         });
 
         it('should throw InvalidCredentialError if credential is invalid', () => {
-            jest.spyOn(console, 'warn').mockImplementation();
+            jest.spyOn(console, 'warn').mockImplementation(() => {});
             expect(() => getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(null)).toThrow(InvalidCredentialError);
         });
 
         /**
-         * we expect {@link getLoginCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the console.warn method
+         * we expect {@link getLoginCredentialWithGracefullyHandlingAuthenticatorIssues} to log a warning, therefore we mock the `console.warn` method
          */
         it('should throw InvalidCredentialError if the credential cannot be processed', () => {
-            jest.spyOn(console, 'warn').mockImplementation(); // Suppress console warnings in the test
+            jest.spyOn(console, 'warn').mockImplementation(() => {}); // Suppress console warnings in the test
             const malformedCredential = { id: 'mock-id' } as unknown as Credential;
 
             // Mock the toJSON method to simulate an error
