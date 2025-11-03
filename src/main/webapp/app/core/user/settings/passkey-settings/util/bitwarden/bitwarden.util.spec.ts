@@ -1,5 +1,5 @@
 import { convertToBase64, getLoginCredentialFromMalformedBitwardenObject, getRegistrationCredentialFromMalformedBitwardenObject } from './bitwarden.util';
-import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
+import { MalformedBitwardenRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-registration-credential';
 import { expectBase64UrlFieldsForLogin, expectBase64UrlFieldsForRegistration } from '../test.helpers';
 import { describe, expect, it } from '@jest/globals';
 
@@ -98,7 +98,7 @@ describe('Bitwarden Util', () => {
     });
 
     describe('getRegistrationCredentialFromMalformedBitwardenObject', () => {
-        const malformedRegistrationCredential: MalformedBitwardenCredential = {
+        const malformedRegistrationCredential: MalformedBitwardenRegistrationCredential = {
             id: 'test-id',
             rawId: { 0: 116, 1: 101, 2: 115, 3: 116 },
             type: 'public-key',
@@ -150,7 +150,7 @@ describe('Bitwarden Util', () => {
         });
 
         it('should handle undefined optional fields gracefully', () => {
-            const minimalCredential: MalformedBitwardenCredential = {
+            const minimalCredential: MalformedBitwardenRegistrationCredential = {
                 id: 'minimal-id',
                 rawId: { 0: 1, 1: 2 },
                 type: 'public-key',
@@ -172,7 +172,7 @@ describe('Bitwarden Util', () => {
     });
 
     describe('getLoginCredentialFromMalformedBitwardenObject', () => {
-        const malformedLoginCredential: MalformedBitwardenCredential = {
+        const malformedLoginCredential: MalformedBitwardenRegistrationCredential = {
             id: 'login-id',
             rawId: { 0: 108, 1: 111, 2: 103, 3: 105, 4: 110 },
             type: 'public-key',
@@ -210,7 +210,7 @@ describe('Bitwarden Util', () => {
         });
 
         it('should handle undefined optional fields gracefully', () => {
-            const minimalCredential: MalformedBitwardenCredential = {
+            const minimalCredential: MalformedBitwardenRegistrationCredential = {
                 id: 'minimal-id',
                 rawId: { 0: 1, 1: 2 },
                 type: 'public-key',

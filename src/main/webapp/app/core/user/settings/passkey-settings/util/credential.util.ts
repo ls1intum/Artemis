@@ -1,4 +1,4 @@
-import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
+import { MalformedBitwardenRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-registration-credential';
 import {
     getLoginCredentialFromMalformedBitwardenObject,
     getRegistrationCredentialFromMalformedBitwardenObject,
@@ -12,6 +12,7 @@ import {
 import { Malformed1Password8Credential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-credential';
 import { SerializableRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-registration-credential';
 import { SerializableLoginCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-login-credential';
+import { MalformedBitwardenLoginCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-login-credential';
 
 /**
  * Generic handler for converting malformed registration credentials to serializable credentials.
@@ -77,7 +78,9 @@ function handleMalformedLoginCredential<T>(
 function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends SerializableRegistrationCredential | SerializableLoginCredential>(
     credential: Credential | null,
     credentialType: 'registration' | 'login',
-    bitwardenConverter: (credential: MalformedBitwardenCredential) => T | undefined,
+    bitwardenConverter: (
+        malformedBitwardenLoginCredential: MalformedBitwardenLoginCredential | MalformedBitwardenRegistrationCredential | null,
+    ) => SerializableLoginCredential | undefined,
     onePassword8Converter: (credential: Malformed1Password8Credential) => T | undefined,
     malformedHandler: <U>(credential: Credential | null, converterFunction: (credential: U) => T | undefined) => T,
 ): Credential | T {
@@ -96,7 +99,7 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
         console.warn(`Authenticator returned a malformed ${credentialType} credential, attempting to fix it`, error);
 
         // Authenticators, such as bitwarden, do not handle the credential generation properly; this is a workaround for it
-        let fixedCredential = malformedHandler<MalformedBitwardenCredential>(credential, bitwardenConverter);
+        let fixedCredential = malformedHandler<MalformedBitwardenRegistrationCredential>(credential, bitwardenConverter);
 
         // 1Password8 returns empty string for authenticatorData when the Bitwarden workaround is applied
         const is1Password8Credential = fixedCredential.response?.authenticatorData === '';

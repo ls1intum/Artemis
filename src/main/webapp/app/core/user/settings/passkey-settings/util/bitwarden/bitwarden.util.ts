@@ -1,7 +1,8 @@
-import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
+import { MalformedBitwardenRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-registration-credential';
 import { SerializableRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-registration-credential';
 import { SerializableLoginCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-login-credential';
 import { encodeAsBase64Url } from 'app/shared/util/base64.util';
+import { MalformedBitwardenLoginCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-login-credential';
 
 /**
  * Converts a record containing numeric values into a Base64-encoded string.
@@ -34,26 +35,26 @@ export function convertToBase64(rawObject: Record<string, number> | null | undef
  * <p><strong>We fix the issue by creating a serializable copy of the object with its properties converted into the correct format.</strong></p>
  */
 export function getRegistrationCredentialFromMalformedBitwardenObject(
-    malformedBitwardenCredential: MalformedBitwardenCredential | null,
+    malformedBitwardenRegistrationCredential: MalformedBitwardenRegistrationCredential | null,
 ): SerializableRegistrationCredential | undefined {
-    if (!malformedBitwardenCredential) {
+    if (!malformedBitwardenRegistrationCredential) {
         return undefined;
     }
 
     return {
-        authenticatorAttachment: malformedBitwardenCredential.authenticatorAttachment as AuthenticatorAttachment,
-        clientExtensionResults: malformedBitwardenCredential.getClientExtensionResults() as AuthenticationExtensionsClientOutputs,
-        id: malformedBitwardenCredential.id,
-        rawId: convertToBase64(malformedBitwardenCredential.rawId),
+        authenticatorAttachment: malformedBitwardenRegistrationCredential.authenticatorAttachment as AuthenticatorAttachment,
+        clientExtensionResults: malformedBitwardenRegistrationCredential.getClientExtensionResults() as AuthenticationExtensionsClientOutputs,
+        id: malformedBitwardenRegistrationCredential.id,
+        rawId: convertToBase64(malformedBitwardenRegistrationCredential.rawId),
         response: {
-            attestationObject: convertToBase64(malformedBitwardenCredential.response.attestationObject),
-            authenticatorData: convertToBase64(malformedBitwardenCredential.response.getAuthenticatorData?.() ?? undefined),
-            clientDataJSON: convertToBase64(malformedBitwardenCredential.response.clientDataJSON),
-            publicKey: convertToBase64(malformedBitwardenCredential.response.getPublicKey?.() ?? undefined),
-            publicKeyAlgorithm: malformedBitwardenCredential.response.getPublicKeyAlgorithm?.() ?? undefined,
-            transports: malformedBitwardenCredential.response.getTransports?.() ?? undefined,
+            attestationObject: convertToBase64(malformedBitwardenRegistrationCredential.response.attestationObject),
+            authenticatorData: convertToBase64(malformedBitwardenRegistrationCredential.response.getAuthenticatorData?.() ?? undefined),
+            clientDataJSON: convertToBase64(malformedBitwardenRegistrationCredential.response.clientDataJSON),
+            publicKey: convertToBase64(malformedBitwardenRegistrationCredential.response.getPublicKey?.() ?? undefined),
+            publicKeyAlgorithm: malformedBitwardenRegistrationCredential.response.getPublicKeyAlgorithm?.() ?? undefined,
+            transports: malformedBitwardenRegistrationCredential.response.getTransports?.() ?? undefined,
         },
-        type: malformedBitwardenCredential.type as PublicKeyCredentialType,
+        type: malformedBitwardenRegistrationCredential.type as PublicKeyCredentialType,
     };
 }
 
@@ -73,22 +74,24 @@ export function getRegistrationCredentialFromMalformedBitwardenObject(
  *
  * <p><strong>We fix the issue by creating a serializable copy of the object with its properties converted into the correct format.</strong></p>
  */
-export function getLoginCredentialFromMalformedBitwardenObject(malformedBitwardenCredential: MalformedBitwardenCredential | null): SerializableLoginCredential | undefined {
-    if (!malformedBitwardenCredential) {
+export function getLoginCredentialFromMalformedBitwardenObject(
+    malformedBitwardenLoginCredential: MalformedBitwardenLoginCredential | null,
+): SerializableLoginCredential | undefined {
+    if (!malformedBitwardenLoginCredential) {
         return undefined;
     }
 
     return {
-        authenticatorAttachment: malformedBitwardenCredential.authenticatorAttachment as AuthenticatorAttachment,
-        clientExtensionResults: malformedBitwardenCredential.getClientExtensionResults() as AuthenticationExtensionsClientOutputs,
-        id: malformedBitwardenCredential.id,
-        rawId: convertToBase64(malformedBitwardenCredential.rawId),
+        authenticatorAttachment: malformedBitwardenLoginCredential.authenticatorAttachment as AuthenticatorAttachment,
+        clientExtensionResults: malformedBitwardenLoginCredential.getClientExtensionResults() as AuthenticationExtensionsClientOutputs,
+        id: malformedBitwardenLoginCredential.id,
+        rawId: convertToBase64(malformedBitwardenLoginCredential.rawId),
         response: {
-            authenticatorData: convertToBase64(malformedBitwardenCredential.response.authenticatorData),
-            clientDataJSON: convertToBase64(malformedBitwardenCredential.response.clientDataJSON),
-            signature: convertToBase64(malformedBitwardenCredential.response.signature),
-            userHandle: convertToBase64(malformedBitwardenCredential.response.userHandle),
+            authenticatorData: convertToBase64(malformedBitwardenLoginCredential.response.authenticatorData),
+            clientDataJSON: convertToBase64(malformedBitwardenLoginCredential.response.clientDataJSON),
+            signature: convertToBase64(malformedBitwardenLoginCredential.response.signature),
+            userHandle: convertToBase64(malformedBitwardenLoginCredential.response.userHandle),
         },
-        type: malformedBitwardenCredential.type as PublicKeyCredentialType,
+        type: malformedBitwardenLoginCredential.type as PublicKeyCredentialType,
     };
 }

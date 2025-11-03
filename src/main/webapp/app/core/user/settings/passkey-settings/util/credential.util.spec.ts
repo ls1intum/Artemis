@@ -1,5 +1,5 @@
 import { getLoginCredentialWithGracefullyHandlingAuthenticatorIssues, getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues } from './credential.util';
-import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
+import { MalformedBitwardenRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-registration-credential';
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/errors/invalid-credential.error';
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 
@@ -20,7 +20,7 @@ describe('credential util helper method', () => {
          */
         it('should handle malformed Bitwarden credentials gracefully', () => {
             jest.spyOn(console, 'warn').mockImplementation(() => {}); // Suppress console warnings in the test
-            const malformedCredential: MalformedBitwardenCredential = {
+            const malformedCredential: MalformedBitwardenRegistrationCredential = {
                 id: 'mock-id',
                 rawId: { 0: 1, 1: 2, 2: 3 },
                 type: 'public-key',
@@ -99,7 +99,7 @@ describe('credential util helper method', () => {
          */
         it('should handle malformed Bitwarden credentials gracefully during login', () => {
             jest.spyOn(console, 'warn').mockImplementation(() => {}); // Suppress console warnings in the test
-            const malformedCredential: MalformedBitwardenCredential = {
+            const malformedCredential: MalformedBitwardenRegistrationCredential = {
                 id: 'mock-id',
                 rawId: { 0: 1, 1: 2, 2: 3 },
                 type: 'public-key',
