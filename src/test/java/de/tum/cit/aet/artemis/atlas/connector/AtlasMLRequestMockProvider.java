@@ -19,7 +19,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasMLEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 
 @Component
 @Profile(PROFILE_CORE)
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasMLEnabled.class)
 @Lazy
 public class AtlasMLRequestMockProvider {
 

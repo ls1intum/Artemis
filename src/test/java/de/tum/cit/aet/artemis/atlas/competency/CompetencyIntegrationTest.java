@@ -17,6 +17,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
+import de.tum.cit.aet.artemis.atlas.config.AtlasMLNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
@@ -369,8 +371,9 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         @BeforeEach
         void setupNestedMocks() {
             // Reset mock server to clear any previous test's requests, then add expectations
-            atlasMLRequestMockProvider.reset();
-            atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+            var provider = atlasMLRequestMockProvider.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
+            provider.reset();
+            provider.mockSaveCompetenciesAny();
         }
 
         @Test
@@ -382,7 +385,8 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
             var mockedResponse = new SuggestCompetencyResponseDTO(List.of(new AtlasMLCompetencyDTO(1L, "Mocked", "Desc", 1L)));
 
             // Add mock for this specific test (mockSaveCompetenciesAny is already set by @BeforeEach)
-            atlasMLRequestMockProvider.mockSuggestCompetencies(requestBody, mockedResponse);
+            var provider = atlasMLRequestMockProvider.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
+            provider.mockSuggestCompetencies(requestBody, mockedResponse);
 
             var response = request.postWithResponseBody("/api/atlas/competencies/suggest", requestBody, SuggestCompetencyResponseDTO.class, HttpStatus.OK);
             // minimal assertion to ensure our mocked data is returned
@@ -408,7 +412,8 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
             var mockedRelations = new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "ASSUMES")));
 
             // Add mock for this specific test (mockSaveCompetenciesAny is already set by @BeforeEach)
-            atlasMLRequestMockProvider.mockSuggestCompetencyRelations(courseId, mockedRelations);
+            var provider = atlasMLRequestMockProvider.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
+            provider.mockSuggestCompetencyRelations(courseId, mockedRelations);
 
             var response = request.get("/api/atlas/courses/" + courseId + "/competencies/relations/suggest", HttpStatus.OK, SuggestCompetencyRelationsResponseDTO.class);
             assert response.relations() != null && response.relations().size() == 1;

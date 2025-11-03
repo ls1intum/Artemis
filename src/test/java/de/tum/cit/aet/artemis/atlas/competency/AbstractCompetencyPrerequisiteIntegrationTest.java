@@ -17,6 +17,8 @@ import java.util.function.Function;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
+import de.tum.cit.aet.artemis.atlas.config.AtlasMLNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
@@ -66,8 +68,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     // BeforeEach
     void setupTestScenario(String TEST_PREFIX, Function<Course, CourseCompetency> createCourseCompetencyForCourse) {
         // Mock AtlasML saves to avoid external calls in tests that create/import competencies
-        atlasMLRequestMockProvider.enableMockingOfRequests();
-        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+        var provider = atlasMLRequestMockProvider.orElseThrow(() -> new AtlasMLNotPresentException(AtlasMLApi.class));
+        provider.enableMockingOfRequests();
+        provider.mockSaveCompetenciesAny();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
 
