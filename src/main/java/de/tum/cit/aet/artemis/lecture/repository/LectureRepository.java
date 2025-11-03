@@ -71,17 +71,34 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.attachments
-            WHERE lecture.course.id = :courseId AND NOT lecture.isTutorialLecture
+            WHERE lecture.course.id = :courseId
             """)
-    Set<Lecture> findAllNonTutorialLecturesByCourseIdWithAttachments(@Param("courseId") Long courseId);
+    Set<Lecture> findAllLecturesByCourseIdWithAttachments(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+            WHERE lecture.course.id = :courseId AND lecture.isTutorialLecture
+            """)
+    Set<Lecture> findAllTutorialLecturesByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.attachments
-                LEFT JOIN FETCH lecture.lectureUnits lu
-                LEFT JOIN FETCH lu.attachment
+                LEFT JOIN FETCH lecture.lectureUnits lectureUnit
+                LEFT JOIN FETCH TREAT(lectureUnit AS AttachmentVideoUnit).attachment
             WHERE lecture.course.id = :courseId
+            """)
+    Set<Lecture> findAllLecturesByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.attachments
+                LEFT JOIN FETCH lecture.lectureUnits lectureUnit
+                LEFT JOIN FETCH TREAT(lectureUnit AS AttachmentVideoUnit).attachment
+            WHERE lecture.course.id = :courseId AND NOT lecture.isTutorialLecture
             """)
     Set<Lecture> findAllNonTutorialLecturesByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
 

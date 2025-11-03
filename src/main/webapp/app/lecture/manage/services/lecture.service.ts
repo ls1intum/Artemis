@@ -72,11 +72,9 @@ export class LectureService {
         );
     }
 
-    findAllByCourseId(courseId: number, withLectureUnits = false): Observable<EntityArrayResponseType> {
-        const params = new HttpParams().set('withLectureUnits', withLectureUnits ? '1' : '0');
+    findAllLecturesByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures`, {
-                params,
                 observe: 'response',
             })
             .pipe(
@@ -86,6 +84,31 @@ export class LectureService {
             );
     }
 
+    findAllNonTutorialLecturesByCourseIdWithUnits(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Lecture[]>(`api/lecture/courses/${courseId}/non-tutorial-lectures-with-units`, {
+                observe: 'response',
+            })
+            .pipe(
+                map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
+                map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
+                tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+            );
+    }
+
+    findAllTutorialLecturesByCourseId(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Lecture[]>(`api/lecture/courses/${courseId}/tutorial-lectures`, {
+                observe: 'response',
+            })
+            .pipe(
+                map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
+                map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
+                tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+            );
+    }
+
+    // TODO: check if still works correctly
     findAllByCourseIdWithSlides(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures-with-slides`, {

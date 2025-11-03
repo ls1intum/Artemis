@@ -125,7 +125,7 @@ describe('Lecture Service', () => {
             const expected = returnedFromService;
             const courseId = 1;
             service
-                .findAllByCourseId(courseId)
+                .findAllLecturesByCourseId(courseId)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({

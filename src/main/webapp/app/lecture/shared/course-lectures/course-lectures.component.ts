@@ -133,7 +133,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     processLectures(lectures: Lecture[]) {
-        this.sortedLectures = this.courseOverviewService.sortLectures(lectures);
+        const filteredLectures = lectures.filter((lecture) => !lecture.tutorialLecture);
+        this.sortedLectures = this.courseOverviewService.sortLectures(filteredLectures);
         this.sidebarLectures = this.courseOverviewService.mapLecturesToSidebarCardElements(this.sortedLectures);
         this.accordionLectureGroups = this.courseOverviewService.groupLecturesByStartDate(this.sortedLectures);
         this.updateSidebarData();

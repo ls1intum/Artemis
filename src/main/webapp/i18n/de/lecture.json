@@ -92,6 +92,8 @@
                 "lectureSeriesLabel": "Vorlesungsserie"
             },
             "longLectureWarning": "Vermeide Vorlesungen die mehr als ein paar Stunden dauern. Sie machen den Kalender unübersichtlich.",
+            "tutorialLectureTooltip": "Eine Tutoriumsvorlesung ist nur Teil des Tutoriumstabs und kann benutzt werden, um Tutoriumsinhalte zur Verfügung zu stellen.",
+            "tutorialLectureCheckboxLabel": "Das ist eine Tutoriumsvorlesung.",
             "createSeries": {
                 "startAndEndDateExplanation": "Erstelle schnell eine Vorlesungsserie, indem du Title und Zeiten definierst. Füge Inhalte später hinzu. Definiere als erstes den Start und das Ende von mindestens einer Vorlesung, die du wöchentlich wiederholen willst:",
                 "seriesEndDateExplanation": "Definieren nun noch ein Datum, an dem die sich wiederholenden Vorlesungen aufhören sollen:",

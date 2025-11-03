@@ -125,10 +125,9 @@ export class CourseTutorialGroupsComponent {
     }
 
     private loadAndSetTutorialLectures(courseId: number) {
-        this.lectureService.findAllByCourseId(courseId).subscribe({
+        this.lectureService.findAllTutorialLecturesByCourseId(courseId).subscribe({
             next: ({ body }) => {
-                const lectures = body ?? [];
-                const tutorialLectures = lectures.filter((lecture) => lecture.tutorialLecture);
+                const tutorialLectures = body ?? [];
                 this.tutorialLectures.set(tutorialLectures);
                 this.updateCachedLectures(tutorialLectures, courseId);
             },
@@ -136,12 +135,15 @@ export class CourseTutorialGroupsComponent {
         });
     }
 
-    private updateCachedLectures(lectures: Lecture[], courseId: number) {
+    private updateCachedLectures(lecturesToUpdate: Lecture[], courseId: number) {
         const course = this.courseStorageService.getCourse(courseId);
-        if (course) {
-            course.lectures = lectures;
-            this.courseStorageService.updateCourse(course);
+        if (!course) {
+            return;
         }
+        const existingLectures = course.lectures ?? [];
+        const remainingLectures = existingLectures.filter((existing) => !lecturesToUpdate.some((updated) => updated.id === existing.id));
+        course.lectures = [...remainingLectures, ...lecturesToUpdate];
+        this.courseStorageService.updateCourse(course);
     }
 
     private prepareSidebarData(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]) {

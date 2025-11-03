@@ -215,25 +215,42 @@ public class LectureResource {
     /**
      * GET /courses/:courseId/lectures : get all the lectures of a course for the course administration page
      *
-     * @param withLectureUnits if set associated lecture units will also be loaded
-     * @param courseId         the courseId of the course for which all lectures should be returned
+     * @param courseId the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping("courses/{courseId}/lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
+    public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        Set<Lecture> lectures;
-        if (withLectureUnits) {
-            lectures = lectureRepository.findAllNonTutorialLecturesByCourseIdWithAttachmentsAndLectureUnits(courseId);
-        }
-        else {
-            lectures = lectureRepository.findAllNonTutorialLecturesByCourseIdWithAttachments(courseId);
-        }
+        Set<Lecture> lectures = lectureRepository.findAllLecturesByCourseIdWithAttachments(courseId);
+        return ResponseEntity.ok().body(lectures);
+    }
+
+    @GetMapping("courses/{courseId}/tutorial-lectures")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Set<Lecture>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all Lectures for the course with id : {}", courseId);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        Set<Lecture> lectures = lectureRepository.findAllTutorialLecturesByCourseId(courseId);
+        return ResponseEntity.ok().body(lectures);
+    }
+
+    @GetMapping("courses/{courseId}/non-tutorial-lectures-with-units")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Set<Lecture>> getNonTutorialLecturesForCourseWithLectureUnits(@PathVariable Long courseId) {
+        log.debug("REST request to get all Lectures for the course with id : {}", courseId);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        Set<Lecture> lectures = lectureRepository.findAllNonTutorialLecturesByCourseIdWithAttachmentsAndLectureUnits(courseId);
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -251,7 +268,7 @@ public class LectureResource {
 
         /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
         /* TODO: #11479 - remove the commented out code OR add back in such that the result of the query is filtered for visible lectures again */
-        var lectures = lectureRepository.findAllNonTutorialLecturesByCourseIdWithAttachmentsAndLectureUnits(courseId); // .stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
+        var lectures = lectureRepository.findAllLecturesByCourseIdWithAttachmentsAndLectureUnits(courseId); // .stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
         Set<Long> attachmentVideoUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream())
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(DomainObject::getId).collect(Collectors.toSet());
 

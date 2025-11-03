@@ -8,7 +8,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { getCurrentLocaleSignal, onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCircleInfo, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { LectureTitleChannelNameComponent } from '../lecture-title-channel-name/lecture-title-channel-name.component';
@@ -30,6 +30,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import { TranslateService } from '@ngx-translate/core';
+import { CheckboxModule } from 'primeng/checkbox';
+import { TooltipModule } from 'primeng/tooltip';
 
 export enum LectureCreationMode {
     SINGLE = 'single',
@@ -59,6 +61,8 @@ interface CreateLectureOption {
         ArtemisTranslatePipe,
         SelectButtonModule,
         LectureSeriesCreateComponent,
+        CheckboxModule,
+        TooltipModule,
     ],
 })
 export class LectureUpdateComponent implements OnInit, OnDestroy {
@@ -67,6 +71,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected readonly faSave = faSave;
     protected readonly faPuzzleProcess = faPuzzlePiece;
     protected readonly faBan = faBan;
+    protected readonly faCircleInfo = faCircleInfo;
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
@@ -106,6 +111,8 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     createLectureOptions = computed(() => this.computeCreateLectureOptions());
     selectedCreateLectureOption = signal<LectureCreationMode>(LectureCreationMode.SINGLE);
     isLectureSeriesCreationMode = computed(() => !this.isEditMode() && this.selectedCreateLectureOption() === LectureCreationMode.SERIES);
+    isTutorialLecture = signal(false);
+    tutorialLectureTooltip = computed<string>(() => this.computeTutorialLectureTooltip());
 
     constructor() {
         effect(() => {
@@ -153,6 +160,11 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
                 this.subscriptions = new Subscription();
             }
         });
+
+        effect(() => {
+            this.lecture().tutorialLecture = this.isTutorialLecture();
+            this.updateIsChangesMadeToTitleOrPeriodSection();
+        });
     }
 
     ngOnInit() {
@@ -163,6 +175,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
             this.lecture.set(lecture ?? new Lecture());
+            this.isTutorialLecture.set(lecture.tutorialLecture);
             const course = data['course'];
             if (course) {
                 this.lecture().course = course;
@@ -214,7 +227,8 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         return (
             this.lecture().title !== this.lectureOnInit.title ||
             this.lecture().channelName !== this.lectureOnInit.channelName ||
-            (this.lecture().description ?? '') !== (this.lectureOnInit.description ?? '')
+            (this.lecture().description ?? '') !== (this.lectureOnInit.description ?? '') ||
+            this.lecture().tutorialLecture !== this.lectureOnInit.tutorialLecture
         );
     }
 
@@ -382,5 +396,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             { label: this.translateService.instant('artemisApp.lecture.creationMode.singleLectureLabel'), mode: LectureCreationMode.SINGLE },
             { label: this.translateService.instant('artemisApp.lecture.creationMode.lectureSeriesLabel'), mode: LectureCreationMode.SERIES },
         ];
+    }
+
+    private computeTutorialLectureTooltip(): string {
+        this.currentLocale();
+        return this.translateService.instant('artemisApp.lecture.tutorialLectureTooltip');
     }
 }
