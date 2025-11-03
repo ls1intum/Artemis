@@ -219,6 +219,7 @@ public class IrisRequestMockProvider {
         // @formatter:off
         PyrisHealthStatusDTO[] activeIrisStatusDTO = new PyrisHealthStatusDTO[] {
             new PyrisHealthStatusDTO(
+                true,
                 Map.of(
                     "weaviate",
                     new PyrisHealthStatusDTO.ModuleStatusDTO(

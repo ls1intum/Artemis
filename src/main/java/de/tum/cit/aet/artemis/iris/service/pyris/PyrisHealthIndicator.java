@@ -14,15 +14,16 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
-
 // ...imports...
 
 @Component
@@ -69,36 +70,33 @@ public class PyrisHealthIndicator implements HealthIndicator {
         }
 
         ConnectorHealth connectorHealth;
+        URI healthUri = UriComponentsBuilder.fromUri(irisUrl).path("/api/v1/health").build(true).toUri();
         var additionalInfo = new HashMap<String, Object>();
         additionalInfo.put(IRIS_URL_KEY, irisUrl);
 
         try {
-            ResponseEntity<PyrisHealthStatusDTO> response = restTemplate.getForEntity(irisUrl + "/api/v1/health/", PyrisHealthStatusDTO.class);
+            ResponseEntity<String> response = restTemplate.getForEntity(healthUri, String.class);
+            String json = response.getBody();
 
-            boolean overallUp = response.getStatusCode().is2xxSuccessful();
-
-            PyrisHealthStatusDTO body = response.getBody();
-            if (body != null && body.modules() != null) {
-                flattenModulesInto(additionalInfo, body.modules());
+            if (json == null || json.isBlank() || "null".equalsIgnoreCase(json.trim())) {
+                connectorHealth = fail(additionalInfo, "Empty response from Pyris");
             }
-
-            connectorHealth = new ConnectorHealth(overallUp, additionalInfo, null);
-        }
-        catch (HttpStatusCodeException e) {
-            try {
-                var parsed = objectMapper.readValue(e.getResponseBodyAsString(), PyrisHealthStatusDTO.class);
-                if (parsed != null && parsed.modules() != null) {
-                    flattenModulesInto(additionalInfo, parsed.modules());
+            else {
+                try {
+                    PyrisHealthStatusDTO body = objectMapper.readValue(json, PyrisHealthStatusDTO.class);
+                    flattenModulesInto(additionalInfo, body.modules());
+                    connectorHealth = new ConnectorHealth(body.isHealthy(), additionalInfo, null);
+                }
+                catch (JsonProcessingException e) {
+                    connectorHealth = fail(additionalInfo, "Incorrect format from Pyris");
                 }
             }
-            catch (Exception ignore) {
-                /* body may be empty or not JSON */ }
-            connectorHealth = new ConnectorHealth(false, additionalInfo, null);
+        }
+        catch (ResourceAccessException e) {
+            connectorHealth = fail(additionalInfo, "Connection to Pyris timed out");
         }
         catch (RestClientException e) {
-            String icon = iconFor(PyrisHealthStatusDTO.ServiceStatus.DOWN);
-            additionalInfo.put("error", icon + " Connection to Pyris failed");
-            connectorHealth = new ConnectorHealth(false, additionalInfo, null);
+            connectorHealth = fail(additionalInfo, "Connection to Pyris failed");
         }
 
         var newHealth = connectorHealth.asActuatorHealth();
@@ -113,16 +111,16 @@ public class PyrisHealthIndicator implements HealthIndicator {
         modules.forEach((name, m) -> target.put(name, summarizeModule(m)));
     }
 
-    private static String summarizeModule(PyrisHealthStatusDTO.ModuleStatusDTO m) {
-        String icon = iconFor(m.status());
+    private static String summarizeModule(PyrisHealthStatusDTO.ModuleStatusDTO module) {
+        String icon = iconFor(module.status());
 
         StringBuilder sb = new StringBuilder().append(icon).append(' ');
-        if (m.error() != null && !m.error().isBlank()) {
-            sb.append(m.error());
+        if (module.error() != null && !module.error().isBlank()) {
+            sb.append(module.error());
             return sb.toString();
         }
-        if (m.metaData() != null && !m.metaData().isBlank())
-            sb.append(m.metaData());
+        if (module.metaData() != null && !module.metaData().isBlank())
+            sb.append(module.metaData());
 
         return sb.toString();
     }
@@ -134,5 +132,10 @@ public class PyrisHealthIndicator implements HealthIndicator {
             case DEGRADED -> ORANGE_CIRCLE;
             case DOWN -> RED_CIRCLE;
         };
+    }
+
+    private static ConnectorHealth fail(Map<String, Object> info, String message) {
+        info.put("error", iconFor(PyrisHealthStatusDTO.ServiceStatus.DOWN) + " " + message);
+        return new ConnectorHealth(false, info, null);
     }
 }
