@@ -1,6 +1,6 @@
 import { addNewPasskey, getLoginCredentialWithGracefullyHandlingAuthenticatorIssues, getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues } from './credential.util';
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
-import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
+import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/errors/invalid-credential.error';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';

@@ -17,9 +17,7 @@ import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { loginWithPasskey } from 'app/core/user/settings/passkey-settings/util/credential.util';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -49,7 +47,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
     private readonly webauthnService = inject(WebauthnService);
-    private readonly webauthnApiService = inject(WebauthnApiService);
     private readonly modalService = inject(NgbModal);
     private readonly localStorageService = inject(LocalStorageService);
 
@@ -133,7 +130,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     }
 
     async loginWithPasskey() {
-        await loginWithPasskey(this.webauthnService, this.webauthnApiService, this.alertService);
+        await this.webauthnService.loginWithPasskey();
         this.handleLoginSuccess();
     }
 
