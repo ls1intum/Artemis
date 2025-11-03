@@ -314,6 +314,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         List<String> categories = new ArrayList<>();
         categoriesArray.forEach(node -> categories.add(node.asText()));
         assertThat(categories).containsExactlyInAnyOrder("cat1", "cat2");
+
+        localRepo.resetLocalRepo();
     }
 
     @Test
