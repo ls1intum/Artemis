@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerci
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
-import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
+import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -85,7 +85,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     private IrisMessageService irisMessageService;
 
     @Autowired
-    private PublicPyrisStatusUpdateResource publicPyrisStatusUpdateResource;
+    private PyrisInternalStatusUpdateResource publicPyrisStatusUpdateResource;
 
     private ProgrammingExercise programmingExercise;
 
@@ -306,7 +306,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(mockRequest, de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob.class);
         assertThat(job).isNotNull();
         assertThat(job.jobId()).isEqualTo(token);
-        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Test stage", 0, PyrisStageState.DONE, "Done"));
+        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Test stage", 0, PyrisStageState.DONE, "Done", false));
         var statusUpdate = new TutorSuggestionStatusUpdateDTO("Test suggestion", "Test result", stages, null);
         var mockRequestForStatusUpdate = new org.springframework.mock.web.MockHttpServletRequest();
         mockRequestForStatusUpdate.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);

@@ -330,7 +330,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/lecture-chat/runs/" + jobId + "/status",
-                new PyrisLectureChatStatusUpdateDTO(result, stages, sessionTitle), HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/lecture-chat/runs/" + jobId + "/status", new PyrisLectureChatStatusUpdateDTO(result, stages, sessionTitle),
+                HttpStatus.OK, headers);
     }
 }
