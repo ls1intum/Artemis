@@ -1,6 +1,6 @@
 <div class="edit-mc-question">
     @if (!reEvaluationInProgress()) {
-        <div class="question-options card-header question-card-header" [hidden]="showPreview">
+        <div class="question-options card-header question-card-header" [hidden]="showPreview()">
             <button
                 class="btn question-collapse"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
@@ -114,7 +114,7 @@
     }
 
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
-        <div [ngClass]="reEvaluationInProgress() ? 'question-options row' : 'question-options'" [hidden]="showPreview">
+        <div [ngClass]="reEvaluationInProgress() ? 'question-options row' : 'question-options'" [hidden]="showPreview()">
             <div [ngClass]="reEvaluationInProgress() ? 'col-12 col-lg-4' : ''">
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
