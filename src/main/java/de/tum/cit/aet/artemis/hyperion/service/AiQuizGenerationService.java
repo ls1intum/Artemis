@@ -126,6 +126,14 @@ public class AiQuizGenerationService {
         if (question.subtype() == null) {
             throw new IllegalArgumentException("Question subtype is required");
         }
+        // Check length constraints according to Artemis quiz model
+
+        if (question.explanation() != null && question.explanation().length() > 500) {
+            throw new IllegalArgumentException("The provided explanation is too long. Please shorten it to 500 characters.");
+        }
+        if (question.hint() != null && question.hint().length() > 500) {
+            throw new IllegalArgumentException("The provided hint is too long. Please shorten it to 500 characters.");
+        }
 
         // Count correct answers
         long correctCount = question.options().stream().filter(McOptionDTO::correct).count();

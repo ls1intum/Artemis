@@ -24,5 +24,6 @@ Important constraints:
 - difficulty must be between 1-5
 - All questions must have a non-empty title and text
 - explanation and hint are optional but recommended
+- explanation and hint CHARACTER limits: max 500 characters each
 
 Do not include any extra commentary or formatting outside the JSON array.
