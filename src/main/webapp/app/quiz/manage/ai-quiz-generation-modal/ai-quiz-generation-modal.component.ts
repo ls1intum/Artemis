@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal, NgbAlertModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -25,6 +25,7 @@ import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 export class AiQuizGenerationModalComponent {
     @Input() courseId!: number;
 
+    // expose enums to template
     AiLanguage = AiLanguage;
     AiDifficultyLevel = AiDifficultyLevel;
     AiRequestedSubtype = AiRequestedSubtype;
@@ -39,9 +40,10 @@ export class AiQuizGenerationModalComponent {
         requestedSubtype: AiRequestedSubtype.SINGLE_CORRECT,
     };
 
-    loading = false;
-    warnings: string[] = [];
-    generated: AiGeneratedQuestionDTO[] = [];
+    loading = signal(false);
+    warnings = signal<string[]>([]);
+    generated = signal<AiGeneratedQuestionDTO[]>([]);
+
     selected: Record<number, boolean> = {};
 
     private readonly activeModal = inject(NgbActiveModal);
@@ -61,23 +63,29 @@ export class AiQuizGenerationModalComponent {
     }
 
     generate(f: NgForm): void {
-        if (!f.valid || !this.courseId) return;
-        this.loading = true;
-        this.warnings = [];
-        this.generated = [];
+        if (!f.valid || !this.courseId) {
+            return;
+        }
+
+        this.loading.set(true);
+        this.warnings.set([]);
+        this.generated.set([]);
         this.selected = {};
 
         this.service.generate(this.courseId, this.formData).subscribe((res: AiQuizGenerationResponse) => {
-            this.loading = false;
-            this.generated = res.questions ?? [];
-            this.warnings = res.warnings ?? [];
-            this.generated.forEach((_, i) => (this.selected[i] = true)); // preselect all
+            this.loading.set(false);
+            const questions = res.questions ?? [];
+            const warns = res.warnings ?? [];
+
+            this.generated.set(questions);
+            this.warnings.set(warns);
+
+            questions.forEach((_, i) => (this.selected[i] = true)); // preselect all
         });
     }
 
     useInEditor(): void {
-        const picked = this.generated.filter((_, i) => this.selected[i]);
-        // return also the difficulty (and subtype, handy for future UX if needed)
+        const picked = this.generated().filter((_, i) => this.selected[i]);
         this.activeModal.close({
             questions: picked,
             requestedDifficulty: this.formData.difficultyLevel,
@@ -86,7 +94,7 @@ export class AiQuizGenerationModalComponent {
     }
 
     get anySelected(): boolean {
-        return this.generated.some((_, i) => this.selected[i]);
+        return this.generated().some((_, i) => this.selected[i]);
     }
 
     difficultyToSlider(level: AiDifficultyLevel): number {

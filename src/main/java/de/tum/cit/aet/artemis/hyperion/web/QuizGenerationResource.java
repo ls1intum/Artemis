@@ -42,7 +42,7 @@ public class QuizGenerationResource {
      */
     @PostMapping("courses/{courseId}/generate")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<AiQuizGenerationResponseDTO> generate(@PathVariable Long courseId, @Valid @RequestBody AiQuizGenerationRequestDTO generationParams) {
+    public ResponseEntity<AiQuizGenerationResponseDTO> generate(@PathVariable long courseId, @Valid @RequestBody AiQuizGenerationRequestDTO generationParams) {
         log.debug("REST request to generate AI quiz for course {}", courseId);
         return ResponseEntity.ok(aiQuizGenerationService.generate(courseId, generationParams));
     }

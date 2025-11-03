@@ -52,6 +52,7 @@ import { AiDifficultyLevel, AiGeneratedQuestionDTO, AiRequestedSubtype } from 'a
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -749,7 +750,14 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         q.singleChoice = dto.subtype === AiRequestedSubtype.SINGLE_CORRECT || dto.subtype === AiRequestedSubtype.TRUE_FALSE;
         q.points = 1;
         q.scoringType = ScoringType.ALL_OR_NOTHING;
-
+        q.answerOptions =
+            dto.options?.map((optDto) => {
+                const opt = new AnswerOption();
+                opt.text = optDto.text || '';
+                opt.isCorrect = optDto.correct ?? false;
+                opt.explanation = optDto.feedback || undefined;
+                return opt;
+            }) ?? [];
         // merge AI-provided hint + difficulty into the question's hint.
         // Use dto.hint as the source (q.hint may be unset) and append the difficulty notation if provided.
         const dtoHint = dto.hint ?? null;
@@ -781,24 +789,21 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 return DifficultyLevel.MEDIUM;
         }
     }
+
     private applyAIDifficultyToForm(aiDiff: AiDifficultyLevel | undefined): void {
-        if (!aiDiff) return;
+        if (!aiDiff) {
+            return;
+        }
 
         const mapped = this.mapAiDifficultyToExerciseDifficulty(aiDiff);
 
-        // a) Update the underlying model
+        // Update the underlying model
         this.quizExercise.difficulty = mapped;
 
-        // b) If your editor uses a reactive form, also patch the control so the UI updates.
-        //    Adjust the form variable/control name to your file (common ones shown).
-        //    Only the existing one(s) will be defined; the others are no-ops.
-        (this as any).quizExerciseForm?.get?.('difficulty')?.setValue(mapped);
-        (this as any).exerciseForm?.get?.('difficulty')?.setValue(mapped);
-        (this as any).formGroup?.get?.('difficulty')?.setValue(mapped);
-
-        // c) Trigger CD to refresh the picker if using OnPush
-        this.changeDetector.detectChanges?.();
+        // Trigger change detection to refresh the picker if using OnPush
+        this.changeDetector.detectChanges();
     }
+
     get hyperionEnabled(): boolean {
         return this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     }

@@ -332,7 +332,7 @@
                     "trueFalse": "Wahr/Falsch"
                 },
                 "promptHintLabel": "Zusätzlicher Hinweis (optional)",
-                "promptHintTooltip": "Optionaler Kontext oder Anweisung für das Modell (z. B. Stil, Umfang, was vermeiden).",
+                "promptHintTooltip": "Optionaler Kontext oder Anweisung für die KI (z. B. Stil, Umfang, was vermeiden).",
                 "generate": "Generieren",
                 "close": "Schließen",
                 "preview": "Vorschau (zum Einfügen auswählen)",

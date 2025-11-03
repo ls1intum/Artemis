@@ -1,7 +1,14 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,15 +35,19 @@ public class AiQuizGenerationService {
 
     private final HyperionPromptTemplateService templateService;
 
+    private final Validator validator;
+
     public AiQuizGenerationService(ChatClient chatClient, HyperionPromptTemplateService templateService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
+        // will be reused for all requests
+        this.validator = Validation.buildDefaultValidatorFactory().getValidator();
     }
 
     /**
      * Generates an AI-based quiz for a given course using the specified generation parameters.
      *
-     * @param courseId         the ID of the course for which the quiz should be generated
+     * @param courseId         the ID of the course for which the quiz should be generated (currently used for logging)
      * @param generationParams the parameters that define how the quiz should be generated
      * @return an {@link AiQuizGenerationResponseDTO} containing the generated quiz data
      */
@@ -52,39 +63,54 @@ public class AiQuizGenerationService {
             List<GeneratedMcQuestionDTO> questions = chatClient.prompt().system(systemPrompt).user(userPrompt).call().entity(new ParameterizedTypeReference<>() {
             });
 
-            // Validate all questions
-            validateQuestions(questions);
+            List<String> warnings = new ArrayList<>();
+            List<GeneratedMcQuestionDTO> validQuestions = new ArrayList<>();
 
-            log.info("Successfully generated {} quiz questions for course {}", questions.size(), courseId);
-            return new AiQuizGenerationResponseDTO(questions, List.of());
-        }
-        catch (IllegalArgumentException e) {
-            log.error("Validation failed for generated questions in course {}: {}", courseId, e.getMessage(), e);
-            return new AiQuizGenerationResponseDTO(List.of(), List.of("Generated questions failed validation: " + e.getMessage()));
+            if (questions == null || questions.isEmpty()) {
+                warnings.add("No questions were generated");
+                log.warn("AI quiz generation returned no questions for course {}", courseId);
+            }
+            else {
+                for (int i = 0; i < questions.size(); i++) {
+                    GeneratedMcQuestionDTO question = questions.get(i);
+
+                    // 1) run Bean Validation on the DTO (title/text/not blank etc.)
+                    Set<ConstraintViolation<GeneratedMcQuestionDTO>> dtoViolations = validator.validate(question);
+                    if (!dtoViolations.isEmpty()) {
+                        String msg = "Question " + (i + 1) + " violated constraints: "
+                                + dtoViolations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining("; "));
+                        log.warn(msg);
+                        warnings.add(msg);
+                        // skip this one, continue with the others
+                        continue;
+                    }
+
+                    // 2) run business-rule validation (subtype-specific stuff)
+                    try {
+                        validateQuestion(question);
+                        validQuestions.add(question);
+                    }
+                    catch (IllegalArgumentException e) {
+                        String msg = "Question " + (i + 1) + " failed business validation: " + e.getMessage();
+                        log.warn(msg);
+                        warnings.add(msg);
+                    }
+                }
+            }
+
+            if (validQuestions.isEmpty()) {
+                log.warn("All generated questions failed validation for course {}", courseId);
+            }
+            else {
+                log.info("Successfully validated {} quiz questions ({} warnings) for course {}", validQuestions.size(), warnings.size(), courseId);
+            }
+
+            return new AiQuizGenerationResponseDTO(validQuestions, warnings);
         }
         catch (Exception e) {
+            // this is the true unexpected-path fallback
             log.error("Unexpected error during quiz generation for course {}: {}", courseId, e.getMessage(), e);
             return new AiQuizGenerationResponseDTO(List.of(), List.of("Error during quiz generation: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * Validates all generated questions according to business rules.
-     * Throws IllegalArgumentException if any question fails validation.
-     */
-    private void validateQuestions(List<GeneratedMcQuestionDTO> questions) {
-        if (questions == null || questions.isEmpty()) {
-            throw new IllegalArgumentException("No questions were generated");
-        }
-
-        for (int i = 0; i < questions.size(); i++) {
-            GeneratedMcQuestionDTO question = questions.get(i);
-            try {
-                validateQuestion(question);
-            }
-            catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Question " + (i + 1) + ": " + e.getMessage(), e);
-            }
         }
     }
 
@@ -92,13 +118,8 @@ public class AiQuizGenerationService {
      * Validates a single question according to business rules.
      */
     private void validateQuestion(GeneratedMcQuestionDTO question) {
-        // Check required fields
-        if (question.title() == null || question.title().isBlank()) {
-            throw new IllegalArgumentException("Title is required");
-        }
-        if (question.text() == null || question.text().isBlank()) {
-            throw new IllegalArgumentException("Question text is required");
-        }
+        // Check required fields (Bean Validation already covers most of these, but we keep
+        // the business rules here because they're quiz-specific and not just "not blank")
         if (question.options() == null || question.options().isEmpty()) {
             throw new IllegalArgumentException("At least one option is required");
         }
@@ -113,7 +134,6 @@ public class AiQuizGenerationService {
         switch (question.subtype()) {
             case SINGLE_CORRECT -> {
                 if (correctCount != 1) {
-                    log.warn("SINGLE_CORRECT question '{}' has {} correct answers, expected exactly 1", question.title(), correctCount);
                     throw new IllegalArgumentException("SINGLE_CORRECT must have exactly 1 correct answer, found " + correctCount);
                 }
                 if (question.options().size() < 2) {
@@ -122,7 +142,6 @@ public class AiQuizGenerationService {
             }
             case MULTI_CORRECT -> {
                 if (correctCount < 1) {
-                    log.warn("MULTI_CORRECT question '{}' has no correct answers", question.title());
                     throw new IllegalArgumentException("MULTI_CORRECT must have at least 1 correct answer");
                 }
                 if (question.options().size() < 2) {
@@ -131,17 +150,15 @@ public class AiQuizGenerationService {
             }
             case TRUE_FALSE -> {
                 if (question.options().size() != 2) {
-                    log.warn("TRUE_FALSE question '{}' has {} options, expected exactly 2", question.title(), question.options().size());
                     throw new IllegalArgumentException("TRUE_FALSE must have exactly 2 options, found " + question.options().size());
                 }
                 if (correctCount != 1) {
-                    log.warn("TRUE_FALSE question '{}' has {} correct answers, expected exactly 1", question.title(), correctCount);
                     throw new IllegalArgumentException("TRUE_FALSE must have exactly 1 correct answer, found " + correctCount);
                 }
             }
         }
 
-        // Log non-critical warnings (won't fail validation)
+        // Non-critical fields -> just log
         if (question.hint() == null || question.hint().isBlank()) {
             log.debug("Question '{}' has no hint", question.title());
         }

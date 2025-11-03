@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.web;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
@@ -14,7 +12,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -85,7 +83,6 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     void shouldGenerateQuizForInstructor() throws Exception {
         long courseId = persistedCourseId;
         mockSuccessfulQuizGeneration();
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
 
         String requestBody = """
@@ -99,8 +96,7 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
-        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-                .andExpect(status().isOk()); // Successful response, content is validated in service tests
+        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.OK); // Successful response, content is validated in service tests
     }
 
     @Test
@@ -108,7 +104,6 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     void shouldGenerateQuizForEditor() throws Exception {
         long courseId = persistedCourseId;
         mockSuccessfulQuizGeneration();
-        userUtilService.changeUser(TEST_PREFIX + "editor1");
         courseRepository.findById(courseId).orElseThrow();
 
         String requestBody = """
@@ -122,15 +117,13 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
-        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-                .andExpect(status().isOk()); // Successful response, content is validated in service tests
+        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
     void shouldReturnForbiddenForTutor() throws Exception {
         long courseId = persistedCourseId;
-        userUtilService.changeUser(TEST_PREFIX + "tutor1");
         courseRepository.findById(courseId).orElseThrow();
 
         String requestBody = """
@@ -144,15 +137,13 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
-        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-                .andExpect(status().isForbidden());
+        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
     void shouldReturnForbiddenForStudent() throws Exception {
         long courseId = persistedCourseId;
-        userUtilService.changeUser(TEST_PREFIX + "student1");
         courseRepository.findById(courseId).orElseThrow();
 
         String requestBody = """
@@ -166,15 +157,13 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
-        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-                .andExpect(status().isForbidden());
+        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForInvalidInput() throws Exception {
         long courseId = persistedCourseId;
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
 
         // Invalid: numberOfQuestions is 0 (must be at least 1)
@@ -189,7 +178,6 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
-        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
-                .andExpect(status().isBadRequest());
+        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.BAD_REQUEST);
     }
 }
