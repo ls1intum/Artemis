@@ -120,8 +120,9 @@ public class PyrisHealthIndicator implements HealthIndicator {
     }
 
     private static void flattenModulesInto(Map<String, Object> target, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) {
-        if (modules == null)
+        if (modules == null) {
             return;
+        }
         modules.forEach((name, m) -> target.put(name, summarizeModule(m)));
     }
 

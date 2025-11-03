@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -68,7 +69,7 @@ public class IrisRequestMockProvider {
     @Value("${artemis.iris.url}/api/v1/pipelines/")
     private String variantsApiBaseURL;
 
-    @Value("${artemis.iris.url}/api/v1/health/")
+    @Value("${artemis.iris.url}/api/v1/health")
     private URL healthApiURL;
 
     @Autowired
@@ -277,5 +278,54 @@ public class IrisRequestMockProvider {
             .andExpect(method(HttpMethod.GET))
             .andRespond(withRawStatus(418));
         // @formatter:on
+    }
+
+    /** Healthy response with configurable module statuses. */
+    public void mockHealthStatusSuccess(boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ServiceStatus> moduleStatuses) throws JsonProcessingException {
+        var modules = moduleStatuses.entrySet().stream()
+                .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, e -> new PyrisHealthStatusDTO.ModuleStatusDTO(e.getValue(), null, null)));
+        var dto = new PyrisHealthStatusDTO(overallHealthy, modules);
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
+    }
+
+    /** Server error / connection failure – let the indicator fall back to DOWN. */
+    public void mockHealthStatusFailure() {
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withRawStatus(HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
+
+    /** Next call returns an explicit literal "null" body */
+    public void mockHealthNullBody() {
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("null", MediaType.APPLICATION_JSON));
+    }
+
+    public void mockHealthMalformedJson() {
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("{ not-json", MediaType.APPLICATION_JSON));
+    }
+
+    /** Throw a ResourceAccessException to simulate a connect/timeout problem. */
+    public void mockHealthTimeout() {
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET)).andRespond(_ -> {
+            throw new ResourceAccessException("simulated timeout");
+        });
+    }
+
+    /** Full control over modules, including null, error, and metaData. */
+    public void mockHealthWithModules(Boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) throws JsonProcessingException {
+        var dto = new PyrisHealthStatusDTO(overallHealthy != null && overallHealthy, modules); // allow null → false
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
+    }
+
+    public void verify() {
+        if (shortTimeoutMockServer != null) {
+            shortTimeoutMockServer.verify();
+        }
+        if (mockServer != null) {
+            mockServer.verify();
+        }
     }
 }
