@@ -59,11 +59,25 @@ public class PyrisHealthIndicator implements HealthIndicator {
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Reports the current health of the Pyris connector.
+     * <p>
+     * Called by Spring Boot Actuator; delegates to {@link #health(boolean)} with caching disabled.
+     * </p>
+     *
+     * @return the connector health
+     */
     @Override
     public Health health() {
         return health(false);
     }
 
+    /**
+     * Computes or returns a cached health state.
+     *
+     * @param useCache if {@code true}, return a cached value when still within the TTL
+     * @return Actuator {@link Health} describing the Pyris connector status
+     */
     public Health health(boolean useCache) {
         if (useCache && cachedHealth != null && System.currentTimeMillis() - lastUpdated < CACHE_TTL) {
             return cachedHealth;
@@ -119,9 +133,9 @@ public class PyrisHealthIndicator implements HealthIndicator {
             sb.append(module.error());
             return sb.toString();
         }
-        if (module.metaData() != null && !module.metaData().isBlank())
+        if (module.metaData() != null && !module.metaData().isBlank()) {
             sb.append(module.metaData());
-
+        }
         return sb.toString();
     }
 
