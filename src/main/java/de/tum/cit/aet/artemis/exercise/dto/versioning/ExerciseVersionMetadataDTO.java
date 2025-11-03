@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 public record ExerciseVersionMetadataDTO(long id, UserPublicInfoDTO author, Instant createdDate) {
 
     /**
-     * A constructor for ExerciseVersionDTO that takes a User entity and a creation date.
+     * A constructor for ExerciseVersionMetadataDTO that takes a User entity and a creation date.
      *
      * @param id          the version id
      * @param user        the author of the exercise version

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService.zonedDateTimeBiPredicate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -17,6 +18,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -62,7 +65,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
 
     @Autowired
-    private ExerciseVersionTestRepository exerciseVersionTestRepository;
+    private ExerciseVersionTestRepository exerciseVersionRepository;
 
     private Course course;
 
@@ -102,7 +105,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateProgrammingExercise_createsExerciseVersion() throws Exception {
+    void testCreateProgrammingExercise_createsExerciseVersion() {
         // Assert: Verify exercise version was created
         exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
     }
@@ -468,6 +471,53 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseVersions_includesPaginationHeaders() throws Exception {
+        ExerciseVersionUtilService.updateExercise(programmingExercise);
+        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+
+        MvcResult mvcResult = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/exercise/" + programmingExercise.getId() + "/versions").param("page", "0").param("size", "1"))
+                .andExpect(status().isOk()).andReturn();
+
+        var response = mvcResult.getResponse();
+        assertThat(response.getHeader("X-Total-Count")).isNotBlank();
+        assertThat(response.getHeader(HttpHeaders.LINK)).isNotBlank();
+
+        List<ExerciseVersionMetadataDTO> versions = request.getObjectMapper().readValue(response.getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, ExerciseVersionMetadataDTO.class));
+        assertThat(versions).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseVersions_returnsEmptyPageWhenNoVersions() throws Exception {
+        var versionsToDelete = exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId());
+        exerciseVersionRepository.deleteAll(versionsToDelete);
+        assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).isEmpty();
+
+        MvcResult mvcResult = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/exercise/" + programmingExercise.getId() + "/versions").param("page", "0").param("size", "5"))
+                .andExpect(status().isOk()).andReturn();
+
+        var response = mvcResult.getResponse();
+        assertThat(response.getHeader("X-Total-Count")).isEqualTo("0");
+        assertThat(response.getHeader(HttpHeaders.LINK)).isNotNull();
+
+        List<ExerciseVersionMetadataDTO> versions = request.getObjectMapper().readValue(response.getContentAsString(),
+                request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, ExerciseVersionMetadataDTO.class));
+        assertThat(versions).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseVersions_forbiddenForUnknownExercise() throws Exception {
+        long unknownExerciseId = programmingExercise.getId() + 9999;
+        request.get("/api/exercise/" + unknownExerciseId + "/versions?page=0&size=1", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExerciseSnapshot_returnsCompleteSnapshotData() throws Exception {
         ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         ExerciseSnapshotDTO snapshot = request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + version.getId(), HttpStatus.OK, ExerciseSnapshotDTO.class);
@@ -499,6 +549,30 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         userUtilService.addInstructor(TEST_PREFIX + "bad_instructor", TEST_PREFIX + "bad_instructor");
         userUtilService.changeUser(TEST_PREFIX + "bad_instructor");
         request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseSnapshot_forbidden_forTutorWithoutCourseAccess() throws Exception {
+        ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        Long versionId = version.getId();
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        ExerciseSnapshotDTO tutorSnapshot = request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + versionId, HttpStatus.OK, ExerciseSnapshotDTO.class);
+        assertThat(tutorSnapshot).isNotNull();
+
+        userUtilService.addTeachingAssistant(TEST_PREFIX + "isolated-tutor-group", TEST_PREFIX + "external_tutor");
+        userUtilService.changeUser(TEST_PREFIX + "external_tutor");
+        request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + versionId, HttpStatus.FORBIDDEN, ExerciseSnapshotDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExerciseSnapshot_notFoundForUnknownVersion() throws Exception {
+        ExerciseVersion version = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
+        long unknownVersionId = version.getId() + 9999;
+
+        request.get("/api/exercise/" + programmingExercise.getId() + "/version/" + unknownVersionId, HttpStatus.NOT_FOUND, ExerciseSnapshotDTO.class);
     }
 
     @Test
