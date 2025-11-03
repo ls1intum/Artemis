@@ -33,8 +33,16 @@ public class TumLiveService {
 
     private final RestClient restClient;
 
-    public TumLiveService(RestClient.Builder restClientBuilder, @Value("${artemis.tum-live.api-base-url}") String tumLiveApiBaseUrl) {
-        this.restClient = restClientBuilder.baseUrl(tumLiveApiBaseUrl).build();
+    public TumLiveService(RestClient.Builder restClientBuilder, @Value("${artemis.tum-live.api-base-url:#{null}}") String tumLiveApiBaseUrl) {
+        if (tumLiveApiBaseUrl == null || tumLiveApiBaseUrl.isBlank()) {
+            log.warn(
+                    "TUM Live API base URL is not configured. TUM Live integration will be disabled and transcription generation will not work. Please set 'artemis.tum-live.api-base-url' in your configuration.");
+            this.restClient = null;
+        }
+        else {
+            log.info("TUM Live API base URL is set to '{}'", tumLiveApiBaseUrl);
+            this.restClient = restClientBuilder.baseUrl(tumLiveApiBaseUrl).build();
+        }
     }
 
     /**
@@ -45,16 +53,8 @@ public class TumLiveService {
      * @return an optional playlist URL if found from the TUM Live API, or empty if not found or the URL is invalid
      */
     public Optional<String> getTumLivePlaylistLink(String videoUrl) {
-        try {
-            String host = new URI(videoUrl).getHost();
-            boolean allowed = host != null && (host.equals("tum.live") || host.endsWith(".tum.live") || host.equals("rbg.tum.de") || host.endsWith(".rbg.tum.de"));
-            if (!allowed) {
-                log.debug("Not a TUM Live link: {}", videoUrl);
-                return Optional.empty();
-            }
-        }
-        catch (URISyntaxException e) {
-            log.warn("Malformed TUM Live URL: {}", videoUrl, e);
+        if (restClient == null) {
+            log.warn("TUM Live API client is not configured. Cannot fetch requested playlist URL for video: {}", videoUrl);
             return Optional.empty();
         }
 

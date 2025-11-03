@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.athena.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils.hashSha256;
 
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +35,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -85,9 +85,9 @@ public class AthenaResource {
 
     private final AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService;
 
-    private final AthenaRepositoryExportService athenaRepositoryExportService;
-
     private final AthenaModuleService athenaModuleService;
+
+    private final AthenaRepositoryExportService athenaRepositoryExportService;
 
     private final byte[] athenaSecretHash;
 
@@ -97,7 +97,7 @@ public class AthenaResource {
     public AthenaResource(CourseRepository courseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
-            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService, AthenaModuleService athenaModuleService,
+            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaModuleService athenaModuleService, AthenaRepositoryExportService athenaRepositoryExportService,
             @Value("${artemis.athena.secret}") String athenaSecret) {
         this.courseRepository = courseRepository;
         this.textRepositoryApi = textRepositoryApi;
@@ -108,8 +108,8 @@ public class AthenaResource {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.authCheckService = authCheckService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
-        this.athenaRepositoryExportService = athenaRepositoryExportService;
         this.athenaModuleService = athenaModuleService;
+        this.athenaRepositoryExportService = athenaRepositoryExportService;
         this.athenaSecretHash = hashSha256(athenaSecret);
     }
 
@@ -255,6 +255,18 @@ public class AthenaResource {
     }
 
     /**
+     * Validate that the exercise has Athena enabled, otherwise throw an exception.
+     *
+     * @param exerciseId the id of the exercise to check
+     */
+    private void validateAthenaEnabled(long exerciseId) {
+        var exercise = programmingExerciseRepository.findById(exerciseId);
+        if (exercise.isEmpty() || !exercise.get().areFeedbackSuggestionsEnabled()) {
+            throw new ServiceUnavailableException("Athena is not enabled for this exercise");
+        }
+    }
+
+    /**
      * GET public/programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a file map
      *
      * @param exerciseId   the id of the exercise the submission belongs to
@@ -263,12 +275,13 @@ public class AthenaResource {
      * @return 200 Ok with the file map as body if successful
      */
     @GetMapping("public/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
-    @EnforceNothing // We check the Athena secret instead
+    @EnforceNothing // We check the Athena secret and validation here
     @ManualConfig
     public ResponseEntity<Map<String, String>> getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth)
-            throws IOException {
+            throws java.io.IOException {
         log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, submissionId);
         checkAthenaSecret(auth);
+        validateAthenaEnabled(exerciseId);
         return ResponseEntity.ok(athenaRepositoryExportService.getStudentRepositoryFilesContent(exerciseId, submissionId));
     }
 
@@ -281,13 +294,14 @@ public class AthenaResource {
      * @return 200 Ok with the file map as body if successful
      */
     @GetMapping("public/programming-exercises/{exerciseId}/repository/{repositoryType}")
-    @EnforceNothing // We check the Athena secret instead
+    @EnforceNothing // We check the Athena secret and validation here
     @ManualConfig
     public ResponseEntity<Map<String, String>> getInstructorRepository(@PathVariable long exerciseId, @PathVariable String repositoryType,
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws java.io.IOException {
         log.debug("REST call to get {} instructor repository for exercise {}", repositoryType, exerciseId);
 
         checkAthenaSecret(auth);
+        validateAthenaEnabled(exerciseId);
 
         try {
             return ResponseEntity.ok(athenaRepositoryExportService.getInstructorRepositoryFilesContent(exerciseId, RepositoryType.fromString(repositoryType)));
