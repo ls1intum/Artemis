@@ -72,7 +72,7 @@ export class LectureService {
         );
     }
 
-    findAllLecturesByCourseId(courseId: number): Observable<EntityArrayResponseType> {
+    findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures`, {
                 observe: 'response',
