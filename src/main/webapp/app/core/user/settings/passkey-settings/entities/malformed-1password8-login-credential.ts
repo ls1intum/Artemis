@@ -4,6 +4,7 @@ export interface Malformed1Password8LoginCredential {
     id: string;
     rawId: ArrayBuffer;
     response: {
+        clientDataJSON: ArrayBuffer;
         getAuthenticatorData?: () => ArrayBuffer;
         authenticatorData?: ArrayBuffer;
         signature?: ArrayBuffer;

@@ -2,7 +2,7 @@ import { encodeAsBase64Url } from 'app/shared/util/base64.util';
 import { Malformed1password8RegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-registration-credential';
 import { SerializableRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-registration-credential';
 import { SerializableLoginCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-login-credential';
-import { MalformedBitwardenLoginCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-login-credential';
+import { Malformed1Password8LoginCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-login-credential';
 
 export function getRegistrationCredentialFromMalformed1Password8Object(
     malformed1Password8RegistrationCredential: Malformed1password8RegistrationCredential | null,
@@ -42,7 +42,7 @@ export function getRegistrationCredentialFromMalformed1Password8Object(
 }
 
 export function getLoginCredentialFromMalformed1Password8Object(
-    malformed1Password8LoginCredential: MalformedBitwardenLoginCredential | null,
+    malformed1Password8LoginCredential: Malformed1Password8LoginCredential | null,
 ): SerializableLoginCredential | undefined {
     if (!malformed1Password8LoginCredential) {
         return undefined;
