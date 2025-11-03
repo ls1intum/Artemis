@@ -74,7 +74,7 @@ describe('AiQuizGenerationModalComponent', () => {
 
         expect(activeModal.close).toHaveBeenCalledWith(
             expect.objectContaining({
-                questions: expect.any(Array),
+                questions: [expect.objectContaining({ title: 'Q1', text: 'T' })],
                 requestedSubtype: expect.anything(),
             }),
         );

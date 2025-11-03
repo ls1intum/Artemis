@@ -42,7 +42,7 @@ import { CategorySelectorComponent } from 'app/shared/category-selector/category
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { AsyncPipe, JsonPipe, NgClass } from '@angular/common';
+import { JsonPipe, NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -50,7 +50,6 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { AiQuizGenerationModalComponent } from 'app/quiz/manage/ai-quiz-generation-modal/ai-quiz-generation-modal.component';
 import { AiDifficultyLevel, AiGeneratedQuestionDTO, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 
@@ -79,7 +78,6 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
         NgClass,
         JsonPipe,
         ArtemisTranslatePipe,
-        AsyncPipe,
     ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
@@ -752,17 +750,24 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         q.points = 1;
         q.scoringType = ScoringType.ALL_OR_NOTHING;
 
-        if (dto.difficulty != null) {
-            q.hint = (q.hint ? q.hint + '\n' : '') + `AI difficulty: ${dto.difficulty}`;
+        // merge AI-provided hint + difficulty into the question's hint.
+        // Use dto.hint as the source (q.hint may be unset) and append the difficulty notation if provided.
+        const dtoHint = dto.hint ?? null;
+        const dtoDifficulty = dto.difficulty ?? null;
+
+        let mergedHint: string | null = null;
+        if (dtoHint) {
+            mergedHint = dtoHint;
+        }
+        if (dtoDifficulty !== null && dtoDifficulty !== undefined) {
+            const difficultyNote = `AI difficulty: ${dtoDifficulty}`;
+            mergedHint = (mergedHint ? mergedHint + '\n' : '') + difficultyNote;
         }
 
-        q.answerOptions = (dto.options ?? []).map((o) => {
-            const ao = new AnswerOption();
-            ao.text = o.text;
-            ao.explanation = o.feedback || '';
-            ao.isCorrect = o.correct;
-            return ao;
-        });
+        // Only set q.hint when we actually have something to set (avoid empty hints).
+        if (mergedHint !== null) {
+            q.hint = mergedHint;
+        }
 
         return q;
     }
