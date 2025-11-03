@@ -67,14 +67,14 @@ export class WebauthnService {
                 },
             });
         } catch (error) {
-            const userPressedCancelInPasskeyCreationDialog = error.name == UserAbortedPasskeyCreationError.name && error.code == UserAbortedPasskeyCreationError.code;
+            const userPressedCancelInPasskeyCreationDialog = error.name === UserAbortedPasskeyCreationError.name && error.code === UserAbortedPasskeyCreationError.code;
             if (userPressedCancelInPasskeyCreationDialog) {
                 return;
             }
 
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-            } else if (error.name == InvalidStateError.name && error.code == InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
+            } else if (error.name === InvalidStateError.name && error.code === InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.passkeyAlreadyRegistered');
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.registration');
@@ -94,7 +94,7 @@ export class WebauthnService {
         try {
             const authenticatorCredential = await this.getCredential();
 
-            if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
+            if (!authenticatorCredential || authenticatorCredential.type !== 'public-key') {
                 // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
                 throw new InvalidCredentialError();
             }
