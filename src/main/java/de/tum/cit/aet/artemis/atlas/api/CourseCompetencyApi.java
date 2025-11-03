@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
+import java.util.Set;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -21,5 +23,16 @@ public class CourseCompetencyApi extends AbstractAtlasApi {
 
     public void save(CourseCompetency courseCompetency) {
         courseCompetencyRepository.save(courseCompetency);
+    }
+
+    /**
+     * Finds course competencies by their ids and course id.
+     *
+     * @param ids      the ids of the course competencies
+     * @param courseId the id of the course
+     * @return the set of found course competencies
+     */
+    public Set<CourseCompetency> findCourseCompetenciesByIdsAndCourseId(Set<Long> ids, Long courseId) {
+        return courseCompetencyRepository.findByIdInAndCourseId(ids, courseId);
     }
 }
