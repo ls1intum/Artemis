@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -128,14 +128,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<SlideApi> slideApi;
 
-    private final Optional<CourseCompetencyService> courseCompetencyService;
+    private final Optional<CourseCompetencyRepository> courseCompetencyRepository;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi, @Lazy Optional<CourseCompetencyService> courseCompetencyService) {
+            Optional<SlideApi> slideApi, Optional<CourseCompetencyRepository> courseCompetencyRepository) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -151,7 +151,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
-        this.courseCompetencyService = courseCompetencyService;
+        this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
     /**
@@ -654,13 +654,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return The updated set of competency exercise links
      */
     private Set<CompetencyExerciseLink> updateCompetencyExerciseLinks(QuizExercise quizExercise, Set<CompetencyExerciseLinkFromEditorDTO> competencies, Course course) {
-        if (courseCompetencyService.isEmpty()) {
+        if (courseCompetencyRepository.isEmpty()) {
             return Set.of();
         }
-        CourseCompetencyService courseCompetencyRepository = this.courseCompetencyService.get();
+        CourseCompetencyRepository courseCompetencyRepository = this.courseCompetencyRepository.get();
         Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
         Set<Long> competencyIds = competencies.stream().map(CompetencyExerciseLinkFromEditorDTO::competencyId).collect(Collectors.toSet());
-        Set<CourseCompetency> foundCompetencies = courseCompetencyRepository.findCourseCompetenciesByIdsAndCourseId(competencyIds, course.getId());
+        Set<CourseCompetency> foundCompetencies = courseCompetencyRepository.findByIdInAndCourseId(competencyIds, course.getId());
         for (CompetencyExerciseLinkFromEditorDTO dto : competencies) {
             Optional<CourseCompetency> matchingCompetency = foundCompetencies.stream().filter(c -> c.getId().equals(dto.competencyId())).findFirst();
             if (matchingCompetency.isPresent()) {
