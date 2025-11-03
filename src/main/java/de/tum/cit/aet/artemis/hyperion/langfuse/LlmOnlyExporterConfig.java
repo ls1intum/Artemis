@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -24,6 +25,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter;
  * so infrastructure spans (HTTP, DB, etc.) are ignored.
  */
 @Configuration
+@Profile("dev")
 public class LlmOnlyExporterConfig {
 
     /**

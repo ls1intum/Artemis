@@ -5,12 +5,14 @@ import java.util.List;
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.springframework.ai.content.Content;
 import org.springframework.ai.observation.ObservabilityHelper;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import io.micrometer.common.KeyValue;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationFilter;
 
 /**
  * Observation filter that enriches AI chat model spans with additional metadata
@@ -22,7 +24,8 @@ import io.micrometer.observation.Observation;
  * are exported by the custom {@code LlmOnlyExporterConfig}.
  */
 @Component
-public class ChatModelCompletionContentObservationFilter implements io.micrometer.observation.ObservationFilter {
+@Profile("dev")
+public class ChatModelCompletionContentObservationFilter implements ObservationFilter {
 
     /**
      * Adds prompt and completion data to AI spans and marks them with {@code ai.span=true}.
