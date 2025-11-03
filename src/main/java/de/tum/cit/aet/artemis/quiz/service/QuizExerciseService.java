@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -39,8 +40,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -54,7 +55,6 @@ import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.CalendarEventType;
@@ -657,12 +657,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         if (courseCompetencyApi.isEmpty()) {
             return Set.of();
         }
-        CourseCompetencyApi courseCompetencyRepository = this.courseCompetencyApi.get();
+        CourseCompetencyApi courseCompetencyApi = this.courseCompetencyApi.get();
         Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
         Set<Long> competencyIds = competencies.stream().map(CompetencyExerciseLinkFromEditorDTO::competencyId).collect(Collectors.toSet());
-        Set<CourseCompetency> foundCompetencies = courseCompetencyRepository.findCourseCompetenciesByIdsAndCourseId(competencyIds, course.getId());
+        Set<Competency> foundCompetencies = courseCompetencyApi.findCourseCompetenciesByIdsAndCourseId(competencyIds, course.getId());
         for (CompetencyExerciseLinkFromEditorDTO dto : competencies) {
-            Optional<CourseCompetency> matchingCompetency = foundCompetencies.stream().filter(c -> c.getId().equals(dto.competencyId())).findFirst();
+            Optional<Competency> matchingCompetency = foundCompetencies.stream().filter(c -> c.getId().equals(dto.competencyId())).findFirst();
             if (matchingCompetency.isPresent()) {
                 CompetencyExerciseLink link = new CompetencyExerciseLink();
                 link.setCompetency(matchingCompetency.get());
@@ -671,7 +671,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 updatedLinks.add(link);
             }
             else {
-                throw new InternalServerErrorException("Competency with id " + dto.competencyId() + " not found in course " + course.getId());
+                throw new BadRequestException("Competency with id " + dto.competencyId() + " not found in course " + course.getId());
             }
         }
         return updatedLinks;

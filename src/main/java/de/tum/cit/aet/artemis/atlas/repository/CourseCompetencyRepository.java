@@ -322,6 +322,4 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             WHERE lul.lectureUnit.id = :lectureUnitId
             """)
     List<CourseCompetency> findAllByLectureUnitIdWithLectureUnitLinks(@Param("lectureUnitId") long lectureUnitId);
-
-    Set<CourseCompetency> findByIdInAndCourseId(Set<Long> ids, Long courseId);
 }

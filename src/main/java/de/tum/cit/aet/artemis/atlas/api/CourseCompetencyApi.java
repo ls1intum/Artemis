@@ -7,7 +7,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 
 @Controller
@@ -17,8 +19,11 @@ public class CourseCompetencyApi extends AbstractAtlasApi {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
-    public CourseCompetencyApi(CourseCompetencyRepository courseCompetencyRepository) {
+    private final CompetencyRepository competencyRepository;
+
+    public CourseCompetencyApi(CourseCompetencyRepository courseCompetencyRepository, CompetencyRepository competencyRepository) {
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.competencyRepository = competencyRepository;
     }
 
     public void save(CourseCompetency courseCompetency) {
@@ -32,7 +37,7 @@ public class CourseCompetencyApi extends AbstractAtlasApi {
      * @param courseId the id of the course
      * @return the set of found course competencies
      */
-    public Set<CourseCompetency> findCourseCompetenciesByIdsAndCourseId(Set<Long> ids, Long courseId) {
-        return courseCompetencyRepository.findByIdInAndCourseId(ids, courseId);
+    public Set<Competency> findCourseCompetenciesByIdsAndCourseId(Set<Long> ids, Long courseId) {
+        return competencyRepository.findAllByIdsAndCourseId(ids, courseId);
     }
 }
