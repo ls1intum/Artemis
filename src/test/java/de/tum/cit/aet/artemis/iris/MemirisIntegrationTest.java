@@ -130,8 +130,8 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
 
         // Build non-terminal and terminal stage lists
         var preparingDone = stagesRef.get().getFirst();
-        var executingInProgress = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS, null);
-        var executingDone = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.DONE, null);
+        var executingInProgress = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS, null, false);
+        var executingDone = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.DONE, null, false);
 
         // Send intermediate status with accessed memories only (no result yet) and non-terminal stages
         sendCourseStatus(jobIdRef.get(), null, List.of(preparingDone, executingInProgress), null,
@@ -167,7 +167,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
     private void sendCourseStatus(String jobId, String result, List<PyrisStageDTO> stages, List<String> suggestions, List<MemirisMemoryDTO> accessedMemories,
             List<MemirisMemoryDTO> createdMemories) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/course-chat/runs/" + jobId + "/status",
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/course-chat/runs/" + jobId + "/status",
                 new PyrisChatStatusUpdateDTO(result, stages, null, suggestions, null, accessedMemories, createdMemories), HttpStatus.OK, headers);
     }
 
@@ -190,7 +190,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         await().until(() -> jobIdRef.get() != null && stagesRef.get() != null);
 
         var preparingDone = stagesRef.get().getFirst();
-        var executingInProgress = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS, null);
+        var executingInProgress = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS, null, false);
 
         // First: send assistant result to create assistant message and set assistantMessageId on the job (keep job running with non-terminal stages)
         sendCourseStatus(jobIdRef.get(), "Initial Answer", List.of(preparingDone, executingInProgress), null, null, null);

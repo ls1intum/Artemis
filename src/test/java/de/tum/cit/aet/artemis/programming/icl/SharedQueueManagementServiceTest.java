@@ -6,17 +6,16 @@ import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
 
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 
 class SharedQueueManagementServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     @Test
     void testPushDockerImageCleanupInfo() {
 
-        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+        DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo = distributedDataAccessService.getDistributedDockerImageCleanupInfo();
         dockerImageCleanupInfo.clear();
 
         ZonedDateTime now = ZonedDateTime.now();
