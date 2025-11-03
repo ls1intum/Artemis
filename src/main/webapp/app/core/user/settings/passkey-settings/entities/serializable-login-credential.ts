@@ -3,7 +3,7 @@
  * with all binary data converted to base64url-encoded strings for JSON serialization.
  *
  * This type is used when converting malformed login credentials from authenticators
- * (like Bitwarden or 1Password8) that don't properly implement toJSON().
+ * (like Bitwarden or 1Password8) that don't properly implement `toJSON()`.
  */
 export interface SerializableLoginCredential {
     /**
@@ -29,7 +29,7 @@ export interface SerializableLoginCredential {
 }
 
 /**
- * Serializable version of AuthenticatorAssertionResponse (login response)
+ * Serializable version of {@link AuthenticatorAssertionResponse}
  * with all binary data converted to base64url-encoded strings.
  */
 export interface SerializableLoginResponse {
@@ -44,12 +44,12 @@ export interface SerializableLoginResponse {
     authenticatorData?: string;
 
     /**
-     * Signature as base64url string (login only)
+     * Signature as base64url string
      */
     signature?: string;
 
     /**
-     * User handle as base64url string (login only)
+     * User handle as base64url string
      */
     userHandle?: string;
 }

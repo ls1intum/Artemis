@@ -1,9 +1,9 @@
 /**
- * Represents a serializable version of a PublicKeyCredential for registration
+ * Represents a serializable version of a {@link PublicKeyCredential} for registration
  * with all binary data converted to base64url-encoded strings for JSON serialization.
  *
  * This type is used when converting malformed registration credentials from authenticators
- * (like Bitwarden or 1Password8) that don't properly implement toJSON().
+ * (like Bitwarden or 1Password8) that don't properly implement `toJSON()`.
  */
 export interface SerializableRegistrationCredential {
     /**
@@ -29,7 +29,7 @@ export interface SerializableRegistrationCredential {
 }
 
 /**
- * Serializable version of AuthenticatorAttestationResponse (registration response)
+ * Serializable version of {@link AuthenticatorAttestationResponse}
  * with all binary data converted to base64url-encoded strings.
  */
 export interface SerializableRegistrationResponse {
@@ -39,7 +39,7 @@ export interface SerializableRegistrationResponse {
     clientDataJSON: string | undefined;
 
     /**
-     * Attestation object as base64url string (registration only)
+     * Attestation object as base64url string
      */
     attestationObject?: string;
 
@@ -49,17 +49,17 @@ export interface SerializableRegistrationResponse {
     authenticatorData?: string;
 
     /**
-     * Public key as base64url string (registration only)
+     * Public key as base64url string
      */
     publicKey?: string;
 
     /**
-     * Public key algorithm identifier (registration only)
+     * Public key algorithm identifier
      */
     publicKeyAlgorithm?: number;
 
     /**
-     * Supported transports (registration only)
+     * Supported transports
      */
     transports?: string[];
 }
