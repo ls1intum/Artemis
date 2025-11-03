@@ -213,7 +213,7 @@ public class LectureResource {
     }
 
     /**
-     * GET /courses/:courseId/lectures : get all the lectures of a course for the course administration page
+     * GET /courses/:courseId/lectures : get all the lectures of a course
      *
      * @param courseId the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
@@ -230,6 +230,12 @@ public class LectureResource {
         return ResponseEntity.ok().body(lectures);
     }
 
+    /**
+     * GET /courses/:courseId/tutorial-lectures : get all the tutorial-lectures of a course
+     *
+     * @param courseId the courseId of the course for which the lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
+     */
     @GetMapping("courses/{courseId}/tutorial-lectures")
     @EnforceAtLeastEditor
     public ResponseEntity<Set<Lecture>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
@@ -242,6 +248,12 @@ public class LectureResource {
         return ResponseEntity.ok().body(lectures);
     }
 
+    /**
+     * GET /courses/:courseId/non-tutorial-lectures-with-units : get all the non-tutorial-lectures of a course together with their lecture units
+     *
+     * @param courseId the courseId of the course for which the lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
+     */
     @GetMapping("courses/{courseId}/non-tutorial-lectures-with-units")
     @EnforceAtLeastEditor
     public ResponseEntity<Set<Lecture>> getNonTutorialLecturesForCourseWithLectureUnits(@PathVariable Long courseId) {
