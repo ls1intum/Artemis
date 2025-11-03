@@ -41,14 +41,17 @@
         </select>
     </div>
     <div class="col-3 ps-2 pe-0 d-flex justify-content-end gap-2">
-        <jhi-button
-            [btnType]="ButtonType.WARNING"
-            [icon]="faLightbulb"
-            (onClick)="fetchSuggestions()"
-            [disabled]="isLoadingSuggestions()"
-            tooltip="artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip"
-            [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
-        />
+        @if (shouldShowSuggestionsButton()) {
+            <jhi-button
+                [btnType]="ButtonType.WARNING"
+                [icon]="faLightbulb"
+                (onClick)="fetchSuggestions()"
+                [disabled]="isLoadingSuggestions()"
+                [isLoading]="isLoadingSuggestions()"
+                tooltip="artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip"
+                [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
+            />
+        }
         @if (exactRelationAlreadyExists()) {
             <button (click)="deleteRelation()" class="btn btn-danger">
                 @if (isLoading()) {
@@ -86,7 +89,7 @@
                 (onClick)="addSelectedSuggestions()"
                 [disabled]="selectedSuggestionsCount() === 0 || isLoading()"
                 [isLoading]="isLoading()"
-                [title]="addSuggestionsTitle()"
+                title="artemisApp.courseCompetency.relations.suggestions.addSelectedSuggestions"
                 class="mt-2"
                 data-testid="add-suggestions-button"
             />

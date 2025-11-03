@@ -8,30 +8,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.cluster.Member;
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.hazelcast.map.IMap;
-import com.hazelcast.topic.ITopic;
-
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
 /**
- * This service is used to access the distributed data structures in Hazelcast.
+ * This service is used to access the distributed data structures.
  * All data structures are created lazily, meaning they are only created when they are first accessed.
  */
 @Lazy
@@ -39,26 +34,27 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 @Profile({ PROFILE_LOCALCI, PROFILE_BUILDAGENT })
 public class DistributedDataAccessService {
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
-    private IQueue<BuildJobQueueItem> buildJobQueue;
+    private DistributedQueue<BuildJobQueueItem> buildJobQueue;
 
-    private IMap<String, BuildJobQueueItem> processingJobs;
+    private DistributedMap<String, BuildJobQueueItem> processingJobs;
 
-    private IQueue<ResultQueueItem> buildResultQueue;
+    private DistributedQueue<ResultQueueItem> buildResultQueue;
 
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
+    private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
 
-    private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
+    private DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    private ITopic<String> canceledBuildJobsTopic;
+    private DistributedTopic<String> canceledBuildJobsTopic;
 
-    private ITopic<String> pauseBuildAgentTopic;
+    private DistributedTopic<String> pauseBuildAgentTopic;
 
-    private ITopic<String> resumeBuildAgentTopic;
+    private DistributedTopic<String> resumeBuildAgentTopic;
 
-    public DistributedDataAccessService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    public DistributedDataAccessService(Optional<DistributedDataProvider> distributedDataProvider) {
+        this.distributedDataProvider = distributedDataProvider.orElseThrow(
+                () -> new IllegalStateException("DistributedDataProvider is not available. " + "Please ensure that the application is running with the correct profile"));
     }
 
     /**
@@ -68,9 +64,9 @@ public class DistributedDataAccessService {
      *
      * @return the distributed queue of build jobs.
      */
-    public IQueue<BuildJobQueueItem> getDistributedBuildJobQueue() {
+    public DistributedQueue<BuildJobQueueItem> getDistributedBuildJobQueue() {
         if (this.buildJobQueue == null) {
-            this.buildJobQueue = this.hazelcastInstance.getQueue("buildJobQueue");
+            this.buildJobQueue = this.distributedDataProvider.getPriorityQueue("buildJobQueue");
         }
         return this.buildJobQueue;
     }
@@ -83,7 +79,7 @@ public class DistributedDataAccessService {
      */
     public List<BuildJobQueueItem> getQueuedJobs() {
         // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(getDistributedBuildJobQueue());
+        return getDistributedBuildJobQueue().getAll();
     }
 
     /**
@@ -100,9 +96,9 @@ public class DistributedDataAccessService {
      *
      * @return the distributed map of processing jobs
      */
-    public IMap<String, BuildJobQueueItem> getDistributedProcessingJobs() {
+    public DistributedMap<String, BuildJobQueueItem> getDistributedProcessingJobs() {
         if (this.processingJobs == null) {
-            this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
+            this.processingJobs = this.distributedDataProvider.getMap("processingJobs");
         }
         return this.processingJobs;
     }
@@ -140,9 +136,9 @@ public class DistributedDataAccessService {
      *
      * @return the distributed queue of build results
      */
-    public IQueue<ResultQueueItem> getDistributedBuildResultQueue() {
+    public DistributedQueue<ResultQueueItem> getDistributedBuildResultQueue() {
         if (this.buildResultQueue == null) {
-            this.buildResultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
+            this.buildResultQueue = this.distributedDataProvider.getQueue("buildResultQueue");
         }
         return this.buildResultQueue;
     }
@@ -154,8 +150,9 @@ public class DistributedDataAccessService {
      * @return a list of build results
      */
     public List<ResultQueueItem> getBuildResultQueue() {
-        // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(getDistributedBuildResultQueue());
+        // NOTE: we should not use streams with DistributedQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network
+        // condition
+        return getDistributedBuildResultQueue().getAll();
     }
 
     /**
@@ -180,9 +177,9 @@ public class DistributedDataAccessService {
      *
      * @return the distributed map of build agent information
      */
-    public IMap<String, BuildAgentInformation> getDistributedBuildAgentInformation() {
+    public DistributedMap<String, BuildAgentInformation> getDistributedBuildAgentInformation() {
         if (this.buildAgentInformation == null) {
-            this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
+            this.buildAgentInformation = this.distributedDataProvider.getMap("buildAgentInformation");
         }
         return this.buildAgentInformation;
     }
@@ -195,7 +192,7 @@ public class DistributedDataAccessService {
      */
     public Map<String, BuildAgentInformation> getBuildAgentInformationMap() {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new HashMap<>(getDistributedBuildAgentInformation());
+        return getDistributedBuildAgentInformation().getMapCopy();
     }
 
     /**
@@ -223,9 +220,9 @@ public class DistributedDataAccessService {
      *
      * @return the distributed map of docker image cleanup info
      */
-    public IMap<String, ZonedDateTime> getDistributedDockerImageCleanupInfo() {
+    public DistributedMap<String, ZonedDateTime> getDistributedDockerImageCleanupInfo() {
         if (this.dockerImageCleanupInfo == null) {
-            this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
+            this.dockerImageCleanupInfo = this.distributedDataProvider.getMap("dockerImageCleanupInfo");
         }
         return this.dockerImageCleanupInfo;
     }
@@ -238,16 +235,16 @@ public class DistributedDataAccessService {
      */
     public Map<String, ZonedDateTime> getDockerImageCleanupInfoMap() {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new HashMap<>(getDistributedDockerImageCleanupInfo());
+        return new HashMap<>(getDistributedDockerImageCleanupInfo().getMapCopy());
     }
 
     /**
      * @return ITopic for canceled build jobs
      *         The topic is initialized lazily the first time this method is called if it is still null.
      */
-    public ITopic<String> getCanceledBuildJobsTopic() {
+    public DistributedTopic<String> getCanceledBuildJobsTopic() {
         if (this.canceledBuildJobsTopic == null) {
-            this.canceledBuildJobsTopic = this.hazelcastInstance.getTopic("canceledBuildJobsTopic");
+            this.canceledBuildJobsTopic = this.distributedDataProvider.getTopic("canceledBuildJobsTopic");
         }
         return this.canceledBuildJobsTopic;
     }
@@ -256,9 +253,9 @@ public class DistributedDataAccessService {
      * @return ITopic for pausing build agents
      *         The topic is initialized lazily the first time this method is called if it is still null.
      */
-    public ITopic<String> getPauseBuildAgentTopic() {
+    public DistributedTopic<String> getPauseBuildAgentTopic() {
         if (this.pauseBuildAgentTopic == null) {
-            this.pauseBuildAgentTopic = this.hazelcastInstance.getTopic("pauseBuildAgentTopic");
+            this.pauseBuildAgentTopic = this.distributedDataProvider.getTopic("pauseBuildAgentTopic");
         }
         return this.pauseBuildAgentTopic;
     }
@@ -267,9 +264,9 @@ public class DistributedDataAccessService {
      * @return ITopic for resuming build agents
      *         The topic is initialized lazily the first time this method is called if it is still null.
      */
-    public ITopic<String> getResumeBuildAgentTopic() {
+    public DistributedTopic<String> getResumeBuildAgentTopic() {
         if (this.resumeBuildAgentTopic == null) {
-            this.resumeBuildAgentTopic = this.hazelcastInstance.getTopic("resumeBuildAgentTopic");
+            this.resumeBuildAgentTopic = this.distributedDataProvider.getTopic("resumeBuildAgentTopic");
         }
         return this.resumeBuildAgentTopic;
     }
@@ -323,44 +320,29 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * Checks if the Hazelcast instance is active and operational.
+     * Checks if the instance is active and operational.
      *
-     * @return {@code true} if the Hazelcast instance has been initialized and is actively running,
+     * @return {@code true} if the instance has been initialized and is actively running,
      *         {@code false} if the instance has not been initialized or is no longer running
      */
     public boolean isInstanceRunning() {
-        return hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning();
+        return distributedDataProvider.isInstanceRunning();
     }
 
     /**
-     * @return the address of the local Hazelcast member
+     * @return the address of the local member
      */
     public String getLocalMemberAddress() {
-        if (!isInstanceRunning()) {
-            throw new HazelcastInstanceNotActiveException();
-        }
-        return hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        return distributedDataProvider.getLocalMemberAddress();
     }
 
     /**
-     * Retrieves the members of the Hazelcast cluster.
-     *
-     * @return a stream of Hazelcast cluster members
-     */
-    public Stream<Member> getClusterMembers() {
-        if (!isInstanceRunning()) {
-            return Stream.empty();
-        }
-        return hazelcastInstance.getCluster().getMembers().stream();
-    }
-
-    /**
-     * Retrieves the addresses of all members in the Hazelcast cluster.
+     * Retrieves the addresses of all members in the cluster.
      *
      * @return a set of addresses of all cluster members
      */
     public Set<String> getClusterMemberAddresses() {
-        return getClusterMembers().map(Member::getAddress).map(Object::toString).collect(Collectors.toSet());
+        return distributedDataProvider.getClusterMemberAddresses();
     }
 
     /**
@@ -369,7 +351,7 @@ public class DistributedDataAccessService {
      * @return {@code true} if all members in the cluster are lite members (i.e., no data members are available),
      */
     public boolean noDataMemberInClusterAvailable() {
-        return getClusterMembers().allMatch(Member::isLiteMember);
+        return distributedDataProvider.noDataMemberInClusterAvailable();
     }
 
     /**
@@ -379,15 +361,10 @@ public class DistributedDataAccessService {
      */
     @Nullable
     public BuildAgentInformation.BuildAgentStatus getLocalBuildAgentStatus() {
-        try {
-            BuildAgentInformation localAgentInfo = getDistributedBuildAgentInformation().get(getLocalMemberAddress());
-            if (localAgentInfo == null) {
-                return null;
-            }
-            return localAgentInfo.status();
-        }
-        catch (HazelcastInstanceNotActiveException e) {
+        BuildAgentInformation localAgentInfo = getDistributedBuildAgentInformation().get(getLocalMemberAddress());
+        if (localAgentInfo == null) {
             return null;
         }
+        return localAgentInfo.status();
     }
 }
