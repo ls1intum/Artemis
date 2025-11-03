@@ -15,7 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
 
-public class PyrisHealthIndicatorIntegrationTest extends AbstractIrisIntegrationTest {
+class PyrisHealthIndicatorIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String MODULE = "module_example";
 
@@ -187,6 +187,30 @@ public class PyrisHealthIndicatorIntegrationTest extends AbstractIrisIntegration
         assertThat(h.getStatus()).isEqualTo(Status.DOWN);
         assertThat(h.getDetails().get("error").toString()).contains("\uD83D\uDD34") // 🔴
                 .contains("timed out");
+    }
+
+    @Test
+    void shouldMarkNullModuleEntryAsDownWithMessage() throws Exception {
+        // build a map that contains a null value (Map.of(...) doesn’t allow nulls)
+        var modules = new java.util.HashMap<String, PyrisHealthStatusDTO.ModuleStatusDTO>();
+        modules.put(MODULE, null); // simulate "modules": {"module_example": null}
+
+        irisRequestMockProvider.mockHealthWithModules(true, modules);
+
+        Health h = pyrisHealthIndicator.health();
+        // Expect: red icon + "No data"
+        assertThat(h.getDetails().get(MODULE).toString()).contains(RED)     // 🔴
+                .contains("No data");
+    }
+
+    @Test
+    void shouldShowRedIconWhenStatusIsNull() throws Exception {
+        var mod = new PyrisHealthStatusDTO.ModuleStatusDTO(null, null, "   "); // blank meta
+        irisRequestMockProvider.mockHealthWithModules(true, java.util.Map.of(MODULE, mod));
+
+        Health h = pyrisHealthIndicator.health();
+        // summarizeModule: icon + space only (no error, no meta)
+        assertThat(h.getDetails().get(MODULE)).isEqualTo(RED + " "); // 🔴␠
     }
 
 }

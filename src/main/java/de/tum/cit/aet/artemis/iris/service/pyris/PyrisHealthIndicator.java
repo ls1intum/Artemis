@@ -123,7 +123,14 @@ public class PyrisHealthIndicator implements HealthIndicator {
         if (modules == null) {
             return;
         }
-        modules.forEach((name, m) -> target.put(name, summarizeModule(m)));
+        modules.forEach((name, m) -> {
+            if (m == null) {
+                target.put(name, iconFor(null) + " No data");
+            }
+            else {
+                target.put(name, summarizeModule(m));
+            }
+        });
     }
 
     private static String summarizeModule(PyrisHealthStatusDTO.ModuleStatusDTO module) {
@@ -141,6 +148,9 @@ public class PyrisHealthIndicator implements HealthIndicator {
     }
 
     private static String iconFor(PyrisHealthStatusDTO.ServiceStatus status) {
+        if (status == null) {
+            return RED_CIRCLE;
+        }
         return switch (status) {
             case UP -> GREEN_CIRCLE;
             case WARN -> YELLOW_CIRCLE;
