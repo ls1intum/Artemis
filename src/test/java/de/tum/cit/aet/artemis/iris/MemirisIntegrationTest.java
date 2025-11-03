@@ -167,7 +167,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
     private void sendCourseStatus(String jobId, String result, List<PyrisStageDTO> stages, List<String> suggestions, List<MemirisMemoryDTO> accessedMemories,
             List<MemirisMemoryDTO> createdMemories) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/course-chat/runs/" + jobId + "/status",
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/course-chat/runs/" + jobId + "/status",
                 new PyrisChatStatusUpdateDTO(result, stages, null, suggestions, null, accessedMemories, createdMemories), HttpStatus.OK, headers);
     }
 

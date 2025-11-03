@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerci
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
-import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
+import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -85,7 +85,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     private IrisMessageService irisMessageService;
 
     @Autowired
-    private PublicPyrisStatusUpdateResource publicPyrisStatusUpdateResource;
+    private PyrisInternalStatusUpdateResource pyrisInternalStatusUpdateResource;
 
     private ProgrammingExercise programmingExercise;
 
@@ -310,7 +310,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var statusUpdate = new TutorSuggestionStatusUpdateDTO("Test suggestion", "Test result", stages, null);
         var mockRequestForStatusUpdate = new org.springframework.mock.web.MockHttpServletRequest();
         mockRequestForStatusUpdate.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
-        publicPyrisStatusUpdateResource.setTutorSuggestionJobStatus(token, statusUpdate, mockRequestForStatusUpdate);
+        pyrisInternalStatusUpdateResource.setTutorSuggestionJobStatus(token, statusUpdate, mockRequestForStatusUpdate);
 
         // Remove the job and assert that accessing it throws an exception
         var requestAfterRemoval = new org.springframework.mock.web.MockHttpServletRequest();

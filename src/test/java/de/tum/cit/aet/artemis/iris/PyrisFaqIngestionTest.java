@@ -142,7 +142,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.");
         PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(doneStage), faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
 
     }
 
@@ -155,7 +155,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.");
         PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(doneStage), faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
         assertThat(pyrisJobService.getJob(jobToken)).isNull();
 
     }
@@ -169,7 +169,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         PyrisStageDTO inProgressStage = new PyrisStageDTO("inProgressStage", 1, PyrisStageState.IN_PROGRESS, "Stage completed successfully.");
         PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(doneStage, inProgressStage), faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
         assertThat(pyrisJobService.getJob(jobToken)).isNotNull();
 
     }
@@ -184,7 +184,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         PyrisStageDTO inProgressStage = new PyrisStageDTO("inProgressStage", 1, PyrisStageState.IN_PROGRESS, "Stage completed successfully.");
         PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(doneStage, inProgressStage), faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
         assertThat(pyrisJobService.getJob(jobToken)).isNotNull();
 
     }
@@ -198,7 +198,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.");
         PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(errorStage), faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
         assertThat(pyrisJobService.getJob(jobToken)).isNull();
 
     }
@@ -211,7 +211,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.");
         PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(errorStage), faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
         assertThat(pyrisJobService.getJob(jobToken)).isNull();
 
     }
@@ -225,10 +225,10 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.");
         PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(errorStage), faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + chatJobToken))));
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/runs/" + newJobToken + "/status", statusUpdate,
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + newJobToken + "/status", statusUpdate,
                 HttpStatus.CONFLICT, headers);
         assertThat(response.getContentAsString()).contains("Run ID in URL does not match run ID in request body");
-        response = request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/faqs/runs/" + chatJobToken + "/status", statusUpdate, HttpStatus.CONFLICT, headers);
+        response = request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + chatJobToken + "/status", statusUpdate, HttpStatus.CONFLICT, headers);
         assertThat(response.getContentAsString()).contains("Run ID is not an ingestion job");
     }
 
@@ -241,10 +241,10 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
         PyrisStageDTO errorStage = new PyrisStageDTO("error", 1, PyrisStageState.ERROR, "Stage not broke due to error.");
         PyrisFaqIngestionStatusUpdateDTO statusUpdate = new PyrisFaqIngestionStatusUpdateDTO("Success", List.of(errorStage), faq1.getId());
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + chatJobToken))));
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/runs/" + newJobToken + "/status", statusUpdate,
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/runs/" + newJobToken + "/status", statusUpdate,
                 HttpStatus.CONFLICT, headers);
         assertThat(response.getContentAsString()).contains("Run ID in URL does not match run ID in request body");
-        response = request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/faqs/runs/" + chatJobToken + "/status", statusUpdate, HttpStatus.CONFLICT, headers);
+        response = request.postWithoutResponseBody("/api/iris/internal/webhooks/ingestion/faqs/runs/" + chatJobToken + "/status", statusUpdate, HttpStatus.CONFLICT, headers);
         assertThat(response.getContentAsString()).contains("Run ID is not an ingestion job");
     }
 }
