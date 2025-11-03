@@ -20,6 +20,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -194,6 +195,7 @@ public class Lecture extends DomainObject {
         return visibleDate.isBefore(ZonedDateTime.now());
     }
 
+    @JsonProperty("isTutorialLecture")
     public boolean isTutorialLecture() {
         return isTutorialLecture;
     }

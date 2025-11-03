@@ -162,7 +162,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         });
 
         effect(() => {
-            this.lecture().tutorialLecture = this.isTutorialLecture();
+            this.lecture().isTutorialLecture = this.isTutorialLecture();
             this.updateIsChangesMadeToTitleOrPeriodSection();
         });
     }
@@ -228,7 +228,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             this.lecture().title !== this.lectureOnInit.title ||
             this.lecture().channelName !== this.lectureOnInit.channelName ||
             (this.lecture().description ?? '') !== (this.lectureOnInit.description ?? '') ||
-            this.lecture().tutorialLecture !== this.lectureOnInit.tutorialLecture
+            this.lecture().isTutorialLecture !== this.lectureOnInit.isTutorialLecture
         );
     }
 
