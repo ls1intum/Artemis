@@ -18,7 +18,7 @@ public class ExerciseVersion extends AbstractAuditingEntity {
     @Column(name = "exercise_id", updatable = false, nullable = false)
     private Long exerciseId;
 
-    // Direct ID access (for saving), not nullable because delete will cascade when an exercise is deleted
+    // Direct ID access (for saving), not nullable, since users can only be soft deleted
     @Column(name = "author_id", updatable = false, nullable = false)
     private Long authorId;
 
