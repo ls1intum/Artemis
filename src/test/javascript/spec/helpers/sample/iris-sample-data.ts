@@ -89,6 +89,21 @@ export const mockWebsocketStatusMessage = {
     ],
 } as IrisChatWebsocketDTO;
 
+export const mockWebsocketStatusMessageWithInteralStage = {
+    type: IrisChatWebsocketPayloadType.STATUS,
+    stages: [
+        {
+            name: 'Stage 1',
+            state: IrisStageStateDTO.IN_PROGRESS,
+        },
+        {
+            name: 'Internal Stage',
+            state: IrisStageStateDTO.IN_PROGRESS,
+            internal: true,
+        },
+    ],
+} as IrisChatWebsocketDTO;
+
 export const mockConversation = {
     id: 1,
     exercise: irisExercise,
