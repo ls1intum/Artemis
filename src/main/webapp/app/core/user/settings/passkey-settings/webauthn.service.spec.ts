@@ -9,6 +9,7 @@ import { User } from 'app/core/user/user.model';
 import * as credentialUtil from './util/credential.util';
 import * as credentialOptionUtil from './util/credential-option.util';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { encodeAsBase64Url } from 'app/shared/util/base64.util';
 
 describe('WebauthnService', () => {
     let service: WebauthnService;
@@ -64,13 +65,6 @@ describe('WebauthnService', () => {
     });
 
     describe('loginWithPasskey', () => {
-        const mockPublicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {
-            challenge: new Uint8Array([1, 2, 3]),
-            timeout: 60000,
-            rpId: 'example.com',
-            userVerification: 'preferred',
-        };
-
         const mockPublicKeyCredential = {
             id: 'credential-id',
             type: 'public-key',
@@ -82,8 +76,18 @@ describe('WebauthnService', () => {
             },
         } as unknown as PublicKeyCredential;
 
+        const setupAuthenticationOptionsMock = () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+                userVerification: 'preferred',
+            } as any);
+        };
+
         beforeEach(() => {
-            webauthnApiService.getAuthenticationOptions.mockResolvedValue(mockPublicKeyCredentialRequestOptions);
+            setupAuthenticationOptionsMock();
         });
 
         it('should successfully login with passkey', async () => {
@@ -96,9 +100,10 @@ describe('WebauthnService', () => {
             expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalled();
             expect(navigator.credentials.get).toHaveBeenCalledWith({
                 publicKey: expect.objectContaining({
-                    challenge: expect.any(Uint8Array),
+                    challenge: expect.any(ArrayBuffer),
                     timeout: 60000,
                     rpId: 'example.com',
+                    userVerification: 'preferred',
                 }),
             });
             expect(credentialUtil.getLoginCredentialWithGracefullyHandlingAuthenticatorIssues).toHaveBeenCalledWith(mockPublicKeyCredential);
@@ -107,6 +112,7 @@ describe('WebauthnService', () => {
         });
 
         it('should throw InvalidCredentialError when credential is null', async () => {
+            jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
             jest.spyOn(navigator.credentials, 'get').mockResolvedValue(null);
 
             await expect(service.loginWithPasskey()).rejects.toThrow(InvalidCredentialError);
@@ -114,6 +120,7 @@ describe('WebauthnService', () => {
         });
 
         it('should throw InvalidCredentialError when credential is undefined', async () => {
+            jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
             jest.spyOn(navigator.credentials, 'get').mockResolvedValue(undefined as any);
 
             await expect(service.loginWithPasskey()).rejects.toThrow(InvalidCredentialError);
@@ -121,6 +128,7 @@ describe('WebauthnService', () => {
         });
 
         it('should throw InvalidCredentialError when credential type is not public-key', async () => {
+            jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
             const invalidCredential = { ...mockPublicKeyCredential, type: 'invalid-type' } as unknown as PublicKeyCredential;
             jest.spyOn(navigator.credentials, 'get').mockResolvedValue(invalidCredential);
 
@@ -129,6 +137,7 @@ describe('WebauthnService', () => {
         });
 
         it('should throw InvalidCredentialError when getLoginCredentialWithGracefullyHandlingAuthenticatorIssues returns null', async () => {
+            jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
             jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
             jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(null as any);
 
@@ -173,18 +182,17 @@ describe('WebauthnService', () => {
 
     describe('getCredential', () => {
         it('should return a PublicKeyCredential when successful', async () => {
-            const mockPublicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions = {
-                challenge: new Uint8Array([1, 2, 3]),
-                timeout: 60000,
-                rpId: 'example.com',
-            };
-
+            const challenge = new Uint8Array([1, 2, 3]);
             const mockCredential = {
                 id: 'credential-id',
                 type: 'public-key',
             } as PublicKeyCredential;
 
-            webauthnApiService.getAuthenticationOptions.mockResolvedValue(mockPublicKeyCredentialRequestOptions);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
             jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
 
             const result = await service.getCredential();
@@ -193,15 +201,16 @@ describe('WebauthnService', () => {
             expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalled();
             expect(navigator.credentials.get).toHaveBeenCalledWith({
                 publicKey: expect.objectContaining({
-                    challenge: expect.any(Uint8Array),
+                    challenge: expect.any(ArrayBuffer),
                 }),
             });
         });
 
         it('should return undefined when credentials.get returns null', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
             webauthnApiService.getAuthenticationOptions.mockResolvedValue({
-                challenge: new Uint8Array([1, 2, 3]),
-            } as PublicKeyCredentialRequestOptions);
+                challenge: encodeAsBase64Url(challenge),
+            } as any);
             jest.spyOn(navigator.credentials, 'get').mockResolvedValue(null);
 
             const result = await service.getCredential();
@@ -210,20 +219,21 @@ describe('WebauthnService', () => {
         });
 
         it('should handle allowCredentials mapping correctly', async () => {
-            const mockOptions = {
-                challenge: new Uint8Array([1, 2, 3]),
+            const challenge = new Uint8Array([1, 2, 3]);
+            const credentialId = new Uint8Array([4, 5, 6, 7, 8]);
+
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
                 timeout: 60000,
                 rpId: 'example.com',
                 allowCredentials: [
                     {
                         type: 'public-key' as const,
-                        id: 'base64url-encoded-id',
+                        id: encodeAsBase64Url(credentialId),
                         transports: ['usb', 'nfc'] as AuthenticatorTransport[],
                     },
                 ],
-            };
-
-            webauthnApiService.getAuthenticationOptions.mockResolvedValue(mockOptions as any);
+            } as any);
             jest.spyOn(navigator.credentials, 'get').mockResolvedValue({} as PublicKeyCredential);
 
             await service.getCredential();
@@ -233,6 +243,7 @@ describe('WebauthnService', () => {
                     allowCredentials: expect.arrayContaining([
                         expect.objectContaining({
                             type: 'public-key',
+                            id: expect.any(ArrayBuffer),
                             transports: ['usb', 'nfc'],
                         }),
                     ]),
@@ -265,15 +276,19 @@ describe('WebauthnService', () => {
             },
         } as unknown as PublicKeyCredential;
 
+        const setupSuccessfulRegistrationMocks = () => {
+            jest.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
+            jest.spyOn(navigator.credentials, 'create').mockResolvedValue(mockPublicKeyCredential);
+            jest.spyOn(credentialUtil, 'getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
+            webauthnApiService.registerPasskey.mockResolvedValue({ success: true } as any);
+        };
+
         beforeEach(() => {
             webauthnApiService.getRegistrationOptions.mockResolvedValue(mockRegistrationOptions);
         });
 
         it('should successfully register a new passkey', async () => {
-            jest.spyOn(navigator.credentials, 'create').mockResolvedValue(mockPublicKeyCredential);
-            jest.spyOn(credentialUtil, 'getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
-            jest.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
-            webauthnApiService.registerPasskey.mockResolvedValue({ success: true } as any);
+            setupSuccessfulRegistrationMocks();
 
             await service.addNewPasskey(mockUser);
 
@@ -364,10 +379,7 @@ describe('WebauthnService', () => {
         });
 
         it('should include OS in passkey label', async () => {
-            jest.spyOn(navigator.credentials, 'create').mockResolvedValue(mockPublicKeyCredential);
-            jest.spyOn(credentialUtil, 'getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
-            jest.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
-            webauthnApiService.registerPasskey.mockResolvedValue({ success: true } as any);
+            setupSuccessfulRegistrationMocks();
 
             await service.addNewPasskey(mockUser);
 
