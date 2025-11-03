@@ -45,7 +45,7 @@
                         class="btn question-collapse"
                         (click)="isQuestionCollapsed = !isQuestionCollapsed"
                         [attr.aria-expanded]="!isQuestionCollapsed"
-                        [attr.aria-controls]="'collapseQuestion' + questionIndex"
+                        [attr.aria-controls]="'collapseQuestion' + questionIndex()"
                     >
                         <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
                     </button>
@@ -195,7 +195,7 @@
                         ></button>
                     </div>
                     <div class="col-2 col-lg-1">
-                        <div class="re-evaluate-button" id="delete-button" class="delete-button" (click)="deleteQuestion()">
+                        <div id="delete-button" class="delete-button" (click)="deleteQuestion()">
                             <fa-icon [icon]="faTrash" size="2x" />
                         </div>
                     </div>
