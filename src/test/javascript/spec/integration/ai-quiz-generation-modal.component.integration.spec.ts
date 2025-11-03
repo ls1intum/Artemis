@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AiQuizGenerationModalComponent } from 'app/quiz/manage/ai-quiz-generation-modal/ai-quiz-generation-modal.component';
-import { AiQuizGenerationService, AiRequestedSubtype, AiGeneratedQuestionDTO } from 'app/quiz/manage/service/ai-quiz-generation.service';
+import { AiGeneratedQuestionDTO, AiQuizGenerationService, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 describe('AiQuizGenerationModalComponent', () => {
     let fixture: ComponentFixture<AiQuizGenerationModalComponent>;
@@ -21,7 +22,8 @@ describe('AiQuizGenerationModalComponent', () => {
         } as unknown as jest.Mocked<NgbActiveModal>;
 
         await TestBed.configureTestingModule({
-            imports: [AiQuizGenerationModalComponent],
+            imports: [AiQuizGenerationModalComponent, TranslateModule.forRoot()],
+
             providers: [
                 { provide: AiQuizGenerationService, useValue: service },
                 { provide: NgbActiveModal, useValue: activeModal },
