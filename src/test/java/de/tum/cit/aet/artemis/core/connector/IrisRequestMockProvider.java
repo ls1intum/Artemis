@@ -69,7 +69,7 @@ public class IrisRequestMockProvider {
     @Value("${artemis.iris.url}/api/v1/pipelines/")
     private String variantsApiBaseURL;
 
-    @Value("${artemis.iris.url}/api/v1/health")
+    @Value("${artemis.iris.url}/api/v1/health/")
     private URL healthApiURL;
 
     @Value("${artemis.iris.url}/api/v1/memiris")

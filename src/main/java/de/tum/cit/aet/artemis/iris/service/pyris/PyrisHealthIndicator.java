@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
-// ...imports...
 
 @Component
 @Lazy
@@ -84,7 +83,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
         }
 
         ConnectorHealth connectorHealth;
-        URI healthUri = UriComponentsBuilder.fromUri(irisUrl).path("/api/v1/health").build(true).toUri();
+        URI healthUri = UriComponentsBuilder.fromUri(irisUrl).path("/api/v1/health/").build(true).toUri();
         var additionalInfo = new HashMap<String, Object>();
         additionalInfo.put(IRIS_URL_KEY, irisUrl);
 
