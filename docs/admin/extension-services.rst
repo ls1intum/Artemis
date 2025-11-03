@@ -18,6 +18,7 @@ EduTelligence is a comprehensive suite of AI-powered microservices designed to e
    :includehidden:
    :maxdepth: 2
 
+   setup/nebula
    setup/pyris
    setup/athena
 
