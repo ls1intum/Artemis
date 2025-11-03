@@ -76,6 +76,10 @@ artemis:
         destination: http://localhost:8081
     plagiarism-checks:
         plagiarism-results-limit: 100
+    security:
+        internal:
+            allowed-cidrs:
+                - 127.0.0.0/8
 
 info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service
