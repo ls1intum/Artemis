@@ -44,27 +44,33 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student.getGroups().add(course.getStudentGroupName());
         userTestRepository.save(student);
+
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         tutor.getGroups().add(course.getTeachingAssistantGroupName());
         userTestRepository.save(tutor);
+
         var editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
         editor.getGroups().add(course.getEditorGroupName());
         userTestRepository.save(editor);
+
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         instructor.getGroups().add(course.getInstructorGroupName());
         userTestRepository.save(instructor);
     }
 
+    /**
+     * Creates a fully valid AI quiz generation response that passes all new validation rules.
+     */
     private void mockSuccessfulQuizGeneration() {
         String validQuizResponse = """
                 [
                   {
                     "title": "Test Question",
                     "text": "What is Java?",
-                    "explanation": "Java is a programming language",
-                    "hint": "Think about OOP",
-                    "difficulty": 3,
-                    "tags": [],
+                    "explanation": "Java is a high-level, class-based, object-oriented programming language used widely in software development.",
+                    "hint": "Think about OOP languages and bytecode.",
+                    "difficulty": 2,
+                    "tags": ["java", "programming"],
                     "subtype": "SINGLE_CORRECT",
                     "competencyIds": [],
                     "options": [
@@ -96,7 +102,8 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
-        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.OK); // Successful response, content is validated in service tests
+        // Happy path: instructor can successfully trigger AI quiz generation
+        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.OK);
     }
 
     @Test
@@ -108,15 +115,16 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         String requestBody = """
                 {
-                  "topic": "Java Programming",
+                  "topic": "Java Fundamentals",
                   "numberOfQuestions": 1,
                   "language": "ENGLISH",
-                  "difficultyLevel": "MEDIUM",
+                  "difficultyLevel": "EASY",
                   "requestedSubtype": "SINGLE_CORRECT",
-                  "promptHint": null
+                  "promptHint": "Simple intro questions"
                 }
                 """;
 
+        // Happy path: editor can successfully trigger AI quiz generation
         request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.OK);
     }
 
@@ -137,6 +145,7 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
+        // Tutor cannot trigger AI quiz generation → forbidden
         request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.FORBIDDEN);
     }
 
@@ -157,6 +166,7 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
+        // Student cannot trigger AI quiz generation → forbidden
         request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.FORBIDDEN);
     }
 
@@ -166,7 +176,7 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         long courseId = persistedCourseId;
         courseRepository.findById(courseId).orElseThrow();
 
-        // Invalid: numberOfQuestions is 0 (must be at least 1)
+        // Invalid: numberOfQuestions is 0 (violates @Min(1))
         String requestBody = """
                 {
                   "topic": "Java Programming",
