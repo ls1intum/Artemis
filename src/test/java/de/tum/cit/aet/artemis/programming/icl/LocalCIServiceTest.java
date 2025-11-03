@@ -16,8 +16,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -36,22 +34,24 @@ import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.BuildStatus;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 
 class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "localciservice";
 
-    protected IQueue<BuildJobQueueItem> queuedJobs;
+    protected DistributedQueue<BuildJobQueueItem> queuedJobs;
 
-    protected IMap<Long, BuildJobQueueItem> processingJobs;
+    protected DistributedMap<String, BuildJobQueueItem> processingJobs;
 
     @Autowired
     private RepositoryCheckoutService repositoryCheckoutService;
 
     @BeforeEach
     void setUp() {
-        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
-        processingJobs = hazelcastInstance.getMap("processingJobs");
+        queuedJobs = distributedDataAccessService.getDistributedBuildJobQueue();
+        processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
 
         // remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
@@ -78,7 +78,7 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         BuildAgentDTO buildAgent = new BuildAgentDTO("artemis-build-agent-test", memberAddress, "artemis-build-agent-test");
 
         BuildJobQueueItem job1 = new BuildJobQueueItem("1", "job1", buildAgent, participation.getId(), course.getId(), 1, 1, 1,
@@ -86,14 +86,11 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         BuildJobQueueItem job2 = new BuildJobQueueItem("2", "job2", buildAgent, participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
 
-        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
-        processingJobs = hazelcastInstance.getMap("processingJobs");
-
         // No build jobs for the participation are queued or building
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.INACTIVE);
 
         queuedJobs.add(job1);
-        processingJobs.put(1L, job2);
+        processingJobs.put("1", job2);
 
         // At least one build job for the participation is queued
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.QUEUED);

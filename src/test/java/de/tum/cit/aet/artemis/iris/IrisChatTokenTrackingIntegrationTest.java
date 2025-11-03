@@ -129,7 +129,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         List<PyrisStageDTO> doneStage = new ArrayList<>();
-        doneStage.add(new PyrisStageDTO("DoneTest", 10, PyrisStageState.DONE, "Done"));
+        doneStage.add(new PyrisStageDTO("DoneTest", 10, PyrisStageState.DONE, "Done", false));
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", doneStage, tokens));
@@ -181,7 +181,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
         var tokens = getMockLLMCosts("IRIS_CHAT_EXERCISE_MESSAGE");
         List<PyrisStageDTO> failedStages = new ArrayList<>();
-        failedStages.add(new PyrisStageDTO("TestTokenFail", 10, PyrisStageState.ERROR, "Failed running pipeline"));
+        failedStages.add(new PyrisStageDTO("TestTokenFail", 10, PyrisStageState.ERROR, "Failed running pipeline", false));
         irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), null, failedStages, tokens));
@@ -211,7 +211,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, List<LLMRequest> tokens) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/programming-exercise-chat/runs/" + jobId + "/status",
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/programming-exercise-chat/runs/" + jobId + "/status",
                 new PyrisChatStatusUpdateDTO(result, stages, null, null, tokens, null, null), HttpStatus.OK, headers);
     }
 }
