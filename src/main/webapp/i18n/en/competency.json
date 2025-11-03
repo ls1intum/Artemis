@@ -307,6 +307,7 @@
                     "aiTooltip": "Suggested by AI",
                     "aiSuggestionsTitle": "AI Suggestions",
                     "addSuggestions": "Add Suggestions ({{count}})",
+                    "addSelectedSuggestions": "Add Selected Suggestions",
                     "alreadyExists": "(already exists)",
                     "getAiSuggestionsTooltip": "Get AI Suggestions"
                 }
