@@ -136,6 +136,11 @@ artemis:
         destination: https://telemetry.artemis.cit.tum.de
     version-control:
         local-vcs-repo-path: ./local-vcs-repos
+    security:
+        internal:
+            allowed-cidrs:
+                - ::/0
+                - 0.0.0.0/0
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:
