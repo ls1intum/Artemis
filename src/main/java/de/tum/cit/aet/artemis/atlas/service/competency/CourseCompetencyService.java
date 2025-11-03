@@ -507,15 +507,4 @@ public class CourseCompetencyService {
                     competency.getLectureUnitLinks().stream().findFirst().map(CompetencyLectureUnitLink::getWeight).orElse(0.0), master);
         }).toList();
     }
-
-    /**
-     * Finds course competencies by their ids and course id.
-     *
-     * @param ids      the ids of the course competencies
-     * @param courseId the id of the course
-     * @return the set of found course competencies
-     */
-    public Set<CourseCompetency> findCourseCompetenciesByIdsAndCourseId(Set<Long> ids, Long courseId) {
-        return courseCompetencyRepository.findByIdInAndCourseId(ids, courseId);
-    }
 }
