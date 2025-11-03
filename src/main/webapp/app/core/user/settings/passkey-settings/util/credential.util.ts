@@ -13,6 +13,7 @@ import { Malformed1password8RegistrationCredential } from 'app/core/user/setting
 import { SerializableRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-registration-credential';
 import { SerializableLoginCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-login-credential';
 import { MalformedBitwardenLoginCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-login-credential';
+import { Malformed1Password8LoginCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-login-credential';
 
 /**
  * Generic handler for converting malformed registration credentials to serializable credentials.
@@ -78,12 +79,8 @@ function handleMalformedLoginCredential<T>(
 function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends SerializableRegistrationCredential | SerializableLoginCredential>(
     credential: Credential | null,
     credentialType: 'registration' | 'login',
-    bitwardenConverter: (
-        malformedBitwardenLoginCredential: MalformedBitwardenRegistrationCredential | MalformedBitwardenLoginCredential | null,
-    ) => SerializableLoginCredential | undefined,
-    onePassword8Converter: (
-        malformed1Password8LoginCredential: Malformed1password8RegistrationCredential | MalformedBitwardenLoginCredential | null,
-    ) => SerializableLoginCredential | undefined,
+    bitwardenConverter: (malformedBitwardenCredential: MalformedBitwardenRegistrationCredential | MalformedBitwardenLoginCredential | null) => T | undefined,
+    onePassword8Converter: (malformed1Password8Credential: Malformed1password8RegistrationCredential | Malformed1Password8LoginCredential | null) => T | undefined,
     malformedHandler: <U>(credential: Credential | null, converterFunction: (credential: U) => T | undefined) => T,
 ): Credential | T {
     try {

@@ -151,7 +151,7 @@ describe('Bitwarden Util', () => {
         });
 
         it('should handle undefined optional fields gracefully', () => {
-            const minimalCredential: MalformedBitwardenRegistrationCredential = {
+            const minimalCredential = {
                 id: 'minimal-id',
                 rawId: { 0: 1, 1: 2 },
                 type: 'public-key',
@@ -160,7 +160,7 @@ describe('Bitwarden Util', () => {
                     clientDataJSON: { 0: 123, 1: 125 },
                 },
                 getClientExtensionResults: () => ({}),
-            } as MalformedBitwardenRegistrationCredential;
+            } as unknown as MalformedBitwardenRegistrationCredential;
 
             const credential = getRegistrationCredentialFromMalformedBitwardenObject(minimalCredential);
 
@@ -211,7 +211,7 @@ describe('Bitwarden Util', () => {
         });
 
         it('should handle undefined optional fields gracefully', () => {
-            const minimalCredential: MalformedBitwardenLoginCredential = {
+            const minimalCredential = {
                 id: 'minimal-id',
                 rawId: { 0: 1, 1: 2 },
                 type: 'public-key',
@@ -220,7 +220,7 @@ describe('Bitwarden Util', () => {
                     clientDataJSON: { 0: 123, 1: 125 },
                 },
                 getClientExtensionResults: () => ({}),
-            } as MalformedBitwardenLoginCredential;
+            } as unknown as MalformedBitwardenLoginCredential;
 
             const credential = getLoginCredentialFromMalformedBitwardenObject(minimalCredential);
 
