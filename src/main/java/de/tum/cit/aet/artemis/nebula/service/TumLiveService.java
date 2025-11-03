@@ -35,9 +35,11 @@ public class TumLiveService {
 
     public TumLiveService(RestClient.Builder restClientBuilder, @Value("${artemis.tum-live.api-base-url:#{null}") String tumLiveApiBaseUrl) {
         if (tumLiveApiBaseUrl == null || tumLiveApiBaseUrl.isBlank()) {
-            log.error("TUM Live API base URL is not configured. TUM Live integration will be disabled and transcription generation will not work. Please set 'artemis.tum-live.api-base-url' in your configuration.");
+            log.error(
+                    "TUM Live API base URL is not configured. TUM Live integration will be disabled and transcription generation will not work. Please set 'artemis.tum-live.api-base-url' in your configuration.");
             this.restClient = null;
-        } else {
+        }
+        else {
             log.info("TUM Live API base URL is set to '{}'", tumLiveApiBaseUrl);
             this.restClient = restClientBuilder.baseUrl(tumLiveApiBaseUrl).build();
         }
