@@ -7,7 +7,7 @@
             "totalQuestions": "Gesamtanzahl an Fragen",
             "howItWorks": {
                 "title": "Wie das Training funktioniert",
-                "content": "Übe Quiz-Fragen einzeln in einem Spaced-Repetition-System. Wenn keine Fragen fällig sind, kannst du trotzdem im ungewerteten Modus trainieren, was die Bestenliste nicht beeinflusst."
+                "content": "Übe Quiz-Fragen einzeln mit Spaced Repetition (Wiederholung in optimalen Zeitabständen). Du kannst jederzeit im ungewerteten Modus trainieren, ohne die Bestenliste zu beeinflussen."
             },
             "leagues": {
                 "title": "Ligen und Ranglisten",
@@ -16,7 +16,7 @@
             "scoring": {
                 "content": "Beantworte Fragen richtig, um Punkte zu sammeln und in höhere Ligen aufzusteigen. Je öfter eine Frage am Stück richtig beantwortet wird, desto mehr Punkte erhältst du dafür."
             },
-            "showInLeaderboard": "Meinen Namen in der Quiz Bestenliste anzeigen",
+            "showInLeaderboard": "In der Quiz-Bestenliste anzeigen lassen",
             "bronzeLeague": "Bronze Liga",
             "silverLeague": "Silber Liga",
             "goldLeague": "Gold Liga",
