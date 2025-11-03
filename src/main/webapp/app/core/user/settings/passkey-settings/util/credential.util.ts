@@ -9,7 +9,7 @@ import {
     getLoginCredentialFromMalformed1Password8Object,
     getRegistrationCredentialFromMalformed1Password8Object,
 } from 'app/core/user/settings/passkey-settings/util/1password8/1password8.util';
-import { Malformed1Password8Credential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-credential';
+import { Malformed1password8RegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-registration-credential';
 import { SerializableRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-registration-credential';
 import { SerializableLoginCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-login-credential';
 import { MalformedBitwardenLoginCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-login-credential';
@@ -79,9 +79,11 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
     credential: Credential | null,
     credentialType: 'registration' | 'login',
     bitwardenConverter: (
-        malformedBitwardenLoginCredential: MalformedBitwardenLoginCredential | MalformedBitwardenRegistrationCredential | null,
+        malformedBitwardenLoginCredential: MalformedBitwardenRegistrationCredential | MalformedBitwardenLoginCredential | null,
     ) => SerializableLoginCredential | undefined,
-    onePassword8Converter: (credential: Malformed1Password8Credential) => T | undefined,
+    onePassword8Converter: (
+        malformed1Password8LoginCredential: Malformed1password8RegistrationCredential | MalformedBitwardenLoginCredential | null,
+    ) => SerializableLoginCredential | undefined,
     malformedHandler: <U>(credential: Credential | null, converterFunction: (credential: U) => T | undefined) => T,
 ): Credential | T {
     try {
@@ -106,7 +108,7 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
         if (is1Password8Credential) {
             // eslint-disable-next-line no-undef
             console.warn('Bitwarden workaround did not succeed, attempting 1password8 workaround', error);
-            fixedCredential = malformedHandler<Malformed1Password8Credential>(credential, onePassword8Converter);
+            fixedCredential = malformedHandler<Malformed1password8RegistrationCredential>(credential, onePassword8Converter);
         }
 
         return fixedCredential;

@@ -1,5 +1,5 @@
 import { getLoginCredentialFromMalformed1Password8Object, getRegistrationCredentialFromMalformed1Password8Object } from './1password8.util';
-import { Malformed1Password8Credential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-credential';
+import { Malformed1password8RegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-registration-credential';
 import { expectBase64UrlFieldsForLogin, expectBase64UrlFieldsForRegistration } from '../test.helpers';
 import { describe, expect, it } from '@jest/globals';
 
@@ -10,7 +10,7 @@ describe('1Password8 Util', () => {
     }
 
     describe('Registration Credential (with attestationObject)', () => {
-        const malformedRegistrationCredential: Malformed1Password8Credential = {
+        const malformedRegistrationCredential: Malformed1password8RegistrationCredential = {
             id: 'test-id',
             rawId: createArrayBuffer([116, 101, 115, 116]),
             type: 'public-key',
@@ -59,7 +59,7 @@ describe('1Password8 Util', () => {
     });
 
     describe('Login Credential (with signature and userHandle)', () => {
-        const malformedLoginCredential: Malformed1Password8Credential = {
+        const malformedLoginCredential: Malformed1password8RegistrationCredential = {
             id: 'login-id',
             rawId: createArrayBuffer([108, 111, 103, 105, 110]),
             type: 'public-key',
@@ -108,7 +108,7 @@ describe('1Password8 Util', () => {
         });
 
         it('should handle registration credential without optional fields', () => {
-            const minimalCredential: Malformed1Password8Credential = {
+            const minimalCredential: Malformed1password8RegistrationCredential = {
                 id: 'minimal-id',
                 rawId: createArrayBuffer([1, 2, 3]),
                 type: 'public-key',
@@ -132,7 +132,7 @@ describe('1Password8 Util', () => {
         });
 
         it('should handle login credential without optional fields', () => {
-            const minimalCredential: Malformed1Password8Credential = {
+            const minimalCredential: Malformed1password8RegistrationCredential = {
                 id: 'minimal-id',
                 rawId: createArrayBuffer([1, 2, 3]),
                 type: 'public-key',
@@ -154,7 +154,7 @@ describe('1Password8 Util', () => {
         });
 
         it('should handle empty ArrayBuffers for registration', () => {
-            const credentialWithEmptyBuffers: Malformed1Password8Credential = {
+            const credentialWithEmptyBuffers: Malformed1password8RegistrationCredential = {
                 id: 'empty-id',
                 rawId: createArrayBuffer([]),
                 type: 'public-key',
@@ -173,7 +173,7 @@ describe('1Password8 Util', () => {
         });
 
         it('should handle empty ArrayBuffers for login', () => {
-            const credentialWithEmptyBuffers: Malformed1Password8Credential = {
+            const credentialWithEmptyBuffers: Malformed1password8RegistrationCredential = {
                 id: 'empty-id',
                 rawId: createArrayBuffer([]),
                 type: 'public-key',
@@ -195,7 +195,7 @@ describe('1Password8 Util', () => {
     describe('Data Integrity', () => {
         it('should preserve the original data when encoding and maintain correct byte representation for registration', () => {
             const originalData = [72, 101, 108, 108, 111]; // "Hello" in ASCII
-            const credential: Malformed1Password8Credential = {
+            const credential: Malformed1password8RegistrationCredential = {
                 id: 'test-id',
                 rawId: createArrayBuffer(originalData),
                 type: 'public-key',
@@ -218,7 +218,7 @@ describe('1Password8 Util', () => {
 
         it('should preserve the original data when encoding and maintain correct byte representation for login', () => {
             const originalData = [72, 101, 108, 108, 111]; // "Hello" in ASCII
-            const credential: Malformed1Password8Credential = {
+            const credential: Malformed1password8RegistrationCredential = {
                 id: 'test-id',
                 rawId: createArrayBuffer(originalData),
                 type: 'public-key',
