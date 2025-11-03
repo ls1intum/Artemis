@@ -39,7 +39,8 @@ in the :code:`Authorization` header.
        secret-token: your-shared-secret
 
      tum-live:
-       api-base-url: https://api.tum.live.example.com
+       # Ensure this URL points to your GoCast (TUM-Live) instance. Add the /api/v2 suffix.
+       api-base-url: https://api.tum.live.example.com/api/v2
 
 .. note::
    Artemis uses :code:`server.url` internally when contacting Nebula. Make sure the property reflects the external URL of your Artemis instance.
