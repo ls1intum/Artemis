@@ -1,0 +1,174 @@
+---
+id: quiz-training
+title: Quiz Training Mode
+sidebar_label: Quiz Training
+---
+
+import trainingTab from "./assets/quiz/quiz-training-tab.png";
+import scorecard from "./assets/quiz/scorecard.png";
+import mcQuestion from "./assets/quiz/mc-question.png";
+import mcQuestionSolution from "./assets/quiz/mc-question-solution.png";
+import saQuestion from "./assets/quiz/sa-question.png";
+import saQuestionSolution from "./assets/quiz/sa-question-sample-solution.png";
+import unratedNotification from "./assets/quiz/unrated-notification.png";
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Quiz Training Mode
+
+The Quiz Training Mode allows you to reinforce your knowledge through repeated practice of quiz questions. The system uses a spaced-repetition algorithm to ensure you review questions at optimal intervals.
+
+---
+
+## Getting Started
+
+When you first visit the Quiz Training, a welcome dialog appears explaining the key features:
+
+### How It Works
+
+Quiz Training is based on the principle of spaced repetition. Questions you answer correctly are repeated at longer intervals, while incorrectly answered questions appear more frequently.
+
+### League System
+
+The training uses a motivating league system with five levels:
+
+- **Bronze League:** 0-50 points
+- **Silver League:** 50-150 points
+- **Gold League:** 150-300 points
+- **Diamond League:** 300-500 points
+- **Master League:** 500+ points
+
+Each correctly answered question earns you points, allowing you to advance to higher leagues.
+
+### Scoring
+
+Point allocation depends on the difficulty and your performance on the question. Graded questions count toward your progress, while ungraded questions are only for practice.
+
+### Leaderboard Settings
+
+You can choose whether your name appears in the course leaderboard. You can change this setting at any time.
+
+---
+
+## Overview Page
+
+After the initial setup, you'll see the training overview with several sections:
+
+### Score Card
+
+The left side shows your current status:
+
+- **League Badge:** Your current league with a progress bar to the next league
+- **Next Questions Due In:** Countdown until new questions are available for review
+- **Total Questions:** Number of all attempted questions
+- **Correct Answers:** Number of correctly answered questions
+- **Wrong Answers:** Number of incorrectly answered questions
+
+<Image src={scorecard} alt={"Scorecard"} size={ImageSize.small}></Image>
+
+### Leaderboard
+
+The right side shows the course leaderboard (if enabled):
+
+- **Your Position:** Highlighted with your rank, name, and score
+- **Top Participants:** Leaderboard of other course participants
+- **Profile Pictures:** Visual representation of participants
+
+---
+
+## Starting Training
+
+Click **"Start Training"** to begin practicing.
+
+### Answering Questions
+
+The system presents questions in three different formats:
+
+#### Multiple-Choice Questions
+
+- Select one or more correct answers
+- Mark all applicable options
+- Click **"Submit"** to check your answer
+
+<Image src={mcQuestion} alt={"MC Question"} size={ImageSize.small}></Image>
+
+#### Drag-and-Drop Questions
+
+- Drag elements to the correct position
+- Match terms to appropriate categories
+- Submit your solution when finished
+
+<Image src={mcQuestion} alt={"Scorecard"} size={ImageSize.small}></Image>
+
+#### Short Answer Questions
+
+- Enter text answers in the provided fields
+- Pay attention to correct spelling
+- Confirm your entries
+
+<Image src={saQuestion} alt={"SA Question"} size={ImageSize.small}></Image>
+
+### Graded vs. Ungraded Questions
+
+<Image src={unratedNotification} alt={"Unrated Notification"} size={ImageSize.small}></Image>
+
+<Callout variant={CalloutVariant.info}>
+    <p>
+        When an ungraded question appears, you'll be asked if you want to continue.
+        Ungraded questions don't count toward your score but help with practice.
+    </p>
+</Callout>
+
+### Receiving Feedback
+
+After submitting, you'll immediately see:
+
+- **Score Achieved:** How many points you earned for this question
+- **Correct Answers:** Which options were correct (marked in green)
+- **Wrong Answers:** Which options were incorrect (marked in red)
+- **Explanations:** Additional hints about the correct solution
+- **Sample Solution:** A button to view a sample solution (for short-answer and drag-and-drop questions)
+
+<Image src={mcQuestionSolution} alt={"Solution"} size={ImageSize.small}></Image>
+
+<Image src={saQuestionSolution} alt={"Sample Solution"} size={ImageSize.small}></Image>
+
+### Navigation
+
+- **Next Question:** Proceed to the next question
+- **End Training:** Return to the overview page (appears on the last question)
+
+---
+
+## Tips for Effective Training
+
+1. **Practice Regularly:** Visit the training daily to benefit from spaced repetition
+2. **Work Through All Questions:** Use both graded and ungraded questions for learning
+3. **Read Feedback:** Understand why an answer was correct or incorrect
+4. **Use the Leaderboard:** Get motivated by others and compare your progress
+5. **Work Toward Higher Leagues:** Set goals for the next league level
+
+---
+
+## Frequently Asked Questions
+
+**When do new questions appear?**
+The system displays a countdown showing when the next questions are available for review. This is based on your past performance.
+
+**Can I change my leaderboard visibility?**
+Yes, click the **"Info"** button on the overview page to adjust your settings.
+
+**What happens if I answer a question incorrectly?**
+The question will be repeated at shorter intervals until you answer it correctly. Your score will be adjusted accordingly.
+
+**Do all questions count toward my score?**
+Only graded questions count toward your score and league progress. Ungraded questions are solely for practice.
+
+---
+
+<Callout variant={CalloutVariant.tip}>
+    <p>
+        Use Quiz Training regularly to reinforce your knowledge long-term.
+        The spaced-repetition method is scientifically proven to be one of the most effective learning methods!
+    </p>
+</Callout>
