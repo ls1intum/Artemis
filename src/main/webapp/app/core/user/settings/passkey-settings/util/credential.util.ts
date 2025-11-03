@@ -68,8 +68,8 @@ function handleMalformedLoginCredential<T>(
  *
  * @param credential - The credential to process
  * @param credentialType - for logging purposes ('registration' or 'login')
- * @param bitwardenConverter - for Bitwarden credentials
- * @param onePassword8Converter - for 1Password8 credentials
+ * @param bitwardenConverter - for Bitwarden credentials (the converted is different for registration and login)
+ * @param onePassword8Converter - for 1Password8 credentials (the converted is different for registration and login)
  * @param malformedHandler - Handler function for converting malformed credentials
  * @returns The processed credential
  * @throws {@link InvalidCredentialError} if the credential cannot be processed.
@@ -117,7 +117,7 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
  * for Bitwarden and might fail for other authenticators.
  * </p>
  *
- * <p><strong>Authenticators that return a proper {@link Credential} are not affected by this workaround!</strong></p>
+ * <p><strong>Authenticators that return a properly serializable {@link Credential} are not affected by this workaround!</strong></p>
  *
  * @param credential - The registration credential to process
  * @throws {@link InvalidCredentialError} if the credential cannot be processed.

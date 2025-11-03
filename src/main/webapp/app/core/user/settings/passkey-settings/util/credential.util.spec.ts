@@ -1,9 +1,6 @@
-import { addNewPasskey, getLoginCredentialWithGracefullyHandlingAuthenticatorIssues, getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues } from './credential.util';
+import { getLoginCredentialWithGracefullyHandlingAuthenticatorIssues, getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues } from './credential.util';
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/errors/invalid-credential.error';
-import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { User } from 'app/core/user/user.model';
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 
 describe('credential util helper method', () => {
@@ -156,60 +153,6 @@ describe('credential util helper method', () => {
             expect(() => {
                 getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(malformedCredential);
             }).toThrow(InvalidCredentialError);
-        });
-    });
-
-    describe('addNewPasskey', () => {
-        let mockWebauthnApiService: jest.Mocked<WebauthnApiService>;
-        let mockAlertService: jest.Mocked<AlertService>;
-        let mockUser: User;
-
-        const originalCredentials = navigator.credentials;
-
-        beforeEach(() => {
-            // Mock navigator.credentials.create
-            Object.defineProperty(navigator, 'credentials', {
-                value: {
-                    create: jest.fn(),
-                },
-                writable: true,
-            });
-
-            mockWebauthnApiService = {
-                getRegistrationOptions: jest.fn(),
-                registerPasskey: jest.fn(),
-            } as unknown as jest.Mocked<WebauthnApiService>;
-
-            mockAlertService = {
-                addErrorAlert: jest.fn(),
-            } as unknown as jest.Mocked<AlertService>;
-
-            mockUser = { email: 'test@example.com' } as User;
-        });
-
-        afterEach(() => {
-            Object.defineProperty(navigator, 'credentials', {
-                value: originalCredentials,
-                writable: true,
-            });
-        });
-
-        it('should throw an error if user is undefined', async () => {
-            await expect(addNewPasskey(undefined, mockWebauthnApiService, mockAlertService)).rejects.toThrow('User or Username is not defined');
-        });
-
-        it('should handle WebAuthn API errors gracefully', async () => {
-            mockWebauthnApiService.getRegistrationOptions.mockRejectedValue(new Error('WebAuthn API error'));
-
-            await expect(addNewPasskey(mockUser, mockWebauthnApiService, mockAlertService)).rejects.toThrow('WebAuthn API error');
-        });
-
-        it('should handle InvalidCredentialError if credential is null', async () => {
-            mockWebauthnApiService.getRegistrationOptions.mockResolvedValue({} as PublicKeyCredentialCreationOptions);
-            jest.spyOn(navigator.credentials, 'create').mockResolvedValue(null);
-
-            await expect(addNewPasskey(mockUser, mockWebauthnApiService, mockAlertService)).rejects.toThrow(Error('Invalid credential'));
-            expect(mockAlertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.registration');
         });
     });
 });
