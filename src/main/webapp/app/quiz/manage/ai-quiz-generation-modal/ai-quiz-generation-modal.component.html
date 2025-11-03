@@ -5,7 +5,7 @@
 </div>
 
 <div class="modal-body">
-    @for (w of warnings; track $index) {
+    @for (w of warnings(); track $index) {
         <ngb-alert type="warning" [dismissible]="false" class="mb-2">{{ w }}</ngb-alert>
     }
 
@@ -79,8 +79,8 @@
 
         <!-- generate + close buttons -->
         <div class="d-flex gap-2 mt-3">
-            <button type="submit" class="btn btn-primary" [disabled]="loading || !genForm.valid">
-                @if (!loading) {
+            <button type="submit" class="btn btn-primary" [disabled]="loading() || !genForm.valid">
+                @if (!loading()) {
                     <span jhiTranslate="artemisApp.quizExercise.aiGeneration.generate"></span>
                 } @else {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -91,10 +91,10 @@
     </form>
 
     <!-- generated preview -->
-    @if (generated.length) {
+    @if (generated().length) {
         <h6 class="mt-4 mb-2" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview"></h6>
         <div class="list-group">
-            @for (q of generated; track $index; let i = $index) {
+            @for (q of generated(); track $index; let i = $index) {
                 <label class="list-group-item" [class.list-group-item-secondary]="!selected[i]">
                     <div class="d-flex w-100 align-items-start gap-2">
                         <input class="form-check-input mt-1" type="checkbox" name="sel-{{ i }}" [(ngModel)]="selected[i]" />
@@ -132,7 +132,7 @@
     }
 </div>
 
-@if (generated.length) {
+@if (generated().length) {
     <div class="modal-footer">
         <button class="btn btn-success" (click)="useInEditor()" [disabled]="!anySelected" jhiTranslate="artemisApp.quizExercise.aiGeneration.useInEditor"></button>
     </div>

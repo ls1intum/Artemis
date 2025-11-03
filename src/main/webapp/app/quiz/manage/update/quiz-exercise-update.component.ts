@@ -750,6 +750,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         q.singleChoice = dto.subtype === AiRequestedSubtype.SINGLE_CORRECT || dto.subtype === AiRequestedSubtype.TRUE_FALSE;
         q.points = 1;
         q.scoringType = ScoringType.ALL_OR_NOTHING;
+
+        // Map AI-generated options
         q.answerOptions =
             dto.options?.map((optDto) => {
                 const opt = new AnswerOption();
@@ -758,23 +760,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 opt.explanation = optDto.feedback || undefined;
                 return opt;
             }) ?? [];
-        // merge AI-provided hint + difficulty into the question's hint.
-        // Use dto.hint as the source (q.hint may be unset) and append the difficulty notation if provided.
-        const dtoHint = dto.hint ?? null;
-        const dtoDifficulty = dto.difficulty ?? null;
 
-        let mergedHint: string | null = null;
-        if (dtoHint) {
-            mergedHint = dtoHint;
-        }
-        if (dtoDifficulty !== null && dtoDifficulty !== undefined) {
-            const difficultyNote = `AI difficulty: ${dtoDifficulty}`;
-            mergedHint = (mergedHint ? mergedHint + '\n' : '') + difficultyNote;
-        }
-
-        // Only set q.hint when we actually have something to set (avoid empty hints).
-        if (mergedHint !== null) {
-            q.hint = mergedHint;
+        // Apply AI-provided hint if available
+        if (dto.hint) {
+            q.hint = dto.hint;
         }
 
         return q;
