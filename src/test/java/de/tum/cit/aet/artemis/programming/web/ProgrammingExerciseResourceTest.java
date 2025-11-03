@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.programming.web;
 
+import static de.tum.cit.aet.artemis.programming.util.ZipTestUtil.extractExerciseJsonFromZip;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -15,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -263,6 +268,90 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(result.length).isGreaterThan(0);
         ZipTestUtil.verifyZipStructureAndContent(result);
         ZipTestUtil.verifyZipDoesNotContainGitDirectory(result);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testExportedExerciseJsonContainsDefaultCategories() throws Exception {
+        // GIVEN
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course.setInstructorGroupName(instructor.getGroups().iterator().next());
+        courseRepository.save(course);
+
+        /*
+         * The factory method populateUnreleasedProgrammingExercise() automatically
+         * creates categories "cat1" and "cat2". We intentionally use these defaults.
+         */
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        var localRepo = new LocalRepository(defaultBranch);
+        var originRepoPath = tempPath.resolve("testOriginRepoCategories");
+        localRepo.configureRepos(originRepoPath, "testLocalRepoCategories", "testOriginRepoCategories");
+        setupLocalVCRepository(localRepo, programmingExercise);
+
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
+
+        // WHEN
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-exercise", HttpStatus.OK, byte[].class);
+
+        // THEN
+        assertThat(result).isNotNull();
+        assertThat(result.length).isGreaterThan(0);
+
+        String exerciseJson = extractExerciseJsonFromZip(result);
+        assertThat(exerciseJson).isNotBlank();
+
+        var objectMapper = new ObjectMapper();
+        var json = objectMapper.readTree(exerciseJson);
+
+        assertThat(json.has("categories")).isTrue();
+        var categoriesArray = json.get("categories");
+        assertThat(categoriesArray.isArray()).isTrue();
+        assertThat(categoriesArray).hasSize(2);
+
+        // Verify the default factory categories
+        List<String> categories = new ArrayList<>();
+        categoriesArray.forEach(node -> categories.add(node.asText()));
+        assertThat(categories).containsExactlyInAnyOrder("cat1", "cat2");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testExportedExerciseJsonWithoutCategories() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course.setInstructorGroupName(instructor.getGroups().iterator().next());
+        courseRepository.save(course);
+
+        // Create a programming exercise and explicitly clear all categories
+        // (The factory method populateUnreleasedProgrammingExercise() adds cat1 and cat2)
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise.setCategories(new HashSet<>());
+        programmingExerciseRepository.save(programmingExercise);
+
+        var localRepo = new LocalRepository(defaultBranch);
+        var originRepoPath = tempPath.resolve("testOriginRepoNoCategories");
+        localRepo.configureRepos(originRepoPath, "testLocalRepoNoCategories", "testOriginRepoNoCategories");
+        setupLocalVCRepository(localRepo, programmingExercise);
+
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
+
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-exercise", HttpStatus.OK, byte[].class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.length).isGreaterThan(0);
+
+        String exerciseJson = extractExerciseJsonFromZip(result);
+        assertThat(exerciseJson).isNotBlank();
+
+        var objectMapper = new ObjectMapper();
+        var json = objectMapper.readTree(exerciseJson);
+
+        // Verify categories are not present
+        assertThat(json.has("categories")).as("No categories field should be present").isFalse();
+
+        localRepo.resetLocalRepo();
     }
 
     private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {

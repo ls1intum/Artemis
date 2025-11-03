@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
@@ -109,6 +110,18 @@ public final class ZipTestUtil {
             default -> {
                 /* No specific git entry type found */ }
         }
+    }
+
+    public static String extractExerciseJsonFromZip(byte[] zipBytes) throws IOException {
+        try (var zis = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
+            java.util.zip.ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.getName().endsWith(".json")) {
+                    return new String(zis.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                }
+            }
+        }
+        throw new IOException("No JSON file found inside exported ZIP");
     }
 
     private static class GitVerificationResult {
