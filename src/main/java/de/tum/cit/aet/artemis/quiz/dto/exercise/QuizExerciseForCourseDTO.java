@@ -80,6 +80,9 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
         if (!includedInOverallScore.equals(that.includedInOverallScore)) {
             return false;
         }
+        if (quizMode != that.quizMode) {
+            return false;
+        }
         boolean thisBatchesEmpty = quizBatches == null || quizBatches.isEmpty();
         boolean thatBatchesEmpty = that.quizBatches == null || that.quizBatches.isEmpty();
         if (thisBatchesEmpty && thatBatchesEmpty) {
