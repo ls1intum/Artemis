@@ -53,12 +53,12 @@ describe('AiQuizGenerationModalComponent', () => {
         comp.generate({ valid: true } as any);
 
         expect(service.generate).toHaveBeenCalledWith(42, expect.any(Object));
-        expect(comp.generated).toHaveLength(1);
-        expect(comp.warnings).toContain('warn');
+        expect(comp.generated().length).toBe(1);
+        expect(comp.warnings()).toContain('warn');
     });
 
     it('should close modal with selected questions on useInEditor()', () => {
-        comp.generated = [
+        comp.generated.set([
             {
                 title: 'Q1',
                 text: 'T',
@@ -67,7 +67,7 @@ describe('AiQuizGenerationModalComponent', () => {
                 tags: [],
                 competencyIds: [],
             } as AiGeneratedQuestionDTO,
-        ];
+        ]);
         comp.selected = { 0: true };
 
         comp.useInEditor();
