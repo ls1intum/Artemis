@@ -1,4 +1,4 @@
-import { Component, HostListener, OnChanges, SimpleChanges, ViewChild, inject, input, output } from '@angular/core';
+import { Component, HostListener, ViewChild, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -48,7 +48,7 @@ export enum CollapsableCodeEditorElement {
         KeysPipe,
     ],
 })
-export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
@@ -117,13 +117,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     constructor() {
         this.initializeProperties();
-    }
 
-    ngOnChanges(changes: SimpleChanges) {
-        // Update file badges when feedback suggestions change
-        if (changes.feedbackSuggestions) {
+        effect(() => {
             this.updateFileBadges();
-        }
+        });
     }
 
     get unsavedFiles() {

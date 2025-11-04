@@ -29,7 +29,7 @@
     </div>
     <jhi-code-editor-file-browser
         editorSidebarLeft
-        [disableActions]="!editable"
+        [disableActions]="!editable()"
         [displayOnly]="forRepositoryView()"
         [showEditorInstructions]="showEditorInstructions()"
         [isProblemStatementVisible]="isProblemStatementVisible()"

@@ -111,6 +111,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 alertService = TestBed.inject(AlertService);
+                fixture.componentRef.setInput('initialEditorHeight', 'external');
             });
     });
 
@@ -120,8 +121,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('participationValue', participation);
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
         fixture.detectChanges();
@@ -135,8 +136,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should have test cases according to the result of the test case service if it does not return an empty array', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('participationValue', participation);
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
@@ -160,8 +161,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should update test cases if a new test case result comes in', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('participationValue', participation);
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
@@ -186,8 +187,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should try to retrieve the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('participationValue', participation);
         const subject = new Subject<Result>();
         getLatestResultWithFeedbacksStub.mockReturnValue(subject);
 
@@ -212,9 +213,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should not try to query test cases or solution participation results if the exercise is being created (there can be no test cases yet)', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
-        comp.editMode = false;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('participationValue', participation);
+        fixture.componentRef.setInput('editMode', false);
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
@@ -236,9 +237,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     it('should re-render the preview html when forceRender has emitted', fakeAsync(() => {
         const forceRenderSubject = new Subject<void>();
-        comp.exercise = exercise;
-        comp.participation = participation;
-        comp.forceRender = forceRenderSubject.asObservable();
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('participationValue', participation);
+        fixture.componentRef.setInput('forceRender', forceRenderSubject.asObservable());
 
         triggerChanges(comp, { property: 'exercise', currentValue: exercise });
 
@@ -279,8 +280,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should save the problem statement to the server', () => {
-        comp.exercise = exercise;
-        comp.editMode = true;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('editMode', true);
 
         const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
@@ -294,8 +295,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
         const logErrorSpy = jest.spyOn(alertService, 'error');
 
-        comp.exercise = exercise;
-        comp.editMode = true;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('editMode', true);
 
         comp.saveInstructions(new KeyboardEvent('cmd+s'));
         expect(updateProblemStatementSpy).toHaveBeenCalledOnce();
@@ -304,8 +305,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     it('should save on key commands', () => {
         const saveInstructionsSpy = jest.spyOn(comp, 'saveInstructions');
-        comp.exercise = exercise;
-        comp.editMode = true;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('editMode', true);
 
         comp.saveOnControlAndS(new KeyboardEvent('ctrl+s'));
         expect(saveInstructionsSpy).toHaveBeenCalledOnce();
@@ -320,6 +321,9 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         // Komponente erneut erzeugen, damit computed() neu berechnet wird
         fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
         comp = fixture.componentInstance;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.componentRef.setInput('participationValue', participation);
+        fixture.componentRef.setInput('initialEditorHeight', 'external');
 
         // IDs setzen, die in artemisIntelligenceActions verwendet werden
         comp.courseId = 1;

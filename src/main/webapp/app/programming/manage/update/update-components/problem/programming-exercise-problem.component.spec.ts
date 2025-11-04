@@ -43,8 +43,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
             linkedCompetencies: true,
         });
 
-        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', programmingExerciseCreationConfigMock);
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        fixture.componentRef.setInput('programmingExercise', exercise);
     });
 
     afterEach(() => {
@@ -56,8 +57,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(comp).not.toBeNull();
 
         const exercise = new ProgrammingExercise(undefined, undefined);
-        comp.exercise = exercise;
+        fixture.componentRef.setInput('programmingExercise', exercise);
 
-        expect(comp.exercise).toBe(exercise);
+        expect(comp.programmingExercise()).toBe(exercise);
     }));
 });
