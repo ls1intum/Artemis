@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -80,10 +81,13 @@ public class ProgrammingExerciseUpdateResource {
 
     private final UserRepository userRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, Environment environment, Optional<SlideApi> slideApi) {
+            AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, Environment environment, Optional<SlideApi> slideApi,
+            ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -96,6 +100,7 @@ public class ProgrammingExerciseUpdateResource {
         this.athenaApi = athenaApi;
         this.environment = environment;
         this.slideApi = slideApi;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -203,7 +208,7 @@ public class ProgrammingExerciseUpdateResource {
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
-
+        exerciseVersionService.createExerciseVersion(updatedProgrammingExercise, user);
         return ResponseEntity.ok(savedProgrammingExercise);
     }
 
