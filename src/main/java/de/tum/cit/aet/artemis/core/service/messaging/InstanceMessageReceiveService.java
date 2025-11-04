@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.UserScheduleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureUnitAutoIngestionApi;
 import de.tum.cit.aet.artemis.lecture.service.SlideUnhideScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -54,6 +55,8 @@ public class InstanceMessageReceiveService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final UserRepository userRepository;
@@ -67,14 +70,15 @@ public class InstanceMessageReceiveService {
     private final Optional<IrisLectureUnitAutoIngestionApi> irisLectureUnitAutoIngestionApi;
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            ExerciseRepository exerciseRepository, Optional<AthenaApi> athenaApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
-            UserRepository userRepository, UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService,
-            ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService, SlideUnhideScheduleService slideUnhideScheduleService,
-            Optional<IrisLectureUnitAutoIngestionApi> irisLectureUnitAutoIngestionApi) {
+            ExerciseRepository exerciseRepository, ExerciseAthenaConfigService exerciseAthenaConfigService, Optional<AthenaApi> athenaApi,
+            @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, UserRepository userRepository, UserScheduleService userScheduleService,
+            NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService,
+            SlideUnhideScheduleService slideUnhideScheduleService, Optional<IrisLectureUnitAutoIngestionApi> irisLectureUnitAutoIngestionApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaApi = athenaApi;
         this.exerciseRepository = exerciseRepository;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
         this.userRepository = userRepository;
         this.userScheduleService = userScheduleService;
         this.notificationScheduleService = notificationScheduleService;
@@ -172,7 +176,8 @@ public class InstanceMessageReceiveService {
 
     public void processSchedulePotentialAthenaExercise(Long exerciseId) {
         log.info("Received schedule update for potential Athena exercise {}", exerciseId);
-        Exercise exercise = exerciseRepository.findWithAthenaConfigByIdElseThrow(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        exerciseAthenaConfigService.loadAthenaConfig(exercise);
         athenaApi.ifPresent(api -> api.scheduleExerciseForAthenaIfRequired(exercise));
     }
 

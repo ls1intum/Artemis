@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -85,6 +86,8 @@ public class TextExerciseResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     private final Optional<ExamAccessApi> examAccessApi;
 
     private final FeedbackRepository feedbackRepository;
@@ -108,8 +111,8 @@ public class TextExerciseResource {
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
-            GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, CourseRepository courseRepository, ChannelRepository channelRepository,
-            Optional<ExamAccessApi> examAccessApi) {
+            ExerciseAthenaConfigService exerciseAthenaConfigService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
+            CourseRepository courseRepository, ChannelRepository channelRepository, Optional<ExamAccessApi> examAccessApi) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.textBlockRepository = textBlockRepository;
@@ -120,6 +123,7 @@ public class TextExerciseResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exerciseService = exerciseService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.courseRepository = courseRepository;
         this.channelRepository = channelRepository;
@@ -150,20 +154,20 @@ public class TextExerciseResource {
     }
 
     private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig, boolean includeAthenaConfig) {
-        if (includePlagiarismDetectionConfig && includeAthenaConfig) {
-            var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndAthenaConfigById(exerciseId);
-            textExercise.ifPresent(it -> PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(it, textExerciseRepository));
-            return textExercise;
-        }
+        Optional<TextExercise> textExercise;
         if (includePlagiarismDetectionConfig) {
-            var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId);
+            textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId);
             textExercise.ifPresent(it -> PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(it, textExerciseRepository));
-            return textExercise;
         }
+        else {
+            textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId);
+        }
+
         if (includeAthenaConfig) {
-            return textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndAthenaConfigById(exerciseId);
+            textExercise.ifPresent(exerciseAthenaConfigService::loadAthenaConfig);
         }
-        return textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId);
+
+        return textExercise;
     }
 
     /**
@@ -235,11 +239,16 @@ public class TextExerciseResource {
     // TODO: fix the URL scheme
     @GetMapping("text-editor/{participationId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
+    public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId,
+            @RequestParam(value = "withAthenaConfig", defaultValue = "false") boolean withAthenaConfig) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         if (!(participation.getExercise() instanceof TextExercise textExercise)) {
             throw new BadRequestAlertException("The exercise of the participation is not a text exercise.", ENTITY_NAME, "wrongExerciseType");
+        }
+
+        if (withAthenaConfig) {
+            exerciseAthenaConfigService.loadAthenaConfig(textExercise);
         }
 
         // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers

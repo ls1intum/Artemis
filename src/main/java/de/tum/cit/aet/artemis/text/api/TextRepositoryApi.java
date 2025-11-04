@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -22,9 +23,12 @@ public class TextRepositoryApi extends AbstractTextApi {
 
     private final TextBlockRepository textBlockRepository;
 
-    public TextRepositoryApi(TextExerciseRepository textExerciseRepository, TextBlockRepository textBlockRepository) {
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
+    public TextRepositoryApi(TextExerciseRepository textExerciseRepository, TextBlockRepository textBlockRepository, ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.textExerciseRepository = textExerciseRepository;
         this.textBlockRepository = textBlockRepository;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     public List<TextExercise> findAllWithCategoriesByCourseId(Long courseId) {
@@ -44,6 +48,8 @@ public class TextRepositoryApi extends AbstractTextApi {
     }
 
     public TextExercise findWithAthenaConfigByIdElseThrow(long exerciseId) {
-        return textExerciseRepository.findWithAthenaConfigByIdElseThrow(exerciseId);
+        TextExercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        exerciseAthenaConfigService.loadAthenaConfig(exercise);
+        return exercise;
     }
 }

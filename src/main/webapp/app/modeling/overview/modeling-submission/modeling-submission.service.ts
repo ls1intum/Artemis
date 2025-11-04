@@ -126,8 +126,9 @@ export class ModelingSubmissionService {
      * @param participationId - Id of the participation
      */
     getLatestSubmissionForModelingEditor(participationId: number): Observable<ModelingSubmission> {
+        const params = new HttpParams().set('withAthenaConfig', 'true');
         return this.http
-            .get<ModelingSubmission>(`${this.resourceUrl}/participations/${participationId}/latest-modeling-submission`, { responseType: 'json' })
+            .get<ModelingSubmission>(`${this.resourceUrl}/participations/${participationId}/latest-modeling-submission`, { responseType: 'json', params })
             .pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
 

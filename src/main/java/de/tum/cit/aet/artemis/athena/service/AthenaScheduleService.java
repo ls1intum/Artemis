@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseLifecycleService;
 
 @Lazy
@@ -46,13 +47,17 @@ public class AthenaScheduleService {
 
     private final AthenaSubmissionSendingService athenaSubmissionSendingService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, ExerciseRepository exerciseRepository, ProfileService profileService,
-            @Qualifier("taskScheduler") TaskScheduler taskScheduler, AthenaSubmissionSendingService athenaSubmissionSendingService) {
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler, AthenaSubmissionSendingService athenaSubmissionSendingService,
+            ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.exerciseRepository = exerciseRepository;
         this.profileService = profileService;
         this.taskScheduler = taskScheduler;
         this.athenaSubmissionSendingService = athenaSubmissionSendingService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -75,7 +80,7 @@ public class AthenaScheduleService {
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
         }
-        final Set<Exercise> runningExercises = exerciseRepository.findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate();
+        final Set<Exercise> runningExercises = exerciseAthenaConfigService.findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate();
         runningExercises.forEach(this::scheduleExerciseForAthenaIfRequired);
         log.info("Scheduled Athena for {} exercises with future due dates.", runningExercises.size());
     }
@@ -86,11 +91,12 @@ public class AthenaScheduleService {
      * @param exercise exercise to schedule Athena for
      */
     public void scheduleExerciseForAthenaIfRequired(Exercise exercise) {
-        var config = exercise.getAthenaConfig();
+        var config = exerciseAthenaConfigService.findByExerciseId(exercise.getId()).orElse(null);
         if (config == null || config.getFeedbackSuggestionModule() == null) {
             cancelScheduledAthena(exercise.getId());
             return;
         }
+        exercise.setAthenaConfig(config);
         // ToDo Needs to be adapted for exam exercises (@Jan Philip Bernius)
         if (exercise.getDueDate() == null || exercise.getDueDate().compareTo(ZonedDateTime.now()) < 0) {
             return;

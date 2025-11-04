@@ -361,7 +361,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise e
                 LEFT JOIN FETCH e.categories
                 LEFT JOIN FETCH e.submissionPolicy
-                LEFT JOIN FETCH e.athenaConfig
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
@@ -573,38 +572,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 OR students.id = :userId
             """)
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(@Param("userId") long userId);
-
-    /**
-     * Finds all exercises filtered by feedback suggestion modules not null and due date.
-     *
-     * @param dueDate - filter by due date
-     * @return Set of Exercises
-     */
-    @Query("""
-            SELECT e
-            FROM Exercise e
-                JOIN FETCH e.athenaConfig cfg
-            WHERE cfg.feedbackSuggestionModule IS NOT NULL
-                AND e.dueDate > :dueDate
-            """)
-    Set<Exercise> findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(@Param("dueDate") ZonedDateTime dueDate);
-
-    @EntityGraph(type = LOAD, attributePaths = { "athenaConfig" })
-    Optional<Exercise> findWithAthenaConfigById(Long exerciseId);
-
-    @NotNull
-    default Exercise findWithAthenaConfigByIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithAthenaConfigById(exerciseId), exerciseId);
-    }
-
-    /**
-     * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
-     *
-     * @return Set of Exercises
-     */
-    default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
-        return findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime.now());
-    }
 
     /**
      * Revokes the access by setting all exercises that currently utilize a restricted feedback suggestion module to null.

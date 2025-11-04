@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 
 /**
  * Service for selecting the "best" submission to assess right now using Athena, e.g. by the highest information gain.
@@ -40,6 +42,8 @@ public class AthenaSubmissionSelectionService {
 
     private final AthenaDTOConverterService athenaDTOConverterService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     // Athena just needs submission IDs => quicker request, because less data is sent
     private record RequestDTO(ExerciseBaseDTO exercise, List<Long> submissionIds) {
@@ -55,10 +59,11 @@ public class AthenaSubmissionSelectionService {
      * Responses should be fast, and it's not too bad if it fails. Therefore, we use a very short timeout for requests.
      */
     public AthenaSubmissionSelectionService(@Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutAthenaRestTemplate,
-            AthenaModuleService athenaModuleService, AthenaDTOConverterService athenaDTOConverterService) {
+            AthenaModuleService athenaModuleService, AthenaDTOConverterService athenaDTOConverterService, ExerciseAthenaConfigService exerciseAthenaConfigService) {
         connector = new AthenaConnector<>(veryShortTimeoutAthenaRestTemplate, ResponseDTO.class);
         this.athenaModuleService = athenaModuleService;
         this.athenaDTOConverterService = athenaDTOConverterService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -71,10 +76,7 @@ public class AthenaSubmissionSelectionService {
      * @throws IllegalArgumentException if exercise isn't automatically assessable
      */
     public Optional<Long> getProposedSubmissionId(Exercise exercise, List<Long> submissionIds) {
-        var config = exercise.getAthenaConfig();
-        if (config == null || config.getFeedbackSuggestionModule() == null) {
-            throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
-        }
+        var config = getFeedbackSuggestionConfig(exercise);
         if (submissionIds.isEmpty()) {
             return Optional.empty();
         }
@@ -102,5 +104,14 @@ public class AthenaSubmissionSelectionService {
         }
 
         return Optional.empty();
+    }
+
+    private ExerciseAthenaConfig getFeedbackSuggestionConfig(Exercise exercise) {
+        var config = exerciseAthenaConfigService.findByExerciseId(exercise.getId()).orElse(null);
+        if (config == null || config.getFeedbackSuggestionModule() == null) {
+            throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
+        }
+        exercise.setAthenaConfig(config);
+        return config;
     }
 }

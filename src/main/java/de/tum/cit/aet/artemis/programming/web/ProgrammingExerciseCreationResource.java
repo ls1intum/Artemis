@@ -109,17 +109,10 @@ public class ProgrammingExerciseCreationResource {
         programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 
         // Check that only allowed athena modules are used
-        if (athenaApi.isPresent()) {
-            var api = athenaApi.get();
+        athenaApi.ifPresent(api -> {
             api.checkHasAccessToAthenaModule(programmingExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME);
             api.checkHasAccessToAthenaModule(programmingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
-        }
-        else {
-            programmingExercise.setAthenaConfig(null);
-        }
-        if (programmingExercise.getAthenaConfig() != null) {
-            programmingExercise.getAthenaConfig().setExercise(programmingExercise);
-        }
+        });
         try {
             // Setup all repositories etc
             ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise);

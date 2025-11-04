@@ -97,6 +97,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         }
 
         TextExercise newTextExercise = exerciseService.saveWithCompetencyLinks(newExercise, textExerciseRepository::save);
+        exerciseService.saveAthenaConfig(newTextExercise, newExercise.getAthenaConfig());
 
         channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));

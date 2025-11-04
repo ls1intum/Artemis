@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -59,6 +60,9 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     @Autowired
     private UserUtilService userUtilService;
 
+    @Autowired
+    private ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     private AthenaSubmissionSendingService athenaSubmissionSendingService;
 
     private TextExercise textExercise;
@@ -72,13 +76,13 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         userUtilService.addUsers(TEST_PREFIX, MAX_NUMBER_OF_TOTAL_PARTICIPATIONS, 0, 0, 0);
 
         athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), submissionRepository, athenaModuleService,
-                athenaDTOConverterService);
+                athenaDTOConverterService, exerciseAthenaConfigService);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_TEXT_TEST, null));
+        exerciseAthenaConfigService.updateAthenaConfig(textExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_TEXT_TEST, null));
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
+        exerciseAthenaConfigService.updateAthenaConfig(programmingExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
     }
 
     @AfterEach
@@ -172,7 +176,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendSubmissionsWithFeedbackSuggestionsDisabledText() {
-        textExercise.setAthenaConfig(null);
+        exerciseAthenaConfigService.updateAthenaConfig(textExercise, null);
         assertThatThrownBy(() -> athenaSubmissionSendingService.sendSubmissions(textExercise)).isInstanceOf(IllegalArgumentException.class);
     }
 }

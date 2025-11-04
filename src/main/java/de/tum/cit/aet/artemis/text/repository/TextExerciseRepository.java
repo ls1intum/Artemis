@@ -46,15 +46,6 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "plagiarismDetectionConfig" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "athenaConfig" })
-    Optional<TextExercise> findWithAthenaConfigById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "athenaConfig" })
-    Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndAthenaConfigById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "plagiarismDetectionConfig", "athenaConfig" })
-    Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndAthenaConfigById(long exerciseId);
-
     @Query("""
             SELECT t
             FROM TextExercise t
@@ -127,6 +118,11 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     }
 
     @NotNull
+    default TextExercise findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId), exerciseId);
+    }
+
+    @NotNull
     default TextExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
         return getValueElseThrow(findWithExampleSubmissionsAndResultsById(exerciseId), exerciseId);
     }
@@ -144,13 +140,4 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @EntityGraph(type = LOAD, attributePaths = { "categories" })
     List<TextExercise> findAllWithCategoriesByCourseId(Long courseId);
 
-    @NotNull
-    default TextExercise findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndAthenaConfigByIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndAthenaConfigById(exerciseId), exerciseId);
-    }
-
-    @NotNull
-    default TextExercise findWithAthenaConfigByIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithAthenaConfigById(exerciseId), exerciseId);
-    }
 }

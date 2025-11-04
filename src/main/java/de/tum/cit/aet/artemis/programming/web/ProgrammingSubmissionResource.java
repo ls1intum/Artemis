@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -96,13 +97,15 @@ public class ProgrammingSubmissionResource {
 
     private final ExerciseDateService exerciseDateService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingTriggerService programmingTriggerService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GradingCriterionRepository gradingCriterionRepository,
             SubmissionRepository submissionRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository,
-            ExerciseDateService exerciseDateService) {
+            ExerciseDateService exerciseDateService, ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
@@ -117,6 +120,7 @@ public class ProgrammingSubmissionResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.userRepository = userRepository;
         this.exerciseDateService = exerciseDateService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -307,7 +311,9 @@ public class ProgrammingSubmissionResource {
         log.debug("REST request to get ProgrammingSubmission with id: {}", submissionId);
         var programmingSubmission = (ProgrammingSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
         final var participation = programmingSubmission.getParticipation();
-        final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAthenaConfigByIdElseThrow(participation.getExercise().getId());
+        final var programmingExercise = programmingExerciseRepository
+                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(participation.getExercise().getId());
+        exerciseAthenaConfigService.loadAthenaConfig(programmingExercise);
         final var numberOfEnabledCorrectionRounds = programmingExercise.getNumberOfCorrectionRounds();
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);
@@ -370,7 +376,9 @@ public class ProgrammingSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
 
-        final ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAthenaConfigByIdElseThrow(exerciseId);
+        final ProgrammingExercise programmingExercise = programmingExerciseRepository
+                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(exerciseId);
+        exerciseAthenaConfigService.loadAthenaConfig(programmingExercise);
 
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         programmingExercise.setGradingCriteria(gradingCriteria);

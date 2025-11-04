@@ -76,11 +76,14 @@ public class ExerciseDeletionService {
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository,
-            ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
+            ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi,
+            ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -95,6 +98,7 @@ public class ExerciseDeletionService {
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsApi = irisSettingsApi;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -135,6 +139,7 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
+        exerciseAthenaConfigService.deleteByExerciseId(exerciseId);
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 

@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -69,10 +70,13 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService, Optional<AthenaFeedbackApi> athenaFeedbackApi,
             SubmissionService submissionService, ResultService resultService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ResultRepository resultRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService1,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingMessagingService programmingMessagingService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.groupNotificationService = groupNotificationService;
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.submissionService = submissionService;
@@ -82,6 +86,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService1;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -98,7 +103,9 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             ProgrammingExercise programmingExercise) {
         if (this.athenaFeedbackApi.isPresent()) {
             this.athenaFeedbackApi.get().checkRateLimitOrThrow(participation);
-            ProgrammingExercise programmingExerciseWithConfig = programmingExerciseRepository.findWithAthenaConfigByIdElseThrow(programmingExercise.getId());
+            ProgrammingExercise programmingExerciseWithConfig = programmingExerciseRepository
+                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(programmingExercise.getId());
+            exerciseAthenaConfigService.loadAthenaConfig(programmingExerciseWithConfig);
             CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, programmingExerciseWithConfig));
             return participation;
         }

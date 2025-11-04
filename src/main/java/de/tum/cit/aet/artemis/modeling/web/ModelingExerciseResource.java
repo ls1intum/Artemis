@@ -55,8 +55,10 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
@@ -98,6 +100,8 @@ public class ModelingExerciseResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     private final ExerciseDeletionService exerciseDeletionService;
 
     private final ModelingExerciseImportService modelingExerciseImportService;
@@ -121,9 +125,9 @@ public class ModelingExerciseResource {
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
-            SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
-            GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AthenaApi> athenaApi) {
+            SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, ExerciseAthenaConfigService exerciseAthenaConfigService,
+            GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository, ChannelService channelService,
+            ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AthenaApi> athenaApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -136,6 +140,7 @@ public class ModelingExerciseResource {
         this.authCheckService = authCheckService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.exerciseService = exerciseService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -175,20 +180,15 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         // Check that only allowed athena modules are used
-        if (athenaApi.isPresent()) {
-            var api = athenaApi.get();
+        athenaApi.ifPresent(api -> {
             api.checkHasAccessToAthenaModule(modelingExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME);
             api.checkHasAccessToAthenaModule(modelingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
-        }
-        else {
-            modelingExercise.setAthenaConfig(null);
-        }
+        });
 
-        if (modelingExercise.getAthenaConfig() != null) {
-            modelingExercise.getAthenaConfig().setExercise(modelingExercise);
-        }
-
+        ExerciseAthenaConfig athenaConfig = modelingExercise.getAthenaConfig();
         ModelingExercise result = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
+        exerciseService.saveAthenaConfig(result, athenaConfig);
+        exerciseAthenaConfigService.loadAthenaConfig(result);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
@@ -239,8 +239,8 @@ public class ModelingExerciseResource {
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
-        final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository
-                .findWithEagerExampleSubmissionsAndCompetenciesAndAthenaConfigByIdElseThrow(modelingExercise.getId());
+        final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(modelingExercise.getId());
+        exerciseAthenaConfigService.loadAthenaConfig(modelingExerciseBeforeUpdate);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExerciseBeforeUpdate, user);
 
         // Forbid changing the course the exercise belongs to.
@@ -253,24 +253,22 @@ public class ModelingExerciseResource {
 
         // Check that only allowed athena modules are used
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(modelingExerciseBeforeUpdate);
-        if (athenaApi.isPresent()) {
-            var api = athenaApi.get();
+        athenaApi.ifPresent(api -> {
             api.checkHasAccessToAthenaModule(modelingExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME);
             api.checkHasAccessToAthenaModule(modelingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
-        }
-        else {
-            modelingExercise.setAthenaConfig((modelingExerciseBeforeUpdate.getAthenaConfig()));
+        });
+        if (modelingExercise.getAthenaConfig() == null) {
+            modelingExercise.setAthenaConfig(modelingExerciseBeforeUpdate.getAthenaConfig());
         }
         // Changing Athena module after the due date has passed is not allowed
         athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(modelingExerciseBeforeUpdate, modelingExercise, ENTITY_NAME));
 
         channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
 
-        if (modelingExercise.getAthenaConfig() != null) {
-            modelingExercise.getAthenaConfig().setExercise(modelingExercise);
-        }
-
+        ExerciseAthenaConfig athenaConfig = modelingExercise.getAthenaConfig();
         ModelingExercise updatedModelingExercise = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
+        exerciseService.saveAthenaConfig(updatedModelingExercise, athenaConfig);
+        exerciseAthenaConfigService.loadAthenaConfig(updatedModelingExercise);
 
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
@@ -308,10 +306,11 @@ public class ModelingExerciseResource {
     }
 
     private ModelingExercise findModelingExercise(Long exerciseId, boolean includeAthenaConfig) {
+        var exercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
         if (includeAthenaConfig) {
-            return modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesAndAthenaConfigByIdElseThrow(exerciseId);
+            exerciseAthenaConfigService.loadAthenaConfig(exercise);
         }
-        return modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
+        return exercise;
     }
 
     /**
@@ -419,10 +418,6 @@ public class ModelingExerciseResource {
         }
         else {
             importedExercise.setAthenaConfig(null);
-        }
-
-        if (importedExercise.getAthenaConfig() != null) {
-            importedExercise.getAthenaConfig().setExercise(importedExercise);
         }
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);

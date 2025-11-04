@@ -49,8 +49,11 @@ import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
@@ -92,6 +95,8 @@ public class AthenaResource {
 
     private final AthenaModuleService athenaModuleService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     private final byte[] athenaSecretHash;
 
     /**
@@ -101,7 +106,7 @@ public class AthenaResource {
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
             AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService, AthenaModuleService athenaModuleService,
-            @Value("${artemis.athena.secret}") String athenaSecret) {
+            ExerciseAthenaConfigService exerciseAthenaConfigService, @Value("${artemis.athena.secret}") String athenaSecret) {
         this.courseRepository = courseRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
@@ -113,6 +118,7 @@ public class AthenaResource {
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.athenaRepositoryExportService = athenaRepositoryExportService;
         this.athenaModuleService = athenaModuleService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
         this.athenaSecretHash = hashSha256(athenaSecret);
     }
 
@@ -132,6 +138,7 @@ public class AthenaResource {
         log.debug("REST call to get feedback suggestions for exercise {}, submission {}", exerciseId, submissionId);
 
         final var exercise = exerciseFetcher.apply(exerciseId);
+        exerciseAthenaConfigService.loadAthenaConfig(exercise);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         // Check if feedback suggestions are actually enabled
@@ -193,8 +200,8 @@ public class AthenaResource {
     @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findWithAthenaConfigByIdElseThrow,
-                programmingSubmissionRepository::findByIdElseThrow, athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
+        return getFeedbackSuggestions(exerciseId, submissionId, this::findProgrammingExerciseWithAthenaConfig, programmingSubmissionRepository::findByIdElseThrow,
+                athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
     }
 
     /**
@@ -207,8 +214,21 @@ public class AthenaResource {
     @GetMapping("modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ModelingFeedbackDTO>> getModelingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        return getFeedbackSuggestions(exerciseId, submissionId, modelingExerciseRepository::findWithAthenaConfigByIdElseThrow, modelingSubmissionRepository::findByIdElseThrow,
+        return getFeedbackSuggestions(exerciseId, submissionId, this::findModelingExerciseWithAthenaConfig, modelingSubmissionRepository::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getModelingFeedbackSuggestions);
+    }
+
+    private ProgrammingExercise findProgrammingExerciseWithAthenaConfig(long exerciseId) {
+        var programmingExercise = programmingExerciseRepository
+                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(exerciseId);
+        exerciseAthenaConfigService.loadAthenaConfig(programmingExercise);
+        return programmingExercise;
+    }
+
+    private ModelingExercise findModelingExerciseWithAthenaConfig(long exerciseId) {
+        var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
+        exerciseAthenaConfigService.loadAthenaConfig(modelingExercise);
+        return modelingExercise;
     }
 
     /**

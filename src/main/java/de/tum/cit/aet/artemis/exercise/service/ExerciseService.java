@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamLiveEventsApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -103,6 +104,8 @@ public class ExerciseService {
     private final AuditEventRepository auditEventRepository;
 
     private final ExerciseRepository exerciseRepository;
+
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
 
     private final ParticipantScoreRepository participantScoreRepository;
 
@@ -142,16 +145,17 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
-            TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
-            UserRepository userRepository, ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService,
-            ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
-            RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
-            Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService) {
+    public ExerciseService(ExerciseRepository exerciseRepository, ExerciseAthenaConfigService exerciseAthenaConfigService, AuthorizationCheckService authCheckService,
+            AuditEventRepository auditEventRepository, TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
+            ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi, UserRepository userRepository, ComplaintRepository complaintRepository,
+            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
+            FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository,
+            QuizBatchService quizBatchService, Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService,
+            Optional<CompetencyRelationApi> competencyRelationApi, ParticipationFilterService participationFilterService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
         this.authCheckService = authCheckService;
         this.auditEventRepository = auditEventRepository;
         this.submissionRepository = submissionRepository;
@@ -506,6 +510,7 @@ public class ExerciseService {
     public Exercise findOneWithDetailsForStudents(Long exerciseId, User user) {
         var exercise = exerciseRepository.findByIdWithDetailsForStudent(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
         setAssignedTeamIdForExerciseAndUser(exercise, user);
+        exerciseAthenaConfigService.loadAthenaConfig(exercise);
         return exercise;
     }
 
@@ -797,6 +802,10 @@ public class ExerciseService {
         }
 
         return savedExercise;
+    }
+
+    public void saveAthenaConfig(Exercise exercise, ExerciseAthenaConfig athenaConfig) {
+        exerciseAthenaConfigService.updateAthenaConfig(exercise, athenaConfig);
     }
 
     /**

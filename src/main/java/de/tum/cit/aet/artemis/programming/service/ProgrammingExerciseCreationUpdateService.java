@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -158,7 +159,9 @@ public class ProgrammingExerciseCreationUpdateService {
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         programmingExercise.setBuildConfig(savedBuildConfig);
 
+        ExerciseAthenaConfig athenaConfig = programmingExercise.getAthenaConfig();
         var savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(programmingExercise, programmingExerciseRepository::saveForCreation);
+        exerciseService.saveAthenaConfig(savedProgrammingExercise, athenaConfig);
 
         savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
@@ -271,7 +274,9 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
 
+        ExerciseAthenaConfig athenaConfig = updatedProgrammingExercise.getAthenaConfig();
         ProgrammingExercise savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(updatedProgrammingExercise, programmingExerciseRepository::save);
+        exerciseService.saveAthenaConfig(savedProgrammingExercise, athenaConfig);
 
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);

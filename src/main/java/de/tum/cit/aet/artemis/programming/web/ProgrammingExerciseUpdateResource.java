@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -66,6 +67,8 @@ public class ProgrammingExerciseUpdateResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
     private final ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
@@ -83,9 +86,10 @@ public class ProgrammingExerciseUpdateResource {
     private final UserRepository userRepository;
 
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
-            ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, Environment environment, Optional<SlideApi> slideApi) {
+            CourseService courseService, ExerciseService exerciseService, ExerciseAthenaConfigService exerciseAthenaConfigService,
+            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi,
+            Environment environment, Optional<SlideApi> slideApi) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -93,6 +97,7 @@ public class ProgrammingExerciseUpdateResource {
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.athenaApi = athenaApi;
@@ -132,6 +137,7 @@ public class ProgrammingExerciseUpdateResource {
         programmingExerciseValidationService.checkProgrammingExerciseForError(updatedProgrammingExercise);
 
         var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updatedProgrammingExercise.getId());
+        exerciseAthenaConfigService.loadAthenaConfig(programmingExerciseBeforeUpdate);
         if (!Objects.equals(programmingExerciseBeforeUpdate.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
@@ -185,10 +191,6 @@ public class ProgrammingExerciseUpdateResource {
         // Changing Athena module after the due date has passed is not allowed
         athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 
-        if (updatedProgrammingExercise.getAthenaConfig() != null) {
-            updatedProgrammingExercise.getAthenaConfig().setExercise(updatedProgrammingExercise);
-        }
-
         // Ignore changes to the default branch
         updatedProgrammingExercise.getBuildConfig().setBranch(programmingExerciseBeforeUpdate.getBuildConfig().getBranch());
 
@@ -211,6 +213,7 @@ public class ProgrammingExerciseUpdateResource {
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(programmingExerciseBeforeUpdate,
                 updatedProgrammingExercise, notificationText);
+        exerciseAthenaConfigService.loadAthenaConfig(savedProgrammingExercise);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);

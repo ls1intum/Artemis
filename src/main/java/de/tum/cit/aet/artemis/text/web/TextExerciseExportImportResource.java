@@ -128,10 +128,6 @@ public class TextExerciseExportImportResource {
             importedExercise.setAthenaConfig(null);
         }
 
-        if (importedExercise.getAthenaConfig() != null) {
-            importedExercise.getAthenaConfig().setExercise(importedExercise);
-        }
-
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         textExerciseRepository.save(newTextExercise);
 

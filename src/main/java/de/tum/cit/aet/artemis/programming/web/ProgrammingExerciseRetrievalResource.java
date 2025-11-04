@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -72,6 +73,8 @@ public class ProgrammingExerciseRetrievalResource {
 
     private final ExerciseService exerciseService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     private final RepositoryCheckoutService repositoryCheckoutService;
@@ -97,8 +100,8 @@ public class ProgrammingExerciseRetrievalResource {
     public ProgrammingExerciseRetrievalResource(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseRepository programmingExerciseRepository,
             CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService,
-            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            GradingCriterionRepository gradingCriterionRepository, ChannelRepository channelRepository,
+            ExerciseAthenaConfigService exerciseAthenaConfigService, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, GradingCriterionRepository gradingCriterionRepository, ChannelRepository channelRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, RepositoryCheckoutService repositoryCheckoutService) {
         this.programmingExerciseService = programmingExerciseService;
@@ -108,6 +111,7 @@ public class ProgrammingExerciseRetrievalResource {
         this.userRepository = userRepository;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseService = exerciseService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.gradingCriterionRepository = gradingCriterionRepository;
@@ -139,24 +143,22 @@ public class ProgrammingExerciseRetrievalResource {
     }
 
     private ProgrammingExercise findProgrammingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig, boolean includeAthenaConfig) {
-        if (includePlagiarismDetectionConfig && includeAthenaConfig) {
-            var programmingExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigAndAthenaConfigElseThrow(
-                            exerciseId);
-            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, programmingExerciseRepository);
-            return programmingExercise;
-        }
+        ProgrammingExercise programmingExercise;
         if (includePlagiarismDetectionConfig) {
-            var programmingExercise = programmingExerciseRepository
+            programmingExercise = programmingExerciseRepository
                     .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(exerciseId);
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(programmingExercise, programmingExerciseRepository);
-            return programmingExercise;
         }
+        else {
+            programmingExercise = programmingExerciseRepository
+                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(exerciseId);
+        }
+
         if (includeAthenaConfig) {
-            return programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigAndAthenaConfigElseThrow(exerciseId);
+            exerciseAthenaConfigService.loadAthenaConfig(programmingExercise);
         }
-        return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigElseThrow(exerciseId);
+
+        return programmingExercise;
     }
 
     /**

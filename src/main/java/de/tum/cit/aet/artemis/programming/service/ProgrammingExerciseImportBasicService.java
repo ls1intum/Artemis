@@ -168,6 +168,7 @@ public class ProgrammingExerciseImportBasicService {
         }
 
         final ProgrammingExercise importedExercise = exerciseService.saveWithCompetencyLinks(newProgrammingExercise, programmingExerciseRepository::save);
+        exerciseService.saveAthenaConfig(importedExercise, newProgrammingExercise.getAthenaConfig());
 
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
         importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);

@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
@@ -58,9 +59,11 @@ public class TextExerciseFeedbackService {
 
     private final TextExerciseRepository textExerciseRepository;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public TextExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, SubmissionService submissionService, ResultService resultService,
             ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextBlockService textBlockService,
-            TextExerciseRepository textExerciseRepository) {
+            TextExerciseRepository textExerciseRepository, ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.submissionService = submissionService;
         this.resultService = resultService;
@@ -69,6 +72,7 @@ public class TextExerciseFeedbackService {
         this.participationService = participationService;
         this.textBlockService = textBlockService;
         this.textExerciseRepository = textExerciseRepository;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -96,7 +100,8 @@ public class TextExerciseFeedbackService {
                 throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);
             }
 
-            TextExercise textExerciseWithConfig = textExerciseRepository.findWithAthenaConfigByIdElseThrow(textExercise.getId());
+            TextExercise textExerciseWithConfig = textExerciseRepository.findByIdElseThrow(textExercise.getId());
+            exerciseAthenaConfigService.loadAthenaConfig(textExerciseWithConfig);
             CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExerciseWithConfig));
         }
         return participation;

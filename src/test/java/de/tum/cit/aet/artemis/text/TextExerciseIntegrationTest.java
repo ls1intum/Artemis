@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
@@ -142,6 +143,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private ConversationUtilService conversationUtilService;
 
+    @Autowired
+    private ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     private Course course;
 
     private TextExercise textExercise;
@@ -195,6 +199,17 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getTextExerciseIncludesAthenaConfigWhenRequested() throws Exception {
+        exerciseAthenaConfigService.updateAthenaConfig(textExercise, ExerciseAthenaConfig.of(ATHENA_RESTRICTED_MODULE_TEXT_TEST, null));
+
+        TextExercise loadedExercise = request.get("/api/text/text-exercises/" + textExercise.getId() + "?withAthenaConfig=true", HttpStatus.OK, TextExercise.class);
+
+        assertThat(loadedExercise.getAthenaConfig()).isNotNull();
+        assertThat(loadedExercise.getAthenaConfig().getFeedbackSuggestionModule()).isEqualTo(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
     }
 
     @Test

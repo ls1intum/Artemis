@@ -19,6 +19,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -50,14 +52,17 @@ public class AthenaRepositoryExportService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public AthenaRepositoryExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseExportService programmingExerciseExportService,
             FileService fileService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.fileService = fileService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -66,8 +71,7 @@ public class AthenaRepositoryExportService {
      * @param exercise the exercise to check
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
-    private void checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(Exercise exercise) {
-        var config = exercise.getAthenaConfig();
+    private void checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(Exercise exercise, ExerciseAthenaConfig config) {
         var feedbackSuggestionModule = config != null ? config.getFeedbackSuggestionModule() : null;
         var preliminaryFeedbackModule = config != null ? config.getPreliminaryFeedbackModule() : null;
         if (feedbackSuggestionModule == null && preliminaryFeedbackModule == null) {
@@ -90,8 +94,10 @@ public class AthenaRepositoryExportService {
     public Path exportRepository(long exerciseId, Long submissionId, RepositoryType repositoryType) throws IOException {
         log.debug("Exporting repository for exercise {}, submission {}", exerciseId, submissionId);
 
-        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAthenaConfigByIdElseThrow(exerciseId);
-        checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(exerciseId);
+        var config = exerciseAthenaConfigService.findByExerciseId(exerciseId).orElse(null);
+        programmingExercise.setAthenaConfig(config);
+        checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise, config);
 
         // Athena currently does not support individual due dates
         var exportOptions = new RepositoryExportOptionsDTO(false, true, false, programmingExercise.getDueDate(), false, false, false, true, false);

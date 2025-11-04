@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -103,11 +104,14 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
             TextSubmissionService textSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
-            FeedbackRepository feedbackRepository, ResultService resultService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
+            FeedbackRepository feedbackRepository, ResultService resultService, Optional<AthenaFeedbackApi> athenaFeedbackApi,
+            ExerciseAthenaConfigService exerciseAthenaConfigService) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
 
         this.textAssessmentService = textAssessmentService;
@@ -120,6 +124,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
         this.athenaFeedbackApi = athenaFeedbackApi;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -400,7 +405,8 @@ public class TextAssessmentResource extends AssessmentResource {
         // prepare and load in all feedbacks
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, result);
 
-        exercise = exerciseRepository.findWithAthenaConfigByIdElseThrow(exercise.getId());
+        exercise = exerciseRepository.findByIdElseThrow(exercise.getId());
+        exerciseAthenaConfigService.loadAthenaConfig(exercise);
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         exercise.setGradingCriteria(gradingCriteria);
         participation.setExercise(exercise);

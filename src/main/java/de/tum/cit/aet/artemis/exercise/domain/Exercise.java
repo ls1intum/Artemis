@@ -174,9 +174,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnoreProperties("exercise")
     private PlagiarismDetectionConfig plagiarismDetectionConfig;
 
-    @OneToOne(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Transient
     @JsonIgnoreProperties("exercise")
-    private ExerciseAthenaConfig athenaConfig;
+    private ExerciseAthenaConfig athenaConfigTransient;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -670,23 +670,15 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public ExerciseAthenaConfig getAthenaConfig() {
-        return athenaConfig;
+        return athenaConfigTransient;
     }
 
     public void setAthenaConfig(ExerciseAthenaConfig athenaConfig) {
-        if (this.athenaConfig != null && this.athenaConfig != athenaConfig) {
-            this.athenaConfig.setExercise(null);
-        }
-
         if (athenaConfig == null || athenaConfig.isEmpty()) {
-            this.athenaConfig = null;
+            this.athenaConfigTransient = null;
             return;
         }
-
-        this.athenaConfig = athenaConfig;
-        if (athenaConfig.getExercise() != this) {
-            athenaConfig.setExercise(this);
-        }
+        this.athenaConfigTransient = athenaConfig;
     }
 
     public Set<GradingCriterion> getGradingCriteria() {

@@ -41,12 +41,11 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
      * @param submissionId the id of the modeling submission that should be loaded from the database
      * @return the modeling submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "results.assessmentNote", "participation.submissions.results", "participation.exercise",
-            "participation.exercise.athenaConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "results.assessmentNote", "participation.submissions.results", "participation.exercise" })
     Optional<ModelingSubmission> findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(Long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "participation.exercise", "participation.exercise.athenaConfig" })
-    Optional<ModelingSubmission> findWithParticipationExerciseAndAthenaConfigById(Long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "participation.exercise" })
+    Optional<ModelingSubmission> findWithParticipationExerciseById(Long submissionId);
 
     @Query("""
             SELECT DISTINCT submission
@@ -81,7 +80,7 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
         return getValueElseThrow(findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(submissionId), submissionId);
     }
 
-    default ModelingSubmission findByIdWithExerciseAthenaConfigElseThrow(Long submissionId) {
-        return getValueElseThrow(findWithParticipationExerciseAndAthenaConfigById(submissionId), submissionId);
+    default ModelingSubmission findByIdWithParticipationExerciseElseThrow(Long submissionId) {
+        return getValueElseThrow(findWithParticipationExerciseById(submissionId), submissionId);
     }
 }

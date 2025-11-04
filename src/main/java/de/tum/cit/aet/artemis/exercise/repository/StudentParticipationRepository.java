@@ -772,7 +772,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.exercise exercise
-                LEFT JOIN FETCH exercise.athenaConfig
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results sr
                 LEFT JOIN FETCH sr.feedbacks

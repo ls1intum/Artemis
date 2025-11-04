@@ -29,11 +29,11 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -54,18 +54,18 @@ public class ModelingExerciseFeedbackService {
 
     private final ResultRepository resultRepository;
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
 
     public ModelingExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, SubmissionService submissionService, ResultService resultService,
             ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService,
-            ModelingExerciseRepository modelingExerciseRepository) {
+            ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.resultRepository = resultRepository;
         this.resultWebsocketService = resultWebsocketService;
         this.participationService = participationService;
-        this.modelingExerciseRepository = modelingExerciseRepository;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -96,8 +96,8 @@ public class ModelingExerciseFeedbackService {
                 throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);
             }
 
-            ModelingExercise modelingExerciseWithConfig = modelingExerciseRepository.findWithAthenaConfigByIdElseThrow(modelingExercise.getId());
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExerciseWithConfig));
+            exerciseAthenaConfigService.loadAthenaConfig(modelingExercise);
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise));
         }
         return participation;
     }

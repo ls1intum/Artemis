@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -85,10 +86,12 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final Optional<ExamSubmissionApi> examSubmissionApi;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, Optional<ExamSubmissionApi> examSubmissionApi, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, Optional<ExamAccessApi> examAccessApi) {
+            ModelingSubmissionRepository modelingSubmissionRepository, Optional<ExamAccessApi> examAccessApi, ExerciseAthenaConfigService exerciseAthenaConfigService) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -96,6 +99,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         this.examSubmissionApi = examSubmissionApi;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.examAccessApi = examAccessApi;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -201,9 +205,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
 
-        var modelingSubmission = modelingSubmissionRepository.findByIdWithExerciseAthenaConfigElseThrow(submissionId);
+        var modelingSubmission = modelingSubmissionRepository.findByIdWithParticipationExerciseElseThrow(submissionId);
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
+        exerciseAthenaConfigService.loadAthenaConfig(modelingExercise);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -275,7 +280,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
 
         log.debug("REST request to get a modeling submission without assessment");
-        final var exercise = modelingExerciseRepository.findWithAthenaConfigByIdElseThrow(exerciseId);
+        final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        exerciseAthenaConfigService.loadAthenaConfig(exercise);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
@@ -375,11 +381,15 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("participations/{participationId}/latest-modeling-submission")
     @EnforceAtLeastStudent
-    public ResponseEntity<ModelingSubmission> getLatestModelingSubmission(@PathVariable long participationId) {
+    public ResponseEntity<ModelingSubmission> getLatestModelingSubmission(@PathVariable long participationId,
+            @RequestParam(value = "withAthenaConfig", defaultValue = "false") boolean withAthenaConfig) {
         log.debug("REST request to get latest modeling submission for participation: {}", participationId);
         var validationResult = validateParticipation(participationId);
         var studentParticipation = validationResult.studentParticipation;
         var exercise = validationResult.modelingExercise;
+        if (withAthenaConfig) {
+            exerciseAthenaConfigService.loadAthenaConfig(exercise);
+        }
 
         Optional<Submission> optionalLatestSubmission = studentParticipation.findLatestSubmission();
         ModelingSubmission modelingSubmission;

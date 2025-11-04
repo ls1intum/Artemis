@@ -265,10 +265,6 @@ public class ProgrammingExerciseExportImportResource {
             newExercise.setAthenaConfig(null);
         }
 
-        if (newExercise.getAthenaConfig() != null) {
-            newExercise.getAthenaConfig().setExercise(newExercise);
-        }
-
         try {
             ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate,
                     recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);

@@ -71,18 +71,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(
             long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "auxiliaryRepositories", "submissionPolicy", "athenaConfig", "buildConfig" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigAndAthenaConfigById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "athenaConfig" })
-    Optional<ProgrammingExercise> findWithAthenaConfigById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "auxiliaryRepositories", "submissionPolicy", "plagiarismDetectionConfig", "athenaConfig", "buildConfig" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigAndAthenaConfigById(
-            long exerciseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(long exerciseId);
 
@@ -91,9 +79,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "athenaConfig" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAthenaConfigById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndBuildConfigById(long exerciseId);
@@ -108,7 +93,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencyLinks.competency", "buildConfig", "categories", "athenaConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencyLinks.competency", "buildConfig", "categories" })
     Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
@@ -696,37 +681,11 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigAndAthenaConfigElseThrow(
-            long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigAndAthenaConfigById(
-                programmingExerciseId);
-        return getValueElseThrow(programmingExercise, programmingExerciseId);
-    }
-
-    @NotNull
-    default ProgrammingExercise findWithAthenaConfigByIdElseThrow(long programmingExerciseId) {
-        // Athena requests often need access to instructor repositories. Ensure those participations are eagerly loaded.
-        return getValueElseThrow(findWithTemplateAndSolutionParticipationAndAthenaConfigById(programmingExerciseId), programmingExerciseId);
-    }
-
-    @NotNull
-    default ProgrammingExercise findWithTemplateAndSolutionParticipationAndAthenaConfigByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithTemplateAndSolutionParticipationAndAthenaConfigById(programmingExerciseId), programmingExerciseId);
-    }
-
-    @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(
             long programmingExerciseId) throws EntityNotFoundException {
         return getValueElseThrow(
                 findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(programmingExerciseId),
                 programmingExerciseId);
-    }
-
-    @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigAndAthenaConfigElseThrow(
-            long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigAndAthenaConfigById(
-                programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -938,7 +897,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         // @formatter:off
         Categories(Exercise_.CATEGORIES),
         TeamAssignmentConfig(Exercise_.TEAM_ASSIGNMENT_CONFIG),
-        AthenaConfig(Exercise_.ATHENA_CONFIG),
         AuxiliaryRepositories(ProgrammingExercise_.AUXILIARY_REPOSITORIES),
         GradingCriteria(Exercise_.GRADING_CRITERIA),
         StudentParticipations(ProgrammingExercise_.STUDENT_PARTICIPATIONS),

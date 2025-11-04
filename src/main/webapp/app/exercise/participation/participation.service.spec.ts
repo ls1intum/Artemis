@@ -176,6 +176,7 @@ describe('Participation Service', () => {
         exercise.id = 1;
         exercise.categories = undefined;
         exercise.exampleSolutionPublicationDate = undefined;
+        exercise.athenaConfig = null;
 
         const returnedFromService = {
             ...participationDefault,

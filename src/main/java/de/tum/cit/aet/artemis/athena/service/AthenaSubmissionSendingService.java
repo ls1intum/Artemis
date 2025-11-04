@@ -24,8 +24,10 @@ import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 
 /**
  * Service for sending submissions to the Athena service for further processing
@@ -48,15 +50,18 @@ public class AthenaSubmissionSendingService {
 
     private final AthenaDTOConverterService athenaDTOConverterService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     /**
      * Creates a new AthenaSubmissionSendingService.
      */
     public AthenaSubmissionSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, SubmissionRepository submissionRepository,
-            AthenaModuleService athenaModuleService, AthenaDTOConverterService athenaDTOConverterService) {
+            AthenaModuleService athenaModuleService, AthenaDTOConverterService athenaDTOConverterService, ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.submissionRepository = submissionRepository;
         connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
         this.athenaModuleService = athenaModuleService;
         this.athenaDTOConverterService = athenaDTOConverterService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -83,10 +88,7 @@ public class AthenaSubmissionSendingService {
      * @param maxRetries number of retries before the request will be canceled
      */
     public void sendSubmissions(Exercise exercise, int maxRetries) {
-        var config = exercise.getAthenaConfig();
-        if (config == null || config.getFeedbackSuggestionModule() == null) {
-            throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
-        }
+        var config = getFeedbackSuggestionConfig(exercise);
 
         log.debug("Start Athena Submission Sending Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
@@ -111,11 +113,17 @@ public class AthenaSubmissionSendingService {
      * @param maxRetries  number of retries before the request will be canceled
      */
     public void sendSubmissions(Exercise exercise, Set<Submission> submissions, int maxRetries) {
-        var config = exercise.getAthenaConfig();
+        var config = getFeedbackSuggestionConfig(exercise);
+        sendSubmissions(exercise, submissions, maxRetries, config.getFeedbackSuggestionModule());
+    }
+
+    private ExerciseAthenaConfig getFeedbackSuggestionConfig(Exercise exercise) {
+        var config = exerciseAthenaConfigService.findByExerciseId(exercise.getId()).orElse(null);
         if (config == null || config.getFeedbackSuggestionModule() == null) {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }
-        sendSubmissions(exercise, submissions, maxRetries, config.getFeedbackSuggestionModule());
+        exercise.setAthenaConfig(config);
+        return config;
     }
 
     private void sendSubmissions(Exercise exercise, Set<Submission> submissions, int maxRetries, String feedbackSuggestionModule) {

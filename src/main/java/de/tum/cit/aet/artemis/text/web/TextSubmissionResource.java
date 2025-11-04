@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismAccessApi;
@@ -86,10 +87,13 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final ExerciseDateService exerciseDateService;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
-            Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService) {
+            Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService,
+            ExerciseAthenaConfigService exerciseAthenaConfigService) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -102,6 +106,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.examSubmissionApi = examSubmissionApi;
         this.plagiarismAccessApi = plagiarismAccessApi;
         this.exerciseDateService = exerciseDateService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -226,7 +231,8 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = exerciseRepository.findWithAthenaConfigByIdElseThrow(exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        exerciseAthenaConfigService.loadAthenaConfig(exercise);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         if (!(exercise instanceof TextExercise)) {
             throw new BadRequestAlertException("The exerciseId does not belong to a text exercise", ENTITY_NAME, "wrongExerciseType");

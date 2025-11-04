@@ -11,8 +11,9 @@ export class TextEditorService {
     private http = inject(HttpClient);
 
     get(participationId: number): Observable<StudentParticipation> {
+        const params = { withAthenaConfig: 'true' };
         return this.http
-            .get(`api/text/text-editor/${participationId}`, { responseType: 'json' })
+            .get(`api/text/text-editor/${participationId}`, { responseType: 'json', params })
             .pipe(tap((participation: StudentParticipation) => ExerciseService.convertExerciseDatesFromServer(participation.exercise)));
     }
 

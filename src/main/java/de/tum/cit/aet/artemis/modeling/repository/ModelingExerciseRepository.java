@@ -42,13 +42,6 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             "exampleSubmissions.submission.results" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencyLinks.competency", "exampleSubmissions.submission.results",
-            "athenaConfig" })
-    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndAthenaConfigById(Long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "athenaConfig" })
-    Optional<ModelingExercise> findWithAthenaConfigById(long exerciseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })
     Optional<ModelingExercise> findWithEagerCompetenciesById(Long exerciseId);
 
@@ -131,16 +124,6 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @NotNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId), exerciseId);
-    }
-
-    @NotNull
-    default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesAndAthenaConfigByIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesAndAthenaConfigById(exerciseId), exerciseId);
-    }
-
-    @NotNull
-    default ModelingExercise findWithAthenaConfigByIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithAthenaConfigById(exerciseId), exerciseId);
     }
 
     @NotNull

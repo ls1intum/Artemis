@@ -299,7 +299,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
         this.isSaving = true;
-
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.modelingExercise, this.isExamMode, this.notificationText)
             .subscribe({
