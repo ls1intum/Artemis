@@ -148,6 +148,8 @@ export function formatConsistencyCheckResults(issue: InlineConsistencyIssue): st
     md += `**[${severityToString(issue.severity)}] ${category} ${linePart}**\n\n`;
     md += `${issue.description}\n\n`;
     if (issue.suggestedFix) {
+        // Does not need to be localized, as the LLM output is english. Only and it
+        // is planed to store the content on the server in the future.
         md += `**Suggested fix:** ${issue.suggestedFix}\n\n`;
     }
 
@@ -162,6 +164,8 @@ export function formatConsistencyCheckResults(issue: InlineConsistencyIssue): st
  * @returns Human-friendly title string.
  */
 export function humanizeCategory(category: string): string {
+    // Does not need to be localized, as the LLM output is english. Only and it
+    // is planed to store the content on the server in the future.
     return category
         .split('_')
         .filter((p) => p.length > 0)
@@ -175,6 +179,8 @@ export function humanizeCategory(category: string): string {
  * @returns Display label for severity.
  */
 export function severityToString(severity: ConsistencyIssue.SeverityEnum) {
+    // Does not need to be localized, as the LLM output is english. Only and it
+    // is planed to store the content on the server in the future.
     switch (severity) {
         case ConsistencyIssue.SeverityEnum.High:
             return 'HIGH';
@@ -193,6 +199,8 @@ export function severityToString(severity: ConsistencyIssue.SeverityEnum) {
  * @returns Display label for artifact domain.
  */
 export function formatArtifactType(type: ArtifactLocation.TypeEnum): string {
+    // Does not need to be localized, as the LLM output is english. Only and it
+    // is planed to store the content on the server in the future.
     switch (type) {
         case ArtifactLocation.TypeEnum.ProblemStatement:
             return 'Problem Statement';
