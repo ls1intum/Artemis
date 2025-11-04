@@ -28,7 +28,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -36,9 +35,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -51,7 +48,6 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -82,17 +78,11 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestionStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
-import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
-import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     private static final String TEST_PREFIX = "quizexerciseintegration";
 
@@ -124,13 +114,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private final PointCounter pc60 = pc(6, 0);
 
     @Autowired
-    private QuizExerciseService quizExerciseService;
-
-    @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
-
-    @Autowired
-    private QuizExerciseTestRepository quizExerciseTestRepository;
 
     @Autowired
     private QuizSubmissionTestRepository quizSubmissionTestRepository;
@@ -152,12 +136,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private ChannelRepository channelRepository;
-
-    @Autowired
-    private ExamUtilService examUtilService;
-
-    @Autowired
-    private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
@@ -231,12 +209,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         checkCreatedFiles(quizExercise);
     }
 
-    private Course createEmptyCourse() {
-        final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
-        final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
-        return quizExerciseUtilService.createAndSaveCourse(1L, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, Set.of());
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizExerciseForExamBadRequestOtherOperations() throws Exception {
@@ -245,102 +217,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, BAD_REQUEST);
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.BAD_REQUEST);
         request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-    }
-
-    private QuizExercise importQuizExerciseWithFiles(QuizExercise quizExercise, Long id, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz/quiz-exercises/import/" + id);
-        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
-                .contentType(MediaType.MULTIPART_FORM_DATA);
-        for (MockMultipartFile file : files) {
-            builder.file(file);
-        }
-        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
-        request.restoreSecurityContext();
-        if (expectedStatus == HttpStatus.CREATED) {
-            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
-        }
-        return null;
-    }
-
-    private QuizExercise reevalQuizExerciseWithFiles(QuizExercise quizExercise, Long id, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/quiz/quiz-exercises/" + id + "/re-evaluate");
-        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
-                .contentType(MediaType.MULTIPART_FORM_DATA);
-        for (MockMultipartFile file : files) {
-            builder.file(file);
-        }
-        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
-        request.restoreSecurityContext();
-        if (expectedStatus == OK) {
-            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
-        }
-        return null;
-    }
-
-    /**
-     * Sends a create request for a quiz exercise. It automatically adds the files to the request and modifies the exercise to be sent.
-     *
-     * @param quizExercise       the quiz exercise to be sent
-     * @param expectedStatus     the expected status of the request
-     * @param addBackgroundImage whether to add a background image to the quiz exercise
-     * @return the created quiz exercise or null if the request failed
-     */
-    private QuizExercise createQuizExerciseWithFiles(QuizExercise quizExercise, HttpStatus expectedStatus, boolean addBackgroundImage) throws Exception {
-        String url;
-        if (quizExercise.isExamExercise()) {
-            url = "/api/quiz/exercise-groups/" + quizExercise.getExerciseGroup().getId() + "/quiz-exercises";
-        }
-        else {
-            url = "/api/quiz/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises";
-        }
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, url);
-        addFilesToBuilderAndModifyExercise(builder, quizExercise, addBackgroundImage);
-        QuizExerciseCreateDTO dto = QuizExerciseCreateDTO.of(quizExercise);
-        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(dto))).contentType(MediaType.MULTIPART_FORM_DATA);
-        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
-        request.restoreSecurityContext();
-        if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
-            assertThat(result.getResponse().getContentAsString()).isNotBlank();
-            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
-        }
-        return null;
-    }
-
-    private QuizExercise updateQuizExerciseWithFiles(QuizExercise quizExercise, List<String> fileNames, HttpStatus expectedStatus) throws Exception {
-        return updateQuizExerciseWithFiles(quizExercise, fileNames, expectedStatus, null);
-    }
-
-    /**
-     * Sends an update request for the given quiz exercise.
-     *
-     * @param quizExercise   the quiz exercise to update. Expects to contain changed filenames if appliccable
-     * @param fileNames      the filenames of changed or new files
-     * @param expectedStatus the expected status of the request
-     * @return the updated quiz exercise or null if the request failed
-     */
-    private QuizExercise updateQuizExerciseWithFiles(QuizExercise quizExercise, List<String> fileNames, HttpStatus expectedStatus, MultiValueMap<String, String> params)
-            throws Exception {
-        QuizExerciseFromEditorDTO dto = new QuizExerciseFromEditorDTO(quizExercise.getTitle(), quizExercise.getChannelName(), quizExercise.getCategories(),
-                quizExercise.getCompetencyLinks(), quizExercise.getDifficulty(), quizExercise.getDuration(), quizExercise.isRandomizeQuestionOrder(), quizExercise.getQuizMode(),
-                quizExercise.getQuizBatches(), quizExercise.getReleaseDate(), quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getIncludedInOverallScore(),
-                quizExercise.getQuizQuestions());
-
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PATCH, "/api/quiz/quiz-exercises/" + quizExercise.getId());
-        if (params != null) {
-            builder.params(params);
-        }
-        if (fileNames != null) {
-            for (String fileName : fileNames) {
-                builder.file(new MockMultipartFile("files", fileName, MediaType.IMAGE_PNG_VALUE, "test".getBytes()));
-            }
-        }
-        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(dto))).contentType(MediaType.MULTIPART_FORM_DATA);
-        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
-        request.restoreSecurityContext();
-        if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
-            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
-        }
-        return null;
     }
 
     private void checkCreatedFiles(QuizExercise quizExercise) throws Exception {
@@ -1829,72 +1705,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         assertThat(quizExercise.getStudentParticipations()).hasSize(1);
         assertThat(quizExercise.getStudentParticipations()).containsExactlyInAnyOrder((StudentParticipation) quizSubmission.getParticipation());
-    }
-
-    private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(releaseDate, dueDate, quizMode);
-        quizExercise.setDuration(3600);
-
-        QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
-        QuizExercise quizExerciseDatabase = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
-        assertThat(quizExerciseServer).isNotNull();
-        assertThat(quizExerciseDatabase).isNotNull();
-
-        checkQuizExercises(quizExercise, quizExerciseServer);
-        checkQuizExercises(quizExercise, quizExerciseDatabase);
-
-        for (int i = 0; i < quizExercise.getQuizQuestions().size(); i++) {
-            QuizQuestion question = quizExercise.getQuizQuestions().get(i);
-            QuizQuestion questionServer = quizExerciseServer.getQuizQuestions().get(i);
-            QuizQuestion questionDatabase = quizExerciseDatabase.getQuizQuestions().get(i);
-
-            assertThat(question.getId()).as("Question IDs are correct").isNull();
-            assertThat(questionDatabase.getId()).as("Question IDs are correct").isEqualTo(questionServer.getId());
-
-            assertThat(question.getExercise().getId()).as("Exercise IDs are correct").isNull();
-            assertThat(questionDatabase.getExercise().getId()).as("Exercise IDs are correct").isEqualTo(quizExerciseDatabase.getId());
-
-            assertThat(question.getTitle()).as("Question titles are correct").isEqualTo(questionDatabase.getTitle());
-            assertThat(question.getTitle()).as("Question titles are correct").isEqualTo(questionServer.getTitle());
-
-            assertThat(question.getPoints()).as("Question scores are correct").isEqualTo(questionDatabase.getPoints());
-            assertThat(question.getPoints()).as("Question scores are correct").isEqualTo(questionServer.getPoints());
-        }
-        return quizExerciseDatabase;
-    }
-
-    private QuizExercise createQuizOnServerForExam() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
-        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
-        quizExercise.setDuration(3600);
-
-        QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
-        QuizExercise quizExerciseDatabase = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
-        assertThat(quizExerciseServer).isNotNull();
-        assertThat(quizExerciseDatabase).isNotNull();
-
-        checkQuizExercises(quizExercise, quizExerciseServer);
-        checkQuizExercises(quizExercise, quizExerciseDatabase);
-
-        for (int i = 0; i < quizExercise.getQuizQuestions().size(); i++) {
-            QuizQuestion question = quizExercise.getQuizQuestions().get(i);
-            QuizQuestion questionServer = quizExerciseServer.getQuizQuestions().get(i);
-            QuizQuestion questionDatabase = quizExerciseDatabase.getQuizQuestions().get(i);
-
-            assertThat(question.getId()).as("Question IDs are correct").isNull();
-            assertThat(questionDatabase.getId()).as("Question IDs are correct").isEqualTo(questionServer.getId());
-
-            assertThat(question.getExercise().getId()).as("Exercise IDs are correct").isNull();
-            assertThat(questionDatabase.getExercise().getId()).as("Exercise IDs are correct").isEqualTo(quizExerciseDatabase.getId());
-
-            assertThat(question.getTitle()).as("Question titles are correct").isEqualTo(questionDatabase.getTitle());
-            assertThat(question.getTitle()).as("Question titles are correct").isEqualTo(questionServer.getTitle());
-
-            assertThat(question.getPoints()).as("Question scores are correct").isEqualTo(questionDatabase.getPoints());
-            assertThat(question.getPoints()).as("Question scores are correct").isEqualTo(questionServer.getPoints());
-        }
-
-        return quizExerciseDatabase;
     }
 
     private void createdQuizAssert(QuizExercise quizExercise) throws Exception {
