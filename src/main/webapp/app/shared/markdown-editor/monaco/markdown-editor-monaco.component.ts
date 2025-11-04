@@ -358,12 +358,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             return;
         }
 
-        setTimeout(() => {
-            this.monacoEditor.disposeWidgets();
-
-            // Readd inconsistency issue comments, because all widgets got removed
-            addCommentBoxes(this.monacoEditor, issues, 'problem_statement.md', 'PROBLEM_STATEMENT');
-        }, 0);
+        this.monacoEditor.disposeWidgets();
+        addCommentBoxes(this.monacoEditor, issues, 'problem_statement.md', 'PROBLEM_STATEMENT');
     }
 
     ngAfterContentInit(): void {
