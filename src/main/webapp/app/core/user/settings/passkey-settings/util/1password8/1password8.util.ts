@@ -4,6 +4,11 @@ import { SerializableRegistrationCredential } from 'app/core/user/settings/passk
 import { SerializableLoginCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-login-credential';
 import { Malformed1Password8LoginCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-login-credential';
 
+/**
+ * Converts ArrayBuffers to base64url strings for JSON serialization
+ *
+ * @param malformed1Password8RegistrationCredential
+ */
 export function getRegistrationCredentialFromMalformed1Password8Object(
     malformed1Password8RegistrationCredential: Malformed1password8RegistrationCredential | null,
 ): SerializableRegistrationCredential | undefined {
@@ -11,7 +16,6 @@ export function getRegistrationCredentialFromMalformed1Password8Object(
         return undefined;
     }
 
-    // Convert ArrayBuffers to base64url strings for JSON serialization
     const rawIdBase64 = encodeAsBase64Url(new Uint8Array(malformed1Password8RegistrationCredential.rawId));
     const clientDataJSONBase64 = encodeAsBase64Url(new Uint8Array(malformed1Password8RegistrationCredential.response.clientDataJSON));
     const attestationObjectBase64 = malformed1Password8RegistrationCredential.response.attestationObject
@@ -41,6 +45,11 @@ export function getRegistrationCredentialFromMalformed1Password8Object(
     };
 }
 
+/**
+ * Converts ArrayBuffers to base64url strings for JSON serialization
+ *
+ * @param malformed1Password8LoginCredential
+ */
 export function getLoginCredentialFromMalformed1Password8Object(
     malformed1Password8LoginCredential: Malformed1Password8LoginCredential | null,
 ): SerializableLoginCredential | undefined {
@@ -48,7 +57,6 @@ export function getLoginCredentialFromMalformed1Password8Object(
         return undefined;
     }
 
-    // Convert ArrayBuffers to base64url strings for JSON serialization
     const rawIdBase64 = encodeAsBase64Url(new Uint8Array(malformed1Password8LoginCredential.rawId));
     const clientDataJSONBase64 = encodeAsBase64Url(new Uint8Array(malformed1Password8LoginCredential.response.clientDataJSON));
     const authenticatorDataBase64 = malformed1Password8LoginCredential.response.authenticatorData
