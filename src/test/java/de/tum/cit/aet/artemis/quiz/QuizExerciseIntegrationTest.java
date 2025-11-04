@@ -46,6 +46,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -1617,6 +1619,47 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         QuizExerciseWithQuestionsDTO dto = objectMapper.readValue(content, QuizExerciseWithQuestionsDTO.class);
         assertThat(dto.quizQuestions()).hasSize(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testQuizWithGradingCriterion() throws Exception {
+        // Create a quiz exercise
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+
+        // Create a grading criterion
+        GradingCriterion criterion = new GradingCriterion();
+        criterion.setTitle("Test Criterion");
+        criterion.setExercise(quizExercise);
+
+        // Create a grading instruction
+        GradingInstruction instruction = new GradingInstruction();
+        instruction.setCredits(2.0);
+        instruction.setGradingScale("Good");
+        instruction.setInstructionDescription("Use this for testing");
+        instruction.setFeedback("Test feedback");
+        instruction.setUsageCount(0);
+        instruction.setGradingCriterion(criterion);
+
+        criterion.setStructuredGradingInstructions(Set.of(instruction));
+
+        // Set grading criteria to the quiz
+        quizExercise.setGradingCriteria(Set.of(criterion));
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        // Fetch the quiz exercise
+        QuizExercise fetchedQuiz = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+
+        // Verify the grading criterion is in the response
+        assertThat(fetchedQuiz.getGradingCriteria()).hasSize(1);
+        GradingCriterion fetchedCriterion = fetchedQuiz.getGradingCriteria().iterator().next();
+        assertThat(fetchedCriterion.getTitle()).isEqualTo("Test Criterion");
+        assertThat(fetchedCriterion.getStructuredGradingInstructions()).hasSize(1);
+        GradingInstruction fetchedInstruction = fetchedCriterion.getStructuredGradingInstructions().iterator().next();
+        assertThat(fetchedInstruction.getCredits()).isEqualTo(2.0);
+        assertThat(fetchedInstruction.getGradingScale()).isEqualTo("Good");
+        assertThat(fetchedInstruction.getInstructionDescription()).isEqualTo("Use this for testing");
+        assertThat(fetchedInstruction.getFeedback()).isEqualTo("Test feedback");
     }
 
     /**
