@@ -13,6 +13,7 @@ import saQuestionSolution from "./assets/quiz/sa-question-sample-solution.png";
 import unratedNotification from "./assets/quiz/unrated-notification.png";
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
 
 # Quiz Training Mode
 
@@ -90,7 +91,7 @@ The system presents questions in three different formats:
 - Mark all applicable options
 - Click **"Submit"** to check your answer
 
-<Image src={mcQuestion} alt={"MC Question"} size={ImageSize.small}></Image>
+<Image src={mcQuestion} alt={"MC Question"} size={ImageSize.large}></Image>
 
 #### Drag-and-Drop Questions
 
@@ -98,7 +99,8 @@ The system presents questions in three different formats:
 - Match terms to appropriate categories
 - Submit your solution when finished
 
-<Image src={mcQuestion} alt={"Scorecard"} size={ImageSize.small}></Image>
+<Image src={mcQuestion} alt={"Scorecard"} size={ImageSize.large}></Image>
+Test
 
 #### Short Answer Questions
 
@@ -106,17 +108,15 @@ The system presents questions in three different formats:
 - Pay attention to correct spelling
 - Confirm your entries
 
-<Image src={saQuestion} alt={"SA Question"} size={ImageSize.small}></Image>
+<Image src={saQuestion} alt={"SA Question"} size={ImageSize.large}></Image>
 
 ### Graded vs. Ungraded Questions
 
-<Image src={unratedNotification} alt={"Unrated Notification"} size={ImageSize.small}></Image>
+<Image src={unratedNotification} alt={"Unrated Notification"} size={ImageSize.medium}></Image>
 
 <Callout variant={CalloutVariant.info}>
-    <p>
         When an ungraded question appears, you'll be asked if you want to continue.
         Ungraded questions don't count toward your score but help with practice.
-    </p>
 </Callout>
 
 ### Receiving Feedback
@@ -129,9 +129,9 @@ After submitting, you'll immediately see:
 - **Explanations:** Additional hints about the correct solution
 - **Sample Solution:** A button to view a sample solution (for short-answer and drag-and-drop questions)
 
-<Image src={mcQuestionSolution} alt={"Solution"} size={ImageSize.small}></Image>
+<Image src={mcQuestionSolution} alt={"Solution"} size={ImageSize.large}></Image>
 
-<Image src={saQuestionSolution} alt={"Sample Solution"} size={ImageSize.small}></Image>
+<Image src={saQuestionSolution} alt={"Sample Solution"} size={ImageSize.large}></Image>
 
 ### Navigation
 
@@ -167,8 +167,6 @@ Only graded questions count toward your score and league progress. Ungraded ques
 ---
 
 <Callout variant={CalloutVariant.tip}>
-    <p>
         Use Quiz Training regularly to reinforce your knowledge long-term.
         The spaced-repetition method is scientifically proven to be one of the most effective learning methods!
-    </p>
 </Callout>
