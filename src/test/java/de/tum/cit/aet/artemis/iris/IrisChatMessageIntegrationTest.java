@@ -482,7 +482,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/programming-exercise-chat/runs/" + jobId + "/status",
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/programming-exercise-chat/runs/" + jobId + "/status",
                 new PyrisChatStatusUpdateDTO(result, stages, sessionTitle, suggestions, null,
                         List.of(new MemirisMemoryDTO("UUID", "Test Memory", "Test Content", Collections.emptyList(), Collections.emptyList(), false, false)), null),
                 HttpStatus.OK, headers);

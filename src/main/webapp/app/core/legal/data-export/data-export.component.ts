@@ -46,7 +46,7 @@ export class DataExportComponent implements OnInit {
     isAdmin = false;
 
     ngOnInit() {
-        this.currentLogin = this.accountService.userIdentity?.login;
+        this.currentLogin = this.accountService.userIdentity()?.login;
         this.isAdmin = this.accountService.isAdmin();
         this.route.params.subscribe((params) => {
             if (params['id']) {
