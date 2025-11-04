@@ -1516,6 +1516,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, quizExercise, 0.25)));
         quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
 
+        // Get the quiz exercise as instructor and verify competency link
+        QuizExercise retrievedQuiz = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+        assertThat(retrievedQuiz.getCompetencyLinks()).hasSize(1);
+        CompetencyExerciseLink link = retrievedQuiz.getCompetencyLinks().iterator().next();
+        assertThat(link.getCompetency().getId()).isEqualTo(competency.getId());
+        assertThat(link.getWeight()).isEqualTo(0.25);
+
         Competency fakeCompetency = new Competency();
         fakeCompetency.setId(999L);
         quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(fakeCompetency, quizExercise, 0.25)));
