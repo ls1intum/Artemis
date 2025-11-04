@@ -9,7 +9,7 @@ ext {
         "atlas"         :          ["INSTRUCTION": 0.894, "CLASS":  4],
         "buildagent"    :          ["INSTRUCTION": 0.781, "CLASS":  0],
         "communication" :          ["INSTRUCTION": 0.870, "CLASS":  6],
-        "core"          :          ["INSTRUCTION": 0.815, "CLASS": 52],
+        "core"          :          ["INSTRUCTION": 0.815, "CLASS": 50],
         "exam"          :          ["INSTRUCTION": 0.915, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.913, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.946, "CLASS":  0],
