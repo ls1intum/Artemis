@@ -3,6 +3,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { TranslateService } from '@ngx-translate/core';
 
 export type InlineConsistencyIssue = {
     filePath: string;
@@ -17,19 +18,21 @@ export type InlineConsistencyIssue = {
 
 /**
  * Adds a comment boxes below code lines in Monaco based on the issues.
- * @param editor       Monaco editor wrapper component.
- * @param issues       Issues to render.
- * @param selectedFile The currently selected file in the repo.
- * @param selectedRepo The currently selected repository.
+ * @param editor            Monaco editor wrapper component.
+ * @param issues            Issues to render.
+ * @param selectedFile      The currently selected file in the repo.
+ * @param selectedRepo      The currently selected repository.
+ * @param translateService  Service to translate text in the comments.
  */
 export function addCommentBoxes(
     editor: MonacoEditorComponent,
     issues: ConsistencyIssue[],
     selectedFile: string | undefined,
     selectedRepo: RepositoryType | 'PROBLEM_STATEMENT' | undefined,
+    translateService: TranslateService,
 ) {
     for (const [index, issue] of issuesForSelectedFile(selectedFile, selectedRepo, issues).entries()) {
-        addCommentBox(editor, issue, index);
+        addCommentBox(editor, issue, index, translateService);
     }
 }
 
@@ -38,12 +41,14 @@ export function addCommentBoxes(
  * @param editor Monaco editor wrapper component.
  * @param issue  Issue to render.
  * @param id     The unique identifier for this comment.
+ * @param translateService  Service to translate text in the comments.
  */
-export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsistencyIssue, id: number) {
+export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsistencyIssue, id: number, translateService: TranslateService) {
+    const headingText = translateService.instant('artemisApp.consistencyCheck.issueHeading');
     const node = document.createElement('div');
     node.className = 'alert alert-warning alert-dismissible text-start fade show';
     node.innerHTML = `
-      <h5 class='alert-heading' jhiTranslate='artemisApp.consistencyCheck.issueHeading'>Consistency Issue Found</h5>
+      <h5 class='alert-heading'>${headingText}</h5>
       <div>${htmlForMarkdown(formatConsistencyCheckResults(issue))}</div>
     `;
 
