@@ -98,13 +98,13 @@ describe('1Password8 Util', () => {
     });
 
     describe('Edge Cases', () => {
-        it('should return undefined for a null input (registration)', () => {
-            const credential = getRegistrationCredentialFromMalformed1Password8Object(null);
+        it('should return undefined for an undefined input (registration)', () => {
+            const credential = getRegistrationCredentialFromMalformed1Password8Object(undefined);
             expect(credential).toBeUndefined();
         });
 
-        it('should return undefined for a null input (login)', () => {
-            const credential = getLoginCredentialFromMalformed1Password8Object(null);
+        it('should return undefined for an undefined input (login)', () => {
+            const credential = getLoginCredentialFromMalformed1Password8Object(undefined);
             expect(credential).toBeUndefined();
         });
 
