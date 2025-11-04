@@ -86,22 +86,22 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     crop = true;
 
     /** Whether some elements are interactive in the apollon editor. */
-    hasInteractive = computed(() => {
+    get hasInteractive(): boolean {
         return (
             !!this.apollonEditor &&
             (Object.entries(this.apollonEditor.model.interactive.elements).some(([, selected]) => selected) ||
                 Object.entries(this.apollonEditor.model.interactive.relationships).some(([, selected]) => selected))
         );
-    });
+    }
 
     /** Whether some elements are selected in the apollon editor. */
-    hasSelection = computed(() => {
+    get hasSelection(): boolean {
         return (
             !!this.apollonEditor &&
             (Object.entries(this.apollonEditor.selection.elements).some(([, selected]) => selected) ||
                 Object.entries(this.apollonEditor.selection.relationships).some(([, selected]) => selected))
         );
-    });
+    }
 
     // Icons
     faDownload = faDownload;
@@ -120,7 +120,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             this.courseService.find(courseId).subscribe({
                 next: (response) => {
                     this.course.set(response.body!);
-                    //this.cdr.detectChanges();
                 },
                 error: () => {
                     this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
@@ -136,7 +135,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                     const model: UMLModel = diagram.jsonRepresentation && JSON.parse(diagram.jsonRepresentation);
                     this.initializeApollonEditor(model);
                     this.setAutoSaveTimer();
-                    //this.cdr.detectChanges();
                 },
                 error: () => {
                     this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
@@ -261,7 +259,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @async
      */
     async generateExercise() {
-        if (!this.hasInteractive()) {
+        if (!this.hasInteractive) {
             this.alertService.error('artemisApp.apollonDiagram.create.validationError');
             return;
         }
@@ -269,10 +267,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         if (this.apollonEditor && this.apollonDiagram()) {
             const isSaved = await this.saveDiagram();
             if (isSaved) {
-                const course = this.course();
-                if (!course) {
-                    return;
-                }
                 const question = await generateDragAndDropQuizExercise(this.course(), this.apollonDiagram().title!, this.apollonEditor.model!);
                 this.closeEdit.emit(question);
             }
@@ -285,7 +279,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @async
      */
     async downloadSelection() {
-        if (!this.hasSelection()) {
+        if (!this.hasSelection) {
             return;
         }
 
