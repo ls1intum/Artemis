@@ -286,10 +286,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
          * to verify that color information is preserved in the exported file.
          */
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        Set<String> categoriesJson = Set.of(
-            "{\"color\":\"#0d3cc2\",\"category\":\"cat1\"}",
-            "{\"color\":\"#691b0b\",\"category\":\"cat2\"}"
-        );
+        Set<String> categoriesJson = Set.of("{\"color\":\"#0d3cc2\",\"category\":\"cat1\"}", "{\"color\":\"#691b0b\",\"category\":\"cat2\"}");
         programmingExercise.setCategories(new HashSet<>(categoriesJson));
         programmingExerciseRepository.save(programmingExercise);
 
@@ -338,7 +335,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         localRepo.resetLocalRepo();
     }
 
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportedExerciseJsonWithoutCategories() throws Exception {
@@ -377,13 +373,10 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var json = objectMapper.readTree(exerciseJson);
 
         // Verify categories are not present
-        assertThat(json.has("categories"))
-            .as("No 'categories' field should be present in exported JSON when exercise has none")
-            .isFalse();
+        assertThat(json.has("categories")).as("No 'categories' field should be present in exported JSON when exercise has none").isFalse();
 
         localRepo.resetLocalRepo();
     }
-
 
     private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
         String projectKey = exercise.getProjectKey();
