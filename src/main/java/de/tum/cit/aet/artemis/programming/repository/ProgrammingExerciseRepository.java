@@ -467,10 +467,14 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(long exerciseId);
 
     /**
-     * Defines the default entity graph for loading exercises along with related configurations.
+     * Defines the default entity graph for loading programming exercises along with related configurations.
      * <p>
      * The {@code categories} attribute is included here so that category strings are
      * available immediately without additional lazy loading.
+     *
+     * @param exerciseId the ID of the programming exercise to fetch
+     * @return an {@link Optional} containing the programming exercise with all related configurations if found,
+     *         or an empty {@link Optional} otherwise
      */
     @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig", "gradingCriteria", "categories" })
     Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesById(long exerciseId);
