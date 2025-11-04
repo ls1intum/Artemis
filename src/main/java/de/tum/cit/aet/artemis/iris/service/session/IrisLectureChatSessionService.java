@@ -97,8 +97,8 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
         pyrisPipelineService.executePipeline("lecture-chat", settings.selectedVariant(), Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new LectureChatJob(token, course.getId(), lecture.getId(), session.getId())),
-                dto -> new PyrisLectureChatPipelineExecutionDTO(course.getId(), lecture.getId(), conversation, new PyrisUserDTO(user), dto.settings(), dto.initialStages(),
-                        settings.customInstructions()),
+                dto -> new PyrisLectureChatPipelineExecutionDTO(course.getId(), lecture.getId(), session.getTitle(), conversation, new PyrisUserDTO(user), dto.settings(),
+                        dto.initialStages(), settings.customInstructions()),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages));
     }
 
@@ -148,14 +148,15 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
     public LectureChatJob handleStatusUpdate(LectureChatJob job, PyrisLectureChatStatusUpdateDTO statusUpdate) {
         // TODO: LLM Token Tracking - or better, make this class a subclass of AbstractIrisChatSessionService
         var session = (IrisLectureChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());
+        String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
         if (statusUpdate.result() != null) {
             var message = session.newMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle);
         }
         else {
-            irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages());
+            irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages(), sessionTitle);
         }
 
         return job;

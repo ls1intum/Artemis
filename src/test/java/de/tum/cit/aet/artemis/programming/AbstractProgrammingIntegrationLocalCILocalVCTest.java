@@ -1,10 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
@@ -21,6 +18,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasic
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIEventListenerService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -31,10 +29,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     // Config
-    @Autowired
-    @Qualifier("hazelcastInstance")
-    protected HazelcastInstance hazelcastInstance;
-
     @Value("${artemis.user-management.internal-admin.username}")
     protected String localVCUsername;
 
@@ -87,6 +81,8 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     @Autowired
     protected StaticCodeAnalysisService staticCodeAnalysisService;
 
+    @Autowired
+    protected DistributedDataAccessService distributedDataAccessService;
     // External Services
 
     // Util Services

@@ -91,7 +91,6 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse = new ComplaintResponse();
             _complaint.complaintResponse.reviewer = { login } as User;
             _complaint.complaintResponse.isCurrentlyLocked = true;
-            accountService.userIdentity = { login } as User;
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
 
@@ -105,7 +104,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse = new ComplaintResponse();
             _complaint.complaintResponse.reviewer = { login } as User;
             _complaint.complaintResponse.isCurrentlyLocked = true;
-            accountService.userIdentity = { login: anotherLogin } as User;
+            accountService.userIdentity.set({ login: anotherLogin } as User);
             jest.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(false);
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
@@ -120,7 +119,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse = new ComplaintResponse();
             _complaint.complaintResponse.reviewer = { login } as User;
             _complaint.complaintResponse.isCurrentlyLocked = true;
-            accountService.userIdentity = { login: anotherLogin } as User;
+            accountService.userIdentity.set({ login: anotherLogin } as User);
             jest.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(true);
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
@@ -161,7 +160,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse = new ComplaintResponse();
             _complaint.complaintResponse.isCurrentlyLocked = true;
             _complaint.complaintResponse.reviewer = { login } as User;
-            accountService.userIdentity = { login: anotherLogin } as User;
+            accountService.userIdentity.set({ login: anotherLogin } as User);
 
             const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
             expect(result).toBeFalse();
@@ -173,7 +172,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse = new ComplaintResponse();
             _complaint.complaintResponse.isCurrentlyLocked = true;
             _complaint.complaintResponse.reviewer = { login } as User;
-            accountService.userIdentity = { login } as User;
+            accountService.userIdentity.set({ login: login } as User);
 
             const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
             expect(result).toBeTrue();
