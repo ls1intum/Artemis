@@ -107,6 +107,9 @@ export class QuizExerciseLifecycleButtonsComponent {
     addBatch() {
         this.quizExerciseService.addBatch(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizBatch>) => {
+                if (!this.quizExercise().quizBatches) {
+                    this.quizExercise().quizBatches = [];
+                }
                 this.quizExercise().quizBatches?.push(res.body!);
             },
             error: (res: HttpErrorResponse) => {
