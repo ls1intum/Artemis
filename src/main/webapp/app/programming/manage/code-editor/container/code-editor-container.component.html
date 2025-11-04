@@ -10,7 +10,7 @@
         <div class="d-flex flex-wrap align-items-center ms-auto gap-2">
             <ng-content select="[editorToolbar]" />
             <ng-content select="[chatbot-button]" />
-            @if (!isTutorAssessment || commitState === CommitState.CONFLICT) {
+            @if (!isTutorAssessment() || commitState === CommitState.CONFLICT) {
                 <jhi-code-editor-actions
                     [buildable]="buildable()"
                     [disableActions]="!editable() && (!isTutorAssessment || commitState !== CommitState.CONFLICT)"

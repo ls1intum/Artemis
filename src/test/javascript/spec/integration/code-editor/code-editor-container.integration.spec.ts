@@ -161,7 +161,7 @@ describe('CodeEditorContainerIntegration', () => {
         getBuildLogsStub.mockReturnValue(getBuildLogsSubject);
         getLatestPendingSubmissionStub.mockReturnValue(getLatestPendingSubmissionSubject);
 
-        container.participation = participation as any;
+        containerFixture.componentRef.setInput('participation', participation);
 
         // TODO: This should be replaced by testing with route params.
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
@@ -237,7 +237,7 @@ describe('CodeEditorContainerIntegration', () => {
         getFeedbackDetailsForResultStub.mockReturnValue(of([]));
         getBuildLogsStub.mockReturnValue(getBuildLogsSubject);
 
-        container.participation = participation;
+        containerFixture.componentRef.setInput('participation', participation);
 
         // TODO: This should be replaced by testing with route params.
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
@@ -490,7 +490,7 @@ describe('CodeEditorContainerIntegration', () => {
         getFeedbackDetailsForResultStub.mockReturnValue(of(feedbacks));
         getRepositoryContentStub.mockReturnValue(of([]));
 
-        container.participation = participation;
+        containerFixture.componentRef.setInput('participation', participation);
         domainService.setDomain([DomainType.PARTICIPATION, participation]);
 
         containerFixture.detectChanges();
@@ -531,14 +531,15 @@ describe('CodeEditorContainerIntegration', () => {
     });
 
     it('should create file badges for feedback suggestions', () => {
-        container.feedbackSuggestions = [
+        containerFixture.componentRef.setInput('feedbackSuggestions', [
             { reference: 'file:src/Test1.java_line:2' },
             { reference: 'file:src/Test2.java_line:2' },
             { reference: 'file:src/Test2.java_line:4' },
             { reference: 'file:src/Test3.java_line:4' },
             { reference: 'file:src/Test3.java_line:10' },
             { reference: 'file:src/Test3.java_line:11' },
-        ];
+        ]);
+
         container.updateFileBadges();
         expect(container.fileBadges).toEqual({
             'src/Test1.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
