@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -34,21 +34,11 @@ export class ProgrammingExerciseProblemComponent {
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
     protected readonly faQuestionCircle = faQuestionCircle;
 
-    @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
-    @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
-    @Output() problemStatementChange = new EventEmitter<string>();
+    problemStatementChange = output<string>();
 
-    programmingExercise: ProgrammingExercise;
-
-    @Input()
-    get exercise() {
-        return this.programmingExercise;
-    }
-
-    set exercise(exercise: ProgrammingExercise) {
-        this.programmingExercise = exercise;
-        this.exerciseChange.emit(this.programmingExercise);
-    }
+    programmingExercise = input.required<ProgrammingExercise>();
+    programmingExerciseChange = output<ProgrammingExercise>();
 }
