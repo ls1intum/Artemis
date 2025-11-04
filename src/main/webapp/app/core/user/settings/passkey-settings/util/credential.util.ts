@@ -28,7 +28,7 @@ function handleMalformedRegistrationCredential<T>(
     converterFunction: (credential: T) => SerializableRegistrationCredential | undefined,
 ): SerializableRegistrationCredential {
     try {
-        const malformedCredential = credential as unknown as T;
+        const malformedCredential = credential as T;
         const serializableCredential = converterFunction(malformedCredential);
         if (!serializableCredential) {
             // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
@@ -53,7 +53,7 @@ function handleMalformedLoginCredential<T>(
     converterFunction: (credential: T) => SerializableLoginCredential | undefined,
 ): SerializableLoginCredential {
     try {
-        const malformedCredential = credential as unknown as T;
+        const malformedCredential = credential as T;
         const serializableCredential = converterFunction(malformedCredential);
         if (!serializableCredential) {
             // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
