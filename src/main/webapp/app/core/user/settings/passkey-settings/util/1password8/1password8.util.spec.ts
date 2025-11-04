@@ -116,9 +116,14 @@ describe('1Password8 Util', () => {
                 authenticatorAttachment: 'platform',
                 response: {
                     clientDataJSON: createArrayBuffer([123, 125]),
+                    attestationObject: createArrayBuffer([]),
+                    getAuthenticatorData: () => createArrayBuffer([]),
+                    getPublicKey: () => createArrayBuffer([]),
+                    getPublicKeyAlgorithm: () => 0,
+                    getTransports: () => [],
                 },
                 getClientExtensionResults: () => ({}),
-            } as Malformed1password8RegistrationCredential;
+            };
 
             const credential = getRegistrationCredentialFromMalformed1Password8Object(minimalCredential);
 
@@ -162,9 +167,14 @@ describe('1Password8 Util', () => {
                 authenticatorAttachment: 'platform',
                 response: {
                     clientDataJSON: createArrayBuffer([]),
+                    attestationObject: createArrayBuffer([]),
+                    getAuthenticatorData: () => createArrayBuffer([]),
+                    getPublicKey: () => createArrayBuffer([]),
+                    getPublicKeyAlgorithm: () => 0,
+                    getTransports: () => [],
                 },
                 getClientExtensionResults: () => ({}),
-            } as Malformed1password8RegistrationCredential;
+            };
 
             const credential = getRegistrationCredentialFromMalformed1Password8Object(credentialWithEmptyBuffers);
 
@@ -203,9 +213,14 @@ describe('1Password8 Util', () => {
                 authenticatorAttachment: 'platform',
                 response: {
                     clientDataJSON: createArrayBuffer(originalData),
+                    attestationObject: createArrayBuffer([]),
+                    getAuthenticatorData: () => createArrayBuffer([]),
+                    getPublicKey: () => createArrayBuffer([]),
+                    getPublicKeyAlgorithm: () => 0,
+                    getTransports: () => [],
                 },
                 getClientExtensionResults: () => ({}),
-            } as Malformed1password8RegistrationCredential;
+            };
 
             const result = getRegistrationCredentialFromMalformed1Password8Object(credential);
 
