@@ -140,6 +140,7 @@
             }
         },
         "notEnoughExamSeats": "Die ausgewählten Räume haben nur Kapazität für {{ numberOfUsableSeats }} der {{ numberOfExamUsers }} Klausurteilnehmer",
+        "reserveFactorOutOfRange": "Der Reservierungsfaktor muss zwischen 0 und 1 sein",
         "noRoomIDs": "Du hast keine Räume ausgewählt",
         "invalidRoomIDs": "Mindestens einer der Räume, die du ausgewählt hast, existiert nicht oder ist veraltet",
         "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
