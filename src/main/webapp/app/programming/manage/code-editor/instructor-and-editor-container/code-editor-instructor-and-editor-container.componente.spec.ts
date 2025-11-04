@@ -34,7 +34,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     error1.type = ErrorType.TEMPLATE_BUILD_PLAN_MISSING;
 
     beforeEach(waitForAsync(async () => {
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             providers: [
                 MockProvider(ArtemisIntelligenceService),
                 MockProvider(ConsistencyCheckService),
