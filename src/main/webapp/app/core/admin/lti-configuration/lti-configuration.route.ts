@@ -10,12 +10,14 @@ export const ltiConfigurationRoute: Routes = [
         data: {
             pageTitle: 'global.menu.admin.lti',
             defaultSort: 'id,desc',
+            usesModuleBackground: true,
         },
     },
     {
         path: 'lti-configuration',
         data: {
             pageTitle: 'global.menu.admin.lti',
+            usesModuleBackground: true,
         },
         children: [
             {

@@ -1,4 +1,4 @@
-<div class="module-bg p-3">
+<div>
     <div class="upload-container">
         <h2><span jhiTranslate="artemisApp.examRooms.adminOverview.title"></span></h2>
         <div class="mt-2">
@@ -66,54 +66,72 @@
                 <table class="table table-striped">
                     <thead>
                         <tr jhiSort [(predicate)]="sortAttribute" [(ascending)]="ascending" (sortChange)="sortRows()">
+                            <th jhiSortBy="id">
+                                <!-- 1. Room id -->
+                                <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.id"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
                             <th jhiSortBy="roomNumber">
-                                <!-- 1. Room number -->
+                                <!-- 2. Room number -->
                                 <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.roomNumber"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="name">
-                                <!-- 2. Room name -->
+                                <!-- 3. Room name -->
                                 <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.roomName"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="building">
-                                <!-- 3. Building -->
+                                <!-- 4. Building -->
                                 <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.building"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
+                            <th jhiSortBy="defaultCapacity">
+                                <!-- 5. Default capacity -->
+                                <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.defaultCapacity"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
                             <th jhiSortBy="maxCapacity">
-                                <!-- 4. Max capacity -->
+                                <!-- 6. Max capacity -->
                                 <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.maxCapacity"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
                             <th>
-                                <!-- 5. Layout strategies -->
+                                <!-- 7. Layout strategies -->
                                 <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.layoutStrategies"></span>
                             </th>
                         </tr>
                     </thead>
                     @if (hasExamRoomData()) {
                         <tbody>
-                            @for (examRoom of examRoomData(); track examRoom.roomNumber) {
+                            @for (examRoom of examRoomData(); track examRoom.id) {
                                 <tr>
                                     <td>
-                                        <!-- 1. Room number -->
+                                        <!-- 1. Room id -->
+                                        <span>{{ examRoom.id }}</span>
+                                    </td>
+                                    <td>
+                                        <!-- 2. Room number -->
                                         <span>{{ examRoom.roomNumber }}</span>
                                     </td>
                                     <td>
-                                        <!-- 2. Room name -->
+                                        <!-- 3. Room name -->
                                         <span>{{ examRoom.name }}</span>
                                     </td>
                                     <td>
-                                        <!-- 3. Building -->
+                                        <!-- 4. Building -->
                                         <span>{{ examRoom.building }}</span>
                                     </td>
                                     <td>
-                                        <!-- 4. Max capacity -->
+                                        <!-- 5. Default capacity -->
+                                        <span>{{ examRoom.defaultCapacity }}</span>
+                                    </td>
+                                    <td>
+                                        <!-- 6. Max capacity -->
                                         <span>{{ examRoom.maxCapacity }}</span>
                                     </td>
                                     <td>
-                                        <!-- 5. Layout strategies -->
+                                        <!-- 7. Layout strategies -->
                                         <span>{{ examRoom.layoutStrategyNames }}</span>
                                     </td>
                                 </tr>

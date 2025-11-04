@@ -11,6 +11,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
         data: {
             authorities: [Authority.USER],
+            usesModuleBackground: true,
         },
         children: [
             {
@@ -110,6 +111,13 @@ export const routes: Routes = [
                     import('app/core/user/settings/global-notifications-settings/global-notifications-settings.component').then((m) => m.GlobalNotificationsSettingsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.GLOBAL_NOTIFICATIONS',
+                },
+            },
+            {
+                path: 'quiz-training',
+                loadComponent: () => import('app/core/user/settings/quiz-training-settings/quiz-training-settings.component').then((m) => m.QuizTrainingSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.QUIZ_TRAINING_SETTINGS',
                 },
             },
         ],

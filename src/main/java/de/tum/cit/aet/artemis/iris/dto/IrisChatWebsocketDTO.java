@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages,
-        List<String> suggestions, List<LLMRequest> tokens) {
+        String sessionTitle, List<String> suggestions, List<LLMRequest> tokens) {
 
     /**
      * Creates a new IrisWebsocketDTO instance with the given parameters
@@ -32,9 +32,9 @@ public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage me
      * @param rateLimitInfo the rate limit information
      * @param stages        the stages of the Pyris pipeline
      */
-    public IrisChatWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, List<String> suggestions,
-            List<LLMRequest> tokens) {
-        this(determineType(message), message, rateLimitInfo, stages, suggestions, tokens);
+    public IrisChatWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, String sessionTitle,
+            List<String> suggestions, List<LLMRequest> tokens) {
+        this(determineType(message), message, rateLimitInfo, stages, sessionTitle, suggestions, tokens);
     }
 
     /**
@@ -65,7 +65,8 @@ public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage me
             return false;
         }
         IrisChatWebsocketDTO that = (IrisChatWebsocketDTO) o;
-        return type == that.type && Objects.equals(message, that.message) && Objects.equals(rateLimitInfo, that.rateLimitInfo) && Objects.equals(stages, that.stages);
+        return type == that.type && Objects.equals(message, that.message) && Objects.equals(rateLimitInfo, that.rateLimitInfo) && Objects.equals(stages, that.stages)
+                && Objects.equals(sessionTitle, that.sessionTitle);
     }
 
     public enum IrisWebsocketMessageType {

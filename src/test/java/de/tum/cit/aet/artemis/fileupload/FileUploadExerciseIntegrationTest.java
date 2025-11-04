@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
+import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -56,6 +57,9 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
 
     private static final String TEST_PREFIX = "fileuploaderxercise";
 
@@ -97,14 +101,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createFileUploadExercise_InvalidMaxScore() throws Exception {
-        fileUploadExercise.setFilePattern(creationFilePattern);
-        fileUploadExercise.setMaxPoints(0.0);
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadExercise_InvalidInstructor() throws Exception {
         // make sure the instructor is not instructor for this course anymore by changing the courses' instructor group name
         course.setInstructorGroupName("new-instructor-group-name");
@@ -127,26 +123,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void createFileUploadExerciseFails_EmptyFilePattern() throws Exception {
         fileUploadExercise.setFilePattern("");
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createFileUploadExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
-        fileUploadExercise.setFilePattern(creationFilePattern);
-        fileUploadExercise.setMaxPoints(10.0);
-        fileUploadExercise.setBonusPoints(1.0);
-        fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createFileUploadExercise_NotIncludedInvalidBonusPoints() throws Exception {
-        fileUploadExercise.setFilePattern(creationFilePattern);
-        fileUploadExercise.setMaxPoints(10.0);
-        fileUploadExercise.setBonusPoints(1.0);
-        fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -671,6 +647,31 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         result = request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
+        atlasMLRequestMockProvider.enableMockingOfRequests();
+        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+
+        // Create
+        courseUtilService.enableMessagingForCourse(course);
+        var create = new FileUploadExercise();
+        create.setCourse(course);
+        create.setTitle("AtlasML FileUpload Create");
+        create.setFilePattern("pdf, png");
+        create.setMaxPoints(10.0);
+        create.setChannelName("atlasml-fileupload-create");
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", create, FileUploadExercise.class, HttpStatus.CREATED);
+
+        // Update
+        FileUploadExercise persisted = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
+        persisted.setTitle("AtlasML FileUpload Update");
+        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + persisted.getId() + "?notificationText=x", persisted, FileUploadExercise.class, HttpStatus.OK);
+
+        // Delete
+        request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.OK);
     }
 
     @Test

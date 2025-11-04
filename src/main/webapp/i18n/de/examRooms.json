@@ -34,9 +34,11 @@
                     "uniqueLayoutStrategies": "Einzigartige Verteilungsstrategien:",
                     "distinctLayoutStrategyNames": "Alle verfügbaren Verteilungsstrategien:",
                     "examRoomsTitle": "Alle verfügbaren Prüfungsräume",
+                    "id": "ID",
                     "roomNumber": "Raumnummer",
                     "roomName": "Raumname",
                     "building": "Gebäude",
+                    "defaultCapacity": "Standardkapazität",
                     "maxCapacity": "Maximale Kapazität",
                     "layoutStrategies": "Verfügbare Strategien"
                 }

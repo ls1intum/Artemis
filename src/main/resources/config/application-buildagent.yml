@@ -24,7 +24,9 @@ artemis:
         passkey:
             enabled: false
     nebula:
-      enabled: false
+        enabled: false
+    sharing:
+        enabled: false
 
     checked-out-repos-path: ./checked-out-repos # The directory to which repositories temporarily get cloned for the build job execution
     repo-clone-path: ./repos
@@ -68,6 +70,7 @@ artemis:
             max-cpu-count: 4 # The maximum number of CPU cores that can be used by the build agent. If a higher value is specified, the build agent will be limited to this value. Value must be a positive integer. 0 means unlimited.
             max-memory: 8096 # The maximum amount of memory that can be used by the build agent. If a higher value is specified, the build agent will be limited to this value. Value must be a positive integer. 0 means unlimited.
             max-memory-swap: 8096 # The maximum amount of memory swap that can be used by the build agent. If a higher value is specified, the build agent will be limited to this value. Value must be a positive integer. 0 means unlimited.
+        data-store: Hazelcast # set Hazelcast, Redis, Local as data store for Local CI data
     git:
         name: Artemis
         email: artemis@xcit.tum.de

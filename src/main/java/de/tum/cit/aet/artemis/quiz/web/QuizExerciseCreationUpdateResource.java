@@ -8,6 +8,8 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,17 +26,21 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
@@ -61,74 +67,114 @@ public class QuizExerciseCreationUpdateResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ChannelService channelService;
+    private final CourseRepository courseRepository;
 
-    private final Optional<CompetencyProgressApi> competencyProgressApi;
+    private final Optional<AtlasMLApi> atlasMLApi;
 
     private final QuizExerciseRepository quizExerciseRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            AuthorizationCheckService authCheckService, ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi) {
+            AuthorizationCheckService authCheckService, ExerciseVersionService exerciseVersionService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
-        this.channelService = channelService;
-        this.competencyProgressApi = competencyProgressApi;
+        this.exerciseVersionService = exerciseVersionService;
+        this.courseRepository = courseRepository;
+        this.atlasMLApi = atlasMLApi;
     }
 
     /**
-     * POST /quiz-exercises : Create a new quizExercise.
+     * POST /exercise-groups/{exerciseGroupId}/quiz-exercises : Create a new
+     * quizExercise for an exam.
      *
-     * @param quizExercise the quizExercise to create
-     * @param files        the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
-     * @return the ResponseEntity with status 201 (Created) and with body the new quizExercise, or with status 400 (Bad Request) if the quizExercise has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @param exerciseGroupId the id of the exercise group to which the quiz
+     *                            exercise should be added
+     * @param quizExerciseDTO the quizExercise DTO to create
+     * @param files           the files for drag and drop questions to upload
+     *                            (optional). The original file name must equal the file
+     *                            path of the image in {@code quizExerciseDTO}
+     * @return the ResponseEntity with status 201 (Created) and with body the new
+     *         quizExercise, or with status 400 (Bad Request) if the quizExercise is
+     *         not valid
+     * @throws IOException if there is an error handling the files
      */
-    @PostMapping(value = "quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "exercise-groups/{exerciseGroupId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<QuizExercise> createQuizExercise(@RequestPart("exercise") QuizExercise quizExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
-        log.info("REST request to create QuizExercise : {}", quizExercise);
-        if (quizExercise.getId() != null) {
-            throw new BadRequestAlertException("A new quizExercise cannot already have an ID", ENTITY_NAME, "idExists");
-        }
+    public ResponseEntity<QuizExercise> createExamQuizExercise(@PathVariable Long exerciseGroupId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
+        log.info("REST request to create QuizExercise : {} in exam exercise group {}", quizExerciseDTO, exerciseGroupId);
+        QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
 
-        // check if quiz is valid
-        if (!quizExercise.isValid()) {
-            // TODO: improve error message and tell the client why the quiz is invalid (also see below in update Quiz)
-            throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
-        }
+        // We create a new ExerciseGroup with the given id
+        // The exercise group is replaced when retrieveCourseOverExerciseGroupOrCourseId
+        // is called below
+        // This approach avoids an additional database call
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
+        exerciseGroup.setId(exerciseGroupId);
+        quizExercise.setExerciseGroup(exerciseGroup);
 
-        quizExercise.validateGeneralSettings();
-        // Valid exercises have set either a course or an exerciseGroup
-        quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-
-        // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        quizExerciseService.handleDndQuizFileCreation(quizExercise, files);
+        QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, true);
+        exerciseVersionService.createExerciseVersion(result);
+        return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+    }
 
-        QuizExercise result = quizExerciseService.save(quizExercise);
+    /**
+     * POST /courses/{courseId}/quiz-exercises : Create a new quizExercise for a
+     * course.
+     *
+     * @param courseId        the id of the course to which the quiz exercise should
+     *                            be added
+     * @param quizExerciseDTO the quizExercise DTO to create
+     * @param files           the files for drag and drop questions to upload
+     *                            (optional). The original file name must equal the file
+     *                            path of the image in {@code quizExerciseDTO}
+     * @return the ResponseEntity with status 201 (Created) and with body the new
+     *         quizExercise, or with status 400 (Bad Request) if the quizExercise is
+     *         not valid
+     * @throws IOException if there is an error handling the files
+     */
+    @PostMapping(value = "courses/{courseId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<QuizExercise> createCourseQuizExercise(@PathVariable Long courseId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
+        log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
+        quizExercise.setCourse(course);
 
-        channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
+        QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, false);
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
+        // Notify AtlasML about the new quiz exercise
+        notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise creation");
+
+        exerciseVersionService.createExerciseVersion(result);
 
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
-     * PATCH /quiz-exercises/:exerciseId : Update an existing quizExercise with a DTO.
+     * PATCH /quiz-exercises/:exerciseId : Update an existing quizExercise with a
+     * DTO.
      *
      * @param exerciseId                the id of the quizExercise to save
      * @param quizExerciseFromEditorDTO the quizExercise to update
-     * @param files                     the new files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in
+     * @param files                     the new files for drag and drop questions to
+     *                                      upload (optional). The original file name
+     *                                      must equal the file path of the image in
      *                                      {@code quizExercise}
-     * @param notificationText          about the quiz exercise update that should be displayed to the student group
-     * @return the ResponseEntity with status 200 (OK) and with body the updated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with status 500
+     * @param notificationText          about the quiz exercise update that should
+     *                                      be displayed to the student group
+     * @return the ResponseEntity with status 200 (OK) and with body the updated
+     *         quizExercise, or with status 400 (Bad Request) if the quizExercise is
+     *         not valid, or with status 500
      *         (Internal Server Error) if the quizExercise couldn't be updated
      */
     @PatchMapping(value = "quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -143,6 +189,32 @@ public class QuizExerciseCreationUpdateResource {
 
         quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO);
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files, notificationText);
+
+        // Notify AtlasML about the quiz exercise update
+        notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");
+
+        exerciseVersionService.createExerciseVersion(result);
+
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Helper method to notify AtlasML about quiz exercise changes with consistent
+     * error handling.
+     *
+     * @param exercise             the exercise to save
+     * @param operationType        the operation type (UPDATE or DELETE)
+     * @param operationDescription the description of the operation for logging
+     *                                 purposes
+     */
+    private void notifyAtlasML(QuizExercise exercise, OperationTypeDTO operationType, String operationDescription) {
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(exercise, operationType);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
+            }
+        });
     }
 }

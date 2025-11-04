@@ -18,19 +18,18 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
 
         fixture = TestBed.createComponent(CollapsableAssessmentInstructionsComponent);
         component = fixture.componentInstance;
-        component.exercise = mockExercise;
-        fixture.detectChanges();
+        fixture.componentRef.setInput('exercise', mockExercise);
     });
 
     it('should receive input properties correctly', () => {
-        component.isAssessmentTraining = true;
-        component.showAssessmentInstructions = false;
-        component.collapsed = true;
-        component.readOnly = true;
+        fixture.componentRef.setInput('isAssessmentTraining', true);
+        fixture.componentRef.setInput('showAssessmentInstructions', false);
+        fixture.componentRef.setInput('collapsed', true);
+        fixture.componentRef.setInput('readOnly', true);
 
-        expect(component.isAssessmentTraining).toBeTrue();
-        expect(component.showAssessmentInstructions).toBeFalse();
-        expect(component.collapsed).toBeTrue();
-        expect(component.readOnly).toBeTrue();
+        expect(component.isAssessmentTraining()).toBeTrue();
+        expect(component.showAssessmentInstructions()).toBeFalse();
+        expect(component.collapsed()).toBeTrue();
+        expect(component.readOnly()).toBeTrue();
     });
 });
