@@ -416,7 +416,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         var authHeaders = new HttpHeaders();
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
 
-        String json = request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, String.class, authHeaders);
+        String json = request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, String.class, authHeaders);
         Map<String, String> repoFiles = request.getObjectMapper().readValue(json, new TypeReference<Map<String, String>>() {
         });
         assertThat(repoFiles).as("export returns exactly one file: README.md").isNotNull().hasSize(1).containsOnlyKeys("README.md").containsEntry("README.md", "Initial commit");
@@ -429,7 +429,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
 
         // Expect status 503 because Athena is not enabled for the exercise
-        request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.SERVICE_UNAVAILABLE, Result.class, authHeaders);
+        request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.SERVICE_UNAVAILABLE, Result.class, authHeaders);
     }
 
     @ParameterizedTest
@@ -443,7 +443,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExerciseRepository.save(programmingExercise);
 
         // Expect status 403 because the Authorization header is wrong
-        request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.FORBIDDEN, Result.class, authHeaders);
+        request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.FORBIDDEN, Result.class, authHeaders);
     }
 
     @ParameterizedTest
@@ -456,6 +456,8 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExerciseRepository.save(programmingExercise);
 
-        request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.BAD_REQUEST, Result.class, authHeaders);
+        request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.NOT_FOUND, Result.class, authHeaders);
     }
+
+    // Removed legacy public endpoint test that expected BAD_REQUEST for invalid repository type
 }
