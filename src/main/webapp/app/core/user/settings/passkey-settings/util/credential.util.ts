@@ -81,7 +81,7 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
     credentialType: 'registration' | 'login',
     bitwardenConverter: (malformedBitwardenCredential: MalformedBitwardenRegistrationCredential | MalformedBitwardenLoginCredential | undefined) => T | undefined,
     onePassword8Converter: (malformed1Password8Credential: Malformed1password8RegistrationCredential | Malformed1Password8LoginCredential | undefined) => T | undefined,
-    malformedHandler: <U>(credential: Credential | undefined, converterFunction: (credential: U) => T | undefined) => T,
+    malformedHandler: <U>(credential: Credential | undefined, converterFunction: (credential: U | undefined) => T | undefined) => T,
 ): Credential | T {
     try {
         // properly returned credentials can be stringified
