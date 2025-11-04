@@ -8,7 +8,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -26,13 +25,6 @@ import dayjs from 'dayjs/esm';
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseTutorialGroupsComponent {
-    private readonly EMPTY_TUTORIAL_UNIT_GROUPS: AccordionGroups = {
-        registeredGroups: { entityData: [] },
-        furtherGroups: { entityData: [] },
-        allGroups: { entityData: [] },
-        currentTutorialLecture: { entityData: [] },
-        furtherTutorialLectures: { entityData: [] },
-    };
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
         registeredGroups: false,
         allGroups: true,
@@ -44,7 +36,7 @@ export class CourseTutorialGroupsComponent {
         registeredGroups: false,
         allGroups: false,
         furtherGroups: false,
-        currentTutorialLecture: true,
+        currentTutorialLecture: false,
         furtherTutorialLectures: false,
     };
 
@@ -53,9 +45,9 @@ export class CourseTutorialGroupsComponent {
     private alertService = inject(AlertService);
     private courseStorageService = inject(CourseStorageService);
     private tutorialGroupService = inject(TutorialGroupsService);
+    private lectureService = inject(LectureService);
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
-    private lectureService = inject(LectureService);
 
     courseId = this.getCurrentCourseIdSignal();
     tutorialGroups = signal<TutorialGroup[]>([]);
@@ -150,7 +142,7 @@ export class CourseTutorialGroupsComponent {
         const tutorialGroupCardElements = this.courseOverviewService.mapTutorialGroupsToSidebarCardElements(tutorialGroups);
         const tutorialLectureCardElements = this.courseOverviewService.mapTutorialLecturesToSidebarCardElements(tutorialLectures);
         const cardElements = [...tutorialGroupCardElements, ...tutorialLectureCardElements];
-        const accordionGroups = this.createAccordionGroups(tutorialGroups, tutorialLectures);
+        const accordionGroups: AccordionGroups = this.createAccordionGroups(tutorialGroups, tutorialLectures);
         this.sidebarData.set({
             groupByCategory: true,
             storageId: 'tutorialGroup',
@@ -160,7 +152,13 @@ export class CourseTutorialGroupsComponent {
     }
 
     private createAccordionGroups(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]): AccordionGroups {
-        const accordionGroups = cloneDeep(this.EMPTY_TUTORIAL_UNIT_GROUPS) as AccordionGroups;
+        const accordionGroups: AccordionGroups = {
+            registeredGroups: { entityData: [] },
+            furtherGroups: { entityData: [] },
+            allGroups: { entityData: [] },
+            currentTutorialLecture: { entityData: [] },
+            furtherTutorialLectures: { entityData: [] },
+        };
         let tutorialGroupCategory: TutorialGroupCategory;
 
         const hasUserAtLeastOneTutorialGroup = tutorialGroups.some((tutorialGroup) => tutorialGroup.isUserRegistered || tutorialGroup.isUserTutor);
@@ -175,12 +173,12 @@ export class CourseTutorialGroupsComponent {
         });
 
         const now = dayjs();
-        const nonEndedLectures = tutorialLectures.filter((lecture) => lecture.startDate && lecture.endDate && lecture.endDate.isAfter(now));
-        const earliestNonEndedLecture =
-            nonEndedLectures.length === 0 ? undefined : nonEndedLectures.reduce((earliest, current) => (current.startDate!.isBefore(earliest.startDate!) ? current : earliest));
+        const currentLectures = tutorialLectures.filter((lecture) => lecture.startDate!.isSameOrBefore(now) && now.isSameOrBefore(lecture.endDate));
+        const earliestCurrentLecture =
+            currentLectures.length === 0 ? undefined : currentLectures.reduce((earliest, current) => (current.startDate!.isBefore(earliest.startDate!) ? current : earliest));
         tutorialLectures.forEach((tutorialLecture) => {
             const tutorialLectureCardItem = this.courseOverviewService.mapTutorialLectureToSidebarCardElement(tutorialLecture);
-            const isCurrentTutorialLecture = earliestNonEndedLecture ? tutorialLecture.id === earliestNonEndedLecture.id : false;
+            const isCurrentTutorialLecture = earliestCurrentLecture ? tutorialLecture.id === earliestCurrentLecture.id : false;
             tutorialGroupCategory = isCurrentTutorialLecture ? 'currentTutorialLecture' : 'furtherTutorialLectures';
             accordionGroups[tutorialGroupCategory].entityData.push(tutorialLectureCardItem);
         });

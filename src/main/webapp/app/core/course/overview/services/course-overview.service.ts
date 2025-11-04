@@ -18,7 +18,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/shared/types/sidebar';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
@@ -307,6 +307,7 @@ export class CourseOverviewService {
     mapExercisesToSidebarCardElements(exercises: Exercise[]) {
         return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
     }
+
     mapExamsToSidebarCardElements(exams: Exam[], studentExams?: StudentExam[]) {
         return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams?.[index]));
     }
@@ -404,7 +405,7 @@ export class CourseOverviewService {
         }
     }
 
-    private computeTutorialSidebarCardSubtitles(start?: dayjs.Dayjs, end?: dayjs.Dayjs): [string?, string?] {
+    private computeTutorialSidebarCardSubtitles(start?: Dayjs, end?: Dayjs): [string?, string?] {
         const subtitleLeft = start?.format('MMM DD, YYYY');
         if (!subtitleLeft) {
             return [this.translate.instant('artemisApp.courseOverview.sidebar.noUpcomingSession'), undefined];
