@@ -73,7 +73,7 @@ artemis:
       atlasml:
         enabled: true
         base-url: https://fake.fake
-        auth-token: face-token
+        auth-token: fake-token
     apollon:
         conversion-service-url: http://localhost:8080
     telemetry:
