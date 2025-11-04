@@ -175,7 +175,9 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
             this.lecture.set(lecture ?? new Lecture());
-            this.isTutorialLecture.set(lecture.tutorialLecture);
+            if (lecture) {
+                this.isTutorialLecture.set(lecture.isTutorialLecture);
+            }
             const course = data['course'];
             if (course) {
                 this.lecture().course = course;
