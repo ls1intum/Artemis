@@ -86,22 +86,22 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     crop = true;
 
     /** Whether some elements are interactive in the apollon editor. */
-    get hasInteractive(): boolean {
+    hasInteractive = computed(() => {
         return (
             !!this.apollonEditor &&
             (Object.entries(this.apollonEditor.model.interactive.elements).some(([, selected]) => selected) ||
                 Object.entries(this.apollonEditor.model.interactive.relationships).some(([, selected]) => selected))
         );
-    }
+    });
 
     /** Whether some elements are selected in the apollon editor. */
-    get hasSelection(): boolean {
+    hasSelection = computed(() => {
         return (
             !!this.apollonEditor &&
             (Object.entries(this.apollonEditor.selection.elements).some(([, selected]) => selected) ||
                 Object.entries(this.apollonEditor.selection.relationships).some(([, selected]) => selected))
         );
-    }
+    });
 
     // Icons
     faDownload = faDownload;
@@ -261,7 +261,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @async
      */
     async generateExercise() {
-        if (!this.hasInteractive) {
+        if (!this.hasInteractive()) {
             this.alertService.error('artemisApp.apollonDiagram.create.validationError');
             return;
         }
@@ -281,7 +281,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @async
      */
     async downloadSelection() {
-        if (!this.hasSelection) {
+        if (!this.hasSelection()) {
             return;
         }
 
