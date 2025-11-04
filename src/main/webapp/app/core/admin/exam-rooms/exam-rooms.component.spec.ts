@@ -111,7 +111,6 @@ describe('ExamRoomsComponentTest', () => {
             ...uploadedRoom,
             defaultCapacity: 30,
             maxCapacity: 30,
-            layoutStrategyNames: 'default',
         });
     });
 
