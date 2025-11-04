@@ -90,7 +90,7 @@
                     </thead>
                     @if (hasExamRoomData()) {
                         <tbody>
-                            @for (examRoom of examRoomData(); track examRoom.id) {
+                            @for (examRoom of examRoomData(); track examRoom.roomNumber) {
                                 <tr>
                                     <td>
                                         <span>{{ examRoom.roomNumber }}</span>
