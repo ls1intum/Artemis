@@ -269,6 +269,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         if (this.apollonEditor && this.apollonDiagram()) {
             const isSaved = await this.saveDiagram();
             if (isSaved) {
+                const course = this.course();
+                if (!course) {
+                    return;
+                }
                 const question = await generateDragAndDropQuizExercise(this.course(), this.apollonDiagram().title!, this.apollonEditor.model!);
                 this.closeEdit.emit(question);
             }
