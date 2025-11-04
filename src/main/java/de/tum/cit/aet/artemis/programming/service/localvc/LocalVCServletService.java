@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -111,6 +112,8 @@ public class LocalVCServletService {
 
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
 
@@ -129,7 +132,8 @@ public class LocalVCServletService {
             RepositoryAccessService repositoryAccessService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService,
+            ExerciseVersionService exerciseVersionService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -142,6 +146,7 @@ public class LocalVCServletService {
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -377,7 +382,6 @@ public class LocalVCServletService {
      * @param authorizationHeader  the authorization header containing authentication credentials
      * @param exercise             the programming exercise the user is attempting to access
      * @param localVCRepositoryUri the URI of the local version control repository the user is attempting to access
-     *
      * @return the authenticated {@link User} if authentication is successful
      * @throws LocalVCAuthException    if an error occurs during authentication with the local version control system
      * @throws AuthenticationException if the authentication credentials are invalid or authentication fails
@@ -756,6 +760,10 @@ public class LocalVCServletService {
         }
 
         try {
+            if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
+                exerciseVersionService.createExerciseVersion(exercise, user);
+            }
+
             if (repositoryType.equals(RepositoryType.TESTS)) {
                 processNewPushToTestOrAuxRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
                 return;
