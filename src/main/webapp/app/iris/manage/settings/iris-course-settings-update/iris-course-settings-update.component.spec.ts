@@ -88,6 +88,11 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(comp.canDeactivateWarning).toBe('Warning');
     });
 
+    it('Can deactivate when settingsUpdateComponent is undefined', () => {
+        expect(comp.canDeactivate()).toBeTrue();
+        expect(comp.canDeactivateWarning).toBeUndefined();
+    });
+
     it('Saves settings correctly', () => {
         fixture.detectChanges();
         const irisSettings = mockSettings();
