@@ -282,6 +282,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     it('should save the problem statement to the server', () => {
         fixture.componentRef.setInput('programmingExercise', exercise);
         fixture.componentRef.setInput('editMode', true);
+        // This is what happens in Artemis, it sends changes to the parent, the
+        // parent updates the inputs in turn (the parent component is not there in tests
+        // we have to simulate it)
+        comp.programmingExerciseChange.subscribe((change) => fixture.componentRef.setInput('programmingExercise', change));
 
         const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
