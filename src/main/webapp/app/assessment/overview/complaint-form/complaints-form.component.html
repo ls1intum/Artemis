@@ -1,11 +1,11 @@
-@if (isCurrentUserSubmissionAuthor) {
+@if (isCurrentUserSubmissionAuthor()) {
     <div class="col-12 mt-4">
         <div class="row">
             <div class="col-12 col-md-6">
-                <h3 [jhiTranslate]="complaintType === ComplaintType.COMPLAINT ? 'artemisApp.complaint.title' : 'artemisApp.moreFeedback.title'"></h3>
-                @if (complaintType !== ComplaintType.COMPLAINT) {
+                <h3 [jhiTranslate]="complaintType() === ComplaintType.COMPLAINT ? 'artemisApp.complaint.title' : 'artemisApp.moreFeedback.title'"></h3>
+                @if (complaintType() !== ComplaintType.COMPLAINT) {
                     <p>
-                        {{ (exercise.teamMode ? 'artemisApp.moreFeedback.descriptionTeam' : 'artemisApp.moreFeedback.description') | artemisTranslate }}
+                        {{ (exercise().teamMode ? 'artemisApp.moreFeedback.descriptionTeam' : 'artemisApp.moreFeedback.description') | artemisTranslate }}
                         {{ 'artemisApp.moreFeedback.info' | artemisTranslate }}
                     </p>
                 }
@@ -14,18 +14,20 @@
         <div class="row">
             <div class="col-12 col-md-6">
                 <p>
-                    @if (exercise.teamMode) {
+                    @if (exercise().teamMode) {
                         <span
-                            [jhiTranslate]="complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.beDescriptiveTeam' : 'artemisApp.complaint.beDescriptiveTeam'"
+                            [jhiTranslate]="
+                                complaintType() === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.beDescriptiveTeam' : 'artemisApp.complaint.beDescriptiveTeam'
+                            "
                         ></span>
                     }
-                    @if (!exercise.teamMode) {
+                    @if (!exercise().teamMode) {
                         <span
-                            [jhiTranslate]="complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.beDescriptive' : 'artemisApp.complaint.beDescriptive'"
+                            [jhiTranslate]="complaintType() === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.beDescriptive' : 'artemisApp.complaint.beDescriptive'"
                         ></span>
                     }
                 </p>
-                @if (!examId) {
+                @if (!examId()) {
                     <p jhiTranslate="artemisApp.complaint.exclusivityDisclaimer"></p>
                 }
                 <div class="d-flex flex-column">
@@ -41,7 +43,7 @@
                             (click)="createComplaint()"
                         >
                             {{
-                                complaintType === ComplaintType.COMPLAINT
+                                complaintType() === ComplaintType.COMPLAINT
                                     ? ('artemisApp.complaint.submit' | artemisTranslate)
                                     : ('artemisApp.moreFeedback.button' | artemisTranslate)
                             }}
