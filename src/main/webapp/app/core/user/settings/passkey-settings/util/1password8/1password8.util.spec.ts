@@ -130,11 +130,11 @@ describe('1Password8 Util', () => {
             expect(credential).toBeDefined();
             expect(credential?.id).toBe('minimal-id');
             expect(credential?.response.clientDataJSON).toBeDefined();
-            expect(credential?.response.attestationObject).toBeUndefined();
-            expect(credential?.response.authenticatorData).toBeUndefined();
-            expect(credential?.response.publicKey).toBeUndefined();
-            expect(credential?.response.publicKeyAlgorithm).toBeUndefined();
-            expect(credential?.response.transports).toBeUndefined();
+            expect(credential?.response.attestationObject).toBe('');
+            expect(credential?.response.authenticatorData).toBe('');
+            expect(credential?.response.publicKey).toBe('');
+            expect(credential?.response.publicKeyAlgorithm).toBe(0);
+            expect(credential?.response.transports).toEqual([]);
         });
 
         it('should handle login credential without optional fields', () => {
