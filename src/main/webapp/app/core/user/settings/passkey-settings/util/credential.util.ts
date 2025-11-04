@@ -25,7 +25,7 @@ import { Malformed1Password8LoginCredential } from 'app/core/user/settings/passk
  */
 function handleMalformedRegistrationCredential<T>(
     credential: Credential | undefined,
-    converterFunction: (credential: T) => SerializableRegistrationCredential | undefined,
+    converterFunction: (credential: T | undefined) => SerializableRegistrationCredential | undefined,
 ): SerializableRegistrationCredential {
     try {
         const malformedCredential = credential as T;
@@ -50,7 +50,7 @@ function handleMalformedRegistrationCredential<T>(
  */
 function handleMalformedLoginCredential<T>(
     credential: Credential | undefined,
-    converterFunction: (credential: T) => SerializableLoginCredential | undefined,
+    converterFunction: (credential: T | undefined) => SerializableLoginCredential | undefined,
 ): SerializableLoginCredential {
     try {
         const malformedCredential = credential as T;
