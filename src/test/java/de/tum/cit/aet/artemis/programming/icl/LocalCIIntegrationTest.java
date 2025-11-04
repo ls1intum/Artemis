@@ -67,8 +67,6 @@ import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Frame;
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
@@ -91,6 +89,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 // TODO re-enable tests. when Executed in isolation they work
@@ -122,11 +122,11 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     private String commitHash;
 
-    private IQueue<BuildJobQueueItem> queuedJobs;
+    private DistributedQueue<BuildJobQueueItem> queuedJobs;
 
-    private IMap<String, BuildJobQueueItem> processingJobs;
+    private DistributedMap<String, BuildJobQueueItem> processingJobs;
 
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
+    private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
@@ -173,9 +173,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         dockerClientTestService.mockInspectImage(dockerClient);
 
-        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
-        processingJobs = hazelcastInstance.getMap("processingJobs");
-        buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
+        queuedJobs = distributedDataAccessService.getDistributedBuildJobQueue();
+        processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
+        buildAgentInformation = distributedDataAccessService.getDistributedBuildAgentInformation();
     }
 
     @AfterEach
@@ -798,19 +798,18 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPauseAndResumeBuildAgent() {
         String buildAgentName = "artemis-build-agent-test";
-        hazelcastInstance.getTopic("pauseBuildAgentTopic").publish(buildAgentName);
+        distributedDataAccessService.getPauseBuildAgentTopic().publish(buildAgentName);
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
         await().until(() -> {
-            IMap<String, BuildJobQueueItem> buildJobMap = hazelcastInstance.getMap("processingJobs");
+            List<String> buildJobIds = distributedDataAccessService.getProcessingJobIds();
             BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
-
-            return buildJobQueueItem != null && buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash) && !buildJobMap.containsKey(buildJobQueueItem.id());
+            return buildJobQueueItem != null && buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash) && !buildJobIds.contains(buildJobQueueItem.id());
         });
 
-        hazelcastInstance.getTopic("resumeBuildAgentTopic").publish(buildAgentName);
+        distributedDataAccessService.getResumeBuildAgentTopic().publish(buildAgentName);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
     }
 
@@ -826,6 +825,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
+
+        var queuedJobs = distributedDataAccessService.getQueuedJobs();
 
         await().until(() -> queuedJobs.stream().anyMatch(buildJobQueueItem -> buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash)
                 && buildJobQueueItem.participationId() == studentParticipation.getId()));
@@ -858,7 +859,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         processingJobs.put(buildJobQueueItem.id(), buildJobQueueItem);
         var submissionDto = request.get("/api/programming/programming-exercise-participations/" + submission.getParticipation().getId() + "/latest-pending-submission",
                 HttpStatus.OK, SubmissionDTO.class);
-        processingJobs.delete(buildJobQueueItem.id());
+        processingJobs.remove(buildJobQueueItem.id());
 
         assertThat(submissionDto).isNotNull();
         assertThat(submissionDto.isProcessing()).isTrue();
@@ -868,7 +869,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Test
     void testSelfPauseTriggersListenerAndEmailNotification() {
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         BuildAgentDTO buildAgentDTO = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
         BuildAgentInformation buildAgent = new BuildAgentInformation(buildAgentDTO, 0, 0, new ArrayList<>(List.of()), BuildAgentInformation.BuildAgentStatus.IDLE, null, null, 100);
         buildAgentInformation.put(memberAddress, buildAgent);
