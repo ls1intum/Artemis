@@ -24,11 +24,6 @@ describe('Bitwarden Util', () => {
             expect(result1).toBe(result2);
         });
 
-        it('should return undefined for null input', () => {
-            const result = convertToBase64(null);
-            expect(result).toBeUndefined();
-        });
-
         it('should return undefined for undefined input', () => {
             const result = convertToBase64(undefined);
             expect(result).toBeUndefined();
@@ -145,8 +140,8 @@ describe('Bitwarden Util', () => {
             ]);
         });
 
-        it('should return undefined for a null input', () => {
-            const credential = getRegistrationCredentialFromMalformedBitwardenObject(null);
+        it('should return undefined for an undefined input', () => {
+            const credential = getRegistrationCredentialFromMalformedBitwardenObject(undefined);
             expect(credential).toBeUndefined();
         });
 
@@ -160,7 +155,7 @@ describe('Bitwarden Util', () => {
                     clientDataJSON: { 0: 123, 1: 125 },
                 },
                 getClientExtensionResults: () => ({}),
-            } as unknown as MalformedBitwardenRegistrationCredential;
+            } as MalformedBitwardenRegistrationCredential;
 
             const credential = getRegistrationCredentialFromMalformedBitwardenObject(minimalCredential);
 
@@ -205,8 +200,8 @@ describe('Bitwarden Util', () => {
             expectBase64UrlFieldsForLogin(credential, ['rawId', 'response.clientDataJSON', 'response.authenticatorData', 'response.signature', 'response.userHandle']);
         });
 
-        it('should return undefined for a null input', () => {
-            const credential = getLoginCredentialFromMalformedBitwardenObject(null);
+        it('should return undefined for an undefined input', () => {
+            const credential = getLoginCredentialFromMalformedBitwardenObject(undefined);
             expect(credential).toBeUndefined();
         });
 
@@ -220,7 +215,7 @@ describe('Bitwarden Util', () => {
                     clientDataJSON: { 0: 123, 1: 125 },
                 },
                 getClientExtensionResults: () => ({}),
-            } as unknown as MalformedBitwardenLoginCredential;
+            } as MalformedBitwardenLoginCredential;
 
             const credential = getLoginCredentialFromMalformedBitwardenObject(minimalCredential);
 

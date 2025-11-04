@@ -11,7 +11,7 @@ describe('credential util helper method', () => {
         });
 
         it('should return the credential if it can be stringified', () => {
-            const validCredential = { id: '123' } as unknown as Credential;
+            const validCredential = { id: '123' } as Credential;
             const result = getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(validCredential);
             expect(result).toEqual(validCredential);
         });
@@ -63,7 +63,7 @@ describe('credential util helper method', () => {
 
         it('should throw InvalidCredentialError if credential is invalid', () => {
             jest.spyOn(console, 'warn').mockImplementation(() => {});
-            expect(() => getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(null)).toThrow(InvalidCredentialError);
+            expect(() => getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(undefined)).toThrow(InvalidCredentialError);
         });
 
         /**
@@ -71,7 +71,7 @@ describe('credential util helper method', () => {
          */
         it('should throw InvalidCredentialError if the credential cannot be processed', () => {
             jest.spyOn(console, 'warn').mockImplementation(() => {}); // Suppress console warnings in the test
-            const malformedCredential = { id: 'mock-id' } as unknown as Credential;
+            const malformedCredential = { id: 'mock-id' } as Credential;
 
             // Mock the toJSON method to simulate an error
             (malformedCredential as any).toJSON = () => {
@@ -90,7 +90,7 @@ describe('credential util helper method', () => {
         });
 
         it('should return the credential if it can be stringified', () => {
-            const validCredential = { id: '123' } as unknown as Credential;
+            const validCredential = { id: '123' } as Credential;
             const result = getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(validCredential);
             expect(result).toEqual(validCredential);
         });
@@ -136,7 +136,7 @@ describe('credential util helper method', () => {
 
         it('should throw InvalidCredentialError if credential is invalid', () => {
             jest.spyOn(console, 'warn').mockImplementation(() => {});
-            expect(() => getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(null)).toThrow(InvalidCredentialError);
+            expect(() => getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(undefined)).toThrow(InvalidCredentialError);
         });
 
         /**
@@ -144,7 +144,7 @@ describe('credential util helper method', () => {
          */
         it('should throw InvalidCredentialError if the credential cannot be processed', () => {
             jest.spyOn(console, 'warn').mockImplementation(() => {}); // Suppress console warnings in the test
-            const malformedCredential = { id: 'mock-id' } as unknown as Credential;
+            const malformedCredential = { id: 'mock-id' } as Credential;
 
             // Mock the toJSON method to simulate an error
             (malformedCredential as any).toJSON = () => {

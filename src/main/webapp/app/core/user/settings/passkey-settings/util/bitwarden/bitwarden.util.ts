@@ -10,7 +10,7 @@ import { MalformedBitwardenLoginCredential } from 'app/core/user/settings/passke
  * @param rawObject - which can be a record of numbers, null, or undefined.
  * @returns A Base64-encoded string representation of the object, or undefined if the input is invalid.
  */
-export function convertToBase64(rawObject: Record<string, number> | null | undefined): string | undefined {
+export function convertToBase64(rawObject: Record<string, number> | undefined): string | undefined {
     if (!rawObject || typeof rawObject !== 'object') {
         return undefined;
     }
@@ -35,7 +35,7 @@ export function convertToBase64(rawObject: Record<string, number> | null | undef
  * <p><strong>We fix the issue by creating a serializable copy of the object with its properties converted into the correct format.</strong></p>
  */
 export function getRegistrationCredentialFromMalformedBitwardenObject(
-    malformedBitwardenRegistrationCredential: MalformedBitwardenRegistrationCredential | null,
+    malformedBitwardenRegistrationCredential: MalformedBitwardenRegistrationCredential | undefined,
 ): SerializableRegistrationCredential | undefined {
     if (!malformedBitwardenRegistrationCredential) {
         return undefined;
@@ -75,7 +75,7 @@ export function getRegistrationCredentialFromMalformedBitwardenObject(
  * <p><strong>We fix the issue by creating a serializable copy of the object with its properties converted into the correct format.</strong></p>
  */
 export function getLoginCredentialFromMalformedBitwardenObject(
-    malformedBitwardenLoginCredential: MalformedBitwardenLoginCredential | null,
+    malformedBitwardenLoginCredential: MalformedBitwardenLoginCredential | undefined,
 ): SerializableLoginCredential | undefined {
     if (!malformedBitwardenLoginCredential) {
         return undefined;

@@ -15,6 +15,10 @@ export function expectBase64UrlFieldsForRegistration(credential: SerializableReg
     fields.forEach((fieldPath) => {
         const value = getNestedValue(credential, fieldPath);
 
+        if (value === undefined) {
+            throw new Error(`Expected registration credential field '${fieldPath}' to be defined`);
+        }
+
         expect(value).toMatch(base64UrlPattern);
     });
 }
@@ -32,6 +36,10 @@ export function expectBase64UrlFieldsForLogin(credential: SerializableLoginCrede
     fields.forEach((fieldPath) => {
         const value = getNestedValue(credential, fieldPath);
 
+        if (value === undefined) {
+            throw new Error(`Expected login credential field '${fieldPath}' to be defined`);
+        }
+
         expect(value).toMatch(base64UrlPattern);
     });
 }
@@ -39,7 +47,10 @@ export function expectBase64UrlFieldsForLogin(credential: SerializableLoginCrede
 /**
  * Helper function to get nested property value from an object using dot notation.
  * E.g., 'response.clientDataJSON' will access credential.response.clientDataJSON
+ *
+ * This is typed to return `string | undefined` because the fields we inspect
+ * are base64url-encoded strings in the serializable credential types.
  */
-function getNestedValue(obj: any, path: string): any {
-    return path.split('.').reduce((current, key) => current?.[key], obj);
+function getNestedValue(obj: SerializableRegistrationCredential | SerializableLoginCredential | undefined, path: string): string | undefined {
+    return path.split('.').reduce((current: any, key: string) => current?.[key], obj) as string | undefined;
 }

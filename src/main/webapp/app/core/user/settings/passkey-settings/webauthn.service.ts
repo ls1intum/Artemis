@@ -58,7 +58,7 @@ export class WebauthnService {
             const authenticatorCredential = await navigator.credentials.create({
                 publicKey: credentialOptions,
             });
-            const credential = getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential);
+            const credential = getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential ?? undefined);
 
             await this.webauthnApiService.registerPasskey({
                 publicKey: {

@@ -24,7 +24,7 @@ import { Malformed1Password8LoginCredential } from 'app/core/user/settings/passk
  * @throws InvalidCredentialError if the conversion fails
  */
 function handleMalformedRegistrationCredential<T>(
-    credential: Credential | null,
+    credential: Credential | undefined,
     converterFunction: (credential: T) => SerializableRegistrationCredential | undefined,
 ): SerializableRegistrationCredential {
     try {
@@ -49,7 +49,7 @@ function handleMalformedRegistrationCredential<T>(
  * @throws InvalidCredentialError if the conversion fails
  */
 function handleMalformedLoginCredential<T>(
-    credential: Credential | null,
+    credential: Credential | undefined,
     converterFunction: (credential: T) => SerializableLoginCredential | undefined,
 ): SerializableLoginCredential {
     try {
@@ -77,11 +77,11 @@ function handleMalformedLoginCredential<T>(
  * @throws {@link InvalidCredentialError} if the credential cannot be processed.
  */
 function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends SerializableRegistrationCredential | SerializableLoginCredential>(
-    credential: Credential | null,
+    credential: Credential | undefined,
     credentialType: 'registration' | 'login',
-    bitwardenConverter: (malformedBitwardenCredential: MalformedBitwardenRegistrationCredential | MalformedBitwardenLoginCredential | null) => T | undefined,
-    onePassword8Converter: (malformed1Password8Credential: Malformed1password8RegistrationCredential | Malformed1Password8LoginCredential | null) => T | undefined,
-    malformedHandler: <U>(credential: Credential | null, converterFunction: (credential: U) => T | undefined) => T,
+    bitwardenConverter: (malformedBitwardenCredential: MalformedBitwardenRegistrationCredential | MalformedBitwardenLoginCredential | undefined) => T | undefined,
+    onePassword8Converter: (malformed1Password8Credential: Malformed1password8RegistrationCredential | Malformed1Password8LoginCredential | undefined) => T | undefined,
+    malformedHandler: <U>(credential: Credential | undefined, converterFunction: (credential: U) => T | undefined) => T,
 ): Credential | T {
     try {
         // properly returned credentials can be stringified
@@ -124,7 +124,7 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
  * @param credential - The registration credential to process
  * @throws {@link InvalidCredentialError} if the credential cannot be processed.
  */
-export function getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(credential: Credential | null): Credential | SerializableRegistrationCredential {
+export function getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(credential: Credential | undefined): Credential | SerializableRegistrationCredential {
     return getCredentialWithGracefullyHandlingAuthenticatorIssues<SerializableRegistrationCredential>(
         credential,
         'registration',
@@ -146,7 +146,7 @@ export function getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssu
  * @param credential - The login credential to process
  * @throws {@link InvalidCredentialError} if the credential cannot be processed.
  */
-export function getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(credential: Credential | null): Credential | SerializableLoginCredential {
+export function getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(credential: Credential | undefined): Credential | SerializableLoginCredential {
     return getCredentialWithGracefullyHandlingAuthenticatorIssues<SerializableLoginCredential>(
         credential,
         'login',

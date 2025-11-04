@@ -10,7 +10,7 @@ import { Malformed1Password8LoginCredential } from 'app/core/user/settings/passk
  * @param malformed1Password8RegistrationCredential
  */
 export function getRegistrationCredentialFromMalformed1Password8Object(
-    malformed1Password8RegistrationCredential: Malformed1password8RegistrationCredential | null,
+    malformed1Password8RegistrationCredential: Malformed1password8RegistrationCredential | undefined,
 ): SerializableRegistrationCredential | undefined {
     if (!malformed1Password8RegistrationCredential) {
         return undefined;
@@ -51,7 +51,7 @@ export function getRegistrationCredentialFromMalformed1Password8Object(
  * @param malformed1Password8LoginCredential
  */
 export function getLoginCredentialFromMalformed1Password8Object(
-    malformed1Password8LoginCredential: Malformed1Password8LoginCredential | null,
+    malformed1Password8LoginCredential: Malformed1Password8LoginCredential | undefined,
 ): SerializableLoginCredential | undefined {
     if (!malformed1Password8LoginCredential) {
         return undefined;
