@@ -106,6 +106,17 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     Set<ModelingExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
 
     /**
+     * Finds a ModelingExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or example submissions.
+     * Basic ModelingExercise fields (exampleSolutionModel, exampleSolutionExplanation, diagramType) are already included in the entity.
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return {@link ModelingExercise}
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    Optional<ModelingExercise> findForVersioningById(long exerciseId);
+
+    /**
      * Finds a modeling exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
      *
      * @param title    the title of the exercise

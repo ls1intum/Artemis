@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -23,6 +24,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
@@ -39,6 +41,7 @@ import org.springframework.util.FileSystemUtils;
 import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.File;
@@ -194,9 +197,79 @@ public class RepositoryService {
         return getFileContentFromBareRepositoryForCommitId(repository, headCommitId);
     }
 
+    /**
+     * Retrieves the contents of text-based files from the latest commit in a bare repository identified by its URI.
+     * If the bare repository is unavailable, falls back to retrieving files from the checked-out repository.
+     * Binary files, as defined by {@link BinaryFileExtensionConfiguration}, are excluded.
+     *
+     * @param repositoryUri the {@link LocalVCRepositoryUri} identifying the repository location.
+     * @return a {@link Map} where keys are file paths and values are file contents as UTF-8 strings.
+     * @throws IOException if an error occurs while accessing the repository.
+     */
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri) throws IOException {
         try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
             return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
+        }
+        catch (GitException exception) {
+            log.debug("Bare repository for {} is unavailable, falling back to checked out repository", repositoryUri, exception);
+            return getFilesContentFromCheckedOutRepository(repositoryUri, null);
+        }
+    }
+
+    /**
+     * Retrieves the contents of text-based files from the most recent commit on or before the specified deadline.
+     * Traverses the commit history from HEAD in descending commit time order and selects the first commit whose
+     * committer time is less than or equal to the provided deadline.
+     * Binary files and symlinks are excluded.
+     *
+     * @param repository the JGit {@link Repository} instance representing the bare repository.
+     * @param deadline   the cutoff time; selects the last commit at or before this instant. If null, falls back to HEAD.
+     * @return a map from file paths to UTF-8 content at the selected commit. Empty if no such commit exists.
+     * @throws IOException if an error occurs while accessing the repository.
+     */
+    public Map<String, String> getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(Repository repository, ZonedDateTime deadline) throws IOException {
+        if (deadline == null) {
+            return getFilesContentFromBareRepositoryForLastCommit(repository);
+        }
+
+        ObjectId headCommitId = repository.resolve("HEAD");
+        if (headCommitId == null) {
+            log.warn("Cannot resolve HEAD. The repository might be empty.");
+            return Map.of();
+        }
+
+        long epochSeconds = deadline.toInstant().getEpochSecond();
+        try (RevWalk walk = new RevWalk(repository)) {
+            walk.markStart(walk.parseCommit(headCommitId));
+            walk.sort(RevSort.COMMIT_TIME_DESC, true);
+
+            for (RevCommit commit : walk) {
+                if (((long) commit.getCommitTime()) <= epochSeconds) {
+                    return getFileContentFromBareRepositoryForCommitId(repository, commit.getId());
+                }
+            }
+        }
+
+        // No commit older than or equal to deadline
+        return Map.of();
+    }
+
+    /**
+     * Variant that opens the bare repository from a {@link LocalVCRepositoryUri} and applies
+     * {@link #getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(Repository, ZonedDateTime)}.
+     *
+     * @param repositoryUri the repository URI to open
+     * @param deadline      the deadline for the last commit
+     * @return a mapping of file paths to their content
+     * @throws IOException if an I/O error occurs
+     */
+    public Map<String, String> getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(LocalVCRepositoryUri repositoryUri, ZonedDateTime deadline) throws IOException {
+        try (Repository bareRepository = gitService.getBareRepository(repositoryUri, false)) {
+            return getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(bareRepository, deadline);
+        }
+        catch (GitException exception) {
+            log.debug("Bare repository for {} before deadline {} is unavailable, falling back to checked out repository", repositoryUri, deadline, exception);
+            return getFilesContentFromCheckedOutRepository(repositoryUri, deadline);
         }
     }
 
@@ -252,6 +325,18 @@ public class RepositoryService {
         }
         revWalk.close();
         return filesWithContent;
+    }
+
+    private Map<String, String> getFilesContentFromCheckedOutRepository(LocalVCRepositoryUri repositoryUri, ZonedDateTime deadline) throws IOException {
+        try (Repository checkedOutRepository = gitService.getOrCheckoutRepository(repositoryUri, true, false)) {
+            if (deadline == null) {
+                return getFilesContentFromBareRepositoryForLastCommit(checkedOutRepository);
+            }
+            return getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(checkedOutRepository, deadline);
+        }
+        catch (GitAPIException | GitException e) {
+            throw new IOException("Failed to retrieve repository content for " + repositoryUri, e);
+        }
     }
 
     /**
