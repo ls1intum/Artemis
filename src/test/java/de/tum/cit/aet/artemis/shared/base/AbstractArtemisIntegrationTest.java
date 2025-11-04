@@ -213,7 +213,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @BeforeEach
     void resetParticipantScoreScheduler() {
         // Prevents the ParticipantScoreScheduleService from scheduling tasks related to prior results
-        ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now()));
+        // Subtract a small safety margin to ensure new results created immediately after the reset are picked up by the scheduler
+        ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now().minusSeconds(1)));
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
         participantScoreScheduleService.activate();
     }
