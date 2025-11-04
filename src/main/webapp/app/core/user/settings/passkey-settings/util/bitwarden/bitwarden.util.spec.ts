@@ -145,25 +145,30 @@ describe('Bitwarden Util', () => {
             expect(credential).toBeUndefined();
         });
 
-        it('should handle undefined optional fields gracefully', () => {
-            const minimalCredential = {
+        it('should handle all required fields', () => {
+            const minimalCredential: MalformedBitwardenRegistrationCredential = {
                 id: 'minimal-id',
                 rawId: { 0: 1, 1: 2 },
                 type: 'public-key',
                 authenticatorAttachment: 'platform',
                 response: {
                     clientDataJSON: { 0: 123, 1: 125 },
+                    attestationObject: { 0: 1, 1: 2, 2: 3 },
+                    getAuthenticatorData: () => ({ 0: 4, 1: 5, 2: 6 }),
+                    getPublicKey: () => ({ 0: 7, 1: 8, 2: 9 }),
+                    getPublicKeyAlgorithm: () => -7,
+                    getTransports: () => ['usb'],
                 },
                 getClientExtensionResults: () => ({}),
-            } as MalformedBitwardenRegistrationCredential;
+            };
 
             const credential = getRegistrationCredentialFromMalformedBitwardenObject(minimalCredential);
 
             expect(credential).toBeDefined();
             expect(credential?.id).toBe('minimal-id');
             expect(credential?.response.clientDataJSON).toBeDefined();
-            expect(credential?.response.attestationObject).toBeUndefined();
-            expect(credential?.response.publicKey).toBeUndefined();
+            expect(credential?.response.attestationObject).toBeDefined();
+            expect(credential?.response.publicKey).toBeDefined();
         });
     });
 
@@ -205,25 +210,28 @@ describe('Bitwarden Util', () => {
             expect(credential).toBeUndefined();
         });
 
-        it('should handle undefined optional fields gracefully', () => {
-            const minimalCredential = {
+        it('should handle all required fields', () => {
+            const minimalCredential: MalformedBitwardenLoginCredential = {
                 id: 'minimal-id',
                 rawId: { 0: 1, 1: 2 },
                 type: 'public-key',
                 authenticatorAttachment: 'platform',
                 response: {
                     clientDataJSON: { 0: 123, 1: 125 },
+                    authenticatorData: { 0: 10, 1: 11, 2: 12 },
+                    signature: { 0: 13, 1: 14, 2: 15 },
+                    userHandle: { 0: 16, 1: 17, 2: 18 },
                 },
                 getClientExtensionResults: () => ({}),
-            } as MalformedBitwardenLoginCredential;
+            };
 
             const credential = getLoginCredentialFromMalformedBitwardenObject(minimalCredential);
 
             expect(credential).toBeDefined();
             expect(credential?.id).toBe('minimal-id');
             expect(credential?.response.clientDataJSON).toBeDefined();
-            expect(credential?.response.signature).toBeUndefined();
-            expect(credential?.response.userHandle).toBeUndefined();
+            expect(credential?.response.signature).toBeDefined();
+            expect(credential?.response.userHandle).toBeDefined();
         });
     });
 });
