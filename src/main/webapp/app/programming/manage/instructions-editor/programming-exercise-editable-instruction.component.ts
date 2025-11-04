@@ -204,8 +204,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     updateProblemStatement(problemStatement: string) {
         if (this.programmingExercise().problemStatement !== problemStatement) {
-            // TODO:
-            //this.programmingExerciseChange = { ...this.programmingExercise(), problemStatement };
+            this.programmingExerciseChange.emit({ ...this.programmingExercise(), problemStatement });
             this.unsavedChanges = true;
         }
         this.instructionChange.emit(problemStatement);
