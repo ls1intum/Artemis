@@ -7,13 +7,13 @@
                 </div>
                 <h5 class="mb-0">{{ knowledgeArea.title }}</h5>
             </div>
-            <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate" [ngTemplateOutletContext]="{ knowledgeArea: knowledgeArea }" />
+            <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate()" [ngTemplateOutletContext]="{ knowledgeArea: knowledgeArea }" />
         </div>
         <div [ngbCollapse]="!treeControl().isExpanded(knowledgeArea)" class="tree-indent">
             <ng-container matTreeNodeOutlet />
             @for (competency of knowledgeArea.competencies; track competency.id) {
                 <div class="card tree-card" [class.d-none]="!competency.isVisible">
-                    <ng-container [ngTemplateOutlet]="competencyTemplate" [ngTemplateOutletContext]="{ competency: competency, knowledgeArea: knowledgeArea }" />
+                    <ng-container [ngTemplateOutlet]="competencyTemplate()" [ngTemplateOutletContext]="{ competency: competency, knowledgeArea: knowledgeArea }" />
                 </div>
             }
             @if (!knowledgeArea.children?.length && !knowledgeArea.competencies?.length) {

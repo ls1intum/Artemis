@@ -41,6 +41,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
@@ -50,6 +52,7 @@ describe('IrisBaseChatbotComponent', () => {
     let httpService: jest.Mocked<IrisChatHttpService>;
     let wsMock: jest.Mocked<IrisWebsocketService>;
     let mockModalService: jest.Mocked<NgbModal>;
+    let accountService: AccountService;
 
     const statusMock = {
         currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
@@ -59,19 +62,8 @@ describe('IrisBaseChatbotComponent', () => {
     const mockUserService = {
         updateExternalLLMUsageConsent: jest.fn(),
     } as any;
-    let accountMock = {
-        userIdentity: { externalLLMUsageAccepted: dayjs() },
-        setUserAcceptedExternalLLMUsage: jest.fn(),
-        getAuthenticationState: jest.fn(),
-    } as any;
 
     beforeEach(async () => {
-        accountMock = {
-            userIdentity: { externalLLMUsageAccepted: dayjs() },
-            setUserAcceptedExternalLLMUsage: jest.fn(),
-            getAuthenticationState: jest.fn(),
-        } as any;
-
         await TestBed.configureTestingModule({
             declarations: [
                 IrisBaseChatbotComponent,
@@ -89,7 +81,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 { provide: HttpClient, useValue: {} },
-                { provide: AccountService, useValue: accountMock },
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
                 MockProvider(ActivatedRoute),
@@ -110,9 +102,11 @@ describe('IrisBaseChatbotComponent', () => {
                 httpService = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
                 wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
                 mockModalService = TestBed.inject(NgbModal) as jest.Mocked<NgbModal>;
+                accountService = TestBed.inject(AccountService);
                 component = fixture.componentInstance;
 
-                jest.spyOn(accountMock, 'getAuthenticationState').mockReturnValue(of());
+                accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
+                jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of());
 
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
                 fixture.detectChanges();
@@ -128,7 +122,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should set userAccepted to false if user has not accepted the external LLM usage policy', () => {
-        accountMock.userIdentity.externalLLMUsageAccepted = undefined;
+        accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
         component.ngOnInit();
         expect(component.userAccepted).toBeFalse();
     });
@@ -691,7 +685,13 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should switch to the selected session on session click', () => {
-        const mockSession: IrisSessionDTO = { id: 2, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Course 1' };
+        const mockSession: IrisSessionDTO = {
+            id: 2,
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
         const switchToSessionSpy = jest.spyOn(chatService, 'switchToSession').mockReturnValue();
 
         component.onSessionClick(mockSession);
@@ -787,7 +787,13 @@ describe('IrisBaseChatbotComponent', () => {
 
     describe('getSessionsBetween', () => {
         const mockDate = new Date('2025-06-23T12:00:00.000Z');
-        const sessionToday: IrisSessionDTO = { id: 1, creationDate: new Date('2025-06-23T10:00:00.000Z'), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Course 1' };
+        const sessionToday: IrisSessionDTO = {
+            id: 1,
+            creationDate: new Date('2025-06-23T10:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
         const sessionYesterday: IrisSessionDTO = {
             id: 2,
             creationDate: new Date('2025-06-22T12:00:00.000Z'),
