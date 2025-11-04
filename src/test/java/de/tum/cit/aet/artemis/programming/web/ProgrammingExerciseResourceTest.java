@@ -301,8 +301,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-exercise", HttpStatus.OK, byte[].class);
 
         // THEN
-        assertThat(result).isNotNull();
-        assertThat(result.length).isGreaterThan(0);
+        assertThat(result).as("Export result should not be null").isNotNull();
+        assertThat(result.length).as("Exported ZIP byte array should not be empty").isGreaterThan(0);
 
         String exerciseJson = extractExerciseJsonFromZip(result);
         assertThat(exerciseJson).as("Exported exercise JSON should not be blank").isNotBlank();
@@ -313,7 +313,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(json.has("categories")).as("Exported exercise JSON should contain a 'categories' field").isTrue();
         var categoriesArray = json.get("categories");
         assertThat(categoriesArray.isArray()).as("'categories' field should be an array").isTrue();
-        assertThat(categoriesArray).hasSize(2);
+        assertThat(categoriesArray).as("Categories array should contain 2 entries").hasSize(2);
 
         // Parse inner JSON strings (since categories are stored as stringified JSON)
         List<String> categoryNames = new ArrayList<>();
@@ -363,8 +363,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-exercise", HttpStatus.OK, byte[].class);
 
         // THEN
-        assertThat(result).isNotNull();
-        assertThat(result.length).isGreaterThan(0);
+        assertThat(result).as("Export result should not be null").isNotNull();
+        assertThat(result.length).as("Exported ZIP byte array should not be empty").isGreaterThan(0);
 
         String exerciseJson = extractExerciseJsonFromZip(result);
         assertThat(exerciseJson).as("Exported exercise JSON should not be blank").isNotBlank();

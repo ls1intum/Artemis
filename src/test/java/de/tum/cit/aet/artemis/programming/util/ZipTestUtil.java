@@ -125,10 +125,10 @@ public final class ZipTestUtil {
      */
     public static String extractExerciseJsonFromZip(byte[] zipBytes) throws IOException {
         try (var zis = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
-            java.util.zip.ZipEntry entry;
+            ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 if (entry.getName().endsWith(".json")) {
-                    return new String(zis.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                    return new String(zis.readAllBytes(), StandardCharsets.UTF_8);
                 }
             }
         }
