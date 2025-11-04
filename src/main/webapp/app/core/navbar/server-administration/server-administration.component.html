@@ -117,10 +117,12 @@
             </li>
         }
         @if (ltiEnabled()) {
-            <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">
-                <fa-icon [icon]="faPuzzlePiece" [fixedWidth]="true" />
-                <span jhiTranslate="global.menu.admin.lti"></span>
-            </a>
+            <li>
+                <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">
+                    <fa-icon [icon]="faPuzzlePiece" [fixedWidth]="true" />
+                    <span jhiTranslate="global.menu.admin.lti"></span>
+                </a>
+            </li>
         }
         @if (standardizedCompetenciesEnabled()) {
             <jhi-feature-overlay [enabled]="atlasEnabled()">

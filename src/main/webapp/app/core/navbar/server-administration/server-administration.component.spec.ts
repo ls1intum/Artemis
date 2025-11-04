@@ -4,12 +4,17 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ServerAdministrationComponent } from './server-administration.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { Component } from '@angular/core';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 
-describe('ServerAdministration', () => {
+@Component({ template: '' })
+class MockEmptyComponent {}
+
+describe('ServerAdministrationComponent', () => {
     let component: ServerAdministrationComponent;
     let fixture: ComponentFixture<ServerAdministrationComponent>;
 
@@ -17,13 +22,17 @@ describe('ServerAdministration', () => {
         await TestBed.configureTestingModule({
             imports: [
                 ServerAdministrationComponent,
-                RouterTestingModule,
                 TranslateModule.forRoot(),
-                MockDirective(HasAnyAuthorityDirective),
                 MockComponent(FeatureOverlayComponent),
+                RouterTestingModule.withRoutes([{ path: '**', component: MockEmptyComponent }]),
             ],
             providers: [provideHttpClient(), provideHttpClientTesting()],
-        }).compileComponents();
+        })
+            .overrideComponent(ServerAdministrationComponent, {
+                remove: { imports: [HasAnyAuthorityDirective] },
+                add: { imports: [MockHasAnyAuthorityDirective] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ServerAdministrationComponent);
         component = fixture.componentInstance;
@@ -46,10 +55,14 @@ describe('ServerAdministration', () => {
         fixture.detectChanges();
 
         const dropdownItem = fixture.debugElement.query(By.css('a[routerLink]'));
-        if (dropdownItem) {
-            dropdownItem.triggerEventHandler('click', null);
-            expect(collapseNavbarSpy).toHaveBeenCalled();
-        }
+        expect(dropdownItem).toBeTruthy();
+
+        const mockClickEvent = {
+            button: 0, // Simulates a primary (left) mouse click
+            preventDefault: () => {},
+        };
+        dropdownItem.triggerEventHandler('click', mockClickEvent);
+        expect(collapseNavbarSpy).toHaveBeenCalled();
     });
 
     it('should handle input properties correctly', () => {

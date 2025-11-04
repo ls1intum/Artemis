@@ -4,8 +4,14 @@ Client Tests
 
 **If you are new to client testing, it is highly recommended that you work through the** `testing part <https://angular.dev/guide/testing>`_ **of the angular tutorial.**
 
-We use `Jest <https://jestjs.io>`__ as our client testing framework.
-For mocking Angular dependencies, we use `NgMocks <https://www.npmjs.com/package/ng-mocks/>`_ for mocking the dependencies of an angular component.
+We use `Jest <https://jestjs.io>`__ as client testing framework.
+We use `NgMocks <https://www.npmjs.com/package/ng-mocks/>`_ for mocking the dependencies of an angular component.
+
+You can run all tests by invoking ``npm run testw8`` in the root directory of the Artemis project.
+If you want to run individual tests, you can use the following commands:
+
+1. Run all tests in a file: ``npm run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/manage/assess/file-upload-assessment\.component\.spec\.ts$'``
+2. Run all tests in a module or folder: ``npm run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/.*$'``
 
 General Test Pattern
 ====================
@@ -107,7 +113,6 @@ The following sections outline **best practices** for writing client tests in Ar
                     await TestBed.configureTestingModule({
                         imports: [
                             ArtemisTestModule,
-                            RouterTestingModule,
                             NgxDatatableModule,
                             ParticipationSubmissionComponent,
                             MockComponent(UpdatingResultComponent),
