@@ -14,13 +14,18 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * Service for exporting programming exercise repositories for Athena.
@@ -31,6 +36,8 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 public class AthenaRepositoryExportService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaRepositoryExportService.class);
+
+    private static final String ENTITY_NAME = "programmingExercise";
 
     /**
      * Set of valid instructor repository types that can be accessed by Athena (excludes AUXILIARY).
@@ -74,22 +81,35 @@ public class AthenaRepositoryExportService {
      * @param submissionId the id of the submission
      * @return Map of file paths to their textual contents
      * @throws IOException              if reading from the repository fails
-     * @throws IllegalStateException    if the repository URI is null
+     * @throws BadRequestAlertException if the repository URI is null
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
     public Map<String, String> getStudentRepositoryFilesContent(long exerciseId, Long submissionId) throws IOException {
         log.debug("Retrieving student repository file contents for exercise {}, submission {}", exerciseId, submissionId);
 
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        var submission = programmingSubmissionRepository.findById(submissionId).orElseThrow();
-        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(submission.getParticipation().getId());
-        var repoUri = participation.getVcsRepositoryUri();
-        if (repoUri == null) {
-            throw new IllegalStateException(
-                    "Repository URI is null for student participation " + participation.getId() + ". This may indicate that the student repository has not been set up yet.");
+        checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
+
+        ProgrammingSubmission submission = programmingSubmissionRepository.findByIdElseThrow(submissionId);
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(submission.getParticipation().getId());
+
+        // Validate that the submission belongs to the requested exercise
+        Long submissionExerciseId = participation.getExercise().getId();
+        if (!submissionExerciseId.equals(exerciseId)) {
+            throw new BadRequestAlertException("Submission " + submissionId + " does not belong to exercise " + exerciseId + " (belongs to exercise " + submissionExerciseId + ")",
+                    ENTITY_NAME, "submissionExerciseMismatch");
         }
-        ZonedDateTime deadline = programmingExercise.getDueDate();
+
+        LocalVCRepositoryUri repoUri = participation.getVcsRepositoryUri();
+        if (repoUri == null) {
+            throw new BadRequestAlertException(
+                    "Repository URI is null for student participation " + participation.getId() + ". This may indicate that the student repository has not been set up yet.",
+                    ENTITY_NAME, "invalid.student.repository.url");
+        }
+
+        // Athena currently does not fully support individual due dates, therefore we use the exercise due date instead of the individual due date
+        ZonedDateTime deadline = participation.getExercise().getDueDate();
         if (deadline != null) {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(repoUri, deadline);
         }
@@ -105,25 +125,27 @@ public class AthenaRepositoryExportService {
      * @param repositoryType the type of repository to retrieve (must be an Athena instructor repository type)
      * @return Map of file paths to their textual contents
      * @throws IOException              if reading from the repository fails
-     * @throws IllegalStateException    if the repository URI is null
+     * @throws BadRequestAlertException if the repository URI is null
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
-     * @throws IllegalArgumentException if the repository type is not an Athena instructor repository type
+     * @throws BadRequestAlertException if the repository type is not an Athena instructor repository type
      */
     public Map<String, String> getInstructorRepositoryFilesContent(long exerciseId, RepositoryType repositoryType) throws IOException {
         log.debug("Retrieving instructor repository file contents for exercise {}, repository type {}", exerciseId, repositoryType);
 
         if (!ATHENA_INSTRUCTOR_REPOSITORY_TYPES.contains(repositoryType)) {
-            throw new IllegalArgumentException(repositoryType + " is not a valid instructor repository type. Only " + ATHENA_INSTRUCTOR_REPOSITORY_TYPES + " are allowed.");
+            throw new BadRequestAlertException("Invalid instructor repository type", ENTITY_NAME, "invalid.instructor.repository.type",
+                    Map.of("repositoryType", repositoryType, "validTypes", ATHENA_INSTRUCTOR_REPOSITORY_TYPES));
         }
 
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
 
-        var repoUri = programmingExercise.getRepositoryURI(repositoryType);
+        LocalVCRepositoryUri repoUri = programmingExercise.getRepositoryURI(repositoryType);
         if (repoUri == null) {
-            throw new IllegalStateException("Repository URI is null for exercise " + exerciseId + " and repository type " + repositoryType + ". This may indicate that the "
-                    + repositoryType.name().toLowerCase() + " repository has not been set up yet.");
+            String errorKey = "invalid." + repositoryType.name().toLowerCase() + ".repository.url";
+            throw new BadRequestAlertException("Repository URI is null for exercise " + exerciseId + " and repository type " + repositoryType + ". This may indicate that the "
+                    + repositoryType.name().toLowerCase() + " repository has not been set up yet.", ENTITY_NAME, errorKey);
         }
         return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repoUri);
     }

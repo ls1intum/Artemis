@@ -31,11 +31,11 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 /**
@@ -68,10 +68,11 @@ public class ProgrammingExerciseDeletionResource {
 
     private final UserRepository userRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public ProgrammingExerciseDeletionResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
+            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseDeletionService programmingExerciseDeletionService, ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -79,6 +80,7 @@ public class ProgrammingExerciseDeletionResource {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -133,7 +135,7 @@ public class ProgrammingExerciseDeletionResource {
             exerciseDeletionService.reset(programmingExercise);
             exerciseDeletionService.cleanup(exerciseId);
         }
-
+        exerciseVersionService.createExerciseVersion(programmingExercise, user);
         return ResponseEntity.ok().build();
     }
 
@@ -153,6 +155,7 @@ public class ProgrammingExerciseDeletionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
         programmingExerciseDeletionService.deleteTasks(exercise.getId());
+        exerciseVersionService.createExerciseVersion(exercise);
         return ResponseEntity.noContent().build();
     }
 

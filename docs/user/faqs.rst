@@ -79,7 +79,7 @@ Additional IRIS Features: Automatic FAQ Rewriting
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Prerequisite:** You need to set up a working **IRIS** instance in your Artemis application.
-You can find a guide on how to do this in the :doc:`IRIS setup guide <../admin/setup/iris>`.
+You can find a guide on how to do this in the :doc:`IRIS setup guide <../admin/setup/pyris>`.
 The following video shows how to enable IRIS in your course:
 
   .. raw:: html
@@ -116,4 +116,3 @@ By clicking on a title, they can open a detail view showing the full question an
     :width: 1000
 .. |student-view| image:: communication/faq/student-view.png
     :width: 1000
-

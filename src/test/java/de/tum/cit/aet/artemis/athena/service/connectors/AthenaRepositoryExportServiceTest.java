@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -128,25 +129,26 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    void shouldThrowIllegalArgumentExceptionForInvalidRepositoryType() {
+    void shouldThrowBadRequestAlertExceptionForInvalidRepositoryType() {
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         var invalidRepositoryTypes = Set.of(RepositoryType.USER, RepositoryType.AUXILIARY);
         for (var invalidRepositoryType : invalidRepositoryTypes) {
-            assertThatExceptionOfType(IllegalArgumentException.class).as("Should throw IllegalArgumentException for invalid repository type: " + invalidRepositoryType)
+            assertThatExceptionOfType(BadRequestAlertException.class).as("Should throw BadRequestAlertException for invalid repository type: " + invalidRepositoryType)
                     .isThrownBy(() -> athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), invalidRepositoryType))
-                    .withMessageContaining("is not a valid instructor repository type").withMessageContaining(invalidRepositoryType.toString());
+                    .withMessageContaining("Invalid instructor repository type")
+                    .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("invalid.instructor.repository.type"));
         }
     }
 
     @Test
-    void shouldThrowIllegalArgumentExceptionWhenFeedbackSuggestionModuleIsNull() {
+    void shouldThrowBadRequestAlertExceptionWhenFeedbackSuggestionModuleIsNull() {
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setFeedbackSuggestionModule(null);
 
-        assertThatExceptionOfType(IllegalArgumentException.class).as("Should throw IllegalArgumentException when feedback suggestion module is null")
+        assertThatExceptionOfType(BadRequestAlertException.class).as("Should throw BadRequestAlertException when feedback suggestion module is null")
                 .isThrownBy(() -> athenaModuleService.getAthenaModuleUrl(programmingExercise))
                 .withMessageContaining("Exercise does not have a feedback suggestion module configured");
     }

@@ -45,6 +45,8 @@ public class AthenaModuleService {
     @Value("#{'${artemis.athena.restricted-modules:}'}")
     private List<String> restrictedModules;
 
+    private static final String ENTITY_NAME = "exercise";
+
     private static final Logger log = LoggerFactory.getLogger(AthenaModuleService.class);
 
     private final RestTemplate shortTimeoutRestTemplate;
@@ -111,11 +113,11 @@ public class AthenaModuleService {
      *
      * @param exercise The exercise for which the URL to Athena should be returned
      * @return The URL prefix to access the Athena module. Example: <a href="http://athena.example.com/modules/text/module_text_cofee"></a>
-     * @throws IllegalArgumentException if the exercise has no feedback suggestion module configured
+     * @throws BadRequestAlertException if the exercise has no feedback suggestion module configured
      */
     public String getAthenaModuleUrl(Exercise exercise) {
         if (exercise.getFeedbackSuggestionModule() == null) {
-            throw new IllegalArgumentException("Exercise does not have a feedback suggestion module configured");
+            throw new BadRequestAlertException("Exercise does not have a feedback suggestion module configured", ENTITY_NAME, "missingFeedbackSuggestionModule");
         }
 
         switch (exercise.getExerciseType()) {
