@@ -140,9 +140,15 @@
         "noRoomIDs": "You didn't select any rooms",
         "invalidRoomIDs": "At least one of your selected rooms doesn't exist or is outdated",
         "noStudentDistributed": "None of the exam participants have been assigned a room and seat",
+        "reserveFactorOutOfRange": "The reserve factor needs to be within the range from 0 to 1",
         "wrongCourse": "The reaction does not belong to the selected course.",
         "reactionNotFound": "The reaction could not be found.",
         "missingAssociation": "The reaction must be associated with a post or an answer post.",
-        "emojiIdMissing": "emojiId must be set."
+        "emojiIdMissing": "emojiId must be set.",
+        "exampleSubmission": {
+            "isNull": "No example submission was provided.",
+            "submissionIsNull": "This example submission has no solution attached.",
+            "submissionIdMissing": "The submission must be saved before it can be converted."
+        }
     }
 }

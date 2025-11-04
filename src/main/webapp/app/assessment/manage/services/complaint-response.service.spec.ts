@@ -6,11 +6,11 @@ import { ComplaintResponseService } from 'app/assessment/manage/services/complai
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ComplaintResponseService', () => {
     let complaintResponseService: ComplaintResponseService;
@@ -23,7 +23,7 @@ describe('ComplaintResponseService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(AccountService)],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         })
             .compileComponents()
             .then(() => {
@@ -54,11 +54,7 @@ describe('ComplaintResponseService', () => {
     });
 
     function setupLockTest(loginOfLoggedInUser: string, loggedInUserIsInstructor: boolean, loginOfReviewer: string, lockActive: boolean) {
-        jest.spyOn(accountService, 'userIdentity', 'get').mockImplementation(function getterFn() {
-            const user = new User();
-            user.login = loginOfLoggedInUser;
-            return user;
-        });
+        accountService.userIdentity.set({ login: loginOfLoggedInUser } as User);
         jest.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(loggedInUserIsInstructor);
 
         const lockedComplaintResponse = new ComplaintResponse();

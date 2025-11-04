@@ -9,6 +9,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URL;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import org.mockito.MockitoAnnotations;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -69,6 +71,9 @@ public class IrisRequestMockProvider {
 
     @Value("${artemis.iris.url}/api/v1/health/")
     private URL healthApiURL;
+
+    @Value("${artemis.iris.url}/api/v1/memiris")
+    private URL memirisApiURL;
 
     @Autowired
     private ObjectMapper mapper;
@@ -216,9 +221,17 @@ public class IrisRequestMockProvider {
 
     public void mockStatusResponses() throws JsonProcessingException {
         // @formatter:off
-        PyrisHealthStatusDTO[] activeIrisStatusDTO = new PyrisHealthStatusDTO[] {
-            new PyrisHealthStatusDTO("model", PyrisHealthStatusDTO.ModelStatus.UP)
-        };
+        PyrisHealthStatusDTO activeIrisStatusDTO = new PyrisHealthStatusDTO(
+            true,
+            Map.of(
+                "weaviate",
+                new PyrisHealthStatusDTO.ModuleStatusDTO(
+                    PyrisHealthStatusDTO.ServiceStatus.UP,
+                    null,
+                    null
+                )
+            )
+        );
 
         shortTimeoutMockServer
             .expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
@@ -266,5 +279,119 @@ public class IrisRequestMockProvider {
             .andExpect(method(HttpMethod.GET))
             .andRespond(withRawStatus(418));
         // @formatter:on
+    }
+
+    /** Healthy response with configurable module statuses. */
+    public void mockHealthStatusSuccess(boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ServiceStatus> moduleStatuses) throws JsonProcessingException {
+        var modules = moduleStatuses.entrySet().stream()
+                .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, e -> new PyrisHealthStatusDTO.ModuleStatusDTO(e.getValue(), null, null)));
+        var dto = new PyrisHealthStatusDTO(overallHealthy, modules);
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
+    }
+
+    /** Server error / connection failure – let the indicator fall back to DOWN. */
+    public void mockHealthStatusFailure() {
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withRawStatus(HttpStatus.INTERNAL_SERVER_ERROR.value()));
+    }
+
+    /** Next call returns an explicit literal "null" body */
+    public void mockHealthNullBody() {
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("null", MediaType.APPLICATION_JSON));
+    }
+
+    public void mockHealthMalformedJson() {
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("{ not-json", MediaType.APPLICATION_JSON));
+    }
+
+    /** Throw a ResourceAccessException to simulate a connect/timeout problem. */
+    public void mockHealthTimeout() {
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET)).andRespond(_ -> {
+            throw new ResourceAccessException("simulated timeout");
+        });
+    }
+
+    /** Full control over modules, including null, error, and metaData. */
+    public void mockHealthWithModules(Boolean overallHealthy, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) throws JsonProcessingException {
+        var dto = new PyrisHealthStatusDTO(overallHealthy != null && overallHealthy, modules); // allow null → false
+        shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
+    }
+
+    public void verify() {
+        if (shortTimeoutMockServer != null) {
+            shortTimeoutMockServer.verify();
+        }
+        if (mockServer != null) {
+            mockServer.verify();
+        }
+    }
+
+    // -------------------- Memiris endpoints --------------------
+
+    public void mockListMemories(long userId, Object responseBody) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
+        // @formatter:on
+    }
+
+    public void mockListMemoriesError(long userId, HttpStatus status) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withRawStatus(status.value()));
+        // @formatter:on
+    }
+
+    public void mockGetMemoryWithRelations(long userId, String memoryId, Object responseBody) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
+        // @formatter:on
+    }
+
+    public void mockGetMemoryWithRelationsError(long userId, String memoryId, HttpStatus status) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(withRawStatus(status.value()));
+        // @formatter:on
+    }
+
+    public void mockDeleteMemory(long userId, String memoryId) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
+            .andExpect(method(HttpMethod.DELETE))
+            .andRespond(withRawStatus(HttpStatus.NO_CONTENT.value()));
+        // @formatter:on
+    }
+
+    public void mockDeleteMemoryError(long userId, String memoryId, HttpStatus status) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(memirisApiURL + "/user/" + userId + "/" + memoryId))
+            .andExpect(method(HttpMethod.DELETE))
+            .andRespond(withRawStatus(status.value()));
+        // @formatter:on
+    }
+
+    private String write(Object responseBody) {
+        try {
+            return mapper.writeValueAsString(responseBody);
+        }
+        catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

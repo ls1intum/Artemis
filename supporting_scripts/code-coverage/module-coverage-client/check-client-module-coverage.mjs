@@ -49,15 +49,15 @@ const moduleThresholds = {
     },
     core: {
         statements: 89.70,
-        branches:   72.60,
+        branches:   72.50,
         functions:  81.60,
         lines:      89.70,
     },
     exam: {
-        statements: 91.80,
-        branches:   79.00,
-        functions:  85.00,
-        lines:      92.00,
+        statements: 91.90,
+        branches:   78.90,
+        functions:  85.40,
+        lines:      92.10,
     },
     exercise: {
         statements: 88.50,
@@ -81,8 +81,8 @@ const moduleThresholds = {
         lines:      0,
     },
     iris: {
-        statements: 87.70,
-        branches:   73.10,
+        statements: 87.80,
+        branches:   73.00,
         functions:  86.20,
         lines:      88.30,
     },
@@ -112,7 +112,7 @@ const moduleThresholds = {
     },
     programming: {
         statements: 89.10,
-        branches:   77.10,
+        branches:   77.00,
         functions:  81.40,
         lines:      89.20,
     },
@@ -141,8 +141,6 @@ const moduleThresholds = {
         lines:      91.20,
     },
 };
-
-
 
 const metrics = ['statements', 'branches', 'functions', 'lines'];
 

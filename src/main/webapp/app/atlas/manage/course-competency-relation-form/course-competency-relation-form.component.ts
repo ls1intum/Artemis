@@ -62,7 +62,7 @@ export class CourseCompetencyRelationFormComponent {
     readonly isLoadingSuggestions = signal<boolean>(false);
     readonly selectedSuggestions = signal<Set<number>>(new Set());
     readonly selectedSuggestionsCount = computed(() => this.selectedSuggestions().size);
-    readonly addSuggestionsTitle = computed(() => 'artemisApp.courseCompetency.relations.suggestions.addSuggestions');
+    readonly shouldShowSuggestionsButton = computed(() => this.courseCompetencies().length > 1);
 
     constructor() {
         effect(() => this.selectRelation(this.selectedRelationId()));
