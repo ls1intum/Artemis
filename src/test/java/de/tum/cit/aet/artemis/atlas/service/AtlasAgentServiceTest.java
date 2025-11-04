@@ -51,7 +51,7 @@ class AtlasAgentServiceTest {
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
         // Pass null for ToolCallbackProvider in tests
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null);
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null, "gpt-4o");
     }
 
     @Test
@@ -151,7 +151,7 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null);
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, "gpt-4o");
 
         boolean available = serviceWithNullClient.isAvailable();
 
@@ -192,7 +192,7 @@ class AtlasAgentServiceTest {
     void testProcessChatMessage_WithCompetencyCreated() throws ExecutionException, InterruptedException {
         AtlasAgentToolsService mockToolsService = org.mockito.Mockito.mock(AtlasAgentToolsService.class);
         ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService serviceWithToolsService = new AtlasAgentService(chatClient, templateService, null, null, mockToolsService);
+        AtlasAgentService serviceWithToolsService = new AtlasAgentService(chatClient, templateService, null, null, mockToolsService, "gpt-4o");
 
         String testMessage = "Create a competency";
         Long courseId = 123L;
@@ -215,7 +215,7 @@ class AtlasAgentServiceTest {
     void testProcessChatMessage_WithCompetencyNotCreated() throws ExecutionException, InterruptedException {
         AtlasAgentToolsService mockToolsService = org.mockito.Mockito.mock(AtlasAgentToolsService.class);
         ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService serviceWithToolsService = new AtlasAgentService(chatClient, templateService, null, null, mockToolsService);
+        AtlasAgentService serviceWithToolsService = new AtlasAgentService(chatClient, templateService, null, null, mockToolsService, "gpt-4o");
 
         String testMessage = "Show me competencies";
         Long courseId = 123L;
