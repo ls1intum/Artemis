@@ -30,7 +30,8 @@
             "pyris": "Pyris",
             "ssl": "SSL",
             "hermes": "Hermes Push Notifications",
-            "sharing": "Sharing Platform Connector"
+            "sharing": "Sharing Platform Connector",
+            "redis": "Redis"
         },
         "table": {
             "service": "Service name",
