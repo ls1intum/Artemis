@@ -40,13 +40,13 @@ public class AtlasAgentService {
     private final String chatModel;
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
-            @Nullable ChatMemory chatMemory, @Nullable AtlasAgentToolsService atlasAgentToolsService, @Value("${artemis.atlas.chat-model}") String chatmodel) {
+            @Nullable ChatMemory chatMemory, @Nullable AtlasAgentToolsService atlasAgentToolsService, @Value("${artemis.atlas.chat-model}") String chatModel) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.toolCallbackProvider = toolCallbackProvider;
         this.chatMemory = chatMemory;
         this.atlasAgentToolsService = atlasAgentToolsService;
-        this.chatModel = chatmodel;
+        this.chatModel = chatModel;
     }
 
     /**
