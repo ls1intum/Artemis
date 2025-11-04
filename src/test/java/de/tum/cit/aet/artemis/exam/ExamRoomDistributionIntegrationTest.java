@@ -271,7 +271,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
         Set<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
-        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true);
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.0);
 
         var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
                 AttendanceCheckerAppExamInformationDTO.class);
@@ -329,7 +329,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
         Set<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("0101.01.135", "0101.02.179", "0101.Z1.090", "5602.EG.001"));
-        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true);
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.0);
 
         var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
                 AttendanceCheckerAppExamInformationDTO.class);
