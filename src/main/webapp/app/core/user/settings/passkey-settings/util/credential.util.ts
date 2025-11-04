@@ -9,7 +9,7 @@ import {
     getLoginCredentialFromMalformed1Password8Object,
     getRegistrationCredentialFromMalformed1Password8Object,
 } from 'app/core/user/settings/passkey-settings/util/1password8/1password8.util';
-import { Malformed1password8RegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-registration-credential';
+import { Malformed1Password8RegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/malformed1-password8-registration-credential';
 import { SerializableRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-registration-credential';
 import { SerializableLoginCredential } from 'app/core/user/settings/passkey-settings/entities/serializable-login-credential';
 import { MalformedBitwardenLoginCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-login-credential';
@@ -80,7 +80,7 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
     credential: Credential | undefined,
     credentialType: 'registration' | 'login',
     bitwardenConverter: (malformedBitwardenCredential: MalformedBitwardenRegistrationCredential | MalformedBitwardenLoginCredential | undefined) => T | undefined,
-    onePassword8Converter: (malformed1Password8Credential: Malformed1password8RegistrationCredential | Malformed1Password8LoginCredential | undefined) => T | undefined,
+    onePassword8Converter: (malformed1Password8Credential: Malformed1Password8RegistrationCredential | Malformed1Password8LoginCredential | undefined) => T | undefined,
     malformedHandler: <U>(credential: Credential | undefined, converterFunction: (credential: U | undefined) => T | undefined) => T,
 ): Credential | T {
     try {
@@ -105,7 +105,7 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
         if (is1Password8Credential) {
             // eslint-disable-next-line no-undef
             console.warn('Bitwarden workaround did not succeed, attempting 1password8 workaround', error);
-            fixedCredential = malformedHandler<Malformed1password8RegistrationCredential>(credential, onePassword8Converter);
+            fixedCredential = malformedHandler<Malformed1Password8RegistrationCredential>(credential, onePassword8Converter);
         }
 
         return fixedCredential;

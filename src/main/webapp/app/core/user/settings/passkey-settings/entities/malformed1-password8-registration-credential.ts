@@ -1,4 +1,4 @@
-export interface Malformed1password8RegistrationCredential {
+export interface Malformed1Password8RegistrationCredential {
     authenticatorAttachment: string;
     getClientExtensionResults(): unknown;
     id: string;
