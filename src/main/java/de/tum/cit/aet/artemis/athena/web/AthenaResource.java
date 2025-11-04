@@ -3,13 +3,15 @@ package de.tum.cit.aet.artemis.athena.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils.hashSha256;
 
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import jakarta.ws.rs.BadRequestException;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +32,6 @@ import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
-import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -48,7 +49,6 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.text.api.TextApi;
@@ -87,8 +87,6 @@ public class AthenaResource {
 
     private final AthenaModuleService athenaModuleService;
 
-    private final AthenaRepositoryExportService athenaRepositoryExportService;
-
     private final byte[] athenaSecretHash;
 
     /**
@@ -97,8 +95,7 @@ public class AthenaResource {
     public AthenaResource(CourseRepository courseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
-            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaModuleService athenaModuleService, AthenaRepositoryExportService athenaRepositoryExportService,
-            @Value("${artemis.athena.secret}") String athenaSecret) {
+            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaModuleService athenaModuleService, @Value("${artemis.athena.secret}") String athenaSecret) {
         this.courseRepository = courseRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
@@ -109,7 +106,6 @@ public class AthenaResource {
         this.authCheckService = authCheckService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.athenaModuleService = athenaModuleService;
-        this.athenaRepositoryExportService = athenaRepositoryExportService;
         this.athenaSecretHash = hashSha256(athenaSecret);
     }
 
@@ -267,48 +263,91 @@ public class AthenaResource {
     }
 
     /**
-     * GET public/programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a file map
+     * GET public/programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a zip file download
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get the repository for
      * @param auth         the auth header value to check
-     * @return 200 Ok with the file map as body if successful
+     * @param request      the HTTP request
+     * @param response     the HTTP response
+     * @throws ServletException if the forward fails
+     * @deprecated Use {@code api/athena/internal/programming-exercises/{exerciseId}/submissions/{submissionId}/repository} instead
      */
+    @Deprecated
     @GetMapping("public/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
     @EnforceNothing // We check the Athena secret and validation here
     @ManualConfig
-    public ResponseEntity<Map<String, String>> getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth)
-            throws java.io.IOException {
-        log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, submissionId);
+    public void getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth, HttpServletRequest request,
+            HttpServletResponse response) throws ServletException, IOException {
+        log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}, submission {}", exerciseId, submissionId);
         checkAthenaSecret(auth);
         validateAthenaEnabled(exerciseId);
-        return ResponseEntity.ok(athenaRepositoryExportService.getStudentRepositoryFilesContent(exerciseId, submissionId));
+        request.getRequestDispatcher("/api/athena/internal/programming-exercises/" + exerciseId + "/submissions/" + submissionId + "/repository").forward(request, response);
     }
 
     /**
-     * GET public/programming-exercises/{exerciseId}/repository/{repositoryType} : Get the instructor repository (template, solution, tests) as a file map
+     * GET public/programming-exercises/:exerciseId/repository/template : Get the template repository as a zip file download
      *
-     * @param exerciseId     the id of the exercise
-     * @param repositoryType the type of the repository
-     * @param auth           the auth header value to check
-     * @return 200 Ok with the file map as body if successful
+     * @param exerciseId the id of the exercise
+     * @param auth       the auth header value to check
+     * @param request    the HTTP request
+     * @param response   the HTTP response
+     * @throws ServletException if the forward fails
+     * @deprecated Use {@code api/athena/internal/programming-exercises/{exerciseId}/repository/template} instead
      */
-    @GetMapping("public/programming-exercises/{exerciseId}/repository/{repositoryType}")
+    @Deprecated
+    @GetMapping("public/programming-exercises/{exerciseId}/repository/template")
     @EnforceNothing // We check the Athena secret and validation here
     @ManualConfig
-    public ResponseEntity<Map<String, String>> getInstructorRepository(@PathVariable long exerciseId, @PathVariable String repositoryType,
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws java.io.IOException {
-        log.debug("REST call to get {} instructor repository for exercise {}", repositoryType, exerciseId);
-
+    public void getTemplateRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth, HttpServletRequest request,
+            HttpServletResponse response) throws ServletException, IOException {
+        log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}", exerciseId);
         checkAthenaSecret(auth);
         validateAthenaEnabled(exerciseId);
-
-        try {
-            return ResponseEntity.ok(athenaRepositoryExportService.getInstructorRepositoryFilesContent(exerciseId, RepositoryType.fromString(repositoryType)));
-        }
-        catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid repository type: " + repositoryType);
-        }
+        request.getRequestDispatcher("/api/athena/internal/programming-exercises/" + exerciseId + "/repository/template").forward(request, response);
     }
 
+    /**
+     * GET public/programming-exercises/:exerciseId/repository/solution : Get the solution repository as a zip file download
+     *
+     * @param exerciseId the id of the exercise
+     * @param auth       the auth header value to check
+     * @param request    the HTTP request
+     * @param response   the HTTP response
+     * @throws ServletException if the forward fails
+     * @deprecated Use {@code api/athena/internal/programming-exercises/{exerciseId}/repository/solution} instead
+     */
+    @Deprecated
+    @GetMapping("public/programming-exercises/{exerciseId}/repository/solution")
+    @EnforceNothing // We check the Athena secret and validation here
+    @ManualConfig
+    public void getSolutionRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth, HttpServletRequest request,
+            HttpServletResponse response) throws ServletException, IOException {
+        log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}", exerciseId);
+        checkAthenaSecret(auth);
+        validateAthenaEnabled(exerciseId);
+        request.getRequestDispatcher("/api/athena/internal/programming-exercises/" + exerciseId + "/repository/solution").forward(request, response);
+    }
+
+    /**
+     * GET public/programming-exercises/:exerciseId/repository/tests : Get the test repository as a zip file download
+     *
+     * @param exerciseId the id of the exercise
+     * @param auth       the auth header value to check
+     * @param request    the HTTP request
+     * @param response   the HTTP response
+     * @throws ServletException if the forward fails
+     * @deprecated Use {@code api/athena/internal/programming-exercises/{exerciseId}/repository/tests} instead
+     */
+    @Deprecated
+    @GetMapping("public/programming-exercises/{exerciseId}/repository/tests")
+    @EnforceNothing // We check the Athena secret and validation here
+    @ManualConfig
+    public void getTestRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth, HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}", exerciseId);
+        checkAthenaSecret(auth);
+        validateAthenaEnabled(exerciseId);
+        request.getRequestDispatcher("/api/athena/internal/programming-exercises/" + exerciseId + "/repository/tests").forward(request, response);
+    }
 }
