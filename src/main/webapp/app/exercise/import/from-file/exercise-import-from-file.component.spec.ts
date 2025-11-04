@@ -227,6 +227,9 @@ describe('ExerciseImportFromFileComponent', () => {
         // THEN
         const importedEx = component.exercise as ProgrammingExercise;
         expect(importedEx).toBeDefined();
+        expect(importedEx.title).toBe('Category test exercise');
+        expect(importedEx.type).toBe(ExerciseType.PROGRAMMING);
+
         expect(importedEx.categories!).toHaveLength(2);
 
         expect(importedEx.categories![0]).toBeInstanceOf(ExerciseCategory);
@@ -248,7 +251,7 @@ describe('ExerciseImportFromFileComponent', () => {
         component.exerciseType = ExerciseType.PROGRAMMING;
         const progEx = new ProgrammingExercise(undefined, undefined);
         progEx.id = 555;
-        progEx.title = 'No category exercise';
+        progEx.title = 'No category test exercise';
         progEx.type = ExerciseType.PROGRAMMING;
 
         delete (progEx as any).categories;
@@ -259,6 +262,7 @@ describe('ExerciseImportFromFileComponent', () => {
 
         component.fileForImport = zipBlob as any;
         const openImportSpy = jest.spyOn(component, 'openImport');
+        await fixture.whenStable();
 
         // WHEN
         await component.uploadExercise();
@@ -267,9 +271,13 @@ describe('ExerciseImportFromFileComponent', () => {
         // THEN
         const importedEx = component.exercise as ProgrammingExercise;
         expect(importedEx).toBeDefined();
+        expect(importedEx.title).toBe('No category test exercise');
+        expect(importedEx.type).toBe(ExerciseType.PROGRAMMING);
+
         expect(importedEx.categories).toBeUndefined();
-        expect(importedEx.title).toBe('No category exercise');
+
         expect(openImportSpy).toHaveBeenCalledOnce();
+        expect(openImportSpy).toHaveBeenCalledWith(importedEx);
     });
 });
 

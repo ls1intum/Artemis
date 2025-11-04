@@ -112,6 +112,17 @@ public final class ZipTestUtil {
         }
     }
 
+    /**
+     * Extracts the content of the first JSON file found within a given ZIP archive.
+     * <p>
+     * This method is primarily used in integration tests to verify exported exercise data.
+     * For example, it reads the "Exercise-Details-XXX.json" file from an instructor export of
+     * a programming exercise and returns its contents as a UTF-8 string for further validation.
+     *
+     * @param zipBytes the ZIP file content as a byte array, typically received from an export REST endpoint
+     * @return the content of the first JSON file found within the ZIP as a UTF-8 string
+     * @throws IOException if no JSON file is found inside the ZIP or if an I/O error occurs while reading
+     */
     public static String extractExerciseJsonFromZip(byte[] zipBytes) throws IOException {
         try (var zis = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
             java.util.zip.ZipEntry entry;

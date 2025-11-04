@@ -638,17 +638,22 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         // Ensures that exerciseCategories are synchronized in course-mode imports
         it('should sync exerciseCategories from programmingExercise during import', fakeAsync(() => {
+            // GIVEN
             const categories = [new ExerciseCategory(undefined, undefined)];
             const programmingExercise = getProgrammingExerciseForImport();
             (programmingExercise as any).categories = categories;
-
             route.data = of({ programmingExercise });
-            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+
+            const findSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
+            // WHEN
             comp.ngOnInit();
             tick();
 
+            // THEN
+            expect(findSpy).toHaveBeenCalledWith(course.id);
+            expect(comp.isExamMode).toBeFalse();
             expect(comp.exerciseCategories).toBe(categories);
         }));
 

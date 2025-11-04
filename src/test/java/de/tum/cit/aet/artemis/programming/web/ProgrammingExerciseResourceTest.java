@@ -272,7 +272,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void testExportedExerciseJsonContainsDefaultCategories() throws Exception {
+    void testExportedExerciseJsonWithCategories() throws Exception {
         // GIVEN
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
@@ -280,10 +280,18 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         courseRepository.save(course);
 
         /*
-         * The factory method populateUnreleasedProgrammingExercise() automatically
-         * creates categories "cat1" and "cat2". We intentionally use these defaults.
+         * The factory method populateUnreleasedProgrammingExercise() will call
+         * programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2"))).
+         * We explicitly override those categories here with JSON-encoded strings
+         * to verify that color information is preserved in the exported file.
          */
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        Set<String> categoriesJson = Set.of(
+            "{\"color\":\"#0d3cc2\",\"category\":\"cat1\"}",
+            "{\"color\":\"#691b0b\",\"category\":\"cat2\"}"
+        );
+        programmingExercise.setCategories(new HashSet<>(categoriesJson));
+        programmingExerciseRepository.save(programmingExercise);
 
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = tempPath.resolve("testOriginRepoCategories");
@@ -300,35 +308,51 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(result.length).isGreaterThan(0);
 
         String exerciseJson = extractExerciseJsonFromZip(result);
-        assertThat(exerciseJson).isNotBlank();
+        assertThat(exerciseJson).as("Exported exercise JSON should not be blank").isNotBlank();
 
         var objectMapper = new ObjectMapper();
         var json = objectMapper.readTree(exerciseJson);
 
-        assertThat(json.has("categories")).isTrue();
+        assertThat(json.has("categories")).as("Exported exercise JSON should contain a 'categories' field").isTrue();
         var categoriesArray = json.get("categories");
-        assertThat(categoriesArray.isArray()).isTrue();
+        assertThat(categoriesArray.isArray()).as("'categories' field should be an array").isTrue();
         assertThat(categoriesArray).hasSize(2);
 
-        // Verify the default factory categories
-        List<String> categories = new ArrayList<>();
-        categoriesArray.forEach(node -> categories.add(node.asText()));
-        assertThat(categories).containsExactlyInAnyOrder("cat1", "cat2");
+        // Parse inner JSON strings (since categories are stored as stringified JSON)
+        List<String> categoryNames = new ArrayList<>();
+        List<String> colors = new ArrayList<>();
+
+        for (var node : categoriesArray) {
+            var raw = node.asText();
+            var inner = objectMapper.readTree(raw);
+            categoryNames.add(inner.get("category").asText());
+            colors.add(inner.get("color").asText());
+        }
+
+        // Verify category names
+        assertThat(categoryNames).as("Exported categories should include the default names").containsExactlyInAnyOrder("cat1", "cat2");
+
+        // Verify color values
+        assertThat(colors).as("Exported categories should preserve color information").containsExactlyInAnyOrder("#0d3cc2", "#691b0b");
 
         localRepo.resetLocalRepo();
     }
 
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportedExerciseJsonWithoutCategories() throws Exception {
+        // GIVEN
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         course.setInstructorGroupName(instructor.getGroups().iterator().next());
         courseRepository.save(course);
 
         // Create a programming exercise and explicitly clear all categories
-        // (The factory method populateUnreleasedProgrammingExercise() adds cat1 and cat2)
+        // (The factory method populateUnreleasedProgrammingExercise() normally adds "cat1" and "cat2")
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        // ensure empty
         programmingExercise.setCategories(new HashSet<>());
         programmingExerciseRepository.save(programmingExercise);
 
@@ -339,22 +363,27 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
 
+        // WHEN
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-exercise", HttpStatus.OK, byte[].class);
 
+        // THEN
         assertThat(result).isNotNull();
         assertThat(result.length).isGreaterThan(0);
 
         String exerciseJson = extractExerciseJsonFromZip(result);
-        assertThat(exerciseJson).isNotBlank();
+        assertThat(exerciseJson).as("Exported exercise JSON should not be blank").isNotBlank();
 
         var objectMapper = new ObjectMapper();
         var json = objectMapper.readTree(exerciseJson);
 
         // Verify categories are not present
-        assertThat(json.has("categories")).as("No categories field should be present").isFalse();
+        assertThat(json.has("categories"))
+            .as("No 'categories' field should be present in exported JSON when exercise has none")
+            .isFalse();
 
         localRepo.resetLocalRepo();
     }
+
 
     private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
         String projectKey = exercise.getProjectKey();
