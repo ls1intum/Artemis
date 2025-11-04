@@ -110,6 +110,27 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
         expect(comp.canDeactivateWarning).toBeUndefined();
     });
 
+    it('Does not render settings update when ids are missing', () => {
+        routeParamsSubject.next({});
+        fixture.detectChanges();
+
+        expect(comp.courseId).toBeNaN();
+        expect(comp.exerciseId).toBeNaN();
+        expect(fixture.debugElement.query(By.directive(IrisSettingsUpdateComponent))).toBeNull();
+        expect(getSettingsSpy).not.toHaveBeenCalled();
+        expect(getParentSettingsSpy).not.toHaveBeenCalled();
+    });
+
+    it('Parses numeric ids from string route params', () => {
+        routeParamsSubject.next({ courseId: '11', exerciseId: '13' });
+        fixture.detectChanges();
+
+        expect(comp.courseId).toBe(11);
+        expect(comp.exerciseId).toBe(13);
+        expect(getSettingsSpy).toHaveBeenCalledWith(13);
+        expect(getParentSettingsSpy).toHaveBeenCalledWith(11);
+    });
+
     it('should not overwrite settings when save fails', fakeAsync(() => {
         fixture.detectChanges();
         const irisSettings = mockSettings();
