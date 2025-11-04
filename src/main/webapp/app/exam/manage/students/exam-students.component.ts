@@ -14,7 +14,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faCheck, faInfoCircle, faPlus, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faInfoCircle, faPlus, faThLarge, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -25,6 +25,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -40,6 +41,7 @@ const cssClasses = {
         TranslateDirective,
         UsersImportButtonComponent,
         StudentsUploadImagesButtonComponent,
+        StudentsRoomDistributionDialogComponent,
         FaIconComponent,
         RouterLink,
         DeleteButtonDirective,
@@ -93,6 +95,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     faUpload = faUpload;
     faCheck = faCheck;
     faTimes = faTimes;
+    faThLarge = faThLarge;
 
     ngOnInit() {
         this.isLoading = true;
