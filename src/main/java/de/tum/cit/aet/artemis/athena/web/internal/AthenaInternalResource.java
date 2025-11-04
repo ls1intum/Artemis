@@ -55,10 +55,10 @@ public class AthenaInternalResource {
     }
 
     /**
-     * GET programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a file map
+     * GET programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the student repository as a file map based on the submission id
      *
      * @param exerciseId   the id of the exercise the submission belongs to
-     * @param submissionId the id of the submission to get the repository for
+     * @param submissionId the id of the submission to get the repository for (refers to one student submission)
      * @param auth         the auth header value to check
      * @return 200 Ok with the file map as body if successful
      */
