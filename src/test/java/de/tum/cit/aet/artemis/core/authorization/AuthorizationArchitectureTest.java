@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
@@ -28,6 +29,8 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
     private static final String REST_ADMIN_PACKAGE = REST_BASE_PACKAGE + ".admin";
 
     private static final String REST_OPEN_PACKAGE = REST_BASE_PACKAGE + ".open";
+
+    private static final String REST_INTERNAL_PACKAGE = REST_BASE_PACKAGE + ".internal";
 
     @Test
     void testNoPreAuthorizeOnRestControllers() {
@@ -51,30 +54,41 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testEnforceInternalAnnotations() {
+        ArchRule rule = methods().that().areAnnotatedWith(Internal.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
+                .resideInAPackage(REST_INTERNAL_PACKAGE + "..");
+        rule.allowEmptyShould(true).check(productionClasses);
+    }
+
+    @Test
     void testEnforceAtLeastInstructorAnnotations() {
         ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastInstructor.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
-                .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..");
+                .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat()
+                .resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..", REST_INTERNAL_PACKAGE + "..");
         rule.check(productionClasses);
     }
 
     @Test
     void testEnforceAtLeastEditorAnnotations() {
         ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastEditor.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
-                .resideInAnyPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..");
+                .resideInAnyPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat()
+                .resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..", REST_INTERNAL_PACKAGE + "..");
         rule.check(productionClasses);
     }
 
     @Test
     void testEnforceAtLeastTutorAnnotations() {
         ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastTutor.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
-                .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..");
+                .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat()
+                .resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..", REST_INTERNAL_PACKAGE + "..");
         rule.check(productionClasses);
     }
 
     @Test
     void testEnforceAtLeastStudentAnnotations() {
         ArchRule rule = methods().that().areAnnotatedWith(EnforceAtLeastStudent.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
-                .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat().resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..");
+                .resideInAPackage(REST_BASE_PACKAGE + "..").andShould().beDeclaredInClassesThat()
+                .resideOutsideOfPackages(REST_ADMIN_PACKAGE + "..", REST_OPEN_PACKAGE + "..", REST_INTERNAL_PACKAGE + "..");
         rule.check(productionClasses);
     }
 

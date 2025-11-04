@@ -31,9 +31,9 @@ import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
@@ -87,17 +87,13 @@ import tech.jhipster.config.cache.PrefixedKeyGenerator;
  * dynamically connecting cluster nodes at runtime based on service discovery. By decoupling static
  * configuration from runtime coordination, the system ensures better modularity, testability, and maintainability.
  */
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Conditional(CoreOrHazelcastBuildAgent.class)
 @Lazy(value = false)
 @Configuration
 @EnableCaching
 public class CacheConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
-
-    private final Optional<GitProperties> gitProperties;
-
-    private final Optional<BuildProperties> buildProperties;
 
     private final ServerProperties serverProperties;
 
@@ -120,11 +116,8 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    public CacheConfiguration(ApplicationContext applicationContext, Optional<GitProperties> gitProperties, Optional<BuildProperties> buildProperties,
-            ServerProperties serverProperties, Optional<Registration> registration, Environment env) {
+    public CacheConfiguration(ApplicationContext applicationContext, ServerProperties serverProperties, Optional<Registration> registration, Environment env) {
         this.applicationContext = applicationContext;
-        this.gitProperties = gitProperties;
-        this.buildProperties = buildProperties;
         this.serverProperties = serverProperties;
         this.registration = registration;
         this.env = env;
@@ -334,8 +327,8 @@ public class CacheConfiguration {
     }
 
     @Bean
-    public KeyGenerator keyGenerator() {
-        return new PrefixedKeyGenerator(this.gitProperties.orElse(null), this.buildProperties.orElse(null));
+    public KeyGenerator keyGenerator(GitProperties gitProperties, BuildProperties buildProperties) {
+        return new PrefixedKeyGenerator(gitProperties, buildProperties);
     }
 
     // config for files in the files system
