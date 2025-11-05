@@ -8,6 +8,7 @@ import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SimpleChange } from '@angular/core';
+import { AthenaModuleMode } from 'app/assessment/shared/entities/athena.model';
 
 describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     let fixture: ComponentFixture<ExerciseFeedbackSuggestionOptionsComponent>;
@@ -55,6 +56,9 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
             assessmentType: AssessmentType.SEMI_AUTOMATIC,
             dueDate: dayjs().add(2, 'day'),
             feedbackSuggestionModule: 'initial-module',
+            athenaConfig: {
+                feedbackSuggestionModule: 'initial-module',
+            },
             numberOfAssessmentsOfCorrectionRounds: [],
             studentAssignedTeamIdComputed: false,
             secondCorrectionEnabled: false,
@@ -69,7 +73,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(athenaService.getAvailableModules).toHaveBeenCalledWith(courseId, component.exercise);
+        expect(athenaService.getAvailableModules).toHaveBeenCalledWith(courseId, component.exercise, AthenaModuleMode.FEEDBACK_SUGGESTIONS);
         expect(component.availableAthenaModules).toEqual(modules);
         expect(component.modulesAvailable).toBeTrue();
         expect(component.isAthenaEnabled).toBeTrue();
@@ -77,7 +81,9 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     }));
 
     it('should mark modules unavailable and athena disabled when no modules are returned', fakeAsync(() => {
-        component.exercise.feedbackSuggestionModule = undefined;
+        component.exercise.athenaConfig = {
+            feedbackSuggestionModule: undefined,
+        };
         athenaService.getAvailableModules.mockReturnValue(of([]));
         profileService.isProfileActive.mockReturnValue(false);
 
@@ -97,7 +103,9 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
             return this[0];
         };
 
-        component.exercise.feedbackSuggestionModule = 'changed-module';
+        component.exercise.athenaConfig = {
+            feedbackSuggestionModule: 'changed-module',
+        };
         component.exercise.dueDate = dayjs().subtract(1, 'day');
         component.dueDate = dayjs().subtract(1, 'day');
 
@@ -105,12 +113,14 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
             dueDate: new SimpleChange(dayjs().add(1, 'day'), component.dueDate, false),
         });
 
-        expect(component.exercise.feedbackSuggestionModule).toBe('initial-module');
+        expect(component.exercise.athenaConfig.feedbackSuggestionModule).toBe('initial-module');
     });
 
     it('should keep the selected module when inputs remain enabled after due date change', () => {
         component.initialAthenaModule = 'initial-module';
-        component.exercise.feedbackSuggestionModule = 'selected-module';
+        component.exercise.athenaConfig = {
+            feedbackSuggestionModule: 'selected-module',
+        };
         component.exercise.dueDate = dayjs().add(1, 'day');
         component.dueDate = dayjs().add(1, 'day');
 
@@ -118,7 +128,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
             dueDate: new SimpleChange(dayjs().subtract(2, 'day'), component.dueDate, false),
         });
 
-        expect(component.exercise.feedbackSuggestionModule).toBe('selected-module');
+        expect(component.exercise.athenaConfig.feedbackSuggestionModule).toBe('selected-module');
     });
 
     it('should evaluate disabled state for programming exercises correctly', () => {
@@ -181,37 +191,24 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
             return this[0];
         };
 
-        component.exercise.feedbackSuggestionModule = undefined;
-        component.exercise.allowFeedbackRequests = true;
+        component.exercise.athenaConfig = {
+            feedbackSuggestionModule: undefined,
+        };
+        component.exercise.allowManualFeedbackRequests = true;
 
         component.toggleFeedbackSuggestions({ target: { checked: true } });
-        expect(component.exercise.feedbackSuggestionModule).toBe('moduleA');
+        expect(component.exercise.athenaConfig.feedbackSuggestionModule).toBe('moduleA');
+        expect(component.exercise.allowManualFeedbackRequests).toBeFalse();
 
         component.toggleFeedbackSuggestions({ target: { checked: false } });
-        expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
-        expect(component.exercise.allowFeedbackRequests).toBeFalse();
-    });
-
-    it('should toggle feedback requests and set module when enabling', () => {
-        component.availableAthenaModules = ['moduleA'] as any;
-        (component.availableAthenaModules as any).first = function () {
-            return this[0];
-        };
-
-        component.exercise.feedbackSuggestionModule = undefined;
-        component.exercise.allowFeedbackRequests = false;
-
-        component.toggleFeedbackRequests({ target: { checked: true } });
-        expect(component.exercise.allowFeedbackRequests).toBeTrue();
-        expect(component.exercise.feedbackSuggestionModule).toBe('moduleA');
-
-        component.toggleFeedbackRequests({ target: { checked: false } });
-        expect(component.exercise.allowFeedbackRequests).toBeFalse();
-        expect(component.exercise.feedbackSuggestionModule).toBe('moduleA');
+        expect(component.exercise.athenaConfig).toBeUndefined();
+        expect(component.exercise.allowManualFeedbackRequests).toBeFalse();
     });
 
     it('should honor the initial module when athena remains enabled', fakeAsync(() => {
-        component.exercise.feedbackSuggestionModule = 'initial-module';
+        component.exercise.athenaConfig = {
+            feedbackSuggestionModule: 'initial-module',
+        };
         component.initialAthenaModule = 'initial-module';
         athenaService.getAvailableModules.mockReturnValue(of(['moduleA']));
         profileService.isProfileActive.mockReturnValue(true);
@@ -219,7 +216,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.exercise.feedbackSuggestionModule).toBe('initial-module');
+        expect(component.exercise.athenaConfig.feedbackSuggestionModule).toBe('initial-module');
         expect(component.modulesAvailable).toBeTrue();
         expect(component.isAthenaEnabled).toBeTrue();
     }));

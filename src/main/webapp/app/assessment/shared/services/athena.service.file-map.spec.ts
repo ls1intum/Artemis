@@ -34,7 +34,10 @@ describe('AthenaService file map behaviour', () => {
     const exerciseBase = {
         id: 10,
         gradingCriteria,
-        feedbackSuggestionModule: 'module-A',
+        athenaConfig: {
+            feedbackSuggestionModule: 'athena-module-1',
+            preliminaryFeedbackModule: 'athena-module-2"',
+        },
     } as Exercise;
 
     beforeEach(() => {
