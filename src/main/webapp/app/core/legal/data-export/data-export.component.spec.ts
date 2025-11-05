@@ -65,7 +65,7 @@ describe('DataExportComponent', () => {
         user.login = 'admin';
         user.id = 1;
         route.params = of({});
-        accountService.userIdentity = user;
+        accountService.userIdentity.set(user);
         component.ngOnInit();
         tick();
         expect(component.currentLogin).toBe('admin');
