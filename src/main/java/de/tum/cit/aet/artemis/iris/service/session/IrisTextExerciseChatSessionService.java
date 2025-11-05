@@ -118,7 +118,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
                 settings.selectedVariant(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
-                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, PyrisTextExerciseDTO.of(exercise), conversation, latestSubmissionText, settings.customInstructions()),
+                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, PyrisTextExerciseDTO.of(exercise), session.getTitle(), conversation, latestSubmissionText, settings.customInstructions()),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages)
         );
         // @formatter:on

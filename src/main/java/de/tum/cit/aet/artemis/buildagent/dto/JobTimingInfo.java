@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.buildagent.dto;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -10,6 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record JobTimingInfo(ZonedDateTime submissionDate, ZonedDateTime buildStartDate, ZonedDateTime buildCompletionDate, ZonedDateTime estimatedCompletionDate,
-        long estimatedDuration) implements Serializable {
+public record JobTimingInfo(@NotNull ZonedDateTime submissionDate, @Nullable ZonedDateTime buildStartDate, @Nullable ZonedDateTime buildCompletionDate,
+        @Nullable ZonedDateTime estimatedCompletionDate, long estimatedDuration) implements Serializable {
 }

@@ -11,6 +11,7 @@
                 </tr>
             </thead>
             <tbody>
+                @let studentGradeOrBonusPointsOrGradeBonus = this.studentGradeOrBonusPointsOrGradeBonus();
                 @if (plagiarismGrade === studentGradeOrBonusPointsOrGradeBonus) {
                     <tr [class.highlighted]="plagiarismGrade === studentGradeOrBonusPointsOrGradeBonus">
                         <td>

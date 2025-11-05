@@ -122,8 +122,8 @@ public class PyrisPipelineService {
             Consumer<List<PyrisStageDTO>> statusUpdater) {
         // Define the preparation stages of pipeline execution with their initial states
         // There will be more stages added in Pyris later
-        var preparing = new PyrisStageDTO("Preparing", 10, null, null);
-        var executing = new PyrisStageDTO("Executing pipeline", 30, null, null);
+        var preparing = new PyrisStageDTO("Preparing", 10, null, null, false);
+        var executing = new PyrisStageDTO("Executing pipeline", 30, null, null, false);
 
         // Send initial status update indicating that the preparation stage is in progress
         statusUpdater.accept(List.of(preparing.inProgress(), executing.notStarted()));
@@ -181,6 +181,7 @@ public class PyrisPipelineService {
                             latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
                             pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise),
                             new PyrisCourseDTO(course),
+                            session.getTitle(),
                             pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                             new PyrisUserDTO(user),
                             executionDto.settings(),
@@ -230,6 +231,7 @@ public class PyrisPipelineService {
                     PyrisExtendedCourseDTO.of(fullCourse),
                     api.getStudentCourseMetrics(studentId, courseId),
                     generateEventPayloadFromObjectType(eventDtoClass, eventObject), // get the event payload DTO
+                    session.getTitle(),
                     pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                     new PyrisUserDTO(user),
                     executionDto.settings(),
