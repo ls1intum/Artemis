@@ -8,6 +8,7 @@ import trainingTab from "./assets/quiz-training-mode/quiz-training-tab.png";
 import scorecard from "./assets/quiz-training-mode/scorecard.png";
 import mcQuestion from "./assets/quiz-training-mode/mc-question.png";
 import mcQuestionSolution from "./assets/quiz-training-mode/mc-question-solution.png";
+import ddQuestion from "./assets/quiz-training-mode/dd-question.png";
 import saQuestion from "./assets/quiz-training-mode/sa-question.png";
 import saQuestionSolution from "./assets/quiz-training-mode/sa-question-sample-solution.png";
 import unratedNotification from "./assets/quiz-training-mode/unrated-notification.png";
@@ -26,6 +27,8 @@ The Quiz Training Mode allows you to reinforce your knowledge through repeated p
 ---
 
 ## Getting Started
+
+<Image src={trainingTab} alt={"Description"} size={ImageSize.small}></Image>
 
 When you first visit the Quiz Training, a welcome dialog appears explaining the key features:
 
@@ -96,25 +99,23 @@ The system presents questions in three different formats:
 #### Multiple-Choice Questions
 
 - Select one or more correct answers
-- Mark all applicable options
-- Click **"Submit"** to check your answer
+- Submit your solution when finished
 
 <Image src={mcQuestion} alt={"MC Question"} size={ImageSize.large}></Image>
 
 #### Drag-and-Drop Questions
 
 - Drag elements to the correct position
-- Match terms to appropriate categories
 - Submit your solution when finished
 
-<Image src={mcQuestion} alt={"Scorecard"} size={ImageSize.large}></Image>
+<Image src={ddQuestion} alt={"DD Question"} size={ImageSize.large}></Image>
 Test
 
 #### Short Answer Questions
 
 - Enter text answers in the provided fields
 - Pay attention to correct spelling
-- Confirm your entries
+- Submit your solution when finished
 
 <Image src={saQuestion} alt={"SA Question"} size={ImageSize.large}></Image>
 
