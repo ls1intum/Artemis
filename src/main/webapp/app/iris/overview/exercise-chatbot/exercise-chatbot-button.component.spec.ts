@@ -20,6 +20,7 @@ import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { User } from 'app/core/user/user.model';
 
 describe('ExerciseChatbotButtonComponent', () => {
     let component: IrisExerciseChatbotButtonComponent;
@@ -32,6 +33,7 @@ describe('ExerciseChatbotButtonComponent', () => {
     let mockActivatedRoute: ActivatedRoute;
     let mockDialogClose: any;
     let mockParamsSubject: any;
+    let accountService: AccountService;
 
     const statusMock = {
         currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
@@ -40,9 +42,7 @@ describe('ExerciseChatbotButtonComponent', () => {
     const userMock = {
         acceptExternalLLMUsage: jest.fn(),
     };
-    const accountMock = {
-        userIdentity: { externalLLMUsageAccepted: dayjs() },
-    };
+    const accountMock = { externalLLMUsageAccepted: dayjs() } as User;
 
     const mockExerciseId = 123;
     const mockCourseId = 456;
@@ -86,7 +86,6 @@ describe('ExerciseChatbotButtonComponent', () => {
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: UserService, useValue: userMock },
-                { provide: AccountService, useValue: accountMock },
             ],
         })
             .compileComponents()
@@ -98,6 +97,9 @@ describe('ExerciseChatbotButtonComponent', () => {
                 chatService.setCourseId(mockCourseId);
                 chatHttpServiceMock = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
                 wsServiceMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
+                accountService = TestBed.inject(AccountService);
+
+                accountService.userIdentity.set(accountMock);
             });
     });
 

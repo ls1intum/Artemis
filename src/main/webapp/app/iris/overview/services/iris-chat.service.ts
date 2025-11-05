@@ -166,7 +166,7 @@ export class IrisChatService implements OnDestroy {
         const requiresAcceptance = this.sessionCreationIdentifier
             ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
             : true;
-        if (requiresAcceptance === false || this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
+        if (requiresAcceptance === false || this.accountService.userIdentity()?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
             this.getCurrentSessionOrCreate().subscribe({
                 ...this.handleNewSession(),
                 complete: () => this.loadChatSessions(),
@@ -416,16 +416,20 @@ export class IrisChatService implements OnDestroy {
                     this.replaceOrAddMessage(payload.message);
                 }
                 if (payload.stages) {
-                    this.stages.next(payload.stages);
+                    this.stages.next(this.filterStages(payload.stages));
                 }
                 break;
             case IrisChatWebsocketPayloadType.STATUS:
-                this.stages.next(payload.stages || []);
+                this.stages.next(this.filterStages(payload.stages || []));
                 if (payload.suggestions) {
                     this.suggestions.next(payload.suggestions);
                 }
                 break;
         }
+    }
+
+    private filterStages(stages: IrisStageDTO[]): IrisStageDTO[] {
+        return stages.filter((stage) => !stage.internal);
     }
 
     protected close(): void {
@@ -480,7 +484,7 @@ export class IrisChatService implements OnDestroy {
             captureException(new Error('Could not load chat sessions, courseId is not set.'), {
                 extra: {
                     currentUrl: this.router.url,
-                    userId: this.accountService.userIdentity?.id,
+                    userId: this.accountService.userIdentity()?.id,
                     sessionCreationIdentifier: this.sessionCreationIdentifier,
                 },
                 tags: {
@@ -541,7 +545,7 @@ export class IrisChatService implements OnDestroy {
             captureException(new Error('Could not switch session, courseId is not set.'), {
                 extra: {
                     currentUrl: this.router.url,
-                    userId: this.accountService.userIdentity?.id,
+                    userId: this.accountService.userIdentity()?.id,
                     sessionId: this.sessionId,
                     sessionCreationIdentifier: this.sessionCreationIdentifier,
                 },
