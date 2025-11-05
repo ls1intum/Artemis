@@ -22,12 +22,12 @@ interface AgentChatResponse {
     providedIn: 'root',
 })
 export class AgentChatService {
-    private http = inject(HttpClient);
-    private translateService = inject(TranslateService);
-    private accountService = inject(AccountService);
+    private readonly http = inject(HttpClient);
+    private readonly translateService = inject(TranslateService);
+    private readonly accountService = inject(AccountService);
 
     sendMessage(message: string, courseId: number): Observable<AgentChatResponse> {
-        const userId = this.accountService.userIdentity?.id;
+        const userId = this.accountService.userIdentity()?.id;
         if (!userId) {
             throw new Error('User must be authenticated to use agent chat');
         }

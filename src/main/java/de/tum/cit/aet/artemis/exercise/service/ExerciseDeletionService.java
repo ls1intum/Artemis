@@ -18,8 +18,6 @@ import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -68,8 +66,6 @@ public class ExerciseDeletionService {
 
     private final Optional<TextApi> textApi;
 
-    private final ChannelRepository channelRepository;
-
     private final ChannelService channelService;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
@@ -81,9 +77,8 @@ public class ExerciseDeletionService {
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
-            Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository,
-            ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi,
-            ExerciseAthenaConfigService exerciseAthenaConfigService) {
+            Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi, ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -94,7 +89,6 @@ public class ExerciseDeletionService {
         this.lectureUnitApi = lectureUnitApi;
         this.plagiarismResultApi = plagiarismResultApi;
         this.textApi = textApi;
-        this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsApi = irisSettingsApi;
@@ -144,8 +138,7 @@ public class ExerciseDeletionService {
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         long start = System.nanoTime();
-        Channel exerciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
-        channelService.deleteChannel(exerciseChannel);
+        channelService.deleteChannelForExerciseId(exerciseId);
         log.debug("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
 
         if (exercise instanceof TextExercise) {

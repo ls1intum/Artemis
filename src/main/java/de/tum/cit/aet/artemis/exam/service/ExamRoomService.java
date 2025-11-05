@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
-import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 
 /**
  * Service implementation for managing exam rooms.
@@ -53,12 +52,9 @@ public class ExamRoomService {
 
     private final ObjectMapper objectMapper;
 
-    private final ExamUserRepository examUserRepository;
-
-    public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper, ExamUserRepository examUserRepository) {
+    public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper) {
         this.examRoomRepository = examRoomRepository;
         this.objectMapper = objectMapper;
-        this.examUserRepository = examUserRepository;
     }
 
     /* Multiple records that will be used internally for Jackson deserialization */
@@ -156,9 +152,9 @@ public class ExamRoomService {
 
     private static ExamRoom extractSimpleExamRoomFields(String roomNumber, ExamRoomInput examRoomInput) {
         ExamRoom room = new ExamRoom();
-        room.setRoomNumber(roomNumber);
+        room.setRoomNumber(roomNumber.replaceAll("\u0000", ""));
         final String alternativeRoomNumber = examRoomInput.alternativeNumber;
-        if (!roomNumber.equals(alternativeRoomNumber)) {
+        if (!room.getRoomNumber().equals(alternativeRoomNumber)) {
             room.setAlternativeRoomNumber(alternativeRoomNumber);
         }
 
@@ -354,16 +350,59 @@ public class ExamRoomService {
     /**
      * Calculates the exam seats that are usable for an exam, according to the default layout
      *
-     * @param examRoom The exam room, containing seats and default layout
+     * @param examRoom      The exam room, containing seats and default layout
+     * @param reserveFactor Percentage of seats that should not be included. Defaults to 0%
      * @return All seats that can be used for the exam, in ascending order
      */
-    public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom) {
+    public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom, double reserveFactor) {
         LayoutStrategy defaultLayoutStrategy = getDefaultLayoutStrategyOrElseThrow(examRoom);
+        return getUsableSeatsForLayout(examRoom, defaultLayoutStrategy, reserveFactor);
+    }
 
-        return switch (defaultLayoutStrategy.getType()) {
-            case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, defaultLayoutStrategy);
-            case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, defaultLayoutStrategy);
+    /**
+     * Calculates the exam seats that are usable for an exam, according to given layout
+     *
+     * @param examRoom       The exam room, containing seats and default layout
+     * @param layoutStrategy The layout strategy we want to apply. Must be a layout strategy of the given exam room
+     * @param reserveFactor  Percentage of seats that should not be included
+     * @return All seats that can be used for the exam, in ascending order
+     */
+    public List<ExamSeatDTO> getUsableSeatsForLayout(ExamRoom examRoom, LayoutStrategy layoutStrategy, double reserveFactor) {
+        if (!examRoom.getLayoutStrategies().contains(layoutStrategy)) {
+            throw new BadRequestAlertException("Could not find specified layout", ENTITY_NAME, "room.missingSpecifiedLayout",
+                    Map.of("roomNumber", examRoom.getRoomNumber(), "layoutName", layoutStrategy.getName()));
+        }
+
+        List<ExamSeatDTO> pickedSeats = switch (layoutStrategy.getType()) {
+            case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, layoutStrategy);
+            case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, layoutStrategy);
         };
+
+        return applyReserveFactorToList(pickedSeats, reserveFactor);
+    }
+
+    /**
+     * Calculates the size after applying a reserve factor
+     *
+     * @param originalSize  The original size
+     * @param reserveFactor The reserve factor in range [0,1]
+     * @return The size after applying the reserve factor
+     */
+    public int getSizeAfterApplyingReserveFactor(int originalSize, double reserveFactor) {
+        if (originalSize < 0) {
+            throw new IllegalArgumentException("originalSize must be non-negative");
+        }
+        if (!Double.isFinite(reserveFactor) || reserveFactor < 0.0 || reserveFactor > 1.0) {
+            throw new IllegalArgumentException("reserveFactor must be in [0,1]");
+        }
+
+        int result = (int) Math.floor(originalSize * (1.0 - reserveFactor));
+        return Math.max(0, result);
+    }
+
+    private <T> List<T> applyReserveFactorToList(List<T> list, double reserveFactor) {
+        int numberOfIncludedElements = getSizeAfterApplyingReserveFactor(list.size(), reserveFactor);
+        return list.subList(0, numberOfIncludedElements);
     }
 
     private record FixedSelectionSeatInput(@JsonProperty("row_index") int rowIndex, @JsonProperty("seat_index") int seatIndex,
@@ -421,7 +460,7 @@ public class ExamRoomService {
             final int seatIndex = seatInput.seatIndex();
 
             if (rowIndex < 0 || sortedRows.size() <= rowIndex || seatIndex < 0 || sortedRows.get(rowIndex).size() <= seatIndex) {
-                throw new BadRequestAlertException("Sire, the selected seat " + seatInput + " does not exist in room " + roomNumber, ENTITY_NAME, "room.seatNotFoundFixedSelection",
+                throw new BadRequestAlertException("The selected seat " + seatInput + " does not exist in room " + roomNumber, ENTITY_NAME, "room.seatNotFoundFixedSelection",
                         Map.of("rowIndex", rowIndex, "seatIndex", seatIndex, "roomNumber", roomNumber));
             }
 
@@ -465,8 +504,8 @@ public class ExamRoomService {
      *
      * @param examRoom The exam room
      * @param firstRow Number of the first row (starts at 1, lower values default to 1)
-     * @param xSpace   Minimum required free space between the left and right of seats
-     * @param ySpace   Minimum required free space between rows
+     * @param xSpace   Required spacing between seats (exclusive minimum - distances equal to this value are rejected)
+     * @param ySpace   Required spacing between rows (exclusive minimum - distances equal to this value are rejected)
      * @return Sorted list of this room's seats, respecting the given filters
      */
     private static List<ExamSeatDTO> getSortedSeatsWithRelativeDistanceFilters(ExamRoom examRoom, int firstRow, double xSpace, double ySpace) {
@@ -501,8 +540,16 @@ public class ExamRoomService {
     private static List<ExamSeatDTO> applyXSpaceAndYSpaceFilter(List<ExamSeatDTO> sortedSeatsAfterFirstRowFilter, double xSpace, double ySpace) {
         List<ExamSeatDTO> usableSeats = new ArrayList<>();
         for (ExamSeatDTO examSeatDTO : sortedSeatsAfterFirstRowFilter) {
-            boolean isFarEnough = usableSeats.stream().noneMatch(
-                    existing -> Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate()) <= ySpace && Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate()) <= xSpace);
+            boolean isFarEnough = usableSeats.stream().noneMatch(existing -> {
+                double yDifference = Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate());
+                double xDifference = Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate());
+
+                boolean isDifferentRowWithoutEnoughSpaceBetweenRows = 0 < yDifference && yDifference <= ySpace;
+                boolean isSameRowWithoutEnoughSpaceBetweenColumns = yDifference == 0 && xDifference <= xSpace;
+
+                return isDifferentRowWithoutEnoughSpaceBetweenRows || isSameRowWithoutEnoughSpaceBetweenColumns;
+            });
+
             if (isFarEnough) {
                 usableSeats.add(examSeatDTO);
             }

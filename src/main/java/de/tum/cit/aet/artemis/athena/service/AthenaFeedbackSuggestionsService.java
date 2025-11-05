@@ -218,7 +218,7 @@ public class AthenaFeedbackSuggestionsService {
      */
     public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isPreliminary)
             throws NetworkingException {
-        log.debug("Start Athena {} Feedback Suggestions Service for Exercise '{}' (#{}).", isPreliminary ? "Non Graded" : "Graded", exercise.getTitle(), exercise.getId());
+        log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isPreliminary ? "Non Graded" : "Graded", exercise.getTitle(), exercise.getId());
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 !isPreliminary, null);
         var module = getModuleOrThrow(exercise, isPreliminary);

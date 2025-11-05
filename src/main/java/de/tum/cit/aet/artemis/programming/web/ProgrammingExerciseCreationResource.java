@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
@@ -76,10 +77,12 @@ public class ProgrammingExerciseCreationResource {
 
     private final UserRepository userRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public ProgrammingExerciseCreationResource(AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             StaticCodeAnalysisService staticCodeAnalysisService, Optional<AthenaApi> athenaApi, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.courseService = courseService;
@@ -88,6 +91,7 @@ public class ProgrammingExerciseCreationResource {
         this.athenaApi = athenaApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -121,6 +125,8 @@ public class ProgrammingExerciseCreationResource {
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
+
+            exerciseVersionService.createExerciseVersion(newProgrammingExercise);
 
             return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId())).body(newProgrammingExercise);
         }
@@ -161,6 +167,7 @@ public class ProgrammingExerciseCreationResource {
             boolean didGenerateOracle = programmingExerciseCreationUpdateService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
 
             if (didGenerateOracle) {
+                exerciseVersionService.createExerciseVersion(programmingExercise, user);
                 HttpHeaders responseHeaders = new HttpHeaders();
                 responseHeaders.setContentType(MediaType.TEXT_PLAIN);
                 return new ResponseEntity<>("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName(), responseHeaders, HttpStatus.OK);

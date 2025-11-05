@@ -33,7 +33,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipation, TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -243,7 +243,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         }
 
-        this.tutor = this.accountService.userIdentity;
+        this.tutor = this.accountService.userIdentity();
 
         this.loadAll();
 
@@ -638,12 +638,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readInstruction() {
         this.isLoading = true;
         this.tutorParticipationService
-            .create(this.tutorParticipation, this.exerciseId)
+            .create(this.exerciseId)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
-                next: (res: HttpResponse<TutorParticipation>) => {
-                    this.tutorParticipation = res.body!;
-                    this.tutorParticipationStatus = this.tutorParticipation.status!;
+                next: (res: HttpResponse<TutorParticipationDTO>) => {
+                    const dto = res.body!;
+                    this.tutorParticipation = dto;
+                    this.tutorParticipationStatus = dto.status!;
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,

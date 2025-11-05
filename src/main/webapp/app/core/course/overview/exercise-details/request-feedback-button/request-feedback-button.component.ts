@@ -107,7 +107,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     setUserAcceptedExternalLLMUsage(): void {
-        this.hasUserAcceptedExternalLLMUsage = !!this.accountService.userIdentity?.externalLLMUsageAccepted;
+        this.hasUserAcceptedExternalLLMUsage = !!this.accountService.userIdentity()?.externalLLMUsageAccepted;
     }
 
     acceptExternalLLMUsage(modal: any) {

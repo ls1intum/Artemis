@@ -13,6 +13,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisCourseChatPipelineExecutionDTO<T>(PyrisExtendedCourseDTO course, StudentMetricsDTO metrics, PyrisEventDTO<T> eventPayload, List<PyrisMessageDTO> chatHistory,
-        PyrisUserDTO user, PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages, String customInstructions) {
+public record PyrisCourseChatPipelineExecutionDTO<T>(PyrisExtendedCourseDTO course, StudentMetricsDTO metrics, PyrisEventDTO<T> eventPayload, String sessionTitle,
+        List<PyrisMessageDTO> chatHistory, PyrisUserDTO user, PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages, String customInstructions) {
 }

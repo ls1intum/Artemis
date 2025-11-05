@@ -27,12 +27,12 @@ plugins {
     id "org.owasp.dependencycheck" version "12.1.8"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
-    id "org.openapi.generator" version "7.16.0"
-
+    id "org.openapi.generator" version "7.17.0"
+    id "com.google.osdetector" version "1.7.3"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.4.4"
+version = "8.5.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -42,7 +42,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.1.0"
+    gradleVersion = "9.2.0"
 }
 
 node {
@@ -158,6 +158,8 @@ configurations.configureEach {
 
 dependencies {
 
+    // Required by Sharing Platform
+    implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
     // Required by Spring cloud
     implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
@@ -213,7 +215,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2025.4"
+    implementation "net.sourceforge.plantuml:plantuml:1.2025.9"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
@@ -302,10 +304,16 @@ dependencies {
     implementation("io.netty:netty-resolver") { version { 	    		strictly netty_version } }
     implementation("io.netty:netty-resolver-dns") { version { 			strictly netty_version } }
     implementation("io.netty:netty-transport") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-transport-classes-epoll") { version {	        strictly netty_version } }
+    implementation("io.netty:netty-transport-classes-epoll") { version {strictly netty_version } }
     implementation("io.netty:netty-transport-native-epoll") { version {	strictly netty_version } }
     implementation("io.netty:netty-handler") { version { 				strictly netty_version } }
     implementation("io.netty:netty-handler-proxy") { version { 			strictly netty_version } }
+
+    // only load netty-resolver-dns-native-macos on macos systems
+    if (osdetector.os == 'osx') {
+        def classifier = (osdetector.arch == 'aarch_64') ? 'osx-aarch_64' : 'osx-x86_64'
+        runtimeOnly("io.netty:netty-resolver-dns-native-macos:${netty_version}:${classifier}") { version { strictly netty_version } }
+    }
 
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version {strictly "2.6.0" } }
@@ -316,6 +324,10 @@ dependencies {
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     // Required for Hibernate multi node caching
     runtimeOnly "com.hazelcast:hazelcast-hibernate53:5.2.0"
+    // alternative for Hazelcast
+    implementation "org.redisson:redisson:${redisson_version}"
+    implementation "org.redisson:redisson-spring-boot-starter:${redisson_version}"
+
 
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
     implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
@@ -409,7 +421,7 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
     // Required by JPlag
-    implementation "com.ibm.icu:icu4j-charset:77.1"
+    implementation "com.ibm.icu:icu4j-charset:78.1"
     // Required by exam session service
     implementation "com.github.seancfoley:ipaddress:5.5.1"
 
@@ -437,9 +449,9 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 
-    implementation "com.google.errorprone:error_prone_annotations:2.42.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.43.0"
     // needed for OpenAPI generation
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -482,10 +494,10 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.184"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.1.0"
+    testImplementation "org.gradle:gradle-tooling-api:9.2.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
-
+    testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
@@ -506,7 +518,7 @@ dependencies {
     testImplementation "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
 }
 
-// we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ":mockitoAgent" after it has been resolved
+// we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved
 apply from: "gradle/test.gradle"
 apply from: "gradle/openapi.gradle"
 

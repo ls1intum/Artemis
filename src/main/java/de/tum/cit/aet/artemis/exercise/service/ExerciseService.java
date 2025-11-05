@@ -459,6 +459,16 @@ public class ExerciseService {
     }
 
     /**
+     * Find all example submissions for the given exercise.
+     *
+     * @param exercise the exercise for which example submissions should be found
+     * @return the example submissions for the given exercise
+     */
+    public Set<ExampleSubmission> findExampleSubmissionsForExercise(Exercise exercise) {
+        return exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
+    }
+
+    /**
      * Check to ensure that an updatedExercise is not converted from a course exercise to an exam exercise and vice versa.
      *
      * @param updatedExercise the updated Exercise

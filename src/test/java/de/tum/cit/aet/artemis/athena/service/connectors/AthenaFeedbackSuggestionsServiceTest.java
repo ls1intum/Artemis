@@ -19,10 +19,12 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
+import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
@@ -79,6 +81,9 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Autowired
     private UserUtilService userUtilService;
 
+    @Value("${server.url}")
+    private String serverUrl;
+
     private TextExercise textExercise;
 
     private TextSubmission textSubmission;
@@ -113,22 +118,16 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST, ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST));
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setId(3L);
-
         programmingSubmission.setParticipation(new StudentParticipation().exercise(programmingExercise));
 
-        var modelingCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise(null);
-        modelingExercise = (ModelingExercise) modelingCourse.getExercises().stream().findFirst().orElseThrow();
+        modelingExercise = modelingExerciseUtilService.addModelingExerciseToCourse(course);
         modelingExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_MODELING_SUGGESTIONS_TEST, ATHENA_MODULE_MODELING_PRELIMINARY_TEST));
-        modelingSubmission = new ModelingSubmission();
+        modelingSubmission = new ModelingSubmission().model("This is a model submission");
         modelingSubmission.setId(4L);
         modelingSubmission.setParticipation(new StudentParticipation().exercise(modelingExercise));
 
         llmTokenUsageRequestRepository.deleteAll();
         llmTokenUsageTraceRepository.deleteAll();
-
-        StudentParticipation programmingParticipation = new StudentParticipation().exercise(programmingExercise);
-        programmingParticipation.setId(2L);
-        programmingSubmission.setParticipation(programmingParticipation);
     }
 
     @Test
@@ -188,11 +187,23 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPreliminaryFeedbackModeling() throws NetworkingException {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", true, null, jsonPath("$.exercise.id").value(modelingExercise.getId()),
+                jsonPath("$.exercise.title").value(modelingExercise.getTitle()), jsonPath("$.submission.id").value(modelingSubmission.getId()),
+                jsonPath("$.submission.model").value(modelingSubmission.getModel()));
+        List<ModelingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, modelingSubmission, true);
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        assertThat(suggestions.getFirst().credits()).isEqualTo(0);
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPreliminaryFeedbackProgramming() throws NetworkingException {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", true, null, jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(programmingSubmission.getId()),
                 jsonPath("$.submission.repositoryUri")
-                        .value("http://localhost/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
+                        .value(serverUrl + "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
         List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true);
         assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
         assertThat(suggestions.getFirst().lineStart()).isEqualTo(3);

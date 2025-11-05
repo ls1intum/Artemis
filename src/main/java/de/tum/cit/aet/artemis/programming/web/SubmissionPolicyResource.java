@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -59,14 +60,17 @@ public class SubmissionPolicyResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public SubmissionPolicyResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authorizationCheckService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ParticipationAuthorizationCheckService participationAuthCheckService, ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.participationAuthCheckService = participationAuthCheckService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -125,6 +129,7 @@ public class SubmissionPolicyResource {
         submissionPolicyService.validateSubmissionPolicy(submissionPolicy);
 
         addedSubmissionPolicy = submissionPolicyService.addSubmissionPolicyToProgrammingExercise(submissionPolicy, programmingExercise);
+        exerciseVersionService.createExerciseVersion(programmingExercise);
         HttpHeaders responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, Long.toString(addedSubmissionPolicy.getId()));
 
         return ResponseEntity.created(new URI("programming-exercises/" + exerciseId + "/submission-policy")).headers(responseHeaders).body(addedSubmissionPolicy);
@@ -158,6 +163,7 @@ public class SubmissionPolicyResource {
         }
 
         submissionPolicyService.removeSubmissionPolicyFromProgrammingExercise(programmingExercise);
+        exerciseVersionService.createExerciseVersion(programmingExercise);
         HttpHeaders responseHeaders = HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
         return ResponseEntity.ok().headers(responseHeaders).build();
     }
@@ -194,6 +200,7 @@ public class SubmissionPolicyResource {
         else {
             submissionPolicyService.disableSubmissionPolicy(submissionPolicy);
         }
+        exerciseVersionService.createExerciseVersion(exercise);
         responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
         return ResponseEntity.ok().headers(responseHeaders).build();
     }
@@ -249,7 +256,7 @@ public class SubmissionPolicyResource {
         submissionPolicyService.validateSubmissionPolicy(updatedSubmissionPolicy);
         submissionPolicy.setProgrammingExercise(exercise);
         submissionPolicy = submissionPolicyService.updateSubmissionPolicy(exercise, updatedSubmissionPolicy);
-
+        exerciseVersionService.createExerciseVersion(exercise);
         responseHeaders = HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, Long.toString(submissionPolicy.getId()));
         return ResponseEntity.ok().headers(responseHeaders).body(submissionPolicy);
     }
@@ -268,7 +275,6 @@ public class SubmissionPolicyResource {
     public ResponseEntity<Integer> getParticipationSubmissionCount(@PathVariable Long participationId) {
         var programmingExerciseStudentParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(programmingExerciseStudentParticipation);
-
         return ResponseEntity.ok().body(submissionPolicyService.getParticipationSubmissionCount(programmingExerciseStudentParticipation, false));
     }
 }

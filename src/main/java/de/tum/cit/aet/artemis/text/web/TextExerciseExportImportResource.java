@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -60,14 +61,18 @@ public class TextExerciseExportImportResource {
 
     private final UserRepository userRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public TextExerciseExportImportResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, Optional<AthenaApi> athenaApi) {
+            TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, Optional<AthenaApi> athenaApi,
+            ExerciseVersionService exerciseVersionService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionExportService = textSubmissionExportService;
         this.athenaApi = athenaApi;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -129,8 +134,8 @@ public class TextExerciseExportImportResource {
         }
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
-        textExerciseRepository.save(newTextExercise);
-
+        var savedExercise = textExerciseRepository.save(newTextExercise);
+        exerciseVersionService.createExerciseVersion(savedExercise, user);
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
     }
 
