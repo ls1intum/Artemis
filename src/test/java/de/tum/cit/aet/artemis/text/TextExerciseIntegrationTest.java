@@ -147,6 +147,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private ExerciseAthenaConfigService exerciseAthenaConfigService;
 
+    @Autowired
     private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
 
     private Course course;
