@@ -135,7 +135,7 @@
                 </div>
                 <!-- LECTURE END -->
                 <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-                    @if (lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
+                    @if (lecture && !lecture.isTutorialLecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
                         <jhi-discussion-section [lecture]="lecture" />
                     }
                 </div>
