@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -81,10 +82,12 @@ public class QuizExerciseResource {
 
     private final QuizBatchRepository quizBatchRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, InstanceMessageSendService instanceMessageSendService, AuthorizationCheckService authCheckService,
             GroupNotificationService groupNotificationService, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository,
-            QuizSubmissionService quizSubmissionService) {
+            QuizSubmissionService quizSubmissionService, ExerciseVersionService exerciseVersionService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -95,6 +98,7 @@ public class QuizExerciseResource {
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
         this.quizSubmissionService = quizSubmissionService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -227,6 +231,7 @@ public class QuizExerciseResource {
 
         // notify websocket channel of changes to the quiz exercise
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, action);
+        exerciseVersionService.createExerciseVersion(quizExercise, user);
         return new ResponseEntity<>(quizExercise, HttpStatus.OK);
     }
 }
