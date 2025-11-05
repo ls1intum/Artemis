@@ -250,7 +250,6 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
      * @param id             the id of the quiz exercise
      * @param files          the files to be uploaded
      * @param expectedStatus the expected status for HTTP request
-     * @return updated QuizExercise or null if the request failed
      */
     protected void reevalQuizExerciseWithFiles(QuizExercise quizExercise, Long id, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
         QuizExerciseReEvaluateDTO dto = QuizExerciseReEvaluateDTO.of(quizExercise);
