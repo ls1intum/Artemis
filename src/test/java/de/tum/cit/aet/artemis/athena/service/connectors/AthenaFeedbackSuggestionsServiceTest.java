@@ -15,10 +15,12 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
+import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
@@ -30,6 +32,8 @@ import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -50,6 +54,9 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
+    @Value("${server.url}")
+    private String serverUrl;
+
     private TextExercise textExercise;
 
     private TextSubmission textSubmission;
@@ -57,6 +64,10 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingSubmission programmingSubmission;
+
+    private ModelingExercise modelingExercise;
+
+    private ModelingSubmission modelingSubmission;
 
     @BeforeEach
     void setUp() {
@@ -76,6 +87,15 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         StudentParticipation programmingParticipation = new StudentParticipation().exercise(programmingExercise);
         programmingParticipation.setId(2L);
         programmingSubmission.setParticipation(programmingParticipation);
+
+        modelingExercise = new ModelingExercise();
+        modelingExercise.setId(5L);
+        modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        modelingSubmission = new ModelingSubmission();
+        modelingSubmission.setId(6L);
+        StudentParticipation modelingParticipation = new StudentParticipation().exercise(modelingExercise);
+        modelingParticipation.setId(4L);
+        modelingSubmission.setParticipation(modelingParticipation);
     }
 
     @Test
@@ -91,12 +111,39 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    void testTextFeedbackSuggestionsReturnsEmptyWhenModuleMissing() throws NetworkingException {
+        textExercise.setFeedbackSuggestionModule(null);
+
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true);
+
+        assertThat(suggestions).isEmpty();
+    }
+
+    @Test
+    void testProgrammingFeedbackSuggestionsReturnsEmptyWhenModuleMissing() throws NetworkingException {
+        programmingExercise.setFeedbackSuggestionModule(null);
+
+        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true);
+
+        assertThat(suggestions).isEmpty();
+    }
+
+    @Test
+    void testModelingFeedbackSuggestionsReturnsEmptyWhenModuleMissing() throws NetworkingException {
+        modelingExercise.setFeedbackSuggestionModule(null);
+
+        List<ModelingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, modelingSubmission, true);
+
+        assertThat(suggestions).isEmpty();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFeedbackSuggestionsProgramming() throws NetworkingException {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(programmingSubmission.getId()),
                 jsonPath("$.submission.repositoryUri")
-                        .value("http://localhost/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
+                        .value(serverUrl + "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
         List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true);
         assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
         assertThat(suggestions.getFirst().lineStart()).isEqualTo(3);
