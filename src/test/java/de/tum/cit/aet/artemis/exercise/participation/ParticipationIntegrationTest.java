@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -178,6 +179,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private LearnerProfileUtilService learnerProfileUtilService;
+
+    @Autowired
+    private ExerciseAthenaConfigService athenaConfigService;
 
     @Captor
     private ArgumentCaptor<Result> resultCaptor;
@@ -681,7 +685,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(null, ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST));
+        athenaConfigService.updateAthenaConfig(programmingExercise, ExerciseAthenaConfig.of(null, ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST));
         this.exerciseRepository.save(programmingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", true, null);
@@ -728,7 +732,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(course);
 
-        this.programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(null, ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST));
+        athenaConfigService.updateAthenaConfig(programmingExercise, ExerciseAthenaConfig.of(null, ATHENA_MODULE_PROGRAMMING_PRELIMINARY_TEST));
         this.exerciseRepository.save(programmingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", true, null);
@@ -774,7 +778,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(textCourse);
 
-        this.textExercise.setAthenaConfig(ExerciseAthenaConfig.of(null, ATHENA_MODULE_TEXT_PRELIMINARY_TEST));
+        athenaConfigService.updateAthenaConfig(textExercise, ExerciseAthenaConfig.of(null, ATHENA_MODULE_TEXT_PRELIMINARY_TEST));
         this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", true, null);
@@ -814,7 +818,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         modelingCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(modelingCourse);
 
-        this.modelingExercise.setAthenaConfig(ExerciseAthenaConfig.of(null, ATHENA_MODULE_MODELING_PRELIMINARY_TEST));
+        athenaConfigService.updateAthenaConfig(modelingExercise, ExerciseAthenaConfig.of(null, ATHENA_MODULE_MODELING_PRELIMINARY_TEST));
         this.exerciseRepository.save(modelingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", true, null);
