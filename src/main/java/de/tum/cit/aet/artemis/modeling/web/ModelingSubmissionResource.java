@@ -280,7 +280,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
 
         log.debug("REST request to get a modeling submission without assessment");
-        final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         exerciseAthenaConfigService.loadAthenaConfig(exercise);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
