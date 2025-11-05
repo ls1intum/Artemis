@@ -4,13 +4,17 @@ title: Quiz Training Mode
 sidebar_label: Quiz Training
 ---
 
-import trainingTab from "./assets/quiz/quiz-training-tab.png";
-import scorecard from "./assets/quiz/scorecard.png";
-import mcQuestion from "./assets/quiz/mc-question.png";
-import mcQuestionSolution from "./assets/quiz/mc-question-solution.png";
-import saQuestion from "./assets/quiz/sa-question.png";
-import saQuestionSolution from "./assets/quiz/sa-question-sample-solution.png";
-import unratedNotification from "./assets/quiz/unrated-notification.png";
+import trainingTab from "./assets/quiz-training-mode/quiz-training-tab.png";
+import scorecard from "./assets/quiz-training-mode/scorecard.png";
+import mcQuestion from "./assets/quiz-training-mode/mc-question.png";
+import mcQuestionSolution from "./assets/quiz-training-mode/mc-question-solution.png";
+import saQuestion from "./assets/quiz-training-mode/sa-question.png";
+import saQuestionSolution from "./assets/quiz-training-mode/sa-question-sample-solution.png";
+import unratedNotification from "./assets/quiz-training-mode/unrated-notification.png";
+import description from "./assets/quiz-training-mode/description.png";
+import leaderboard from "./assets/quiz-training-mode/leaderboard.png";
+import userSettings from "./assets/quiz-training-mode/user-settings.png";
+import userLeaderboardSettings from "./assets/quiz-training-mode/user-leaderboard-settings.png";
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
@@ -49,6 +53,8 @@ Point allocation depends on the difficulty and your performance on the question.
 
 You can choose whether your name appears in the course leaderboard. You can change this setting at any time.
 
+<Image src={description} alt={"Description"} size={ImageSize.medium}></Image>
+
 ---
 
 ## Overview Page
@@ -60,10 +66,10 @@ After the initial setup, you'll see the training overview with several sections:
 The left side shows your current status:
 
 - **League Badge:** Your current league with a progress bar to the next league
-- **Next Questions Due In:** Countdown until new questions are available for review
-- **Total Questions:** Number of all attempted questions
-- **Correct Answers:** Number of correctly answered questions
-- **Wrong Answers:** Number of incorrectly answered questions
+- **Next Questions Due In:** Countdown until the next questions are planed for training according to the spaced-repetition algorithm
+- **Total Questions:** Number of questions in the training pool
+- **Correct Answers:** Total number of correct answers
+- **Wrong Answers:** Total number of wrong answers
 
 <Image src={scorecard} alt={"Scorecard"} size={ImageSize.small}></Image>
 
@@ -74,6 +80,8 @@ The right side shows the course leaderboard (if enabled):
 - **Your Position:** Highlighted with your rank, name, and score
 - **Top Participants:** Leaderboard of other course participants
 - **Profile Pictures:** Visual representation of participants
+
+<Image src={leaderboard} alt={"Leaderboard"} size={ImageSize.large}></Image>
 
 ---
 
@@ -140,6 +148,18 @@ After submitting, you'll immediately see:
 
 ---
 
+## Leaderboard Settings
+
+You can adjust your leaderboard visibility at any time:
+
+- **From the Overview Page:** Click the **"View description"** button in the scorecard to open the description dialog and settings
+- **From User Settings:** Navigate to your user settings and change the quiz training leaderboard visibility
+
+<Image src={userSettings} alt={"User Settings"} size={ImageSize.small}></Image>
+<Image src={userLeaderboardSettings} alt={"User Leaderboard Settings"} size={ImageSize.medium}></Image>
+
+---
+
 ## Tips for Effective Training
 
 1. **Practice Regularly:** Visit the training daily to benefit from spaced repetition
@@ -166,6 +186,10 @@ Only graded questions count toward your score and league progress. Ungraded ques
 
 **I answered a graded question correctly, but did not receive points. Why?**
 If you answered the question wrong before, you will not receive points for the same question if you answer it correctly on the same day. This is to prevent users from repeatedly answering a question wrong and then correct to secure points.
+
+**What is spaced-repetition?**
+Spaced repetition is a learning technique that involves reviewing information at increasing intervals to enhance long-term retention.
+Correctly answered questions are shown less frequently, while incorrectly answered questions appear more often.
 
 ---
 
