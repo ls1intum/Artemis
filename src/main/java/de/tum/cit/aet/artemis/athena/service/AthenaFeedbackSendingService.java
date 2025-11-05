@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 
 /**
  * Service for publishing feedback to the Athena service for further processing
@@ -38,16 +39,19 @@ public class AthenaFeedbackSendingService {
 
     private final AthenaModuleService athenaModuleService;
 
+    private final ExerciseAthenaConfigService athenaConfigService;
+
     private final AthenaDTOConverterService athenaDTOConverterService;
 
     /**
      * Creates a new service to send feedback to the Athena service
      */
     public AthenaFeedbackSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
-            AthenaDTOConverterService athenaDTOConverterService) {
+            AthenaDTOConverterService athenaDTOConverterService, ExerciseAthenaConfigService athenaConfigService) {
         connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
         this.athenaModuleService = athenaModuleService;
         this.athenaDTOConverterService = athenaDTOConverterService;
+        this.athenaConfigService = athenaConfigService;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -82,7 +86,7 @@ public class AthenaFeedbackSendingService {
      */
     @Async
     public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks, int maxRetries) {
-        var config = exercise.getAthenaConfig();
+        var config = athenaConfigService.findByExerciseId(exercise.getId()).orElse(null);
         if (config == null || config.getFeedbackSuggestionModule() == null) {
             throw new IllegalArgumentException("The exercise does not have feedback suggestions enabled.");
         }

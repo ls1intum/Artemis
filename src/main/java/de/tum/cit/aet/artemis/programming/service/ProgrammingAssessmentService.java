@@ -126,13 +126,10 @@ public class ProgrammingAssessmentService extends AssessmentService {
     }
 
     /**
-     * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
+     * Send feedback to Athena (if it is enabled for the Artemis instance).
      */
     private void sendFeedbackToAthena(final ProgrammingExercise exercise, final ProgrammingSubmission programmingSubmission, final List<Feedback> feedbacks) {
-        var config = exercise.getAthenaConfig();
-        if (athenaFeedbackApi.isPresent() && config != null && config.getFeedbackSuggestionModule() != null) {
-            athenaFeedbackApi.get().sendFeedback(exercise, programmingSubmission, feedbacks);
-        }
+        athenaFeedbackApi.ifPresent(feedbackApi -> feedbackApi.sendFeedback(exercise, programmingSubmission, feedbacks));
     }
 
     private void handleResolvedFeedbackRequest(StudentParticipation participation) {

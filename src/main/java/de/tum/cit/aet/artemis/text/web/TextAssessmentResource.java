@@ -527,12 +527,9 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
+     * Send feedback to Athena (if it is enabled for the Artemis instance).
      */
     private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
-        var config = exercise.getAthenaConfig();
-        if (athenaFeedbackApi.isPresent() && config != null && config.getFeedbackSuggestionModule() != null) {
-            athenaFeedbackApi.get().sendFeedback(exercise, textSubmission, feedbacks);
-        }
+        athenaFeedbackApi.ifPresent(feedbackApi -> feedbackApi.sendFeedback(exercise, textSubmission, feedbacks));
     }
 }
