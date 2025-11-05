@@ -1,58 +1,58 @@
+import { DecimalPipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faExclamationTriangle, faGripLines, faTimeline } from '@fortawesome/free-solid-svg-icons';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { captureException } from '@sentry/angular';
+import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
+import { RatingComponent } from 'app/exercise/rating/rating.component';
+import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
+import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercise/result/result.utils';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
-import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
-import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercise/result/result.utils';
-import { AccountService } from 'app/core/auth/account.service';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
+import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
-import { faExclamationTriangle, faGripLines, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { Subject, Subscription, TeardownLogic, of } from 'rxjs';
-import { omit } from 'lodash-es';
-import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/shared/service/alert.service';
-import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { catchError, filter, skip, switchMap, tap } from 'rxjs/operators';
-import { onError } from 'app/shared/util/global.utils';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assessment.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DecimalPipe, NgClass } from '@angular/common';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { captureException } from '@sentry/angular';
-import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { TranslateService } from '@ngx-translate/core';
-import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { AlertService } from 'app/shared/service/alert.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { onError } from 'app/shared/util/global.utils';
+import { stringifyIgnoringFields } from 'app/shared/util/utils';
+import dayjs from 'dayjs/esm';
+import { omit } from 'lodash-es';
+import { Subject, Subscription, TeardownLogic, of } from 'rxjs';
+import { catchError, filter, skip, switchMap, tap } from 'rxjs/operators';
+import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assessment.component';
+import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -379,7 +379,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     private updateModelAndExplanation(): void {
         if (this.submission.model) {
-            this.umlModel = JSON.parse(this.submission.model);
+            this.umlModel = importDiagram(JSON.parse(this.submission.model));
             const nodes = this.umlModel.nodes ?? {};
             this.hasElements = Array.isArray(nodes) ? nodes.length !== 0 : Object.values(nodes).length !== 0;
         }
@@ -603,7 +603,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 next: (response) => {
                     this.submission = response.body!;
                     if (this.submission.model) {
-                        this.umlModel = JSON.parse(this.submission.model);
+                        this.umlModel = importDiagram(JSON.parse(this.submission.model));
                         this.hasElements = this.umlModel.nodes && Object.values(this.umlModel.nodes).length !== 0;
                     }
                     this.submissionChange.next(this.submission);

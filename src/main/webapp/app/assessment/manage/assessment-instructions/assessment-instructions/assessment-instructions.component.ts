@@ -1,21 +1,21 @@
 import { Component, Input, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
+import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
 
 @Component({
     selector: 'jhi-assessment-instructions',
@@ -66,7 +66,7 @@ export class AssessmentInstructionsComponent {
                 const modelingExercise = exercise as ModelingExercise;
                 sampleSolutionMarkdown = modelingExercise.exampleSolutionExplanation;
                 if (modelingExercise.exampleSolutionModel) {
-                    this.sampleSolutionModel = JSON.parse(modelingExercise.exampleSolutionModel);
+                    this.sampleSolutionModel = importDiagram(JSON.parse(modelingExercise.exampleSolutionModel));
                 }
                 this.sampleSolutionDiagramType = modelingExercise.diagramType;
                 break;

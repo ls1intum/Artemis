@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -238,7 +238,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.hasAssessmentDueDatePassed = !!this.modelingExercise?.assessmentDueDate && dayjs(this.modelingExercise.assessmentDueDate).isBefore(dayjs());
 
         if (this.submission.model) {
-            this.model = JSON.parse(this.submission.model);
+            this.model = importDiagram(JSON.parse(this.submission.model));
         } else {
             this.alertService.closeAll();
             this.alertService.warning('artemisApp.modelingAssessmentEditor.messages.noModel');

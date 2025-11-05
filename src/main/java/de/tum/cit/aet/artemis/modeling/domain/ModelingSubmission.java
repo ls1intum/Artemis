@@ -65,7 +65,8 @@ public class ModelingSubmission extends Submission {
 
     /**
      * checks if the modeling submission is empty by using a new object mapper.
-     * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements in the json description are empty.
+     * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements/nodes in the json description are empty.
+     * Supports both Apollon v2 (with 'elements') and v3 (with 'nodes').
      *
      * @return true if the submission is empty, false otherwise
      */
@@ -76,7 +77,8 @@ public class ModelingSubmission extends Submission {
 
     /**
      * checks if the modeling submission is empty by using a predefined object mapper (in case this is invoked multiple times).
-     * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements in the json description are empty.
+     * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements/nodes in the json description are empty.
+     * Supports both Apollon v2 (with 'elements') and v3 (with 'nodes').
      *
      * @param jacksonObjectMapper a predefined jackson object mapper
      * @return true if the submission is empty, false otherwise
@@ -88,9 +90,23 @@ public class ModelingSubmission extends Submission {
                 return false;
             }
             // TODO: further improve this!!
-            return model == null || model.isBlank() || jacksonObjectMapper.readTree(getModel()).get("nodes").isEmpty();
+            if (model == null || model.isBlank()) {
+                return true;
+            }
+            var jsonNode = jacksonObjectMapper.readTree(getModel());
+
+            // Check for v2 format (elements)
+            var elements = jsonNode.get("elements");
+            if (elements != null) {
+                return elements.isEmpty();
+            }
+
+            // Check for v3 format (nodes)
+            var nodes = jsonNode.get("nodes");
+            return nodes == null || nodes.isEmpty();
         }
         catch (JsonProcessingException ex) {
+            log.warn("Failed to parse model JSON", ex);
             return false;
         }
     }

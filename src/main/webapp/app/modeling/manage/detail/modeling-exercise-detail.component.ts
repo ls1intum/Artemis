@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { UMLModel } from '@tumaet/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { Subscription } from 'rxjs';
@@ -79,7 +79,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.gradingInstructions);
             this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.exampleSolutionExplanation);
             if (this.modelingExercise.exampleSolutionModel && this.modelingExercise.exampleSolutionModel !== '') {
-                this.exampleSolutionUML = JSON.parse(this.modelingExercise.exampleSolutionModel);
+                this.exampleSolutionUML = importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel));
             }
             this.detailOverviewSections = this.getExerciseDetailSections();
         });

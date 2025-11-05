@@ -12,7 +12,7 @@ import { ExampleSubmission } from 'app/assessment/shared/entities/example-submis
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { UMLModel } from '@tumaet/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import {
@@ -325,7 +325,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         this.modelingExercise = this.exercise as ModelingExercise;
                         if (this.modelingExercise.exampleSolutionModel) {
                             this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.exampleSolutionExplanation);
-                            this.exampleSolutionModel = JSON.parse(this.modelingExercise.exampleSolutionModel);
+                            this.exampleSolutionModel = importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel));
                         }
                         break;
                     case ExerciseType.FILE_UPLOAD:

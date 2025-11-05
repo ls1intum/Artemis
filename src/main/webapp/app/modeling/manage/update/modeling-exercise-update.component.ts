@@ -1,48 +1,48 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
+import { FormsModule, NgModel } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
+import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
+import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
-import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
-import { ModelingExerciseService } from '../services/modeling-exercise.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { switchMap, tap } from 'rxjs/operators';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep, isEmpty } from 'lodash-es';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { onError } from 'app/shared/util/global.utils';
+import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
-import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { onError } from 'app/shared/util/global.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { cloneDeep, isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
-import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
-import { FormsModule, NgModel } from '@angular/forms';
-import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
-import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
-import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
-import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { switchMap, tap } from 'rxjs/operators';
+import { ModelingExerciseService } from '../services/modeling-exercise.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -163,7 +163,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {
-                this.exampleSolution = JSON.parse(this.modelingExercise.exampleSolutionModel);
+                this.exampleSolution = importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel));
             }
 
             this.backupExercise = cloneDeep(this.modelingExercise);
