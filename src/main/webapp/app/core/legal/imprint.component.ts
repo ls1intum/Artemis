@@ -8,7 +8,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-imprint',
-    template: ` <div class="module-bg m-3 mb-5 p-3 rounded rounded-3" [innerHTML]="imprint | htmlForMarkdown"></div> `,
+    template: ` <div [innerHTML]="imprint | htmlForMarkdown"></div> `,
     imports: [HtmlForMarkdownPipe],
 })
 export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
