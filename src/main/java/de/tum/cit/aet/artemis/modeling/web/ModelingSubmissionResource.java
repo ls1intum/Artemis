@@ -376,7 +376,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     /**
      * Returns the submission with data needed for the modeling editor, which includes the participation, the model and the result (if the assessment was already submitted).
      *
-     * @param participationId the participationId for which to find the submission and data for the modeling editor
+     * @param participationId  the participationId for which to find the submission and data for the modeling editor
+     * @param withAthenaConfig boolean flag whether to include the athena config of the exercise
      * @return the ResponseEntity with the submission as body
      */
     @GetMapping("participations/{participationId}/latest-modeling-submission")

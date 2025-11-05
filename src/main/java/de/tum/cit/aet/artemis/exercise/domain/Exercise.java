@@ -673,6 +673,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return athenaConfigTransient;
     }
 
+    /**
+     * Sets the Athena configuration for this exercise.
+     * <p>
+     * If the provided configuration is {@code null} or considered empty (via {@code ExerciseAthenaConfig#isEmpty()}),
+     * the transient configuration is cleared (set to {@code null}). Otherwise, the provided configuration is stored.
+     *
+     * @param athenaConfig the Athena configuration to set; may be {@code null}
+     */
     public void setAthenaConfig(ExerciseAthenaConfig athenaConfig) {
         if (athenaConfig == null || athenaConfig.isEmpty()) {
             this.athenaConfigTransient = null;
