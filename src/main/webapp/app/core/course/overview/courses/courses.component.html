@@ -1,26 +1,26 @@
 @if (nextRelevantExam && nextRelevantCourseForExam) {
-    <div class="module-bg p-3 rounded-3 mb-3">
-        <h3 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.examTitle" [translateValues]="{ course: nextRelevantCourseForExam.title }"></h3>
+    <div>
+        <h3 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.examTitle" [translateValues]="{ course: nextRelevantCourseForExam?.title }"></h3>
         <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center exam-container px-3" (click)="openExam()">
                 <div class="mb-4 mt-4 d-flex" style="width: unset">
                     <fa-icon [icon]="faPenAlt" size="2x" />
-                    <h4 class="ms-2 fw-medium">{{ nextRelevantExam.title }}</h4>
+                    <h4 class="ms-2 fw-medium">{{ nextRelevantExam?.title }}</h4>
                 </div>
                 <div class="text-end mb-4 mt-4" style="width: unset">
-                    @if (nextRelevantExam.startDate) {
-                        <div jhiTranslate="artemisApp.exam.overview.start" [translateValues]="{ start: nextRelevantExam.startDate | artemisDate }"></div>
+                    @if (nextRelevantExam?.startDate) {
+                        <div jhiTranslate="artemisApp.exam.overview.start" [translateValues]="{ start: nextRelevantExam?.startDate | artemisDate }"></div>
                     }
-                    @if (nextRelevantExam.examMaxPoints) {
-                        <div jhiTranslate="artemisApp.exam.overview.maxPoints" [translateValues]="{ points: nextRelevantExam.examMaxPoints }"></div>
+                    @if (nextRelevantExam?.examMaxPoints) {
+                        <div jhiTranslate="artemisApp.exam.overview.maxPoints" [translateValues]="{ points: nextRelevantExam?.examMaxPoints }"></div>
                     }
                 </div>
             </div>
         </div>
     </div>
 }
-<div class="module-bg rounded-3 pb-3">
-    <div class="d-flex justify-content-between p-3 rounded-3 align-items-center">
+<div>
+    <div class="d-flex justify-content-between pb-3 align-items-center">
         <h3 class="fw-medium mb-0">{{ 'artemisApp.studentDashboard.title' | artemisTranslate }} ({{ regularCourses.length + recentlyAccessedCourses.length }})</h3>
         <div class="d-flex gap-3 align-items-center ms-1">
             <div class="text-primary d-inline-flex">
@@ -63,7 +63,7 @@
     }
 </div>
 @if (coursesLoaded) {
-    <div class="d-flex justify-content-center mt-3 mb-5">
+    <div class="d-flex justify-content-center mt-5 mb-3">
         <div jhiTranslate="artemisApp.studentDashboard.archive.oldCourses"></div>
         <div>&nbsp;</div>
         <a [routerLink]="['/courses/archive']" jhiTranslate="artemisApp.studentDashboard.archive.here"></a>

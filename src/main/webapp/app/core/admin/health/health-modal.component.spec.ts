@@ -5,7 +5,7 @@ import { MockProvider } from 'ng-mocks';
 import { HealthDetails, HealthKey } from 'app/core/admin/health/health.model';
 import { By } from '@angular/platform-browser';
 
-describe('HealthModalComponentTest', () => {
+describe('HealthModalComponent', () => {
     let fixture: ComponentFixture<HealthModalComponent>;
     let comp: HealthModalComponent;
     let activeModal: NgbActiveModal;

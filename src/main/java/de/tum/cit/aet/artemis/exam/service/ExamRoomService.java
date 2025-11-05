@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
-import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 
 /**
  * Service implementation for managing exam rooms.
@@ -53,7 +52,7 @@ public class ExamRoomService {
 
     private final ObjectMapper objectMapper;
 
-    public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper, ExamUserRepository examUserRepository) {
+    public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper) {
         this.examRoomRepository = examRoomRepository;
         this.objectMapper = objectMapper;
     }
@@ -351,12 +350,13 @@ public class ExamRoomService {
     /**
      * Calculates the exam seats that are usable for an exam, according to the default layout
      *
-     * @param examRoom The exam room, containing seats and default layout
+     * @param examRoom      The exam room, containing seats and default layout
+     * @param reserveFactor Percentage of seats that should not be included. Defaults to 0%
      * @return All seats that can be used for the exam, in ascending order
      */
-    public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom) {
+    public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom, double reserveFactor) {
         LayoutStrategy defaultLayoutStrategy = getDefaultLayoutStrategyOrElseThrow(examRoom);
-        return getUsableSeatsForLayout(examRoom, defaultLayoutStrategy);
+        return getUsableSeatsForLayout(examRoom, defaultLayoutStrategy, reserveFactor);
     }
 
     /**
@@ -364,19 +364,45 @@ public class ExamRoomService {
      *
      * @param examRoom       The exam room, containing seats and default layout
      * @param layoutStrategy The layout strategy we want to apply. Must be a layout strategy of the given exam room
-     *
+     * @param reserveFactor  Percentage of seats that should not be included
      * @return All seats that can be used for the exam, in ascending order
      */
-    public List<ExamSeatDTO> getUsableSeatsForLayout(ExamRoom examRoom, LayoutStrategy layoutStrategy) {
+    public List<ExamSeatDTO> getUsableSeatsForLayout(ExamRoom examRoom, LayoutStrategy layoutStrategy, double reserveFactor) {
         if (!examRoom.getLayoutStrategies().contains(layoutStrategy)) {
             throw new BadRequestAlertException("Could not find specified layout", ENTITY_NAME, "room.missingSpecifiedLayout",
                     Map.of("roomNumber", examRoom.getRoomNumber(), "layoutName", layoutStrategy.getName()));
         }
 
-        return switch (layoutStrategy.getType()) {
+        List<ExamSeatDTO> pickedSeats = switch (layoutStrategy.getType()) {
             case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, layoutStrategy);
             case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, layoutStrategy);
         };
+
+        return applyReserveFactorToList(pickedSeats, reserveFactor);
+    }
+
+    /**
+     * Calculates the size after applying a reserve factor
+     *
+     * @param originalSize  The original size
+     * @param reserveFactor The reserve factor in range [0,1]
+     * @return The size after applying the reserve factor
+     */
+    public int getSizeAfterApplyingReserveFactor(int originalSize, double reserveFactor) {
+        if (originalSize < 0) {
+            throw new IllegalArgumentException("originalSize must be non-negative");
+        }
+        if (!Double.isFinite(reserveFactor) || reserveFactor < 0.0 || reserveFactor > 1.0) {
+            throw new IllegalArgumentException("reserveFactor must be in [0,1]");
+        }
+
+        int result = (int) Math.floor(originalSize * (1.0 - reserveFactor));
+        return Math.max(0, result);
+    }
+
+    private <T> List<T> applyReserveFactorToList(List<T> list, double reserveFactor) {
+        int numberOfIncludedElements = getSizeAfterApplyingReserveFactor(list.size(), reserveFactor);
+        return list.subList(0, numberOfIncludedElements);
     }
 
     private record FixedSelectionSeatInput(@JsonProperty("row_index") int rowIndex, @JsonProperty("seat_index") int seatIndex,
