@@ -8,6 +8,8 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.Size;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -23,6 +25,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 @DiscriminatorValue(value = "M")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ModelingSubmission extends Submission {
+
+    private static final Logger log = LoggerFactory.getLogger(ModelingSubmission.class);
 
     @Override
     public String getSubmissionExerciseType() {
