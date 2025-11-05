@@ -1,4 +1,4 @@
-import { Component, Signal, effect, inject, signal } from '@angular/core';
+import { Component, Signal, computed, effect, inject, signal } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
@@ -55,6 +55,7 @@ export class CourseTutorialGroupsComponent {
     sidebarData = signal<SidebarData | undefined>(undefined);
     itemSelected = signal(true);
     isCollapsed = false;
+    currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
 
     constructor() {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup');
@@ -73,6 +74,10 @@ export class CourseTutorialGroupsComponent {
                 this.prepareSidebarData(tutorialGroups, tutorialLectures);
                 this.navigateToGroupOrLesson(tutorialGroups);
             }
+        });
+
+        effect(() => {
+            this.lectureService.currentTutorialLectureId = this.currentTutorialLectureId();
         });
     }
 
@@ -219,5 +224,18 @@ export class CourseTutorialGroupsComponent {
             ),
             { initialValue: undefined },
         );
+    }
+
+    private computeCurrentTutorialLectureId(): number | undefined {
+        const sidebarData = this.sidebarData();
+        if (!sidebarData) {
+            return undefined;
+        }
+        const groupedData = sidebarData.groupedData;
+        if (!groupedData) {
+            return undefined;
+        }
+        const currentTutorialLecture = groupedData.currentTutorialLecture.entityData.at(0);
+        return currentTutorialLecture ? (currentTutorialLecture.id as number) : undefined;
     }
 }

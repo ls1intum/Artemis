@@ -21,6 +21,7 @@ export class LectureService {
     private entityTitleService = inject(EntityTitleService);
 
     public resourceUrl = 'api/lecture/lectures';
+    currentTutorialLectureId: number | undefined = undefined;
 
     create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);

@@ -2,6 +2,16 @@
     <div class="header">
         <h1 id="page-title">{{ tutorialGroup().title }}</h1>
         <div class="spacer"></div>
+        @if (currentTutorialLectureId) {
+            <a
+                [routerLink]="['../tutorial-lectures', currentTutorialLectureId]"
+                [relativeTo]="activatedRoute"
+                pButton
+                class="p-button-secondary p-button-sm"
+                jhiTranslate="artemisApp.pages.tutorialGroupDetail.currentLessonLinkLabel"
+                data-testid="tutor-chat-link"
+            ></a>
+        }
         @if (messagingEnabled()) {
             @let chatLink = tutorChatLink();
             @if (chatLink) {
