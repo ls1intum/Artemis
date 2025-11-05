@@ -11,7 +11,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 @Component({
     selector: 'jhi-privacy',
     template: `
-        <div class="module-bg m-3 mb-5 p-3 rounded rounded-3" [innerHTML]="privacyStatement | htmlForMarkdown"></div>
+        <div [innerHTML]="privacyStatement | htmlForMarkdown"></div>
         @if (isAuthenticated) {
             <a jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-exports']"> </a>
         }
