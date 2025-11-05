@@ -219,10 +219,9 @@
                 "taskCommand": "Task",
                 "testCaseCommand": "Insert Test Case",
                 "tasksOfExercise": "Tasks:",
-                "generationAssistance": "AI Problem Statement Generation Assistance",
-                "generateDraftTitle": "Generate Draft Problem Statement",
-                "generateDraftDescription": "Describe what you want the programming exercise to focus on. Be specific about requirements, concepts.",
-                "yourRequirements": "Your Requirements:",
+                "generationAssistance": "Generate Draft Problem Statement",
+                "generateDraftDescription": "Use this field to draft the exercise brief or refine the current statement. Your input drives both the Problem Statement and the Learning Objectives. Be concrete about requirements, concepts, and constraints.",
+                "yourRequirements": "Your Requirements",
                 "examplePlaceholder": "Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms.",
                 "generationSuccess": "Problem statement has been successfully generated.",
                 "generationError": "Failed to generate problem statement. Please try again."

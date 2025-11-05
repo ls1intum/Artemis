@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, input, output, viewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, input, output } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -13,7 +13,7 @@ import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { Popover, PopoverModule } from 'primeng/popover';
+import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
@@ -21,9 +21,10 @@ import { finalize } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { faBan, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent, ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -40,7 +41,7 @@ import { AlertService } from 'app/shared/service/alert.service';
         PopoverModule,
         ButtonModule,
         FaIconComponent,
-        ButtonComponent,
+        HelpIconComponent,
     ],
 })
 export class ProgrammingExerciseProblemComponent {
@@ -55,9 +56,6 @@ export class ProgrammingExerciseProblemComponent {
     programmingExercise = input<ProgrammingExercise>();
     @Output() problemStatementChange = new EventEmitter<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
-
-    generatePopover = viewChild<Popover>('generatePopover');
-
     // Problem statement generation properties
     userPrompt = '';
     isGenerating = false;
@@ -75,15 +73,6 @@ export class ProgrammingExerciseProblemComponent {
     private alertService = inject(AlertService);
 
     /**
-     * Opens the problem statement generation popover
-     */
-    openGeneratePopover(event: Event): void {
-        if (!this.isGenerating) {
-            this.userPrompt = ''; // Reset the prompt
-        }
-        this.generatePopover()?.show(event);
-    }
-    /**
      * Cancels the problem statement generation and closes the popover
      */
     cancelGeneration(): void {
@@ -93,7 +82,6 @@ export class ProgrammingExerciseProblemComponent {
         }
         this.isGenerating = false;
         this.userPrompt = '';
-        this.generatePopover()?.hide();
     }
     /**
      * Generates a draft problem statement using the user's prompt
@@ -132,7 +120,6 @@ export class ProgrammingExerciseProblemComponent {
                         exercise.problemStatement = response.draftProblemStatement;
                         this.programmingExerciseChange.emit(exercise);
                     }
-                    this.generatePopover()?.hide();
                     this.userPrompt = '';
 
                     // Show success alert
@@ -153,5 +140,16 @@ export class ProgrammingExerciseProblemComponent {
      */
     getTranslatedPlaceholder(): string {
         return this.translateService.instant('artemisApp.programmingExercise.problemStatement.examplePlaceholder');
+    }
+
+    /**
+     * Handles changes to competency links
+     */
+    onCompetencyLinksChange(competencyLinks: any): void {
+        const exercise = this.programmingExercise();
+        if (exercise) {
+            exercise.competencyLinks = competencyLinks;
+            this.programmingExerciseChange.emit(exercise);
+        }
     }
 }
