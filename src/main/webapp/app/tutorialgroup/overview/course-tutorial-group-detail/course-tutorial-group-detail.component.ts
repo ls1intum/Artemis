@@ -96,7 +96,7 @@ export class CourseTutorialGroupDetailComponent {
     messagingEnabled = computed<boolean>(() => isMessagingEnabled(this.course()));
     tutorChatLink = computed(() => this.computeTutorChatLink());
     groupChannelLink = computed(() => this.computeGroupChannelLink());
-    userIsNotTutor = computed(() => this.accountService.userIdentity?.login !== this.tutorialGroup().teachingAssistantLogin);
+    userIsNotTutor = computed(() => this.accountService.userIdentity()?.login !== this.tutorialGroup().teachingAssistantLogin);
 
     constructor() {
         effect(() => {
