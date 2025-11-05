@@ -260,7 +260,7 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
             builder.file(file);
         }
 
-        MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
     }
 }
