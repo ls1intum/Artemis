@@ -111,7 +111,6 @@ describe('ExamRoomsComponentTest', () => {
             ...uploadedRoom,
             defaultCapacity: 30,
             maxCapacity: 30,
-            layoutStrategyNames: 'default',
         });
     });
 
@@ -287,7 +286,6 @@ describe('ExamRoomsComponentTest', () => {
     /// Returns the exam room it uses
     function mockServiceGetAdminOverviewSingleRoom(): ExamRoomDTO {
         const examRoom: ExamRoomDTO = {
-            id: 4,
             roomNumber: '123.456.789',
             name: 'Audimax',
             building: 'MI',

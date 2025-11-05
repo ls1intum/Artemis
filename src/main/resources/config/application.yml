@@ -136,6 +136,14 @@ artemis:
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
 
+    # Default security configuration for internal endpoints accessed by other Artemis components 
+    # Currently set to allow all IPs. Adjust as necessary for your deployment.
+    security:
+        internal:
+            allowed-cidrs:
+                - ::/0
+                - 0.0.0.0/0
+
 
 
 management:
