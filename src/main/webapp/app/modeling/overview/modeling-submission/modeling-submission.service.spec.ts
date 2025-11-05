@@ -115,7 +115,7 @@ describe('ModelingSubmission Service', () => {
             .getLatestSubmissionForModelingEditor(participationId)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ ...elemDefault }));
-        const req = httpMock.expectOne({ method: 'GET', url: `api/modeling/participations/${participationId}/latest-modeling-submission` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/modeling/participations/${participationId}/latest-modeling-submission?withAthenaConfig=true` });
         req.flush(returnedFromService);
         tick();
     }));
