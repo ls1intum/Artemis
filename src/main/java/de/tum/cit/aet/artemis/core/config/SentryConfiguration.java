@@ -33,7 +33,7 @@ public class SentryConfiguration {
     @Value("${sentry.environment}")
     private Optional<String> environment;
 
-    @Value("${sentry.send-default-pii}")
+    @Value("${sentry.send-default-pii:false}")
     private boolean sendDefaultPii;
 
     /**
@@ -86,12 +86,12 @@ public class SentryConfiguration {
     /**
      * Get the traces sample rate based on the environment.
      *
-     * @return 0% for local, 100% for test, 20% for production environments
+     * @return 0% for local, 100% for test and staging, 20% for production environments
      */
     private double getTracesSampleRate() {
         String env = getEnvironment();
         // All test/staging environments get 1.0 sample rate
-        if (env.contains("test") || env.contains("staging")) {
+        if (env.startsWith("test") || env.startsWith("staging")) {
             return 1.0;
         }
 
