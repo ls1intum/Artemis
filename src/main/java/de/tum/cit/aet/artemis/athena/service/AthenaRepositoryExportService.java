@@ -146,7 +146,7 @@ public class AthenaRepositoryExportService {
                     Map.of("repositoryType", repositoryType, "validTypes", ATHENA_INSTRUCTOR_REPOSITORY_TYPES));
         }
 
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var config = exerciseAthenaConfigService.findByExerciseId(exerciseId).orElse(null);
         programmingExercise.setAthenaConfig(config);
         checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise, config);

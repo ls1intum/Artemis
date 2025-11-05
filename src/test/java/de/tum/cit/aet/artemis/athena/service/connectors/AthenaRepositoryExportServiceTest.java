@@ -16,13 +16,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -53,7 +53,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     private AthenaRepositoryExportService athenaRepositoryExportService;
 
     @Autowired
-    private AthenaModuleService athenaModuleService;
+    private ExerciseAthenaConfigService athenaConfigService;
 
     private final LocalRepository testRepo = new LocalRepository(defaultBranch);
 
@@ -75,7 +75,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     void shouldExportRepository() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
-        programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
+        athenaConfigService.updateAthenaConfig(programmingExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
@@ -102,7 +102,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     void shouldExportAllValidInstructorRepositoryTypes() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        athenaConfigService.updateAthenaConfig(programmingExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
@@ -132,7 +132,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     @Test
     void shouldThrowBadRequestAlertExceptionForInvalidRepositoryType() {
         var programmingExercise = new ProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        athenaConfigService.updateAthenaConfig(programmingExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         var invalidRepositoryTypes = Set.of(RepositoryType.USER, RepositoryType.AUXILIARY);
@@ -142,15 +142,5 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
                     .withMessageContaining("Invalid instructor repository type")
                     .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("invalid.instructor.repository.type"));
         }
-    }
-
-    @Test
-    void shouldThrowBadRequestAlertExceptionWhenFeedbackSuggestionModuleIsNull() {
-        var programmingExercise = new ProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionModule(null);
-
-        assertThatExceptionOfType(BadRequestAlertException.class).as("Should throw BadRequestAlertException when feedback suggestion module is null")
-                .isThrownBy(() -> athenaModuleService.getAthenaModuleUrl(programmingExercise))
-                .withMessageContaining("Exercise does not have a feedback suggestion module configured");
     }
 }

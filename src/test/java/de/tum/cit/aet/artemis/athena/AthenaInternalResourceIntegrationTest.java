@@ -17,6 +17,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -41,6 +43,9 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
+    @Autowired
+    private ExerciseAthenaConfigService athenaConfigService;
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
@@ -60,7 +65,7 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
     @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests" })
     void testRepositoryExportEndpoint(String urlSuffix) throws Exception {
         // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        athenaConfigService.updateAthenaConfig(programmingExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
         programmingExerciseRepository.save(programmingExercise);
 
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -114,8 +119,6 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
         var authHeaders = new HttpHeaders();
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret + "-wrong");
 
-        // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExerciseRepository.save(programmingExercise);
 
         // Expect status 403 because the Authorization header is wrong

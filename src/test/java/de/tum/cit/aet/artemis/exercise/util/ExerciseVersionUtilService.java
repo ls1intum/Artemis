@@ -87,7 +87,6 @@ public class ExerciseVersionUtilService {
         exercise.setProblemStatement("Updated problem statement");
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(10.0);
-        exercise.setAllowFeedbackRequests(true);
         exercise.setAllowComplaintsForAutomaticAssessments(true);
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setGradingInstructions("Updated grading instructions");

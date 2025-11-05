@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -104,6 +105,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private LearnerProfileUtilService learnerProfileUtilService;
+
+    @Autowired
+    private ExerciseAthenaConfigService athenaConfigService;
 
     private TextExercise textExercise;
 
@@ -274,7 +278,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsSuccessText() throws Exception {
         // Enable Athena for the exercise
-        textExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_TEXT_SUGGESTIONS_TEST, null));
+        athenaConfigService.updateAthenaConfig(textExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_TEXT_SUGGESTIONS_TEST, null));
         textExerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", false, null);
@@ -287,7 +291,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsSuccessProgramming() throws Exception {
         // Enable Athena for the exercise
-        programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST, null));
+        athenaConfigService.updateAthenaConfig(programmingExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_SUGGESTIONS_TEST, null));
         programmingExerciseRepository.save(programmingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", false, null);
@@ -301,7 +305,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbackSuggestionsSuccessModeling() throws Exception {
         // Enable Athena for the exercise
-        modelingExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_MODELING_SUGGESTIONS_TEST, null));
+        athenaConfigService.updateAthenaConfig(modelingExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_MODELING_SUGGESTIONS_TEST, null));
         modelingExerciseRepository.save(modelingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", false, null);
@@ -393,7 +397,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests" })
     void testRepositoryExportEndpoint(String urlSuffix) throws Exception {
         // Enable Athena for the exercise
-        programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
+        athenaConfigService.updateAthenaConfig(programmingExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
         programmingExerciseRepository.save(programmingExercise);
 
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -448,7 +452,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret + "-wrong");
 
         // Enable Athena for the exercise
-        programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
+        athenaConfigService.updateAthenaConfig(programmingExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
         programmingExerciseRepository.save(programmingExercise);
 
         // Expect status 403 because the Authorization header is wrong
@@ -462,7 +466,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
 
         // Enable Athena for the exercise
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        athenaConfigService.updateAthenaConfig(programmingExercise, ExerciseAthenaConfig.of(ATHENA_MODULE_PROGRAMMING_TEST, null));
         programmingExerciseRepository.save(programmingExercise);
 
         request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.NOT_FOUND, Result.class, authHeaders);

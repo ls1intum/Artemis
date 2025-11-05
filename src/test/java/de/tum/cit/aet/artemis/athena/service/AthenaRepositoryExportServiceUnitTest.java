@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseAthenaConfig;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -48,7 +51,12 @@ class AthenaRepositoryExportServiceUnitTest {
     @Mock
     private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
+    @Mock
+    private ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     private AthenaRepositoryExportService athenaRepositoryExportService;
+
+    private ExerciseAthenaConfig athenaConfig;
 
     private ProgrammingExercise programmingExercise;
 
@@ -59,11 +67,13 @@ class AthenaRepositoryExportServiceUnitTest {
     @BeforeEach
     void setUp() {
         athenaRepositoryExportService = new AthenaRepositoryExportService(programmingExerciseRepository, repositoryService, programmingSubmissionRepository,
-                programmingExerciseStudentParticipationRepository);
+                programmingExerciseStudentParticipationRepository, exerciseAthenaConfigService);
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(EXERCISE_ID);
-        programmingExercise.setFeedbackSuggestionModule("module");
+
+        athenaConfig = ExerciseAthenaConfig.of("module", null);
+        programmingExercise.setAthenaConfig(athenaConfig);
 
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setId(SUBMISSION_ID);
@@ -75,8 +85,7 @@ class AthenaRepositoryExportServiceUnitTest {
 
     @Test
     void getStudentRepositoryFilesContentShouldCheckFeedbackSettings() {
-        programmingExercise.setFeedbackSuggestionModule(null);
-        programmingExercise.setAllowFeedbackRequests(false);
+        programmingExercise.setAthenaConfig(ExerciseAthenaConfig.of("null", null));
 
         when(programmingExerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
 
@@ -94,6 +103,7 @@ class AthenaRepositoryExportServiceUnitTest {
         when(programmingExerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
         when(programmingSubmissionRepository.findByIdElseThrow(SUBMISSION_ID)).thenReturn(programmingSubmission);
         when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+        when(exerciseAthenaConfigService.findByExerciseId(EXERCISE_ID)).thenReturn(Optional.ofNullable(athenaConfig));
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> athenaRepositoryExportService.getStudentRepositoryFilesContent(EXERCISE_ID, SUBMISSION_ID))
                 .withMessageContaining("Submission " + SUBMISSION_ID + " does not belong to exercise " + EXERCISE_ID)
@@ -108,6 +118,7 @@ class AthenaRepositoryExportServiceUnitTest {
         when(programmingExerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
         when(programmingSubmissionRepository.findByIdElseThrow(SUBMISSION_ID)).thenReturn(programmingSubmission);
         when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+        when(exerciseAthenaConfigService.findByExerciseId(EXERCISE_ID)).thenReturn(Optional.ofNullable(athenaConfig));
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> athenaRepositoryExportService.getStudentRepositoryFilesContent(EXERCISE_ID, SUBMISSION_ID))
                 .withMessageContaining("Repository URI is null");
@@ -121,6 +132,7 @@ class AthenaRepositoryExportServiceUnitTest {
         when(programmingExerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
         when(programmingSubmissionRepository.findByIdElseThrow(SUBMISSION_ID)).thenReturn(programmingSubmission);
         when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+        when(exerciseAthenaConfigService.findByExerciseId(EXERCISE_ID)).thenReturn(Optional.ofNullable(athenaConfig));
 
         var expected = Map.of("Test.java", "class Test {}");
         when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(participation.getVcsRepositoryUri())).thenReturn(expected);
@@ -133,9 +145,8 @@ class AthenaRepositoryExportServiceUnitTest {
 
     @Test
     void getInstructorRepositoryFilesContentShouldValidateRepositoryUri() {
-        programmingExercise.setFeedbackSuggestionModule("module");
-        programmingExercise.setAllowFeedbackRequests(false);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(EXERCISE_ID)).thenReturn(programmingExercise);
+        when(exerciseAthenaConfigService.findByExerciseId(EXERCISE_ID)).thenReturn(Optional.ofNullable(athenaConfig));
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> athenaRepositoryExportService.getInstructorRepositoryFilesContent(EXERCISE_ID, RepositoryType.SOLUTION))

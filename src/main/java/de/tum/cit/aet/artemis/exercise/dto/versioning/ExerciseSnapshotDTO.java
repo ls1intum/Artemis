@@ -35,11 +35,11 @@ public record ExerciseSnapshotDTO(
 
         // fields of Exercise class
         // not included fields: teams, studentParticipations, tutorParticipations, exampleSubmission, attachment, course, exerciseGroup
-        Set<CompetencyExerciseLinkSnapshotDTO> competencyLinks, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
-        IncludedInOverallScore includedInOverallScore, String problemStatement, String gradingInstructions, Set<String> categories,
-        TeamAssignmentConfigSnapshotDTO teamAssignmentConfig, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule,
-        Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfigSnapshotDTO plagiarismDetectionConfig, ProgrammingExerciseSnapshotDTO programmingData,
-        TextExerciseSnapshotDTO textData, ModelingExerciseSnapshotDTO modelingData, QuizExerciseSnapshotDTO quizData, FileUploadExerciseSnapshotDTO fileUploadData
+        Set<CompetencyExerciseLinkSnapshotDTO> competencyLinks, Boolean allowComplaintsForAutomaticAssessments, IncludedInOverallScore includedInOverallScore,
+        String problemStatement, String gradingInstructions, Set<String> categories, TeamAssignmentConfigSnapshotDTO teamAssignmentConfig, Boolean presentationScoreEnabled,
+        Boolean secondCorrectionEnabled, Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfigSnapshotDTO plagiarismDetectionConfig,
+        ProgrammingExerciseSnapshotDTO programmingData, TextExerciseSnapshotDTO textData, ModelingExerciseSnapshotDTO modelingData, QuizExerciseSnapshotDTO quizData,
+        FileUploadExerciseSnapshotDTO fileUploadData
 
 ) implements Serializable {
 
@@ -65,10 +65,9 @@ public record ExerciseSnapshotDTO(
         return new ExerciseSnapshotDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getMaxPoints(), exercise.getBonusPoints(),
                 exercise.getAssessmentType(), toUtc(exercise.getReleaseDate()), toUtc(exercise.getStartDate()), toUtc(exercise.getDueDate()),
                 toUtc(exercise.getAssessmentDueDate()), toUtc(exercise.getExampleSolutionPublicationDate()), exercise.getDifficulty(), exercise.getMode(), competencyLinks,
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(),
-                exercise.getGradingInstructions(), categories, TeamAssignmentConfigSnapshotDTO.of(exercise.getTeamAssignmentConfig()), exercise.getPresentationScoreEnabled(),
-                exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), gradingCriteria, plagiarismDetectionConfig, programmingData, textData, modelingData,
-                quizData, fileUploadData);
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(), exercise.getGradingInstructions(),
+                categories, TeamAssignmentConfigSnapshotDTO.of(exercise.getTeamAssignmentConfig()), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
+                gradingCriteria, plagiarismDetectionConfig, programmingData, textData, modelingData, quizData, fileUploadData);
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
