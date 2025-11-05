@@ -45,12 +45,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnecti
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
-import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
+import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris).
  * Pyris is responsible for executing the pipelines using (MM)LLMs and other tools asynchronously.
- * Status updates are sent to Artemis via {@link PublicPyrisStatusUpdateResource}
+ * Status updates are sent to Artemis via {@link PyrisInternalStatusUpdateResource}
  */
 @Lazy
 @Service
