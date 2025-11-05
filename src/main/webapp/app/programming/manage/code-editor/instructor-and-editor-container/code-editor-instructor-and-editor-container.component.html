@@ -145,6 +145,8 @@
                             <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                         </button>
                     }
+
+                    <jhi-dynamic-dropdown class="ms-2" [issues]="consistencyIssues()" />
                 </div>
             </div>
             <div editorToolbar class="ms-auto d-flex align-items-center">

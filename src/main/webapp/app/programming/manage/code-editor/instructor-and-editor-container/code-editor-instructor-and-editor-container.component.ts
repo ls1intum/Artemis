@@ -25,6 +25,7 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { DynamicDropdownComponent } from 'app/programming/manage/code-editor/Dropdown/dynamic-dropdown.component';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -47,6 +48,7 @@ import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResp
         ProgrammingExerciseInstructionComponent,
         NgbTooltip,
         ArtemisTranslatePipe,
+        DynamicDropdownComponent,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
