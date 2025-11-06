@@ -129,7 +129,7 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/lecture/courses/${courseId}/lectures?withLectureUnits=0`,
+                url: `api/lecture/courses/${courseId}/lectures`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
