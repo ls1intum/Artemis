@@ -7,6 +7,5 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamRoomDTO(long id, @NotNull String roomNumber, @NotNull String name, @NotNull String building, int numberOfSeats,
-        @NotNull Set<ExamRoomLayoutStrategyDTO> layoutStrategies) {
+public record ExamRoomDTO(@NotNull String roomNumber, @NotNull String name, @NotNull String building, int numberOfSeats, @NotNull Set<ExamRoomLayoutStrategyDTO> layoutStrategies) {
 }
