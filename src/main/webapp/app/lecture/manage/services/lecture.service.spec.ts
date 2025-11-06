@@ -136,6 +136,10 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
+        // TODO: should get all tutorial ectures by courseId
+
+        // TODO: should get all non tutorial ectures by courseId
+
         it('should import lecture', async () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };

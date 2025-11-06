@@ -162,6 +162,8 @@ describe('CourseTutorialGroupDetailComponent', () => {
         expect(tutorChatButton).not.toBeNull();
     });
 
+    // TODO: should display current lesson button if currentTutorialLectureId available
+
     it('should expose correct language', () => {
         const raw: RawTutorialGroupDetailGroupDTO = {
             id: 1,

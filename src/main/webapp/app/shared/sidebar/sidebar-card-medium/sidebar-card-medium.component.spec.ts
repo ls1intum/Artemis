@@ -75,7 +75,7 @@ describe('SidebarCardMediumComponent', () => {
         expect(component.refreshChildComponent).toHaveBeenCalled();
     });
 
-    it('should navigate to the item URL on click', async () => {
+    it('should navigate to selected item without subroute, store target subroute and refresh correctly when previously an item was selected', async () => {
         jest.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = true;
         fixture.detectChanges();
@@ -88,7 +88,9 @@ describe('SidebarCardMediumComponent', () => {
         expect(navigationArray).toStrictEqual(['./', 'testId']);
     });
 
-    it('should navigate to the when no item was selected before', async () => {
+    // TODO: should navigate to selected item with subroute, store target subroute and refresh correctly when previously an item was selected
+
+    it('should navigate to selected item without subroute, store target subroute and refresh correctly when previously no item was selected', async () => {
         jest.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = false;
         fixture.detectChanges();
