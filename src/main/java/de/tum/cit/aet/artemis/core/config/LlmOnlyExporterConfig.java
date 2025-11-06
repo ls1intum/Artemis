@@ -48,7 +48,7 @@ public class LlmOnlyExporterConfig {
      * @param authHeader the authorization header for Langfuse in the form {@code "Basic <base64(public:secret)>"}
      * @return a {@link SpanExporter} that exports only spans with {@code ai.span=true}
      */
-    @Bean(name = "otlpHttpSpanExporter")
+    @Bean(name = "otlpLlmExporter")
     public SpanExporter llmOnlyOtlpExporter(@Value("${management.otlp.tracing.endpoint}") String endpoint,
             @Value("${management.otlp.tracing.headers.Authorization}") String authHeader) {
 
