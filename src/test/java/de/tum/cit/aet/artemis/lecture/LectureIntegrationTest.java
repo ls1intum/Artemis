@@ -559,7 +559,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1, dto2), HttpStatus.NO_CONTENT);
 
-        List<Lecture> lectures = lectureRepository.findAllByCourseId(course1.getId()).stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
+        List<Lecture> lectures = lectureRepository.findAllNonTutorialLecturesByCourseId(course1.getId()).stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
         assertThat(lectures).hasSize(4);
         Lecture firstLecture = lectures.getFirst();
         Lecture secondLecture = lectures.get(1);
