@@ -6,6 +6,7 @@ import java.util.Set;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Positive;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -18,13 +19,11 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         @Nullable @Positive Double maxPoints, @Nullable @Positive Double bonusPoints, @Nullable IncludedInOverallScore includedInOverallScore,
         // Dates and timing
         @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
-        @Nullable ZonedDateTime exampleSolutionPublicationDate,
-        // CompetencyExerciseLink
-        @Nullable Set<CompetencyExerciseLink> competencyLinks,
+        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable Set<CompetencyExerciseLink> competencyLinks,
         // Modeling-specific fields
         @Nullable DiagramType diagramType, @Nullable String exampleSolutionModel, @Nullable String exampleSolutionExplanation,
-        // for conflict check
-        @Nullable Long courseId, @Nullable Long exerciseGroupId) {
+        // For conflict check
+        @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable Set<GradingCriterion> gradingCriteria) {
 
     /**
      * Apply this DTO changes to a ModelingExercise entity.
@@ -84,6 +83,9 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         if (this.competencyLinks != null) {
             existingExercise.setCompetencyLinks(this.competencyLinks);
         }
+        if (gradingCriteria != null) {
+            existingExercise.setGradingCriteria(gradingCriteria);
+        }
         return existingExercise;
     }
 
@@ -101,6 +103,6 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         return new UpdateModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getProblemStatement(), exercise.getCategories(),
                 exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getCompetencyLinks(),
-                exercise.getDiagramType(), exercise.getExampleSolutionModel(), exercise.getExampleSolutionExplanation(), courseId, exerciseGroupId);
+                exercise.getDiagramType(), exercise.getExampleSolutionModel(), exercise.getExampleSolutionExplanation(), courseId, exerciseGroupId, exercise.getGradingCriteria());
     }
 }

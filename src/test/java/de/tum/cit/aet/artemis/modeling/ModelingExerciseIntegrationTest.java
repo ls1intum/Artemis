@@ -936,7 +936,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testReEvaluateAndUpdateModelingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         ModelingExercise modelingExerciseToBeConflicted = modelingExerciseRepository.findByIdElseThrow(classExercise.getId());
         modelingExerciseToBeConflicted.setId(123456789L);
-        modelingExerciseRepository.save(modelingExerciseToBeConflicted);
 
         UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(modelingExerciseToBeConflicted);
         request.put("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate", updateModelingExerciseDTO, HttpStatus.CONFLICT);

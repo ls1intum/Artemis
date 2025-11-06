@@ -433,7 +433,7 @@ public class ModelingExerciseResource {
         log.debug("REST request to re-evaluate ModelingExercise : {}", updateModelingExerciseDTO);
 
         // Get the existing exercise
-        final ModelingExercise existingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
+        final ModelingExercise existingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(exerciseId);
         // Check that the exercise ID in path matches the DTO ID
         authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyIdElseThrow(exerciseId, updateModelingExerciseDTO.id());
 
