@@ -38,8 +38,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
-import com.google.errorprone.annotations.MustBeClosed;
-
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
@@ -161,7 +159,6 @@ public class LocalVCServletService {
      * @return the opened repository instance.
      * @throws RepositoryNotFoundException if the repository could not be found.
      */
-    @MustBeClosed
     public Repository resolveRepository(String repositoryPath) throws RepositoryNotFoundException {
 
         long timeNanoStart = System.nanoTime();

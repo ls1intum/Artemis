@@ -10,10 +10,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryAddedEvent;
@@ -39,16 +38,16 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
     private final ExecutorService notificationExecutor;
 
     public LocalMap() {
-        this(Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("local-map-listener-%d").setDaemon(true).build()));
+        this(Executors.newCachedThreadPool(BasicThreadFactory.builder().namingPattern("local-map-listener-%d").daemon().build()));
     }
 
     public LocalMap(ExecutorService notificationExecutor) {
         this.notificationExecutor = notificationExecutor;
-        this.map = new ConcurrentHashMap<K, V>();
+        this.map = new ConcurrentHashMap<>();
     }
 
     private ReentrantLock getLock(K key) {
-        return locks.computeIfAbsent(key, k -> new ReentrantLock());
+        return locks.computeIfAbsent(key, _ -> new ReentrantLock());
     }
 
     @Override
