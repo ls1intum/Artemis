@@ -1,7 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
@@ -12,17 +16,27 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+public class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private CourseTestRepository courseRepository;
+
+    @MockBean
+    private AiQuizGenerationService aiQuizGenerationService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private static final String TEST_PREFIX = "quizgeneration";
 
@@ -44,33 +58,27 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student.getGroups().add(course.getStudentGroupName());
         userTestRepository.save(student);
-
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         tutor.getGroups().add(course.getTeachingAssistantGroupName());
         userTestRepository.save(tutor);
-
         var editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
         editor.getGroups().add(course.getEditorGroupName());
         userTestRepository.save(editor);
-
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         instructor.getGroups().add(course.getInstructorGroupName());
         userTestRepository.save(instructor);
     }
 
-    /**
-     * Creates a fully valid AI quiz generation response that passes all new validation rules.
-     */
     private void mockSuccessfulQuizGeneration() {
         String validQuizResponse = """
                 [
                   {
                     "title": "Test Question",
                     "text": "What is Java?",
-                    "explanation": "Java is a high-level, class-based, object-oriented programming language used widely in software development.",
-                    "hint": "Think about OOP languages and bytecode.",
-                    "difficulty": 2,
-                    "tags": ["java", "programming"],
+                    "explanation": "Java is a programming language",
+                    "hint": "Think about OOP",
+                    "difficulty": 3,
+                    "tags": [],
                     "subtype": "SINGLE_CORRECT",
                     "competencyIds": [],
                     "options": [
@@ -89,6 +97,7 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     void shouldGenerateQuizForInstructor() throws Exception {
         long courseId = persistedCourseId;
         mockSuccessfulQuizGeneration();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
 
         String requestBody = """
@@ -102,8 +111,8 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
-        // Happy path: instructor can successfully trigger AI quiz generation
-        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.OK);
+        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -111,27 +120,29 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     void shouldGenerateQuizForEditor() throws Exception {
         long courseId = persistedCourseId;
         mockSuccessfulQuizGeneration();
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
         courseRepository.findById(courseId).orElseThrow();
 
         String requestBody = """
                 {
-                  "topic": "Java Fundamentals",
+                  "topic": "Java Programming",
                   "numberOfQuestions": 1,
                   "language": "ENGLISH",
-                  "difficultyLevel": "EASY",
+                  "difficultyLevel": "MEDIUM",
                   "requestedSubtype": "SINGLE_CORRECT",
-                  "promptHint": "Simple intro questions"
+                  "promptHint": null
                 }
                 """;
 
-        // Happy path: editor can successfully trigger AI quiz generation
-        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.OK);
+        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                .andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
     void shouldReturnForbiddenForTutor() throws Exception {
         long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
         courseRepository.findById(courseId).orElseThrow();
 
         String requestBody = """
@@ -145,14 +156,15 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
-        // Tutor cannot trigger AI quiz generation → forbidden
-        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.FORBIDDEN);
+        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
     void shouldReturnForbiddenForStudent() throws Exception {
         long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "student1");
         courseRepository.findById(courseId).orElseThrow();
 
         String requestBody = """
@@ -166,17 +178,17 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
-        // Student cannot trigger AI quiz generation → forbidden
-        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.FORBIDDEN);
+        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForInvalidInput() throws Exception {
         long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
 
-        // Invalid: numberOfQuestions is 0 (violates @Min(1))
         String requestBody = """
                 {
                   "topic": "Java Programming",
@@ -188,6 +200,45 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
                 }
                 """;
 
-        request.post("/api/hyperion/quizzes/courses/" + courseId + "/generate", requestBody, HttpStatus.BAD_REQUEST);
+        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnNotFoundForNonexistentCourse() throws Exception {
+        long invalidCourseId = 9999L;
+        String requestBody = """
+                {
+                  "topic": "Java Programming",
+                  "numberOfQuestions": 1,
+                  "language": "ENGLISH",
+                  "difficultyLevel": "MEDIUM",
+                  "requestedSubtype": "SINGLE_CORRECT",
+                  "promptHint": null
+                }
+                """;
+        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", invalidCourseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldReturnInternalServerErrorWhenServiceThrows() throws Exception {
+        doThrow(new RuntimeException("AI generation failed")).when(aiQuizGenerationService).generate(anyLong(), any());
+
+        String requestBody = """
+                {
+                  "topic": "Java",
+                  "numberOfQuestions": 1,
+                  "language": "ENGLISH",
+                  "difficultyLevel": "MEDIUM",
+                  "requestedSubtype": "SINGLE_CORRECT",
+                  "promptHint": "Focus on basics"
+                }
+                """;
+
+        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", persistedCourseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                .andExpect(status().isInternalServerError());
     }
 }

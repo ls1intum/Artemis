@@ -6,13 +6,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationRequestDTO;
@@ -29,8 +33,11 @@ public class QuizGenerationResource {
 
     private final AiQuizGenerationService aiQuizGenerationService;
 
-    public QuizGenerationResource(AiQuizGenerationService aiQuizGenerationService) {
+    private final CourseRepository courseRepository;
+
+    public QuizGenerationResource(AiQuizGenerationService aiQuizGenerationService, CourseRepository courseRepository) {
         this.aiQuizGenerationService = aiQuizGenerationService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -44,6 +51,10 @@ public class QuizGenerationResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<AiQuizGenerationResponseDTO> generate(@PathVariable long courseId, @Valid @RequestBody AiQuizGenerationRequestDTO generationParams) {
         log.debug("REST request to generate AI quiz for course {}", courseId);
-        return ResponseEntity.ok(aiQuizGenerationService.generate(courseId, generationParams));
+        Course course = courseRepository.findById(courseId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course with id " + courseId + " not found"));
+
+        AiQuizGenerationResponseDTO response = aiQuizGenerationService.generate(courseId, generationParams);
+
+        return ResponseEntity.ok(response);
     }
 }
