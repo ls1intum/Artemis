@@ -32,33 +32,33 @@ export class AgentChatService {
             throw new Error('User must be authenticated to use agent chat');
         }
 
-            const sessionId = `course_${courseId}_user_${userId}`;
+        const sessionId = `course_${courseId}_user_${userId}`;
 
-            const request: AgentChatRequest = {
-                message,
-                sessionId,
-            };
+        const request: AgentChatRequest = {
+            message,
+            sessionId,
+        };
 
-            return this.http.post<AgentChatResponse>(`api/atlas/agent/courses/${courseId}/chat`, request).pipe(
-                timeout(30000),
-                catchError(() => {
-                    return of({
-                        message: this.translateService.instant('artemisApp.agent.chat.error'),
-                        sessionId,
-                        timestamp: new Date().toISOString(),
-                        success: false,
-                        competenciesModified: false,
-                    });
-                }),
-            );
-        } catch (error) {
-            return of({
-                message: error instanceof Error ? error.message : this.translateService.instant('artemisApp.agent.chat.error'),
-                sessionId: '',
-                timestamp: new Date().toISOString(),
-                success: false,
-                competenciesModified: false,
-            });
-        }
+        return this.http.post<AgentChatResponse>(`api/atlas/agent/courses/${courseId}/chat`, request).pipe(
+            timeout(30000),
+            catchError(() => {
+                return of({
+                    message: this.translateService.instant('artemisApp.agent.chat.error'),
+                    sessionId,
+                    timestamp: new Date().toISOString(),
+                    success: false,
+                    competenciesModified: false,
+                });
+            }),
+        );
+    }
+    catch(error) {
+        return of({
+            message: error instanceof Error ? error.message : this.translateService.instant('artemisApp.agent.chat.error'),
+            sessionId: '',
+            timestamp: new Date().toISOString(),
+            success: false,
+            competenciesModified: false,
+        });
     }
 }
