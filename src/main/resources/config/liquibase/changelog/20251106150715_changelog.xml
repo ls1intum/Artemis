@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!--
+    Increase passkey_credential.credential_id column length from VARCHAR(64) to VARCHAR(100)
+
+    Reason:
+    The 1Password8 authenticator creates credential IDs that exceed the previous 64-character limit (usually around 80-90 characters),
+    causing authentication failures. This change accommodates longer credential IDs from modern authenticators.
+
+    WebAuthn Standard Reference (https://www.w3.org/TR/webauthn-2/#credential-id):
+    - Credential IDs must be at least 16 bytes with "at least 100 bits of entropy"
+    - No explicit maximum length requirement
+
+    If we take the minimum 16 bytes and encode it as Base64URL:
+    - Binary data: 16 bytes
+    - Base64URL to varchar length formula: ceil(# of Bytes / 3) * 4
+    - Result: ceil(16/3) * 4 = ceil(5.33) * 4 = 6 * 4 = 24 characters
+    So VARCHAR(24) would be the absolute minimum to store a credential ID that meets the spec's minimum requirement.
+
+    However, this is just the minimum required by authenticators to create. In practice:
+    1. Authenticators can and do create longer IDs - they're not limited to 16 bytes
+    2. 1Password8 clearly creates longer IDs (80-90 characters, which is ~60-67 bytes of binary data)
+    3. There's no maximum limit in the spec, so authenticators are free to use whatever length they want
+
+    ==> We increase to VARCHAR(100) to allow for longer credential IDs from modern authenticators.
+    -->
+    <changeSet id="20251106150715-increase-credential-id-length" author="florian-glombik">
+        <modifyDataType tableName="passkey_credential"
+                        columnName="credential_id"
+                        newDataType="varchar(100)"/>
+
+        <rollback>
+            <modifyDataType tableName="passkey_credential"
+                            columnName="credential_id"
+                            newDataType="varchar(64)"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
