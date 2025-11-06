@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -33,11 +34,14 @@ class AtlasAgentServiceTest {
 
     private AtlasAgentService atlasAgentService;
 
+    @Mock
+    private CompetencyExpertToolsService competencyExpertToolsService;
+
     @BeforeEach
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        // Pass null for ToolCallbackProvider in tests
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null, null);
+        // Pass null for ToolCallbackProviders and ChatMemory in tests
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null, competencyExpertToolsService);
     }
 
     @Test
@@ -166,6 +170,190 @@ class AtlasAgentServiceTest {
         assertThat(chatResult2.message()).isEqualTo("Response for instructor 2");
 
         assertThat(instructor1SessionId).isNotEqualTo(instructor2SessionId);
+    }
+
+    @Nested
+    class MultiAgentOrchestration {
+
+        @Test
+        void shouldDetectCompetencyModificationWhenToolsServiceIndicatesModification() throws ExecutionException, InterruptedException {
+            String testMessage = "Create a competency for OOP";
+            Long courseId = 123L;
+            String sessionId = "test_session";
+
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Competency created successfully")))));
+            when(competencyExpertToolsService.wasCompetencyModified()).thenReturn(true);
+
+            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            AgentChatResult chatResult = result.get();
+            assertThat(chatResult.competenciesModified()).as("Should detect competency modification from tools service").isTrue();
+        }
+
+        @Test
+        void shouldNotIndicateModificationWhenToolsServiceReportsNoChange() throws ExecutionException, InterruptedException {
+            String testMessage = "Show me existing competencies";
+            Long courseId = 123L;
+            String sessionId = "test_session";
+
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Here are the competencies")))));
+            when(competencyExpertToolsService.wasCompetencyModified()).thenReturn(false);
+
+            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            AgentChatResult chatResult = result.get();
+            assertThat(chatResult.competenciesModified()).as("Should not indicate modification for read-only operations").isFalse();
+        }
+
+        @Test
+        void shouldHandleDelegationMarkerInResponse() throws ExecutionException, InterruptedException {
+            String testMessage = "Create a new competency";
+            Long courseId = 123L;
+            String sessionId = "delegation_test";
+            String responseWithDelegationMarker = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:Create OOP competency";
+
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            // First call returns delegation marker, second call (from competency expert) returns clean response
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithDelegationMarker)))))
+                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"preview\": true}")))));
+
+            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            AgentChatResult chatResult = result.get();
+            // The response should be processed and replaced with clean JSON from competency expert
+            assertThat(chatResult.message()).isNotNull();
+            // At minimum, the raw delegation marker should be sanitized
+            assertThat(chatResult.message()).doesNotContain("%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:");
+        }
+
+        @Test
+        void shouldHandleCompetencyExpertToolsServiceNull() throws ExecutionException, InterruptedException {
+            AtlasAgentService serviceWithoutTools = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null);
+
+            String testMessage = "Test message";
+            Long courseId = 123L;
+            String sessionId = "test_session";
+
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response")))));
+
+            CompletableFuture<AgentChatResult> result = serviceWithoutTools.processChatMessage(testMessage, courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            AgentChatResult chatResult = result.get();
+            assertThat(chatResult.competenciesModified()).as("Should handle null tools service gracefully").isFalse();
+        }
+
+        @Test
+        void shouldMaintainSessionIsolationAcrossMultipleAgentTransitions() throws ExecutionException, InterruptedException {
+            Long courseId = 123L;
+            String session1 = "instructor1_session";
+            String session2 = "instructor2_session";
+
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response 1")))))
+                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response 2")))))
+                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response 3")))))
+                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response 4")))));
+
+            // Process messages for both sessions
+            CompletableFuture<AgentChatResult> result1_1 = atlasAgentService.processChatMessage("Message 1 for session 1", courseId, session1);
+            CompletableFuture<AgentChatResult> result2_1 = atlasAgentService.processChatMessage("Message 1 for session 2", courseId, session2);
+            CompletableFuture<AgentChatResult> result1_2 = atlasAgentService.processChatMessage("Message 2 for session 1", courseId, session1);
+            CompletableFuture<AgentChatResult> result2_2 = atlasAgentService.processChatMessage("Message 2 for session 2", courseId, session2);
+
+            // All results should be independent
+            assertThat(result1_1.get().message()).isEqualTo("Response 1");
+            assertThat(result2_1.get().message()).isEqualTo("Response 2");
+            assertThat(result1_2.get().message()).isEqualTo("Response 3");
+            assertThat(result2_2.get().message()).isEqualTo("Response 4");
+        }
+    }
+
+    @Nested
+    class ErrorHandlingAndEdgeCases {
+
+        @Test
+        void shouldHandleMultipleDelegationMarkersGracefully() throws ExecutionException, InterruptedException {
+            String testMessage = "Test multiple delegations";
+            Long courseId = 123L;
+            String sessionId = "multi_delegation_test";
+            String responseWithMultipleMarkers = "First %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%{\"brief\": \"test\"} Second %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%{\"brief\": \"test2\"}";
+
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithMultipleMarkers)))));
+
+            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            AgentChatResult chatResult = result.get();
+            // Should handle multiple markers without crashing
+            assertThat(chatResult.message()).isNotNull();
+        }
+
+        @Test
+        void shouldHandleEmptyDelegationBrief() throws ExecutionException, InterruptedException {
+            String testMessage = "Test empty brief";
+            Long courseId = 123L;
+            String sessionId = "empty_brief_test";
+            String responseWithEmptyBrief = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%";
+
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithEmptyBrief)))));
+
+            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            AgentChatResult chatResult = result.get();
+            // Should handle empty brief gracefully
+            assertThat(chatResult.message()).isNotNull();
+        }
+
+        @Test
+        void shouldHandleReturnToMainAgentMarker() throws ExecutionException, InterruptedException {
+            String testMessage = "Test return marker";
+            Long courseId = 123L;
+            String sessionId = "return_marker_test";
+            String responseWithReturnMarker = "Task complete %%ARTEMIS_RETURN_TO_MAIN_AGENT%%";
+
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithReturnMarker)))));
+
+            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            AgentChatResult chatResult = result.get();
+            // The marker should be removed from the response
+            assertThat(chatResult.message()).doesNotContain("%%ARTEMIS_RETURN_TO_MAIN_AGENT%%");
+            assertThat(chatResult.message()).isEqualTo("Task complete");
+        }
+
+        @Test
+        void shouldHandleCreateApprovedCompetencyMarker() throws ExecutionException, InterruptedException {
+            String testMessage = "Approve creation";
+            Long courseId = 123L;
+            String sessionId = "approval_test";
+            String responseWithApprovalMarker = "Creating competency [CREATE_APPROVED_COMPETENCY]";
+
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            // First call returns approval marker, second call (for creation) returns success message
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithApprovalMarker)))))
+                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"success\": true, \"created\": 1}")))));
+
+            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            AgentChatResult chatResult = result.get();
+            // The response should include both the message and creation confirmation
+            assertThat(chatResult.message()).isNotNull();
+            // The marker itself should be removed (but content around it remains)
+            assertThat(chatResult.message()).doesNotContain("[CREATE_APPROVED_COMPETENCY]");
+        }
     }
 
 }
