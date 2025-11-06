@@ -21,6 +21,9 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.Severity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import io.micrometer.common.KeyValue;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -51,12 +54,15 @@ public class HyperionConsistencyCheckService {
 
     private final HyperionProgrammingExerciseContextRendererService exerciseContextRenderer;
 
+    private final ObservationRegistry observationRegistry;
+
     public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer) {
+            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, ObservationRegistry observationRegistry) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;
         this.exerciseContextRenderer = exerciseContextRenderer;
+        this.observationRegistry = observationRegistry;
     }
 
     /**
@@ -68,24 +74,43 @@ public class HyperionConsistencyCheckService {
      */
     public ConsistencyCheckResponseDTO checkConsistency(ProgrammingExercise exercise) {
         log.debug("Performing consistency check for exercise {}", exercise.getId());
-        var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+        // Create an observation containing LLM calls' traces
+        Observation parent = Observation.createNotStarted("hyperion.consistency", observationRegistry).contextualName("consistency check for exercise id: " + exercise.getId())
+                .lowCardinalityKeyValue(KeyValue.of("ai.span", "true"))
+                .highCardinalityKeyValue(KeyValue.of("lf.trace.name", "Consistency Check for Exercise ID: " + exercise.getId())).parentObservation(null).start();
 
-        String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
-        String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
-        var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage);
+        try (Observation.Scope scope = parent.openScope()) {
+            var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
-        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
-        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+            String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
+            String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
+            var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage);
 
-        // @formatter:off
-        List<ConsistencyIssue> combinedIssues = Flux.merge(
-            structuralMono.flatMapMany(Flux::fromIterable),
-            semanticMono.flatMapMany(Flux::fromIterable)
-        ).collectList().block();
-        // @formatter:on
+            var structuralMono = Mono.fromCallable(() -> {
+                try (Observation.Scope ignore = parent.openScope()) {
+                    return runStructuralCheck(input);
+                }
+            }).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+            var semanticMono = Mono.fromCallable(() -> {
+                try (Observation.Scope ignore = parent.openScope()) {
+                    return runSemanticCheck(input);
+                }
+            }).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
-        List<ConsistencyIssueDTO> issueDTOs = Objects.requireNonNullElse(combinedIssues, new ArrayList<ConsistencyIssue>()).stream().map(this::mapConsistencyIssueToDto).toList();
-        return new ConsistencyCheckResponseDTO(issueDTOs);
+            // @formatter:off
+            List<ConsistencyIssue> combinedIssues = Flux.merge(
+                structuralMono.flatMapMany(Flux::fromIterable),
+                semanticMono.flatMapMany(Flux::fromIterable)
+            ).collectList().block();
+            // @formatter:on
+
+            List<ConsistencyIssueDTO> issueDTOs = Objects.requireNonNullElse(combinedIssues, new ArrayList<ConsistencyIssue>()).stream().map(this::mapConsistencyIssueToDto)
+                    .toList();
+            return new ConsistencyCheckResponseDTO(issueDTOs);
+        }
+        finally {
+            parent.stop();
+        }
     }
 
     /**

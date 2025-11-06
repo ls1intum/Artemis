@@ -50,7 +50,9 @@ class HyperionConsistencyCheckServiceTest {
         // Wire minimal renderer with mocked dependencies
         HyperionProgrammingExerciseContextRendererService exerciseContextRenderer = new HyperionProgrammingExerciseContextRendererService(repositoryService,
                 new HyperionProgrammingLanguageContextFilterService());
-        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer);
+        var observationRegistry = io.micrometer.observation.ObservationRegistry.create();
+        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
+                observationRegistry);
     }
 
     @Test

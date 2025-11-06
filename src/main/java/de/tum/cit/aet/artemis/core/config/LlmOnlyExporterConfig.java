@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.hyperion.langfuse;
+package de.tum.cit.aet.artemis.core.config;
 
 import java.util.Collection;
 import java.util.List;

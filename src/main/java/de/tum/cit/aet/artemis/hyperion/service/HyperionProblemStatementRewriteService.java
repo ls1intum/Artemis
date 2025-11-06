@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Service for rewriting problem statements using Spring AI.
@@ -27,15 +29,18 @@ public class HyperionProblemStatementRewriteService {
 
     private final HyperionPromptTemplateService templateService;
 
+    private final ObservationRegistry observationRegistry;
+
     /**
      * Creates a new ProblemStatementRewriteService.
      *
      * @param chatClient      the AI chat client (optional)
      * @param templateService prompt template service
      */
-    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService) {
+    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry) {
         this.chatClient = chatClient;
         this.templateService = templateService;
+        this.observationRegistry = observationRegistry;
     }
 
     /**
@@ -51,7 +56,11 @@ public class HyperionProblemStatementRewriteService {
         String resourcePath = "/prompts/hyperion/rewrite_problem_statement.st";
         Map<String, String> input = Map.of("text", problemStatementText.trim());
         String renderedPrompt = templateService.render(resourcePath, input);
-        try {
+        // Create a root observation containing LLM calls' traces
+        var parent = Observation.createNotStarted("hyperion.rewrite", observationRegistry).contextualName("problem statement rewrite for course id: " + course.getId())
+                .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of("ai.span", "true"))
+                .highCardinalityKeyValue(io.micrometer.common.KeyValue.of("lf.trace.name", "problem statement rewrite for course id: " + course.getId())).start();
+        try (Observation.Scope scope = parent.openScope()) {
             // @formatter:off
             String responseContent = chatClient
                     .prompt()
@@ -67,6 +76,9 @@ public class HyperionProblemStatementRewriteService {
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning original text", resourcePath, e);
             return new ProblemStatementRewriteResponseDTO(problemStatementText.trim(), false);
+        }
+        finally {
+            parent.stop();
         }
     }
 }

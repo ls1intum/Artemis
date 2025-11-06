@@ -191,7 +191,7 @@ management:
 #    tracing:
 #      sampling:
 #        probability: 1.0
-#    otlp:
+    otlp:
 #      tracing:
         # LangFuse accepts OTLP over HTTP at the traces path only
 #        endpoint: (example: https://langfuse.hephaestus.aet.cit.tum.de/api/public/otel/v1/traces)
@@ -199,8 +199,8 @@ management:
 #        headers:
           # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
 #         Authorization: ""
-#        export:
-#          enabled: false
+        export:
+          enabled: false
 
 
 spring:
