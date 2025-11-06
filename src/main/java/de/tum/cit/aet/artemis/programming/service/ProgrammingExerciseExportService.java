@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -446,7 +447,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 .orElseThrow();
 
         Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 10);
-        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
+        List<Path> zippedRepos;
+        try {
+            zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
+        }
+        catch (GitException e) {
+            log.error("Aborting export: anonymization failed for at least one repository in exercise {} (id: {})", programmingExercise.getTitle(), programmingExercise.getId());
+            return null;
+        }
 
         try {
             // Create a zip folder containing the directories with the repositories.
@@ -484,6 +492,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         List<Path> exportedStudentRepositories = Collections.synchronizedList(new ArrayList<>());
+        AtomicBoolean anonymizationFailed = new AtomicBoolean(false);
 
         log.info("export student repositories for programming exercise {} in parallel", programmingExercise.getId());
         try (var threadPool = Executors.newFixedThreadPool(10)) {
@@ -499,10 +508,16 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                     var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '"
                             + programmingExercise.getTitle() + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
                     exportErrors.add(error);
+                    if (repositoryExportOptions.anonymizeRepository() && exception instanceof GitException) {
+                        anonymizationFailed.set(true);
+                    }
                 }
             }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
             // wait until all operations finish
             CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
+            if (anonymizationFailed.get()) {
+                throw new GitException("Anonymization failed for one or more repositories");
+            }
         }
         return exportedStudentRepositories;
     }
@@ -610,6 +625,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             if (repositoryExportOptions.anonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
                 gitService.anonymizeStudentCommits(repository, programmingExercise);
+                // Verify anonymization succeeded before proceeding
+                gitService.verifyAnonymizationOrThrow(repository, programmingExercise, repositoryExportOptions.combineStudentCommits());
             }
             else {
                 gitService.removeRemotesFromRepository(repository);
