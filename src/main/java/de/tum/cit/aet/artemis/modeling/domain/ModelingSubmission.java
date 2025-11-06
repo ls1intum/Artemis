@@ -99,13 +99,13 @@ public class ModelingSubmission extends Submission {
             }
             var jsonNode = jacksonObjectMapper.readTree(getModel());
 
-            // Check for v2 format (elements)
+            // Check for v3 (elements)
             var elements = jsonNode.get("elements");
             if (elements != null) {
                 return elements.isEmpty();
             }
 
-            // Check for v3 format (nodes)
+            // Check for v4 (nodes)
             var nodes = jsonNode.get("nodes");
             return nodes == null || nodes.isEmpty();
         }
