@@ -122,7 +122,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
 
-        createChannelsForLectures();
+        var lectures = this.course1.getLectures().stream().toList();
+        createChannelsForLectures(lectures);
+
+        lecture2.setIsTutorialLecture(true);
+        lectureRepository.save(lecture2);
 
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
 
@@ -156,13 +160,12 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.postWithResponseBody("/api/lecture/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody("/api/lecture/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
         request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
+        request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
     }
 
-    private void createChannelsForLectures() {
-        List<Lecture> lectures = this.course1.getLectures().stream().toList();
-
+    private void createChannelsForLectures(List<Lecture> lectures) {
         Lecture firstLecture = lectures.getFirst();
         firstLecture.setTitle("Lecture 1");
         Channel firstChannel = new Channel();
@@ -287,8 +290,25 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void getLectureForCourse_shouldGetLectures() throws Exception {
         List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.OK, Lecture.class);
         assertThat(returnedLectures).hasSize(2);
-        Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().orElseThrow();
-        assertThat(lecture.getLectureUnits()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getTutorialLecturesForCourse_shouldGetTutorialLectures() throws Exception {
+        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.OK, Lecture.class);
+        assertThat(returnedLectures).hasSize(1);
+        Lecture lecture = returnedLectures.getFirst();
+        assertThat(lecture.getId()).isEqualTo(lecture2.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getNonTutorialLecturesForCourse_shouldGetNonTutorialLectures() throws Exception {
+        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/non-tutorial-lectures/with-units", HttpStatus.OK, Lecture.class);
+        assertThat(returnedLectures).hasSize(1);
+        Lecture lecture = returnedLectures.getFirst();
+        assertThat(lecture.getId()).isEqualTo(lecture1.getId());
+        assertThat(lecture.getLectureUnits()).isNotEmpty();
     }
 
     @Test
@@ -550,7 +570,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1, dto2), HttpStatus.NO_CONTENT);
 
-        List<Lecture> lectures = lectureRepository.findAllNonTutorialLecturesByCourseId(course1.getId()).stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
+        List<Lecture> lectures = lectureRepository.findAllByCourseId(course1.getId()).stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
         assertThat(lectures).hasSize(4);
         Lecture firstLecture = lectures.getFirst();
         Lecture secondLecture = lectures.get(1);
@@ -583,6 +603,4 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(thirdLectureChannel.getName()).isEqualTo("lecture-modeling");
         assertThat(fourthLectureChannel.getName()).isEqualTo("lecture-lecture-4");
     }
-
-    // TODO: add tests for two new endpoints
 }

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.test_repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -58,4 +59,6 @@ public interface LectureTestRepository extends LectureRepository {
              WHERE l.title = :title
             """)
     int deleteLecturesByTitle(@Param("title") String title);
+
+    Set<Lecture> findAllByCourseId(Long courseId);
 }

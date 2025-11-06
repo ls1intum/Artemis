@@ -200,7 +200,7 @@ public class Lecture extends DomainObject {
         return isTutorialLecture;
     }
 
-    public void setTutorialLecture(boolean tutorialLecture) {
-        isTutorialLecture = tutorialLecture;
+    public void setIsTutorialLecture(boolean isTutorialLecture) {
+        this.isTutorialLecture = isTutorialLecture;
     }
 }

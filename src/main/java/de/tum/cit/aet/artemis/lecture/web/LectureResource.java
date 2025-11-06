@@ -254,7 +254,7 @@ public class LectureResource {
      * @param courseId the courseId of the course for which the lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
-    @GetMapping("courses/{courseId}/non-tutorial-lectures-with-units")
+    @GetMapping("courses/{courseId}/non-tutorial-lectures/with-units")
     @EnforceAtLeastEditor
     public ResponseEntity<Set<Lecture>> getNonTutorialLecturesForCourseWithLectureUnits(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
