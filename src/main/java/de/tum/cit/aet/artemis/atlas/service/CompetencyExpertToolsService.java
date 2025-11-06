@@ -154,8 +154,7 @@ public class CompetencyExpertToolsService {
      */
     @Tool(description = "Get the description of a course")
     public String getCourseDescription(@ToolParam(description = "the ID of the course") Long courseId) {
-        Optional<Course> courseOptional = courseRepository.findById(courseId);
-        return courseOptional.isPresent() ? courseOptional.get().getDescription() : "";
+        return courseRepository.findById(courseId).map(Course::getDescription).orElse("");
     }
 
     /**
