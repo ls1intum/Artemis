@@ -177,7 +177,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldGenerateProblemStatementForInstructor() throws Exception {
         long courseId = persistedCourseId;
-        mockRewriteImproved();
+        mockGenerateSuccess();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"userPrompt\":\"Prompt\"}";
@@ -189,7 +189,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
     void shouldGenerateProblemStatementForEditor() throws Exception {
         long courseId = persistedCourseId;
-        mockRewriteImproved();
+        mockGenerateSuccess();
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"userPrompt\":\"Prompt\"}";

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
@@ -24,18 +25,26 @@ public class SpringAIConfiguration {
 
     /**
      * Default Chat Client for AI features.
-     * Uses the manually configured Azure OpenAI model if available.
+     * Uses the manually configured chat model if available, with specific optimizations for Azure OpenAI.
      *
-     * @param azureOpenAiChatModel the Azure OpenAI chat model to use (optional)
-     * @return a configured ChatClient with default options, or null if model is not available
+     * @param chatModel the chat model to use (optional) - can be AzureOpenAiChatModel in production or generic ChatModel in tests
+     * @return a configured ChatClient with Azure-specific options if using AzureOpenAiChatModel,
+     *         basic configuration for other ChatModel implementations, or null if no model is available
      */
     @Bean
     @Lazy
-    public ChatClient chatClient(@Autowired(required = false) AzureOpenAiChatModel azureOpenAiChatModel) {
-        if (azureOpenAiChatModel == null) {
+    public ChatClient chatClient(@Autowired(required = false) ChatModel chatModel) {
+        if (chatModel == null) {
             return null;
         }
-        return ChatClient.builder(azureOpenAiChatModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName("gpt-5-mini").temperature(1.0).build()).build();
+
+        // If it's an AzureOpenAiChatModel, use specific options
+        if (chatModel instanceof AzureOpenAiChatModel azureModel) {
+            return ChatClient.builder(azureModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName("gpt-5-mini").temperature(1.0).build()).build();
+        }
+
+        // For generic ChatModel (including mocks), use basic builder
+        return ChatClient.builder(chatModel).build();
     }
 
     /**
