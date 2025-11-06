@@ -90,7 +90,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH TREAT(lectureUnit AS AttachmentVideoUnit).attachment
             WHERE lecture.course.id = :courseId
             """)
-    Set<Lecture> findAllLecturesByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
+    Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture

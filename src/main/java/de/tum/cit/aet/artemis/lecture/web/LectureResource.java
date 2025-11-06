@@ -280,7 +280,7 @@ public class LectureResource {
 
         /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
         /* TODO: #11479 - remove the commented out code OR add back in such that the result of the query is filtered for visible lectures again */
-        var lectures = lectureRepository.findAllLecturesByCourseIdWithAttachmentsAndLectureUnits(courseId); // .stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
+        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId); // .stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
         Set<Long> attachmentVideoUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream())
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(DomainObject::getId).collect(Collectors.toSet());
 
@@ -388,7 +388,7 @@ public class LectureResource {
     public ResponseEntity<Lecture> importLecture(@PathVariable long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(sourceLectureId);
-        final var destinationCourse = courseRepository.findByIdElseThrow(courseId);
+        final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);
 
         Course course = sourceLecture.getCourse();
         if (course == null) {
