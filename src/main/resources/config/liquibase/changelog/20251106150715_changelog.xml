@@ -15,7 +15,7 @@
 
     If we take the minimum 16 bytes and encode it as Base64URL:
     - Binary data: 16 bytes
-    - Base64URL to varchar length formula: ceil(# of Bytes / 3) * 4
+    - Base64URL length formula: ceil(# of Bytes / 3) * 4
     - Result: ceil(16/3) * 4 = ceil(5.33) * 4 = 6 * 4 = 24 characters
     So VARCHAR(24) would be the absolute minimum to store a credential ID that meets the spec's minimum requirement.
 
