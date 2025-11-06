@@ -88,7 +88,19 @@ describe('SidebarCardMediumComponent', () => {
         expect(navigationArray).toStrictEqual(['./', 'testId']);
     });
 
-    // TODO: should navigate to selected item with subroute, store target subroute and refresh correctly when previously an item was selected
+    it('should navigate to selected item with subroute, store target subroute and refresh correctly when previously an item was selected', async () => {
+        jest.spyOn(component, 'emitStoreAndRefresh');
+        component.itemSelected = true;
+        component.sidebarItem.targetComponentSubRoute = 'tutorial-lectures';
+        fixture.detectChanges();
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
+        itemElement.click();
+        await fixture.whenStable();
+        expect(component.emitStoreAndRefresh).toHaveBeenCalled();
+        expect(router.navigate).toHaveBeenCalled();
+        const navigationArray = router.navigate.mock.calls[1][0];
+        expect(navigationArray).toStrictEqual(['./', 'tutorial-lectures', 'testId']);
+    });
 
     it('should navigate to selected item without subroute, store target subroute and refresh correctly when previously no item was selected', async () => {
         jest.spyOn(component, 'emitStoreAndRefresh');
