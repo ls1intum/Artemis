@@ -122,7 +122,10 @@ public class HyperionConsistencyCheckService {
     private List<ConsistencyIssue> runStructuralCheck(Map<String, String> input) {
         var resourcePath = "/prompts/hyperion/consistency_structural.st";
         String renderedPrompt = templates.render(resourcePath, input);
-        try {
+        Observation parentObsStructural = observationRegistry.getCurrentObservation();
+        Observation wrapper = Observation.createNotStarted("hyperion.consistency.structural", observationRegistry).parentObservation(parentObsStructural)
+                .contextualName("structural check").lowCardinalityKeyValue(KeyValue.of("ai.span", "true")).start();
+        try (Observation.Scope scope = wrapper.openScope()) {
             // @formatter:off
             var structuralIssues = chatClient
                 .prompt()
@@ -137,6 +140,9 @@ public class HyperionConsistencyCheckService {
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
             return new ArrayList<>();
         }
+        finally {
+            wrapper.stop();
+        }
     }
 
     /**
@@ -148,7 +154,10 @@ public class HyperionConsistencyCheckService {
     private List<ConsistencyIssue> runSemanticCheck(Map<String, String> input) {
         var resourcePath = "/prompts/hyperion/consistency_semantic.st";
         String renderedPrompt = templates.render(resourcePath, input);
-        try {
+        Observation parentObsSemantic = observationRegistry.getCurrentObservation();
+        Observation wrapper = Observation.createNotStarted("hyperion.consistency.semantic", observationRegistry).parentObservation(parentObsSemantic)
+                .contextualName("semantic check").lowCardinalityKeyValue(KeyValue.of("ai.span", "true")).start();
+        try (Observation.Scope scope = wrapper.openScope()) {
             // @formatter:off
             var semanticIssues = chatClient
                 .prompt()
@@ -162,6 +171,9 @@ public class HyperionConsistencyCheckService {
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
             return new ArrayList<>();
+        }
+        finally {
+            wrapper.stop();
         }
     }
 
