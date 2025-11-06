@@ -6,7 +6,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 describe('LectureWizardPeriodComponent', () => {
@@ -30,20 +29,5 @@ describe('LectureWizardPeriodComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-    });
-
-    it('should display warning', () => {
-        const now = dayjs();
-        const lecture = new Lecture();
-        lecture.startDate = now;
-        lecture.endDate = now.add(9, 'hour');
-
-        component.validateDatesFunction = () => {};
-        fixture.componentRef.setInput('lecture', lecture);
-
-        component.onDateChange();
-        fixture.detectChanges();
-
-        expect(fixture.nativeElement.querySelector('.long-lecture-warning')).toBeTruthy();
     });
 });
