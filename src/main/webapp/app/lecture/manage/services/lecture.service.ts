@@ -109,7 +109,6 @@ export class LectureService {
             );
     }
 
-    // TODO: check if still works correctly
     findAllByCourseIdWithSlides(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures-with-slides`, {
