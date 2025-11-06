@@ -21,7 +21,7 @@
 
     However, this is just the minimum required by authenticators to create. In practice:
     1. Authenticators can and do create longer IDs - they're not limited to 16 bytes
-    2. 1Password8 clearly creates longer IDs (80-90 characters, which is ~60-67 bytes of binary data)
+    2. 1Password8 creates longer IDs (80-90 characters, which is ~60-67 bytes of binary data)
     3. There's no maximum limit in the spec, so authenticators are free to use whatever length they want
 
     => We increase to VARCHAR(100) to allow for longer credential IDs from modern authenticators.
