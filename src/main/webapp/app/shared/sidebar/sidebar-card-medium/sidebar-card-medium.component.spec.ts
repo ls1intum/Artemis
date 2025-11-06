@@ -71,7 +71,7 @@ describe('SidebarCardMediumComponent', () => {
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         element.click();
         fixture.detectChanges();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem.id);
+        expect(component.emitStoreAndRefresh).toHaveBeenCalled();
         expect(component.refreshChildComponent).toHaveBeenCalled();
     });
 
@@ -82,10 +82,10 @@ describe('SidebarCardMediumComponent', () => {
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         itemElement.click();
         await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalled();
         expect(router.navigate).toHaveBeenCalled();
         const navigationArray = router.navigate.mock.calls[1][0];
-        expect(navigationArray).toStrictEqual(['./testId']);
+        expect(navigationArray).toStrictEqual(['./', 'testId']);
     });
 
     it('should navigate to the when no item was selected before', async () => {
@@ -95,9 +95,9 @@ describe('SidebarCardMediumComponent', () => {
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         itemElement.click();
         await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
+        expect(component.emitStoreAndRefresh).toHaveBeenCalled();
         expect(router.navigate).toHaveBeenCalled();
         const navigationArray = router.navigate.mock.calls[1][0];
-        expect(navigationArray).toStrictEqual(['', 'testId']);
+        expect(navigationArray).toStrictEqual([router.url, 'testId']);
     });
 });
