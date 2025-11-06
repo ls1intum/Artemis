@@ -91,7 +91,7 @@
                 "singleLectureLabel": "Einzelne Vorlesung",
                 "lectureSeriesLabel": "Vorlesungsserie"
             },
-            "longLectureWarning": "Vermeide Vorlesungen die mehr als ein paar Stunden dauern. Sie machen den Kalender unübersichtlich.",
+            "longLectureWarning": "Vorlesungen sollten nicht länger als ein paar Stunden dauern.",
             "tutorialLectureTooltip": "Eine Tutoriumsvorlesung ist nur Teil des Tutoriumstabs und kann benutzt werden, um Tutoriumsinhalte zur Verfügung zu stellen.",
             "tutorialLectureCheckboxLabel": "Das ist eine Tutoriumsvorlesung.",
             "createSeries": {
