@@ -91,7 +91,6 @@
                 "singleLectureLabel": "Single Lecture",
                 "lectureSeriesLabel": "Lecture Series"
             },
-            "longLectureWarning": "Lectures should not be longer than a couple of hours.",
             "tutorialLectureTooltip": "A tutorial lecture will only be part of the tutorial tab and can be used to deliver tutorial contents.",
             "tutorialLectureCheckboxLabel": "Make this a tutorial lecture.",
             "createSeries": {
