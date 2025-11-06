@@ -227,11 +227,17 @@ public class ModelingExerciseResource {
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO);
 
-        final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findWithEagerCompetenciesByIdElseThrow(updateModelingExerciseDTO.id());
+        final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository
+                .findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(updateModelingExerciseDTO.id());
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExerciseBeforeUpdate, user);
+
+        Long currentCourseId = modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId();
+        if (updateModelingExerciseDTO.courseId() != null && !Objects.equals(currentCourseId, updateModelingExerciseDTO.courseId())) {
+            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+        }
 
         // whether is exam exercise or course exercise are not changeable
         ModelingExercise modelingExercise = updateModelingExerciseDTO.update(modelingExerciseBeforeUpdate);
@@ -240,12 +246,6 @@ public class ModelingExerciseResource {
         modelingExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
         modelingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-
-        // Forbid changing the course the exercise belongs to.
-        if (!Objects.equals(modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
-            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
-        }
-
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
 
@@ -262,7 +262,7 @@ public class ModelingExerciseResource {
         exerciseService.notifyAboutExerciseChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
         slideApi.ifPresent(api -> api.handleDueDateChange(modelingExerciseBeforeUpdate, updatedModelingExercise));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(updatedModelingExercise)));
 
         // Notify AtlasML about the modeling exercise update
         atlasMLApi.ifPresent(api -> {
