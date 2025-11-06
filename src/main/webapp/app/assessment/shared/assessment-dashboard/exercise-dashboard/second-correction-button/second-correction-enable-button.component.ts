@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { faSpinner, faToggleOff, faToggleOn } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -10,10 +10,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, ArtemisTranslatePipe],
 })
 export class SecondCorrectionEnableButtonComponent {
-    @Input() secondCorrectionEnabled: boolean;
-    @Input() togglingSecondCorrectionButton: boolean;
+    readonly secondCorrectionEnabled = input<boolean>();
+    readonly togglingSecondCorrectionButton = input<boolean>();
 
-    @Output() ngModelChange = new EventEmitter();
+    readonly ngModelChange = output();
 
     // Icons
     faToggleOn = faToggleOn;

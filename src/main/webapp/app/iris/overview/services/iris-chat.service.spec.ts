@@ -22,12 +22,14 @@ import {
     mockUserMessageWithContent,
     mockWebsocketServerMessage,
     mockWebsocketStatusMessage,
+    mockWebsocketStatusMessageWithInteralStage,
 } from 'test/helpers/sample/iris-sample-data';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import 'app/shared/util/array.extension';
 import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 
@@ -233,6 +235,18 @@ describe('IrisChatService', () => {
 
         service.currentStages().subscribe((stages) => {
             expect(stages).toEqual(mockWebsocketStatusMessage.stages);
+        });
+        tick();
+    }));
+
+    it('should handle websocket status message with internal stages', fakeAsync(() => {
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketStatusMessageWithInteralStage));
+        service.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, id);
+
+        service.currentStages().subscribe((stages) => {
+            expect(stages).toEqual(mockWebsocketStatusMessageWithInteralStage.stages?.filter((stage: IrisStageDTO) => !stage.internal));
         });
         tick();
     }));

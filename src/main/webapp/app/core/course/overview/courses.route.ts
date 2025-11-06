@@ -33,6 +33,7 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.title',
+            usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService],
     },
@@ -42,6 +43,7 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.studentDashboard.enroll.title',
+            usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService],
     },
@@ -51,6 +53,7 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.archive',
+            usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService],
     },
@@ -64,6 +67,7 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.studentDashboard.enroll.title',
+            usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService],
     },
