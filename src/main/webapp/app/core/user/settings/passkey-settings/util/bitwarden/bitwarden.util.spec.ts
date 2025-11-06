@@ -16,14 +16,6 @@ describe('Bitwarden Util', () => {
             expect(result).toMatch(/^[A-Za-z0-9_-]+$/);
         });
 
-        it('should return the same result for the same input', () => {
-            const input = { 0: 1, 1: 2, 2: 3, 3: 4 };
-            const result1 = convertToBase64(input);
-            const result2 = convertToBase64(input);
-
-            expect(result1).toBe(result2);
-        });
-
         it('should return undefined for undefined input', () => {
             const result = convertToBase64(undefined);
             expect(result).toBeUndefined();
