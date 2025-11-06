@@ -307,6 +307,7 @@
                     "aiTooltip": "Von KI vorgeschlagen",
                     "aiSuggestionsTitle": "KI-Vorschläge",
                     "addSuggestions": "Vorschläge hinzufügen ({{count}})",
+                    "addSelectedSuggestions": "Ausgewählte Vorschläge hinzufügen",
                     "alreadyExists": "(bereits vorhanden)",
                     "getAiSuggestionsTooltip": "KI-Vorschläge abrufen"
                 }

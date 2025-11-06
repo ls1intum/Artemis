@@ -137,7 +137,7 @@ The following members of the project management team are responsible for specifi
 | Quiz exercises        | Timor Morrien ([@Hialus](https://github.com/Hialus))                               |
 | Modeling exercises    | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
 | Text exercises        | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
-| File upload exercises | Elisabeth Friesinger ([@easy-lisi](https://github.com/easy-lisi))                  |
+| File upload exercises | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Exam mode             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Assessment            | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
 | Communication         | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
@@ -146,6 +146,7 @@ The following members of the project management team are responsible for specifi
 | Iris                  | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
 | Athena                | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
 | Hyperion              | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
+| Nebula                | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
 | Tutorial Groups       | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
 | Plagiarism checks     | Markus Paulsen ([@MarkusPaulsen](https://github.com/MarkusPaulsen))                |
 | LTI                   | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |

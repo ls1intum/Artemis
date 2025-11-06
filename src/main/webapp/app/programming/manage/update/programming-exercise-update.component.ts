@@ -671,6 +671,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.programmingExercise.exerciseGroup = undefined;
             });
             this.isExamMode = false;
+
+            // Sync categories
+            this.exerciseCategories = this.programmingExercise.categories ?? [];
         }
         this.loadCourseExerciseCategories(courseId);
         resetProgrammingForImport(this.programmingExercise);
