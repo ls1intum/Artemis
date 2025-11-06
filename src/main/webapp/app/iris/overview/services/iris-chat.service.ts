@@ -416,16 +416,20 @@ export class IrisChatService implements OnDestroy {
                     this.replaceOrAddMessage(payload.message);
                 }
                 if (payload.stages) {
-                    this.stages.next(payload.stages);
+                    this.stages.next(this.filterStages(payload.stages));
                 }
                 break;
             case IrisChatWebsocketPayloadType.STATUS:
-                this.stages.next(payload.stages || []);
+                this.stages.next(this.filterStages(payload.stages || []));
                 if (payload.suggestions) {
                     this.suggestions.next(payload.suggestions);
                 }
                 break;
         }
+    }
+
+    private filterStages(stages: IrisStageDTO[]): IrisStageDTO[] {
+        return stages.filter((stage) => !stage.internal);
     }
 
     protected close(): void {

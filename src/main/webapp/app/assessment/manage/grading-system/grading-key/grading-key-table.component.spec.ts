@@ -109,7 +109,7 @@ describe('GradingKeyTableComponent', () => {
         expect(comp).toBeTruthy();
         expect(comp.examId).toBe(123);
         expect(comp.courseId).toBe(345);
-        expect(comp.studentGradeOrBonusPointsOrGradeBonus).toBe(grade);
+        expect(comp.studentGradeOrBonusPointsOrGradeBonus()).toBe(grade);
         expect(comp.title).toBe('Title');
         expect(comp.isBonus).toBeTrue();
         expect(comp.isExam).toBeTrue();
@@ -187,7 +187,7 @@ describe('GradingKeyTableComponent', () => {
         expect(comp).toBeTruthy();
         expect(comp.examId).toBeUndefined();
         expect(comp.courseId).toBe(courseId);
-        expect(comp.studentGradeOrBonusPointsOrGradeBonus).toBe(studentGrade);
+        expect(comp.studentGradeOrBonusPointsOrGradeBonus()).toBe(studentGrade);
         expect(comp.title).toBe('Title');
         expect(comp.isBonus).toBeTrue();
         expect(comp.isExam).toBeFalse();
