@@ -33,6 +33,7 @@ describe('Lecture Service', () => {
         elemDefault.description = 'new service test Lecture';
         elemDefault.endDate = dayjs();
         elemDefault.id = 1;
+        elemDefault.title = 'Test Lecture';
         elemDefault.isAtLeastEditor = false;
         elemDefault.isAtLeastInstructor = false;
         elemDefault.channelName = 'lecture-default';
@@ -121,6 +122,7 @@ describe('Lecture Service', () => {
         });
 
         it('should get all lectures by courseId', async () => {
+            elemDefault.isTutorialLecture = false;
             const returnedFromService = [elemDefault];
             const expected = returnedFromService;
             const courseId = 1;
@@ -136,9 +138,39 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        // TODO: should get all tutorial ectures by courseId
+        it('should get all tutorial lectures by courseId', async () => {
+            elemDefault.isTutorialLecture = true;
+            const returnedFromService = [elemDefault];
+            const expected = returnedFromService;
+            const courseId = 1;
+            service
+                .findAllTutorialLecturesByCourseId(courseId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/lecture/courses/${courseId}/tutorial-lectures`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
 
-        // TODO: should get all non tutorial ectures by courseId
+        it('should get all non tutorial lectures by courseId', async () => {
+            elemDefault.isTutorialLecture = false;
+            const returnedFromService = [elemDefault];
+            const expected = returnedFromService;
+            const courseId = 1;
+            service
+                .findAllNonTutorialLecturesByCourseIdWithUnits(courseId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/lecture/courses/${courseId}/non-tutorial-lectures-with-units`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
 
         it('should import lecture', async () => {
             const returnedFromService = { ...elemDefault };
