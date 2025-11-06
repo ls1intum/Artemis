@@ -154,7 +154,8 @@ public class CompetencyExpertToolsService {
      */
     @Tool(description = "Get the description of a course")
     public String getCourseDescription(@ToolParam(description = "the ID of the course") Long courseId) {
-        return courseRepository.findById(courseId).map(Course::getDescription).orElse("");
+        Optional<Course> courseOptional = courseRepository.findById(courseId);
+        return courseOptional.isPresent() ? courseOptional.get().getDescription() : "";
     }
 
     /**
@@ -207,10 +208,10 @@ public class CompetencyExpertToolsService {
         // Single item: return single preview format (backward compatible)
         if (competencies.size() == 1) {
             response.put("preview", true);
-            response.put("competency", previews.get(0));
+            response.put("competency", previews.getFirst());
 
-            if (competencies.get(0).getCompetencyId() != null) {
-                response.put("competencyId", competencies.get(0).getCompetencyId());
+            if (competencies.getFirst().getCompetencyId() != null) {
+                response.put("competencyId", competencies.getFirst().getCompetencyId());
             }
 
             if (viewOnly != null && viewOnly) {

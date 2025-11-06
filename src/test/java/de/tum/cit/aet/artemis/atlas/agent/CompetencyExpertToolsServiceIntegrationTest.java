@@ -42,6 +42,8 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        course.setDescription("course description for testing");
+        courseRepository.save(course);
         existingCompetency = competencyUtilService.createCompetency(course);
     }
 
@@ -103,7 +105,6 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnCourseDescription() {
             String expectedDescription = course.getDescription();
-
             String actualDescription = competencyExpertToolsService.getCourseDescription(course.getId());
 
             assertThat(actualDescription).isEqualTo(expectedDescription);
@@ -295,7 +296,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldTrimTitleWhitespaceWhenUpdating() throws Exception {
+        void shouldTrimTitleWhitespaceWhenUpdating() {
             String titleWithSpaces = "  Title With Spaces  ";
             CompetencyOperation updateOperation = new CompetencyOperation(existingCompetency.getId(), titleWithSpaces, "Description", CompetencyTaxonomy.APPLY);
 

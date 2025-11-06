@@ -52,13 +52,4 @@ export class AgentChatService {
             }),
         );
     }
-    catch(error: { message: any }) {
-        return of({
-            message: error instanceof Error ? error.message : this.translateService.instant('artemisApp.agent.chat.error'),
-            sessionId: '',
-            timestamp: new Date().toISOString(),
-            success: false,
-            competenciesModified: false,
-        });
-    }
 }

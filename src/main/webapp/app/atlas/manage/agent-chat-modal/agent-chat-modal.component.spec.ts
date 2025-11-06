@@ -1312,4 +1312,325 @@ describe('AgentChatModalComponent', () => {
             expect(component.messages[1].planApproved).toBeTrue(); // Already approved plans should not be affected
         });
     });
+
+    describe('Batch Competency Creation', () => {
+        beforeEach(() => {
+            mockTranslateService.instant.mockReturnValue('Welcome');
+            component.ngOnInit();
+        });
+
+        it('should create multiple competencies from batch preview', fakeAsync(() => {
+            mockCompetencyService.create.mockReturnValue(
+                of({
+                    id: 1,
+                    title: 'Test',
+                } as any),
+            );
+            const emitSpy = jest.spyOn(component.competencyChanged, 'emit');
+
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Batch preview',
+                isUser: false,
+                timestamp: new Date(),
+                batchCompetencyPreview: [
+                    { title: 'Comp 1', description: 'Desc 1', taxonomy: 'REMEMBER' as any, icon: 'brain' },
+                    { title: 'Comp 2', description: 'Desc 2', taxonomy: 'UNDERSTAND' as any, icon: 'comments' },
+                    { title: 'Comp 3', description: 'Desc 3', taxonomy: 'APPLY' as any, icon: 'pen-fancy' },
+                ],
+            };
+            component.messages = [message];
+
+            component['onCreateBatchCompetencies'](message);
+            tick();
+
+            expect(mockCompetencyService.create).toHaveBeenCalledTimes(3);
+            expect(component.isAgentTyping()).toBeFalse();
+
+            const updatedMessage = component.messages.find((msg) => msg.id === '1');
+            expect(updatedMessage?.batchCreated).toBeTrue();
+            expect(emitSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should not create batch competencies twice', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Batch',
+                isUser: false,
+                timestamp: new Date(),
+                batchCompetencyPreview: [{ title: 'Test', description: 'Test', taxonomy: 'APPLY' as any, icon: 'pen-fancy' }],
+                batchCreated: true,
+            };
+
+            component['onCreateBatchCompetencies'](message);
+
+            expect(mockCompetencyService.create).not.toHaveBeenCalled();
+        });
+
+        it('should not create batch without preview', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'No batch',
+                isUser: false,
+                timestamp: new Date(),
+            };
+
+            component['onCreateBatchCompetencies'](message);
+
+            expect(mockCompetencyService.create).not.toHaveBeenCalled();
+        });
+
+        it('should not create empty batch', () => {
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Empty batch',
+                isUser: false,
+                timestamp: new Date(),
+                batchCompetencyPreview: [],
+            };
+
+            component['onCreateBatchCompetencies'](message);
+
+            expect(mockCompetencyService.create).not.toHaveBeenCalled();
+        });
+
+        it('should handle mixed create and update operations in batch', fakeAsync(() => {
+            mockCompetencyService.create.mockReturnValue(of({ id: 1, title: 'Created' } as any));
+            mockCompetencyService.update.mockReturnValue(of({ id: 10, title: 'Updated' } as any));
+
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Mixed batch',
+                isUser: false,
+                timestamp: new Date(),
+                batchCompetencyPreview: [
+                    { title: 'New', description: 'New desc', taxonomy: 'REMEMBER' as any, icon: 'brain' },
+                    { title: 'Update', description: 'Update desc', taxonomy: 'APPLY' as any, icon: 'pen-fancy', competencyId: 10 },
+                ],
+            };
+            component.messages = [message];
+
+            component['onCreateBatchCompetencies'](message);
+            tick();
+
+            expect(mockCompetencyService.create).toHaveBeenCalledOnce();
+            expect(mockCompetencyService.update).toHaveBeenCalledOnce();
+
+            const successMessage = component.messages.find((msg) => !msg.isUser && msg.content.includes('Successfully processed'));
+            expect(successMessage).toBeDefined();
+        }));
+
+        it('should handle all updates in batch', fakeAsync(() => {
+            mockCompetencyService.update.mockReturnValue(of({ id: 1, title: 'Updated' } as any));
+
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Update batch',
+                isUser: false,
+                timestamp: new Date(),
+                batchCompetencyPreview: [
+                    { title: 'Update 1', description: 'Desc 1', taxonomy: 'ANALYZE' as any, icon: 'magnifying-glass', competencyId: 1 },
+                    { title: 'Update 2', description: 'Desc 2', taxonomy: 'EVALUATE' as any, icon: 'plus-minus', competencyId: 2 },
+                ],
+            };
+            component.messages = [message];
+
+            component['onCreateBatchCompetencies'](message);
+            tick();
+
+            expect(mockCompetencyService.update).toHaveBeenCalledTimes(2);
+
+            const successMessage = component.messages.find((msg) => !msg.isUser && msg.content.includes('Successfully updated 2 competencies'));
+            expect(successMessage).toBeDefined();
+        }));
+
+        it('should handle single competency in batch', fakeAsync(() => {
+            mockCompetencyService.create.mockReturnValue(of({ id: 1, title: 'Single' } as any));
+
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Single batch',
+                isUser: false,
+                timestamp: new Date(),
+                batchCompetencyPreview: [{ title: 'Single', description: 'Single desc', taxonomy: 'CREATE' as any, icon: 'cubes-stacked' }],
+            };
+            component.messages = [message];
+
+            component['onCreateBatchCompetencies'](message);
+            tick();
+
+            expect(mockCompetencyService.create).toHaveBeenCalledOnce();
+
+            const successMessage = component.messages.find((msg) => !msg.isUser && msg.content.includes('Successfully created 1 competency'));
+            expect(successMessage).toBeDefined();
+        }));
+
+        it('should handle batch creation error gracefully', fakeAsync(() => {
+            mockCompetencyService.create.mockReturnValue(throwError(() => new Error('Creation failed')));
+
+            const message: ChatMessage = {
+                id: '1',
+                content: 'Batch error',
+                isUser: false,
+                timestamp: new Date(),
+                batchCompetencyPreview: [{ title: 'Error', description: 'Error desc', taxonomy: 'APPLY' as any, icon: 'pen-fancy' }],
+            };
+            component.messages = [message];
+
+            component['onCreateBatchCompetencies'](message);
+            tick();
+
+            expect(component.isAgentTyping()).toBeFalse();
+            const errorMessage = component.messages.find((msg) => !msg.isUser && msg.content.includes('Failed to process'));
+            expect(errorMessage).toBeDefined();
+        }));
+    });
+
+    describe('Edge Cases for JSON Extraction', () => {
+        beforeEach(() => {
+            mockTranslateService.instant.mockReturnValue('Welcome');
+            component.ngOnInit();
+        });
+
+        it('should handle null content in extractCompetencyPreview', () => {
+            const mockResponse = {
+                message: null as any,
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            mockTranslateService.instant.mockReturnValue('Error message');
+            component.currentMessage.set('Test');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            const agentMessage = component.messages.find((msg) => !msg.isUser);
+            expect(agentMessage).toBeDefined();
+            expect(agentMessage?.competencyPreview).toBeUndefined();
+        });
+
+        it('should handle undefined content in extractBatchCompetencyPreview', () => {
+            const mockResponse = {
+                message: undefined as any,
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            mockTranslateService.instant.mockReturnValue('Error message');
+            component.currentMessage.set('Test');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            const agentMessage = component.messages.find((msg) => !msg.isUser);
+            expect(agentMessage).toBeDefined();
+            expect(agentMessage?.batchCompetencyPreview).toBeUndefined();
+        });
+
+        it('should handle content without valid JSON structure', () => {
+            const mockResponse = {
+                message: 'This is plain text without any JSON',
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            component.currentMessage.set('Test');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            const agentMessage = component.messages.find((msg) => !msg.isUser && msg.content === 'This is plain text without any JSON');
+            expect(agentMessage).toBeDefined();
+            expect(agentMessage?.competencyPreview).toBeUndefined();
+            expect(agentMessage?.batchCompetencyPreview).toBeUndefined();
+        });
+
+        it('should handle incomplete JSON in message', () => {
+            const mockResponse = {
+                message: 'Here is some text {"preview": true, "competency": { incomplete',
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            component.currentMessage.set('Test');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            const agentMessage = component.messages.find((msg) => !msg.isUser);
+            expect(agentMessage).toBeDefined();
+            expect(agentMessage?.competencyPreview).toBeUndefined();
+        });
+
+        it('should handle nested JSON with mismatched braces', () => {
+            const mockResponse = {
+                message: 'Text { "preview": { "nested": { "value" } } extra }',
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            component.currentMessage.set('Test');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            const agentMessage = component.messages.find((msg) => !msg.isUser);
+            expect(agentMessage).toBeDefined();
+        });
+
+        it('should handle empty plan pending content', () => {
+            const mockResponse = {
+                message: '',
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            component.currentMessage.set('Test');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            const agentMessage = component.messages.find((msg) => !msg.isUser);
+            expect(agentMessage?.planPending).toBeUndefined();
+        });
+
+        it('should handle null plan pending content', () => {
+            const mockResponse = {
+                message: null as any,
+                sessionId: 'course_123',
+                timestamp: '2024-01-01T00:00:00Z',
+                success: true,
+                competenciesModified: false,
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            mockTranslateService.instant.mockReturnValue('Error message');
+            component.currentMessage.set('Test');
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            sendButton.click();
+
+            const agentMessage = component.messages.find((msg) => !msg.isUser);
+            expect(agentMessage?.planPending).toBeUndefined();
+        });
+    });
 });
