@@ -178,12 +178,14 @@ export class CourseTutorialGroupsComponent {
         });
 
         const now = dayjs();
-        const currentLectures = tutorialLectures.filter((lecture) => lecture.startDate!.isSameOrBefore(now) && now.isSameOrBefore(lecture.endDate));
-        const earliestCurrentLecture =
-            currentLectures.length === 0 ? undefined : currentLectures.reduce((earliest, current) => (current.startDate!.isBefore(earliest.startDate!) ? current : earliest));
+        const currentLectures = tutorialLectures.filter(
+            (lecture) => lecture.startDate && lecture.startDate.isSameOrBefore(now) && (!lecture.endDate || now.isSameOrBefore(lecture.endDate)),
+        );
+        const mostRecentlyStartedCurrentLecture =
+            currentLectures.length === 0 ? undefined : currentLectures.reduce((latest, current) => (current.startDate!.isAfter(latest.startDate) ? current : latest));
         tutorialLectures.forEach((tutorialLecture) => {
             const tutorialLectureCardItem = this.courseOverviewService.mapTutorialLectureToSidebarCardElement(tutorialLecture);
-            const isCurrentTutorialLecture = earliestCurrentLecture ? tutorialLecture.id === earliestCurrentLecture.id : false;
+            const isCurrentTutorialLecture = mostRecentlyStartedCurrentLecture ? tutorialLecture.id === mostRecentlyStartedCurrentLecture.id : false;
             tutorialGroupCategory = isCurrentTutorialLecture ? 'currentTutorialLecture' : 'furtherTutorialLectures';
             accordionGroups[tutorialGroupCategory].entityData.push(tutorialLectureCardItem);
         });
