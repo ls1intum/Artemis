@@ -12,19 +12,21 @@ import { FormsModule } from '@angular/forms';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { By } from '@angular/platform-browser';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 
 describe('ComplaintsForTutorComponent', () => {
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
     let fixture: ComponentFixture<ComplaintsForTutorComponent>;
     let injectedComplaintResponseService: ComplaintResponseService;
+    let injectedAlertService: AlertService;
 
     let course: Course;
     let exercise: Exercise;
@@ -37,7 +39,7 @@ describe('ComplaintsForTutorComponent', () => {
                 provideRouter([]),
                 MockProvider(ComplaintResponseService),
                 MockProvider(ComplaintService),
-                MockProvider(AlertService),
+                { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
@@ -46,12 +48,15 @@ describe('ComplaintsForTutorComponent', () => {
                 fixture = TestBed.createComponent(ComplaintsForTutorComponent);
                 complaintsForTutorComponent = fixture.componentInstance;
                 injectedComplaintResponseService = TestBed.inject(ComplaintResponseService);
+                injectedAlertService = TestBed.inject(AlertService);
 
                 course = new Course();
                 course.maxComplaintResponseTextLimit = 26;
 
                 exercise = { id: 11, isAtLeastInstructor: true, course: course } as Exercise;
-                complaintsForTutorComponent.exercise = exercise;
+                fixture.componentRef.setInput('exercise', exercise);
+                fixture.componentRef.setInput('submission', undefined);
+                fixture.componentRef.setInput('complaint', undefined);
             });
     });
 
@@ -73,8 +78,8 @@ describe('ComplaintsForTutorComponent', () => {
         handledComplaint.complaintResponse.id = 1;
         handledComplaint.complaintResponse.responseText = 'gj';
         handledComplaint.complaintType = ComplaintType.COMPLAINT;
-        complaintsForTutorComponent.isAssessor = false;
-        complaintsForTutorComponent.complaint = handledComplaint;
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.componentRef.setInput('complaint', handledComplaint);
         fixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
@@ -110,14 +115,14 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
-        complaintsForTutorComponent.complaint = unhandledComplaint;
-        complaintsForTutorComponent.isAssessor = false;
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
+        fixture.componentRef.setInput('isAssessor', false);
         fixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
         expect(createLockStub).toHaveBeenCalledOnce();
-        expect(complaintsForTutorComponent.complaint).toEqual(freshlyCreatedComplaintResponse.complaint);
+        expect(complaintsForTutorComponent.complaint()).toEqual(freshlyCreatedComplaintResponse.complaint);
         expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
         const lockButton = fixture.debugElement.query(By.css('#lockButton')).nativeElement;
         const lockDuration = fixture.debugElement.query(By.css('#lockDuration')).nativeElement;
@@ -129,6 +134,28 @@ describe('ComplaintsForTutorComponent', () => {
         const removeLockStub = jest.spyOn(injectedComplaintResponseService, 'removeLock').mockReturnValue(of());
         lockButton.click();
         expect(removeLockStub).toHaveBeenCalledOnce();
+    }));
+
+    it('should handle error when creating a new complaint response for an unhandled complaint', fakeAsync(() => {
+        const unhandledComplaint = new Complaint();
+        unhandledComplaint.id = 1;
+        unhandledComplaint.accepted = undefined;
+        unhandledComplaint.complaintText = 'please check again';
+        unhandledComplaint.complaintResponse = undefined;
+        unhandledComplaint.complaintType = ComplaintType.COMPLAINT;
+
+        const error = { status: 404 };
+        const createLockStub = jest.spyOn(injectedComplaintResponseService, 'createLock').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        const alertServiceErrorSpy = jest.spyOn(injectedAlertService, 'error');
+
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.detectChanges();
+        tick();
+
+        expect(createLockStub).toHaveBeenCalledOnce();
+        expect(complaintsForTutorComponent.isLoading).toBeFalse();
+        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     }));
 
     it('should refresh a complaint response for a unhandled complaint with a connected complaint response', fakeAsync(() => {
@@ -156,14 +183,14 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
-        complaintsForTutorComponent.isAssessor = false;
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
         fixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
         expect(createLockStub).toHaveBeenCalledOnce();
-        expect(complaintsForTutorComponent.complaint).toEqual(freshlyCreatedComplaintResponse.complaint);
+        expect(complaintsForTutorComponent.complaint()).toEqual(freshlyCreatedComplaintResponse.complaint);
         expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
         const lockButton = fixture.debugElement.query(By.css('#lockButton')).nativeElement;
         const lockDuration = fixture.debugElement.query(By.css('#lockDuration')).nativeElement;
@@ -191,7 +218,7 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.complaintResponse.responseText = 'accepted';
         unhandledComplaint.complaintResponse.id = 1;
         complaintsForTutorComponent.complaintResponse = unhandledComplaint.complaintResponse;
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
 
         const emitSpy = jest.spyOn(complaintsForTutorComponent.updateAssessmentAfterComplaint, 'emit');
 
@@ -218,7 +245,7 @@ describe('ComplaintsForTutorComponent', () => {
         unhandledComplaint.complaintResponse.responseText = 'rejected';
         unhandledComplaint.complaintResponse.id = 1;
         complaintsForTutorComponent.complaintResponse = unhandledComplaint.complaintResponse;
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
 
         const freshlyCreatedComplaintResponse = new ComplaintResponse();
         freshlyCreatedComplaintResponse.id = 1;
@@ -265,8 +292,8 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
-        complaintsForTutorComponent.isAssessor = false;
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
 
         // Update fixture
         fixture.detectChanges();
@@ -316,8 +343,8 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
-        complaintsForTutorComponent.isAssessor = false;
-        complaintsForTutorComponent.complaint = unhandledComplaint;
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.componentRef.setInput('complaint', unhandledComplaint);
 
         // Update fixture
         fixture.detectChanges();
@@ -355,7 +382,7 @@ describe('ComplaintsForTutorComponent', () => {
             newComplaintResponse.complaint = unhandledComplaint;
             newComplaintResponse.responseText = 'accepted';
 
-            complaintsForTutorComponent.complaint = unhandledComplaint;
+            fixture.componentRef.setInput('complaint', unhandledComplaint);
             complaintsForTutorComponent.complaintResponse = newComplaintResponse;
 
             complaintsForTutorComponent.isLoading = false;

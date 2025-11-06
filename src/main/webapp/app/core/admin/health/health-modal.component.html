@@ -22,7 +22,7 @@
                         @for (healthDetail of health.value.details! | keyvalue; track healthDetail) {
                             <tr>
                                 <td class="text-left">{{ healthDetail.key }}</td>
-                                <td class="text-left">{{ readableValue(healthDetail.value) }}</td>
+                                <td class="text-left" [ngStyle]="{ 'white-space': 'pre-line' }">{{ readableValue(healthDetail.value) }}</td>
                             </tr>
                         }
                     </tbody>

@@ -11,9 +11,10 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 
 /**
- * Spring Data JPA repository for the {@link de.tum.cit.aet.artemis.exam.domain.room.ExamRoom} entity.
+ * Spring Data JPA repository for the {@link ExamRoom} entity.
  */
 @Conditional(ExamEnabled.class)
 @Lazy
@@ -108,4 +109,31 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
 
     @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = { "layoutStrategies" })
     Set<ExamRoom> findAllWithEagerLayoutStrategiesByIdIn(Set<Long> ids);
+
+    /**
+     * Returns a collection of {@link ExamRoomForDistributionDTO}, which are derived from {@link ExamRoom}.
+     *
+     * @implNote Uses the same PARTITION BY trick as explained in {@link #findAllIdsOfCurrentExamRooms}
+     *
+     * @return Basic room information for distribution
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO(
+                roomPartition.id,
+                roomPartition.roomNumber,
+                roomPartition.alternativeRoomNumber,
+                roomPartition.name,
+                roomPartition.alternativeName,
+                roomPartition.building
+            )
+            FROM (
+                SELECT er.id AS id, er.roomNumber AS roomNumber, er.alternativeRoomNumber AS alternativeRoomNumber, er.name AS name, er.alternativeName AS alternativeName, er.building AS building, er.createdDate AS createdDate, ROW_NUMBER() OVER (
+                    PARTITION BY er.roomNumber, er.name
+                    ORDER BY er.createdDate DESC, er.id DESC
+                ) AS rowNumber
+                FROM ExamRoom er
+            ) roomPartition
+            WHERE roomPartition.rowNumber = 1
+            """)
+    Set<ExamRoomForDistributionDTO> findAllCurrentExamRoomsForDistribution();
 }
