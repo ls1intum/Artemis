@@ -198,6 +198,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "external_llm_usage_accepted")
     private ZonedDateTime externalLLMUsageAccepted = null;
 
+    @Nullable
+    @Column(name = "internal_llm_usage_accepted")
+    private ZonedDateTime internalLLMUsageAccepted = null;
+
     @NotNull
     @Column(name = "memiris_enabled", nullable = false)
     private boolean memirisEnabled = false;
@@ -496,8 +500,21 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 
+    @Nullable
+    public ZonedDateTime getInternalLLMUsageAcceptedTimestamp() {
+        return internalLLMUsageAccepted;
+    }
+
+    public void setInternalLLMUsageAcceptedTimestamp(@Nullable ZonedDateTime internalLLMUsageAccepted) {
+        this.internalLLMUsageAccepted = internalLLMUsageAccepted;
+    }
+
     public boolean hasAcceptedExternalLLMUsage() {
         return externalLLMUsageAccepted != null;
+    }
+
+    public boolean hasAcceptedInternalLLMUsage() {
+        return internalLLMUsageAccepted != null;
     }
 
     /**
@@ -507,6 +524,16 @@ public class User extends AbstractAuditingEntity implements Participant {
     public void hasAcceptedExternalLLMUsageElseThrow() {
         if (externalLLMUsageAccepted == null) {
             throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
+        }
+    }
+
+    /**
+     * Checks if the user has accepted the internal (=local deployment) LLM privacy policy.
+     * If not, an {@link AccessForbiddenException} is thrown.
+     */
+    public void hasAcceptedInternalLLMUsageElseThrow() {
+        if (internalLLMUsageAccepted == null) {
+            throw new AccessForbiddenException("The user has not accepted the internal LLM privacy policy yet.");
         }
     }
 
