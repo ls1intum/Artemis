@@ -39,14 +39,14 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        QuizExerciseForCourseDTO that = (QuizExerciseForCourseDTO) o;
+        QuizExerciseForCourseDTO that = (QuizExerciseForCourseDTO) object;
         if (id != that.id) {
             return false;
         }
@@ -107,14 +107,14 @@ record QuizBatchForCourseDTO(long id, @Nullable String password, boolean started
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        QuizBatchForCourseDTO that = (QuizBatchForCourseDTO) o;
+        QuizBatchForCourseDTO that = (QuizBatchForCourseDTO) object;
         if (id != that.id) {
             return false;
         }

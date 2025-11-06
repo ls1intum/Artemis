@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -671,7 +671,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 updatedLinks.add(link);
             }
             else {
-                throw new BadRequestException("Competency with id " + dto.competencyId() + " not found in course " + course.getId());
+                throw new NotFoundException("Competency with id " + dto.competencyId() + " not found in course " + course.getId());
             }
         }
         return updatedLinks;
