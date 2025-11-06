@@ -69,10 +69,8 @@ import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
-import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -103,11 +101,7 @@ public class StudentExamResource {
 
     private final ExamSessionService examSessionService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final ExamRepository examRepository;
-
-    private final SubmittedAnswerRepository submittedAnswerRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -131,8 +125,7 @@ public class StudentExamResource {
 
     public StudentExamResource(ExamAccessService examAccessService, ExamDeletionService examDeletionService, StudentExamService studentExamService,
             StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
-            StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
-            StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
+            StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
             SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService, ExamLiveEventRepository examLiveEventRepository) {
         this.examAccessService = examAccessService;
@@ -144,9 +137,7 @@ public class StudentExamResource {
         this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
         this.examSessionService = examSessionService;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.examRepository = examRepository;
-        this.submittedAnswerRepository = submittedAnswerRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
         this.websocketMessagingService = websocketMessagingService;

@@ -31,6 +31,7 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 
+import de.tum.cit.aet.artemis.athena.web.AthenaResource;
 import de.tum.cit.aet.artemis.communication.web.LinkPreviewResource;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
@@ -62,7 +63,8 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
         ArchRule rule = methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().arePublic().should()
                 .haveRawReturnType(ResponseEntity.class).orShould().haveRawReturnType(ModelAndView.class);
         // We exclude the LinkPreviewResource from this check, as it is a special case that requires the serialization of the response which is not possible with ResponseEntities
-        JavaClasses classes = classesExcept(allClasses, LinkPreviewResource.class);
+        // We exclude the AthenaResource as it has endpoints that return void to forward requests from deprecated to the new endpoints
+        JavaClasses classes = classesExcept(allClasses, LinkPreviewResource.class, AthenaResource.class);
         // allow empty should since some modules do not have any REST controllers
         rule.allowEmptyShould(true).check(classes);
     }

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -44,6 +44,7 @@ import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profil
 import { signal } from '@angular/core';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -64,6 +65,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
     let profileService: ProfileService;
+    let programmingExerciseSharingService: ProgrammingExerciseSharingService;
     let localStorageService: LocalStorageService;
 
     beforeEach(async () => {
@@ -90,6 +92,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         programmingExerciseFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
         alertService = TestBed.inject(AlertService);
         profileService = TestBed.inject(ProfileService);
+        programmingExerciseSharingService = TestBed.inject(ProgrammingExerciseSharingService);
         localStorageService = TestBed.inject(LocalStorageService);
 
         const programmingLanguageFeature = {
@@ -632,6 +635,59 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(loadExerciseCategoriesSpy).toHaveBeenCalledOnce();
         });
+
+        // Ensures that exerciseCategories are synchronized in course-mode imports
+        it('should sync exerciseCategories from programmingExercise during import', fakeAsync(() => {
+            // GIVEN
+            const categories = [new ExerciseCategory(undefined, undefined)];
+            const programmingExercise = getProgrammingExerciseForImport();
+            (programmingExercise as any).categories = categories;
+            route.data = of({ programmingExercise });
+
+            const findSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            // WHEN
+            comp.ngOnInit();
+            tick();
+
+            // THEN
+            expect(findSpy).toHaveBeenCalledWith(course.id);
+            expect(comp.isExamMode).toBeFalse();
+            expect(comp.exerciseCategories).toBe(categories);
+        }));
+
+        // Ensures that exerciseCategories remain empty in exam-mode imports.
+        it('should NOT sync exerciseCategories from programmingExercise when importing into an exam', fakeAsync(() => {
+            // GIVEN
+            const examId = 1;
+            const exerciseGroupId = 42;
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = exerciseGroupId;
+            exerciseGroup.exam = { id: examId, course };
+
+            const categories = [new ExerciseCategory(undefined, undefined)];
+            const programmingExercise = getProgrammingExerciseForImport();
+            (programmingExercise as any).categories = categories;
+
+            route.params = of({ courseId, examId, exerciseGroupId });
+            route.data = of({ programmingExercise });
+            route.url = of([{ path: 'import' } as UrlSegment]);
+
+            // mock exerciseGroupService
+            const findSpy = jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            // WHEN
+            comp.ngOnInit();
+            tick();
+
+            // THEN
+            expect(findSpy).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
+            expect(comp.isExamMode).toBeTrue();
+
+            expect(comp.exerciseCategories).toEqual([]);
+        }));
     });
 
     describe('import from file', () => {
@@ -686,6 +742,142 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // THEN
             expect(programmingExerciseService.importFromFile).toHaveBeenCalledWith(entity, 1);
             expect(comp.isSaving).toBeFalse();
+        }));
+    });
+
+    describe('import from sharing', () => {
+        let route: ActivatedRoute;
+
+        beforeEach(() => {
+            route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+
+            route.url = of([{ path: 'import-from-sharing' } as UrlSegment]);
+            route.queryParams = of({
+                basketToken: 'test-basket-token',
+                returnURL: '/test-return-url',
+                apiBaseURL: 'https://api.example.com',
+                selectedExercise: 5,
+                checksum: 'test-checksum',
+            });
+        });
+
+        it('should import and reset dates, id, project key and handle exercise', fakeAsync(() => {
+            const programmingExercise = getProgrammingExerciseForImport();
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            const sharingServiceStub = jest.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
+            sharingServiceStub.mockReturnValue(of(programmingExercise));
+            comp.ngOnInit();
+
+            fixture.detectChanges();
+            tick();
+            expect(comp.isImportFromFile).toBeFalse();
+            expect(comp.isImportFromSharing).toBeTrue();
+            expect(comp.isImportFromExistingExercise).toBeFalse();
+
+            verifyImport(programmingExercise);
+        }));
+
+        it('should also handle exam mode import', fakeAsync(() => {
+            const examId = 1;
+            const exerciseGroupId = 1;
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = exerciseGroupId;
+            exerciseGroup.exam = { id: examId, course };
+            route.params = of({ courseId, examId, exerciseGroupId });
+
+            const programmingExercise = getProgrammingExerciseForImport();
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            const sharingServiceStub = jest.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
+            sharingServiceStub.mockReturnValue(of(programmingExercise));
+            comp.ngOnInit();
+
+            fixture.detectChanges();
+            tick();
+            expect(comp.isImportFromFile).toBeFalse();
+            expect(comp.isImportFromSharing).toBeTrue();
+            expect(comp.isImportFromExistingExercise).toBeFalse();
+
+            verifyImport(programmingExercise);
+        }));
+
+        it('should call create service on save for new sharing entity', fakeAsync(() => {
+            // GIVEN
+            const entity: ProgrammingExercise = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 2,
+                        },
+                    }),
+                ),
+            );
+            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            jest.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(of(new HttpResponse({ body: entity })));
+
+            comp.isImportFromSharing = true;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+            comp.courseId = course.id!;
+            // WHEN
+            comp.save();
+            tick(); // simulate async
+
+            // THEN
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course, comp['sharingInfo']);
+        }));
+
+        it('should call create service on save for new sharing entity, but save failed', fakeAsync(() => {
+            // GIVEN
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+
+            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            jest.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'save failed', status: 503 })));
+
+            comp.isImportFromSharing = true;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+            comp.courseId = course.id!;
+            // WHEN
+            comp.save();
+            tick(); // simulate async
+
+            // THEN
+            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course, comp['sharingInfo']);
+        }));
+
+        it('should import without buildConfig and reset dates, id, project key and store zipFile', fakeAsync(() => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            programmingExercise.buildConfig = undefined; // Simulate no build config
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            const sharingServiceStub = jest.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
+            sharingServiceStub.mockReturnValue(of(programmingExercise));
+            comp.ngOnInit();
+
+            fixture.detectChanges();
+            tick();
+            expect(comp.isImportFromFile).toBeFalse();
+            expect(comp.isImportFromSharing).toBeTrue();
+            expect(comp.isImportFromExistingExercise).toBeFalse();
+
+            verifyImport(programmingExercise);
         }));
     });
 

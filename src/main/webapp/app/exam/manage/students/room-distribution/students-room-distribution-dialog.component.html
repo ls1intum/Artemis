@@ -1,0 +1,103 @@
+<p-dialog [(visible)]="dialogVisible" [modal]="true" [closable]="true" [dismissableMask]="true" (onHide)="closeDialog()" [style]="{ width: '45dvw' }">
+    <ng-template pTemplate="header">
+        <h4>
+            <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
+        </h4>
+    </ng-template>
+    <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate (keydown.enter)="$event.preventDefault()">
+        <p jhiTranslate="artemisApp.exam.examUsers.rooms.introText" class="intro-text"></p>
+        <div class="d-flex flex-column align-items-end mb-2">
+            <div class="form-group text-end mb-2">
+                <label for="reserveFactor" jhiTranslate="artemisApp.exam.examUsers.rooms.reserveFactor" class="small"></label>
+                <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.reserveFactorTooltip" />
+                <input
+                    id="reserveFactor"
+                    type="text"
+                    class="form-control form-control-sm"
+                    style="width: 3rem"
+                    [defaultValue]="RESERVE_FACTOR_DEFAULT_PERCENTAGE"
+                    (input)="handleReserveFactorInput($event)"
+                    (focusout)="resetReserveFactorText($event)"
+                    (focusin)="selectAllTextAndOpenDropdown($event)"
+                />
+            </div>
+            <div class="form-check form-switch ms-auto">
+                <label for="allowNarrowLayoutsToggle" jhiTranslate="artemisApp.exam.examUsers.rooms.allowNarrowLayouts" class="form-check-label"></label>
+                <input id="allowNarrowLayoutsToggle" type="checkbox" class="form-check-input" [checked]="allowNarrowLayouts()" (change)="toggleNarrowLayouts()" />
+                <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.allowNarrowLayoutsTooltip" />
+            </div>
+        </div>
+        <input
+            type="text"
+            class="form-control"
+            placeholder="{{ 'artemisApp.exam.examUsers.rooms.searchPlaceholder' | artemisTranslate }}"
+            [ngbTypeahead]="search"
+            container="body"
+            [resultFormatter]="formatter"
+            [inputFormatter]="emptyStringFormatter"
+            (selectItem)="pickSelectedRoom($event)"
+            (focusin)="selectAllTextAndOpenDropdown($event)"
+        />
+        @if (hasSelectedRooms()) {
+            <div class="table-responsive" style="max-height: 45dvh; overflow-y: auto">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th jhiTranslate="artemisApp.exam.examUsers.rooms.name"></th>
+                            <th jhiTranslate="artemisApp.exam.examUsers.rooms.building"></th>
+                            <th jhiTranslate="artemisApp.exam.examUsers.rooms.number"></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (examRoom of selectedRooms(); track examRoom.id) {
+                            <tr>
+                                <td>
+                                    {{ examRoom.name }}
+                                    @if (examRoom.alternativeName) {
+                                        ({{ examRoom.alternativeName }})
+                                    }
+                                </td>
+                                <td>{{ examRoom.building }}</td>
+                                <td>
+                                    {{ examRoom.roomNumber }}
+                                    @if (examRoom.alternativeRoomNumber) {
+                                        ({{ examRoom.alternativeRoomNumber }})
+                                    }
+                                </td>
+                                <td>
+                                    <button type="button" jhiTranslate="entity.action.remove" class="btn btn-sm btn-danger" (click)="removeSelectedRoom(examRoom)"></button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @let capacities = seatInfo();
+            @if (canSeatAllStudents()) {
+                <p jhiTranslate="artemisApp.exam.examUsers.rooms.enoughSeatsForStudents" [translateValues]="{ totalStudents: capacities.totalStudents }"></p>
+            } @else {
+                <p
+                    jhiTranslate="artemisApp.exam.examUsers.rooms.notEnoughSeatsForStudents"
+                    [translateValues]="{ usableCapacity: capacities.usableCapacity, totalStudents: capacities.totalStudents, percentage: capacities.percentage }"
+                ></p>
+            }
+        }
+    </form>
+    <ng-template pTemplate="footer">
+        <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">
+            <fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel" class="m-1"></span>
+        </button>
+        @if (hasSelectedRooms() && canSeatAllStudents()) {
+            <button class="btn btn-success" id="finish-button" (click)="attemptDistributeAndCloseDialog()">
+                <fa-icon [icon]="faThLarge" /><span jhiTranslate="artemisApp.exam.examUsers.rooms.distribute" class="m-1"></span>
+            </button>
+        } @else {
+            <span [title]="'artemisApp.exam.examUsers.rooms.distributeWarning' | artemisTranslate" class="d-inline-block">
+                <button class="btn btn-warning" id="finish-button" [disabled]="true" [hidden]="!hasSelectedRooms()">
+                    <fa-icon [icon]="faThLarge" /><span jhiTranslate="artemisApp.exam.examUsers.rooms.distribute" class="m-1"></span>
+                </button>
+            </span>
+        }
+    </ng-template>
+</p-dialog>

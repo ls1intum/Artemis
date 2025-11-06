@@ -81,7 +81,7 @@ describe('CourseCompetencies', () => {
                 const accountService = TestBed.inject(AccountService);
                 const user = new User();
                 user.login = 'testUser';
-                jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue(user);
+                accountService.userIdentity.set(user);
             });
     });
 

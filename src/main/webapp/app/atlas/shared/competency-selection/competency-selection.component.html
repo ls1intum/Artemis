@@ -1,15 +1,30 @@
 @if (isLoading || competencyLinks?.length) {
     <div>
-        @if (labelName()) {
-            <label for="competency-selector">
-                {{ labelName() }}
-            </label>
-        }
-        @if (labelTooltip()) {
-            <fa-stack class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip()">
-                <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
-            </fa-stack>
-        }
+        <div class="d-flex align-items-center mb-1">
+            @if (labelName()) {
+                <label for="competency-selector">
+                    {{ labelName() }}
+                </label>
+            }
+            @if (labelTooltip()) {
+                <fa-stack class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip()">
+                    <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
+                </fa-stack>
+            }
+            @if (competencyLinks && competencyLinks.length > 0) {
+                <jhi-button
+                    [btnType]="ButtonType.WARNING"
+                    [disabled]="isSuggesting || disabled || !exerciseDescription()?.trim()"
+                    (onClick)="suggestCompetencies()"
+                    [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip'"
+                    [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
+                    [btnSize]="ButtonSize.SMALL"
+                    [icon]="faLightbulb"
+                    [isLoading]="isSuggesting"
+                    class="ms-2"
+                />
+            }
+        </div>
         @if (isLoading) {
             <div>
                 <div class="spinner-border" role="status">
@@ -20,18 +35,24 @@
             <div class="competency-selector p-2" id="competency-selector">
                 @for (competencyLink of competencyLinks; track competencyLink) {
                     @if (competencyLink && competencyLink.competency && competencyLink.competency.id) {
-                        <div>
-                            <input
-                                id="competency-{{ competencyLink.competency.id }}"
-                                type="checkbox"
-                                [ngModel]="checkboxStates[competencyLink.competency.id]"
-                                (ngModelChange)="toggleCompetency(competencyLink)"
-                                [disabled]="disabled"
-                            />
-                            <label for="competency-{{ competencyLink.competency.id }}">
-                                <fa-icon [icon]="getIcon(competencyLink.competency.taxonomy)" [fixedWidth]="true" />
-                                {{ competencyLink.competency.title }}
-                            </label>
+                        <div class="mb-1">
+                            <div class="d-flex align-items-center">
+                                <input
+                                    id="competency-{{ competencyLink.competency.id }}"
+                                    type="checkbox"
+                                    [ngModel]="checkboxStates[competencyLink.competency.id]"
+                                    (ngModelChange)="toggleCompetency(competencyLink)"
+                                    [disabled]="disabled"
+                                    class="me-2"
+                                />
+                                <label for="competency-{{ competencyLink.competency.id }}" class="d-flex align-items-center m-0">
+                                    <fa-icon [icon]="getIcon(competencyLink.competency.taxonomy)" [fixedWidth]="true" />
+                                    <span class="ms-1">{{ competencyLink.competency.title }}</span>
+                                </label>
+                                @if (isSuggested(competencyLink.competency.id)) {
+                                    <fa-icon [icon]="faLightbulb" class="text-warning ms-2" [ngbTooltip]="'artemisApp.competency.suggestion.tooltip' | artemisTranslate" />
+                                }
+                            </div>
                             @if (checkboxStates[competencyLink.competency.id]) {
                                 <select
                                     [ngModel]="
@@ -42,11 +63,11 @@
                                               : HIGH_COMPETENCY_LINK_WEIGHT
                                     "
                                     (ngModelChange)="updateLinkWeight(competencyLink, $event)"
-                                    ngbTooltip="{{ 'artemisApp.competency.link.weightTooltip' | artemisTranslate }}"
+                                    [ngbTooltip]="'artemisApp.competency.link.weightTooltip' | artemisTranslate"
                                 >
-                                    <option [ngValue]="LOW_COMPETENCY_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.low'"></option>
-                                    <option [ngValue]="MEDIUM_COMPETENCY_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.medium'"></option>
-                                    <option [ngValue]="HIGH_COMPETENCY_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.high'"></option>
+                                    <option [ngValue]="LOW_COMPETENCY_LINK_WEIGHT" jhiTranslate="artemisApp.competency.link.weightLabels.low"></option>
+                                    <option [ngValue]="MEDIUM_COMPETENCY_LINK_WEIGHT" jhiTranslate="artemisApp.competency.link.weightLabels.medium"></option>
+                                    <option [ngValue]="HIGH_COMPETENCY_LINK_WEIGHT" jhiTranslate="artemisApp.competency.link.weightLabels.high"></option>
                                 </select>
                             }
                         </div>

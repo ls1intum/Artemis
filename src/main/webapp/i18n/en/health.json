@@ -13,7 +13,6 @@
         "indicator": {
             "clientConfigServer": "Client Config Server",
             "discoveryComposite": "Discovery Composite",
-            "refreshScope": "Microservice Refresh Scope",
             "configServer": "Microservice Config Server",
             "hystrix": "Hystrix",
             "diskSpace": "Disk space",
@@ -30,7 +29,9 @@
             "apollon": "Apollon Conversion Server",
             "pyris": "Pyris",
             "ssl": "SSL",
-            "hermes": "Hermes Push Notifications"
+            "hermes": "Hermes Push Notifications",
+            "sharing": "Sharing Platform Connector",
+            "redis": "Redis"
         },
         "table": {
             "service": "Service name",

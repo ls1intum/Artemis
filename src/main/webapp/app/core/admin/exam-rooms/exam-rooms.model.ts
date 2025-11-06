@@ -6,18 +6,16 @@ export interface ExamRoomUploadInformationDTO {
 }
 
 export interface ExamRoomDTO {
-    readonly id: number;
     roomNumber: string;
     name: string;
     building: string;
     numberOfSeats: number;
-    layoutStrategies: ExamRoomLayoutStrategyDTO[];
+    layoutStrategies?: ExamRoomLayoutStrategyDTO[];
 }
 
 export interface ExamRoomDTOExtended extends ExamRoomDTO {
     defaultCapacity: number;
     maxCapacity: number;
-    layoutStrategyNames: string;
 }
 
 export interface ExamRoomLayoutStrategyDTO {

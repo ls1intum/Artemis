@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
-import static de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -38,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
 
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.
@@ -106,6 +106,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
+
+    /**
+     * Finds a ProgrammingExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or participation data.
+     * This includes: testCases, tasks, auxiliaryRepositories, staticCodeAnalysisCategories, buildConfig
+     *
+     * @param exerciseId the id of the exercise to be found
+     * @return the programming exercise
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "templateParticipation", "solutionParticipation", "tasks", "testCases", "tasks.testCases",
+            "staticCodeAnalysisCategories", "submissionPolicy", "buildConfig", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria",
+            "plagiarismDetectionConfig" })
+    Optional<ProgrammingExercise> findForVersioningById(long exerciseId);
 
     /**
      * Finds one programming exercise including its submission policy by the exercise's project key.
@@ -453,6 +466,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig", "gradingCriteria" })
     Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(long exerciseId);
 
+    /**
+     * Defines the default entity graph for loading programming exercises along with related configurations.
+     * <p>
+     * The {@code categories} attribute is included here so that category strings are
+     * available immediately without additional lazy loading.
+     *
+     * @param exerciseId the ID of the programming exercise to fetch
+     * @return an {@link Optional} containing the programming exercise with all related configurations if found,
+     *         or an empty {@link Optional} otherwise
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig", "gradingCriteria", "categories" })
+    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesById(long exerciseId);
+
     long countByShortNameAndCourse(String shortName, Course course);
 
     long countByTitleAndCourse(String shortName, Course course);
@@ -521,6 +547,20 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @NotNull
     default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExerciseId), programmingExerciseId);
+    }
+
+    /**
+     * Find a programming exercise by its id and fetch related plagiarism detection config,
+     * team config, build config, grading criteria, and categories.
+     * Throws an EntityNotFoundException if the exercise cannot be found.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
+        return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesById(programmingExerciseId), programmingExerciseId);
     }
 
     /**

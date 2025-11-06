@@ -136,7 +136,17 @@ artemis:
         destination: https://telemetry.artemis.cit.tum.de
     version-control:
         local-vcs-repo-path: ./local-vcs-repos
+    security:
+        internal:
+            allowed-cidrs:
+                - ::/0
+                - 0.0.0.0/0
 
 helios:
   status:
     enabled: false
+
+atlas:
+    atlasml:
+        base-url: https://atlasml.aet.cit.tum.de
+

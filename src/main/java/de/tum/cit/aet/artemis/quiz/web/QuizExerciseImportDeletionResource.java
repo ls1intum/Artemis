@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -26,6 +27,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -41,6 +44,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -80,9 +84,13 @@ public class QuizExerciseImportDeletionResource {
 
     private final UserRepository userRepository;
 
+    private final ExerciseVersionService exerciseVersionService;
+
+    private final Optional<AtlasMLApi> atlasMLApi;
+
     public QuizExerciseImportDeletionResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, UserRepository userRepository,
             ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, QuizExerciseImportService quizExerciseImportService, CourseService courseService,
-            AuthorizationCheckService authCheckService) {
+            AuthorizationCheckService authCheckService, ExerciseVersionService exerciseVersionService, Optional<AtlasMLApi> atlasMLApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
@@ -91,6 +99,8 @@ public class QuizExerciseImportDeletionResource {
         this.quizExerciseImportService = quizExerciseImportService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
+        this.exerciseVersionService = exerciseVersionService;
+        this.atlasMLApi = atlasMLApi;
     }
 
     /**
@@ -115,7 +125,11 @@ public class QuizExerciseImportDeletionResource {
                         dragItemImagePaths.stream().filter(Objects::nonNull).map(path -> convertToActualPath(path, FilePathType.DRAG_ITEM)))
                 .filter(Objects::nonNull).toList();
 
-        // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
+        // Notify AtlasML about the quiz exercise deletion before actual deletion
+        notifyAtlasML(quizExercise, OperationTypeDTO.DELETE, "quiz exercise deletion");
+
+        // note: we use the exercise service here, because this one makes sure to clean
+        // up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(quizExerciseId, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
@@ -136,16 +150,25 @@ public class QuizExerciseImportDeletionResource {
     }
 
     /**
-     * POST /quiz-exercises/import: Imports an existing quiz exercise into an existing course
+     * POST /quiz-exercises/import: Imports an existing quiz exercise into an
+     * existing course
      * <p>
-     * This will import the whole exercise except for the participations and dates. Referenced
+     * This will import the whole exercise except for the participations and dates.
+     * Referenced
      * entities will get cloned and assigned a new id.
      *
-     * @param sourceExerciseId The ID of the original exercise which should get imported
-     * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
-     * @param files            the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
-     * @return The imported exercise (200), a not found error (404) if the template does not exist,
-     *         or a forbidden error (403) if the user is not at least an instructor in the target course.
+     * @param sourceExerciseId The ID of the original exercise which should get
+     *                             imported
+     * @param importedExercise The new exercise containing values that should get
+     *                             overwritten in the imported exercise, s.a. the title
+     *                             or difficulty
+     * @param files            the files for drag and drop questions to upload
+     *                             (optional). The original file name must equal the
+     *                             file path of the image in {@code quizExercise}
+     * @return The imported exercise (200), a not found error (404) if the template
+     *         does not exist,
+     *         or a forbidden error (403) if the user is not at least an instructor
+     *         in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping(value = "quiz-exercises/import/{sourceExerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -166,7 +189,8 @@ public class QuizExerciseImportDeletionResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         if (!importedExercise.isValid()) {
-            // TODO: improve error message and tell the client why the quiz is invalid (also see above in create Quiz)
+            // TODO: improve error message and tell the client why the quiz is invalid (also
+            // see above in create Quiz)
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
@@ -179,8 +203,33 @@ public class QuizExerciseImportDeletionResource {
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
         QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
 
+        // Notify AtlasML about the imported exercise
+        notifyAtlasML(newQuizExercise, OperationTypeDTO.UPDATE, "quiz exercise import");
+
+        exerciseVersionService.createExerciseVersion(newQuizExercise);
+
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
+    }
+
+    /**
+     * Helper method to notify AtlasML about quiz exercise changes with consistent
+     * error handling.
+     *
+     * @param exercise             the exercise to save
+     * @param operationType        the operation type (UPDATE or DELETE)
+     * @param operationDescription the description of the operation for logging
+     *                                 purposes
+     */
+    private void notifyAtlasML(QuizExercise exercise, OperationTypeDTO operationType, String operationDescription) {
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(exercise, operationType);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
+            }
+        });
     }
 
 }

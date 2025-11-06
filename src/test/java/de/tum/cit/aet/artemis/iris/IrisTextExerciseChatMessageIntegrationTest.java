@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -103,7 +103,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
             assertThat(dto.execution().settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World", dto.execution().initialStages()));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World", dto.execution().initialStages(), null));
 
             pipelineDone.set(true);
         });
@@ -171,7 +171,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
             assertThat(dto.execution().settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World 1", dto.execution().initialStages()));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World 1", dto.execution().initialStages(), null));
 
             pipelineDone.set(true);
         });
@@ -179,7 +179,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
             assertThat(dto.execution().settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World 2", dto.execution().initialStages()));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World 2", dto.execution().initialStages(), null));
 
             pipelineDone.set(true);
         });
@@ -270,7 +270,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
             assertThat(dto.execution().settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World", dto.execution().initialStages()));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World", dto.execution().initialStages(), null));
 
             pipelineDone.set(true);
         });
@@ -295,7 +295,7 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
             assertThat(dto.execution().settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World", dto.execution().initialStages()));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World", dto.execution().initialStages(), null));
 
             pipelineDone.set(true);
         });
@@ -324,9 +324,31 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         }
     }
 
-    private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages) throws Exception {
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMessageUpdatesSessionTitle() throws Exception {
+        var irisSession = createSessionForUser("student1");
+        var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+        final String expectedTitle = "New chat";
+
+        irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
+            assertThat(dto.execution().settings().authenticationToken()).isNotNull();
+
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World", dto.execution().initialStages(), expectedTitle));
+
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        var irisSessionFromDb = irisTextExerciseChatSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
+        assertThat(irisSessionFromDb.getTitle()).isEqualTo(expectedTitle);
+    }
+
+    private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/text-exercise-chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, stages, null, null, null, null), HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/text-exercise-chat/runs/" + jobId + "/status",
+                new PyrisTextExerciseChatStatusUpdateDTO(result, stages, sessionTitle), HttpStatus.OK, headers);
     }
 }

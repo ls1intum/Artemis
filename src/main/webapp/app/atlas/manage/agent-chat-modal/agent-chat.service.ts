@@ -22,16 +22,15 @@ interface AgentChatResponse {
     providedIn: 'root',
 })
 export class AgentChatService {
-    private http = inject(HttpClient);
-    private translateService = inject(TranslateService);
-    private accountService = inject(AccountService);
+    private readonly http = inject(HttpClient);
+    private readonly translateService = inject(TranslateService);
+    private readonly accountService = inject(AccountService);
 
     sendMessage(message: string, courseId: number): Observable<AgentChatResponse> {
-        try {
-            const userId = this.accountService.userIdentity?.id;
-            if (!userId) {
-                throw new Error(this.translateService.instant('artemisApp.agent.chat.authenticationRequired'));
-            }
+        const userId = this.accountService.userIdentity()?.id;
+        if (!userId) {
+            throw new Error('User must be authenticated to use agent chat');
+        }
 
             const sessionId = `course_${courseId}_user_${userId}`;
 
