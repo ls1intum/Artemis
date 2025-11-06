@@ -284,7 +284,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getLectureForCourse_withOutLectureUnits_shouldGetLecturesWithOutLectureUnits() throws Exception {
+    void getLectureForCourse_shouldGetLectures() throws Exception {
         List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.OK, Lecture.class);
         assertThat(returnedLectures).hasSize(2);
         Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().orElseThrow();
@@ -312,15 +312,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(filteredLecture.getLectureUnits()).contains(attachmentVideoUnitWithSlides);
         AttachmentVideoUnit attachmentVideoUnit = (AttachmentVideoUnit) filteredLecture.getLectureUnits().getFirst();
         assertThat(attachmentVideoUnit.getSlides()).hasSize(numberOfSlides);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getLectureForCourse_withLectureUnits_shouldGetLecturesWithLectureUnits() throws Exception {
-        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures?withLectureUnits=true", HttpStatus.OK, Lecture.class);
-        assertThat(returnedLectures).hasSize(2);
-        Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().orElseThrow();
-        assertThat(lecture.getLectureUnits()).hasSize(4);
     }
 
     @Test
@@ -592,4 +583,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(thirdLectureChannel.getName()).isEqualTo("lecture-modeling");
         assertThat(fourthLectureChannel.getName()).isEqualTo("lecture-lecture-4");
     }
+
+    // TODO: add tests for two new endpoints
 }
