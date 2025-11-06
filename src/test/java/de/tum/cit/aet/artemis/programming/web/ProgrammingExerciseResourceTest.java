@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -250,16 +250,14 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
         String projectKey = exercise.getProjectKey();
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String templateRepositorySlug = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
 
-        // Create and configure the repository using LocalVCLocalCITestService
-        LocalRepository localVCRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        // Seed target bare repo under LocalVC and copy contents from source
+        RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey, templateRepositorySlug, localRepo);
 
-        FileUtils.copyDirectory(localRepo.remoteBareGitRepo.getRepository().getDirectory(), localVCRepo.remoteBareGitRepoFile);
-
-        // Set the proper LocalVC URI format
+        // Wire URI to template participation for this exercise
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
     }
 }

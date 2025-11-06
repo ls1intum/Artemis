@@ -12,7 +12,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -44,6 +43,7 @@ import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRep
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -408,9 +409,8 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         sourceRepo.configureRepos(localVCRepoPath, "athenaSrcLocalRepo", "athenaSrcOriginRepo");
 
         // Ensure tests repository URI exists on the exercise
-        var testsSlug = programmingExercise.getProjectKey().toLowerCase() + "-tests";
-        var testsUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), testsSlug);
-        programmingExercise.setTestRepositoryUri(testsUri.toString());
+        var testsSlug = programmingExercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        programmingExercise.setTestRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, programmingExercise.getProjectKey(), testsSlug));
         programmingExerciseRepository.save(programmingExercise);
 
         var sourceUri = new LocalVCRepositoryUri(localVCBaseUri, sourceRepo.remoteBareGitRepoFile.toPath());
@@ -452,14 +452,11 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
         var projectKey = programmingExercise.getProjectKey();
         var studentRepoSlug = localVCLocalCITestService.getRepositorySlug(projectKey, studentLogin);
-        var studentLocalVCRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, studentRepoSlug);
-
-        // Copy seeded source contents into the student's bare repo
-        FileUtils.copyDirectory(sourceRepo.remoteBareGitRepo.getRepository().getDirectory(), studentLocalVCRepo.remoteBareGitRepoFile);
+        var studentLocalVCRepo = RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey, studentRepoSlug, sourceRepo);
 
         // Persist repository URI on the participation
         var programmingStudentParticipation = programmingExerciseStudentParticipationTestRepository.findById(programmingSubmission.getParticipation().getId()).orElseThrow();
-        programmingStudentParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + studentRepoSlug + ".git");
+        programmingStudentParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, studentRepoSlug));
         programmingExerciseStudentParticipationTestRepository.save(programmingStudentParticipation);
 
         // Call the internal endpoint with valid Athena auth and verify file map

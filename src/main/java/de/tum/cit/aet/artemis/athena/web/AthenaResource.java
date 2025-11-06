@@ -268,6 +268,8 @@ public class AthenaResource {
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get the repository for
      * @param auth         the auth header value to check
+     * @param request      the HTTP servlet request used for forwarding
+     * @param response     the HTTP servlet response used for forwarding
      */
     @GetMapping("public/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
     @EnforceNothing // We check the Athena secret and validation here
