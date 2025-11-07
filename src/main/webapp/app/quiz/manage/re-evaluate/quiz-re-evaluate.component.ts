@@ -23,10 +23,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { ReEvaluateMultipleChoiceQuestionComponent } from './multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { ReEvaluateShortAnswerQuestionComponent } from './short-answer-question/re-evaluate-short-answer-question.component';
 import { JsonPipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ReEvaluateMultipleChoiceQuestionComponent } from 'app/quiz/manage/re-evaluate/multiple-choice-question/re-evaluate-multiple-choice-question.component';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -41,11 +41,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         NgbTooltip,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
-        ReEvaluateMultipleChoiceQuestionComponent,
         ReEvaluateDragAndDropQuestionComponent,
         ReEvaluateShortAnswerQuestionComponent,
         JsonPipe,
         ArtemisTranslatePipe,
+        ReEvaluateMultipleChoiceQuestionComponent,
     ],
 })
 export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {
