@@ -191,17 +191,21 @@
                                 <span>{{ value | artemisDate: 'long' : true }}</span>
                             </ng-template>
                         </ngx-datatable-column>
-                        <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200">
-                            <ng-template ngx-datatable-header-template>
-                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
-                                    <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
-                                    <fa-icon [icon]="controls.iconForSortPropField('courseId')" />
-                                </span>
-                            </ng-template>
-                            <ng-template ngx-datatable-cell-template let-value="value">
-                                <a [routerLink]="['/course-management', value]">{{ value }}</a>
-                            </ng-template>
-                        </ngx-datatable-column>
+
+                        @if (!isCourseContext) {
+                            <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200">
+                                <ng-template ngx-datatable-header-template>
+                                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
+                                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
+                                        <fa-icon [icon]="controls.iconForSortPropField('courseId')" />
+                                    </span>
+                                </ng-template>
+                                <ng-template ngx-datatable-cell-template let-value="value">
+                                    <a [routerLink]="['/course-management', value]">{{ value }}</a>
+                                </ng-template>
+                            </ngx-datatable-column>
+                        }
+
                         <ngx-datatable-column prop="priority" [minWidth]="150" [width]="200">
                             <ng-template ngx-datatable-header-template>
                                 <span class="datatable-header-cell-wrapper" (click)="controls.onSort('priority')">
@@ -370,17 +374,21 @@
                                 <span>{{ value | artemisDate: 'long' : true }}</span>
                             </ng-template>
                         </ngx-datatable-column>
-                        <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200">
-                            <ng-template ngx-datatable-header-template>
-                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
-                                    <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
-                                    <fa-icon [icon]="controls.iconForSortPropField('courseId')" />
-                                </span>
-                            </ng-template>
-                            <ng-template ngx-datatable-cell-template let-value="value">
-                                <a [routerLink]="['/course-management', value]">{{ value }}</a>
-                            </ng-template>
-                        </ngx-datatable-column>
+
+                        @if (!isCourseContext) {
+                            <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200">
+                                <ng-template ngx-datatable-header-template>
+                                    <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
+                                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
+                                        <fa-icon [icon]="controls.iconForSortPropField('courseId')" />
+                                    </span>
+                                </ng-template>
+                                <ng-template ngx-datatable-cell-template let-value="value">
+                                    <a [routerLink]="['/course-management', value]">{{ value }}</a>
+                                </ng-template>
+                            </ngx-datatable-column>
+                        }
+
                         <ngx-datatable-column prop="priority" [minWidth]="150" [width]="200">
                             <ng-template ngx-datatable-header-template>
                                 <span class="datatable-header-cell-wrapper" (click)="controls.onSort('priority')">
@@ -482,10 +490,14 @@
                                 <span jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"></span>
                                 <fa-icon [icon]="faSort" />
                             </th>
-                            <th jhiSortBy="courseId" class="finish-jobs-column">
-                                <span jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
-                                <fa-icon [icon]="faSort" />
-                            </th>
+
+                            @if (!isCourseContext) {
+                                <th jhiSortBy="courseId" class="finish-jobs-column">
+                                    <span jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
+                                    <fa-icon [icon]="faSort" />
+                                </th>
+                            }
+
                             <th class="finish-jobs-column">
                                 <span jhiTranslate="artemisApp.buildQueue.buildJob.duration"></span>
                             </th>
@@ -633,9 +645,13 @@
                                         <span class="wrap-long-text">{{ finishedBuildJob.commitHash?.substring(0, 7) }}</span>
                                     }
                                 </td>
-                                <td class="finish-jobs-column">
-                                    <a [routerLink]="['/course-management', finishedBuildJob.courseId]">{{ finishedBuildJob.courseId }}</a>
-                                </td>
+
+                                @if (!isCourseContext) {
+                                    <td class="finish-jobs-column">
+                                        <a [routerLink]="['/course-management', finishedBuildJob.courseId]">{{ finishedBuildJob.courseId }}</a>
+                                    </td>
+                                }
+
                                 <td class="finish-jobs-column">
                                     <span>{{ finishedBuildJob.buildDuration }}</span>
                                 </td>
