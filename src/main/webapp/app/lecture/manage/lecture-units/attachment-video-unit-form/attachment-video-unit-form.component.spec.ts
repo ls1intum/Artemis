@@ -577,6 +577,11 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         // Non TUM-Live URL
         const nonTumUrl = 'https://example.com/video/123';
+
+        // Mock the service to return null (no playlist found)
+        const httpMock = TestBed.inject(HttpClient);
+        const spy = jest.spyOn(httpMock, 'get').mockReturnValue(of(null));
+
         attachmentVideoUnitFormComponent.checkPlaylistAvailability(nonTumUrl);
 
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();

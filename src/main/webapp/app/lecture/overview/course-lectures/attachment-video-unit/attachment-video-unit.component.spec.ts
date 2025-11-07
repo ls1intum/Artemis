@@ -180,7 +180,7 @@ describe('AttachmentVideoUnitComponent', () => {
         parseSpy.mockRestore();
     });
 
-    it('videoUrl: returns undefined when not allowlisted and parser returns undefined', () => {
+    it('videoUrl: returns source even when parser returns undefined but URL is valid', () => {
         const src = 'https://example.com/not-a-video';
         // @ts-ignore - default export object has parse()
         const parseSpy = jest.spyOn(urlParser, 'parse').mockReturnValue(undefined as any);
@@ -188,7 +188,8 @@ describe('AttachmentVideoUnitComponent', () => {
         component.lectureUnit().videoSource = src;
         fixture.detectChanges();
 
-        expect(component.videoUrl()).toBeUndefined();
+        // The URL is valid, so it should be returned even if parser doesn't recognize it
+        expect(component.videoUrl()).toBe(src);
         parseSpy.mockRestore();
     });
     it('toggleCollapse(false): resets state, resolves playlist, fetches transcript (happy path)', fakeAsync(() => {
@@ -196,8 +197,6 @@ describe('AttachmentVideoUnitComponent', () => {
         const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
         const playlist = 'https://cdn.tum/live/abcd/1234/playlist.m3u8';
         component.lectureUnit().videoSource = src;
-
-        (component as any).resolveTumLivePlaylist = jest.fn().mockResolvedValue(playlist);
 
         const mockTranscriptDTO: LectureTranscriptionDTO = {
             lectureUnitId: 1,
@@ -218,7 +217,12 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.transcriptSegments()).toEqual([]);
         expect(component.playlistUrl()).toBeUndefined();
 
-        // Let the resolveTumLivePlaylist promise run (this triggers fetchTranscript)
+        // Mock the HTTP request for getPlaylistUrl
+        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === src);
+        expect(req.request.method).toBe('GET');
+        req.flush(playlist);
+
+        // Let the Observable chain finish
         flushMicrotasks();
 
         expect(component.playlistUrl()).toBe(playlist);
@@ -248,16 +252,15 @@ describe('AttachmentVideoUnitComponent', () => {
 
         component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/efgh/9999?video_only=1';
 
-        const resolveSpy = jest
-            // @ts-ignore accessing private for test
-            .spyOn(component as any, 'resolveTumLivePlaylist')
-            .mockResolvedValue(undefined);
-
         const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription');
 
         component.toggleCollapse(false);
 
-        // Let the Promise chain finish
+        // Mock the HTTP request to return an error
+        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist');
+        req.flush('Not found', { status: 404, statusText: 'Not Found' });
+
+        // Let the Observable chain finish
         flushMicrotasks();
 
         // Ensure no transcript service call was made
@@ -265,18 +268,11 @@ describe('AttachmentVideoUnitComponent', () => {
 
         expect(component.playlistUrl()).toBeUndefined();
         expect(component.hasTranscript()).toBeFalse();
-
-        resolveSpy.mockRestore();
     }));
 
-    it('toggleCollapse(false): .m3u8 URL uses playlist directly without resolver', fakeAsync(() => {
+    it('toggleCollapse(false): .m3u8 URL is resolved through API like any other URL', fakeAsync(() => {
         const m3u8Url = 'https://live.rbg.tum.de/some/path/playlist.m3u8';
         component.lectureUnit().videoSource = m3u8Url;
-
-        const resolveSpy = jest
-            // @ts-ignore accessing private for test
-            .spyOn(component as any, 'resolveTumLivePlaylist')
-            .mockResolvedValue('should-not-be-called');
 
         const mockTranscriptDTO: LectureTranscriptionDTO = {
             lectureUnitId: 1,
@@ -290,30 +286,23 @@ describe('AttachmentVideoUnitComponent', () => {
         // Act
         component.toggleCollapse(false);
 
-        // The resolver should NOT be called for .m3u8 URLs
-        expect(resolveSpy).not.toHaveBeenCalled();
-
-        // The playlist URL should be set immediately
-        expect(component.playlistUrl()).toBe(m3u8Url);
+        // Mock the HTTP request (even .m3u8 URLs go through the API)
+        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === m3u8Url);
+        expect(req.request.method).toBe('GET');
+        req.flush(m3u8Url);
 
         // Let any pending microtasks finish
         flushMicrotasks();
 
+        expect(component.playlistUrl()).toBe(m3u8Url);
         expect(component.transcriptSegments()).toHaveLength(1);
         expect(component.hasTranscript()).toBeTrue();
         expect(component.transcriptSegments()[0].text).toBe('Direct HLS transcript');
-
-        resolveSpy.mockRestore();
     }));
 
-    it('toggleCollapse(false): non-TUM Live URL does not trigger resolver or transcript fetch', fakeAsync(() => {
+    it('toggleCollapse(false): non-TUM Live URL does not trigger transcript fetch when resolver returns null', fakeAsync(() => {
         const nonTumLiveUrl = 'https://example.com/some-video';
         component.lectureUnit().videoSource = nonTumLiveUrl;
-
-        const resolveSpy = jest
-            // @ts-ignore accessing private for test
-            .spyOn(component as any, 'resolveTumLivePlaylist')
-            .mockResolvedValue('should-not-be-called');
 
         const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription');
 
@@ -322,20 +311,19 @@ describe('AttachmentVideoUnitComponent', () => {
         // Act
         component.toggleCollapse(false);
 
+        // Mock the HTTP request to return null (no playlist found)
+        const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === nonTumLiveUrl);
+        req.flush(null);
+
         // Let any pending microtasks finish
         flushMicrotasks();
 
-        // The resolver should NOT be called for non-TUM Live URLs
-        expect(resolveSpy).not.toHaveBeenCalled();
-
-        // No transcript fetch should occur
+        // No transcript fetch should occur since no playlist was found
         expect(getTranscriptionSpy).not.toHaveBeenCalled();
 
         // Playlist should remain undefined
         expect(component.playlistUrl()).toBeUndefined();
         expect(component.hasTranscript()).toBeFalse();
-
-        resolveSpy.mockRestore();
     }));
 
     it('hasAttachment / hasVideo and getFileName() when no attachment', () => {
