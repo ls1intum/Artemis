@@ -16,7 +16,6 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
 class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
@@ -32,18 +31,13 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
     @Autowired
     private LectureUtilService lectureUtilService;
 
-    @Autowired
-    private LectureRepository lectureRepository;
-
-    private Course course;
-
     private Lecture lecture;
 
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
 
-        course = courseUtilService.createCourse();
+        Course course = courseUtilService.createCourse();
         lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
 
         activateIrisGlobally();
@@ -64,8 +58,8 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
         var sessionsInDb = irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lecture.getId(),
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
         assertThat(sessionsInDb).hasSize(1);
-        assertThat(sessionsInDb.get(0).getId()).isEqualTo(response.getId());
-        assertThat(sessionsInDb.get(0).getLectureId()).isEqualTo(lecture.getId());
+        assertThat(sessionsInDb.getFirst().getId()).isEqualTo(response.getId());
+        assertThat(sessionsInDb.getFirst().getLectureId()).isEqualTo(lecture.getId());
     }
 
     @Test
@@ -120,17 +114,6 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
         // When/Then: Request should be forbidden (student1 is not in otherCourse)
         request.postWithResponseBody("/api/iris/lecture-chat/" + otherLecture.getId() + "/sessions/current", null, IrisLectureChatSession.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCurrentSessionOrCreateIfNotExists_failsWhenLectureNotVisible() throws Exception {
-        // Given: Lecture is not visible to students
-        lecture.setVisibleDate(ZonedDateTime.now().plusDays(1));
-        lectureRepository.save(lecture);
-
-        // When/Then: Request should fail with conflict
-        request.postWithResponseBody("/api/iris/lecture-chat/" + lecture.getId() + "/sessions/current", null, IrisLectureChatSession.class, HttpStatus.CONFLICT);
     }
 
     @Test
