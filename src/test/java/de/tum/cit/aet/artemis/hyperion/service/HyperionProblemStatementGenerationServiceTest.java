@@ -18,7 +18,6 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 
 class HyperionProblemStatementGenerationServiceTest {
@@ -37,13 +36,13 @@ class HyperionProblemStatementGenerationServiceTest {
     }
 
     @Test
-    void rewriteProblemStatement_returnsText() throws Exception {
+    void generateProblemStatement_returnsGeneratedDraft() throws Exception {
         String generatedDraft = "Generated draft problem statement";
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
 
-        var user = new User();
         var course = new Course();
-
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);

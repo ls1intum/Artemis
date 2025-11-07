@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -99,7 +101,8 @@ public class HyperionProblemStatementResource {
      */
     @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/problem-statements/generate")
-    public ResponseEntity<ProblemStatementGenerationResponseDTO> generateProblemStatement(@PathVariable long courseId, @RequestBody ProblemStatementGenerationRequestDTO request) {
+    public ResponseEntity<ProblemStatementGenerationResponseDTO> generateProblemStatement(@PathVariable long courseId,
+            @Valid @RequestBody ProblemStatementGenerationRequestDTO request) {
         log.debug("REST request to Hyperion generate draft problem statement for course [{}]", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var result = problemStatementGenerationService.generateProblemStatement(course, request.userPrompt());
