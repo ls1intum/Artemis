@@ -76,7 +76,14 @@ public class FileUtil {
      * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
      */
     private static final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc",
-            "docx", "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
+            "docx", "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf", "mp4", "webm", "ogg", "mov",
+            "avi", "mkv", "flv", "wmv", "m4v");
+
+    /**
+     * The list of video file extensions that are allowed to be uploaded.
+     * Extensions must be lower-case without leading dots.
+     */
+    private static final Set<String> allowedVideoFileExtensions = Set.of("mp4", "webm", "ogg", "mov", "avi", "mkv", "flv", "wmv", "m4v");
 
     private static final String MARKDOWN_FILE_SUBPATH = "markdown/";
 
@@ -222,6 +229,17 @@ public class FileUtil {
         if (allowedExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
             throw new BadRequestAlertException("Unsupported file type! Allowed file types: " + String.join(", ", allowedExtensions), "file", null, true);
         }
+    }
+
+    /**
+     * Checks if the given filename has a video file extension.
+     *
+     * @param filename the filename to check
+     * @return true if the file is a video file, false otherwise
+     */
+    public static boolean isVideoFile(String filename) {
+        final String fileExtension = FilenameUtils.getExtension(filename);
+        return allowedVideoFileExtensions.stream().anyMatch(fileExtension::equalsIgnoreCase);
     }
 
     /**

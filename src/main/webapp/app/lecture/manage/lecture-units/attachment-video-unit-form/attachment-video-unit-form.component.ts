@@ -2,7 +2,7 @@ import { Component, ElementRef, OnChanges, ViewChild, computed, inject, input, o
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCheck, faExclamationTriangle, faQuestionCircle, faTimes, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -114,6 +114,9 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faCheck = faCheck;
+    protected readonly faVideo = faVideo;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
@@ -121,6 +124,11 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     private readonly http = inject(HttpClient);
     canGenerateTranscript = signal(false);
     playlistUrl = signal<string | undefined>(undefined);
+
+    // Upload progress tracking
+    isUploading = signal(false);
+    uploadProgress = signal(0);
+    uploadStatus = signal('');
 
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
@@ -182,16 +190,54 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         if (!input.files?.length) {
             return;
         }
-        this.file = input.files[0];
-        this.fileName.set(this.file.name);
-        // automatically set the name in case it is not yet specified
-        if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
-            this.form.patchValue({
-                // without extension
-                name: this.file.name.replace(/\.[^/.]+$/, ''),
-            });
-        }
-        this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
+
+        this.fileInputTouched = true;
+        this.isUploading.set(true);
+        this.uploadProgress.set(0);
+        this.uploadStatus.set('Preparing upload...');
+
+        // Simulate upload progress for better UX
+        const progressInterval = setInterval(() => {
+            const currentProgress = this.uploadProgress();
+            if (currentProgress < 90) {
+                this.uploadProgress.set(currentProgress + 10);
+                if (currentProgress < 30) {
+                    this.uploadStatus.set('Reading file...');
+                } else if (currentProgress < 60) {
+                    this.uploadStatus.set('Processing...');
+                } else {
+                    this.uploadStatus.set('Almost done...');
+                }
+            }
+        }, 100);
+
+        // Process the file
+        setTimeout(() => {
+            clearInterval(progressInterval);
+            this.file = input.files![0];
+            this.fileName.set(this.file.name);
+
+            // Validate file size
+            this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
+
+            // Complete upload
+            this.uploadProgress.set(100);
+            this.uploadStatus.set('Upload complete!');
+
+            // Reset upload state after a brief delay
+            setTimeout(() => {
+                this.isUploading.set(false);
+                this.uploadProgress.set(0);
+                this.uploadStatus.set('');
+            }, 1000);
+
+            // Automatically set the name if not yet specified
+            if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
+                this.form.patchValue({
+                    name: this.file.name.replace(/\.[^/.]+$/, ''),
+                });
+            }
+        }, 1000);
     }
 
     get nameControl() {

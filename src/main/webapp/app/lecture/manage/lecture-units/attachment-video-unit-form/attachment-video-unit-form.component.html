@@ -40,34 +40,83 @@
             </div>
             <div class="form-group">
                 <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}</label>
-                <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
+                <small id="fileHelp" class="form-text text-body-secondary">
+                    <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></span>
+                    <span class="text-primary ms-1" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.videoSupported"></span>
+                </small>
                 <fa-icon
                     [icon]="faQuestionCircle"
                     [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
                 />
-                <div class="input-group background-file">
-                    <div class="custom-file overflow-ellipsis">
-                        <input
-                            #fileInput
-                            id="fileInput"
-                            type="file"
-                            class="custom-file-input"
-                            [accept]="acceptedFileExtensionsFileBrowser"
-                            (change)="onFileChange($event)"
-                            aria-describedby="fileHelp"
-                            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile' | artemisTranslate"
-                            (click)="fileInputTouched = true"
-                        />
+
+                <!-- Enhanced Video Upload Button -->
+                <div class="mt-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-primary" (click)="fileInput.click()" [disabled]="isUploading()">
+                            <fa-icon [icon]="faVideo" class="me-1" />
+                            @if (isUploading()) {
+                                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.uploading"></span>
+                            } @else if (fileName()) {
+                                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.changeFile"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile"></span>
+                            }
+                        </button>
+                        @if (fileName()) {
+                            <span class="text-success">
+                                <fa-icon [icon]="faCheck" class="me-1" />
+                                <strong>{{ fileName() }}</strong>
+                            </span>
+                        } @else if (fileInputTouched) {
+                            <span class="text-muted">
+                                <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.noFileSelected"></span>
+                            </span>
+                        }
                     </div>
+
+                    <!-- Hidden file input -->
+                    <input
+                        #fileInput
+                        id="fileInput"
+                        type="file"
+                        class="d-none"
+                        [accept]="acceptedFileExtensionsFileBrowser"
+                        (change)="onFileChange($event)"
+                        [disabled]="isUploading()"
+                    />
                 </div>
+
+                <!-- Upload Progress Bar -->
+                @if (isUploading()) {
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">{{ uploadStatus() }}</small>
+                            <small class="text-muted">{{ uploadProgress() }}%</small>
+                        </div>
+                        <div class="progress" style="height: 8px">
+                            <div
+                                class="progress-bar progress-bar-striped progress-bar-animated"
+                                [style.width.%]="uploadProgress()"
+                                [class.bg-success]="uploadProgress() === 100"
+                                [class.bg-primary]="uploadProgress() < 100"
+                            ></div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Error Messages -->
                 @if (isFileTooBig()) {
-                    <div class="alert alert-danger">
+                    <div class="alert alert-danger mt-2">
+                        <fa-icon [icon]="faExclamationTriangle" class="me-1" />
                         {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileTooBig' | artemisTranslate }}
                         {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation' | artemisTranslate }}
                     </div>
                 }
-                @if (!fileName() && fileInputTouched) {
-                    <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></div>
+                @if (!fileName() && fileInputTouched && !isUploading()) {
+                    <div class="alert alert-danger mt-2">
+                        <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                        <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></span>
+                    </div>
                 }
             </div>
             <div class="form-group">

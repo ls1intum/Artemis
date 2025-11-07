@@ -43,11 +43,30 @@ export const UPLOAD_FILE_EXTENSIONS = [
     'odc',
     'odi',
     'odf',
+    'mp4',
+    'webm',
+    'ogg',
+    'mov',
+    'avi',
+    'mkv',
+    'flv',
+    'wmv',
+    'm4v',
 ];
+
+/**
+ * Video file extensions that are allowed to be uploaded.
+ * Extensions must be lower-case without leading dots.
+ */
+export const VIDEO_FILE_EXTENSIONS = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
 
 export const ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE = UPLOAD_FILE_EXTENSIONS.join(', ');
 // The list of file extensions for the "accept" attribute of the file input field
 export const ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+
+// Video-specific constants
+export const ALLOWED_VIDEO_FILE_EXTENSIONS_HUMAN_READABLE = VIDEO_FILE_EXTENSIONS.join(', ');
+export const ACCEPTED_VIDEO_FILE_EXTENSIONS_FILE_BROWSER = VIDEO_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
 /**
  * The list of file extensions that are readable in a file editor.
