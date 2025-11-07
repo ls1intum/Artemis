@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.springframework.ai.content.Content;
 import org.springframework.ai.observation.ObservabilityHelper;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -24,7 +24,7 @@ import io.micrometer.observation.ObservationFilter;
  * are exported by the custom {@code LlmOnlyExporterConfig}.
  */
 @Component
-@Profile("dev")
+@ConditionalOnProperty(prefix = "artemis.langfuse", name = "enabled", havingValue = "true")
 public class ChatModelCompletionContentObservationFilter implements ObservationFilter {
 
     /**
