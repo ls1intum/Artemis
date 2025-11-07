@@ -679,6 +679,27 @@ export class CourseUpdateComponent implements OnInit {
         });
     }
 
+    /**
+     * Enable or disable communication
+     */
+    changeCommunicationEnabled() {
+        if (this.communicationEnabled && !this.course.courseInformationSharingMessagingCodeOfConduct) {
+            this.fileService.getTemplateCodeOfConduct().subscribe({
+                next: (res: HttpResponse<string>) => {
+                    if (res.body) {
+                        this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
+                        this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(res.body);
+                    }
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+        }
+
+        if (this.communicationEnabled) {
+            this.disableMessaging();
+        }
+    }
+
     disableMessaging() {
         this.messagingEnabled = false;
     }
