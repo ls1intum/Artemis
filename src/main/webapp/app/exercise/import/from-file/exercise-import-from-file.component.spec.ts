@@ -58,7 +58,7 @@ describe('ExerciseImportFromFileComponent', () => {
     // using fakeasync and tick didn't work here, that's why I used whenStable and async
     it.each([ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
         'should raise error alert if not supported exercise type',
-        async (exerciseType) => {
+        async (exerciseType: ExerciseType) => {
             // GIVEN
             const alertServiceSpy = jest.spyOn(alertService, 'error');
             component.exerciseType = exerciseType;
@@ -119,6 +119,19 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(component.exercise).toMatchObject({ type: 'programming', id: undefined, title: 'Test exercise' });
         expect(openImportSpy).toHaveBeenCalledOnce();
         expect(openImportSpy).toHaveBeenCalledWith(component.exercise);
+    });
+
+    it('should load build configs in the old format', async () => {
+        component.exerciseType = ExerciseType.PROGRAMMING;
+        component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING, true)) as File;
+        await fixture.whenStable();
+        fixture.detectChanges();
+        // WHEN
+        await component.uploadExercise();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        // THEN
+        expect((component.exercise as ProgrammingExercise).buildConfig).toBeDefined();
     });
 
     it('should disable upload button as long as no file is selected', () => {
@@ -281,7 +294,7 @@ describe('ExerciseImportFromFileComponent', () => {
     });
 });
 
-async function generateValidTestZipFileWithExerciseType(exerciseType: ExerciseType): Promise<Blob> {
+async function generateValidTestZipFileWithExerciseType(exerciseType: ExerciseType, oldStyleBuildConfig: boolean = false): Promise<Blob> {
     const zip = new JSZip();
     let exercise;
 
@@ -300,6 +313,11 @@ async function generateValidTestZipFileWithExerciseType(exerciseType: ExerciseTy
             break;
         case ExerciseType.PROGRAMMING:
             exercise = new ProgrammingExercise(undefined, undefined);
+            if (oldStyleBuildConfig) {
+                // old format: build config is not a separate object, but the attributes are part of the exercise itself
+                // simplification: we just remove it completely here, the component will generate a new default config object
+                exercise.buildConfig = undefined;
+            }
             break;
         default:
             throw new Error('Unexpected exercise type');
