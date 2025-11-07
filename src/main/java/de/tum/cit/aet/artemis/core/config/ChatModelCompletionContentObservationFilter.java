@@ -24,7 +24,7 @@ import io.micrometer.observation.ObservationFilter;
  * are exported by the custom {@code LlmOnlyExporterConfig}.
  */
 @Component
-@ConditionalOnProperty(prefix = "artemis.langfuse", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "management.langfuse", name = "enabled", havingValue = "true")
 public class ChatModelCompletionContentObservationFilter implements ObservationFilter {
 
     /**

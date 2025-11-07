@@ -25,7 +25,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter;
  * so infrastructure spans (HTTP, DB, etc.) are ignored.
  */
 @Configuration
-@ConditionalOnProperty(prefix = "artemis.langfuse", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "management.langfuse", name = "enabled", havingValue = "true")
 public class LlmOnlyExporterConfig {
 
     /**
