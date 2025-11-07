@@ -5,8 +5,8 @@ import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lectu
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
     faDownload,
     faFile,
@@ -29,9 +29,9 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { TranscriptSegment } from 'app/lecture/shared/video-player/video-player.component';
-import { firstValueFrom, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { TranscriptSegment } from 'app/lecture/shared/transcript-viewer/transcript-viewer.component';
+import { firstValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
@@ -44,14 +44,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
-    private readonly http = inject(HttpClient);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
-
-    private readonly videoUrlAllowList = [RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$')];
 
     /**
      * Return the URL of the video source
@@ -60,17 +58,30 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     /**
      * Computes the video URL based on the video source.
-     * Returns undefined if the source is invalid or doesn't match the allow list.
+     * Returns the source if it's a valid URL or can be parsed as a video URL.
      */
     private computeVideoUrl(): string | undefined {
         const source = this.lectureUnit().videoSource;
+
         if (!source) {
             return undefined;
         }
-        if (this.videoUrlAllowList.some((r) => r.test(source)) || !urlParser || urlParser.parse(source)) {
-            return source;
+
+        // Try to parse with urlParser (for known video platforms like YouTube, Vimeo, etc.)
+        if (urlParser) {
+            const parsed = urlParser.parse(source);
+            if (parsed) {
+                return source;
+            }
         }
-        return undefined;
+
+        // Check if it's a valid URL (for direct URLs like .m3u8, TUM Live, etc.)
+        try {
+            new URL(source);
+            return source;
+        } catch {
+            return undefined;
+        }
     }
 
     override toggleCollapse(isCollapsed: boolean): void {
@@ -84,33 +95,24 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.playlistUrl.set(undefined);
 
             const src = this.lectureUnit().videoSource;
+
             if (!src) {
                 return;
             }
 
-            // Direct .m3u8 playlist URLs - use without resolver
-            const url = new URL(src);
-            if (url.pathname.endsWith('.m3u8')) {
-                this.playlistUrl.set(src);
-                this.fetchTranscript();
-                return;
-            }
-            // For non-playlist URLs, try to resolve a .m3u8 playlist (only for validated TUM Live URLs)
-            if (this.videoUrlAllowList.some((pattern) => pattern.test(src))) {
-                this.resolveTumLivePlaylist(src).then((url) => {
-                    if (url) {
-                        this.playlistUrl.set(url);
-                        this.fetchTranscript();
-                    }
-                });
-            }
+            // Try to resolve a .m3u8 playlist URL through the backend API
+            this.resolvePlaylistUrl(src).then((resolvedUrl) => {
+                if (resolvedUrl) {
+                    this.playlistUrl.set(resolvedUrl);
+                    this.fetchTranscript();
+                }
+            });
         }
     }
 
-    private async resolveTumLivePlaylist(pageUrl: string): Promise<string | undefined> {
-        const params = new HttpParams().set('url', pageUrl);
+    private async resolvePlaylistUrl(pageUrl: string): Promise<string | undefined> {
         try {
-            const res = await firstValueFrom(this.http.get('/api/nebula/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(null))));
+            const res = await firstValueFrom(this.attachmentVideoUnitService.getPlaylistUrl(pageUrl));
             return (res || undefined) as string | undefined;
         } catch {
             return undefined;

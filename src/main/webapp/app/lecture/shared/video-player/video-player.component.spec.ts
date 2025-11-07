@@ -104,8 +104,25 @@ describe('VideoPlayerComponent', () => {
         setInputs(undefined, []);
         await render();
 
-        expect(vjs).not.toHaveBeenCalled();
-        expect((component as any).player).toBeUndefined();
+        expect(MockHlsClass).not.toHaveBeenCalled();
+        expect((component as any).hls).toBeNull();
+    });
+
+    it('initializes hls.js when videoUrl is provided and hls.js is supported', async () => {
+        const url = 'https://cdn.example.com/master.m3u8';
+        setInputs(url, []);
+        await render();
+
+        expect(MockHlsClass).toHaveBeenCalledOnce();
+        expect(MockHlsClass).toHaveBeenCalledWith({
+            enableWorker: true,
+            lowLatencyMode: false,
+        });
+        expect(mockHls.loadSource).toHaveBeenCalledWith(url);
+        expect(mockHls.attachMedia).toHaveBeenCalledWith(videoElement);
+        expect(mockHls.on).toHaveBeenCalledWith('hlsManifestParsed', expect.any(Function));
+        expect(mockHls.on).toHaveBeenCalledWith('hlsError', expect.any(Function));
+        expect((component as any).hls).toBe(mockHls);
     });
 
     it('initializes video.js when videoUrl is provided', async () => {
@@ -147,7 +164,7 @@ describe('VideoPlayerComponent', () => {
 
         const getById = jest
             .spyOn(document, 'getElementById')
-            .mockImplementation((id: string): HTMLElement | undefined => (id === `segment-${segments[0].startTime}` ? (el as unknown as HTMLElement) : undefined));
+            .mockImplementation((id: string): HTMLElement | null => (id === `segment-${segments[0].startTime}` ? (el as unknown as HTMLElement) : null));
 
         // Simulate timeupdate at 10.1s (inside first segment)
         vjs.__player.currentTime(10.1);
