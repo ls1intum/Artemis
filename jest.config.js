@@ -135,6 +135,6 @@ module.exports = {
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
         '^video\\.js$': '<rootDir>/src/test/javascript/spec/helpers/mocks/video.js.ts',
         '^@ls1intum/apollon$': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/index.js', // adjust if the package.json "exports" points elsewhere
-
+        '^@ls1intum/apollon/lib/es6/(.*)': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/$1',
     },
 };
