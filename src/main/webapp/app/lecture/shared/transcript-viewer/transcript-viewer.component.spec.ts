@@ -63,7 +63,7 @@ describe('TranscriptViewerComponent', () => {
     });
 
     it('should navigate to next search result', () => {
-        component.onSearchQueryChange('a'); // Matches "Angular component"
+        component.onSearchQueryChange('Angular'); // Matches only "Angular component"
         fixture.detectChanges();
 
         expect(component.currentSearchIndex()).toBe(0);

@@ -13,10 +13,25 @@ const mockHls = {
     attachMedia: jest.fn(),
     on: jest.fn(),
     destroy: jest.fn(),
+    startLoad: jest.fn(),
+    recoverMediaError: jest.fn(),
 };
 
 const MockHlsClass = jest.fn(() => mockHls);
 (MockHlsClass as any).isSupported = jest.fn(() => true);
+
+// Mock Hls.Events and Hls.ErrorTypes as static properties
+(MockHlsClass as any).Events = {
+    ERROR: 'hlsError',
+    MANIFEST_PARSED: 'hlsManifestParsed',
+    MEDIA_ATTACHED: 'hlsMediaAttached',
+};
+
+(MockHlsClass as any).ErrorTypes = {
+    NETWORK_ERROR: 'networkError',
+    MEDIA_ERROR: 'mediaError',
+    OTHER_ERROR: 'otherError',
+};
 
 jest.mock('hls.js', () => ({
     __esModule: true,
@@ -38,6 +53,8 @@ describe('VideoPlayerComponent', () => {
         mockHls.attachMedia.mockClear();
         mockHls.on.mockClear();
         mockHls.destroy.mockClear();
+        mockHls.startLoad.mockClear();
+        mockHls.recoverMediaError.mockClear();
 
         TestBed.configureTestingModule({
             imports: [VideoPlayerComponent],
