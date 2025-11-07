@@ -171,6 +171,7 @@ public class ExerciseSharingResource {
      * @return {@code 200 OK} with the {@link ProgrammingExercise} details; {@code 400 Bad Request}
      *         on checksum failure; {@code 404 Not Found} if the exercise cannot be resolved
      */
+    // TODO: we should NOT use a POST request for a GET Operation
     @PostMapping("import/basket/exercise-details")
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) {

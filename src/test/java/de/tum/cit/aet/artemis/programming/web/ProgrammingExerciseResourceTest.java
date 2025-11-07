@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.programming.util.ZipTestUtil.extractExercis
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -91,9 +90,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCRepoPath;
 
     @BeforeEach
     void setup() {
@@ -252,7 +248,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testExportOwnStudentRepository_shouldReturnZipWithoutGit() throws Exception {
         var participations = programmingExerciseStudentParticipationTestRepository.findByExerciseId(programmingExercise.getId());
         assertThat(participations).isNotEmpty();
-        var studentParticipation = participations.getFirst();
+        var studentParticipation = participations.iterator().next();
 
         // Create a LocalVC repository for the student and wire the URI
         String projectKey = programmingExercise.getProjectKey();
