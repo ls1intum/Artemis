@@ -13,6 +13,9 @@ describe('TranscriptViewerComponent', () => {
     ];
 
     beforeEach(async () => {
+        // Mock scrollIntoView for tests
+        Element.prototype.scrollIntoView = jest.fn();
+
         await TestBed.configureTestingModule({
             imports: [TranscriptViewerComponent, TranslateModule.forRoot()],
         }).compileComponents();

@@ -11,6 +11,7 @@
 const mockHls = {
     loadSource: jest.fn(),
     attachMedia: jest.fn(),
+    on: jest.fn(),
     destroy: jest.fn(),
 };
 
@@ -35,6 +36,7 @@ describe('VideoPlayerComponent', () => {
         MockHlsClass.mockClear();
         mockHls.loadSource.mockClear();
         mockHls.attachMedia.mockClear();
+        mockHls.on.mockClear();
         mockHls.destroy.mockClear();
 
         TestBed.configureTestingModule({
@@ -53,6 +55,7 @@ describe('VideoPlayerComponent', () => {
     });
 
     afterEach(() => {
+        jest.clearAllMocks();
         jest.restoreAllMocks();
     });
 

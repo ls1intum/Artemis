@@ -75,6 +75,11 @@
     &:hover {
         color: var(--gray-700);
     }
+
+    &:focus {
+        outline: 0.2rem solid var(--primary);
+        outline-offset: 0.2rem;
+    }
 }
 
 /* Search Navigation */
@@ -111,6 +116,11 @@
         opacity: 0.5;
         cursor: not-allowed;
     }
+
+    &:focus {
+        outline: 0.2rem solid var(--primary);
+        outline-offset: 0.2rem;
+    }
 }
 
 /* Only the list scrolls */
@@ -134,7 +144,7 @@
 
     /* Highlight marks */
     ::ng-deep mark {
-        background-color: #ffeb3b;
+        background-color: var(--bs-warning-bg-subtle);
         color: inherit;
         padding: 0.1rem 0.2rem;
         border-radius: 0.125rem;

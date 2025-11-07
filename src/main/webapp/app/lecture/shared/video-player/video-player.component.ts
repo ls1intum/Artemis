@@ -39,6 +39,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Reference to the transcript viewer component */
     transcriptViewer = viewChild(TranscriptViewerComponent);
 
+    /** Store reference to timeupdate handler for cleanup */
+    private timeupdateHandler: (() => void) | undefined = undefined;
+
     ngAfterViewInit(): void {
         const elRef = this.videoRef();
         const videoElement = elRef ? elRef.nativeElement : undefined;
@@ -53,15 +56,37 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.hls = new Hls();
             this.hls.loadSource(src);
             this.hls.attachMedia(videoElement);
+
+            // Handle HLS errors
+            this.hls.on(Hls.Events.ERROR, (_event, data) => {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            // Try to recover from network error
+                            this.hls?.startLoad();
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            // Try to recover from media error
+                            this.hls?.recoverMediaError();
+                            break;
+                        default:
+                            // Fatal error, cannot recover
+                            this.hls?.destroy();
+                            this.hls = undefined;
+                            break;
+                    }
+                }
+            });
         } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
             // Native HLS support (Safari)
             videoElement.src = src;
         }
 
         // Listen to timeupdate events to sync transcript
-        videoElement.addEventListener('timeupdate', () => {
+        this.timeupdateHandler = () => {
             this.updateCurrentSegment(videoElement.currentTime);
-        });
+        };
+        videoElement.addEventListener('timeupdate', this.timeupdateHandler);
     }
 
     /** Seek the video to the given time and resume playback. */
@@ -99,6 +124,15 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /** Clean up on destroy. */
     ngOnDestroy(): void {
+        // Remove event listener to prevent memory leaks
+        const elRef = this.videoRef();
+        const videoElement = elRef ? elRef.nativeElement : undefined;
+        if (videoElement && this.timeupdateHandler) {
+            videoElement.removeEventListener('timeupdate', this.timeupdateHandler);
+            this.timeupdateHandler = undefined;
+        }
+
+        // Destroy HLS instance
         if (this.hls) {
             this.hls.destroy();
             this.hls = undefined;

@@ -115,10 +115,7 @@ export class TranscriptViewerComponent {
         }
 
         const segment = filtered[index];
-        const el = document.getElementById(`segment-${segment.startTime}`);
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        this.scrollToSegmentElement(segment);
     }
 
     /** Highlight search matches in segment text */
@@ -174,6 +171,14 @@ export class TranscriptViewerComponent {
         }
 
         const segment = segments[index];
+        this.scrollToSegmentElement(segment);
+    }
+
+    /**
+     * Common helper method to scroll to a segment element.
+     * Encapsulates the DOM element lookup and scrollIntoView logic.
+     */
+    private scrollToSegmentElement(segment: TranscriptSegment): void {
         const el = document.getElementById(`segment-${segment.startTime}`);
         if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });

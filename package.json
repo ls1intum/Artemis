@@ -52,7 +52,7 @@
         "fast-json-patch": "3.1.1",
         "franc-min": "6.2.0",
         "graphemer": "1.4.0",
-        "hls.js": "^1.5.19",
+        "hls.js": "1.5.19",
         "html-diff-ts": "1.4.2",
         "interactjs": "1.10.27",
         "js-video-url-parser": "0.5.1",
