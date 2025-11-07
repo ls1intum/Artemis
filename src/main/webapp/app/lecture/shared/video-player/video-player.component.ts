@@ -107,6 +107,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                 controls: true,
                 preload: 'auto',
                 sources: [{ src, type: 'application/x-mpegURL' }],
+                playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
             });
 
             // store instance after creation
