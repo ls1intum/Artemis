@@ -296,7 +296,7 @@
                     "allSessions": "Alle",
                     "futureSessions": "Zukünftige"
                 },
-                "currentLessonLinkLabel": "Aktuelle Lektion",
+                "currentTutorialLectureLinkLabel": "Aktuelle Lektion",
                 "tutorChatLinkLabel": "Tutor Chat",
                 "groupChannelLinkLabel": "Gruppen Channel",
                 "sessionTableColumnTitle": {

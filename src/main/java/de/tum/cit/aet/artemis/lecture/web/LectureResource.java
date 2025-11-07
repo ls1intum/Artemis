@@ -226,7 +226,7 @@ public class LectureResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        Set<Lecture> lectures = lectureRepository.findAllLecturesByCourseIdWithAttachments(courseId);
+        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
         return ResponseEntity.ok().body(lectures);
     }
 

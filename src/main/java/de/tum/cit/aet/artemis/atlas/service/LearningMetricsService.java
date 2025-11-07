@@ -169,7 +169,7 @@ public class LearningMetricsService {
     public LectureUnitStudentMetricsDTO getStudentLectureUnitMetrics(long userId, long courseId) {
         LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
 
-        final var lectureUnitInfo = api.findAllLectureUnitInformationByCourseId(courseId);
+        final var lectureUnitInfo = api.findAllNonTutorialLectureUnitInformationByCourseId(courseId);
         final var lectureUnitInfoMap = lectureUnitInfo.stream().collect(toMap(LectureUnitInformationDTO::id, identity()));
 
         final var lectureUnitIds = lectureUnitInfoMap.keySet();
