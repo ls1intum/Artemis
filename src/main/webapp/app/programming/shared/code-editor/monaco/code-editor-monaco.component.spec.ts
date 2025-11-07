@@ -327,7 +327,10 @@ describe('CodeEditorMonacoComponent', () => {
         await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) });
         await new Promise((r) => setTimeout(r, 0));
 
-        expect(addLineWidgetStub).toHaveBeenCalledTimes(8); // 8=2x4 calls, as we trigger renders four times
+        expect(addLineWidgetStub).toHaveBeenCalledTimes(8);
+        // 8=2x4 calls, as two feedbacks each trigger render three times
+        // and the initial selectedFile=undefined and follow up selectedFile=file1.java
+        // trigger the corresponding signal and effect twice.
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1-line-2`, document.createElement('div'));
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2-line-3`, document.createElement('div'));
         expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(6);
