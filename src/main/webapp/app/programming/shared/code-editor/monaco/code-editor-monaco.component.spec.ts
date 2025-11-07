@@ -333,7 +333,8 @@ describe('CodeEditorMonacoComponent', () => {
         // trigger the corresponding signal and effect twice.
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1-line-2`, document.createElement('div'));
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2-line-3`, document.createElement('div'));
-        expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(6);
+        expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(8);
+        // The same explanation as above applies.
         expect(selectFileInEditorStub).toHaveBeenCalled();
         consoleErrorSpy.mockRestore();
     });
