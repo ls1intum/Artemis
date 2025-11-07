@@ -186,11 +186,11 @@ management:
             server:
                 requests:
                     name: http.server.requests
+#        annotations:
+#          enabled: true
 # Configuration for exporting LLM traces to Langfuse (only set to true when in 'dev')
 #   langfuse:
-#       enabled: false
-#       annotations:
-#         enabled: true
+#       enabled: true
 #    tracing:
 #      sampling:
 #        probability: 1.0
@@ -202,6 +202,11 @@ management:
 #        headers:
           # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
 #         Authorization: ""
+# Set export to false to filter out http requests
+#        export:
+#          enabled: false
+
+
 
 
 spring:
