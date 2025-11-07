@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.iris.web.open;
+package de.tum.cit.aet.artemis.iris.web.internal;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisText
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.RewritingJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
@@ -45,20 +47,20 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 @Lazy
 @RestController
 @Profile(PROFILE_IRIS)
-@RequestMapping("api/iris/public/pyris/")
-public class PublicPyrisStatusUpdateResource {
+@RequestMapping("api/iris/internal/")
+public class PyrisInternalStatusUpdateResource {
 
     private final PyrisJobService pyrisJobService;
 
     private final PyrisStatusUpdateService pyrisStatusUpdateService;
 
-    public PublicPyrisStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService) {
+    public PyrisInternalStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService) {
         this.pyrisJobService = pyrisJobService;
         this.pyrisStatusUpdateService = pyrisStatusUpdateService;
     }
 
     /**
-     * POST public/pyris/pipelines/programming-exercise-chat/runs/:runId/status : Set the status of an exercise chat job
+     * POST internal/pipelines/programming-exercise-chat/runs/:runId/status : Set the status of an exercise chat job
      * <p>
      * Uses custom token based authentication.
      *
@@ -70,7 +72,7 @@ public class PublicPyrisStatusUpdateResource {
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
     @PostMapping("pipelines/programming-exercise-chat/runs/{runId}/status")
-    @EnforceNothing
+    @Internal
     public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ExerciseChatJob.class);
         if (!Objects.equals(job.jobId(), runId)) {
@@ -83,7 +85,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * POST public/pyris/pipelines/course-chat/runs/:runId/status : Set the status of a course chat job
+     * POST internal/pipelines/course-chat/runs/:runId/status : Set the status of a course chat job
      * <p>
      * Uses custom token based authentication.
      *
@@ -95,7 +97,7 @@ public class PublicPyrisStatusUpdateResource {
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
     @PostMapping("pipelines/course-chat/runs/{runId}/status")
-    @EnforceNothing
+    @Internal
     public ResponseEntity<Void> setStatusOfCourseChatJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, CourseChatJob.class);
         if (!Objects.equals(job.jobId(), runId)) {
@@ -108,7 +110,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * POST public/pyris/pipelines/competency-extraction/runs/:runId/status : Send the competencies extracted from a course description in a status update
+     * POST internal/pipelines/competency-extraction/runs/:runId/status : Send the competencies extracted from a course description in a status update
      * <p>
      * Uses custom token based authentication.
      *
@@ -120,7 +122,7 @@ public class PublicPyrisStatusUpdateResource {
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
     @PostMapping("pipelines/competency-extraction/runs/{runId}/status")
-    @EnforceNothing
+    @Internal
     public ResponseEntity<Void> setCompetencyExtractionJobStatus(@PathVariable String runId, @RequestBody PyrisCompetencyStatusUpdateDTO statusUpdateDTO,
             HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, CompetencyExtractionJob.class);
@@ -134,7 +136,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST public/pyris/pipelines/text-exercise-chat/runs/{runId}/status} : Set the status of a Text Exercise Chat job.
+     * {@code POST internal/pipelines/text-exercise-chat/runs/{runId}/status} : Set the status of a Text Exercise Chat job.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
@@ -144,7 +146,7 @@ public class PublicPyrisStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      */
     @PostMapping("pipelines/text-exercise-chat/runs/{runId}/status")
-    @EnforceNothing
+    @Internal
     public ResponseEntity<Void> respondInTextExerciseChat(@PathVariable String runId, @RequestBody PyrisTextExerciseChatStatusUpdateDTO statusUpdateDTO,
             HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, TextExerciseChatJob.class);
@@ -158,7 +160,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST public/pyris/pipelines/lecture-chat/runs/{runId}/status} : Set the status of a Lecture Chat job.
+     * {@code POST internal/pipelines/lecture-chat/runs/{runId}/status} : Set the status of a Lecture Chat job.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
@@ -168,7 +170,7 @@ public class PublicPyrisStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      */
     @PostMapping("pipelines/lecture-chat/runs/{runId}/status")
-    @EnforceNothing
+    @Internal
     public ResponseEntity<Void> respondInLectureChat(@PathVariable String runId, @RequestBody PyrisLectureChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, LectureChatJob.class);
         if (!Objects.equals(job.jobId(), runId)) {
@@ -181,7 +183,32 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * POST public/pyris/pipelines/tutor-suggestion/runs/:runId/status : Send the tutor suggestion response in a status update
+     * POST internal/pipelines/rewriting/runs/:runId/status : Send the rewritten text in a status update
+     * <p>
+     * Uses custom token based authentication.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     */
+    @PostMapping("pipelines/rewriting/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setRewritingJobStatus(@PathVariable String runId, @RequestBody PyrisRewritingStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, RewritingJob.class);
+        if (!Objects.equals(job.jobId(), runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST internal/pipelines/tutor-suggestion/runs/:runId/status : Send the tutor suggestion response in a status update
      * <p>
      * Uses custom token based authentication.
      *
@@ -193,7 +220,7 @@ public class PublicPyrisStatusUpdateResource {
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
     @PostMapping("pipelines/tutor-suggestion/runs/{runId}/status")
-    @EnforceNothing
+    @Internal
     public ResponseEntity<Void> setTutorSuggestionJobStatus(@PathVariable String runId, @RequestBody TutorSuggestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, TutorSuggestionJob.class);
         if (!Objects.equals(job.jobId(), runId)) {
@@ -206,7 +233,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST public/pyris/webhooks/ingestion/runs/{runId}/status} : Set the status of an Ingestion job.
+     * {@code POST internal/webhooks/ingestion/runs/{runId}/status} : Set the status of an Ingestion job.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
@@ -216,7 +243,7 @@ public class PublicPyrisStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      */
     @PostMapping("webhooks/ingestion/runs/{runId}/status")
-    @EnforceNothing
+    @Internal
     public ResponseEntity<Void> setStatusOfIngestionJob(@PathVariable String runId, @RequestBody PyrisLectureIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, PyrisJob.class);
         if (!job.jobId().equals(runId)) {
@@ -231,7 +258,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST public/pyris/webhooks/ingestion/faqs/runs/{runId}/status} : Set the status of an Ingestion job.
+     * {@code POST internal/webhooks/ingestion/faqs/runs/{runId}/status} : Set the status of an Ingestion job.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
@@ -241,7 +268,7 @@ public class PublicPyrisStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      */
     @PostMapping("webhooks/ingestion/faqs/runs/{runId}/status")
-    @EnforceNothing
+    @Internal
     public ResponseEntity<Void> setStatusOfFaqIngestionJob(@PathVariable String runId, @RequestBody PyrisFaqIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, PyrisJob.class);
         if (!job.jobId().equals(runId)) {

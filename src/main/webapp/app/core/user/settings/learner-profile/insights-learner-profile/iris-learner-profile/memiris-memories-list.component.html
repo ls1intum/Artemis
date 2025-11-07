@@ -1,0 +1,87 @@
+<h5 jhiTranslate="artemisApp.iris.memories.title"></h5>
+
+@if (loading) {
+    <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.loadingList"></div>
+} @else {
+    @if (memories?.length === 0) {
+        <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.empty"></div>
+    } @else {
+        <ul class="list-unstyled">
+            @for (memory of memories; track memory.id) {
+                <li class="py-2 border-bottom">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="text-start p-0 me-3 d-flex align-items-center" role="button" (click)="toggleOpen(memory)" style="cursor: pointer">
+                            <fa-icon class="me-2" [icon]="open[memory.id] ? faChevronDown : faChevronRight" />
+                            <span class="fw-semibold">{{ memory.title || memory.id }}</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" [disabled]="deleting[memory.id]" (click)="deleteMemory(memory)">
+                            @if (deleting[memory.id]) {
+                                <span jhiTranslate="artemisApp.iris.memories.deleting"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.iris.memories.delete"></span>
+                            }
+                        </button>
+                    </div>
+
+                    @if (open[memory.id]) {
+                        <div class="mt-2 ms-4">
+                            @if (loadingDetails[memory.id]) {
+                                <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.details.loading"></div>
+                            } @else {
+                                @if (details[memory.id]) {
+                                    <div class="mb-2 text-break">{{ details[memory.id]!.content }}</div>
+                                    <div class="mb-2">
+                                        <div class="fw-semibold" jhiTranslate="artemisApp.iris.memories.details.learnings"></div>
+                                        @if (details[memory.id]!.learnings?.length === 0) {
+                                            <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.details.none"></div>
+                                        } @else {
+                                            <ul class="mb-0">
+                                                @for (l of details[memory.id]!.learnings; track l.id) {
+                                                    <li>
+                                                        <span class="fw-semibold">{{ l.title || l.id }}</span>
+                                                        <div class="small text-break">{{ l.content }}</div>
+                                                        @if (l.reference) {
+                                                            <div class="small text-muted">
+                                                                <span jhiTranslate="artemisApp.iris.memories.details.reference"></span>
+                                                                : {{ l.reference }}
+                                                            </div>
+                                                        }
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                    </div>
+                                    @if (details[memory.id]!.connections?.length) {
+                                        <div class="mb-1">
+                                            <div class="fw-semibold" jhiTranslate="artemisApp.iris.memories.details.connections"></div>
+                                            <ul class="mb-0">
+                                                @for (c of details[memory.id]!.connections; track c.id) {
+                                                    <li>
+                                                        <span class="fw-semibold">{{ c.connectionType }}</span>
+                                                        <div class="small text-muted">
+                                                            <span jhiTranslate="artemisApp.iris.memories.details.weight"></span>
+                                                            : {{ c.weight }}
+                                                        </div>
+                                                        <div class="small">
+                                                            <span jhiTranslate="artemisApp.iris.memories.details.memories"></span>
+                                                            : {{ c.memories?.join(', ') }}
+                                                        </div>
+                                                        @if (c.description) {
+                                                            <div class="small text-break">{{ c.description }}</div>
+                                                        }
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                } @else {
+                                    <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.details.noDetails"></div>
+                                }
+                            }
+                        </div>
+                    }
+                </li>
+            }
+        </ul>
+    }
+}

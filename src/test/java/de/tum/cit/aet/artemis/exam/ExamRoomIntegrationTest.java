@@ -282,8 +282,8 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(newestRoomNames).contains(expectedNewRoomNames);  // we want to test the subset containment
         // because `newestRoomNames` could contain older rooms we didn't upload in the latest run
 
-        var newestUniqueExamRoomsFromDb = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream().map(er -> new ExamRoomDTO(er.getId(),
-                er.getRoomNumber(), er.getName(), er.getBuilding(), er.getSeats().size(),
+        var newestUniqueExamRoomsFromDb = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream().map(er -> new ExamRoomDTO(er.getRoomNumber(),
+                er.getName(), er.getBuilding(), er.getSeats().size(),
                 // Because of the INCLUDE.NON_EMPTY on the admin overview, we need to map to null on empty lists
                 er.getLayoutStrategies().isEmpty() ? null
                         : er.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))

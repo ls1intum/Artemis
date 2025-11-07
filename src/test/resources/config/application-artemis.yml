@@ -76,6 +76,11 @@ artemis:
         destination: http://localhost:8081
     plagiarism-checks:
         plagiarism-results-limit: 100
+    security:
+        internal:
+            allowed-cidrs:
+                - 127.0.0.0/8
+
     nebula:
         enabled: true
 info:
