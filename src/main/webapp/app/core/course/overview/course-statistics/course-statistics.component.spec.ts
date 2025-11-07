@@ -64,7 +64,7 @@ describe('CourseStatisticsComponent', () => {
             ],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            totalNumberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: 0,
             numberOfComplaints: 0,
             presentationScoreEnabled: true,
         },
@@ -93,7 +93,7 @@ describe('CourseStatisticsComponent', () => {
             ],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            totalNumberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: 0,
             numberOfComplaints: 0,
         },
         {
@@ -106,7 +106,7 @@ describe('CourseStatisticsComponent', () => {
             studentParticipations: [],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            totalNumberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: 0,
             numberOfComplaints: 0,
         },
         {
@@ -145,7 +145,7 @@ describe('CourseStatisticsComponent', () => {
             ],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            totalNumberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: 0,
             numberOfComplaints: 0,
         },
         {
@@ -184,7 +184,7 @@ describe('CourseStatisticsComponent', () => {
             ],
             diagramType: 'ClassDiagram',
             numberOfSubmissions: new DueDateStat(),
-            totalNumberOfAssessments: new DueDateStat(),
+            totalNumberOfAssessments: 0,
             numberOfComplaints: 0,
         },
     ] as ModelingExercise[];
@@ -229,7 +229,7 @@ describe('CourseStatisticsComponent', () => {
             },
         ],
         numberOfSubmissions: new DueDateStat(),
-        totalNumberOfAssessments: new DueDateStat(),
+        totalNumberOfAssessments: 0,
         numberOfComplaints: 0,
     } as FileUploadExercise;
 
@@ -271,7 +271,7 @@ describe('CourseStatisticsComponent', () => {
             },
         ],
         numberOfSubmissions: new DueDateStat(),
-        totalNumberOfAssessments: new DueDateStat(),
+        totalNumberOfAssessments: 0,
         numberOfComplaints: 0,
     } as QuizExercise;
 
@@ -315,7 +315,7 @@ describe('CourseStatisticsComponent', () => {
             },
         ],
         numberOfSubmissions: new DueDateStat(),
-        totalNumberOfAssessments: new DueDateStat(),
+        totalNumberOfAssessments: 0,
         numberOfComplaints: 0,
     } as ProgrammingExercise;
 

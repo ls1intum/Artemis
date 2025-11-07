@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +29,6 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
@@ -169,8 +169,8 @@ public class BuildAgentConfiguration {
         }
         this.threadPoolSize = threadPoolSize;
 
-        ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
-                .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
+        ThreadFactory customThreadFactory = BasicThreadFactory.builder().namingPattern("local-ci-build-%d")
+                .uncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in thread {}", t.getName(), e)).build();
 
         RejectedExecutionHandler customRejectedExecutionHandler = (runnable, executor) -> {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());

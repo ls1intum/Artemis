@@ -78,9 +78,6 @@ export class CourseManagementService {
 
     private fetchingCoursesForNotifications = false;
 
-    private courseOverviewSubject = new BehaviorSubject<boolean>(false);
-    isCourseOverview$ = this.courseOverviewSubject.asObservable();
-
     /**
      * updates a course using a PUT request
      * @param courseId - the id of the course to be updated
@@ -761,14 +758,6 @@ export class CourseManagementService {
     getNumberOfAllowedComplaintsInCourse(courseId: number, teamMode = false): Observable<number> {
         // Note: 0 is the default value in case the server returns something that does not make sense
         return this.http.get<number>(`${this.resourceUrl}/${courseId}/allowed-complaints?teamMode=${teamMode}`) ?? 0;
-    }
-
-    enableCourseOverviewBackground() {
-        this.courseOverviewSubject.next(true);
-    }
-
-    disableCourseOverviewBackground() {
-        this.courseOverviewSubject.next(false);
     }
 
     getSemesterCollapseStateFromStorage(storageId: string): boolean {

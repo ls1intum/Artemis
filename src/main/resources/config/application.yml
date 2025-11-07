@@ -136,6 +136,14 @@ artemis:
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
 
+    # Default security configuration for internal endpoints accessed by other Artemis components 
+    # Currently set to allow all IPs. Adjust as necessary for your deployment.
+    security:
+        internal:
+            allowed-cidrs:
+                - ::/0
+                - 0.0.0.0/0
+
 
 
 management:
@@ -307,18 +315,26 @@ server:
     shutdown: graceful
     forward-headers-strategy: native
 
+# The below configuration is given so the Sentry Logback appender is configured properly
+# If these are set through Java code, the Logback appender fails to pick up the desired settings
+# Errors are still reported if the appender fails, but traces are missing
 sentry:
+    dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.aet.cit.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
     logging:
         enabled: true
         minimum-breadcrumb-level: error
         minimum-event-level: error
     sample-rate: 1
-    traces-sample-rate: 0.2
+    release: ${artemis.version}
+    send-default-pii: true
+    # This is a placeholder value overwritten in both application-prod.yml and application-dev.yml.
+    # It is only provided to prevent the SDK from choosing the default value 'production', which might lead to confusion
+    environment: test
 
 # Properties to be exposed on the /info management endpoint
 info:
     sentry:
-        dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
+        dsn: ${sentry.dsn}
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false
     textAssessmentAnalyticsEnabled: false

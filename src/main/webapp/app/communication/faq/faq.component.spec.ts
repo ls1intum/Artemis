@@ -211,7 +211,16 @@ describe('FaqComponent', () => {
         jest.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
         faqComponentFixture.detectChanges();
         faqComponent.rejectFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(
+            courseId,
+            expect.objectContaining({
+                id: faq1.id,
+                faqState: FaqState.REJECTED,
+                questionTitle: faq1.questionTitle,
+                questionAnswer: faq1.questionAnswer,
+                categories: faq1.categories,
+            }),
+        );
         expect(faq1.faqState).toEqual(FaqState.REJECTED);
     });
 
@@ -220,7 +229,10 @@ describe('FaqComponent', () => {
         jest.spyOn(faqService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         faqComponent.rejectFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(
+            courseId,
+            expect.objectContaining({ id: faq1.id, faqState: FaqState.REJECTED, questionTitle: faq1.questionTitle }),
+        );
         expect(faq1.faqState).toEqual(FaqState.PROPOSED);
     });
 
@@ -228,7 +240,16 @@ describe('FaqComponent', () => {
         jest.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
         faqComponentFixture.detectChanges();
         faqComponent.acceptProposedFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(
+            courseId,
+            expect.objectContaining({
+                id: faq1.id,
+                faqState: FaqState.ACCEPTED,
+                questionTitle: faq1.questionTitle,
+                questionAnswer: faq1.questionAnswer,
+                categories: faq1.categories,
+            }),
+        );
         expect(faq1.faqState).toEqual(FaqState.ACCEPTED);
     });
 
@@ -237,7 +258,10 @@ describe('FaqComponent', () => {
         jest.spyOn(faqService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         faqComponent.acceptProposedFaq(courseId, faq1);
-        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(
+            courseId,
+            expect.objectContaining({ id: faq1.id, faqState: FaqState.ACCEPTED, questionTitle: faq1.questionTitle }),
+        );
         expect(faq1.faqState).toEqual(FaqState.PROPOSED);
     });
 

@@ -166,7 +166,7 @@ dependencies {
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
-    implementation "org.glassfish.jersey.core:jersey-common:3.1.11"
+    implementation "org.glassfish.jersey.core:jersey-common:4.0.0"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -216,6 +216,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:1.2025.9"
+
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
@@ -237,7 +238,7 @@ dependencies {
 
     implementation "org.jsoup:jsoup:1.21.2"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "commons-codec:commons-codec:1.19.0"
+    implementation "commons-codec:commons-codec:1.20.0"
 
     // use the latest version to avoid security vulnerabilities
     implementation "org.springframework:spring-aop:${spring_framework_version}"
@@ -324,6 +325,10 @@ dependencies {
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     // Required for Hibernate multi node caching
     runtimeOnly "com.hazelcast:hazelcast-hibernate53:5.2.0"
+    // alternative for Hazelcast
+    implementation "org.redisson:redisson:${redisson_version}"
+    implementation "org.redisson:redisson-spring-boot-starter:${redisson_version}"
+
 
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
     implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
@@ -335,6 +340,8 @@ dependencies {
     implementation "org.apache.commons:commons-text:${commons_text_version}"
     implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "org.apache.commons:commons-lang3:${commons_lang3_version}"
+    implementation "org.apache.commons:commons-collections4:4.5.0"
+
     // required by eureka, but actually superseded by commons-lang3 above
     implementation "commons-lang:commons-lang:2.6"
 
@@ -372,14 +379,14 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
-    implementation "io.projectreactor.netty:reactor-netty-core:1.2.11"
+    implementation "io.projectreactor.netty:reactor-netty-core:1.2.12"
 
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.12"
 
     // passkey functionality to simplify login
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.11.2.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.29.7.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.30.0.RELEASE"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -387,7 +394,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:10.5"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.6"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -442,12 +449,13 @@ dependencies {
     // make sure to use the latest version to avoid security vulnerabilities
     runtimeOnly "commons-beanutils:commons-beanutils:1.11.0"
     checkstyle "commons-beanutils:commons-beanutils:1.11.0"
+
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 
-    implementation "com.google.errorprone:error_prone_annotations:2.43.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.44.0"
     // needed for OpenAPI generation
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -493,7 +501,7 @@ dependencies {
     testImplementation "org.gradle:gradle-tooling-api:9.2.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
-
+    testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
@@ -509,9 +517,9 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-params:${junit_version}"
 
     // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
-    testImplementation "org.junit.platform:junit-platform-commons:${junit_platform_version}"
-    testImplementation "org.junit.platform:junit-platform-engine:${junit_platform_version}"
-    testImplementation "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
+    testImplementation "org.junit.platform:junit-platform-commons:${junit_version}"
+    testImplementation "org.junit.platform:junit-platform-engine:${junit_version}"
+    testImplementation "org.junit.platform:junit-platform-launcher:${junit_version}"
 }
 
 // we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved

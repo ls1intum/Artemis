@@ -14,7 +14,7 @@
     }
     @if (showSkeleton) {
         <div>
-            <div [ngClass]="{ 'course-overview px-3': isCourseOverview }">
+            <div [ngClass]="{ 'module-bg m-3 mb-5 p-3 mt-0 rounded rounded-3': usesModuleBackground }">
                 <router-outlet />
             </div>
         </div>

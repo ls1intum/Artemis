@@ -12,13 +12,16 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,6 +42,7 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,7 +65,6 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -278,10 +281,11 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             // Lazy load student participation, sort by id, and set the export options
             var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId)).toList();
+            // Filter late submissions must be false here, because we do not load submissions or commit hashes here
             var exportOptions = new RepositoryExportOptionsDTO(true, false, false, null, false, false, false, false, false);
 
             // Export student repositories and add them to list
-            var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, workingDir, outputDir, exportErrors).stream()
+            var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, Map.of(), workingDir, outputDir, exportErrors, exportOptions).stream()
                     .filter(Objects::nonNull).toList();
             pathsToBeZipped.addAll(exportedStudentRepositoryFiles);
         }
@@ -435,18 +439,26 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
-     * @param programmingExerciseId   the id of the exercise entity
-     * @param participations          participations that should be exported
-     * @param repositoryExportOptions the options that should be used for the export
+     * @param programmingExercise       the programming exercise for which student repositories should be exported
+     * @param participations            participations that should be exported
+     * @param repositoryExportOptions   the options that should be used for the export
+     * @param participationCommitHashes a map containing the relevant commit hashes to be used for each participation (typically only relevant when filtering for specific
+     *                                      submissions)
      * @return a zip file containing all requested participations
      */
-    public File exportStudentRepositoriesToZipFile(long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
-            RepositoryExportOptionsDTO repositoryExportOptions) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+    public File exportStudentRepositoriesToZipFile(ProgrammingExercise programmingExercise, @NotNull Collection<ProgrammingExerciseStudentParticipation> participations,
+            RepositoryExportOptionsDTO repositoryExportOptions, Map<Long, String> participationCommitHashes) {
 
         Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 10);
-        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
+        List<Path> zippedRepos;
+        try {
+            zippedRepos = exportStudentRepositories(programmingExercise, participations, participationCommitHashes, outputDir, outputDir, new ArrayList<>(),
+                    repositoryExportOptions);
+        }
+        catch (GitException e) {
+            log.error("Aborting export: anonymization failed for at least one repository in exercise {} (id: {})", programmingExercise.getTitle(), programmingExercise.getId());
+            return null;
+        }
 
         try {
             // Create a zip folder containing the directories with the repositories.
@@ -461,16 +473,17 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     /**
      * Creates directories of the participations of programming exercises of a requested list of students.
      *
-     * @param programmingExercise     the programming exercise
-     * @param participations          participations that should be exported
-     * @param repositoryExportOptions the options that should be used for the export
-     * @param workingDir              The directory used to clone the repositories
-     * @param outputDir               The directory used for store the directories
-     * @param exportErrors            A list of errors that occurred during export (populated by this function)
-     * @return List of directory paths
+     * @param programmingExercise       the programming exercise
+     * @param participations            participations that should be exported
+     * @param participationCommitHashes a map containing the commit hashes to be used for each participation (typically only relevant when filtering for specific submissions)
+     * @param workingDir                The directory used to clone the repositories
+     * @param outputDir                 The directory used for store the directories
+     * @param exportErrors              A list of errors that occurred during export (populated by this function)
+     * @param repositoryExportOptions   the options that should be used for the export (e.g. anonymization)
+     * @return List of directory paths with checked out and potentially anonymized repositories
      */
-    public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
-            RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, List<String> exportErrors) {
+    public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull Collection<ProgrammingExerciseStudentParticipation> participations,
+            Map<Long, String> participationCommitHashes, Path workingDir, Path outputDir, List<String> exportErrors, RepositoryExportOptionsDTO repositoryExportOptions) {
         var programmingExerciseId = programmingExercise.getId();
         if (repositoryExportOptions.exportAllParticipants()) {
             log.info("Request to export all {} student or team repositories of programming exercise {} with title '{}'", participations.size(), programmingExerciseId,
@@ -483,28 +496,37 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                     participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
         }
 
-        List<Path> exportedStudentRepositories = Collections.synchronizedList(new ArrayList<>());
+        List<Path> exportedStudentRepositoriesPaths = Collections.synchronizedList(new ArrayList<>());
+        AtomicBoolean anonymizationFailed = new AtomicBoolean(false);
 
         log.info("export student repositories for programming exercise {} in parallel", programmingExercise.getId());
         try (var threadPool = Executors.newFixedThreadPool(10)) {
             var futures = participations.stream().map(participation -> CompletableFuture.runAsync(() -> {
                 try {
+                    var relevantCommitHash = participationCommitHashes.get(participation.getId());
                     log.debug("invoke createZipForRepositoryWithParticipation for participation {}", participation.getId());
-                    Path dir = getRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir, false);
-                    if (dir != null) {
-                        exportedStudentRepositories.add(dir);
+                    Path repoOutputPath = getRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, relevantCommitHash, workingDir, outputDir,
+                            false);
+                    if (repoOutputPath != null) {
+                        exportedStudentRepositoriesPaths.add(repoOutputPath);
                     }
                 }
                 catch (Exception exception) {
                     var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '"
                             + programmingExercise.getTitle() + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
                     exportErrors.add(error);
+                    if (repositoryExportOptions.anonymizeRepository() && exception instanceof GitException) {
+                        anonymizationFailed.set(true);
+                    }
                 }
             }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
             // wait until all operations finish
             CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
+            if (anonymizationFailed.get()) {
+                throw new GitException("Anonymization failed for one or more repositories");
+            }
         }
-        return exportedStudentRepositories;
+        return exportedStudentRepositoriesPaths;
     }
 
     /**
@@ -562,15 +584,18 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipped repo
+     * @param relevantCommitHash      The commit hash relevant for the submission (e.g. based on the submission date)
      * @param workingDir              The directory used to clone the repository
      * @param outputDir               The directory where the zip file or directory is stored
      * @param zipOutput               If true the method returns a zip file otherwise a directory.
-     * @return The checked out repository as a zip file or directory
+     * @return The checked out repository as a zip file or directory depending on the zipOutput parameter
      * @throws IOException if zip file creation failed
      */
     // TODO: we should check out the repo in memory and not clone it into the file system and additionally do multiple remote operations
+    @Nullable
     public Path getRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
-            final RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, boolean zipOutput) throws IOException, UncheckedIOException {
+            final RepositoryExportOptionsDTO repositoryExportOptions, @Nullable String relevantCommitHash, Path workingDir, Path outputDir, boolean zipOutput)
+            throws IOException, UncheckedIOException {
         if (participation.getVcsRepositoryUri() == null) {
             log.warn("Ignore participation {} for export, because its repository URI is null", participation.getId());
             return null;
@@ -590,11 +615,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 return null;
             }
 
-            // TODO: this operation is only necessary if the repo was not newly cloned
-            gitService.resetToOriginHead(repository);
+            ObjectId latestSetupCommit = null;
+            if (repositoryExportOptions.combineStudentCommits() || repositoryExportOptions.anonymizeRepository()) {
+                // only retrieve the setup commit once, even if it is needed for both operations
+                latestSetupCommit = gitService.getFirstCommitWithMessage(repository, de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
+            }
 
             if (repositoryExportOptions.filterLateSubmissions()) {
-                filterLateSubmissions(repositoryExportOptions, participation, repository);
+                filterLateSubmissions(repositoryExportOptions, relevantCommitHash, participation, repository);
             }
 
             if (repositoryExportOptions.addParticipantName()) {
@@ -604,12 +632,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
             if (repositoryExportOptions.combineStudentCommits()) {
                 log.debug("Combining commits for participation {}", participation);
-                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.anonymizeRepository());
+                gitService.combineAllStudentCommits(repository, repositoryExportOptions.anonymizeRepository(), latestSetupCommit);
             }
 
             if (repositoryExportOptions.anonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
-                gitService.anonymizeStudentCommits(repository, programmingExercise);
+                gitService.anonymizeStudentCommits(repository, latestSetupCommit);
+                // Verify anonymization succeeded before proceeding
+                gitService.verifyAnonymizationOrThrow(repository, repositoryExportOptions.combineStudentCommits(), latestSetupCommit);
             }
             else {
                 gitService.removeRemotesFromRepository(repository);
@@ -658,10 +688,12 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * Filters out all late commits of submissions from the checked out repository of a participation
      *
      * @param repositoryExportOptions The options that should get applied when exporting the submissions
+     * @param relevantCommitHash      The commit hash relevant for the submission (if any)
      * @param participation           The participation related to the repository
      * @param repo                    The repository for which to filter all late submissions
      */
-    private void filterLateSubmissions(RepositoryExportOptionsDTO repositoryExportOptions, ProgrammingExerciseStudentParticipation participation, Repository repo) {
+    private void filterLateSubmissions(RepositoryExportOptionsDTO repositoryExportOptions, @Nullable String relevantCommitHash,
+            ProgrammingExerciseStudentParticipation participation, Repository repo) {
         log.debug("Filter late submissions for participation {}", participation.toString());
         final Optional<ZonedDateTime> latestAllowedDate;
         if (repositoryExportOptions.filterLateSubmissionsIndividualDueDate()) {
@@ -672,10 +704,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         if (latestAllowedDate.isPresent()) {
-            Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
-                    .filter(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(latestAllowedDate.get()))
-                    .max(Comparator.naturalOrder());
-            gitService.filterLateSubmissions(repo, lastValidSubmission, latestAllowedDate.get());
+            gitService.filterLateSubmissions(repo, relevantCommitHash, latestAllowedDate.get());
         }
     }
 
@@ -710,8 +739,10 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         try {
-            gitService.stageAllChanges(repository);
-            gitService.commit(repository, "Add participant identifier (student login or team short name) to project name");
+            boolean hasChanges = gitService.stageAllChanges(repository);
+            if (hasChanges) {
+                gitService.commit(repository, "Add participant identifier (student login or team short name) to project name");
+            }
         }
         catch (GitAPIException ex) {
             log.error("Cannot stage or commit to the repository {}", repository.getLocalPath(), ex);
@@ -799,7 +830,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     private List<String> listAllFilesInPath(Path path) {
         List<String> allRepoFiles = Collections.emptyList();
         try (Stream<Path> walk = Files.walk(path)) {
-            allRepoFiles = walk.filter(Files::isRegularFile).map(Path::toString).filter(s -> !s.contains(".git")).toList();
+            allRepoFiles = walk.filter(Files::isRegularFile).map(Path::toString).filter(fileName -> !fileName.contains(File.separator + ".git" + File.separator)).toList();
         }
         catch (IOException | SecurityException e) {
             log.error("Cannot list all files in path {}: {}", path, e.getMessage());
