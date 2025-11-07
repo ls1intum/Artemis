@@ -80,7 +80,6 @@ artemis:
         internal:
             allowed-cidrs:
                 - 127.0.0.0/8
-
     nebula:
         enabled: true
 info:
