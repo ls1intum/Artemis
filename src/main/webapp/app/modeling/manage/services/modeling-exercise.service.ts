@@ -29,8 +29,9 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
 
     update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
+        const dto = toUpdateModelingExerciseDTO(modelingExercise);
         return this.http
-            .put<ModelingExercise>(this.resourceUrl, toUpdateModelingExerciseDTO(modelingExercise), { params: options, observe: 'response' })
+            .put<ModelingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -74,11 +75,9 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      */
     reevaluateAndUpdate(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const dto = toUpdateModelingExerciseDTO(modelingExercise);
         return this.http
-            .put<ModelingExercise>(`${this.resourceUrl}/${modelingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .put<ModelingExercise>(`${this.resourceUrl}/${modelingExercise.id}/re-evaluate`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 }

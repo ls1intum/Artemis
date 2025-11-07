@@ -31,61 +31,30 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
      * @return a new updated ModelingExercise entity with the data from this DTO
      */
     public ModelingExercise update(ModelingExercise existingExercise) {
-
-        if (this.title != null) {
-            existingExercise.setTitle(this.title);
-        }
-        if (this.channelName != null) {
-            existingExercise.setChannelName(this.channelName);
-        }
+        existingExercise.setTitle(this.title);
+        existingExercise.setChannelName(this.channelName);
         if (this.problemStatement != null) {
             existingExercise.setProblemStatement(this.problemStatement);
         }
-        if (this.categories != null) {
-            existingExercise.setCategories(this.categories);
-        }
+        existingExercise.setCategories(this.categories);
         if (this.difficulty != null) {
             existingExercise.setDifficulty(this.difficulty);
         }
-        if (this.maxPoints != null) {
-            existingExercise.setMaxPoints(this.maxPoints);
-        }
-        if (this.bonusPoints != null) {
-            existingExercise.setBonusPoints(this.bonusPoints);
-        }
-        if (this.includedInOverallScore != null) {
-            existingExercise.setIncludedInOverallScore(this.includedInOverallScore);
-        }
-        if (this.releaseDate != null) {
-            existingExercise.setReleaseDate(this.releaseDate);
-        }
-        if (this.startDate != null) {
-            existingExercise.setStartDate(this.startDate);
-        }
-        if (this.dueDate != null) {
-            existingExercise.setDueDate(this.dueDate);
-        }
-        if (this.assessmentDueDate != null) {
-            existingExercise.setAssessmentDueDate(this.assessmentDueDate);
-        }
-        if (this.exampleSolutionPublicationDate != null) {
-            existingExercise.setExampleSolutionPublicationDate(this.exampleSolutionPublicationDate);
-        }
+        existingExercise.setMaxPoints(this.maxPoints);
+        existingExercise.setBonusPoints(this.bonusPoints);
+        existingExercise.setIncludedInOverallScore(this.includedInOverallScore);
+        existingExercise.setReleaseDate(this.releaseDate);
+        existingExercise.setStartDate(this.startDate);
+        existingExercise.setDueDate(this.dueDate);
+        existingExercise.setAssessmentDueDate(this.assessmentDueDate);
+        existingExercise.setExampleSolutionPublicationDate(this.exampleSolutionPublicationDate);
         if (this.diagramType != null) {
             existingExercise.setDiagramType(this.diagramType);
         }
-        if (this.exampleSolutionModel != null) {
-            existingExercise.setExampleSolutionModel(this.exampleSolutionModel);
-        }
-        if (this.exampleSolutionExplanation != null) {
-            existingExercise.setExampleSolutionExplanation(this.exampleSolutionExplanation);
-        }
-        if (this.competencyLinks != null) {
-            existingExercise.setCompetencyLinks(this.competencyLinks);
-        }
-        if (gradingCriteria != null) {
-            existingExercise.setGradingCriteria(gradingCriteria);
-        }
+        existingExercise.setExampleSolutionModel(this.exampleSolutionModel);
+        existingExercise.setExampleSolutionExplanation(this.exampleSolutionExplanation);
+        existingExercise.setCompetencyLinks(this.competencyLinks);
+        existingExercise.setGradingCriteria(gradingCriteria);
         return existingExercise;
     }
 
