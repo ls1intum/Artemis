@@ -434,7 +434,8 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        final var tmpFile = File.createTempFile(Objects.requireNonNull(res.getResponse().getHeader("filename")), null);
+        // the header typically includes a suffix already, to prevent adding "...tmp", we use an empty string here
+        final var tmpFile = File.createTempFile(Objects.requireNonNull(res.getResponse().getHeader("filename")), "", tempPath.toFile());
         FileUtils.writeByteArrayToFile(tmpFile, res.getResponse().getContentAsByteArray());
 
         return tmpFile;
