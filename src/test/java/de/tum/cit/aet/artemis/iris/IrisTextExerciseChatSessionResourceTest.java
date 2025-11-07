@@ -12,7 +12,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionRepository;
@@ -63,8 +62,8 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         var sessionsInDb = irisTextExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(textExercise.getId(),
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
         assertThat(sessionsInDb).hasSize(1);
-        assertThat(sessionsInDb.get(0).getId()).isEqualTo(response.getId());
-        assertThat(sessionsInDb.get(0).getExerciseId()).isEqualTo(textExercise.getId());
+        assertThat(sessionsInDb.getFirst().getId()).isEqualTo(response.getId());
+        assertThat(sessionsInDb.getFirst().getExerciseId()).isEqualTo(textExercise.getId());
     }
 
     @Test
@@ -129,8 +128,8 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
 
         assertThat(student1Sessions).hasSize(1);
         assertThat(student2Sessions).hasSize(1);
-        assertThat(student1Sessions.get(0).getId()).isEqualTo(response1.getId());
-        assertThat(student2Sessions.get(0).getId()).isEqualTo(response2.getId());
+        assertThat(student1Sessions.getFirst().getId()).isEqualTo(response1.getId());
+        assertThat(student2Sessions.getFirst().getId()).isEqualTo(response2.getId());
     }
 
     @Test
@@ -144,8 +143,7 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         activateIrisFor(otherExercise);
 
         // When/Then: Request should be forbidden (student1 with TEST_PREFIX is not in otherCourse)
-        request.postWithResponseBody("/api/iris/text-exercise-chat/" + otherExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class,
-                HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/iris/text-exercise-chat/" + otherExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -159,8 +157,7 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         activateIrisFor(examExercise);
 
         // When/Then: Request should fail with conflict
-        request.postWithResponseBody("/api/iris/text-exercise-chat/" + examExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class,
-                HttpStatus.CONFLICT);
+        request.postWithResponseBody("/api/iris/text-exercise-chat/" + examExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class, HttpStatus.CONFLICT);
     }
 
     @Test
