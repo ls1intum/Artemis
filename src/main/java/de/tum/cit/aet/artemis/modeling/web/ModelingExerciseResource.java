@@ -228,7 +228,6 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or with status 400 (Bad Request) if the modelingExercise is not valid, or with
      *         status 500 (Internal Server Error) if the modelingExercise couldn't be updated
      */
-    // TODO: change the request body to a DTO to support the new hibernate version 6.6
     // NOTE: IMPORTANT we should NEVER call save on an entity retrieved from the client because it is unsafe and can lead to data loss
     @PutMapping("modeling-exercises")
     @EnforceAtLeastEditor
