@@ -5,12 +5,13 @@ import { of, throwError } from 'rxjs';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { QuizTrainingSettingsComponent } from './quiz-training-settings.component';
 import { QuizTrainingSettingsService } from 'app/core/user/settings/quiz-training-settings/quiz-training-settings.service';
-import { MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 import * as globalUtils from 'app/shared/util/global.utils';
 import { HttpResponse } from '@angular/common/http';
 import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 describe('QuizTrainingSettingsComponent', () => {
     let component: QuizTrainingSettingsComponent;
@@ -25,7 +26,7 @@ describe('QuizTrainingSettingsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FormsModule, QuizTrainingSettingsComponent],
-            declarations: [MockDirective(TranslateDirective)],
+            declarations: [MockDirective(TranslateDirective), MockComponent(HelpIconComponent)],
             providers: [{ provide: QuizTrainingSettingsService, useValue: mockService }, MockProvider(AlertService)],
             schemas: [CUSTOM_ELEMENTS_SCHEMA],
         }).compileComponents();
