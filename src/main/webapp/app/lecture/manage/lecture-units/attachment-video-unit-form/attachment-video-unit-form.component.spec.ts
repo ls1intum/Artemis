@@ -580,7 +580,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         // Mock the service to return null (no playlist found)
         const httpMock = TestBed.inject(HttpClient);
-        const spy = jest.spyOn(httpMock, 'get').mockReturnValue(of(null));
+        jest.spyOn(httpMock, 'get').mockReturnValue(of(null));
 
         attachmentVideoUnitFormComponent.checkPlaylistAvailability(nonTumUrl);
 
