@@ -105,7 +105,7 @@ describe('VideoPlayerComponent', () => {
         await render();
 
         expect(vjs).not.toHaveBeenCalled();
-        expect((component as any).player).toBeNull();
+        expect((component as any).player).toBeUndefined();
     });
 
     it('initializes video.js when videoUrl is provided', async () => {
@@ -147,7 +147,7 @@ describe('VideoPlayerComponent', () => {
 
         const getById = jest
             .spyOn(document, 'getElementById')
-            .mockImplementation((id: string): HTMLElement | null => (id === `segment-${segments[0].startTime}` ? (el as unknown as HTMLElement) : null));
+            .mockImplementation((id: string): HTMLElement | undefined => (id === `segment-${segments[0].startTime}` ? (el as unknown as HTMLElement) : undefined));
 
         // Simulate timeupdate at 10.1s (inside first segment)
         vjs.__player.currentTime(10.1);

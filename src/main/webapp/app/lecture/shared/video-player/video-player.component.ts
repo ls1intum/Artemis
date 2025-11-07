@@ -48,7 +48,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     transcriptSegments = input<TranscriptSegment[]>([]);
 
     /** The Video.js player instance (set once created) */
-    private player: VideoJsPlayer | null = null;
+    private player: VideoJsPlayer | undefined = undefined;
 
     /** Track the index of the currently active transcript segment */
     currentSegmentIndex = signal<number>(-1);
@@ -94,7 +94,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     ngAfterViewInit(): void {
         const elRef = this.videoRef();
-        const videoElement = elRef ? elRef.nativeElement : null;
+        const videoElement = elRef ? elRef.nativeElement : undefined;
         const src = this.videoUrl();
 
         if (!videoElement || !src) {
@@ -159,7 +159,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     ngOnDestroy(): void {
         if (this.player) {
             this.player.dispose();
-            this.player = null;
+            this.player = undefined;
         }
     }
 
