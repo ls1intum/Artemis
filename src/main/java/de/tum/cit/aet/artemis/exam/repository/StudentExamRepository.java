@@ -168,6 +168,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @param userId the id of the user
      * @return all student exams for the given user
      */
+    // TODO: this query is way too complex and MUST be simplified in the future
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se

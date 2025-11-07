@@ -32,8 +32,8 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
  * In the case of using LocalVC with LocalCI, LocalVC contains the origin repositories,
  * they are just not kept in an external system, but rather in another folder that belongs to Artemis.
  */
-// TODO we should NOT use this class anymore for server tests and instead write proper integration tests that use the LocalVC service and the Artemis server API without mocking
-// repositories
+// TODO DO NOT USE this class anymore for server tests and instead write proper integration tests that use the LocalVC service and the Artemis server API without mocking repos
+@Deprecated
 public class LocalRepository {
 
     private static final Logger log = LoggerFactory.getLogger(LocalRepository.class);
