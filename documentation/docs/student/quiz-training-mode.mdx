@@ -19,44 +19,59 @@ import userLeaderboardSettings from "./assets/quiz-training-mode/user-leaderboar
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
+import {Footnote, FootnoteText} from "../../src/components/Footnote/Footnote";
 
 # Quiz Training Mode
 
-The Quiz Training Mode allows you to reinforce your knowledge through repeated practice of quiz questions. The system uses a spaced-repetition algorithm to ensure you review questions at optimal intervals.
+The Quiz Training Mode allows you to reinforce your knowledge through repeated practice of quiz questions. Artemis uses a spaced-repetition<Footnote id="1"/>  algorithm to ensure you review questions at optimal intervals.
 
 ---
 
 ## Getting Started
 
-<Image src={trainingTab} alt={"Description"} size={ImageSize.small}></Image>
+You can find the Quiz Training mode in the course sidebar under the **"Quiz Training"** tab:
 
-When you first visit the Quiz Training, a welcome dialog appears explaining the key features:
+<Image src={trainingTab} alt={"Description"} size={ImageSize.small}></Image>
 
 ### How It Works
 
-Quiz Training is based on the principle of spaced repetition. Questions you answer correctly are repeated at longer intervals, while incorrectly answered questions appear more frequently.
+Quiz Training is based on the principle of spaced-repetition. Questions you answer correctly are repeated at longer intervals, while incorrectly answered questions appear more frequently.
 
-### League System
+<div style={{display: 'flex', alignItems: 'flex-start'}}>
+    <div style={{flex: 1}}>
+        ### League System
 
-The training uses a motivating league system with five levels:
+        The training uses a motivating league system with five levels:
 
-- **Bronze League:** 0-50 points
-- **Silver League:** 50-150 points
-- **Gold League:** 150-300 points
-- **Diamond League:** 300-500 points
-- **Master League:** 500+ points
+        - **Bronze League:** 0-50 points
+        - **Silver League:** 50-150 points
+        - **Gold League:** 150-300 points
+        - **Diamond League:** 300-500 points
+        - **Master League:** 500+ points
 
-Each correctly answered question earns you points, allowing you to advance to higher leagues.
+        Each correctly answered question earns you points, allowing you to advance to higher leagues.
 
-### Scoring
+        ### Scoring
 
-Point allocation depends on the difficulty and your performance on the question. Graded questions count toward your progress, while ungraded questions are only for practice.
+        Point allocation depends on the difficulty and your performance on the question. Graded questions count toward your progress, while ungraded questions are only for practice.
+
+    </div>
+    <div>
+        <Image src={description} alt={"Description"} size={ImageSize.small}></Image>
+    </div>
+</div>
 
 ### Leaderboard Settings
 
-You can choose whether your name appears in the course leaderboard. You can change this setting at any time.
+You can choose whether your name appears in the course leaderboard. You can change this setting at any time:
 
-<Image src={description} alt={"Description"} size={ImageSize.medium}></Image>
+- **From the Overview Page:** Click the **"View description"** button in the scorecard to open the description dialog and settings
+- **From User Settings:** Navigate to your user settings and change the quiz training leaderboard visibility
+
+<div style={{display: 'flex', alignItems: 'flex-start', gap: '20px'}}>
+    <Image src={userSettings} alt={"User Settings"} size={ImageSize.small}></Image>
+    <Image src={userLeaderboardSettings} alt={"User Leaderboard Settings"} size={ImageSize.medium}></Image>
+</div>
 
 ---
 
@@ -74,7 +89,7 @@ The left side shows your current status:
 - **Correct Answers:** Total number of correct answers
 - **Wrong Answers:** Total number of wrong answers
 
-<Image src={scorecard} alt={"Scorecard"} size={ImageSize.small}></Image>
+<Image src={scorecard} alt={"Scorecard"} size={ImageSize.small} hideBorder={true}></Image>
 
 ### Leaderboard
 
@@ -94,29 +109,13 @@ Click **"Start Training"** to begin practicing.
 
 ### Answering Questions
 
-The system presents questions in three different formats:
+Artemis presents questions in three different formats:
 
-#### Multiple-Choice Questions
+- **Multiple-Choice Questions**
 
-- Select one or more correct answers
-- Submit your solution when finished
+- **Drag-and-Drop Questions**
 
-<Image src={mcQuestion} alt={"MC Question"} size={ImageSize.large}></Image>
-
-#### Drag-and-Drop Questions
-
-- Drag elements to the correct position
-- Submit your solution when finished
-
-<Image src={ddQuestion} alt={"DD Question"} size={ImageSize.large}></Image>
-
-#### Short Answer Questions
-
-- Enter text answers in the provided fields
-- Pay attention to correct spelling
-- Submit your solution when finished
-
-<Image src={saQuestion} alt={"SA Question"} size={ImageSize.large}></Image>
+- **Short Answer Questions**
 
 ### Graded vs. Ungraded Questions
 
@@ -126,38 +125,6 @@ The system presents questions in three different formats:
         When an ungraded question appears, you'll be asked if you want to continue.
         Ungraded questions don't count toward your score but help with practice.
 </Callout>
-
-### Receiving Feedback
-
-After submitting, you'll immediately see:
-
-- **Score Achieved:** How many points you earned for this question
-- **Correct Answers:** Which options were correct (marked in green)
-- **Wrong Answers:** Which options were incorrect (marked in red)
-- **Explanations:** Additional hints about the correct solution
-
-<Image src={mcQuestionSolution} alt={"Solution"} size={ImageSize.large}></Image>
-
-- **Sample Solution:** A button to view a sample solution (for short-answer and drag-and-drop questions)
-
-<Image src={saQuestionSolution} alt={"Sample Solution"} size={ImageSize.large}></Image>
-
-### Navigation
-
-- **Next Question:** Proceed to the next question
-- **End Training:** Return to the overview page (appears on the last question)
-
----
-
-## Leaderboard Settings
-
-You can adjust your leaderboard visibility at any time:
-
-- **From the Overview Page:** Click the **"View description"** button in the scorecard to open the description dialog and settings
-- **From User Settings:** Navigate to your user settings and change the quiz training leaderboard visibility
-
-<Image src={userSettings} alt={"User Settings"} size={ImageSize.small}></Image>
-<Image src={userLeaderboardSettings} alt={"User Leaderboard Settings"} size={ImageSize.medium}></Image>
 
 ---
 
@@ -192,9 +159,13 @@ If you answered the question wrong before, you will not receive points for the s
 Spaced repetition is a learning technique that involves reviewing information at increasing intervals to enhance long-term retention.
 Correctly answered questions are shown less frequently, while incorrectly answered questions appear more often.
 
----
-
 <Callout variant={CalloutVariant.tip}>
         Use Quiz Training regularly to reinforce your knowledge long-term.
         The spaced-repetition method is scientifically proven to be one of the most effective learning methods!
 </Callout>
+
+---
+
+<FootnoteText id="1">
+    Source for spaced repetition
+</FootnoteText>
