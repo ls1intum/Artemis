@@ -46,10 +46,6 @@ describe('Course Management Detail Component', () => {
         courseArchivePath: 'some-path',
     };
     const dtoMock: CourseManagementDetailViewDto = {
-        numberOfStudentsInCourse: 100,
-        numberOfTeachingAssistantsInCourse: 5,
-        numberOfEditorsInCourse: 5,
-        numberOfInstructorsInCourse: 10,
         // assessments
         currentPercentageAssessments: 50,
         currentAbsoluteAssessments: 10,
@@ -66,7 +62,6 @@ describe('Course Management Detail Component', () => {
         currentPercentageAverageScore: 90,
         currentAbsoluteAverageScore: 90,
         currentMaxAverageScore: 100,
-        activeStudents: [4, 10, 14, 35],
         // LLM
         currentTotalLlmCostInEur: 82.3,
     };

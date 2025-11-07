@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.core.util;
 
-import org.apache.commons.lang3.time.DurationFormatUtils;
-
 public class TimeLogUtil {
 
     /**
-     * calculate the difference to the given start time in nano seconds and format it in a readable way
+     * calculate the difference to the given start time in nanoseconds and format it in a readable way
      *
      * @param timeNanoStart the time of the first measurement in nanoseconds
      * @return formatted string of the duration between now and timeNanoStart
@@ -32,21 +30,18 @@ public class TimeLogUtil {
          */
         int durationInMinutes = (int) (durationInSeconds / 60.0);
         if (durationInMinutes < 60) {
-            return durationInMinutes + ":" + ((int) durationInSeconds % 60) + "min";
+            return durationInMinutes + ":" + padTo2Digits((int) durationInSeconds % 60) + "min";
         }
 
         int durationInHours = durationInMinutes / 60;
-        return durationInHours + ":" + (durationInMinutes % 60) + "hours";
-    }
-
-    public static String formatDuration(long durationInSeconds) {
-        if (durationInSeconds < 60) {
-            return durationInSeconds + "s";
-        }
-        return DurationFormatUtils.formatDuration(durationInSeconds * 1000, "HH:mm:ss") + " (HH:mm:ss)";
+        return durationInHours + ":" + padTo2Digits(durationInMinutes % 60) + "hours";
     }
 
     private static String roundOffTo2DecPlaces(double val) {
         return String.format("%.2f", val);
+    }
+
+    private static String padTo2Digits(int val) {
+        return String.format("%02d", val);
     }
 }

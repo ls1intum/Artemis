@@ -7,7 +7,7 @@ import { OrganizationManagementService } from 'app/core/admin/organization-manag
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -124,7 +124,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 map((value) => (value ? this.filter(value) : this.allGroups.slice())),
             );
         });
-        this.isJenkins = this.profileService.isProfileActive('jenkins');
+        this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.authorities = [];
         this.userService.authorities().subscribe((authorities) => {
             this.authorities = authorities;

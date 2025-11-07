@@ -10,18 +10,12 @@
             [enableResize]="enableResize"
             [markdown]="exercise.problemStatement"
             [showDefaultPreview]="false"
-            (onPreviewSelect)="generateHtml()"
+            [showPreviewButton]="false"
+            [showVisualButton]="false"
+            [showEditButton]="false"
+            [consistencyIssues]="consistencyIssues()"
             (markdownChange)="updateProblemStatement($event)"
-        >
-            <jhi-programming-exercise-instructions
-                id="previewMonaco"
-                class="editable-instruction-container__instructions"
-                [participation]="participation"
-                [exercise]="exercise"
-                [generateHtmlEvents]="generateHtmlSubject.asObservable()"
-                [personalParticipation]="false"
-            />
-        </jhi-markdown-editor-monaco>
+        />
     }
     @if (editMode) {
         <button
@@ -75,13 +69,6 @@
                     class="editable-instruction-container__status__testcase"
                 />
             }
-        </div>
-    }
-    @if (showConsistencyCheck()) {
-        <div class="alert alert-warning alert-dismissible text-start fade show mt-4" role="alert">
-            <button type="button" class="btn-close" (click)="dismissConsistencyCheck()" aria-label="Close"></button>
-            <h4 class="alert-heading" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.title"></h4>
-            <div [innerHtml]="renderedConsistencyCheckResultMarkdown()"></div>
         </div>
     }
 </div>

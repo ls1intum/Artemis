@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.Repo
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
  * It is closely related to the {@link BuildJobExecutionService} which contains the methods that are used to execute the build jobs.
  */
-@Lazy
+@Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildJobContainerService {

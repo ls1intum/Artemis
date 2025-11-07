@@ -1,78 +1,80 @@
 <!-- client -->
-<div class="chat-header">
-    <div class="header-start">
-        @if (isChatHistoryAvailable()) {
-            <button
-                [ngClass]="{ 'is-collapsed': !isChatHistoryOpen }"
-                triggers="hover"
-                class="btn btn-sidebar-collapse btn-sm rounded-3"
-                (click)="setChatHistoryVisibility(!isChatHistoryOpen)"
-            >
-                <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary d-flex justify-content-center align-items-center" size="lg" />
-                <div class="btn-sidebar-collapse-chevron d-flex gap-1">
-                    <fa-icon
-                        [fixedWidth]="true"
-                        [icon]="faChevronRight"
-                        class="text-secondary btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center"
-                        size="xs"
-                    />
-                    <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary d-flex justify-content-center align-items-center" size="xs" />
-                </div>
-            </button>
-        }
-
-        <jhi-iris-logo [size]="IrisLogoSize.FLUID" />
-
-        <div class="word-iris">{{ isChatGptWrapper ? 'ChatGPT' : 'Iris' }}</div>
-        @if (!isChatGptWrapper) {
-            <a [routerLink]="'/about-iris'" target="_blank">
-                <fa-icon [icon]="faCircleInfo" class="info-button" />
-            </a>
-        }
-    </div>
-    <div class="d-flex gap-2">
-        @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
-            <div class="toolbox">
-                <button [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
-                    <div>
-                        {{ relatedEntityLinkButtonLabel() | artemisTranslate }}
+@if (!isEmbeddedChat()) {
+    <div class="chat-header">
+        <div class="header-start">
+            @if (isChatHistoryAvailable()) {
+                <button
+                    [ngClass]="{ 'is-collapsed': !isChatHistoryOpen }"
+                    triggers="hover"
+                    class="btn btn-sidebar-collapse btn-sm rounded-3"
+                    (click)="setChatHistoryVisibility(!isChatHistoryOpen)"
+                >
+                    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary d-flex justify-content-center align-items-center" size="lg" />
+                    <div class="btn-sidebar-collapse-chevron d-flex gap-1">
+                        <fa-icon
+                            [fixedWidth]="true"
+                            [icon]="faChevronRight"
+                            class="text-secondary btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center"
+                            size="xs"
+                        />
+                        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary d-flex justify-content-center align-items-center" size="xs" />
                     </div>
-                    <fa-icon [icon]="faLink" />
-                </button>
-            </div>
-        }
-        @if (rateLimitInfo.rateLimit > 0) {
-            <div class="toolbox">
-                <span class="rate-limit" [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo.rateLimitTimeframeHours }">
-                    {{ rateLimitInfo.currentMessageCount }} / {{ rateLimitInfo.rateLimit }}
-                </span>
-            </div>
-        }
-        <div class="toolbox">
-            @if (this.messages.length >= 1) {
-                <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
-                    <fa-icon [icon]="faPenToSquare" />
                 </button>
             }
 
-            @if (fullSize !== undefined) {
-                <button (click)="fullSizeToggle.next()" class="header-control">
-                    @if (!fullSize) {
-                        <fa-icon [icon]="faExpand" />
-                    } @else {
-                        <fa-icon [icon]="faCompress" />
-                    }
-                </button>
-            }
+            <jhi-iris-logo [size]="IrisLogoSize.FLUID" />
 
-            @if (showCloseButton) {
-                <button (click)="closeChat()" class="header-control">
-                    <fa-icon [icon]="faXmark" />
-                </button>
+            <div class="word-iris">{{ isChatGptWrapper ? 'ChatGPT' : 'Iris' }}</div>
+            @if (!isChatGptWrapper) {
+                <a [routerLink]="'/about-iris'" target="_blank">
+                    <fa-icon [icon]="faCircleInfo" class="info-button" />
+                </a>
             }
         </div>
+        <div class="d-flex gap-2">
+            @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
+                <div class="toolbox">
+                    <button [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
+                        <div>
+                            {{ relatedEntityLinkButtonLabel() | artemisTranslate }}
+                        </div>
+                        <fa-icon [icon]="faLink" />
+                    </button>
+                </div>
+            }
+            @if (rateLimitInfo.rateLimit > 0) {
+                <div class="toolbox">
+                    <span class="rate-limit" [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo.rateLimitTimeframeHours }">
+                        {{ rateLimitInfo.currentMessageCount }} / {{ rateLimitInfo.rateLimit }}
+                    </span>
+                </div>
+            }
+            <div class="toolbox">
+                @if (this.messages.length >= 1) {
+                    <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
+                        <fa-icon [icon]="faPenToSquare" />
+                    </button>
+                }
+
+                @if (fullSize !== undefined) {
+                    <button (click)="fullSizeToggle.next()" class="header-control">
+                        @if (!fullSize) {
+                            <fa-icon [icon]="faExpand" />
+                        } @else {
+                            <fa-icon [icon]="faCompress" />
+                        }
+                    </button>
+                }
+
+                @if (showCloseButton) {
+                    <button (click)="closeChat()" class="header-control">
+                        <fa-icon [icon]="faXmark" />
+                    </button>
+                }
+            </div>
+        </div>
     </div>
-</div>
+}
 <ng-template #clearConfirmModal let-modal>
     <div class="modal-header">
         <h4 class="modal-title">
@@ -97,6 +99,10 @@
                 <div class="chat-history-container">
                     <div class="chat-history-close-btn-row">
                         <h6 jhiTranslate="artemisApp.iris.chatHistory.title"></h6>
+                    </div>
+
+                    <div class="px-2 mt-2 mb-3">
+                        <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
                     </div>
 
                     @let todaySessions = getSessionsBetween(0, 0);
@@ -222,7 +228,7 @@
                 }
             </div>
         }
-        @if (!messages?.length) {
+        @if (!messages?.length && !isEmbeddedChat()) {
             <div class="empty-chat-message">
                 <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                 <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>

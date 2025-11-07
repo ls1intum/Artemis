@@ -40,14 +40,14 @@ export interface Channel {
     subTypeWithReferenceFromChannel?: Channel;
 }
 export namespace Channel {
-    export type SubTypeEnum = 'general' | 'exercise' | 'lecture' | 'exam' | 'feedbackDiscussion';
     export const SubTypeEnum = {
-        General: 'general' as SubTypeEnum,
-        Exercise: 'exercise' as SubTypeEnum,
-        Lecture: 'lecture' as SubTypeEnum,
-        Exam: 'exam' as SubTypeEnum,
-        FeedbackDiscussion: 'feedbackDiscussion' as SubTypeEnum
-    };
+        General: 'general',
+        Exercise: 'exercise',
+        Lecture: 'lecture',
+        Exam: 'exam',
+        FeedbackDiscussion: 'feedbackDiscussion'
+    } as const;
+    export type SubTypeEnum = typeof SubTypeEnum[keyof typeof SubTypeEnum];
 }
 
 

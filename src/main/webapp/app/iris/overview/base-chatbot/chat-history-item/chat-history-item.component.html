@@ -8,7 +8,7 @@
     (keydown.enter)="onItemClick()"
 >
     <div class="chat-history-text">
-        {{ session().creationDate | date: 'dd.MM.yy HH:mm' }}
+        {{ session().title ? session().title : (session().creationDate | date: 'dd.MM.yy HH:mm') }}
     </div>
     @if (relatedEntityName() && icon() && tooltipKey()) {
         <div class="related-entity-info">

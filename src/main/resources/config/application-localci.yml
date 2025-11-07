@@ -9,12 +9,12 @@ artemis:
         docker-connection-uri: unix:///var/run/docker.sock
         # Set this to true if you want to specify the number of build that can run concurrently on this node. If false, the number will be determined based on system resources.
         specify-concurrent-builds: false
-        # The number of builds that can run concurrently on this node.
+        # The number of builds that can run concurrently on this build agent node.
         concurrent-build-size: 1
         # If true, the CI jobs will be executed asynchronously. If false, the CI jobs will be executed synchronously (e.g. for debugging and tests).
         asynchronous: true
-        # The number of results that can be processed concurrently. This is used to speed up the processing of the results of the CI jobs. Increase for production setups according to your available cpu resources.
-        concurrent-result-processing-size: 1
+        # The number of results that can be processed concurrently. This is used to speed up the processing of the results of the CI jobs. Adapt according to your available hardware resources and expected load on the CI system.
+        concurrent-result-processing-size: 16
         # The prefix that is used for the Docker containers that are created by the local CI system.
         build-container-prefix: local-ci-
         # In case you need to use a proxy to access the internet from the Docker container (e.g., due to firewall constraints), set use-system-proxy to true and configure the proxy settings below.
@@ -30,6 +30,7 @@ artemis:
             expiry-days: 2
             # Time of cleanup (cron expression)
             cleanup-schedule-time: 0 0 3 * * *
+        data-store: Hazelcast # set Hazelcast, Redis, Local as data store for Local CI data
         # This specifies the options that are shown to the instructor when creating a new programming exercise. Max value also defines the max timeout for the build.
         # The max value should be the same specified in application-buildagent.yml
         build-timeout-seconds:
@@ -37,3 +38,4 @@ artemis:
             default: 120 # The default number of seconds that will be used if the instructor does not specify a value. This is the default value that will be shown in the slider when creating or editing a programming exercise.
             # Max value also defines the max timeout for the build. Meaning that builds that exceed this time will be automatically interrupted.
             max: 240 # The maximum number of seconds that the instructor can set for the build timeout. This is the maximum value that will be shown in the slider when creating or editing a programming exercise.
+        max-missing-job-retries: 3 # The Maximium number of retries for jobs that are missing (jobs that got persisted but are neither still running, queued or completed)

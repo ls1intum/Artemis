@@ -51,6 +51,10 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -105,6 +109,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testNoGoogleImport() {
+        ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google");
+        noGoogleDependencies.check(allClasses);
+    }
+
+    @Test
     void testClassNameAndVisibility() {
         ArchRule classNames = methods().that().areAnnotatedWith(Test.class).should().beDeclaredInClassesThat().haveNameMatching(".*Test").orShould().beDeclaredInClassesThat()
                 .areAnnotatedWith(Nested.class);
@@ -115,6 +125,16 @@ class ArchitectureTest extends AbstractArchitectureTest {
         classNames.check(testClasses);
         noPublicTestClasses.check(testClasses.that(are(not(or(simpleNameContaining("Abstract"), INTERFACES)))));
         noPublicTests.check(testClasses);
+    }
+
+    @Test
+    // TODO When upgrading to Spring Boot 4, we can remove this test.
+    @SuppressWarnings("removal")
+    void testNoMockBeanAndSpyBean() {
+        ArchRule noMockBeanAndSpyBean = noFields().should().beAnnotatedWith(MockBean.class).orShould().beAnnotatedWith(SpyBean.class)
+                .because("We use @MockitoBean or @MockitoSpyBean.");
+        noMockBeanAndSpyBean.check(testClasses);
+
     }
 
     @Test
@@ -282,8 +302,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
             public void check(JavaClass item, ConditionEvents events) {
                 boolean hasProfileAnnotation = item.isAnnotatedWith(Profile.class);
                 boolean hasConditionalAnnotation = item.isAnnotatedWith(Conditional.class);
-                if (!(hasProfileAnnotation || hasConditionalAnnotation)) {
-                    String message = String.format("Class %s is neither annotated with @Profile or @Conditional", item.getFullName());
+                boolean hasConditionalOnExpression = item.isAnnotatedWith(ConditionalOnExpression.class);
+                boolean hasConditionalOnProperty = item.isAnnotatedWith(ConditionalOnProperty.class);
+                if (!(hasProfileAnnotation || hasConditionalAnnotation || hasConditionalOnExpression || hasConditionalOnProperty)) {
+                    String message = String.format("Class %s is neither annotated with @Profile, @Conditional, @ConditionalOnExpression or @ConditionalOnProperty",
+                            item.getFullName());
                     events.add(SimpleConditionEvent.violated(item, message));
                 }
             }

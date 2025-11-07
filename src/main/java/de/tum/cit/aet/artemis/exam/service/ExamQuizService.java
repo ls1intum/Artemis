@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -47,8 +46,8 @@ public class ExamQuizService {
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
     public ExamQuizService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            QuizExerciseRepository quizExerciseRepository, QuizStatisticService quizStatisticService, ResultService resultService,
-            QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository) {
+            QuizExerciseRepository quizExerciseRepository, QuizStatisticService quizStatisticService, QuizSubmissionRepository quizSubmissionRepository,
+            SubmittedAnswerRepository submittedAnswerRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
@@ -65,6 +64,7 @@ public class ExamQuizService {
      * @param studentExam The test run or test exam containing the users participations in all exam exercises
      */
     public void evaluateQuizParticipationsForTestRunAndTestExam(StudentExam studentExam) {
+        log.debug("Evaluating quiz participations for test run/test exam for student exam with id {}", studentExam.getId());
         final var participations = studentExam.getExercises().stream()
                 .flatMap(exercise -> exercise.getStudentParticipations().stream().filter(participation -> participation.getExercise() instanceof QuizExercise))
                 .collect(Collectors.toSet());

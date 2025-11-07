@@ -63,9 +63,10 @@ Artemis brings interactive learning to life with instant, individual feedback on
     * **Questions**: Iris supports students with answering questions about exercises, lectures, and the learning performance instantly.
     * **Pro-active assistance**: Iris can pro-actively communicate with the students, help them with the next steps in their learning experience and motivate them to continue.
 14. **[Athena](https://github.com/ls1intum/edutelligence/tree/main/athena)**: Artemis integrates Athena, a machine learning-based tool that supports instructors with the assessment of text, modeling and programming exercises. Athena offers different modules including automatic feedback suggestions based on generative AI. 
-15. **[Tutorial groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis supports the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
-16. **[Plagiarism checks](https://docs.artemis.cit.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
-17. **[LTI](https://docs.artemis.cit.tum.de/user/lti)**: Artemis supports the Learning Tools Interoperability (LTI) standard to integrate Artemis into other learning management systems (LMS) such as Moodle and edX.
+15. **Hyperion**: Artemis integrates Hyperion (via Spring AI), an AI-driven exercise creation assistant that helps instructors create high-quality exercises more efficiently through consistency checking and more.
+16. **[Tutorial groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis supports the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
+17. **[Plagiarism checks](https://docs.artemis.cit.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
+18. **[LTI](https://docs.artemis.cit.tum.de/user/lti)**: Artemis supports the Learning Tools Interoperability (LTI) standard to integrate Artemis into other learning management systems (LMS) such as Moodle and edX.
 
 ## EduTelligence Integration
 
@@ -101,7 +102,6 @@ The Artemis development team prioritizes the following areas in the future. We w
 * **Medium term**: Add automatic generation of hints for programming exercises
 * **Medium term**: Add GenAI support for reviewing exercises for instructors
 * **Medium term**: Add GenAI support for learning analytics (partly done)
-* **Long term**: Explore the possibilities of microservices, Kubernetes based deployment, and micro frontends
 * **Long term**: Allow students to take notes on lecture slides and support the automatic updates of lecture slides
 * **Long term**: Develop an exchange platform for exercises
 
@@ -137,7 +137,7 @@ The following members of the project management team are responsible for specifi
 | Quiz exercises        | Timor Morrien ([@Hialus](https://github.com/Hialus))                               |
 | Modeling exercises    | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
 | Text exercises        | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
-| File upload exercises | Elisabeth Friesinger ([@easy-lisi](https://github.com/easy-lisi))                  |
+| File upload exercises | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Exam mode             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Assessment            | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
 | Communication         | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
@@ -145,6 +145,8 @@ The following members of the project management team are responsible for specifi
 | Atlas                 | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
 | Iris                  | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
 | Athena                | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
+| Hyperion              | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
+| Nebula                | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
 | Tutorial Groups       | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
 | Plagiarism checks     | Markus Paulsen ([@MarkusPaulsen](https://github.com/MarkusPaulsen))                |
 | LTI                   | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
@@ -157,7 +159,8 @@ The following members of the project management team are responsible for specifi
 
 * [How to set up your local development environment](https://docs.artemis.cit.tum.de/dev/setup/)
 * [Server coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/)
-* [Client coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/)
+* [Client coding guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/)
+* [Design guidelines](https://ls1intum.github.io/ui-ux-guidelines/)
 * [Code Review Guidelines](https://docs.artemis.cit.tum.de/dev/development-process/development-process.html#review-process)
 * [Performance Guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/performance/)
 
@@ -202,7 +205,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.4.0.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.5.0.war
 ```
 
 ## Architecture

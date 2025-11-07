@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -42,7 +42,7 @@ import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/cour
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -82,7 +82,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
-    private readonly calendarEventService = inject(CalendarEventService);
+    private readonly calendarService = inject(CalendarService);
 
     exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
@@ -95,6 +95,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
+    @ViewChild('editForm', { read: ElementRef }) editFormEl?: ElementRef<HTMLFormElement>;
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
@@ -294,6 +295,37 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.calculateFormSectionStatus();
     }
 
+    handleEnterKeyNavigation(event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        const activeElement = document.activeElement as HTMLElement;
+
+        if (activeElement?.tagName === 'TEXTAREA' || activeElement?.isContentEditable) {
+            return;
+        }
+
+        const formRoot = this.editFormEl?.nativeElement as HTMLElement | undefined;
+        if (!formRoot) {
+            return;
+        }
+
+        const apollonContainer = formRoot.querySelector('.apollon-container');
+        if (apollonContainer?.contains(activeElement)) {
+            return;
+        }
+
+        const focusableElements = Array.from(
+            formRoot.querySelectorAll(
+                'input:not([disabled]):not([readonly]):not([tabindex="-1"]):not([hidden]):not([type="hidden"]), ' + 'select:not([disabled]):not([tabindex="-1"]):not([hidden])',
+            ),
+        ) as HTMLElement[];
+
+        const currentIndex = focusableElements.indexOf(activeElement);
+        if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
+            focusableElements[currentIndex + 1].focus();
+        }
+    }
+
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
         this.isSaving = true;
@@ -321,7 +353,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.isSaving = false;
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
-        this.calendarEventService.refresh();
+        this.calendarService.reloadEvents();
     }
 
     private onSaveError(errorRes: HttpErrorResponse): void {

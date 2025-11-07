@@ -63,6 +63,9 @@
                     "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
                     "languageStepTitle": "Sprache",
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
+                    "versionControlTitle": "Versionskontrolle",
+                    "versionControlMessage": "Lege fest, welche Features für die Versionskontrolle erlaubt sein sollen.",
+                    "versionControlDocumentationLink": "Für weitere Informationen, lese bitte die <a target=\"_blank\" href=\"https://docs.artemis.cit.tum.de/user/exercises/programming.html#generate-programming-exercise\">Dokumentation</a> zur Aufgabenerstellung.",
                     "problemStepTitle": "Aufgabe",
                     "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
                     "gradingStepTitle": "Bewertung",
@@ -149,6 +152,14 @@
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "onlineIde": "Online IDE",
+            "allowBranching": {
+                "title": "Eigene Branches erlauben",
+                "description": "Erlaubt Studierenden, andere Branches als den default Branch zu pushen. Achtung! Diese Branches werden nicht in der Benutzeroberfläche angezeigt, und diese stellt auch keinen Merge-Support bereit. Studierende müssen ihre Branches lokal verwalten. Nur aktivieren, falls zusätzliche Branches wirklich benötigt werden."
+            },
+            "branchRegex": {
+                "title": "Regex für den Branchnamen",
+                "description": "Namens für andere Branches als der default Branch müssen im Namen dem Regex entsprechen."
+            },
             "showTestNamesToStudents": "Zeige die Testnamen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
@@ -730,6 +741,13 @@
                     "title": "Resultat der Konsistenzprüfung",
                     "improvement": "Verbesserungsempfehlung",
                     "inconsistencies": "Bitte überprüfe die FAQ auf inhaltliche Inkonsistenzen und passe es entsprechend an, damit es stimmig und klar verständlich ist."
+                }
+            },
+            "sharing": {
+                "import": "Programmieraufgabe aus der Austauschplattform importieren",
+                "export": "Exportieren in die Austauschplattform",
+                "error": {
+                    "export": "Kann Aufgabe nicht exportieren: {{ message }}"
                 }
             }
         },

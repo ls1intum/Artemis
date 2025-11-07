@@ -2,27 +2,20 @@ package de.tum.cit.aet.artemis.core.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.user.util.UserTestService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsUserManagementService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
 // TODO: rewrite this test to use LocalVC
@@ -30,28 +23,16 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
 
     private static final String TEST_PREFIX = "userjenk"; // shorter prefix as user's name is limited to 50 chars
 
-    @Value("${artemis.continuous-integration.user}")
-    private String jenkinsAdminUsername;
-
-    @Value("${jenkins.use-pseudonyms:#{false}}")
-    private boolean usePseudonymsJenkins;
-
     @Autowired
     private UserTestService userTestService;
 
     @Autowired
     private PasswordService passwordService;
 
-    @Autowired
-    private JenkinsUserManagementService jenkinsUserManagementService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
     @BeforeEach
     void setUp() throws Exception {
-        userTestService.setup(TEST_PREFIX, this);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        userTestService.setup(TEST_PREFIX);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
@@ -64,18 +45,6 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_asAdmin_isSuccessful() throws Exception {
         userTestService.updateUser_asAdmin_isSuccessful();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void updateUserInvalidId() throws Exception {
-        userTestService.updateUserInvalidId();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void updateUserExistingEmail() throws Exception {
-        userTestService.updateUserExistingEmail();
     }
 
     @Test
@@ -94,47 +63,6 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateUser_asTutor_forbidden() throws Exception {
         request.put("/api/core/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUserWithPseudonymsIsSuccessful() throws Exception {
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "usePseudonyms", true);
-        userTestService.createExternalUser_asAdmin_isSuccessful();
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "usePseudonyms", usePseudonymsJenkins);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createAdminUserSkippedInJenkins() throws Exception {
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", "batman");
-        userTestService.createExternalUser_asAdmin_isSuccessful();
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createAdminInternalUserSkippedInJenkins() throws Exception {
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", "batman");
-        userTestService.createInternalUser_asAdmin_isSuccessful();
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteAdminUserSkippedInJenkins() throws Exception {
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", TEST_PREFIX + "student1");
-        jenkinsRequestMockProvider.mockGetAnyUser(false, 1);
-        userTestService.deleteUser_isSuccessful();
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void updateAdminUserSkippedInJenkins() throws Exception {
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", TEST_PREFIX + "student1");
-        userTestService.updateUser_asAdmin_isSuccessful();
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
     }
 
     @Test
@@ -181,24 +109,6 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUser_asAdmin_illegalLogin_internalError() throws Exception {
-        userTestService.createUser_asAdmin_illegalLogin_internalError();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUser_asAdmin_failInExternalUserManagement_internalError() throws Exception {
-        userTestService.createUser_asAdmin_failInExternalCiUserManagement_internalError();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUser_asAdmin_failInExternalCiUserManagement_cannotGetCiUser_internalError() throws Exception {
-        userTestService.createUser_asAdmin_failInExternalCiUserManagement_cannotGetCiUser_internalError();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
         userTestService.createUser_withNullAsPassword_generatesRandomPassword();
     }
@@ -209,7 +119,6 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteUser_isSuccessful() throws Exception {
-        jenkinsRequestMockProvider.mockGetAnyUser(false, 1);
         userTestService.deleteUser_isSuccessful();
     }
 
@@ -229,7 +138,6 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "ADMIN")
     void deleteUsers_isSuccessfulForAllUsersExceptSelf() throws Exception {
-        jenkinsRequestMockProvider.mockGetAnyUser(true, 4);
         userTestService.deleteUsers(TEST_PREFIX + "tutor1");
     }
 
@@ -314,32 +222,13 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUserWithGroupsAlreadyExists() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-
         User newUser = userTestService.student;
         newUser.setId(null);
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
         newUser.setGroups(Set.of("tutor", "instructor"));
 
-        jenkinsRequestMockProvider.mockCreateUser(newUser, false, false, false);
         request.post("/api/core/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUserWithGroupsAlreadyFails() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-
-        User newUser = userTestService.student;
-        newUser.setId(null);
-        newUser.setLogin("batman");
-        newUser.setEmail("foobar@tum.com");
-        newUser.setGroups(Set.of("tutor", "instructor2"));
-
-        request.post("/api/core/admin/users", new ManagedUserVM(newUser), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -368,12 +257,9 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
         String password = "this is a password";
         userTestService.student.setPassword(passwordService.hashPassword(password));
         userTestRepository.save(userTestService.student);
-        var oldLogin = userTestService.student.getLogin();
         User user = userTestService.student;
         user.setLogin("new-login");
         user.setActivated(false);
-
-        jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
 
         request.put("/api/core/admin/users", new ManagedUserVM(user, password), HttpStatus.OK);
 
@@ -386,7 +272,7 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUser() throws Exception {
-        userTestService.initializeUser(true);
+        userTestService.initializeUser();
     }
 
     @Test
@@ -398,8 +284,6 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUserNonLTI() throws Exception {
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        jenkinsRequestMockProvider.mockUpdateUserAndGroups(user.getLogin(), user, Collections.emptySet(), Collections.emptySet(), true);
         userTestService.initializeUserNonLTI();
     }
 

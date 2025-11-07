@@ -8,6 +8,7 @@ import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 
 const map = new Map<string, any>();
 map.set('model', 'gpt-4');
@@ -33,11 +34,27 @@ export const mockServerMessage2 = {
     sentAt: dayjs(),
 } as IrisAssistantMessage;
 
+export const mockServerMessageWithMemories = {
+    sender: IrisSender.LLM,
+    id: 3,
+    content: [mockMessageContent],
+    sentAt: dayjs(),
+    accessedMemories: [new MemirisMemory('UUID', 'Memory Title', 'Memory content', [], [], false, false)],
+};
+
 export const mockClientMessage = {
     id: 2,
     sender: IrisSender.USER,
     content: [mockMessageContent],
     sentAt: dayjs(),
+} as IrisUserMessage;
+
+export const mockClientMessageWithMemories = {
+    id: 5,
+    sender: IrisSender.USER,
+    content: [mockMessageContent],
+    sentAt: dayjs(),
+    createdMemories: [new MemirisMemory('UUID', 'Memory Title', 'Memory content', [], [], false, false)],
 } as IrisUserMessage;
 
 export const mockWebsocketServerMessage = {
@@ -46,9 +63,20 @@ export const mockWebsocketServerMessage = {
     stages: [],
 } as IrisChatWebsocketDTO;
 
+export const mockWebsocketServerMessageWithMemories = {
+    type: IrisChatWebsocketPayloadType.MESSAGE,
+    message: mockServerMessageWithMemories,
+    stages: [],
+} as IrisChatWebsocketDTO;
+
 export const mockWebsocketClientMessage = {
     type: IrisChatWebsocketPayloadType.MESSAGE,
     message: mockClientMessage,
+} as IrisChatWebsocketDTO;
+
+export const mockWebsocketClientMessageWithMemories = {
+    type: IrisChatWebsocketPayloadType.MESSAGE,
+    message: mockClientMessageWithMemories,
 } as IrisChatWebsocketDTO;
 
 export const mockWebsocketStatusMessage = {
@@ -57,6 +85,21 @@ export const mockWebsocketStatusMessage = {
         {
             name: 'Stage 1',
             state: IrisStageStateDTO.IN_PROGRESS,
+        },
+    ],
+} as IrisChatWebsocketDTO;
+
+export const mockWebsocketStatusMessageWithInteralStage = {
+    type: IrisChatWebsocketPayloadType.STATUS,
+    stages: [
+        {
+            name: 'Stage 1',
+            state: IrisStageStateDTO.IN_PROGRESS,
+        },
+        {
+            name: 'Internal Stage',
+            state: IrisStageStateDTO.IN_PROGRESS,
+            internal: true,
         },
     ],
 } as IrisChatWebsocketDTO;

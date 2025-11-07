@@ -4,7 +4,7 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 export class StatsForDashboard {
     public numberOfStudents = 0;
     public numberOfSubmissions = new DueDateStat();
-    public totalNumberOfAssessments = new DueDateStat();
+    public totalNumberOfAssessments = 0;
     public numberOfAutomaticAssistedAssessments = new DueDateStat();
     public numberOfComplaints = 0;
     public numberOfOpenComplaints = 0;
@@ -23,13 +23,12 @@ export class StatsForDashboard {
     /**
      * Correctly initializes a class instance from a typecasted object.
      * Returns a 'real' class instance that supports all class methods.
-     * @param object: The typecasted object
+     * @param statsForDashboard The type casted object
      * @returns The class instance
      */
-    static from(object: StatsForDashboard): StatsForDashboard {
-        const stats = Object.assign(new StatsForDashboard(), object);
+    static from(statsForDashboard: StatsForDashboard): StatsForDashboard {
+        const stats = Object.assign(new StatsForDashboard(), statsForDashboard);
         stats.numberOfSubmissions = Object.assign(new DueDateStat(), stats.numberOfSubmissions);
-        stats.totalNumberOfAssessments = Object.assign(new DueDateStat(), stats.totalNumberOfAssessments);
         stats.numberOfAutomaticAssistedAssessments = Object.assign(new DueDateStat(), stats.numberOfAutomaticAssistedAssessments);
         return stats;
     }

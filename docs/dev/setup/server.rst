@@ -250,3 +250,49 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 .. code:: bash
 
    ./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,localvc,artemis,scheduling'
+
+.. _hyperion-service:
+
+Hyperion (Optional)
+^^^^^^^^^^^^^^^^^^^^
+
+Hyperion provides AI-assisted exercise creation features via Spring AI. No external Edutelligence service is required, only a LLM provider such as OpenAI or Azure OpenAI.
+
+Quick setup for development
+"""""""""""""""""""""""""""
+
+1. Enable the hyperion service
+
+    In your ``application-local.yml``, enable the hyperion service:
+
+   .. code-block:: yaml
+
+        artemis:
+            hyperion:
+                enabled: true
+
+2. Configure Spring AI
+
+   Set up your preferred provider (Azure OpenAI or OpenAI) in ``application-local.yml``. Examples:
+
+   .. code-block:: yaml
+
+        spring:
+          ai:
+            # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
+            azure:
+              openai:
+                api-key: <azure_openai_key> # comment out if using OpenAI
+                # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets non-azure endpoint automatically
+                endpoint: <azure_openai_endpoint> # comment out if using OpenAI
+                chat:
+                  options:
+                    deployment-name: <azure_openai_deployment_name or openai_model_name>
+                    # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
+                    temperature: 1.0
+
+Production setup
+""""""""""""""""
+
+See :ref:`Hyperion Service <hyperion_admin_setup>` in the Administration Guide for instructions on enabling the
+module in production and configuring LLM credentials.

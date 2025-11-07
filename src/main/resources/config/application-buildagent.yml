@@ -9,17 +9,23 @@
 # TODO: we should make sure this is not required here, because build agent could never enable those modules / features
 artemis:
     atlas:
-      enabled: false
+        enabled: false
+    hyperion:
+        enabled: false
     exam:
-      enabled: false
+        enabled: false
     plagiarism:
-      enabled: false
+        enabled: false
     text:
-      enabled: false
+        enabled: false
     tutorialgroup:
-      enabled: false
+        enabled: false
     user-management:
-      passkey:
+        passkey:
+            enabled: false
+    nebula:
+        enabled: false
+    sharing:
         enabled: false
 
     checked-out-repos-path: ./checked-out-repos # The directory to which repositories temporarily get cloned for the build job execution
@@ -64,6 +70,7 @@ artemis:
             max-cpu-count: 4 # The maximum number of CPU cores that can be used by the build agent. If a higher value is specified, the build agent will be limited to this value. Value must be a positive integer. 0 means unlimited.
             max-memory: 8096 # The maximum amount of memory that can be used by the build agent. If a higher value is specified, the build agent will be limited to this value. Value must be a positive integer. 0 means unlimited.
             max-memory-swap: 8096 # The maximum amount of memory swap that can be used by the build agent. If a higher value is specified, the build agent will be limited to this value. Value must be a positive integer. 0 means unlimited.
+        data-store: Hazelcast # set Hazelcast, Redis, Local as data store for Local CI data
     git:
         name: Artemis
         email: artemis@xcit.tum.de
@@ -76,12 +83,14 @@ spring:
             # Hibernate and DataSource are not needed in the build agent
             - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
             - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-            # Those metrics are repeated here, because overriding the `exclude` array is not possible
+            # Those 6 exclusions are repeated here from application-core.yml, because overriding the `exclude` array is not possible
+            # Important: Make sure to keep the exclusions in sync with the `application-core.yml` file, except for the build agent specific exclusions
             - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+            - tech.jhipster.config.apidoc.JHipsterSpringDocAutoConfiguration
     cloud:
         loadbalancer:
             cache:
@@ -109,5 +118,5 @@ eureka:
         enabled: true
 
 helios:
-  status:
-    enabled: false
+    status:
+        enabled: false

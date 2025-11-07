@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
@@ -43,20 +43,22 @@ export class AccountService implements IAccountService {
     private readonly featureToggleService = inject(FeatureToggleService);
 
     // cached value of the user to avoid unnecessary requests to the server
-    private userIdentityValue?: User;
-    private authenticated = false;
+    userIdentity = signal<User | undefined>(undefined);
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
 
-    // TODO get and set userIdentity should be converted to a signal instead
-    get userIdentity() {
-        return this.userIdentityValue;
+    readonly authenticated = computed(() => !!this.userIdentity());
+
+    constructor() {
+        effect(() => {
+            this.handleSideEffectsWhenUserLogsInOrOut();
+        });
     }
 
-    set userIdentity(user: User | undefined) {
-        this.userIdentityValue = user;
-        this.authenticated = !!user;
+    private handleSideEffectsWhenUserLogsInOrOut(): void {
+        const isAuthenticated = this.authenticated();
         // Alert subscribers about user updates, that is when the user logs in or logs out (undefined).
+        const user = isAuthenticated ? untracked(() => this.userIdentity()) : undefined;
         this.authenticationState.next(user);
 
         // We only subscribe the feature toggle updates when the user is logged in, otherwise we unsubscribe them.
@@ -82,11 +84,17 @@ export class AccountService implements IAccountService {
     }
 
     authenticate(identity?: User) {
-        this.userIdentity = identity;
+        this.userIdentity.set(identity);
     }
 
     syncGroups(groups: string[]) {
-        this.userIdentity!.groups = groups;
+        this.userIdentity.update((currentUserIdentity) => {
+            if (!currentUserIdentity) {
+                return currentUserIdentity;
+            }
+            currentUserIdentity.groups = groups;
+            return currentUserIdentity;
+        });
     }
 
     hasAnyAuthority(authorities: string[]): Promise<boolean> {
@@ -94,12 +102,12 @@ export class AccountService implements IAccountService {
     }
 
     hasAnyAuthorityDirect(authorities: string[]): boolean {
-        if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities) {
+        if (!this.authenticated() || !this.userIdentity()?.authorities) {
             return false;
         }
 
         for (let i = 0; i < authorities.length; i++) {
-            if (this.userIdentity.authorities.includes(authorities[i])) {
+            if (this.userIdentity()?.authorities?.includes(authorities[i])) {
                 return true;
             }
         }
@@ -108,7 +116,7 @@ export class AccountService implements IAccountService {
     }
 
     hasAuthority(authority: string): Promise<boolean> {
-        if (!this.authenticated) {
+        if (!this.authenticated()) {
             return Promise.resolve(false);
         }
 
@@ -124,22 +132,22 @@ export class AccountService implements IAccountService {
     }
 
     hasGroup(group?: string): boolean {
-        if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities || !this.userIdentity.groups || !group) {
+        if (!this.authenticated() || !this.userIdentity()?.authorities || !this.userIdentity()?.groups || !group) {
             return false;
         }
 
-        return this.userIdentity.groups.some((userGroup: string) => userGroup === group);
+        return this.userIdentity()?.groups?.some((userGroup: string) => userGroup === group) ?? false;
     }
 
     identity(force?: boolean): Promise<User | undefined> {
         if (force) {
-            this.userIdentity = undefined;
+            this.userIdentity.set(undefined);
         }
 
         // check and see if we have retrieved the userIdentity data from the server.
         // if we have, reuse it by immediately resolving
-        if (this.userIdentity) {
-            return Promise.resolve(this.userIdentity);
+        if (this.userIdentity()) {
+            return Promise.resolve(this.userIdentity());
         }
 
         // retrieve the userIdentity data from the server, update the identity object, and then resolve.
@@ -148,24 +156,24 @@ export class AccountService implements IAccountService {
                 map((response: HttpResponse<User>) => {
                     const user = response.body!;
                     if (user) {
-                        this.userIdentity = user;
+                        this.userIdentity.set(user);
 
                         // improved error tracking in sentry
                         setUser({ username: user.login! });
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
-                        const langKey = this.userIdentity.langKey || this.sessionStorageService.retrieve<string>('locale');
+                        const langKey = this.userIdentity()?.langKey || this.sessionStorageService.retrieve<string>('locale');
                         if (langKey) {
                             this.translateService.use(langKey);
                         }
                     } else {
-                        this.userIdentity = undefined;
+                        this.userIdentity.set(undefined);
                     }
-                    return this.userIdentity;
+                    return this.userIdentity();
                 }),
                 catchError(() => {
-                    this.userIdentity = undefined;
+                    this.userIdentity.set(undefined);
                     return of(undefined);
                 }),
             ),
@@ -234,7 +242,7 @@ export class AccountService implements IAccountService {
     }
 
     isAuthenticated(): boolean {
-        return this.authenticated;
+        return this.authenticated();
     }
 
     getAuthenticationState(): Observable<User | undefined> {
@@ -278,9 +286,9 @@ export class AccountService implements IAccountService {
      */
     isOwnerOfParticipation(participation: StudentParticipation): boolean {
         if (participation.student) {
-            return this.userIdentity?.login === participation.student.login;
+            return this.userIdentity()?.login === participation.student.login;
         } else if (participation.team?.students) {
-            return participation.team.students.some((student) => this.userIdentity?.login === student.login);
+            return participation.team.students.some((student) => this.userIdentity()?.login === student.login);
         }
         throw new Error('Participation does not have any owners');
     }
@@ -291,13 +299,18 @@ export class AccountService implements IAccountService {
      * Returns undefined if the user is not authenticated or the user does not have an image.
      */
     getImageUrl() {
-        return this.isAuthenticated() && this.userIdentity ? addPublicFilePrefix(this.userIdentity.imageUrl) : undefined;
+        return this.isAuthenticated() && this.userIdentity() ? addPublicFilePrefix(this.userIdentity()!.imageUrl) : undefined;
     }
 
     setImageUrl(url: string | undefined) {
-        if (this.userIdentity != null) {
-            this.userIdentity!.imageUrl = url;
-        }
+        this.userIdentity.update((currentUserIdentity) => {
+            if (!currentUserIdentity) {
+                return currentUserIdentity;
+            }
+
+            currentUserIdentity.imageUrl = url;
+            return currentUserIdentity;
+        });
     }
 
     /**
@@ -310,7 +323,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Returns the current prefilled username and clears it. Necessary as we don't want to show the prefilled username after a later log out.
+     * Returns the current prefilled username and clears it. Necessary as we don't want to show the prefilled username after a later log-out.
      *
      * @returns the prefilled username
      */
@@ -354,7 +367,11 @@ export class AccountService implements IAccountService {
      */
     getVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.get<string>('api/core/account/participation-vcs-access-token', { observe: 'response', params, responseType: 'text' as 'json' });
+        return this.http.get<string>('api/core/account/participation-vcs-access-token', {
+            observe: 'response',
+            params,
+            responseType: 'text' as 'json',
+        });
     }
 
     /**
@@ -365,7 +382,11 @@ export class AccountService implements IAccountService {
      */
     createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.put<string>('api/core/account/participation-vcs-access-token', null, { observe: 'response', params, responseType: 'text' as 'json' });
+        return this.http.put<string>('api/core/account/participation-vcs-access-token', null, {
+            observe: 'response',
+            params,
+            responseType: 'text' as 'json',
+        });
     }
 
     /**
@@ -373,11 +394,30 @@ export class AccountService implements IAccountService {
      * to omit accepting external LLM usage popup appearing multiple time before user refreshes the page.
      */
     setUserAcceptedExternalLLMUsage(accepted: boolean = true): void {
-        if (!this.userIdentity) {
-            return;
-        }
+        this.userIdentity.update((currentUserIdentity) => {
+            if (!currentUserIdentity) {
+                return currentUserIdentity;
+            }
 
-        this.userIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
+            currentUserIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
+            return currentUserIdentity;
+        });
+    }
+
+    setUserEnabledMemiris(memirisEnabled: boolean): void {
+        this.http.put('api/core/account/enable-memiris', memirisEnabled).subscribe({
+            next: () => {
+                this.userIdentity.update((currentUserIdentity) => {
+                    if (!currentUserIdentity) {
+                        return currentUserIdentity;
+                    }
+
+                    currentUserIdentity.memirisEnabled = memirisEnabled;
+                    return currentUserIdentity;
+                });
+            },
+            error: (_) => {},
+        });
     }
 
     /**
@@ -385,6 +425,9 @@ export class AccountService implements IAccountService {
      * The Cookie stays valid, a new bearer token is generated on every call with a validity of max 1d.
      */
     getToolToken(tool: string): Observable<string> {
-        return this.http.post<string>('api/core/tool-token', null, { params: { tool: tool }, responseType: 'text' as 'json' });
+        return this.http.post<string>('api/core/tool-token', null, {
+            params: { tool: tool },
+            responseType: 'text' as 'json',
+        });
     }
 }

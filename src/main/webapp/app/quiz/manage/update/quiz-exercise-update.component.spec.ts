@@ -40,7 +40,7 @@ import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -157,7 +157,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -1045,8 +1045,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 quizExerciseServiceImportStub = jest.spyOn(quizExerciseService, 'import');
                 quizExerciseServiceImportStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-                const calendarEventService = TestBed.inject(CalendarEventService);
-                refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+                const calendarService = TestBed.inject(CalendarService);
+                refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
                 exerciseSanitizeSpy = jest.spyOn(Exercise, 'sanitize');
             });
 
@@ -1194,6 +1194,32 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.quizExercise.releaseDate = now;
                 comp.prepareEntity(comp.quizExercise);
                 expect(comp.quizExercise.releaseDate).toEqual(dayjs(now));
+            });
+
+            it('getEnhancedDescriptionForSuggestions should combine title and question texts, with fallback', () => {
+                // title only
+                comp.quizExercise.title = 'Quiz Title';
+                comp.quizExercise.quizQuestions = [];
+                expect(comp.getEnhancedDescriptionForSuggestions()).toBe('Quiz Title');
+
+                // title + questions
+                const q1 = new MultipleChoiceQuestion();
+                q1.title = 'Q1';
+                q1.text = 'First question';
+                const q2 = new MultipleChoiceQuestion();
+                q2.title = 'Q2';
+                q2.text = 'Second question';
+                comp.quizExercise.quizQuestions = [q1, q2];
+                const combined = comp.getEnhancedDescriptionForSuggestions();
+                expect(combined).toContain('Quiz Title');
+                expect(combined).toContain('Q1 First question');
+                expect(combined).toContain('Q2 Second question');
+
+                // fallback to problemStatement
+                comp.quizExercise.title = '';
+                comp.quizExercise.quizQuestions = [];
+                comp.quizExercise.problemStatement = 'Problem statement fallback';
+                expect(comp.getEnhancedDescriptionForSuggestions()).toBe('Problem statement fallback');
             });
         });
 

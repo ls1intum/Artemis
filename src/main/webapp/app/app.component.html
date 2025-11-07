@@ -13,21 +13,18 @@
         </div>
     }
     @if (showSkeleton) {
-        <div class="card" style="border-style: none">
-            <div class="card-body" [ngClass]="{ 'course-overview pt-0': isCourseOverview }">
+        <div>
+            <div [ngClass]="{ 'module-bg m-3 mb-5 p-3 mt-0 rounded rounded-3': usesModuleBackground }">
                 <router-outlet />
             </div>
         </div>
-    }
-    @if (!showSkeleton) {
+    } @else {
         <router-outlet />
     }
     <jhi-course-notification-popup-overlay />
     @if (showSkeleton && !isShownViaLti) {
-        <div>
-            @if (isTestRunExam || !isExamStarted) {
-                <jhi-footer />
-            }
-        </div>
+        @if (isTestRunExam || !isExamStarted) {
+            <jhi-footer />
+        }
     }
 </div>

@@ -1,0 +1,44 @@
+{
+    "artemisApp": {
+        "quizTraining": {
+            "noData": "no data",
+            "dueNow": "Next questions due now",
+            "nextQuestionsDue": "Next questions due in ",
+            "totalQuestions": "Total questions",
+            "howItWorks": {
+                "title": "How Training Works",
+                "content": "Practice quiz questions in a spaced repetition system one question at a time. If there are no questions due, you can still practice in the unrated mode, which will not affect the leaderboard."
+            },
+            "leagues": {
+                "title": "Leagues and Scoring",
+                "content": "You can participate in a leaderboard against other students in the same league. The settings for the leaderboard can be changed in the user settings."
+            },
+            "scoring": {
+                "content": "Answer questions correctly to collect points and rank up to higher leagues. The more often a question is answered correctly in a row, the more points you earn for it."
+            },
+            "showInLeaderboard": "Show my name in the quiz leaderboard",
+            "bronzeLeague": "Bronze league",
+            "silverLeague": "Silver league",
+            "goldLeague": "Gold league",
+            "diamondLeague": "Diamond league",
+            "masterLeague": "Master league",
+            "noLeague": "No league",
+            "rank": "Rank",
+            "student": "Student",
+            "score": "Score",
+            "scorecard": "Scorecard",
+            "correctQuestions": "correct answers",
+            "wrongQuestions": "wrong answers",
+            "theQuizTraining": "The Quiz Training Mode",
+            "save": "Save",
+            "confirm": "Confirm",
+            "infoButton": "View description",
+            "bronze": "Bronze",
+            "silver": "Silver",
+            "gold": "Gold",
+            "diamond": "Diamond",
+            "master": "Master",
+            "leaderboardSetting": "Leaderboard Settings"
+        }
+    }
+}

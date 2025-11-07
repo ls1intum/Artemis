@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
+import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -87,7 +88,7 @@ public class ProgrammingExerciseUtilService {
     protected String defaultBranch;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCRepoPath;
+    private Path localVCBasePath;
 
     @Autowired
     private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationTestRepo;
@@ -151,6 +152,9 @@ public class ProgrammingExerciseUtilService {
 
     @Autowired
     private GitService gitService;
+
+    @Autowired
+    private GitRepositoryExportService gitRepositoryExportService;
 
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
@@ -860,7 +864,7 @@ public class ProgrammingExerciseUtilService {
     public void createGitRepository() throws Exception {
         // Create repository
         var testRepo = new LocalRepository(defaultBranch);
-        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
+        testRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
         // Add test file to the repository folder
         Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/Test.java");
         var file = Files.createFile(filePath).toFile();
@@ -872,7 +876,7 @@ public class ProgrammingExerciseUtilService {
         // Mock Git service operations
         doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString(), anyBoolean());
         doNothing().when(gitService).resetToOriginHead(any());
-        doReturn(Path.of("repo.zip")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
-        doReturn(Path.of("repo")).when(gitService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));
+        doReturn(Path.of("repo.zip")).when(gitRepositoryExportService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
+        doReturn(Path.of("repo")).when(gitRepositoryExportService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));
     }
 }

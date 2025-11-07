@@ -7,6 +7,7 @@ import java.time.ZoneId;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -59,11 +61,13 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final CourseRepository courseRepository;
 
-    public IrisCourseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
-            IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
-            IrisRateLimitService rateLimitService, IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService,
-            ObjectMapper objectMapper, CourseRepository courseRepository) {
-        super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
+    private final MessageSource messageSource;
+
+    public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
+            IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
+            IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService, IrisCourseChatSessionRepository irisCourseChatSessionRepository,
+            PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper, CourseRepository courseRepository, MessageSource messageSource) {
+        super(irisSessionRepository, null, null, objectMapper, irisMessageService, irisMessageRepository, irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -72,6 +76,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.pyrisPipelineService = pyrisPipelineService;
         this.courseRepository = courseRepository;
+        this.messageSource = messageSource;
     }
 
     /**
@@ -213,7 +218,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     }
 
     private IrisCourseChatSession createSessionInternal(Course course, User user, boolean sendInitialMessage) {
-        var session = irisCourseChatSessionRepository.save(new IrisCourseChatSession(course, user));
+        var courseChat = new IrisCourseChatSession(course, user);
+        courseChat.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
+        var session = irisCourseChatSessionRepository.save(courseChat);
 
         if (sendInitialMessage) {
             // Run async to allow the session to be returned immediately

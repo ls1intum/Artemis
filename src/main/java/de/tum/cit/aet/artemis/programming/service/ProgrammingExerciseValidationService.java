@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,12 +16,16 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
@@ -85,10 +90,12 @@ public class ProgrammingExerciseValidationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     public ProgrammingExerciseValidationService(AuxiliaryRepositoryService auxiliaryRepositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
-            Optional<VersionControlService> versionControlService1) {
+            Optional<VersionControlService> versionControlService1, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionPolicyService = submissionPolicyService;
@@ -96,6 +103,7 @@ public class ProgrammingExerciseValidationService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
         this.versionControlService = versionControlService1;
+        this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
     }
 
     /**
@@ -310,6 +318,41 @@ public class ProgrammingExerciseValidationService {
         String errorMessageCis = continuousIntegrationService.orElseThrow().checkIfProjectExists(projectKey, projectName);
         // means the project does not exist in version control server and does not exist in continuous integration server
         return errorMessageCis != null;
+    }
+
+    /**
+     * Checks whether the exercise to be updated has valid references to its template and solution repositories and build plans.
+     *
+     * @param exercise the programming exercise to be checked
+     * @throws BadRequestAlertException if one of the references is invalid
+     */
+    public void checkProgrammingExerciseForError(ProgrammingExercise exercise) {
+        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+        VersionControlService versionControl = versionControlService.orElseThrow();
+
+        if (!continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
+            throw new BadRequestAlertException("The Template Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID);
+        }
+        if (exercise.getVcsTemplateRepositoryUri() == null || !versionControl.repositoryUriIsValid(exercise.getVcsTemplateRepositoryUri())) {
+            throw new BadRequestAlertException("The Template Repository URI seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL);
+        }
+        if (exercise.getSolutionBuildPlanId() != null && !continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
+            throw new BadRequestAlertException("The Solution Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID);
+        }
+        var solutionRepositoryUri = exercise.getVcsSolutionRepositoryUri();
+        if (solutionRepositoryUri != null && !versionControl.repositoryUriIsValid(solutionRepositoryUri)) {
+            throw new BadRequestAlertException("The Solution Repository URI seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
+        }
+
+        // It has already been checked when setting the test case weights that their sum is at least >= 0.
+        // Only when changing the assessment format to automatic an additional check for > 0 has to be performed.
+        if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
+            if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(testCases)) {
+                throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
+                        ProgrammingExerciseErrorKeys.INVALID_TEST_CASE_WEIGHTS);
+            }
+        }
     }
 
 }

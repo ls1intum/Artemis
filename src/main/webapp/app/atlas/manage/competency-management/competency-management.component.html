@@ -27,24 +27,37 @@
     @if (isLoading()) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">
-                <span class="sr-only" jhiTranslate="loading"></span>
+                <span class="visually-hidden" jhiTranslate="loading"></span>
             </div>
         </div>
     }
     <jhi-competency-management-table
         [courseId]="courseId()"
-        [(allCompetencies)]="courseCompetencies"
         [courseCompetencies]="competencies()"
         [competencyType]="CourseCompetencyType.COMPETENCY"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
         (competencyDeleted)="onRemoveCompetency($event)"
+        (competenciesAdded)="onCompetenciesAdded($event)"
     />
     <jhi-competency-management-table
         [courseId]="courseId()"
-        [(allCompetencies)]="courseCompetencies"
         [courseCompetencies]="prerequisites()"
         [competencyType]="CourseCompetencyType.PREREQUISITE"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
         (competencyDeleted)="onRemoveCompetency($event)"
+        (competenciesAdded)="onCompetenciesAdded($event)"
     />
+
+    <!-- Floating Agent Chat Button -->
+    @if (agentChatEnabled()) {
+        <button
+            class="btn btn-primary rounded-circle agent-chat-button"
+            (click)="openAgentChatModal()"
+            [attr.aria-label]="'AI Assistant'"
+            title="Chat with AI Assistant"
+            id="agent-chat-button"
+        >
+            <fa-icon [icon]="faRobot" />
+        </button>
+    }
 </div>

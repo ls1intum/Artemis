@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.tutorialgroup.repository;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -16,6 +15,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -85,19 +85,6 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     boolean existsByTitleAndCourse(String title, Course course);
 
     @Query("""
-            SELECT DISTINCT tutorialGroups.id
-            FROM Course c
-                LEFT JOIN c.tutorialGroups tutorialGroups
-                LEFT JOIN tutorialGroups.teachingAssistant tutor
-                LEFT JOIN tutorialGroups.registrations registrations
-                LEFT JOIN registrations.student student
-            WHERE (c.startDate <= :now OR c.startDate IS NULL)
-                AND (c.endDate >= :now OR c.endDate IS NULL)
-                AND (student.id = :userId OR tutor.id = :userId)
-            """)
-    Set<Long> findAllActiveTutorialGroupIdsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
-
-    @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
                 LEFT JOIN FETCH tutorialGroup.teachingAssistant
@@ -141,6 +128,30 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
             """)
     Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
 
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO(
+                tutorialGroup.id,
+                tutorialGroup.title,
+                tutorialGroup.language,
+                tutorialGroup.isOnline,
+                tutorialGroup.capacity,
+                tutorialGroup.campus,
+                CONCAT(tutorialGroup.teachingAssistant.firstName, CONCAT(' ', tutorialGroup.teachingAssistant.lastName)),
+                tutorialGroup.teachingAssistant.login,
+                tutorialGroup.teachingAssistant.imageUrl,
+                channel.id,
+                schedule.dayOfWeek,
+                schedule.startTime,
+                schedule.endTime,
+                schedule.location
+            )
+            FROM TutorialGroup tutorialGroup
+                LEFT JOIN tutorialGroup.tutorialGroupChannel channel
+                LEFT JOIN tutorialGroup.tutorialGroupSchedule schedule
+            WHERE tutorialGroup.id = :tutorialGroupId AND tutorialGroup.course.id = :courseId
+            """)
+    Optional<RawTutorialGroupDetailGroupDTO> getTutorialGroupDetailData(@Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
+
     default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
         return getValueElseThrow(findByIdWithSessions(tutorialGroupId), tutorialGroupId);
     }
@@ -161,5 +172,5 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
         return getTutorialGroupWithChannel(tutorialGroupId).map(TutorialGroup::getTutorialGroupChannel);
     }
 
-    Long countByCourse(Course course);
+    Long countByCourseId(long courseId);
 }

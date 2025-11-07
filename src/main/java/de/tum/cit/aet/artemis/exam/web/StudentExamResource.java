@@ -69,12 +69,8 @@ import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
-import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -105,11 +101,7 @@ public class StudentExamResource {
 
     private final ExamSessionService examSessionService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final ExamRepository examRepository;
-
-    private final SubmittedAnswerRepository submittedAnswerRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -133,8 +125,7 @@ public class StudentExamResource {
 
     public StudentExamResource(ExamAccessService examAccessService, ExamDeletionService examDeletionService, StudentExamService studentExamService,
             StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
-            StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
-            StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
+            StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService, ExamRepository examRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
             SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService, ExamLiveEventRepository examLiveEventRepository) {
         this.examAccessService = examAccessService;
@@ -146,9 +137,7 @@ public class StudentExamResource {
         this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
         this.examSessionService = examSessionService;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.examRepository = examRepository;
-        this.submittedAnswerRepository = submittedAnswerRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
         this.websocketMessagingService = websocketMessagingService;
@@ -171,29 +160,8 @@ public class StudentExamResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
-
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
-
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSessionsAndStudentParticipationsElseThrow(studentExamId);
-
-        examService.loadQuizExercisesForStudentExam(studentExam);
-
-        // fetch participations, latest submissions and results for these exercises, note: exams only contain individual exercises for now
-        // fetching all participations at once is more effective
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, true);
-
-        // fetch all submitted answers for quizzes
-        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
-
-        // connect the exercises and student participations correctly and make sure all relevant associations are available
-        for (Exercise exercise : studentExam.getExercises()) {
-            // add participation with submission and result to each exercise
-            examService.filterParticipationForExercise(studentExam, exercise, participations, true);
-        }
-        studentExam.getUser().setVisibleRegistrationNumber();
-
-        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
-
+        StudentExamWithGradeDTO studentExamWithGradeDTO = studentExamService.getStudentExamWithGradeDTO(examId, studentExamId);
         return ResponseEntity.ok(studentExamWithGradeDTO);
     }
 

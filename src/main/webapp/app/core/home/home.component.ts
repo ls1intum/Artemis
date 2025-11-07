@@ -17,10 +17,7 @@ import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
-import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -35,23 +32,23 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 export class HomeComponent implements OnInit, AfterViewChecked {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faKey = faKey;
+
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
 
-    private router = inject(Router);
-    private activatedRoute = inject(ActivatedRoute);
-    private accountService = inject(AccountService);
-    private loginService = inject(LoginService);
-    private sessionStorageService = inject(SessionStorageService);
-    private renderer = inject(Renderer2);
-    private eventManager = inject(EventManager);
-    private profileService = inject(ProfileService);
-    private alertService = inject(AlertService);
-    private translateService = inject(TranslateService);
-    private webauthnService = inject(WebauthnService);
-    private webauthnApiService = inject(WebauthnApiService);
-    private modalService = inject(NgbModal);
-    private localStorageService = inject(LocalStorageService);
+    private readonly router = inject(Router);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly accountService = inject(AccountService);
+    private readonly loginService = inject(LoginService);
+    private readonly sessionStorageService = inject(SessionStorageService);
+    private readonly renderer = inject(Renderer2);
+    private readonly eventManager = inject(EventManager);
+    private readonly profileService = inject(ProfileService);
+    private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
+    private readonly webauthnService = inject(WebauthnService);
+    private readonly modalService = inject(NgbModal);
+    private readonly localStorageService = inject(LocalStorageService);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -107,7 +104,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             return;
         }
 
-        if (!this.accountService.userIdentity?.askToSetupPasskey) {
+        if (!this.accountService.userIdentity()?.askToSetupPasskey) {
             return;
         }
 
@@ -133,32 +130,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     }
 
     async loginWithPasskey() {
-        try {
-            const authenticatorCredential = await this.webauthnService.getCredential();
-
-            if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
-                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
-                throw new InvalidCredentialError();
-            }
-
-            const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential) as unknown as PublicKeyCredential;
-            if (!credential) {
-                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
-                throw new InvalidCredentialError();
-            }
-
-            await this.webauthnApiService.loginWithPasskey(credential);
-            this.handleLoginSuccess();
-        } catch (error) {
-            if (error instanceof InvalidCredentialError) {
-                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-            } else {
-                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
-            }
-            // eslint-disable-next-line no-undef
-            console.error(error);
-            throw error;
-        }
+        await this.webauthnService.loginWithPasskey();
+        this.handleLoginSuccess();
     }
 
     /**

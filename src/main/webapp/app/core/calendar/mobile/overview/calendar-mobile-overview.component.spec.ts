@@ -3,16 +3,20 @@ import { signal } from '@angular/core';
 import { CalendarMobileOverviewComponent } from './calendar-mobile-overview.component';
 import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
 import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
-import { CalendarEventFilterComponent } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
+import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 
 describe('CalendarMobileOverviewComponent', () => {
     let fixture: ComponentFixture<CalendarMobileOverviewComponent>;
@@ -23,23 +27,26 @@ describe('CalendarMobileOverviewComponent', () => {
     let today: Dayjs;
 
     beforeEach(async () => {
-        const calendarEventServiceMock = {
+        const calendarServiceMock = {
             eventMap: signal(new Map<string, CalendarEvent[]>()),
             loadEventsForCurrentMonth: jest.fn().mockReturnValue(of([])),
+            subscriptionToken: signal('testToken'),
+            loadSubscriptionToken: jest.fn().mockReturnValue(of([])),
+            includedEventFilterOptions: signal([
+                CalendarEventFilterOption.LectureEvents,
+                CalendarEventFilterOption.ExerciseEvents,
+                CalendarEventFilterOption.TutorialEvents,
+                CalendarEventFilterOption.ExamEvents,
+            ]),
         };
 
         await TestBed.configureTestingModule({
             imports: [CalendarMobileOverviewComponent, CalendarMobileDayPresentationComponent],
-            declarations: [
-                FaIconComponent,
-                MockComponent(CalendarMobileMonthPresentationComponent),
-                MockComponent(CalendarEventFilterComponent),
-                MockDirective(TranslateDirective),
-            ],
+            declarations: [FaIconComponent, MockComponent(CalendarMobileMonthPresentationComponent), MockDirective(TranslateDirective)],
             providers: [
                 {
-                    provide: CalendarEventService,
-                    useValue: calendarEventServiceMock,
+                    provide: CalendarService,
+                    useValue: calendarServiceMock,
                 },
                 {
                     provide: ActivatedRoute,
@@ -51,6 +58,8 @@ describe('CalendarMobileOverviewComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideNoopAnimations(),
             ],
         }).compileComponents();
 
@@ -96,7 +105,7 @@ describe('CalendarMobileOverviewComponent', () => {
         component.selectedDate.set(undefined);
         fixture.detectChanges();
 
-        const previousButton = fixture.debugElement.query(By.css('.chevron-button:first-child'));
+        const previousButton = fixture.debugElement.query(By.css('[data-testid="previous-button"]'));
         previousButton.nativeElement.click();
         fixture.detectChanges();
 
@@ -107,7 +116,7 @@ describe('CalendarMobileOverviewComponent', () => {
         component.selectedDate.set(firstDayOfCurrentMonth);
         fixture.detectChanges();
 
-        const previousButton = fixture.debugElement.query(By.css('.chevron-button:first-child'));
+        const previousButton = fixture.debugElement.query(By.css('[data-testid="previous-button"]'));
         previousButton.nativeElement.click();
         fixture.detectChanges();
 
@@ -119,7 +128,7 @@ describe('CalendarMobileOverviewComponent', () => {
         component.selectedDate.set(dayToSelect);
         fixture.detectChanges();
 
-        const previousButton = fixture.debugElement.query(By.css('.chevron-button:first-child'));
+        const previousButton = fixture.debugElement.query(By.css('[data-testid="previous-button"]'));
         previousButton.nativeElement.click();
         fixture.detectChanges();
 
@@ -131,7 +140,7 @@ describe('CalendarMobileOverviewComponent', () => {
         component.selectedDate.set(undefined);
         fixture.detectChanges();
 
-        const nextButton = fixture.debugElement.query(By.css('.chevron-button:last-child'));
+        const nextButton = fixture.debugElement.query(By.css('[data-testid="next-button"]'));
         nextButton.nativeElement.click();
         fixture.detectChanges();
 
@@ -142,7 +151,7 @@ describe('CalendarMobileOverviewComponent', () => {
         component.selectedDate.set(firstDayOfCurrentMonth.endOf('month'));
         fixture.detectChanges();
 
-        const nextButton = fixture.debugElement.query(By.css('.chevron-button:last-child'));
+        const nextButton = fixture.debugElement.query(By.css('[data-testid="next-button"]'));
         nextButton.nativeElement.click();
         fixture.detectChanges();
 
@@ -154,7 +163,7 @@ describe('CalendarMobileOverviewComponent', () => {
         component.selectedDate.set(dayToSelect);
         fixture.detectChanges();
 
-        const nextButton = fixture.debugElement.query(By.css('.chevron-button:last-child'));
+        const nextButton = fixture.debugElement.query(By.css('[data-testid="next-button"]'));
         nextButton.nativeElement.click();
         fixture.detectChanges();
 
@@ -166,7 +175,7 @@ describe('CalendarMobileOverviewComponent', () => {
         component.selectedDate.set(dayToSelect);
         fixture.detectChanges();
 
-        const todayButton = fixture.debugElement.query(By.css('.today-button'));
+        const todayButton = fixture.debugElement.query(By.css('[data-testid="today-button"]'));
         todayButton.nativeElement.click();
         fixture.detectChanges();
 
@@ -178,11 +187,27 @@ describe('CalendarMobileOverviewComponent', () => {
         component.selectedDate.set(undefined);
         fixture.detectChanges();
 
-        const todayButton = fixture.debugElement.query(By.css('.today-button'));
+        const todayButton = fixture.debugElement.query(By.css('[data-testid="today-button"]'));
         todayButton.nativeElement.click();
         fixture.detectChanges();
 
         expect(component.firstDateOfCurrentMonth().isSame(today.startOf('month'), 'day')).toBeTrue();
         expect(component.selectedDate()).toBeUndefined();
+    });
+
+    it('should open subscription popover when the subscribe button is clicked', () => {
+        const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarSubscriptionPopoverComponent));
+        expect(popoverDebugElement).toBeTruthy();
+
+        const popover = popoverDebugElement.componentInstance as CalendarSubscriptionPopoverComponent;
+        const openSpy = jest.spyOn(popover, 'open');
+
+        const subscribeButton = fixture.debugElement.query(By.css('[data-testid="subscribe-button"]')).nativeElement;
+        expect(subscribeButton).toBeTruthy();
+
+        subscribeButton.click();
+        fixture.detectChanges();
+
+        expect(openSpy).toHaveBeenCalledOnce();
     });
 });

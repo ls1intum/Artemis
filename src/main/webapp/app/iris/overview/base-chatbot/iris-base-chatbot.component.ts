@@ -43,6 +43,7 @@ import { NgClass } from '@angular/common';
 import { facSidebar } from 'app/shared/icons/icons';
 import { User } from 'app/core/user/user.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -112,6 +113,7 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
         HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
         NgClass,
+        SearchFilterComponent,
     ],
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -182,6 +184,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     isChatHistoryOpen = true;
 
+    searchValue = '';
+
     // User preferences
     user: User | undefined;
     userAccepted: boolean;
@@ -192,6 +196,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     showDeclineButton = input<boolean>(true);
     isChatHistoryAvailable = input<boolean>(false);
+    isEmbeddedChat = input<boolean>(false);
     @Input() fullSize: boolean | undefined;
     @Input() showCloseButton = false;
     @Input() isChatGptWrapper = false;
@@ -226,12 +231,19 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             }
             this.messages = _.cloneDeep(messages).reverse();
             this.messages.forEach((message) => {
-                // @ts-expect-error - TS doesn't get that I'm checking for the type
-                if (message.content?.[0]?.textContent) {
+                if (message.content?.[0] && 'textContent' in message.content[0]) {
                     // Double all \n
                     const cnt = message.content[0] as IrisTextMessageContent;
                     cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
                     cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
+                }
+                if ('accessedMemories' in message) {
+                    // eslint-disable-next-line no-undef
+                    console.log('Accessed memories found in message:', message.accessedMemories);
+                }
+                if ('createdMemories' in message) {
+                    // eslint-disable-next-line no-undef
+                    console.log('Created memories found in message:', message.createdMemories);
                 }
             });
         });
@@ -295,7 +307,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     }
 
     checkIfUserAcceptedExternalLLMUsage(): void {
-        this.userAccepted = !!this.accountService.userIdentity?.externalLLMUsageAccepted;
+        this.userAccepted = !!this.accountService.userIdentity()?.externalLLMUsageAccepted;
         setTimeout(() => this.adjustTextareaRows(), 0);
     }
 
@@ -520,6 +532,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             return [];
         }
 
+        const source = this.getFilteredSessions();
+
         const today = new Date();
         const rangeEndDate = new Date(today);
         rangeEndDate.setDate(today.getDate() - daysAgoNewer);
@@ -532,7 +546,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             rangeStartDate.setHours(0, 0, 0, 0); // Set to the start of the 'daysAgoOlder' day
         }
 
-        return this.chatSessions.filter((session) => {
+        return source.filter((session) => {
             const sessionCreationDate = new Date(session.creationDate);
 
             const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
@@ -548,6 +562,17 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     openNewSession() {
         this.chatService.clearChat();
+    }
+
+    setSearchValue(searchValue: string) {
+        this.searchValue = searchValue.trim().toLowerCase();
+    }
+
+    private getFilteredSessions(): IrisSessionDTO[] {
+        if (!this.searchValue) {
+            return this.chatSessions;
+        }
+        return this.chatSessions.filter((s) => (s.title ?? '').toLowerCase().includes(this.searchValue));
     }
 
     private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {

@@ -1,3 +1,8 @@
+hr {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
 .color-preview {
     cursor: pointer;
     height: 35px;
@@ -38,4 +43,22 @@
     width: 30px;
     height: 30px;
     box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.nested-form-group-head {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.nested-form-group {
+    margin-left: 1.35rem;
+    margin-bottom: 0.5rem;
+}
+
+.row.nested-form-group {
+    margin-left: calc(1.35rem - var(--bs-gutter-x) / 2);
+}
+
+.nested-form-group.last {
+    margin-bottom: 1rem;
 }

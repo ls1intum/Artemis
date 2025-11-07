@@ -1,11 +1,13 @@
 .build-plan-editor {
     flex: 1 1 auto;
     display: flex;
+
     &__content {
         height: 60vh;
         padding: 0;
         display: flex;
         flex: 1 1 auto;
+
         &__editor {
             flex: 1 1 auto;
             max-width: 100%;

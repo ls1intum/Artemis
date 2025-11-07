@@ -106,9 +106,27 @@ Generate programming exercise
     - **Sequential Test Runs:** Activate this option to first run structural and then behavior tests.
       This feature allows students to better concentrate on the immediate challenge at hand.
       Not supported together with static code analysis. Cannot be changed after the exercise creation.
-    - **Customize Build Plan** Activate this option if you want to customize the build plan of your exercise.
+    - **Customize Build Plan:** Activate this option if you want to customize the build plan of your exercise.
       This feature is available for all programming languages, and works with LocalCI and Jenkins, Artemis provides templates for the build plan configuration.
       The build plan can also be customized after the exercise creation.
+
+    |
+
+    .. figure:: programming/programming-options-version-control.png
+              :align: center
+
+    - **Allow Custom Branches:** Activate this option if students should be able to push (to) other branches than the default one.
+
+      .. warning::
+
+          Artemis does not show those branches in the UI, and also offers no merge support in the UI.
+
+      Pushing to other (non-default) branches does not trigger any builds, and does not create submissions.
+      Students are therefore fully responsible for managing their branches locally. Further features that deal with branches
+      in the Artemis UI are out of scope and will not be implemented in the future.
+      Please only activate this option if it is absolutely necessary!
+
+    - **Regular Expression for the branch name:** The custom branch name is matched against this Java regular expression and pushing is only allowed, if it matches.
 
     |
 

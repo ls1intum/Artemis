@@ -8,12 +8,34 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
+import { HyperionReviewAndRefineApiService } from 'app/openapi/api/hyperionReviewAndRefineApi.service';
+import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
+import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import {
+    InlineConsistencyIssue,
+    addCommentBoxes,
+    formatArtifactType,
+    formatConsistencyCheckResults,
+    humanizeCategory,
+    isMatchingRepository,
+    issuesForSelectedFile,
+    severityToString,
+} from './consistency-check';
+import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 describe('ArtemisIntelligenceService', () => {
     let httpMock: HttpTestingController;
     let service: ArtemisIntelligenceService;
     let websocketService: WebsocketService;
     let alertService: AlertService;
+    let translateService: TranslateService;
+
+    const monacoEditorComponent = {
+        addLineWidget: jest.fn(),
+    } as unknown as MonacoEditorComponent;
 
     const mockWebsocketService = {
         subscribe: jest.fn(),
@@ -32,6 +54,80 @@ describe('ArtemisIntelligenceService', () => {
         success: jest.fn(),
     };
 
+    const mockHyperionApiService = {
+        rewriteProblemStatement: jest.fn(),
+        checkExerciseConsistency: jest.fn(),
+    };
+
+    const mockIssues: ConsistencyIssue[] = [
+        {
+            severity: ConsistencyIssue.SeverityEnum.High,
+            category: ConsistencyIssue.CategoryEnum.MethodReturnTypeMismatch,
+            description: 'Description 1.',
+            suggestedFix: 'Fix 1',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.TemplateRepository,
+                    filePath: 'template_repository/src/Class1.java',
+                    startLine: 1,
+                    endLine: 1,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    filePath: 'solution_repository/src/Class1.java',
+                    startLine: 1,
+                    endLine: 1,
+                },
+            ],
+        },
+        {
+            severity: ConsistencyIssue.SeverityEnum.Medium,
+            category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+            description: 'Description 2',
+            suggestedFix: 'Fix 2',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.TemplateRepository,
+                    filePath: 'template_repository/src/Class2.java',
+                    startLine: 1,
+                    endLine: 2,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    filePath: 'solution_repository/src/Class2.java',
+                    startLine: 1,
+                    endLine: 2,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'tests_repository/src/Class2.java',
+                    startLine: 1,
+                    endLine: 2,
+                },
+            ],
+        },
+        {
+            severity: ConsistencyIssue.SeverityEnum.Low,
+            category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
+            description: 'Description 2',
+            suggestedFix: 'Fix 2',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.ProblemStatement,
+                    filePath: 'problem_statement.md',
+                    startLine: 1,
+                    endLine: 3,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'tests_repository/src/Class3.java',
+                    startLine: 1,
+                    endLine: 3,
+                },
+            ],
+        },
+    ];
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
@@ -40,6 +136,7 @@ describe('ArtemisIntelligenceService', () => {
                 { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: mockAlertService },
+                { provide: HyperionReviewAndRefineApiService, useValue: mockHyperionApiService },
             ],
         });
 
@@ -47,6 +144,7 @@ describe('ArtemisIntelligenceService', () => {
         service = TestBed.inject(ArtemisIntelligenceService);
         websocketService = TestBed.inject(WebsocketService);
         alertService = TestBed.inject(AlertService);
+        translateService = TestBed.inject(TranslateService);
     });
 
     afterEach(() => {
@@ -55,7 +153,7 @@ describe('ArtemisIntelligenceService', () => {
     });
 
     describe('rewrite', () => {
-        it('should trigger rewriting pipeline and return rewritten text', () => {
+        it('should trigger rewriting pipeline for FAQ variant via Iris and return rewritten text', () => {
             const toBeRewritten = 'OriginalText';
             const rewritingVariant = RewritingVariant.FAQ;
             const courseId = 1;
@@ -75,7 +173,32 @@ describe('ArtemisIntelligenceService', () => {
             req.flush(null);
         });
 
-        it('should handle HTTP error correctly', () => {
+        it('should trigger rewriting pipeline for PROBLEM_STATEMENT variant via Hyperion and return rewritten text', () => {
+            const toBeRewritten = 'Original problem statement';
+            const rewritingVariant = RewritingVariant.PROBLEM_STATEMENT;
+            const courseId = 42;
+
+            const mockResponse: ProblemStatementRewriteResponse = {
+                rewrittenText: 'Improved problem statement',
+                improved: true,
+            };
+
+            mockHyperionApiService.rewriteProblemStatement.mockReturnValue(of(mockResponse));
+
+            service.rewrite(toBeRewritten, rewritingVariant, courseId).subscribe((result) => {
+                expect(result.result).toBe('Improved problem statement');
+                expect(result.improvement).toBe('Text was improved');
+                expect(result.inconsistencies).toBeUndefined();
+                expect(result.suggestions).toBeUndefined();
+
+                expect(alertService.success).toHaveBeenCalledWith('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
+                expect(mockHyperionApiService.rewriteProblemStatement).toHaveBeenCalledWith(courseId, {
+                    problemStatementText: toBeRewritten,
+                });
+            });
+        });
+
+        it('should handle HTTP error correctly for FAQ variant', () => {
             const toBeRewritten = 'OriginalText';
             const rewritingVariant = RewritingVariant.FAQ;
             const courseId = 1;
@@ -106,57 +229,189 @@ describe('ArtemisIntelligenceService', () => {
     });
 
     describe('consistencyCheck', () => {
-        it('should trigger consistency check and return result', () => {
+        it('should trigger consistency check using Hyperion API and return result', () => {
             const exerciseId = 42;
-            mockWebsocketService.receive.mockReturnValueOnce(of({ result: 'Check Passed' }));
+            const mockResponse: ConsistencyCheckResponse = { issues: [] };
+
+            mockHyperionApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
+
             service.consistencyCheck(exerciseId).subscribe((result) => {
-                expect(result).toBe('Check Passed');
-                expect(websocketService.subscribe).toHaveBeenCalledWith(`/user/topic/iris/consistency-check/exercises/${exerciseId}`);
-                expect(websocketService.unsubscribe).toHaveBeenCalledWith(`/user/topic/iris/consistency-check/exercises/${exerciseId}`);
+                expect(result.issues).toEqual([]);
+                expect(mockHyperionApiService.checkExerciseConsistency).toHaveBeenCalledWith(exerciseId);
             });
-            const req = httpMock.expectOne(`api/iris/consistency-check/exercises/${exerciseId}`);
-            expect(req.request.method).toBe('POST');
-            req.flush(null);
         });
 
-        it('should handle WebSocket error during consistency check', () => {
-            mockWebsocketService.receive.mockReturnValueOnce(throwError(() => new Error('WebSocket Error')));
-            service.consistencyCheck(42).subscribe({
+        it('should handle errors during consistency check', () => {
+            const exerciseId = 42;
+            const error = new Error('API Error');
+
+            mockHyperionApiService.checkExerciseConsistency.mockReturnValue(throwError(() => error));
+
+            service.consistencyCheck(exerciseId).subscribe({
                 next: () => {
                     throw new Error('Should not reach this point');
                 },
-                error: (err) => expect(err.message).toBe('WebSocket Error'),
+                error: (err) => expect(err).toBe(error),
             });
-            const req = httpMock.expectOne(`api/iris/consistency-check/exercises/42`);
-            req.flush(null);
         });
 
-        it('should handle HTTP error and reset loading state', () => {
+        it('should reset loading state after consistency check completes', () => {
             const exerciseId = 42;
-            const errorCallback = jest.fn();
+            const mockIssue = {
+                severity: 'HIGH',
+                category: 'METHOD_PARAMETER_MISMATCH',
+                description: 'Test issue',
+                suggestedFix: 'Fix this',
+                relatedLocations: [],
+            } as const;
+            // Cast to any because openapi types are structural; keeping literals preserves intent while avoiding enum import complexity in spec.
+            const mockResponse: ConsistencyCheckResponse = { issues: [mockIssue as any] };
 
-            service.consistencyCheck(exerciseId).subscribe({
-                error: errorCallback,
+            mockHyperionApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
+
+            service.consistencyCheck(exerciseId).subscribe(() => {
+                expect(service.isLoading()).toBeFalsy();
             });
+        });
 
-            const req = httpMock.expectOne(`api/iris/consistency-check/exercises/${exerciseId}`);
-            expect(req.request.method).toBe('POST');
-            req.flush({ message: 'Error' }, { status: 500, statusText: 'Server Error' });
+        it('matches correct repositories', () => {
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.ProblemStatement, RepositoryType.TEMPLATE)).toBeFalsy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.ProblemStatement, RepositoryType.SOLUTION)).toBeFalsy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.SolutionRepository, RepositoryType.TEMPLATE)).toBeFalsy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.SolutionRepository, RepositoryType.TESTS)).toBeFalsy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TestsRepository, RepositoryType.SOLUTION)).toBeFalsy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TestsRepository, RepositoryType.TEMPLATE)).toBeFalsy();
 
-            expect(errorCallback).toHaveBeenCalled();
-            expect(service.isLoading()).toBeFalse();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.ProblemStatement, 'PROBLEM_STATEMENT')).toBeTruthy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.SolutionRepository, RepositoryType.SOLUTION)).toBeTruthy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TemplateRepository, RepositoryType.TEMPLATE)).toBeTruthy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TestsRepository, RepositoryType.TESTS)).toBeTruthy();
+        });
+
+        it('severity to string correct', () => {
+            expect(severityToString(ConsistencyIssue.SeverityEnum.Medium)).toBe('MEDIUM');
+            expect(severityToString(ConsistencyIssue.SeverityEnum.Low)).toBe('LOW');
+            expect(severityToString(ConsistencyIssue.SeverityEnum.High)).toBe('HIGH');
+            expect(severityToString(undefined as any)).toBe('UNKNOWN');
+        });
+
+        it('humanized category correctly', () => {
+            expect(humanizeCategory('IDENTIFIER_NAMING_INCONSISTENCY')).toBe('Identifier Naming Inconsistency');
+            expect(humanizeCategory('VISIBILITY_MISMATCH')).toBe('Visibility Mismatch');
+            expect(humanizeCategory('METHOD_PARAMETER_MISMATCH')).toBe('Method Parameter Mismatch');
+            expect(humanizeCategory('GENERAL')).toBe('General');
+        });
+
+        it('format artifact type correctly', () => {
+            expect(formatArtifactType(ArtifactLocation.TypeEnum.TestsRepository)).toBe('Tests');
+            expect(formatArtifactType(ArtifactLocation.TypeEnum.ProblemStatement)).toBe('Problem Statement');
+            expect(formatArtifactType(ArtifactLocation.TypeEnum.SolutionRepository)).toBe('Solution');
+            expect(formatArtifactType(ArtifactLocation.TypeEnum.TemplateRepository)).toBe('Template');
+            expect(formatArtifactType(undefined as any)).toBe('Other');
+        });
+
+        it('correct issues for selected files: problem statement', () => {
+            const res = issuesForSelectedFile('problem_statement.md', 'PROBLEM_STATEMENT', mockIssues);
+            expect(res).toHaveLength(1);
+            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.ProblemStatement);
+            expect(res[0].startLine).toBe(1);
+            expect(res[0].endLine).toBe(3);
+            expect(res[0].category).toEqual(mockIssues[2].category);
+            expect(res[0].severity).toEqual(mockIssues[2].severity);
+            expect(res[0].description).toEqual(mockIssues[2].description);
+            expect(res[0].suggestedFix).toEqual(mockIssues[2].suggestedFix);
+        });
+
+        it('correct issues for selected files: template', () => {
+            const res = issuesForSelectedFile('src/Class2.java', RepositoryType.TEMPLATE, mockIssues);
+            expect(res).toHaveLength(1);
+            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.TemplateRepository);
+            expect(res[0].startLine).toBe(1);
+            expect(res[0].endLine).toBe(2);
+            expect(res[0].category).toEqual(mockIssues[1].category);
+            expect(res[0].severity).toEqual(mockIssues[1].severity);
+            expect(res[0].description).toEqual(mockIssues[1].description);
+            expect(res[0].suggestedFix).toEqual(mockIssues[1].suggestedFix);
+        });
+
+        it('correct issues for selected files: solution', () => {
+            const res = issuesForSelectedFile('src/Class1.java', RepositoryType.SOLUTION, mockIssues);
+            expect(res).toHaveLength(1);
+            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.SolutionRepository);
+            expect(res[0].startLine).toBe(1);
+            expect(res[0].endLine).toBe(1);
+            expect(res[0].category).toEqual(mockIssues[0].category);
+            expect(res[0].severity).toEqual(mockIssues[0].severity);
+            expect(res[0].description).toEqual(mockIssues[0].description);
+            expect(res[0].suggestedFix).toEqual(mockIssues[0].suggestedFix);
+        });
+
+        it('correct issues for selected files: tests', () => {
+            const res = issuesForSelectedFile('src/Class3.java', RepositoryType.TESTS, mockIssues);
+            expect(res).toHaveLength(1);
+            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.TestsRepository);
+            expect(res[0].startLine).toBe(1);
+            expect(res[0].endLine).toBe(3);
+            expect(res[0].description).toEqual(mockIssues[2].description);
+            expect(res[0].suggestedFix).toEqual(mockIssues[2].suggestedFix);
+            expect(res[0].category).toEqual(mockIssues[2].category);
+            expect(res[0].severity).toEqual(mockIssues[2].severity);
+        });
+
+        it('correct issues for selected files: undefined', () => {
+            const res = issuesForSelectedFile(undefined, RepositoryType.TEMPLATE, mockIssues);
+            expect(res).toHaveLength(0);
+
+            const res2 = issuesForSelectedFile('template_repository/src/Class2.java', undefined, mockIssues);
+            expect(res2).toHaveLength(0);
+        });
+
+        it('format contains necessary information', () => {
+            const mockIssue: InlineConsistencyIssue = {
+                filePath: 'path',
+                type: ArtifactLocation.TypeEnum.TemplateRepository,
+                startLine: 1,
+                endLine: 3,
+                description: 'Example description',
+                suggestedFix: 'Example fix',
+                category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+                severity: ConsistencyIssue.SeverityEnum.Medium,
+            };
+
+            const res = formatConsistencyCheckResults(mockIssue);
+
+            expect(res).toContain(mockIssue.description);
+            expect(res).toContain(mockIssue.suggestedFix);
+            expect(res).toContain(humanizeCategory(mockIssue.category));
+            expect(res).toContain(severityToString(mockIssue.severity));
+            expect(res).toContain(String(mockIssue.startLine));
+            expect(res).toContain(String(mockIssue.endLine));
+        });
+
+        it('addCommentBoxes calls correct functions', () => {
+            addCommentBoxes(monacoEditorComponent, mockIssues, 'problem_statement.md', 'PROBLEM_STATEMENT', translateService);
+            expect(monacoEditorComponent.addLineWidget).toHaveBeenCalledOnce();
         });
     });
 
     describe('isLoading', () => {
-        it('should reflect loading state correctly', () => {
-            expect(service.isLoading()).toBeFalse();
+        it('should reflect loading state correctly for FAQ rewrite', () => {
+            expect(service.isLoading()).toBeFalsy();
             const subscription = service.rewrite('test', RewritingVariant.FAQ, 1).subscribe();
-            expect(service.isLoading()).toBeTrue();
+            expect(service.isLoading()).toBeTruthy();
             const req = httpMock.expectOne(`api/iris/courses/1/rewrite-text`);
             req.flush(null);
             subscription.unsubscribe();
-            expect(service.isLoading()).toBeFalse();
+            expect(service.isLoading()).toBeFalsy();
+        });
+
+        it('should reflect loading state correctly for Hyperion consistency check', () => {
+            const mockResponse: ConsistencyCheckResponse = { issues: [] };
+            mockHyperionApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
+
+            expect(service.isLoading()).toBeFalsy();
+            service.consistencyCheck(42).subscribe((res) => expect(res.issues).toEqual([]));
+            expect(service.isLoading()).toBeFalsy(); // Should be false after synchronous completion
         });
     });
 });

@@ -18,7 +18,7 @@
                     <span class="badge bg-info align-text-top float-end">
                         <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
                         <span class="badge max-score">{{ calculateMaxExerciseScore() }}</span>
-                        <span class="sr-only" jhiTranslate="artemisApp.quizExercise.maxScore"></span>
+                        <span class="visually-hidden" jhiTranslate="artemisApp.quizExercise.maxScore"></span>
                     </span>
                 </h4>
             </div>
@@ -219,6 +219,7 @@
                                 id="competencies"
                                 [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                                 [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                                [exerciseDescription]="getEnhancedDescriptionForSuggestions()"
                                 [(ngModel)]="quizExercise.competencyLinks"
                                 (ngModelChange)="cacheValidation()"
                                 name="competencyLinks"

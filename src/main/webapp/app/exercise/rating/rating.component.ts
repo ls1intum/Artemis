@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -22,6 +22,7 @@ export class RatingComponent implements OnInit, OnChanges {
     private previousResultId?: number;
 
     @Input() result?: Result;
+    participation = input.required<StudentParticipation>();
 
     ngOnInit(): void {
         this.loadRating();
@@ -35,11 +36,7 @@ export class RatingComponent implements OnInit, OnChanges {
     }
 
     loadRating() {
-        if (
-            !this.result?.id ||
-            !this.result.submission?.participation ||
-            !this.accountService.isOwnerOfParticipation(this.result.submission.participation as StudentParticipation)
-        ) {
+        if (!this.result?.id || !this.participation() || !this.accountService.isOwnerOfParticipation(this.participation())) {
             return;
         }
         this.ratingService.getRating(this.result.id).subscribe((rating) => {
@@ -51,7 +48,7 @@ export class RatingComponent implements OnInit, OnChanges {
      * Update/Create new Rating for the result
      * @param event - starRating component that holds new rating value
      */
-    onRate(event: { oldValue: number; newValue: number; starRating: StarRatingComponent }) {
+    onRate(event: { oldValue: number; newValue: number }) {
         // block rating to prevent double sending of post request
         if (this.disableRating || !this.result) {
             return;

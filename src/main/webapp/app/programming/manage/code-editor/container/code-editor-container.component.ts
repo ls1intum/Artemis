@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -12,7 +12,9 @@ import {
     FileBadgeType,
     FileChange,
     FileType,
+    PROBLEM_STATEMENT_IDENTIFIER,
     RenameFileChange,
+    RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -26,6 +28,7 @@ import { ConnectionError } from 'app/programming/shared/code-editor/services/cod
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -88,6 +91,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @Input()
     disableAutoSave = false;
 
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+
+    isProblemStatementVisible = input<boolean>(true);
+
     @Output()
     onCommitStateChange = new EventEmitter<CommitState>();
     @Output()
@@ -111,9 +118,29 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     /** END WIP */
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
-    selectedFile?: string;
+    private selectedFileValue?: string;
     unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
     fileBadges: { [fileName: string]: FileBadge[] };
+    get selectedFile(): string | undefined {
+        return this.selectedFileValue;
+    }
+
+    set selectedFile(file: string | undefined) {
+        this.selectedFileValue = file;
+    }
+
+    private selectedRepositoryValue?: RepositoryType;
+    get selectedRepository(): RepositoryType | undefined {
+        return this.selectedRepositoryValue;
+    }
+
+    set selectedRepository(repository: RepositoryType | undefined) {
+        this.selectedRepositoryValue = repository;
+    }
+
+    get problemStatementIdentifier(): string {
+        return PROBLEM_STATEMENT_IDENTIFIER;
+    }
 
     /** Code Editor State Variables **/
     editorState: EditorState;
@@ -183,6 +210,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      */
     initializeProperties = () => {
         this.selectedFile = undefined;
+        // I assume we always load into the Template Repo at the beginning
+        this.selectedRepository = RepositoryType.TEMPLATE;
         this.unsavedFiles = {};
         this.fileBadges = {};
         this.editorState = EditorState.CLEAN;
@@ -196,13 +225,18 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      * in case of delete make sure to also remove all sub entities (files in folder).
      */
     onFileChange<F extends FileChange>([, fileChange]: [string[], F]) {
-        this.commitState = CommitState.UNCOMMITTED_CHANGES;
         if (fileChange instanceof CreateFileChange) {
             // Select newly created file
             if (fileChange.fileType === FileType.FILE) {
                 this.selectedFile = fileChange.fileName;
+                this.commitState = CommitState.UNCOMMITTED_CHANGES;
             }
         } else if (fileChange instanceof RenameFileChange || fileChange instanceof DeleteFileChange) {
+            // Guard against PROBLEM_STATEMENT file operations - only allow FILE and FOLDER
+            if (fileChange.fileType !== FileType.FILE && fileChange.fileType !== FileType.FOLDER) {
+                return;
+            }
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
             this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
             this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
         }
@@ -210,7 +244,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
             this.editorState = EditorState.CLEAN;
         }
-        this.monacoEditor.onFileChange(fileChange);
+        this.monacoEditor?.onFileChange(fileChange);
 
         this.onFileChanged.emit();
     }
@@ -233,7 +267,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
-        this.monacoEditor.storeAnnotations(savedFiles);
+        this.monacoEditor?.storeAnnotations(savedFiles);
     }
 
     /**
@@ -246,8 +280,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     /**
      * When the content of a file changes, set it as unsaved.
      */
-    onFileContentChange({ file, fileContent }: { file: string; fileContent: string }) {
-        this.unsavedFiles = { ...this.unsavedFiles, [file]: fileContent };
+    onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
+        this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
         this.onFileChanged.emit();
     }
 
@@ -273,11 +307,11 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     }
 
     getText(): string {
-        return this.monacoEditor.getText() ?? '';
+        return this.monacoEditor?.getText() ?? '';
     }
 
     getNumberOfLines(): number {
-        return this.monacoEditor.getNumberOfLines() ?? 0;
+        return this.monacoEditor?.getNumberOfLines() ?? 0;
     }
 
     /**
@@ -286,7 +320,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      * @param endLine The last line to highlight.
      */
     highlightLines(startLine: number, endLine: number): void {
-        this.monacoEditor.highlightLines(startLine, endLine);
+        this.monacoEditor?.highlightLines(startLine, endLine);
     }
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {

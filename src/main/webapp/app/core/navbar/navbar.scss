@@ -3,6 +3,7 @@
 /* ==========================================================================
 Navbar
 ========================================================================== */
+
 /* Don't underline the menu items on hover */
 a:not(.btn):hover {
     text-decoration: none !important;
@@ -40,13 +41,17 @@ a:not(.btn):hover {
 }
 
 .jh-navbar {
+    padding: 0.2em 1rem;
+}
+
+.jh-navbar,
+.server-administration {
     background-color: var(--artemis-dark);
     white-space: nowrap;
-    padding: 0.2em 1rem;
     color: var(--navbar-dark-color);
 
     .profile-image {
-        margin: -10px 0px;
+        margin: -10px 0;
         height: 30px;
         width: 30px;
     }

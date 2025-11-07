@@ -18,9 +18,9 @@ EduTelligence is a comprehensive suite of AI-powered microservices designed to e
    :includehidden:
    :maxdepth: 2
 
-   setup/iris
    setup/pyris
    setup/athena
+   setup/nebula
 
 Other Extension Services
 ------------------------
@@ -32,4 +32,6 @@ Other Extension Services
    setup/text-assessment-analytics
    setup/apollon
    setup/hermes
+   setup/hyperion
    setup/aeolus
+   setup/sharing

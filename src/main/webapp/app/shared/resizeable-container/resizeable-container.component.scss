@@ -94,10 +94,12 @@
     flex-flow: column nowrap;
     margin-left: 15px;
     cursor: pointer;
+
     .header {
         writing-mode: vertical-rl;
         margin: auto;
     }
+
     fa-icon {
         display: flex;
         justify-content: center;
@@ -107,10 +109,12 @@
 
 .expandable-header {
     cursor: pointer;
+
     fa-icon {
         padding-left: 5px;
     }
 }
+
 // for smaller screens (tablets, phones)
 @media (max-width: 992px) {
     :host {
@@ -123,6 +127,7 @@
         .draggable-left {
             display: none;
         }
+
         .card {
             margin-bottom: 30px;
         }

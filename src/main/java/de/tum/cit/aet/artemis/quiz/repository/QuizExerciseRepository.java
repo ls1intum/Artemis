@@ -93,6 +93,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO(
+                exercise.id,
                 exercise.quizMode,
                 exercise.title,
                 exercise.releaseDate,
@@ -104,7 +105,18 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 LEFT JOIN exercise.quizBatches batch ON exercise.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED
             WHERE exercise.course.id = :courseId
             """)
-    Set<QuizExerciseCalendarEventDTO> getQuizExerciseCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
+    Set<QuizExerciseCalendarEventDTO> getQuizExerciseCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Finds a QuizExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or statistics.
+     * This includes: quizQuestions (without specific answer options to avoid polymorphic issues)
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return {@link QuizExercise}
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    Optional<QuizExercise> findForVersioningById(Long exerciseId);
 
     /**
      * Finds a quiz exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.

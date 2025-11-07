@@ -140,7 +140,7 @@ public class LectureUtilService {
      */
     public Lecture createLecture(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Lecture lecture = new Lecture();
-        lecture.setDescription("Test Lecture");
+        lecture.setTitle("Test Lecture");
         lecture.setCourse(course);
         lecture.setVisibleDate(visibleDate);
         lecture.setStartDate(startDate);
@@ -176,11 +176,11 @@ public class LectureUtilService {
      * @return The updated Lecture
      */
     public Lecture addLectureUnitsToLecture(Lecture lecture, List<LectureUnit> lectureUnits) {
-        Lecture l = lectureRepo.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        Lecture existingLecture = lectureRepo.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
         for (LectureUnit lectureUnit : lectureUnits) {
-            l.addLectureUnit(lectureUnit);
+            existingLecture.addLectureUnit(lectureUnit);
         }
-        return lectureRepo.save(l);
+        return lectureRepo.save(existingLecture);
     }
 
     /**

@@ -10,6 +10,7 @@ import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedProgrammingExerciseChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -67,10 +69,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final IrisSessionRepository irisSessionRepository;
 
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
     private final IrisRateLimitService rateLimitService;
 
     private final PyrisPipelineService pyrisPipelineService;
@@ -85,19 +83,20 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final UserRepository userRepository;
 
-    public IrisExerciseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
-            IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, SubmissionRepository submissionRepository,
-            ExerciseRepository exerciseRepository, UserRepository userRepository) {
-        super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
+    private final MessageSource messageSource;
+
+    public IrisExerciseChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
+            IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
+            IrisSessionRepository irisSessionRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository,
+            SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository, UserRepository userRepository, MessageSource messageSource) {
+        super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
+                irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.rateLimitService = rateLimitService;
         this.pyrisPipelineService = pyrisPipelineService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -105,6 +104,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
+        this.messageSource = messageSource;
     }
 
     /**
@@ -278,22 +278,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         }
     }
 
-    private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
-        List<ProgrammingExerciseStudentParticipation> participations;
-        if (exercise.isTeamMode()) {
-            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(exercise.getId(), user.getLogin());
-        }
-        else {
-            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
-        }
-
-        if (participations.isEmpty()) {
-            return Optional.empty();
-        }
-        return participations.getLast().getSubmissions().stream().max(Submission::compareTo)
-                .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
-    }
-
     /**
      * Checks if there's overall improvement in the given interval [i, j] of the list.
      *
@@ -376,7 +360,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     private IrisProgrammingExerciseChatSession createSessionInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
         checkIfExamExercise(exercise);
 
-        var session = irisExerciseChatSessionRepository.save(new IrisProgrammingExerciseChatSession(exercise, user));
+        var exerciseChat = new IrisProgrammingExerciseChatSession(exercise, user);
+        exerciseChat.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
+        var session = irisExerciseChatSessionRepository.save(exerciseChat);
 
         if (sendInitialMessage) {
             // Run async to allow the session to be returned immediately

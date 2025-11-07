@@ -12,17 +12,19 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -40,6 +42,7 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,7 +65,6 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -105,6 +107,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private final GitService gitService;
 
+    private final GitRepositoryExportService gitRepositoryExportService;
+
     private final ZipFileService zipFileService;
 
     private final BuildPlanRepository buildPlanRepository;
@@ -116,8 +120,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     public static final String BUILD_PLAN_FILE_NAME = "buildPlan.txt";
 
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, ZipFileService zipFileService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository) {
+            StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, GitRepositoryExportService gitRepositoryExportService,
+            ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            BuildPlanRepository buildPlanRepository) {
         // Programming exercises do not have a submission export service
         super(fileService, springMvcJacksonConverter, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -125,6 +130,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         this.studentParticipationRepository = studentParticipationRepository;
         this.fileService = fileService;
         this.gitService = gitService;
+        this.gitRepositoryExportService = gitRepositoryExportService;
         this.zipFileService = zipFileService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.buildPlanRepository = buildPlanRepository;
@@ -236,7 +242,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         List<Path> pathsToBeZipped = new ArrayList<>();
-        var exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
+        Path exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
         // Setup path to store the zip file for the exported programming exercise
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
@@ -275,10 +281,11 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             // Lazy load student participation, sort by id, and set the export options
             var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
                     .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId)).toList();
+            // Filter late submissions must be false here, because we do not load submissions or commit hashes here
             var exportOptions = new RepositoryExportOptionsDTO(true, false, false, null, false, false, false, false, false);
 
             // Export student repositories and add them to list
-            var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, workingDir, outputDir, exportErrors).stream()
+            var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, Map.of(), workingDir, outputDir, exportErrors, exportOptions).stream()
                     .filter(Objects::nonNull).toList();
             pathsToBeZipped.addAll(exportedStudentRepositoryFiles);
         }
@@ -336,52 +343,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     /**
      * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
-     * solution, or tests repository.
-     * <p>
-     * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     *
-     * @param exerciseId     The id of the programming exercise that has the repository
-     * @param repositoryType the type of repository to export
-     * @param exportErrors   List of failures that occurred during the export
-     * @return a zipped file
-     */
-    public Optional<File> exportInstructorRepositoryForExercise(long exerciseId, RepositoryType repositoryType, List<String> exportErrors) {
-        Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
-        return exportInstructorRepositoryForExercise(exerciseId, repositoryType, outputDir, outputDir, exportErrors);
-    }
-
-    /**
-     * Exports a solution repository available for an instructor/tutor/student for a given programming exercise.
-     * <p>
-     * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     *
-     * @param exerciseId   The id of the programming exercise that has the repository
-     * @param includeTests flag that indicates whether the tests should also be exported
-     * @param exportErrors List of failures that occurred during the export
-     * @return a zipped file
-     */
-    public Optional<File> exportStudentRequestedRepository(long exerciseId, boolean includeTests, List<String> exportErrors) {
-        Path uniquePath = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
-        return exportStudentRequestedRepository(exerciseId, includeTests, uniquePath, exportErrors);
-    }
-
-    /**
-     * Exports an auxiliary repository available for an instructor/editor/tutor for a given programming exercise.
-     * <p>
-     * The repository download directory is used as the output directory and is destroyed after 5 minutes.
-     *
-     * @param exerciseId          The id of the programming exercise that has the repository
-     * @param auxiliaryRepository the auxiliary repository to export
-     * @param exportErrors        List of failures that occurred during the export
-     * @return a zipped file
-     */
-    public Optional<File> exportInstructorAuxiliaryRepositoryForExercise(long exerciseId, AuxiliaryRepository auxiliaryRepository, List<String> exportErrors) {
-        Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
-        return exportInstructorAuxiliaryRepositoryForExercise(exerciseId, auxiliaryRepository, outputDir, outputDir, exportErrors);
-    }
-
-    /**
-     * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
      * solution, or tests repository
      *
      * @param exerciseId     The id of the programming exercise that has the repository
@@ -397,7 +358,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return Optional.empty();
         }
         var exercise = exerciseOrEmpty.get();
-        String zippedRepoName = getZippedRepoName(exercise, repositoryType.getName());
+        String zippedRepoName = gitRepositoryExportService.getZippedRepoName(exercise, repositoryType.getName());
         var repositoryUri = exercise.getRepositoryURI(repositoryType);
         return exportRepository(repositoryUri, repositoryType.getName(), zippedRepoName, exercise, workingDir, outputDir, null, exportErrors);
     }
@@ -419,68 +380,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return Optional.empty();
         }
         var exercise = exerciseOrEmpty.get();
-        String zippedRepoName = getZippedRepoName(exercise, auxiliaryRepository.getRepositoryName());
+        String zippedRepoName = gitRepositoryExportService.getZippedRepoName(exercise, auxiliaryRepository.getRepositoryName());
         var repositoryUri = auxiliaryRepository.getVcsRepositoryUri();
         return exportRepository(repositoryUri, auxiliaryRepository.getName(), zippedRepoName, exercise, workingDir, outputDir, null, exportErrors);
-    }
-
-    /**
-     * Exports the solution repository available for an instructor/tutor/student for a given programming exercise.
-     * Removes the ".git" directory from the resulting zip file to prevent leaking unintended information to students.
-     *
-     * @param exerciseId   the id of the programming exercise that has the repository
-     * @param includeTests flag that indicates whether the tests should also be exported
-     * @param uniquePath   the directory used for store the zip file
-     * @param exportErrors list of failures that occurred during the export
-     * @return a zipped file
-     */
-    public Optional<File> exportStudentRequestedRepository(long exerciseId, boolean includeTests, Path uniquePath, List<String> exportErrors) {
-        RepositoryType repositoryType = includeTests ? RepositoryType.TESTS : RepositoryType.SOLUTION;
-        var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, exportErrors);
-        if (exerciseOrEmpty.isEmpty()) {
-            return Optional.empty();
-        }
-        var exercise = exerciseOrEmpty.get();
-        String zippedRepoName = getZippedRepoName(exercise, repositoryType.getName());
-        Predicate<Path> gitDirFilter = path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> ".git".equalsIgnoreCase(pathPart.toString()));
-
-        if (includeTests) {
-            return exportSolutionAndTestStudentRepositoryForExercise(zippedRepoName, exercise, uniquePath, gitDirFilter, exportErrors);
-        }
-        else {
-            var repositoryUri = exercise.getRepositoryURI(repositoryType);
-            return exportRepository(repositoryUri, repositoryType.getName(), zippedRepoName, exercise, uniquePath, uniquePath, gitDirFilter, exportErrors);
-        }
-    }
-
-    /**
-     * Exports the repository belonging to a student's programming exercise participation.
-     *
-     * @param exerciseId    The ID of the programming exercise.
-     * @param participation The participation for which to export the repository.
-     * @param exportErrors  A list in which to store errors that occur during the export.
-     * @return The zipped repository if the export was successful, otherwise an empty optional.
-     */
-    public Optional<File> exportStudentRepository(long exerciseId, ProgrammingExerciseStudentParticipation participation, List<String> exportErrors) {
-        var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, exportErrors);
-        if (exerciseOrEmpty.isEmpty()) {
-            return Optional.empty();
-        }
-        var programmingExercise = exerciseOrEmpty.get();
-        var blankExportOptions = new RepositoryExportOptionsDTO();
-        Path outputDirectory = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 5);
-        try {
-            Path zipFile = getRepositoryWithParticipation(programmingExercise, participation, blankExportOptions, outputDirectory, outputDirectory, true);
-            if (zipFile != null) {
-                return Optional.of(zipFile.toFile());
-            }
-        }
-        catch (IOException e) {
-            String error = String.format("Failed to export the student repository of programming exercise %d and participation %d", exerciseId, participation.getId());
-            log.error(error);
-            exportErrors.add(error);
-        }
-        return Optional.empty();
     }
 
     private Optional<ProgrammingExercise> loadExerciseForRepoExport(long exerciseId, List<String> exportErrors) {
@@ -496,11 +398,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         log.info("Request to export instructor repository of programming exercise {} with title '{}'", exercise, exercise.getTitle());
 
         return Optional.of(exercise);
-    }
-
-    private String getZippedRepoName(ProgrammingExercise exercise, String repositoryName) {
-        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        return FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
     }
 
     /**
@@ -537,59 +434,31 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         return Optional.empty();
     }
 
-    private Optional<File> exportSolutionAndTestStudentRepositoryForExercise(String zippedRepoName, ProgrammingExercise exercise, Path uniquePath,
-            @Nullable Predicate<Path> contentFilter, List<String> exportErrors) {
-        if (exercise.getVcsSolutionRepositoryUri() == null || exercise.getVcsTestRepositoryUri() == null) {
-            var error = "Failed to export repository of exercise " + exercise.getTitle() + " because the repository uri is not defined.";
-            log.error(error);
-            exportErrors.add(error);
-            return Optional.empty();
-        }
-
-        Path clonePath = uniquePath.resolve("clone");
-        Path zipPath = uniquePath.resolve("zip");
-
-        try {
-            gitService.getOrCheckoutRepositoryWithLocalPath(exercise.getVcsTestRepositoryUri(), clonePath, true, false);
-            if (!clonePath.toFile().exists()) {
-                Files.createDirectories(clonePath);
-            }
-            String assignmentPath = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
-            FileUtils.deleteDirectory(clonePath.resolve(assignmentPath).toFile());
-            gitService.getOrCheckoutRepositoryWithLocalPath(exercise.getVcsSolutionRepositoryUri(), clonePath.resolve(assignmentPath), true, false);
-            for (AuxiliaryRepository auxRepo : exercise.getAuxiliaryRepositoriesForBuildPlan()) {
-                FileUtils.deleteDirectory(clonePath.resolve(auxRepo.getCheckoutDirectory()).toFile());
-                gitService.getOrCheckoutRepositoryWithLocalPath(auxRepo.getVcsRepositoryUri(), clonePath.resolve(auxRepo.getCheckoutDirectory()), true, false);
-            }
-
-            return Optional.of(gitService.zipFiles(clonePath, zippedRepoName, zipPath.toString(), contentFilter).toFile());
-        }
-        catch (GitAPIException | IOException e) {
-            var error = "Failed to export solution and test repository for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
-            log.error("{}: {}", error, e.getMessage());
-            exportErrors.add(error);
-        }
-
-        return Optional.empty();
-    }
-
     /**
      * Get participations of programming exercises of a requested list of students packed together in one zip file.
      * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
-     * @param programmingExerciseId   the id of the exercise entity
-     * @param participations          participations that should be exported
-     * @param repositoryExportOptions the options that should be used for the export
+     * @param programmingExercise       the programming exercise for which student repositories should be exported
+     * @param participations            participations that should be exported
+     * @param repositoryExportOptions   the options that should be used for the export
+     * @param participationCommitHashes a map containing the relevant commit hashes to be used for each participation (typically only relevant when filtering for specific
+     *                                      submissions)
      * @return a zip file containing all requested participations
      */
-    public File exportStudentRepositoriesToZipFile(long programmingExerciseId, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
-            RepositoryExportOptionsDTO repositoryExportOptions) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
-                .orElseThrow();
+    public File exportStudentRepositoriesToZipFile(ProgrammingExercise programmingExercise, @NotNull Collection<ProgrammingExerciseStudentParticipation> participations,
+            RepositoryExportOptionsDTO repositoryExportOptions, Map<Long, String> participationCommitHashes) {
 
         Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 10);
-        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
+        List<Path> zippedRepos;
+        try {
+            zippedRepos = exportStudentRepositories(programmingExercise, participations, participationCommitHashes, outputDir, outputDir, new ArrayList<>(),
+                    repositoryExportOptions);
+        }
+        catch (GitException e) {
+            log.error("Aborting export: anonymization failed for at least one repository in exercise {} (id: {})", programmingExercise.getTitle(), programmingExercise.getId());
+            return null;
+        }
 
         try {
             // Create a zip folder containing the directories with the repositories.
@@ -604,16 +473,17 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     /**
      * Creates directories of the participations of programming exercises of a requested list of students.
      *
-     * @param programmingExercise     the programming exercise
-     * @param participations          participations that should be exported
-     * @param repositoryExportOptions the options that should be used for the export
-     * @param workingDir              The directory used to clone the repositories
-     * @param outputDir               The directory used for store the directories
-     * @param exportErrors            A list of errors that occurred during export (populated by this function)
-     * @return List of directory paths
+     * @param programmingExercise       the programming exercise
+     * @param participations            participations that should be exported
+     * @param participationCommitHashes a map containing the commit hashes to be used for each participation (typically only relevant when filtering for specific submissions)
+     * @param workingDir                The directory used to clone the repositories
+     * @param outputDir                 The directory used for store the directories
+     * @param exportErrors              A list of errors that occurred during export (populated by this function)
+     * @param repositoryExportOptions   the options that should be used for the export (e.g. anonymization)
+     * @return List of directory paths with checked out and potentially anonymized repositories
      */
-    public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
-            RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, List<String> exportErrors) {
+    public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull Collection<ProgrammingExerciseStudentParticipation> participations,
+            Map<Long, String> participationCommitHashes, Path workingDir, Path outputDir, List<String> exportErrors, RepositoryExportOptionsDTO repositoryExportOptions) {
         var programmingExerciseId = programmingExercise.getId();
         if (repositoryExportOptions.exportAllParticipants()) {
             log.info("Request to export all {} student or team repositories of programming exercise {} with title '{}'", participations.size(), programmingExerciseId,
@@ -626,28 +496,37 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                     participations.stream().map(StudentParticipation::getParticipantIdentifier).collect(Collectors.joining(", ")));
         }
 
-        List<Path> exportedStudentRepositories = Collections.synchronizedList(new ArrayList<>());
+        List<Path> exportedStudentRepositoriesPaths = Collections.synchronizedList(new ArrayList<>());
+        AtomicBoolean anonymizationFailed = new AtomicBoolean(false);
 
         log.info("export student repositories for programming exercise {} in parallel", programmingExercise.getId());
         try (var threadPool = Executors.newFixedThreadPool(10)) {
             var futures = participations.stream().map(participation -> CompletableFuture.runAsync(() -> {
                 try {
+                    var relevantCommitHash = participationCommitHashes.get(participation.getId());
                     log.debug("invoke createZipForRepositoryWithParticipation for participation {}", participation.getId());
-                    Path dir = getRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir, false);
-                    if (dir != null) {
-                        exportedStudentRepositories.add(dir);
+                    Path repoOutputPath = getRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, relevantCommitHash, workingDir, outputDir,
+                            false);
+                    if (repoOutputPath != null) {
+                        exportedStudentRepositoriesPaths.add(repoOutputPath);
                     }
                 }
                 catch (Exception exception) {
                     var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '"
                             + programmingExercise.getTitle() + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
                     exportErrors.add(error);
+                    if (repositoryExportOptions.anonymizeRepository() && exception instanceof GitException) {
+                        anonymizationFailed.set(true);
+                    }
                 }
             }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
             // wait until all operations finish
             CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
+            if (anonymizationFailed.get()) {
+                throw new GitException("Anonymization failed for one or more repositories");
+            }
         }
-        return exportedStudentRepositories;
+        return exportedStudentRepositoriesPaths;
     }
 
     /**
@@ -673,7 +552,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         // Zip it and return the path to the file
-        return gitService.zipFiles(localRepoPath, zipFilename, outputDir.toString(), contentFilter);
+        return gitRepositoryExportService.zipFiles(localRepoPath, zipFilename, outputDir.toString(), contentFilter);
     }
 
     /**
@@ -705,15 +584,18 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipped repo
+     * @param relevantCommitHash      The commit hash relevant for the submission (e.g. based on the submission date)
      * @param workingDir              The directory used to clone the repository
      * @param outputDir               The directory where the zip file or directory is stored
      * @param zipOutput               If true the method returns a zip file otherwise a directory.
-     * @return The checked out repository as a zip file or directory
+     * @return The checked out repository as a zip file or directory depending on the zipOutput parameter
      * @throws IOException if zip file creation failed
      */
     // TODO: we should check out the repo in memory and not clone it into the file system and additionally do multiple remote operations
+    @Nullable
     public Path getRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
-            final RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, boolean zipOutput) throws IOException, UncheckedIOException {
+            final RepositoryExportOptionsDTO repositoryExportOptions, @Nullable String relevantCommitHash, Path workingDir, Path outputDir, boolean zipOutput)
+            throws IOException, UncheckedIOException {
         if (participation.getVcsRepositoryUri() == null) {
             log.warn("Ignore participation {} for export, because its repository URI is null", participation.getId());
             return null;
@@ -733,11 +615,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 return null;
             }
 
-            // TODO: this operation is only necessary if the repo was not newly cloned
-            gitService.resetToOriginHead(repository);
+            ObjectId latestSetupCommit = null;
+            if (repositoryExportOptions.combineStudentCommits() || repositoryExportOptions.anonymizeRepository()) {
+                // only retrieve the setup commit once, even if it is needed for both operations
+                latestSetupCommit = gitService.getFirstCommitWithMessage(repository, de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
+            }
 
             if (repositoryExportOptions.filterLateSubmissions()) {
-                filterLateSubmissions(repositoryExportOptions, participation, repository);
+                filterLateSubmissions(repositoryExportOptions, relevantCommitHash, participation, repository);
             }
 
             if (repositoryExportOptions.addParticipantName()) {
@@ -747,12 +632,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
             if (repositoryExportOptions.combineStudentCommits()) {
                 log.debug("Combining commits for participation {}", participation);
-                gitService.combineAllStudentCommits(repository, programmingExercise, repositoryExportOptions.anonymizeRepository());
+                gitService.combineAllStudentCommits(repository, repositoryExportOptions.anonymizeRepository(), latestSetupCommit);
             }
 
             if (repositoryExportOptions.anonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
-                gitService.anonymizeStudentCommits(repository, programmingExercise);
+                gitService.anonymizeStudentCommits(repository, latestSetupCommit);
+                // Verify anonymization succeeded before proceeding
+                gitService.verifyAnonymizationOrThrow(repository, repositoryExportOptions.combineStudentCommits(), latestSetupCommit);
             }
             else {
                 gitService.removeRemotesFromRepository(repository);
@@ -770,7 +657,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
 
             log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
-            return gitService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository(), zipOutput);
+            return gitRepositoryExportService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository(), zipOutput);
         }
         catch (GitAPIException | GitException ex) {
             log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),
@@ -801,10 +688,12 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * Filters out all late commits of submissions from the checked out repository of a participation
      *
      * @param repositoryExportOptions The options that should get applied when exporting the submissions
+     * @param relevantCommitHash      The commit hash relevant for the submission (if any)
      * @param participation           The participation related to the repository
      * @param repo                    The repository for which to filter all late submissions
      */
-    private void filterLateSubmissions(RepositoryExportOptionsDTO repositoryExportOptions, ProgrammingExerciseStudentParticipation participation, Repository repo) {
+    private void filterLateSubmissions(RepositoryExportOptionsDTO repositoryExportOptions, @Nullable String relevantCommitHash,
+            ProgrammingExerciseStudentParticipation participation, Repository repo) {
         log.debug("Filter late submissions for participation {}", participation.toString());
         final Optional<ZonedDateTime> latestAllowedDate;
         if (repositoryExportOptions.filterLateSubmissionsIndividualDueDate()) {
@@ -815,10 +704,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         if (latestAllowedDate.isPresent()) {
-            Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
-                    .filter(submission -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(latestAllowedDate.get()))
-                    .max(Comparator.naturalOrder());
-            gitService.filterLateSubmissions(repo, lastValidSubmission, latestAllowedDate.get());
+            gitService.filterLateSubmissions(repo, relevantCommitHash, latestAllowedDate.get());
         }
     }
 
@@ -853,8 +739,10 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         try {
-            gitService.stageAllChanges(repository);
-            gitService.commit(repository, "Add participant identifier (student login or team short name) to project name");
+            boolean hasChanges = gitService.stageAllChanges(repository);
+            if (hasChanges) {
+                gitService.commit(repository, "Add participant identifier (student login or team short name) to project name");
+            }
         }
         catch (GitAPIException ex) {
             log.error("Cannot stage or commit to the repository {}", repository.getLocalPath(), ex);
@@ -942,11 +830,12 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     private List<String> listAllFilesInPath(Path path) {
         List<String> allRepoFiles = Collections.emptyList();
         try (Stream<Path> walk = Files.walk(path)) {
-            allRepoFiles = walk.filter(Files::isRegularFile).map(Path::toString).filter(s -> !s.contains(".git")).toList();
+            allRepoFiles = walk.filter(Files::isRegularFile).map(Path::toString).filter(fileName -> !fileName.contains(File.separator + ".git" + File.separator)).toList();
         }
         catch (IOException | SecurityException e) {
             log.error("Cannot list all files in path {}: {}", path, e.getMessage());
         }
         return allRepoFiles;
     }
+
 }

@@ -33,6 +33,7 @@ artemis:
     version: #project.version#
     file-upload-path: uploads
     submission-export-path: exports
+    temp-path: ./tmp                                # a folder in which temporary files are stored, e.g. for the programming exercise import from file
     bcrypt-salt-rounds: 11 #default value, see application-artemis.yml for more information how to override and customize this value
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
@@ -67,11 +68,11 @@ artemis:
             images:
                 java:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-22"
+                    default: "ls1tum/artemis-maven-template:java17-25"
                     maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-22"
+                    default: "ls1tum/artemis-maven-template:java17-25"
                 empty:
                     default: "ubuntu:24.04"
                 python:
@@ -129,6 +130,20 @@ artemis:
         min: "2.0.0"
         recommended: "2.2.0"
 
+    # Nebula configuration for AI-powered features
+    nebula:
+        enabled: false
+        url: # Set this in production environment (e.g., https://nebula.example.com)
+        secret-token: # Set this in production environment
+
+    # Default security configuration for internal endpoints accessed by other Artemis components 
+    # Currently set to allow all IPs. Adjust as necessary for your deployment.
+    security:
+        internal:
+            allowed-cidrs:
+                - ::/0
+                - 0.0.0.0/0
+
 
 
 management:
@@ -160,6 +175,8 @@ management:
             enabled: false # Disabled to prevent periodic health checks that lead to null pointer exceptions if the ldap is not configured or not active
         config:
             enabled: false # Disabled because we do not use a Spring Cloud Config Server
+        refresh:
+            enabled: false # Disabled because we do not use a refresh scope
     prometheus:
         # Prometheus is the default metrics server
         metrics:
@@ -187,6 +204,8 @@ spring:
         config:
             import-check:
                 enabled: false
+        refresh:
+            enabled: false # Not required in Artemis
     data:
         jpa:
             repositories:
@@ -296,18 +315,26 @@ server:
     shutdown: graceful
     forward-headers-strategy: native
 
+# The below configuration is given so the Sentry Logback appender is configured properly
+# If these are set through Java code, the Logback appender fails to pick up the desired settings
+# Errors are still reported if the appender fails, but traces are missing
 sentry:
+    dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.aet.cit.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
     logging:
         enabled: true
         minimum-breadcrumb-level: error
         minimum-event-level: error
     sample-rate: 1
-    traces-sample-rate: 0.2
+    release: ${artemis.version}
+    send-default-pii: true
+    # This is a placeholder value overwritten in both application-prod.yml and application-dev.yml.
+    # It is only provided to prevent the SDK from choosing the default value 'production', which might lead to confusion
+    environment: test
 
 # Properties to be exposed on the /info management endpoint
 info:
     sentry:
-        dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
+        dsn: ${sentry.dsn}
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false
     textAssessmentAnalyticsEnabled: false

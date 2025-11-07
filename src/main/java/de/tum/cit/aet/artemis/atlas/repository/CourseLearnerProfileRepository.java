@@ -48,6 +48,7 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
     @Query("""
                 SELECT clp
                 FROM CourseLearnerProfile clp
+                LEFT JOIN FETCH clp.course
                 WHERE clp.learnerProfile.user.login = :login AND clp.course = :course
             """)
     Optional<CourseLearnerProfile> findByLoginAndCourse(@Param("login") String login, @Param("course") Course course);

@@ -4,13 +4,13 @@ import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/st
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { MockRatingService } from 'test/helpers/mocks/service/mock-rating.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockComponent } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('RatingComponent', () => {
     let ratingComponent: RatingComponent;
@@ -33,7 +33,7 @@ describe('RatingComponent', () => {
                 ratingService = TestBed.inject(RatingService);
 
                 ratingComponent.result = { id: 89 } as Result;
-                ratingComponent.result.submission = { id: 1, participation: { id: 1 } } as Submission;
+                ratingComponentFixture.componentRef.setInput('participation', { id: 1 } as Participation);
             });
     });
 
@@ -53,7 +53,8 @@ describe('RatingComponent', () => {
 
     it('should return due to missing participation', () => {
         jest.spyOn(ratingService, 'getRating');
-        delete ratingComponent.result?.submission?.participation;
+        ratingComponentFixture.componentRef.setInput('participation', undefined);
+        // delete ratingComponent.result?.submission?.participation;
         ratingComponent.ngOnInit();
         expect(ratingService.getRating).not.toHaveBeenCalled();
     });
@@ -77,8 +78,7 @@ describe('RatingComponent', () => {
 
     it('should not set rating if result participation is not defined', () => {
         ratingComponent.result = { id: 90 } as Result;
-        ratingComponent.result.submission = { id: 1 } as Submission;
-        // result.participation undefined
+        ratingComponentFixture.componentRef.setInput('participation', undefined);
         const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
         jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
         ratingComponentFixture.detectChanges();
@@ -89,7 +89,6 @@ describe('RatingComponent', () => {
     it('should call loadRating when result changes', () => {
         const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
         ratingComponent.result = { id: 90 } as Result;
-        ratingComponent.result.submission = { id: 1, participation: { id: 1 } } as Submission;
         jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
         ratingComponentFixture.detectChanges();
         expect(loadRatingSpy).toHaveBeenCalledOnce();
@@ -100,7 +99,6 @@ describe('RatingComponent', () => {
         // without this condition the loadRating might be spammed making unnecessary api calls
         const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
         ratingComponent.result = { id: 90 } as Result;
-        ratingComponent.result.submission = { id: 1, participation: { id: 1 } } as Submission;
         jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
         ratingComponentFixture.detectChanges();
         ratingComponent.result = { id: 90 } as Result;
@@ -122,7 +120,6 @@ describe('RatingComponent', () => {
             ratingComponent.onRate({
                 oldValue: 0,
                 newValue: 2,
-                starRating: new StarRatingComponent(),
             });
             expect(ratingService.createRating).not.toHaveBeenCalled();
             expect(ratingService.updateRating).not.toHaveBeenCalled();
@@ -132,7 +129,6 @@ describe('RatingComponent', () => {
             ratingComponent.onRate({
                 oldValue: 0,
                 newValue: 2,
-                starRating: new StarRatingComponent(),
             });
             expect(ratingService.createRating).toHaveBeenCalledOnce();
             expect(ratingService.updateRating).not.toHaveBeenCalled();
@@ -144,7 +140,6 @@ describe('RatingComponent', () => {
             ratingComponent.onRate({
                 oldValue: 1,
                 newValue: 2,
-                starRating: new StarRatingComponent(),
             });
             expect(ratingService.updateRating).toHaveBeenCalledOnce();
             expect(ratingService.createRating).not.toHaveBeenCalled();

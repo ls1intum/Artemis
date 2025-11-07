@@ -1,0 +1,192 @@
+name: Query Quality Check
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - 'src/main/java/**'
+  pull_request:
+    paths:
+      - 'src/main/java/**'
+
+jobs:
+  query-quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Query quality check
+        run: |
+          # Run the analysis and capture output
+          output=$(python supporting_scripts/find_slow_queries.py)
+
+          echo "$output"
+          echo ""
+
+          # Extract violation counts
+          entitygraph_violations=$(echo "$output" | grep -c "\[EntityGraph\] Potential over-fetch" || echo "0")
+          query_violations=$(echo "$output" | grep -c "\[@Query\] Potential over-fetch" || echo "0")
+          total_violations=$((entitygraph_violations + query_violations))
+
+          # TODO these values should become zero in the future
+          max_entitygraph_violations=10
+          max_query_violations=24
+          max_total_violations=$((max_entitygraph_violations + max_query_violations))
+
+          echo "=========================================="
+          echo "QUERY QUALITY ANALYSIS SUMMARY"
+          echo "=========================================="
+          echo "EntityGraph violations found: $entitygraph_violations (max allowed: $max_entitygraph_violations)"
+          echo "Query violations found: $query_violations (max allowed: $max_query_violations)"
+          echo "Total violations found: $total_violations (max allowed: $max_total_violations)"
+          echo ""
+
+          violation_detected=false
+
+          if [ "$entitygraph_violations" -gt "$max_entitygraph_violations" ]; then
+            echo "❌ Too many EntityGraph violations: $entitygraph_violations > $max_entitygraph_violations"
+            violation_detected=true
+          else
+            echo "✅ EntityGraph violations within threshold: $entitygraph_violations <= $max_entitygraph_violations"
+          fi
+
+          if [ "$query_violations" -gt "$max_query_violations" ]; then
+            echo "❌ Too many Query violations: $query_violations > $max_query_violations"
+            violation_detected=true
+          else
+            echo "✅ Query violations within threshold: $query_violations <= $max_query_violations"
+          fi
+
+          if [ "$total_violations" -gt "$max_total_violations" ]; then
+            echo "❌ Too many total violations: $total_violations > $max_total_violations"
+            violation_detected=true
+          else
+            echo "✅ Total violations within threshold: $total_violations <= $max_total_violations"
+          fi
+
+          echo "=========================================="
+
+          if [ $violation_detected = "true" ]; then
+            echo "::error::Query Quality check failed"
+            echo ""
+
+            if [ "$entitygraph_violations" -gt "0" ]; then
+              echo "VIOLATING ENTITY GRAPHS ($entitygraph_violations violations):"
+              echo "-----------------------------------------------------------"
+              echo "$output" | sed -n '/\[EntityGraph\] Potential over-fetch/,/^$/p' | grep -E '(Potential over-fetch|@EntityGraph)'
+              echo ""
+            fi
+
+            if [ "$query_violations" -gt "0" ]; then
+              echo "VIOLATING QUERIES ($query_violations violations):"
+              echo "-------------------------------------------------"
+              echo "$output" | sed -n '/\[@Query\] Potential over-fetch/,/^$/p' | grep -E '(Potential over-fetch|JOIN FETCH)'
+              echo ""
+            fi
+
+            echo "=========================================="
+            echo "🔧 HOW TO FIX THESE PERFORMANCE ISSUES"
+            echo "=========================================="
+            echo ""
+            echo "What are these violations?"
+            echo "-------------------------"
+            echo "These violations indicate queries that may fetch too much data at once,"
+            echo "which can cause performance problems, especially with large datasets."
+            echo ""
+            echo "EntityGraph violations: @EntityGraph annotations that load too many related entities"
+            echo "Query violations: @Query annotations with excessive JOIN FETCH clauses"
+            echo ""
+            echo "Why is this a problem?"
+            echo "---------------------"
+            echo "- Slow database queries (can take seconds instead of milliseconds)"
+            echo "- High memory usage (loading unnecessary data into RAM)"
+            echo "- Poor user experience (slow page loads)"
+            echo "- Increased database load"
+            echo ""
+            echo "HOW TO FIX: Common Solutions with Examples"
+            echo "==========================================="
+            echo ""
+            echo "1. PAGINATION - Split large result sets"
+            echo "   ❌ BAD: Fetching all participations at once"
+            echo "   @Query(\"SELECT p FROM StudentParticipation p JOIN FETCH p.submissions\")"
+            echo "   List<StudentParticipation> findAllParticipationsWithSubmissions();"
+            echo ""
+            echo "   ✅ GOOD: Use pagination"
+            echo "   @Query(\"SELECT p FROM StudentParticipation p JOIN FETCH p.submissions\")"
+            echo "   Page<StudentParticipation> findParticipationsWithSubmissions(Pageable pageable);"
+            echo ""
+            echo "2. PROJECTION QUERIES - Fetch only needed fields"
+            echo "   ❌ BAD: Loading full entities when you only need specific fields"
+            echo "   @Query(\"SELECT p FROM StudentParticipation p JOIN FETCH p.submissions JOIN FETCH p.results\")"
+            echo "   List<StudentParticipation> findParticipationsWithSubmissionsAndResults();"
+            echo ""
+            echo "   ✅ GOOD: Use projection for specific fields"
+            echo "   @Query(\"SELECT p.id, p.student.login, s.submissionDate, r.score FROM StudentParticipation p JOIN p.submissions s JOIN s.results r\")"
+            echo "   List<ParticipationSummary> findParticipationSummaries();"
+            echo ""
+            echo "   // Create a simple DTO/record for the projection:"
+            echo "   public record ParticipationSummary(Long id, String studentLogin, ZonedDateTime submissionDate, Double score) {}"
+            echo ""
+            echo "3. SPLIT COMPLEX QUERIES - Break into smaller, focused queries"
+            echo "   ❌ BAD: One query fetching everything"
+            echo "   @EntityGraph(attributePaths = {\"submissions\", \"submissions.results\", \"student\", \"exercise\"})"
+            echo "   List<StudentParticipation> findAllWithEverything();"
+            echo ""
+            echo "   ✅ GOOD: Split into multiple focused queries"
+            echo "   // First, get basic participation data"
+            echo "   List<StudentParticipation> findAllParticipations();"
+            echo "   "
+            echo "   // Then, fetch related data only when needed"
+            echo "   @Query(\"SELECT s FROM Submission s WHERE s.participation.id IN :participationIds\")"
+            echo "   List<Submission> findSubmissionsByParticipationIds(@Param(\"participationIds\") List<Long> participationIds);"
+            echo ""
+            echo "4. CONDITIONAL FETCHING - Load related data only when necessary"
+            echo "   ❌ BAD: Always fetching all relationships"
+            echo "   @EntityGraph(attributePaths = {\"submissions\", \"results\", \"student\"})"
+            echo "   List<StudentParticipation> findAllParticipations();"
+            echo ""
+            echo "   ✅ GOOD: Create specific methods for different use cases"
+            echo "   // For participation list page (minimal data)"
+            echo "   List<StudentParticipation> findAllParticipations();"
+            echo "   "
+            echo "   // For participation detail page (with submissions)"
+            echo "   @EntityGraph(attributePaths = {\"submissions\"})"
+            echo "   Optional<StudentParticipation> findByIdWithSubmissions(Long id);"
+            echo "   "
+            echo "   // For grading page (with results)"
+            echo "   @EntityGraph(attributePaths = {\"submissions\", \"submissions.results\"})"
+            echo "   Optional<StudentParticipation> findByIdWithSubmissionsAndResults(Long id);"
+            echo ""
+            echo "Step-by-step Refactoring Process:"
+            echo "================================="
+            echo "1. Identify the violating query/EntityGraph from the list above"
+            echo "2. Analyze what data is actually needed in your use case"
+            echo "3. Consider if all JOIN FETCHes are necessary"
+            echo "4. Choose the appropriate solution:"
+            echo "   - Add pagination if returning many records"
+            echo "   - Use projection if only specific fields are needed"
+            echo "   - Split into multiple queries if fetching too many relationships"
+            echo "   - Remove unnecessary JOIN FETCHes"
+            echo "5. Test the refactored query with realistic data volumes"
+            echo "6. Measure performance improvement"
+            echo ""
+            echo "Need more help?"
+            echo "==============="
+            echo "- Check our performance guidelines: https://docs.artemis.cit.tum.de/dev/guidelines/performance.html"
+            echo "- Check our best practices in the database section of the developer docs: https://docs.artemis.cit.tum.de/dev/guidelines/database.html"
+            echo "- Monitor query execution time with logging"
+            echo ""
+            echo "Remember: The goal is to fetch only the data you actually need, when you need it!"
+            echo "=========================================="
+
+            exit 1
+          else
+            echo "✅ Query Quality check passed"
+          fi

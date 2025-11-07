@@ -1,12 +1,13 @@
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { AfterViewInit, Component, HostListener, OnDestroy, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, map } from 'rxjs';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { IrisBaseChatbotComponent } from '../../base-chatbot/iris-base-chatbot.component';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -15,18 +16,20 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
     imports: [IrisBaseChatbotComponent],
 })
 export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
+    private breakpointObserver = inject(BreakpointObserver);
     private document = inject<Document>(DOCUMENT);
     private router = inject(Router);
     private dialog = inject(MatDialog);
 
-    dialogData = inject<{ isChatGptWrapper: boolean }>(MAT_DIALOG_DATA);
+    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
+        initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),
+    });
 
     // User preferences
     initialWidth = 400;
     initialHeight = 600;
     fullWidthFactor = 0.93;
     fullHeightFactor = 0.85;
-    isMobile = false;
     fullSize = false;
     public ButtonType = ButtonType;
 
@@ -123,12 +126,10 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
             return;
         }
 
-        this.isMobile = cntRect.width < 600;
-
         let initX: number;
         let initY: number;
 
-        if (this.fullSize || this.isMobile) {
+        if (this.fullSize || this.isMobile()) {
             initX = (cntRect.width * (1 - this.fullWidthFactor)) / 2.0;
             initY = (cntRect.height * (1 - this.fullHeightFactor)) / 2.0;
         } else {
@@ -142,7 +143,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         nE.setAttribute('data-y', String(initY));
 
         // Set width and height
-        if (this.fullSize || this.isMobile) {
+        if (this.fullSize || this.isMobile()) {
             nE.style.width = `${cntRect.width * this.fullWidthFactor}px`;
             nE.style.height = `${cntRect.height * this.fullHeightFactor}px`;
         } else {

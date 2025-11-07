@@ -34,8 +34,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -61,7 +61,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         { testName: 'test3', active: false },
     ];
 
-    const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
+    const mockProfileInfo = { activeModuleFeatures: [MODULE_FEATURE_HYPERION] } as ProfileInfo;
 
     const route = {
         snapshot: { paramMap: convertToParamMap({ courseId: '1', exerciseId: 1 }) },
@@ -313,8 +313,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(saveInstructionsSpy).toHaveBeenCalledOnce();
     });
 
-    it('should have intelligence actions when IRIS is active', () => {
-        const isProfileActiveSpy = jest.spyOn(TestBed.inject(ProfileService), 'isProfileActive').mockReturnValue(true);
+    it('should have intelligence actions when Hyperion is active', () => {
+        const isModuleFeatureActiveSpy = jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
 
         // Komponente erneut erzeugen, damit computed() neu berechnet wird
         fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
@@ -327,9 +327,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
 
         const actions = comp.artemisIntelligenceActions();
-        expect(actions).toHaveLength(2);
+        expect(actions).toHaveLength(1);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
-        expect(actions[1]).toBeInstanceOf(ConsistencyCheckAction);
-        expect(isProfileActiveSpy).toHaveBeenCalledWith('iris');
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_HYPERION);
     });
 });

@@ -9,6 +9,7 @@ import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/progra
 import JSZip from 'jszip';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Component({
     selector: 'jhi-exercise-import-from-file',
@@ -54,13 +55,21 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 const progEx = this.exercise as ProgrammingExercise;
                 // This is needed to make sure that old exported programming exercises can be imported
                 if (!progEx.buildConfig) {
-                    progEx.buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
+                    const buildConfig = new ProgrammingExerciseBuildConfig();
+                    const raw = exerciseJson as unknown as Partial<ProgrammingExerciseBuildConfig>;
+                    Object.assign(buildConfig, raw);
+                    progEx.buildConfig = copyBuildConfigFromExerciseJson(buildConfig);
                 }
                 if (progEx.auxiliaryRepositories) {
                     progEx.auxiliaryRepositories!.forEach((repo, index) => {
                         progEx.auxiliaryRepositories![index].id = undefined;
                     });
                 }
+
+                // This ensures each entry is converted into a proper ExerciseCategory instance
+                // so that category badges render correctly in the UI.
+                ExerciseService.parseExerciseCategories(progEx);
+
                 this.exercise = progEx;
                 break;
             default:

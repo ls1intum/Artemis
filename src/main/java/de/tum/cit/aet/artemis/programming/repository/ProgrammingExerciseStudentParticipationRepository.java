@@ -31,15 +31,37 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
+    /**
+     * Loads a {@link ProgrammingExerciseStudentParticipation} by id with all related submissions and results in one query (avoiding N+1 issues via {@code LEFT JOIN FETCH}).
+     *
+     * <p>
+     * Includes results if:
+     * <ul>
+     * <li>they are automatic,</li>
+     * <li>they are completed and the assessment due date is before {@code dateTime} (or not set), or</li>
+     * <li>no result exists yet.</li>
+     * </ul>
+     *
+     * <p>
+     * This ensures automatic feedback is always visible, manual assessments are only shown
+     * after due dates, and participations without results remain accessible.
+     * </p>
+     *
+     * @param participationId the participation id
+     * @param dateTime        reference time for assessment due date checks
+     * @return the participation with submissions and relevant results, if found
+     */
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results pr
-            WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
-                        OR (pr.completionDate IS NOT NULL
-                            AND (p.exercise.assessmentDueDate IS NULL
-                                OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
+                LEFT JOIN FETCH s.results r
+            WHERE p.id = :participationId
+                AND (
+                    r.assessmentType = 'AUTOMATIC'
+                    OR (r.completionDate IS NOT NULL AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime))
+                    OR r.id IS NULL
+                    )
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
@@ -87,9 +109,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 AND student.id = :studentId
             """)
     Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions.results" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndResultsByExerciseId(long exerciseId);
@@ -142,22 +161,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT participation
             FROM ProgrammingExerciseStudentParticipation participation
-                LEFT JOIN FETCH participation.submissions s
-            WHERE participation.exercise.id = :exerciseId
-                AND participation.student.login = :username
-                AND participation.testRun = :testRun
-            ORDER BY participation.id DESC
-            """)
-    List<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(@Param("exerciseId") long exerciseId,
-            @Param("username") String username, @Param("testRun") boolean testRun);
-
-    default Optional<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun) {
-        return findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(exerciseId, username, testRun).stream().findFirst();
-    }
-
-    @Query("""
-            SELECT participation
-            FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.submissions
             WHERE participation.exercise.id = :exerciseId
                 AND participation.student.login = :username
@@ -206,4 +209,41 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 
+    @Query("""
+            SELECT p.id
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.login IN :participantIdentifierList
+            """)
+    Set<Long> findIdsByExerciseIdAndParticipantIdentifier(@Param("exerciseId") long exerciseId, @Param("participantIdentifierList") Set<String> participantIdentifierList);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :exerciseId
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.id IN :participationIds
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByIds(@Param("participationIds") Collection<Long> participationIds);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.id IN :participationIds
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByIdsWithEagerSubmissions(@Param("participationIds") Collection<Long> participationIds);
 }

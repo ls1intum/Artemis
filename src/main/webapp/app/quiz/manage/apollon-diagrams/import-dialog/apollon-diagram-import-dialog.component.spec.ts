@@ -28,8 +28,8 @@ describe('ApollonDiagramImportDialog Component', () => {
 
     it('handleDetailOpen', () => {
         fixture.componentInstance.handleDetailOpen(apollonDiagramId);
-        expect(fixture.componentInstance.isInEditView).toBeTruthy();
-        expect(fixture.componentInstance.apollonDiagramDetailId).toBe(5);
+        expect(fixture.componentInstance.isInEditView()).toBeTruthy();
+        expect(fixture.componentInstance.apollonDiagramDetailId()).toBe(5);
     });
 
     it('handleDetailClose', () => {
@@ -39,7 +39,7 @@ describe('ApollonDiagramImportDialog Component', () => {
         expect(modalCloseSpy).toHaveBeenCalledWith(newDnDQuestion);
 
         fixture.componentInstance.handleDetailClose();
-        expect(fixture.componentInstance.isInEditView).toBeFalsy();
+        expect(fixture.componentInstance.isInEditView()).toBeFalsy();
     });
 
     it('closeModal', () => {

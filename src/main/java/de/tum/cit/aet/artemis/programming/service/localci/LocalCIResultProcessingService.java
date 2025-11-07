@@ -17,17 +17,13 @@ import java.util.concurrent.TimeoutException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.hazelcast.collection.ItemEvent;
-import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -54,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
@@ -86,7 +83,7 @@ public class LocalCIResultProcessingService {
 
     private UUID listenerId;
 
-    @Value("${artemis.continuous-integration.concurrent-result-processing-size:4}")
+    @Value("${artemis.continuous-integration.concurrent-result-processing-size:16}")
     private int concurrentResultProcessingSize;
 
     private ThreadPoolExecutor resultProcessingExecutor;
@@ -116,12 +113,14 @@ public class LocalCIResultProcessingService {
     @PostConstruct
     public void init() {
         initResultProcessingExecutor();
-        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addItemListener(new ResultQueueListener(), true);
+        log.info("Adding item listener to distributed result queue for LocalCI result processing service");
+        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addItemListener(new ResultQueueListener());
     }
 
     private void initResultProcessingExecutor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-result-%d")
-                .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in result processing thread {}", t.getName(), e)).build();
+        ThreadFactory threadFactory = BasicThreadFactory.builder().namingPattern("local-ci-result-%d")
+                .uncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in result processing thread {}", t.getName(), e)).build();
+
         // buffer up to 1000 tasks before rejecting new tasks. Rejections will not lead to loss because the results maintain in the queue but this speeds up
         // result processing under high load so we do not need to wait for the polling schedule if many results are processed very fast.
         resultProcessingExecutor = new ThreadPoolExecutor(concurrentResultProcessingSize, concurrentResultProcessingSize, 0L, TimeUnit.MILLISECONDS,
@@ -135,18 +134,10 @@ public class LocalCIResultProcessingService {
      */
     @PreDestroy
     public void removeListener() {
-        // check if Hazelcast is still active, before invoking this
-        try {
-            if (distributedDataAccessService.isInstanceRunning()) {
-                distributedDataAccessService.getDistributedBuildResultQueue().removeItemListener(this.listenerId);
-            }
+        if (distributedDataAccessService.isInstanceRunning() && this.listenerId != null) {
+            distributedDataAccessService.getDistributedBuildResultQueue().removeListener(this.listenerId);
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Could not remove listener as hazelcast instance is not active.");
-        }
-        finally {
-            shutdownResultProcessingExecutor();
-        }
+        shutdownResultProcessingExecutor();
     }
 
     private void shutdownResultProcessingExecutor() {
@@ -201,91 +192,96 @@ public class LocalCIResultProcessingService {
         List<BuildLogDTO> buildLogs = resultQueueItem.buildLogs();
         Throwable buildException = resultQueueItem.exception();
 
+        if (buildResult == null) {
+            return;
+        }
         BuildJob savedBuildJob;
+        Result result = null;
 
         SecurityUtils.setAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.participationId());
 
-        if (buildResult != null) {
-            Result result = null;
-            try {
-                if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+        try {
+            if (participationOptional.isPresent()) {
+                ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
 
-                    // In case the participation does not contain the exercise, we have to load it from the database
-                    if (participation.getProgrammingExercise() == null) {
-                        participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
-                    }
-                    result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+                // In case the participation does not contain the exercise, we have to load it from the database
+                if (participation.getProgrammingExercise() == null) {
+                    participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(participation));
+                }
+                result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
 
+            }
+            else {
+                log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
+            }
+        }
+        finally {
+            ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participationOptional.orElse(null);
+            if (programmingExerciseParticipation != null && programmingExerciseParticipation.getExercise() == null) {
+                ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(programmingExerciseParticipation);
+                programmingExerciseParticipation.setExercise(exercise);
+                programmingExerciseParticipation.setProgrammingExercise(exercise);
+            }
+
+            // save build job to database
+            if (buildException != null) {
+                if (buildException.getCause() instanceof CancellationException && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
+                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
+                }
+                else if (buildException.getCause() instanceof TimeoutException) {
+                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
                 }
                 else {
-                    log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", buildJob.participationId());
+                    log.error("Error while processing build job: {}", buildJob, buildException);
+                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
                 }
             }
-            finally {
-                ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participationOptional.orElse(null);
-                if (programmingExerciseParticipation != null && programmingExerciseParticipation.getExercise() == null) {
-                    ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(programmingExerciseParticipation);
-                    programmingExerciseParticipation.setExercise(exercise);
-                    programmingExerciseParticipation.setProgrammingExercise(exercise);
-                }
-
-                // save build job to database
-                if (buildException != null) {
-                    if (buildException.getCause() instanceof CancellationException
-                            && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
-                    }
-                    else if (buildException.getCause() instanceof TimeoutException) {
-                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
-                    }
-                    else {
-                        log.error("Error while processing build job: {}", buildJob, buildException);
-                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
-                    }
-                }
-                else {
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
-                    if (programmingExerciseParticipation != null) {
-                        updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
-                    }
-                }
-
+            else {
+                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
                 if (programmingExerciseParticipation != null) {
-                    if (result != null) {
-                        programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
-                    }
-                    else {
-                        programmingSubmissionMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
-                                new BuildTriggerWebsocketError("Result could not be processed", programmingExerciseParticipation.getId()));
-                    }
-
-                    if (!buildLogs.isEmpty()) {
-                        if (savedBuildJob != null) {
-                            buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId(), programmingExerciseParticipation.getProgrammingExercise());
-                        }
-                        else {
-                            log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
-                        }
-                    }
+                    updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
                 }
             }
 
-            // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
-            if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
-                log.debug("Triggering build of template repository for solution build with id {}", buildJob.id());
-                try {
+            if (programmingExerciseParticipation != null) {
+                if (result != null) {
+                    programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
+                }
+                else {
+                    log.error("Result could not be processed for build job: {}", buildJob);
+                    programmingSubmissionMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
+                            new BuildTriggerWebsocketError("Result could not be processed", programmingExerciseParticipation.getId()));
+                }
+
+                if (!buildLogs.isEmpty()) {
+                    if (savedBuildJob != null) {
+                        buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId(), programmingExerciseParticipation.getProgrammingExercise());
+                    }
+                    else {
+                        log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
+                    }
+                }
+            }
+        }
+
+        // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
+        if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
+            log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
+            try {
+                // Run async to not block the result processing thread
+                CompletableFuture.runAsync(() -> {
+                    SecurityUtils.setAuthorizationObject();
                     programmingTriggerService.triggerTemplateBuildAndNotifyUser(buildJob.exerciseId(), buildJob.buildConfig().testCommitHash(), SubmissionType.TEST,
                             buildJob.repositoryInfo().triggeredByPushTo());
-                }
-                catch (EntityNotFoundException e) {
-                    // Something went wrong while retrieving the template participation.
-                    // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
-                    // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build
-                    // manually.
-                    log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
-                }
+                });
+            }
+            catch (EntityNotFoundException e) {
+                // Something went wrong while retrieving the template participation.
+                // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
+                // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build
+                // manually.
+                log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
             }
         }
     }
@@ -347,17 +343,42 @@ public class LocalCIResultProcessingService {
         }
     }
 
-    public class ResultQueueListener implements ItemListener<ResultQueueItem> {
+    /**
+     * Listener that reacts to new build results added to the distributed result queue.
+     *
+     * <p>
+     * <strong>Responsibilities</strong>:
+     * </p>
+     * <ul>
+     * <li>Trigger asynchronous post-processing of build results when a new {@link ResultQueueItem} arrives.</li>
+     * <li>Keep the Hazelcast event thread lightweight by delegating all work to {@link #processResultAsync()}.</li>
+     * <li>Log concise, context-rich messages for observability while avoiding excessive output.</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Notes</strong>:
+     * </p>
+     * <ul>
+     * <li>Never perform blocking or long-running operations in the event callback.</li>
+     * <li>All exceptions are caught and logged defensively to prevent listener crashes.</li>
+     * </ul>
+     */
+    public class ResultQueueListener implements QueueItemListener<ResultQueueItem> {
 
         @Override
-        public void itemAdded(ItemEvent<ResultQueueItem> event) {
-            log.debug("Result of build job with id {} added to queue", event.getItem().buildJobQueueItem().id());
-            processResultAsync();
+        public void itemAdded(ResultQueueItem item) {
+            try {
+                log.info("Result of build job with id {} added to queue. Will process one result async now", item.buildJobQueueItem().id());
+                processResultAsync();
+            }
+            catch (Exception e) {
+                log.error("Error handling itemAdded event in ResultQueueListener", e);
+            }
         }
 
         @Override
-        public void itemRemoved(ItemEvent<ResultQueueItem> event) {
-
+        public void itemRemoved(ResultQueueItem item) {
+            log.debug("Result removed from queue");
         }
     }
 

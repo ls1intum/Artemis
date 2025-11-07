@@ -52,6 +52,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,8 +67,6 @@ import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Frame;
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
@@ -90,6 +89,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 // TODO re-enable tests. when Executed in isolation they work
@@ -105,6 +106,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 // concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
 // or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
 @Execution(ExecutionMode.SAME_THREAD)
+@Isolated
 class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localciint";
@@ -120,17 +122,20 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     private String commitHash;
 
-    private IQueue<BuildJobQueueItem> queuedJobs;
+    private DistributedQueue<BuildJobQueueItem> queuedJobs;
 
-    private IMap<String, BuildJobQueueItem> processingJobs;
+    private DistributedMap<String, BuildJobQueueItem> processingJobs;
 
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
+    private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
+
+    @Value("${artemis.continuous-integration.max-missing-job-retries:3}")
+    private int maxMissingJobRetries;
 
     @BeforeAll
     void setupAll() {
@@ -140,7 +145,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @AfterAll
     void cleanupAll() {
-        gitService.init();
         buildJobRepository.deleteAll();
     }
 
@@ -169,9 +173,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         dockerClientTestService.mockInspectImage(dockerClient);
 
-        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
-        processingJobs = hazelcastInstance.getMap("processingJobs");
-        buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
+        queuedJobs = distributedDataAccessService.getDistributedBuildJobQueue();
+        processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
+        buildAgentInformation = distributedDataAccessService.getDistributedBuildAgentInformation();
     }
 
     @AfterEach
@@ -301,7 +305,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         }
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMissingBuildJobCheck() {
@@ -326,9 +329,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(6));
         buildJobRepository.save(buildJob);
 
-        hazelcastInstance.getQueue("buildJobQueue").clear();
+        queuedJobs.clear();
 
-        localCIEventListenerService.checkPendingBuildJobsStatus();
+        localCIMissingJobService.checkPendingBuildJobsStatus();
 
         buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
         buildJob = buildJobOptional.orElseThrow();
@@ -336,6 +339,55 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // resume the build agent
         sharedQueueProcessingService.init();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMissingBuildJobRetry() {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
+
+        await().until(() -> {
+            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+            return buildJobOptional.isPresent() && buildJobOptional.get().getBuildStatus() == BuildStatus.QUEUED;
+        });
+
+        BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
+        buildJob.setBuildStatus(BuildStatus.MISSING);
+        buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        buildJobRepository.save(buildJob);
+
+        localCIMissingJobService.retryMissingJobs();
+
+        // job for participation should be retried so retry count should be 1 and status QUEUED
+        await().until(() -> {
+            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId());
+            if (buildJobOptional.isEmpty()) {
+                return false;
+            }
+            BuildJob retriedBuildJob = buildJobOptional.get();
+            return (retriedBuildJob.getBuildStatus() == BuildStatus.QUEUED || retriedBuildJob.getBuildStatus() == BuildStatus.BUILDING) && retriedBuildJob.getRetryCount() == 1;
+        });
+        processingJobs.clear();
+        queuedJobs.clear();
+    }
+
+    @Test
+    void testMissingBuildJobRetryLimit() {
+        BuildJob buildJob = new BuildJob();
+        buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        buildJob.setBuildStatus(BuildStatus.MISSING);
+        buildJob.setRetryCount(maxMissingJobRetries);
+        buildJob.setParticipationId(1L);
+        buildJob = buildJobRepository.save(buildJob);
+
+        localCIMissingJobService.retryMissingJobs();
+
+        // latest build job for the participation should be the same because no retry over the limit
+        BuildJob latestJob = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId()).orElseThrow();
+        assertThat(latestJob.getBuildJobId()).isEqualTo(buildJob.getBuildJobId());
+        assertThat(latestJob.getBuildStatus()).isEqualTo(BuildStatus.MISSING);
+        assertThat(latestJob.getRetryCount()).isEqualTo(maxMissingJobRetries);
     }
 
     @Test
@@ -746,20 +798,18 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPauseAndResumeBuildAgent() {
         String buildAgentName = "artemis-build-agent-test";
-        hazelcastInstance.getTopic("pauseBuildAgentTopic").publish(buildAgentName);
+        distributedDataAccessService.getPauseBuildAgentTopic().publish(buildAgentName);
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
         await().until(() -> {
-            IQueue<BuildJobQueueItem> buildQueue = hazelcastInstance.getQueue("buildJobQueue");
-            IMap<String, BuildJobQueueItem> buildJobMap = hazelcastInstance.getMap("processingJobs");
-            BuildJobQueueItem buildJobQueueItem = buildQueue.peek();
-
-            return buildJobQueueItem != null && buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash) && !buildJobMap.containsKey(buildJobQueueItem.id());
+            List<String> buildJobIds = distributedDataAccessService.getProcessingJobIds();
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+            return buildJobQueueItem != null && buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash) && !buildJobIds.contains(buildJobQueueItem.id());
         });
 
-        hazelcastInstance.getTopic("resumeBuildAgentTopic").publish(buildAgentName);
+        distributedDataAccessService.getResumeBuildAgentTopic().publish(buildAgentName);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
     }
 
@@ -775,6 +825,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
+
+        var queuedJobs = distributedDataAccessService.getQueuedJobs();
 
         await().until(() -> queuedJobs.stream().anyMatch(buildJobQueueItem -> buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash)
                 && buildJobQueueItem.participationId() == studentParticipation.getId()));
@@ -807,7 +859,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         processingJobs.put(buildJobQueueItem.id(), buildJobQueueItem);
         var submissionDto = request.get("/api/programming/programming-exercise-participations/" + submission.getParticipation().getId() + "/latest-pending-submission",
                 HttpStatus.OK, SubmissionDTO.class);
-        processingJobs.delete(buildJobQueueItem.id());
+        processingJobs.remove(buildJobQueueItem.id());
 
         assertThat(submissionDto).isNotNull();
         assertThat(submissionDto.isProcessing()).isTrue();
@@ -817,7 +869,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Test
     void testSelfPauseTriggersListenerAndEmailNotification() {
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         BuildAgentDTO buildAgentDTO = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
         BuildAgentInformation buildAgent = new BuildAgentInformation(buildAgentDTO, 0, 0, new ArrayList<>(List.of()), BuildAgentInformation.BuildAgentStatus.IDLE, null, null, 100);
         buildAgentInformation.put(memberAddress, buildAgent);

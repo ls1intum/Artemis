@@ -7,40 +7,25 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.CloneCommand;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.GitCommand;
 import org.eclipse.jgit.api.LsRemoteCommand;
-import org.eclipse.jgit.api.TransportCommand;
-import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
-import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevSort;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.CredentialItem;
-import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.SshConfigStore;
-import org.eclipse.jgit.transport.SshConstants;
-import org.eclipse.jgit.transport.SshTransport;
-import org.eclipse.jgit.transport.URIish;
-import org.eclipse.jgit.transport.sshd.JGitKeyCache;
-import org.eclipse.jgit.transport.sshd.KeyPasswordProvider;
-import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
-import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,30 +38,12 @@ public abstract class AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractGitService.class);
 
-    private JGitKeyCache jgitKeyCache;
-
-    protected TransportConfigCallback sshCallback;
-
-    private SshdSessionFactory sshdSessionFactory;
-
     protected static final int JGIT_TIMEOUT_IN_SECONDS = 5;
 
     protected static final String REMOTE_NAME = "origin";
 
     @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
-
-    @Value("${artemis.version-control.token:#{null}}")
-    protected Optional<String> gitToken;
-
-    @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
-    protected Optional<String> gitSshPrivateKeyPath;
-
-    @Value("${artemis.version-control.ssh-private-key-password:#{null}}")
-    protected Optional<String> gitSshPrivateKeyPassphrase;
-
-    @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
-    protected Optional<String> sshUrlTemplate;
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -86,40 +53,6 @@ public abstract class AbstractGitService {
         log.debug("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.debug("Default Charset={}", Charset.defaultCharset());
         log.debug("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
-    }
-
-    protected boolean useSsh() {
-        return gitSshPrivateKeyPath.isPresent() && sshUrlTemplate.isPresent();
-        // password is optional and will only be applied if the ssh private key was encrypted using a password
-    }
-
-    /**
-     * Configures the SSH settings for the JGit SSH session factory.
-     */
-    protected void configureSsh() {
-        CredentialsProvider.setDefault(new CustomCredentialsProvider());
-        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, localVCBaseUri);
-        jgitKeyCache = new JGitKeyCache();
-        sshdSessionFactory = sshSessionFactoryBuilder.build(jgitKeyCache);
-        sshCallback = transport -> {
-            if (transport instanceof SshTransport sshTransport) {
-                transport.setTimeout(JGIT_TIMEOUT_IN_SECONDS);
-                sshTransport.setSshSessionFactory(sshdSessionFactory);
-            }
-            else {
-                log.error("Cannot use ssh properly because of mismatch of Jgit transport object: {}", transport);
-            }
-        };
-    }
-
-    protected static SshdSessionFactoryBuilder getSshdSessionFactoryBuilder(Optional<String> gitSshPrivateKeyPath, Optional<String> gitSshPrivateKeyPassphrase, URI gitUri) {
-        // @formatter:off
-        return new SshdSessionFactoryBuilder()
-            .setKeyPasswordProvider(keyPasswordProvider -> new CustomKeyPasswordProvider(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase))
-            .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUri))
-            .setSshDirectory(Path.of(gitSshPrivateKeyPath.orElseThrow()).toFile())
-            .setHomeDirectory(Path.of(System.getProperty("user.home")).toFile());
-            // @formatter:on
     }
 
     /**
@@ -232,7 +165,7 @@ public abstract class AbstractGitService {
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
     @Nullable
-    public ObjectId getLastCommitHash(LocalVCRepositoryUri repoUri) throws EntityNotFoundException {
+    public ObjectId getLastCommitHash(@Nullable LocalVCRepositoryUri repoUri) throws EntityNotFoundException {
         if (repoUri == null || repoUri.getURI() == null) {
             return null;
         }
@@ -252,27 +185,95 @@ public abstract class AbstractGitService {
         }
     }
 
+    /**
+     * Retrieves the hash of the first commit in a bare Git repository whose commit message contains
+     * a given search string. The method iterates commits in chronological order (oldest to newest)
+     * to ensure that the earliest matching commit is returned.
+     *
+     * <p>
+     * If no commit message contains the specified string, the method falls back to returning the
+     * hash of the very first (oldest) commit in the repository. This guarantees that the method always
+     * returns a deterministic commit reference, even when no match is found.
+     *
+     * <p>
+     * The repository is assumed to be a bare Git repository (i.e., without a working tree).
+     * The method opens it directly using {@link FileRepositoryBuilder} and performs a {@link RevWalk}
+     * to traverse commit history starting from all available branch heads.
+     *
+     * <p>
+     * Algorithmic details:
+     * <ul>
+     * <li>Commits are sorted in ascending chronological order using {@code RevSort.REVERSE}.</li>
+     * <li>The iteration stops immediately when a commit message containing the given substring is found.</li>
+     * <li>If no such commit exists, the first (oldest) commit encountered is returned as a fallback.</li>
+     * <li>The method operates in O(N) time, where N is the number of commits, but performs efficiently
+     * even for hundreds of commits (a few milliseconds for ~200 commits).</li>
+     * </ul>
+     *
+     * @param repository the Git repository (bare) to search within.
+     * @param message    the commit message substring to search for (case-sensitive).
+     * @return the {@link ObjectId} of the first commit whose message contains {@code message},
+     *         or the {@link ObjectId} of the oldest commit if no match is found;
+     *         or {@code null} if the repository URI is invalid or inaccessible.
+     * @throws EntityNotFoundException if the repository cannot be opened or traversed.
+     */
+    @Nullable
+    public ObjectId getFirstCommitWithMessage(Repository repository, String message) throws EntityNotFoundException {
+
+        try {
+            try (RevWalk walk = new RevWalk(repository)) {
+
+                // Sort oldest → newest
+                walk.sort(RevSort.COMMIT_TIME_DESC, true);
+                walk.sort(RevSort.REVERSE, true);
+
+                // Mark all branch heads as starting points
+                for (Ref ref : repository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)) {
+                    ObjectId tip = ref.getObjectId();
+                    if (tip != null) {
+                        walk.markStart(walk.parseCommit(tip));
+                    }
+                }
+
+                RevCommit firstCommit = null;
+
+                for (RevCommit commit : walk) {
+                    // Remember the first (oldest) commit as fallback
+                    if (firstCommit == null) {
+                        firstCommit = commit;
+                    }
+
+                    String msg = commit.getFullMessage();
+                    if (msg != null && msg.contains(message)) {
+                        return commit.getId(); // Found a match, return early
+                    }
+                }
+
+                // Fallback: return the first (oldest) commit if no message matched
+                if (firstCommit != null) {
+                    return firstCommit.getId();
+                }
+
+                return null;
+            }
+        }
+        catch (Exception ex) {
+            throw new EntityNotFoundException(
+                    "Could not retrieve the commit hash with message '" + message + "' for repository " + repository.getRemoteRepositoryUri() + ": " + ex);
+        }
+    }
+
     protected String getGitUriAsString(LocalVCRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         return getGitUri(vcsRepositoryUri).toString();
     }
 
     protected abstract URI getGitUri(LocalVCRepositoryUri vcsRepositoryUri) throws URISyntaxException;
 
-    private LsRemoteCommand lsRemoteCommand() {
-        return authenticate(Git.lsRemoteRepository());
-    }
-
-    protected abstract <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command);
-
-    protected CloneCommand cloneCommand() {
-        return authenticate(Git.cloneRepository());
-    }
-
     protected static URI getSshUri(LocalVCRepositoryUri vcsRepositoryUri, Optional<String> sshUrlTemplate) throws URISyntaxException {
         URI templateUri = new URI(sshUrlTemplate.orElseThrow());
         // Example: ssh://git@artemis.tum.de:2222/se2021w07h02/se2021w07h02-ga27yox.git
         final var repositoryUri = vcsRepositoryUri.getURI();
-        final var path = repositoryUri.getPath().replace("/scm", "");
+        final var path = repositoryUri.getPath();
         return new URI(templateUri.getScheme(), templateUri.getUserInfo(), templateUri.getHost(), templateUri.getPort(), path, null, repositoryUri.getFragment());
     }
 
@@ -291,106 +292,5 @@ public abstract class AbstractGitService {
         log.debug("Deleted Repository at {}", repoPath);
     }
 
-    protected void cleanup() {
-        if (useSsh()) {
-            jgitKeyCache.close();
-            sshdSessionFactory.close();
-        }
-    }
-
-    static class CustomCredentialsProvider extends CredentialsProvider {
-
-        @Override
-        public boolean isInteractive() {
-            return false;
-        }
-
-        @Override
-        public boolean supports(CredentialItem... items) {
-            return true;
-        }
-
-        // Note: the following method allows us to store known hosts
-        @Override
-        public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
-            for (CredentialItem item : items) {
-                if (item instanceof CredentialItem.YesNoType yesNoItem) {
-                    yesNoItem.setValue(true);
-                }
-            }
-            return true;
-        }
-    }
-
-    static class CustomKeyPasswordProvider implements KeyPasswordProvider {
-
-        Optional<String> gitSshPrivateKeyPath;
-
-        Optional<String> gitSshPrivateKeyPassphrase;
-
-        public CustomKeyPasswordProvider(Optional<String> gitSshPrivateKeyPath, Optional<String> gitSshPrivateKeyPassphrase) {
-            this.gitSshPrivateKeyPath = gitSshPrivateKeyPath;
-            this.gitSshPrivateKeyPassphrase = gitSshPrivateKeyPassphrase;
-        }
-
-        @Override
-        public char[] getPassphrase(URIish uri, int attempt) {
-            // Example: /Users/artemis/.ssh/artemis/id_rsa contains /Users/artemis/.ssh/artemis
-            if (gitSshPrivateKeyPath.isPresent() && gitSshPrivateKeyPassphrase.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
-                return gitSshPrivateKeyPassphrase.get().toCharArray();
-            }
-            else {
-                return null;
-            }
-        }
-
-        @Override
-        public void setAttempts(int maxNumberOfAttempts) {
-        }
-
-        @Override
-        public boolean keyLoaded(URIish uri, int attempt, Exception error) {
-            return false;
-        }
-    }
-
-    record CustomSshConfigStore(URI gitUri) implements SshConfigStore {
-
-        @Override
-        public HostConfig lookup(String hostName, int port, String userName) {
-            return new HostConfig() {
-
-                @Override
-                public String getValue(String key) {
-                    return null;
-                }
-
-                @Override
-                public List<String> getValues(String key) {
-                    return Collections.emptyList();
-                }
-
-                @Override
-                public Map<String, String> getOptions() {
-                    log.debug("getOptions: {}:{}", hostName, port);
-                    if (hostName.equals(gitUri.getHost())) {
-                        return Collections.singletonMap(SshConstants.STRICT_HOST_KEY_CHECKING, SshConstants.NO);
-                    }
-                    else {
-                        return Collections.emptyMap();
-                    }
-                }
-
-                @Override
-                public Map<String, List<String>> getMultiValuedOptions() {
-                    return Collections.emptyMap();
-                }
-            };
-        }
-
-        @Override
-        public HostConfig lookupDefault(String hostName, int port, String userName) {
-            return lookup(hostName, port, userName);
-        }
-    }
+    protected abstract LsRemoteCommand lsRemoteCommand();
 }

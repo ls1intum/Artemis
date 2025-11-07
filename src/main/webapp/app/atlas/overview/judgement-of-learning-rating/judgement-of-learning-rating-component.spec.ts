@@ -8,7 +8,6 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { of, throwError } from 'rxjs';
 
 describe('JudgementOfLearningRatingComponent', () => {
@@ -53,62 +52,50 @@ describe('JudgementOfLearningRatingComponent', () => {
     });
 
     it('should not emit value when rating and courseId is undefined', () => {
-        component.courseId = undefined;
-        component.rating = undefined;
-
-        const emitSpy = jest.spyOn(component.ratingChange, 'emit');
+        fixture.componentRef.setInput('courseId', undefined as any);
+        fixture.componentRef.setInput('rating', undefined);
 
         component.onRate({} as any);
-        expect(emitSpy).not.toHaveBeenCalled();
+        expect(component.rating()).toBeUndefined();
     });
 
     it('should not emit value when rating is undefined', () => {
-        component.courseId = 1;
-        component.rating = undefined;
-
-        const emitSpy = jest.spyOn(component.ratingChange, 'emit');
-
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('rating', undefined);
         component.onRate({} as any);
-        expect(emitSpy).not.toHaveBeenCalled();
+        expect(component.rating()).toBeUndefined();
     });
 
     it('should not emit value when courseId is undefined', () => {
-        component.courseId = undefined;
-        component.rating = 3;
-
-        const emitSpy = jest.spyOn(component.ratingChange, 'emit');
-
+        fixture.componentRef.setInput('courseId', undefined as any);
+        fixture.componentRef.setInput('rating', 3);
         component.onRate({} as any);
-        expect(emitSpy).not.toHaveBeenCalled();
+        expect(component.rating()).toBe(3);
     });
 
     it('should emit new rating when onRate is called with valid data', fakeAsync(() => {
-        component.rating = undefined;
-        component.courseId = 1;
+        fixture.componentRef.setInput('rating', undefined);
+        fixture.componentRef.setInput('courseId', 1);
 
         const newRating = 4;
-        const event = { oldValue: 3, newValue: newRating, starRating: {} as StarRatingComponent };
+        const event = { oldValue: 3, newValue: newRating };
         jest.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
-        const emitSpy = jest.spyOn(component.ratingChange, 'emit');
-
         component.onRate(event);
-
-        expect(component.rating).toBe(newRating);
-        expect(emitSpy).toHaveBeenCalledWith(newRating);
+        expect(component.rating()).toBe(newRating);
     }));
 
     it('should show error message when setting judgement of learning fails', fakeAsync(() => {
-        component.rating = undefined;
-        component.courseId = 1;
+        fixture.componentRef.setInput('rating', undefined);
+        fixture.componentRef.setInput('courseId', 1);
 
         const newRating = 4;
-        const event = { oldValue: 3, newValue: newRating, starRating: {} as StarRatingComponent };
+        const event = { oldValue: 3, newValue: newRating };
         jest.spyOn(courseCompetencyService, 'setJudgementOfLearning').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
         const errorSpy = jest.spyOn(alertService, 'error');
 
         component.onRate(event);
 
-        expect(component.rating).toBeUndefined();
+        expect(component.rating()).toBeUndefined();
         expect(errorSpy).toHaveBeenCalled();
     }));
 });

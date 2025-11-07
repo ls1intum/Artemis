@@ -1,7 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
-import { v4 as uuid } from 'uuid';
 import { Observable } from 'rxjs';
 
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
@@ -121,7 +120,7 @@ export class FileService {
     getUniqueFileName(extension: string, mapOfFiles?: Map<string, { path?: string; file: File }>): string {
         let name;
         do {
-            name = uuid() + '.' + extension;
+            name = window.crypto.randomUUID().toString() + '.' + extension;
         } while (mapOfFiles && mapOfFiles.has(name));
         return name;
     }

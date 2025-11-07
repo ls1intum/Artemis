@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -43,6 +45,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
+import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -58,6 +61,8 @@ import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {
 
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfiguration.class);
+
     private final CorsFilter corsFilter;
 
     private final Optional<CustomLti13Configurer> customLti13Configurer;
@@ -72,11 +77,10 @@ public class SecurityConfiguration {
 
     private final TokenProvider tokenProvider;
 
+    private final ModuleFeatureService moduleFeatureService;
+
     @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey:15552000}")
     private long tokenValidityInSecondsForPasskey;
-
-    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
-    private boolean passkeyEnabled;
 
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
@@ -88,7 +92,7 @@ public class SecurityConfiguration {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void validatePasskeyAllowedOriginConfiguration() {
-        if (passkeyEnabled) {
+        if (moduleFeatureService.isPasskeyEnabled()) {
             if (tokenValidityInSecondsForPasskey <= 0) {
                 throw new IllegalStateException("Token validity in seconds for passkey must be greater than 0 when passkey authentication is enabled.");
             }
@@ -96,7 +100,8 @@ public class SecurityConfiguration {
     }
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
-            PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider, JWTCookieService jwtCookieService) {
+            PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider, JWTCookieService jwtCookieService,
+            ModuleFeatureService moduleFeatureService) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
@@ -104,6 +109,7 @@ public class SecurityConfiguration {
         this.profileService = profileService;
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
+        this.moduleFeatureService = moduleFeatureService;
     }
 
     /**
@@ -237,8 +243,9 @@ public class SecurityConfiguration {
                     .requestMatchers("/management/info", "/management/health").permitAll()
                     // Admin area requires specific authority.
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
-                    // Publicly accessible API endpoints (allowed for everyone).
+                    // Publicly accessible API endpoints (allowed for everyone, potentially with secret authentication).
                     .requestMatchers("/api/*/public/**").permitAll()
+                    .requestMatchers("/api/*/internal/**").permitAll()
                     .requestMatchers("/login/webauthn").permitAll()
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
@@ -246,31 +253,48 @@ public class SecurityConfiguration {
                     .requestMatchers("/.well-known/assetlinks.json").permitAll()
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
                     // Prometheus endpoint protected by IP address.
-                    .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
+                    .requestMatchers("/management/prometheus/**").access((_, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
-                    .requestMatchers("/swagger-ui/**").permitAll();
+                    .requestMatchers("/swagger-ui/**").permitAll()
+                    .requestMatchers("/api/core/calendar/courses/*/calendar-events-ics").permitAll()
                     // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile
                     // LocalVCFetchFilter/LocalVCPushFilter handle auth
-                    requests.requestMatchers("/git/**").permitAll();
+                    .requestMatchers("/git/**").permitAll();
 
-                    // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
-                    requests.requestMatchers("/**").authenticated();
+                if (moduleFeatureService.isPasskeyEnabled()) {
+                    log.info("Passkey authentication is enabled; permitting /login/webauthn endpoint for all users.");
+                    requests.requestMatchers("/login/webauthn").permitAll();
                 }
-            )
+
+                // only enable sharing endpoints if the sharing module feature is enabled
+                if (moduleFeatureService.isSharingEnabled()) {
+                    log.info("Sharing module feature is enabled; enabling sharing endpoints (permitAll with security token).");
+                    requests
+                        // sharing export (to sharing platform) is protected by explicit security tokens, thus we can permitAll here
+                        .requestMatchers("/api/programming/sharing/export/**").permitAll()
+                        // sharing is protected by explicit security tokens, (or are non-critical) thus we can permitAll here
+                        .requestMatchers("/api/core/sharing/**").permitAll();
+                }
+
+                // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
+                requests.requestMatchers("/**").authenticated();
+            })
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
 
-        // Configure WebAuthn passkey if enabled
-        if(passkeyEnabled){
-        passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
-        }
-
         // @formatter:on
+
+        // Configure WebAuthn passkey if enabled
+        if (moduleFeatureService.isPasskeyEnabled()) {
+            log.info("Passkey authentication is enabled; configuring WebAuthn support.");
+            passkeyWebAuthnConfigurer.orElseThrow(() -> new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
+        }
 
         // Conditionally adds configuration for LTI if it is active.
         if (profileService.isLtiActive()) {
             // Activates the LTI endpoints and filters.
+            log.info("LTI profile is active; enabling LTI endpoints and security configuration.");
             http.with(customLti13Configurer.orElseThrow(), configurer -> configurer.configure(http));
         }
 

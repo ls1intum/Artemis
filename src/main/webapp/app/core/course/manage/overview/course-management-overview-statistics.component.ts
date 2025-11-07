@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { CurveFactory } from 'd3-shape';
 import * as shape from 'd3-shape';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -20,13 +21,9 @@ import { ActiveStudentsChart } from 'app/core/course/shared/entities/active-stud
 export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart implements OnInit, OnChanges {
     private translateService = inject(TranslateService);
 
-    @Input()
-    amountOfStudentsInCourse: number;
-
-    @Input()
-    initialStats: number[] | undefined;
-    @Input()
-    course: Course;
+    @Input() amountOfStudentsInCourse: number;
+    @Input() initialStats: number[] | undefined;
+    @Input() course: Course;
 
     graphType: Graphs = Graphs.ACTIVE_STUDENTS;
 
@@ -41,14 +38,10 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
         group: ScaleType.Ordinal,
         domain: [GraphColors.BLACK],
     };
-    curve: any = shape.curveMonotoneX;
+    curve: CurveFactory = shape.curveMonotoneX;
 
     // Icons
     faSpinner = faSpinner;
-
-    constructor() {
-        super();
-    }
 
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {

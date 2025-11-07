@@ -7,12 +7,15 @@
     align-items: center;
     justify-content: start;
     background-color: transparent;
+
     &:hover {
         color: var(--primary);
     }
+
     &:focus {
         border-color: transparent;
     }
+
     transition: border-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
 }
 

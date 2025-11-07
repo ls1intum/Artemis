@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
  * This is a DTO for updating a programming exercise test case.
@@ -11,4 +12,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingExerciseTestCaseDTO(Long id, Double weight, Double bonusMultiplier, Double bonusPoints, Visibility visibility) {
+
+    public static ProgrammingExerciseTestCaseDTO of(ProgrammingExerciseTestCase testCase) {
+        return new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getWeight(), testCase.getBonusMultiplier(), testCase.getBonusPoints(), testCase.getVisibility());
+    }
 }

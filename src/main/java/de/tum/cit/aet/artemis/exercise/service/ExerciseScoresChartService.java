@@ -99,7 +99,7 @@ public class ExerciseScoresChartService {
         ParticipantScore participantScore = exercise.getMode().equals(ExerciseMode.INDIVIDUAL) ? individualExerciseIdToStudentScore.get(exercise.getId())
                 : teamExerciseIdToTeamScore.get(exercise.getId());
         final double scoreOfStudent = participantScore == null || participantScore.getLastRatedScore() == null ? 0D
-                : roundScoreSpecifiedByCourseSettings(participantScore.getLastScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
+                : roundScoreSpecifiedByCourseSettings(participantScore.getLastRatedScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
 
         return ExerciseScoresDTO.of(exercise, scoreOfStudent, averageScoreAchieved, maxScoreAchieved);
     }

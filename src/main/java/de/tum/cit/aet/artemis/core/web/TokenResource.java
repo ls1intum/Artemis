@@ -51,7 +51,7 @@ public class TokenResource {
      */
     @PostMapping("tool-token")
     @EnforceAtLeastStudent
-    public ResponseEntity<String> convertCookieToToolToken(@RequestParam(name = "tool", required = true) ToolTokenType tool,
+    public ResponseEntity<String> convertCookieToToolToken(@RequestParam(name = "tool") ToolTokenType tool,
             @RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request, HttpServletResponse response) {
         JwtWithSource jwtWithSource = JWTFilter.extractValidJwt(request, tokenProvider);
 

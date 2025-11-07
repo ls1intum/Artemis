@@ -15,10 +15,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.CheckReturnValue;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.google.errorprone.annotations.CheckReturnValue;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -689,25 +688,6 @@ public class AuthorizationCheckService {
         }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
-    }
-
-    /**
-     * checks if the passed user is allowed to see the given lecture
-     *
-     * @param lecture the lecture that needs to be checked
-     * @param user    the user whose permissions should be checked
-     */
-    public void checkIsAllowedToSeeLectureElseThrow(@NotNull Lecture lecture, @Nullable User user) {
-        user = loadUserIfNeeded(user);
-        if (isAdmin(user)) {
-            return;
-        }
-        Course course = lecture.getCourse();
-        if (isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && lecture.isVisibleToStudents())) {
-            return;
-        }
-
-        throw new AccessForbiddenException();
     }
 
     /**

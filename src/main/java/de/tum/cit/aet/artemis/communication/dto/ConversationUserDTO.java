@@ -8,6 +8,7 @@ import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 /**
  * Extension of the UserPublicInfoDTO with special flags for the conversation context
  */
+// TODO: convert to record
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ConversationUserDTO extends UserPublicInfoDTO {
 

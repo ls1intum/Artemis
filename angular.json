@@ -22,8 +22,8 @@
           "options": {
               "allowedCommonJsDependencies": [
                   "@vscode/markdown-it-katex",
+                  "classnames",
                   "clone-deep",
-                  "crypto-js",
                   "crypto",
                   "dagre",
                   "dayjs/locale/de",
@@ -38,7 +38,6 @@
                   "jszip",
                   "localforage",
                   "markdown-it-highlightjs",
-                  "mobile-drag-drop",
                   "papaparse",
                   "pako",
                   "pepjs",
@@ -50,7 +49,6 @@
                   "rfdc",
                   "shallowequal",
                   "markdown-it-class",
-                  "smoothscroll-polyfill",
                   "use-sync-external-store/shim",
                   "use-sync-external-store/shim/with-selector",
                   "webcola",
@@ -74,7 +72,10 @@
             "stylePreprocessorOptions": {
               "includePaths": [
                 "."
-              ]
+              ],
+              "sass": {
+                "silenceDeprecations": ["mixed-decls", "color-functions", "global-builtin", "import"]
+              }
             },
             "assets": [
               "src/main/webapp/content",

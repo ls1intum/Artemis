@@ -426,7 +426,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'build-queue',
-                        loadComponent: () => import('app/buildagent/build-queue/build-queue.component').then((m) => m.BuildQueueComponent),
+                        loadComponent: () => import('app/buildagent/build-queue/build-overview.component').then((m) => m.BuildOverviewComponent),
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.buildQueue.title',

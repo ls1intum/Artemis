@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -85,13 +84,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final RepositoryParticipationService repositoryParticipationService;
 
-    public RepositoryProgrammingExerciseParticipationResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService,
+    public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
             RepositoryParticipationService repositoryParticipationService) {
-        super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
         this.buildLogService = buildLogService;
@@ -169,7 +168,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     String getOrRetrieveBranchOfDomainObject(Long participationID) {
         Participation participation = participationRepository.findByIdElseThrow(participationID);
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
         else if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {

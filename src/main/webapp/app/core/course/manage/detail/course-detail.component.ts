@@ -10,7 +10,7 @@ import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/c
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { faChalkboardUser, faChartBar, faClipboard, faEye, faFlag, faGraduationCap, faListAlt, faQuestion, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faClipboard, faEye, faFlag, faGraduationCap, faListAlt, faQuestion, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -55,7 +55,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     protected readonly faChartBar = faChartBar;
     protected readonly faClipboard = faClipboard;
     protected readonly faGraduationCap = faGraduationCap;
-    protected readonly faChalkboardUser = faChalkboardUser;
     protected readonly faQuestion = faQuestion;
 
     private eventManager = inject(EventManager);
@@ -69,7 +68,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private markdownService = inject(ArtemisMarkdownService);
 
     courseDTO: CourseManagementDetailViewDto;
-    activeStudents?: number[];
     course: Course;
 
     courseDetailSections: DetailOverviewSection[];
@@ -83,7 +81,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     isAdmin = false;
 
-    private eventSubscriber: Subscription;
+    private eventSubscription: Subscription;
     paramSub: Subscription;
 
     /**
@@ -189,10 +187,16 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         const athenaDetails = this.getAthenaDetails();
 
         const details: Detail[] = [
-            { type: DetailType.Text, title: 'artemisApp.course.maxPoints.title', data: { text: this.course.maxPoints } },
             {
                 type: DetailType.Text,
-                title: 'artemisApp.course.accuracyOfScores',
+                title: 'artemisApp.course.maxPoints.title',
+                titleHelpText: 'artemisApp.course.maxPoints.info',
+                data: { text: this.course.maxPoints },
+            },
+            {
+                type: DetailType.Text,
+                title: 'artemisApp.course.accuracyOfScores.title',
+                titleHelpText: 'artemisApp.course.accuracyOfScores.info',
                 data: { text: this.course.accuracyOfScores },
             },
             {
@@ -222,7 +226,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         details.splice(4, 0, {
             type: DetailType.Text,
             title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
-            titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
             data: { text: this.course.timeZone },
         });
 
@@ -299,7 +302,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * Subscribe to changes in courses and reload the course after a change.
      */
     registerChangeInCourses(courseId: number) {
-        this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
+        this.eventSubscription = this.eventManager.subscribe('courseListModification', () => {
             this.courseManagementService.find(courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
                 this.getCourseDetailSections();
@@ -315,7 +318,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.eventManager?.destroy(this.eventSubscriber);
+        this.eventManager?.destroy(this.eventSubscription);
     }
 
     /**
@@ -325,7 +328,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.courseManagementService.getCourseStatisticsForDetailView(courseId).subscribe({
             next: (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
                 this.courseDTO = courseResponse.body!;
-                this.activeStudents = courseResponse.body!.activeStudents;
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });

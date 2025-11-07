@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.collections4.IteratorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,7 +57,6 @@ import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterators;
 
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -138,12 +138,23 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     .setClientLogin(brokerUsername).setClientPasscode(brokerPassword)
                     // Set system username and password to the one loaded from the config
                     .setSystemLogin(brokerUsername).setSystemPasscode(brokerPassword)
+                    // Set the same heartbeat as in the client (websocket-service.ts) to detect broken connections
+                    .setSystemHeartbeatReceiveInterval(10_000)
+                    // Set the same heartbeat as in the client (websocket-service.ts) to detect broken connections
+                    .setSystemHeartbeatSendInterval(10_000)
                     // Set the TCP client to the one generated above
                     .setTcpClient(tcpClient);
         }
         else {
             log.info("Did NOT enable StompBrokerRelay for WebSocket messages. Use simple integrated broker instead.");
-            config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 10000, 20000 }).setTaskScheduler(messageBrokerTaskScheduler);
+
+            // @formatter:off
+            config.enableSimpleBroker("/topic")
+                // Set the same heartbeat as in the client (websocket-service.ts) to detect broken connections
+                .setHeartbeatValue(new long[] { 10_000, 10_000 })
+                // Use the custom task scheduler for the heartbeat messages
+                .setTaskScheduler(messageBrokerTaskScheduler);
+            // @formatter:on
         }
     }
 
@@ -164,13 +175,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * @return a TCP client with a round-robin use
      */
     private ReactorNettyTcpClient<byte[]> createTcpClient() {
-        final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).filter(Optional::isPresent).map(Optional::get)
-                .toList();
+        final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).flatMap(Optional::stream).toList();
 
         // Return null if no valid addresses can be found. This is e.g. due to an invalid config or a development setup without a broker.
         if (!brokerAddressList.isEmpty()) {
             // This provides a round-robin use of brokers, we only want to use the fallback broker if the primary broker fails, so we have the same order of brokers in all nodes
-            var addressIterator = Iterators.cycle(brokerAddressList);
+            var addressIterator = IteratorUtils.loopingIterator(brokerAddressList);
             return new ReactorNettyTcpClient<>(client -> client.remoteAddress(addressIterator::next), new StompReactorNettyCodec());
         }
         return null;

@@ -1,0 +1,26 @@
+.frame {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.25rem 0.35rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    border-radius: 0.75rem;
+    color: var(--white);
+
+    &.status-regular {
+        background-color: var(--green);
+    }
+
+    &.status-cancelled {
+        background-color: var(--danger);
+    }
+
+    &.status-rescheduled {
+        background-color: var(--warning);
+    }
+
+    &.status-relocated {
+        background-color: var(--warning);
+    }
+}

@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
+de.tum.cit.aet.artemis.core.config.SpringAIAutoConfigurationFilter

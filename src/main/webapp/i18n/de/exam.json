@@ -30,7 +30,24 @@
                 "attendanceStatusTitle": "Status der Prüfungsteilnahme",
                 "attendanceCheckFailed": "Anwesenheitskontrolle nicht bestanden",
                 "attendanceCheckPassed": "Anwesenheitskontrolle bestanden",
-                "didNotAttend": "Hat nicht teilgenommen"
+                "didNotAttend": "Hat nicht teilgenommen",
+                "roomDistribute": "Verteilen",
+                "rooms": {
+                    "dialogTitle": "Verteile Klausurteilnehmer",
+                    "introText": "In diesem Dialogfeld kannst du die für eine Prüfung angemeldeten Studierenden auf verschiedene Räume verteilen.",
+                    "reserveFactor": "Reservierte Sitze %",
+                    "reserveFactorTooltip": "Der Prozentsatz der Sitze, die reserviert werden sollten, d. h. nicht verteilt werden sollten; gilt für jeden Raum einzeln",
+                    "allowNarrowLayouts": "Engere Layouts zulassen?",
+                    "allowNarrowLayoutsTooltip": "Wenn diese Option aktiviert ist, kann Artemis die Studierenden direkt nebeneinander platzieren, falls es sonst nicht möglich ist alle Studierenden unterzubringen",
+                    "searchPlaceholder": "Suche nach Zimmernummer, Name und/oder Gebäude",
+                    "number": "Nummer",
+                    "name": "Name",
+                    "building": "Gebäude",
+                    "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
+                    "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
+                    "distribute": "Verteilen",
+                    "distributeWarning": "Du hast nicht ausreichend Kapazitäten"
+                }
             },
             "overview": {
                 "start": "Beginn: {{start}}",
@@ -298,6 +315,10 @@
             "examExercises": "Klausuraufgaben:",
             "exercisePoints": "Punkte",
             "exerciseName": "Name",
+            "navigation": {
+                "nextButton": "Weiter",
+                "previousButton": "Zurück"
+            },
             "noStudentExam": "Du bist nicht für die Klausur angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
             "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur möglich. Um deine Abgaben zu betrachten, navigiere zur Klausurseite ",
             "atLeastTutorStudentExam": "Da du nicht Studierende:r bist, kannst du nicht an der Klausur teilnehmen:",

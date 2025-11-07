@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Set;
@@ -18,9 +15,9 @@ import org.springframework.cloud.netflix.eureka.http.EurekaClientHttpRequestFact
 import org.springframework.cloud.netflix.eureka.http.RestClientDiscoveryClientOptionalArgs;
 import org.springframework.cloud.netflix.eureka.http.RestClientTransportClientFactories;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -28,9 +25,9 @@ import org.springframework.web.client.RestClient;
  * It provides the RestClientTransportClientFactories and RestClientDiscoveryClientOptionalArgs that would normally not be instantiated
  * when Jersey is found by Eureka.
  */
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Conditional(CoreOrHazelcastBuildAgent.class)
 @Configuration
-@Lazy
+@Lazy(false)
 public class EurekaClientConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(EurekaClientConfiguration.class);

@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.UnknownHostException;
@@ -16,9 +14,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -43,7 +41,7 @@ import com.hazelcast.core.Hazelcast;
  * The class avoids connection logic in test environments and handles potential split-brain scenarios
  * by periodically verifying and initiating connections to all expected cluster members.
  */
-@Profile({ PROFILE_BUILDAGENT, PROFILE_CORE })
+@Conditional(CoreOrHazelcastBuildAgent.class)
 @Lazy
 @Configuration
 public class HazelcastConnection {
@@ -81,10 +79,8 @@ public class HazelcastConnection {
      * and registers them in the Hazelcast configuration for joining the cluster.
      *
      * <p>
-     * Called once after the {@link FullStartupEvent} is fired to avoid premature initialization
-     * before all services are available.
+     * Called once after this bean (HazelcastConnection) has been instantiated
      */
-    // we should use @PostConstruct here because the lazy instantiation works properly and FullStartupEvent is sent too early.
     @PostConstruct
     private void connectHazelcast() {
         if (registration.isEmpty()) {

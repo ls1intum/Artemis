@@ -323,7 +323,7 @@ public class LearningPathService {
     }
 
     private void checkNoCompetencies(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
-        if (competencyRepository.countByCourse(course) == 0) {
+        if (competencyRepository.countByCourseId(course.getId()) == 0) {
             status.add(LearningPathHealthDTO.HealthStatus.NO_COMPETENCIES);
         }
     }

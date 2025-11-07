@@ -11,6 +11,7 @@ import {
     Signal,
     ViewChild,
     computed,
+    effect,
     inject,
     input,
     output,
@@ -43,7 +44,6 @@ import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulle
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { faAngleDown, faGripLines, faQuestionCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { v4 as uuid } from 'uuid';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
@@ -77,6 +77,9 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { TranslateService } from '@ngx-translate/core';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -112,7 +115,6 @@ const EXTERNAL_HEIGHT = 'external';
  */
 const BORDER_WIDTH_OFFSET = 3;
 const BORDER_HEIGHT_OFFSET = 2;
-
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
@@ -151,6 +153,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    private readonly translateService = inject(TranslateService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
@@ -246,6 +249,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     isInCommunication = input<boolean>(false);
@@ -337,7 +342,26 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly EditType = PostingEditType;
 
     constructor() {
-        this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
+        this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
+
+        effect(() => {
+            this.renderConsistencyIssues();
+        });
+    }
+
+    /**
+     * Renders consistency issues inside the editor.
+     */
+    protected renderConsistencyIssues() {
+        const issues = this.consistencyIssues();
+
+        // Bail out until the editor is ready
+        if (!this.monacoEditor) {
+            return;
+        }
+
+        this.monacoEditor.disposeWidgets();
+        addCommentBoxes(this.monacoEditor, issues, 'problem_statement.md', 'PROBLEM_STATEMENT', this.translateService);
     }
 
     ngAfterContentInit(): void {
@@ -425,6 +449,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
+        this.renderConsistencyIssues();
     }
 
     /**
@@ -446,9 +471,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.resizeObserver?.disconnect();
     }
 
-    onTextChanged(text: string): void {
-        this.markdown = text;
-        this.markdownChange.emit(text);
+    onTextChanged(event: { text: string; fileName: string }): void {
+        this.markdown = event.text;
+        this.markdownChange.emit(event.text);
     }
 
     /**

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,17 +10,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import jakarta.annotation.Nullable;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
 import net.lingala.zip4j.ZipFile;
@@ -40,7 +39,7 @@ public class ZipFileService {
      * Set of file names that should be ignored when zipping.
      * This currently only includes the gc.log.lock (garbage collector) file created by JGit in programming repositories.
      */
-    private static final Set<Path> IGNORED_ZIP_FILE_NAMES = Set.of(Path.of("gc.log.lock"));
+    private static final Set<String> IGNORED_ZIP_FILE_NAMES = Set.of("gc.log.lock");
 
     public ZipFileService(FileService fileService) {
         this.fileService = fileService;
@@ -54,6 +53,7 @@ public class ZipFileService {
      * @throws IOException if an error occurred while zipping
      */
     public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
+        log.debug("Creating zip file at {} for paths: {}", zipFilePath, paths);
         try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
             for (var path : paths) {
                 if (Files.isReadable(path) && !Files.isDirectory(path)) {
@@ -96,6 +96,40 @@ public class ZipFileService {
     }
 
     /**
+     * Recursively include all files in contentRootPath and create a zip file in memory.
+     *
+     * @param contentRootPath a path to a folder: all content in this folder (and in any subfolders) will be included in the zip file
+     * @param filename        the filename for the zip (for metadata purposes)
+     * @param contentFilter   a path filter to exclude some files, can be null to include everything
+     * @return ByteArrayResource containing the zip file data
+     * @throws IOException if an error occurred while zipping
+     */
+    public ByteArrayResource createZipFileWithFolderContentInMemory(Path contentRootPath, String filename, @Nullable Predicate<Path> contentFilter) throws IOException {
+        try (var files = Files.walk(contentRootPath); ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+
+            createZipFileFromPathStreamToMemory(byteArrayOutputStream, files, contentRootPath, contentFilter);
+
+            byte[] zipData = byteArrayOutputStream.toByteArray();
+            return new ByteArrayResource(zipData) {
+
+                @Override
+                public String getFilename() {
+                    return filename;
+                }
+            };
+        }
+    }
+
+    private void createZipFileFromPathStreamToMemory(ByteArrayOutputStream byteArrayOutputStream, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter)
+            throws IOException {
+        ZipStreamHelper.createZipFileFromPathStreamToMemory(byteArrayOutputStream, paths, pathsRoot, extraFilter, IGNORED_ZIP_FILE_NAMES);
+    }
+
+    private void createZipFileFromPathStream(Path zipFilePath, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter) throws IOException {
+        ZipStreamHelper.createZipFileFromPathStream(zipFilePath, paths, pathsRoot, extraFilter, IGNORED_ZIP_FILE_NAMES);
+    }
+
+    /**
      * Extracts a zip file to a folder with the same name as the zip file
      *
      * @param zipPath path to the zip file
@@ -114,31 +148,5 @@ public class ZipFileService {
             extractZipFileRecursively(path);
         }
 
-    }
-
-    private void createZipFileFromPathStream(Path zipFilePath, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-            var filteredPaths = paths.filter(path -> Files.isReadable(path) && !Files.isDirectory(path));
-            if (extraFilter != null) {
-                filteredPaths = filteredPaths.filter(extraFilter);
-            }
-            filteredPaths.filter(path -> !IGNORED_ZIP_FILE_NAMES.contains(path)).forEach(path -> {
-                ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
-                copyToZipFile(zipOutputStream, path, zipEntry);
-            });
-        }
-    }
-
-    private void copyToZipFile(ZipOutputStream zipOutputStream, Path path, ZipEntry zipEntry) {
-        try {
-            if (Files.exists(path)) {
-                zipOutputStream.putNextEntry(zipEntry);
-                FileUtils.copyFile(path.toFile(), zipOutputStream);
-                zipOutputStream.closeEntry();
-            }
-        }
-        catch (IOException e) {
-            log.error("Create zip file error", e);
-        }
     }
 }

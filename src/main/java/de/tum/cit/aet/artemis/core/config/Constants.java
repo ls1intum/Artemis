@@ -16,6 +16,8 @@ public final class Constants {
 
     public static final int PASSWORD_MAX_LENGTH = 100;
 
+    public static final String SET_UP_TEMPLATE_FOR_EXERCISE = "Set up template for exercise";
+
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 
     // Regex for acceptable logins
@@ -68,7 +70,7 @@ public final class Constants {
 
     public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
 
-    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/public/programming-exercises/";
+    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/internal/programming-exercises/";
 
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
@@ -396,6 +398,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_ATLAS = "atlas";
 
     /**
+     * The name of the module feature used for Hyperion functionality.
+     */
+    public static final String MODULE_FEATURE_HYPERION = "hyperion";
+
+    /**
      * The name of the module feature used for Exam functionality.
      */
     public static final String MODULE_FEATURE_EXAM = "exam";
@@ -416,9 +423,19 @@ public final class Constants {
     public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
 
     /**
+     * The name of the module feature used for nebula functionality.
+     */
+    public static final String MODULE_FEATURE_NEBULA = "nebula";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
+
+    /**
+     * The name of the property used to enable or disable Hyperion functionality.
+     */
+    public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
 
     /**
      * The name of the property used to enable or disable exam functionality.
@@ -444,6 +461,16 @@ public final class Constants {
      * The name of the property used to enable or disable the passkey authentication functionality.
      */
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
+
+    /**
+     * The name of the property used to enable or disable the sharing functionality.
+     */
+    public static final String SHARING_ENABLED_PROPERTY_NAME = "artemis.sharing.enabled";
+
+    /**
+     * The name of the property used to enable or disable nebula functionalities.
+     */
+    public static final String NEBULA_ENABLED_PROPERTY_NAME = "artemis.nebula.enabled";
 
     /**
      * The name of the property used to define the directories for file uploads.
@@ -500,6 +527,12 @@ public final class Constants {
     public static final String JWT_COOKIE_NAME = "jwt";
 
     public static final String BEARER_PREFIX = "Bearer ";
+
+    public static final String HAZELCAST = "Hazelcast";
+
+    public static final String REDIS = "Redis";
+
+    public static final String LOCAL = "Local";
 
     private Constants() {
     }

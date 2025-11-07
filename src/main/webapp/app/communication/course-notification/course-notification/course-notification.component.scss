@@ -44,7 +44,6 @@ $notification-padding-x: 1.2rem;
     justify-content: center;
     cursor: pointer;
     z-index: 2;
-
     transition: opacity 0.3s ease-in-out;
 }
 
@@ -90,7 +89,6 @@ $notification-padding-x: 1.2rem;
     text-align: right;
     color: var(--secondary);
     font-size: 80%;
-
     transition: right 0.2s ease-in-out;
 }
 
@@ -124,6 +122,7 @@ $notification-padding-x: 1.2rem;
     from {
         width: 100%;
     }
+
     to {
         width: 0;
     }

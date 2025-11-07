@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -100,6 +102,7 @@ public class ConsistencyCheckTestService {
      * @throws Exception if an error occurs
      */
     public void testCheckConsistencyOfProgrammingExercise_noErrors() throws Exception {
+        mockDelegate.mockConnectorRequestsForSetup(exercise1, false, false, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
 
@@ -133,8 +136,10 @@ public class ConsistencyCheckTestService {
      * @throws Exception if an error occurs
      */
     public void testCheckConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
+        mockDelegate.mockConnectorRequestsForSetup(exercise1, false, false, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
+
         exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);
 
         submissionRepository.deleteAll(submissionRepository.findAllByParticipationId(exercise1.getTemplateParticipation().getId()));
@@ -146,15 +151,21 @@ public class ConsistencyCheckTestService {
         exercise1.setSolutionParticipation(null);
         exercise1 = programmingExerciseRepository.save(exercise1);
 
+        final var expectedErrors = getConsistencyErrorDTOS();
+
+        var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise1.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
+        assertThat(consistencyErrors).hasSize(5).containsAll(expectedErrors);
+    }
+
+    @NotNull
+    private List<ConsistencyErrorDTO> getConsistencyErrorDTOS() {
         List<ConsistencyErrorDTO> expectedErrors = new ArrayList<>();
         expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING));
         expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
         expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.TEST_REPO_MISSING));
         expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
         expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
-
-        var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise1.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
-        assertThat(consistencyErrors).hasSize(5).containsAll(expectedErrors);
+        return expectedErrors;
     }
 
     /**

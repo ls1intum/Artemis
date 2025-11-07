@@ -1,0 +1,82 @@
+@if (!isLoading()) {
+    <div>
+        <jhi-quiz-training-dialog
+            [(visible)]="showDialog"
+            [(showInLeaderboard)]="showInLeaderboard"
+            [closable]="false"
+            [showLeaderboardSettings]="true"
+            [disableSaveValidation]="true"
+            (save)="onSaveDialog()"
+        />
+
+        @if (!isFirstVisit() && isDataLoaded()) {
+            <div class="header-section d-flex">
+                <div class="ms-auto d-flex align-items-center">
+                    <jhi-button (onClick)="navigateToTraining()" class="button-class" [title]="'artemisApp.exercise.startTraining'" />
+                </div>
+            </div>
+
+            <hr class="mt-2 mb-4" />
+
+            <div class="main-body-section">
+                <div class="legend-section p-3">
+                    <h5 jhiTranslate="artemisApp.quizTraining.scorecard"></h5>
+                    <div class="league-display">
+                        <jhi-league-badge
+                            [league]="league()"
+                            [points]="points()"
+                            [pointsBronzeLeague]="pointsBronzeLeague"
+                            [pointsSilverLeague]="pointsSilverLeague"
+                            [pointsGoldLeague]="pointsGoldLeague"
+                            [pointsDiamondLeague]="pointsDiamondLeague"
+                        />
+                    </div>
+                    <div class="due-date-container mt-5">
+                        <fa-icon [icon]="faClock" />
+                        @if (!dueIn().isValid) {
+                            <span jhiTranslate="artemisApp.quizTraining.noData"></span>
+                        } @else if (dueIn().isPast) {
+                            <span jhiTranslate="artemisApp.quizTraining.dueNow"></span>
+                        } @else {
+                            <span>
+                                <span jhiTranslate="artemisApp.quizTraining.nextQuestionsDue"></span>
+                                @if (dueIn().days > 0) {
+                                    <span>{{ dueIn().days }} d, </span>
+                                }
+                                @if (dueIn().hours > 0 || dueIn().days > 0) {
+                                    <span>{{ dueIn().hours }} h, </span>
+                                }
+                                <span>{{ dueIn().minutes }} min</span>
+                            </span>
+                        }
+                    </div>
+                    <div>
+                        <span> <fa-icon [icon]="faQuestion" /> {{ totalQuestions() }} <span jhiTranslate="artemisApp.quizTraining.totalQuestions"></span> </span>
+                    </div>
+                    <div>
+                        <span> <fa-icon [icon]="faCheck" /> {{ correctQuestions() }} <span jhiTranslate="artemisApp.quizTraining.correctQuestions"></span> </span>
+                    </div>
+                    <div>
+                        <span> <fa-icon [icon]="faXmark" /> {{ wrongQuestions() }} <span jhiTranslate="artemisApp.quizTraining.wrongQuestions"></span> </span>
+                    </div>
+                    <div class="mt-3">
+                        <p-button (click)="showInfoDialog()" severity="secondary">
+                            <span jhiTranslate="artemisApp.quizTraining.infoButton"></span>
+                        </p-button>
+                        <jhi-quiz-training-dialog
+                            [(visible)]="displayInfoDialog"
+                            [(showInLeaderboard)]="showInLeaderboard"
+                            [closable]="true"
+                            [showLeaderboardSettings]="true"
+                            [initialShowInLeaderboard]="initialShowInLeaderboard()"
+                            (save)="onSaveInfoDialog()"
+                        />
+                    </div>
+                </div>
+                <div class="leaderboard-section">
+                    <jhi-leaderboard [leaderboard]="leaderboardEntries()" [currentUserId]="currentUserEntry()?.userId" [leaderboardName]="leaderboardName()" />
+                </div>
+            </div>
+        }
+    </div>
+}

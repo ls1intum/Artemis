@@ -56,7 +56,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     stickyScroll = input<boolean>(false);
     readOnly = input<boolean>(false);
 
-    textChanged = output<string>();
+    textChanged = output<{ text: string; fileName: string }>();
     contentHeightChanged = output<number>();
     onBlurEditor = output<void>();
 
@@ -66,7 +66,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private contentHeightListener?: Disposable;
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
-    private textChangedEmitTimeout?: NodeJS.Timeout;
+    private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
 
     /*
@@ -177,22 +177,46 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
+
+        // Clean up all per-model debounce timeouts
+        this.textChangedEmitTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.textChangedEmitTimeouts.clear();
     }
 
     private emitTextChangeEvent() {
         const newValue = this.getText();
         const delay = this.textChangedEmitDelay();
+        const model = this.getModel();
+        const fullFilePath = this.extractFilePathFromModel(model);
+
         if (!delay) {
-            this.textChanged.emit(newValue);
-        } else {
-            if (this.textChangedEmitTimeout) {
-                clearTimeout(this.textChangedEmitTimeout);
-                this.textChangedEmitTimeout = undefined;
-            }
-            this.textChangedEmitTimeout = setTimeout(() => {
-                this.textChanged.emit(newValue);
-            }, delay);
+            this.textChanged.emit({ text: newValue, fileName: fullFilePath });
+            return;
         }
+        const modelKey = model?.uri?.toString() ?? '';
+        const existing = this.textChangedEmitTimeouts.get(modelKey);
+        if (existing) {
+            clearTimeout(existing);
+        }
+        const timeoutId = setTimeout(() => {
+            this.textChanged.emit({ text: newValue, fileName: fullFilePath });
+            this.textChangedEmitTimeouts.delete(modelKey);
+        }, delay);
+        this.textChangedEmitTimeouts.set(modelKey, timeoutId);
+    }
+
+    private extractFilePathFromModel(model: monaco.editor.ITextModel | null): string {
+        const path = model?.uri?.path ?? '';
+        if (!path) {
+            return '';
+        }
+        // Path format: /model/<editorId>/<full/file/path>
+        const parts = path.split('/').filter(Boolean);
+        if (parts.length >= 3 && parts[0] === 'model') {
+            return parts.slice(2).join('/');
+        }
+        // Fallback: best effort
+        return parts.slice(1).join('/') || parts[parts.length - 1] || '';
     }
 
     getPosition(): EditorPosition {
@@ -310,6 +334,15 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.disposeLineHighlights();
         this.disposeActions();
         this.lineDecorationsHoverButton?.dispose();
+    }
+
+    /**
+     * Registers a keydown listener on the underlying Monaco editor and returns a disposable to remove it.
+     * Use this to intercept keys before the editor handles them (e.g., in read-only mode).
+     * @param listener The callback to invoke on keydown events while the editor is focused.
+     */
+    onKeyDown(listener: (event: monaco.IKeyboardEvent) => void): Disposable {
+        return this._editor.onKeyDown(listener);
     }
 
     disposeWidgets() {
@@ -470,48 +503,52 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     private registerCustomBackspaceAction(editor: monaco.editor.IStandaloneCodeEditor) {
         this.customBackspaceCommandId =
-            editor.addCommand(monaco.KeyCode.Backspace, () => {
-                const model = editor.getModel();
-                const selection = editor.getSelection();
-                if (!model || !selection) return;
+            editor.addCommand(
+                monaco.KeyCode.Backspace,
+                () => {
+                    const model = editor.getModel();
+                    const selection = editor.getSelection();
+                    if (!model || !selection) return;
 
-                if (!selection.isEmpty()) {
-                    editor.trigger('keyboard', 'deleteLeft', null);
-                    return;
-                }
+                    if (!selection.isEmpty()) {
+                        editor.trigger('keyboard', 'deleteLeft', null);
+                        return;
+                    }
 
-                const lineNumber = selection.startLineNumber;
-                const column = selection.startColumn;
-                const lineContent = model.getLineContent(lineNumber);
+                    const lineNumber = selection.startLineNumber;
+                    const column = selection.startColumn;
+                    const lineContent = model.getLineContent(lineNumber);
 
-                const textBeforeCursor = lineContent.substring(0, column - 1);
-                const splitter = new Graphemer();
-                const graphemes = splitter.splitGraphemes(textBeforeCursor);
+                    const textBeforeCursor = lineContent.substring(0, column - 1);
+                    const splitter = new Graphemer();
+                    const graphemes = splitter.splitGraphemes(textBeforeCursor);
 
-                if (textBeforeCursor.length === 0) {
-                    editor.trigger('keyboard', 'deleteLeft', null);
-                    return;
-                }
+                    if (textBeforeCursor.length === 0) {
+                        editor.trigger('keyboard', 'deleteLeft', null);
+                        return;
+                    }
 
-                const lastGrapheme = graphemes.pop();
-                const deletedLength = lastGrapheme?.length ?? 1;
-                const newTextBeforeCursor = graphemes.join('');
-                const textAfterCursor = lineContent.substring(column - 1);
+                    const lastGrapheme = graphemes.pop();
+                    const deletedLength = lastGrapheme?.length ?? 1;
+                    const newTextBeforeCursor = graphemes.join('');
+                    const textAfterCursor = lineContent.substring(column - 1);
 
-                const newLineContent = newTextBeforeCursor + textAfterCursor;
+                    const newLineContent = newTextBeforeCursor + textAfterCursor;
 
-                model.pushEditOperations(
-                    [],
-                    [
-                        {
-                            range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
-                            text: newLineContent,
-                        },
-                    ],
-                    () => null,
-                );
-                const newCursorPosition = column - deletedLength;
-                editor.setSelection(new monaco.Range(lineNumber, newCursorPosition, lineNumber, newCursorPosition));
-            }) || undefined;
+                    model.pushEditOperations(
+                        [],
+                        [
+                            {
+                                range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
+                                text: newLineContent,
+                            },
+                        ],
+                        () => null,
+                    );
+                    const newCursorPosition = column - deletedLength;
+                    editor.setSelection(new monaco.Range(lineNumber, newCursorPosition, lineNumber, newCursorPosition));
+                },
+                'editorTextFocus && !findWidgetVisible',
+            ) || undefined;
     }
 }

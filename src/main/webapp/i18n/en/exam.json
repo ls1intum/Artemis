@@ -30,7 +30,24 @@
                 "attendanceStatusTitle": "Exam Attendance Status",
                 "attendanceCheckFailed": "Attendance check failed",
                 "attendanceCheckPassed": "Attendance check passed",
-                "didNotAttend": "Did not attend"
+                "didNotAttend": "Did not attend",
+                "roomDistribute": "Distribute",
+                "rooms": {
+                    "dialogTitle": "Distribute Students",
+                    "introText": "This dialog can be used to distribute students who are registered for an exam to a selection of rooms.",
+                    "reserveFactor": "Reserved Seats %",
+                    "reserveFactorTooltip": "The percentage of seats that should be reserved, i.e. not distributed to; applied to each room individually",
+                    "allowNarrowLayouts": "Allow narrower layouts?",
+                    "allowNarrowLayoutsTooltip": "If enabled, allows Artemis to seat students directly next to each other, if it is otherwise unable to seat all students",
+                    "searchPlaceholder": "Search by room number, name, and/or building",
+                    "number": "Number",
+                    "name": "Name",
+                    "building": "Building",
+                    "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students.",
+                    "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%).",
+                    "distribute": "Distribute",
+                    "distributeWarning": "You do not have enough capacities"
+                }
             },
             "overview": {
                 "start": "Start: {{start}}",
@@ -298,6 +315,10 @@
             "examExercises": "Exam Exercises:",
             "exercisePoints": "Points",
             "exerciseName": "Name",
+            "navigation": {
+                "nextButton": "Next",
+                "previousButton": "Previous"
+            },
             "noStudentExam": "You are not registered for the exam. Please contact your instructor.",
             "noFurtherAttempts": "Currently no further attempts for the Test Exam are possible. To review your submissions, navigate back to the Exam page",
             "atLeastTutorStudentExam": "Since you are not a student, you cannot participate in this exam:",

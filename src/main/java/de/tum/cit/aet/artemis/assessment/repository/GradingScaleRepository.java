@@ -194,12 +194,13 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
     /**
      * Maps a grade percentage to a valid grade step within the grading scale or throws an exception if no match was found
      *
-     * @param percentage     the grade percentage to be mapped
-     * @param gradingScaleId the identifier for the grading scale
+     * @param percentage   the grade percentage to be mapped
+     * @param gradingScale the grading scale containing the grade steps
      * @return grade step corresponding to the given percentage
      */
-    default GradeStep matchPercentageToGradeStep(double percentage, long gradingScaleId) {
-        Set<GradeStep> gradeSteps = findByIdElseThrow(gradingScaleId).getGradeSteps();
+
+    default GradeStep matchPercentageToGradeStep(double percentage, GradingScale gradingScale) {
+        Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
         return this.matchPercentageToGradeStep(percentage, gradeSteps);
     }
 
@@ -207,7 +208,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
      * @param percentage the grade percentage to be mapped
      * @param gradeSteps the grade steps of a grading scale
      * @return grade step corresponding to the given percentage
-     * @see #matchPercentageToGradeStep(double, long)
+     * @see #matchPercentageToGradeStep(double, GradingScale)
      */
     private GradeStep matchPercentageToGradeStep(double percentage, Set<GradeStep> gradeSteps) {
         if (percentage < 0) {

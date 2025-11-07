@@ -172,6 +172,8 @@ public class ProgrammingExerciseParticipationResource {
      * @param participationId for which to retrieve the student participation with all results and feedbacks.
      * @return the ResponseEntity with status 200 (OK) and the participation with all results and feedbacks in the body.
      */
+    // TODO: this is currently only used in the commit history view. Ideally we add an option to fetch this data additionally as part of the commit history endpoint below and
+    // avoid sending so much data. Then, we can remove this endpoint in the future as well
     @GetMapping("programming-exercise-participations/{participationId}/student-participation-with-all-results")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExerciseStudentParticipation> getParticipationWithAllResultsForStudentParticipation(@PathVariable Long participationId) {
@@ -388,21 +390,6 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * GET /programming-exercise-participations/{participationId}/commits-info : Get the commits information (author, timestamp, message, hash) of a programming exercise
-     * participation.
-     *
-     * @param participationId the id of the participation for which to retrieve the commits information
-     * @return A list of commitInfo DTOs with the commits information of the participation
-     */
-    @GetMapping("programming-exercise-participations/{participationId}/commits-info")
-    @EnforceAtLeastInstructor
-    List<CommitInfoDTO> getCommitInfosForParticipationRepo(@PathVariable long participationId) {
-        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, participation.getProgrammingExercise(), null);
-        return programmingExerciseParticipationService.getCommitInfos(participation);
-    }
-
-    /**
      * GET /programming-exercise-participations/{participationId}/commits-history : Get the commit history of a programming exercise participation.
      * Here we check is at least a teaching assistant for the exercise. If true the user can have access to the commit history of any participation of the exercise.
      * If the user is a student, we check if the user is the owner of the participation.
@@ -412,10 +399,14 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercise-participations/{participationId}/commit-history")
     @EnforceAtLeastStudent
+    // TODO: we should change this to use a paging mechanism in the future, as this can return a lot of data
+    // TODO: allow to add result information, i.e. fetch the corresponding submissions (based on the commit hashes) and their results from the database
+    // check if the user has access and then add the result information to the commit info DTOs so the client can display them grouped by pushed commit
+    // each pushed commit should have a submission with result in the database
     public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        var commitInfo = programmingExerciseParticipationService.getCommitInfos(participation);
+        var commitInfo = programmingExerciseParticipationService.getCommitInfos(participation.getVcsRepositoryUri());
         return ResponseEntity.ok(commitInfo);
     }
 
@@ -441,18 +432,18 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * GET /programming-exercise/{exerciseID}/commit-history/{repositoryType} : Get the commit history of a programming exercise repository. The repository type can be TEMPLATE or
+     * GET /programming-exercise/{exerciseId}/commit-history/{repositoryType} : Get the commit history of a programming exercise repository. The repository type can be TEMPLATE or
      * SOLUTION, TESTS or AUXILIARY.
      * Here we check is at least a teaching assistant for the exercise.
      *
-     * @param exerciseID     the id of the exercise for which to retrieve the commit history
+     * @param exerciseId     the id of the exercise for which to retrieve the commit history
      * @param repositoryType the type of the repository for which to retrieve the commit history
      * @param repositoryId   the id of the repository
      * @return the ResponseEntity with status 200 (OK) and with body a list of commitInfo DTOs with the commits information of the repository
      */
-    @GetMapping("programming-exercise/{exerciseID}/commit-history/{repositoryType}")
+    @GetMapping("programming-exercise/{exerciseId}/commit-history/{repositoryType}")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionTestOrAuxRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType,
+    public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionTestOrAuxRepo(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType,
             @RequestParam Optional<Long> repositoryId) {
         boolean isTemplateRepository = repositoryType.equals(RepositoryType.TEMPLATE);
         boolean isSolutionRepository = repositoryType.equals(RepositoryType.SOLUTION);
@@ -464,26 +455,28 @@ public class ProgrammingExerciseParticipationResource {
             throw new BadRequestAlertException("Invalid repository type", ENTITY_NAME, "invalidRepositoryType");
         }
         else if (isTemplateRepository) {
-            participation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exerciseID);
+            participation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exerciseId);
         }
         else {
-            participation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exerciseID);
+            participation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exerciseId);
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         if (isAuxiliaryRepository) {
             var auxiliaryRepo = auxiliaryRepositoryRepository.findByIdElseThrow(repositoryId.orElseThrow());
-            if (!auxiliaryRepo.getExercise().getId().equals(exerciseID)) {
+            if (!auxiliaryRepo.getExercise().getId().equals(exerciseId)) {
                 throw new BadRequestAlertException("Invalid repository id", ENTITY_NAME, "invalidRepositoryId");
             }
-            return ResponseEntity.ok(programmingExerciseParticipationService.getAuxiliaryRepositoryCommitInfos(auxiliaryRepo));
+            return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfos(auxiliaryRepo.getVcsRepositoryUri()));
         }
-
-        if (isTestRepository) {
-            return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfosTestRepo(participation));
+        else if (isTestRepository) {
+            return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfos(participation.getProgrammingExercise().getVcsTestRepositoryUri()));
+        }
+        else if (isTemplateRepository) {
+            return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfos(participation.getProgrammingExercise().getVcsTemplateRepositoryUri()));
         }
         else {
-            return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfos(participation));
+            return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfos(participation.getProgrammingExercise().getVcsSolutionRepositoryUri()));
         }
     }
 
