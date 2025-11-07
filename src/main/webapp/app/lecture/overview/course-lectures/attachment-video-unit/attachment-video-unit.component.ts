@@ -30,7 +30,6 @@ import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/transcript-viewer/transcript-viewer.component';
-import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -101,29 +100,27 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
 
             // Try to resolve a .m3u8 playlist URL through the backend API
-            this.resolvePlaylistUrl(src).then((resolvedUrl) => {
-                if (resolvedUrl) {
-                    this.playlistUrl.set(resolvedUrl);
-                    this.fetchTranscript();
-                }
+            this.attachmentVideoUnitService.getPlaylistUrl(src).subscribe({
+                next: (resolvedUrl) => {
+                    if (resolvedUrl) {
+                        this.playlistUrl.set(resolvedUrl);
+                        this.fetchTranscript();
+                    }
+                },
+                error: () => {
+                    // Failed to resolve playlist URL, will fall back to iframe
+                    this.playlistUrl.set(undefined);
+                },
             });
-        }
-    }
-
-    private async resolvePlaylistUrl(pageUrl: string): Promise<string | undefined> {
-        try {
-            const res = await firstValueFrom(this.attachmentVideoUnitService.getPlaylistUrl(pageUrl));
-            return (res || undefined) as string | undefined;
-        } catch {
-            return undefined;
         }
     }
 
     private fetchTranscript(): void {
         const id = this.lectureUnit().id!;
 
-        void firstValueFrom(
-            this.lectureTranscriptionService.getTranscription(id).pipe(
+        this.lectureTranscriptionService
+            .getTranscription(id)
+            .pipe(
                 map((dto) => {
                     if (!dto || !dto.segments) {
                         return [];
@@ -131,10 +128,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     // Filter and map to ensure all required fields are present
                     return dto.segments.filter((seg): seg is TranscriptSegment => seg.startTime != null && seg.endTime != null && seg.text != null) as TranscriptSegment[];
                 }),
-            ),
-        ).then((segments) => {
-            this.transcriptSegments.set(segments);
-        });
+            )
+            .subscribe({
+                next: (segments) => {
+                    this.transcriptSegments.set(segments);
+                },
+                error: () => {
+                    // Failed to fetch transcript, video player will work without it
+                    this.transcriptSegments.set([]);
+                },
+            });
     }
 
     /**

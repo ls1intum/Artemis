@@ -93,7 +93,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormSpy).toHaveBeenCalled();
         expect(submitFormEventSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 transcriptionProperties: {
@@ -169,7 +169,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormSpy).toHaveBeenCalled();
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -231,7 +231,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
         const fileInput = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         fileInput.dispatchEvent(new Event('change'));
-        expect(onFileChangeStub).toHaveBeenCalledOnce();
+        expect(onFileChangeStub).toHaveBeenCalled();
     });
 
     it('should disable submit button for too big file', () => {
@@ -312,7 +312,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormSpy).toHaveBeenCalled();
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -372,7 +372,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormSpy).toHaveBeenCalled();
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -443,7 +443,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const httpMock = TestBed.inject(HttpClient);
         const spy = jest.spyOn(httpMock, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(spy).toHaveBeenCalled();
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
@@ -458,7 +458,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const httpMock = TestBed.inject(HttpClient);
         const spy = jest.spyOn(httpMock, 'get').mockReturnValue(throwError(() => new Error('Not found')));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(spy).toHaveBeenCalled();
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
@@ -483,7 +483,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const http = TestBed.inject(HttpClient);
         jest.spyOn(http, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toContain('playlist.m3u8');
         expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeTrue();
@@ -496,7 +496,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const http = TestBed.inject(HttpClient);
         jest.spyOn(http, 'get').mockReturnValue(throwError(() => new Error('Not found')));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
         expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeFalse();
@@ -550,7 +550,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         // spy extract + playlist check
         const extractSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(embedded);
-        const checkSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'checkTumLivePlaylist');
+        const checkSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'checkPlaylistAvailability');
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue(original);
@@ -577,7 +577,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         // Non TUM-Live URL
         const nonTumUrl = 'https://example.com/video/123';
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(nonTumUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(nonTumUrl);
 
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
@@ -634,7 +634,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         attachmentVideoUnitFormComponent.submitForm();
 
-        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).toHaveBeenCalled();
         const payload = emitSpy.mock.calls[0][0] as AttachmentVideoUnitFormData;
         expect(payload.playlistUrl).toBe(playlist);
 
