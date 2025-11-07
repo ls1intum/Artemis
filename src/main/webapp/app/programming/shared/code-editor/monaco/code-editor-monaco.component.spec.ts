@@ -328,7 +328,7 @@ describe('CodeEditorMonacoComponent', () => {
         await new Promise((r) => setTimeout(r, 0));
 
         expect(addLineWidgetStub).toHaveBeenCalledTimes(8);
-        // 8=2x3+2 calls, as two feedbacks each trigger render three times in ngOnChanges
+        // 8=2x3+2 calls, as three renders are triggered with two feedbacks each in ngOnChanges
         // and the feedbacks=... triggers the render function once more.
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1-line-2`, document.createElement('div'));
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2-line-3`, document.createElement('div'));
