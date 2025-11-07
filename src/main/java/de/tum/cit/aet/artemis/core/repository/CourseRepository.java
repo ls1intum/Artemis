@@ -135,7 +135,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
                 LEFT JOIN FETCH lecture.attachments
             WHERE course.id = :courseId AND NOT lecture.isTutorialLecture
             """)
-    Optional<Course> findByIdWithNonTutorialLecturesAndLectureUnitsAndAttachments(long courseId);
+    Optional<Course> findByIdWithNonTutorialLecturesAndLectureUnitsAndAttachments(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
