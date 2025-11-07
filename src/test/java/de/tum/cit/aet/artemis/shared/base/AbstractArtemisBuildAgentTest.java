@@ -28,7 +28,6 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -37,7 +36,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.StartContainerCmd;
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -51,6 +49,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -67,8 +66,7 @@ public abstract class AbstractArtemisBuildAgentTest {
     protected DockerClientTestService dockerClientTestService;
 
     @Autowired
-    @Qualifier("hazelcastInstance")
-    protected HazelcastInstance hazelcastInstance;
+    protected DistributedDataAccessService distributedDataAccessService;
 
     @MockitoSpyBean
     protected BuildAgentConfiguration buildAgentConfiguration;

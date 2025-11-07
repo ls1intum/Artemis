@@ -17,17 +17,13 @@ import java.util.concurrent.TimeoutException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.hazelcast.collection.ItemEvent;
-import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -54,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
@@ -116,13 +113,14 @@ public class LocalCIResultProcessingService {
     @PostConstruct
     public void init() {
         initResultProcessingExecutor();
-        log.info("Adding item listener to Hazelcast distributed result queue for LocalCI result processing service");
-        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addItemListener(new ResultQueueListener(), true);
+        log.info("Adding item listener to distributed result queue for LocalCI result processing service");
+        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addItemListener(new ResultQueueListener());
     }
 
     private void initResultProcessingExecutor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-result-%d")
-                .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in result processing thread {}", t.getName(), e)).build();
+        ThreadFactory threadFactory = BasicThreadFactory.builder().namingPattern("local-ci-result-%d")
+                .uncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in result processing thread {}", t.getName(), e)).build();
+
         // buffer up to 1000 tasks before rejecting new tasks. Rejections will not lead to loss because the results maintain in the queue but this speeds up
         // result processing under high load so we do not need to wait for the polling schedule if many results are processed very fast.
         resultProcessingExecutor = new ThreadPoolExecutor(concurrentResultProcessingSize, concurrentResultProcessingSize, 0L, TimeUnit.MILLISECONDS,
@@ -136,18 +134,10 @@ public class LocalCIResultProcessingService {
      */
     @PreDestroy
     public void removeListener() {
-        // check if Hazelcast is still active, before invoking this
-        try {
-            if (distributedDataAccessService.isInstanceRunning()) {
-                distributedDataAccessService.getDistributedBuildResultQueue().removeItemListener(this.listenerId);
-            }
+        if (distributedDataAccessService.isInstanceRunning() && this.listenerId != null) {
+            distributedDataAccessService.getDistributedBuildResultQueue().removeListener(this.listenerId);
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Could not remove listener as hazelcast instance is not active.");
-        }
-        finally {
-            shutdownResultProcessingExecutor();
-        }
+        shutdownResultProcessingExecutor();
     }
 
     private void shutdownResultProcessingExecutor() {
@@ -294,7 +284,6 @@ public class LocalCIResultProcessingService {
                 log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
             }
         }
-
     }
 
     /**
@@ -354,17 +343,42 @@ public class LocalCIResultProcessingService {
         }
     }
 
-    public class ResultQueueListener implements ItemListener<ResultQueueItem> {
+    /**
+     * Listener that reacts to new build results added to the distributed result queue.
+     *
+     * <p>
+     * <strong>Responsibilities</strong>:
+     * </p>
+     * <ul>
+     * <li>Trigger asynchronous post-processing of build results when a new {@link ResultQueueItem} arrives.</li>
+     * <li>Keep the Hazelcast event thread lightweight by delegating all work to {@link #processResultAsync()}.</li>
+     * <li>Log concise, context-rich messages for observability while avoiding excessive output.</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Notes</strong>:
+     * </p>
+     * <ul>
+     * <li>Never perform blocking or long-running operations in the event callback.</li>
+     * <li>All exceptions are caught and logged defensively to prevent listener crashes.</li>
+     * </ul>
+     */
+    public class ResultQueueListener implements QueueItemListener<ResultQueueItem> {
 
         @Override
-        public void itemAdded(ItemEvent<ResultQueueItem> event) {
-            log.info("Result of build job with id {} added to queue. Will process one result async now", event.getItem().buildJobQueueItem().id());
-            processResultAsync();
+        public void itemAdded(ResultQueueItem item) {
+            try {
+                log.info("Result of build job with id {} added to queue. Will process one result async now", item.buildJobQueueItem().id());
+                processResultAsync();
+            }
+            catch (Exception e) {
+                log.error("Error handling itemAdded event in ResultQueueListener", e);
+            }
         }
 
         @Override
-        public void itemRemoved(ItemEvent<ResultQueueItem> event) {
-
+        public void itemRemoved(ResultQueueItem item) {
+            log.debug("Result removed from queue");
         }
     }
 

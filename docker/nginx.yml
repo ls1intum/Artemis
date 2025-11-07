@@ -6,7 +6,7 @@ services:
     nginx:
         # nginx setup based on artemis prod ansible repository
         container_name: artemis-nginx
-        image: docker.io/library/nginx:1.28.0-alpine-slim
+        image: docker.io/library/nginx:1.29.3-alpine-slim
         pull_policy: missing
         volumes:
             - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro

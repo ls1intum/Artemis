@@ -44,9 +44,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.web.server.ResponseStatusException;
-
-import com.hazelcast.collection.IQueue;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
@@ -66,7 +63,6 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
 import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
@@ -107,7 +103,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     private String teamRepositorySlug;
 
-    protected IQueue<BuildJobQueueItem> queuedJobs;
+    protected DistributedQueue<BuildJobQueueItem> queuedJobs;
 
     @Autowired
     private Optional<VcsAccessLogService> vcsAccessLogService;
@@ -162,7 +158,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         dockerClientTestService.mockInspectImage(dockerClient);
 
-        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
+        queuedJobs = distributedDataAccessService.getDistributedBuildJobQueue();
     }
 
     @AfterEach
@@ -1187,7 +1183,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
                 BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
                 log.info("Poll queue jobs: is null {}", buildJobQueueItem == null ? "true" : "false");
                 if (buildJobQueueItem == null) {
-                    queuedJobs.forEach(item -> log.info("Item in Queue: {}", item));
+                    queuedJobs.getAll().forEach(item -> log.info("Item in Queue: {}", item));
                 }
                 return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
             });

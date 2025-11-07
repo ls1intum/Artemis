@@ -1,0 +1,29 @@
+services:
+  valkey:
+    image: valkey/valkey:8.1.3
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ${REDIS_CONFIG:-./redis/redis.conf}:/usr/local/etc/redis/redis.conf
+      - ${VALKEY_DATA_VOLUME:-./.docker-data/valkey-data}:/data
+    command: [
+      "valkey-server",
+      "/usr/local/etc/redis/redis.conf",
+      "--requirepass ${REDIS_PASSWORD:-artemis}",
+      "--user artemis on >${REDIS_PASSWORD:-artemis} +@all &* ~*",
+      "--user default off nopass nocommands",
+      "--protected-mode no"
+    ]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "-a", "${REDIS_PASSWORD:-artemis}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - artemis
+
+networks:
+  artemis:
+    driver: "bridge"
+    name: artemis

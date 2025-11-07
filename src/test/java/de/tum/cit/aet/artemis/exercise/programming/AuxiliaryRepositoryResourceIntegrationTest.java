@@ -73,9 +73,6 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
 
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCRepoPath;
-
     private final String testRepoBaseUrl = "/api/programming/auxiliary-repository/";
 
     private ProgrammingExercise programmingExercise;
@@ -100,7 +97,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
         // Instantiate the remote repository as non-bare so its files can be manipulated
-        localAuxiliaryRepo.configureRepos(localVCRepoPath, "auxLocalRepo", "auxOriginRepo", false);
+        localAuxiliaryRepo.configureRepos(localVCBasePath, "auxLocalRepo", "auxOriginRepo", false);
 
         // add file to the repository folder
         Path filePath = Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
