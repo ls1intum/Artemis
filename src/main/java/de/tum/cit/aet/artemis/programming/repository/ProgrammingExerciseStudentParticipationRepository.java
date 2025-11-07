@@ -110,9 +110,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
-
     @EntityGraph(type = LOAD, attributePaths = { "submissions.results" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndResultsByExerciseId(long exerciseId);
 
@@ -212,4 +209,41 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 
+    @Query("""
+            SELECT p.id
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.login IN :participantIdentifierList
+            """)
+    Set<Long> findIdsByExerciseIdAndParticipantIdentifier(@Param("exerciseId") long exerciseId, @Param("participantIdentifierList") Set<String> participantIdentifierList);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :exerciseId
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.id IN :participationIds
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByIds(@Param("participationIds") Collection<Long> participationIds);
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.id IN :participationIds
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findByIdsWithEagerSubmissions(@Param("participationIds") Collection<Long> participationIds);
 }

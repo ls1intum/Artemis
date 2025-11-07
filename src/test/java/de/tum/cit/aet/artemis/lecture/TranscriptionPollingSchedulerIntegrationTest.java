@@ -31,18 +31,18 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
     @Autowired
     private LectureTranscriptionRepository lectureTranscriptionRepository;
 
-    private LectureTranscription createPendingTranscription(String jobId) {
+    private void createPendingTranscription(String jobId) {
         var transcription = new LectureTranscription();
         transcription.setJobId(jobId);
         transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
-        return lectureTranscriptionRepository.save(transcription);
+        lectureTranscriptionRepository.save(transcription);
     }
 
-    private LectureTranscription createTranscription(String jobId, TranscriptionStatus status) {
+    private void createTranscription(String jobId, TranscriptionStatus status) {
         var transcription = new LectureTranscription();
         transcription.setJobId(jobId);
         transcription.setTranscriptionStatus(status);
-        return lectureTranscriptionRepository.save(transcription);
+        lectureTranscriptionRepository.save(transcription);
     }
 
     @BeforeEach
@@ -63,6 +63,7 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void pollPendingTranscriptions_callsServiceForEachPendingWithJobId() {
         // Stub the spy bean to avoid real HTTP calls
+        // TODO: we should mock the external Nebula service using MockServer for more realistic integration tests
         doNothing().when(lectureTranscriptionService).processTranscription(any(LectureTranscription.class));
 
         transcriptionPollingScheduler.pollPendingNebulaTranscriptions();

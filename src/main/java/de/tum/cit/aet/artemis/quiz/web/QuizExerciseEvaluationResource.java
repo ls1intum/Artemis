@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +35,7 @@ import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
@@ -109,12 +112,12 @@ public class QuizExerciseEvaluationResource {
      * @param quizExerciseId the quiz id for the quiz that should be re-evaluated
      * @param quizExercise   the quizExercise to re-evaluate
      * @param files          the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
-     * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
+     * @return the ResponseEntity with status 200 (OK) , or with status 400 (Bad Request) if the quizExercise is not valid, or with
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
     @PutMapping(value = "quiz-exercises/{quizExerciseId}/re-evaluate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestPart("exercise") QuizExercise quizExercise,
+    public ResponseEntity<Void> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestPart("exercise") @Valid QuizExerciseReEvaluateDTO quizExercise,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to re-evaluate quiz exercise : {}", quizExerciseId);
         QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
@@ -136,11 +139,11 @@ public class QuizExerciseEvaluationResource {
 
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
 
-        quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise, nullsafeFiles);
-        exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        originalQuizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise, nullsafeFiles);
+        exerciseService.logUpdate(originalQuizExercise, originalQuizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
-        quizExercise.validateScoreSettings();
-        return ResponseEntity.ok().body(quizExercise);
+        originalQuizExercise.validateScoreSettings();
+        return ResponseEntity.ok().build();
     }
 
     /**
