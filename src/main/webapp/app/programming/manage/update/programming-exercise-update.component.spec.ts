@@ -1343,7 +1343,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(problemStepInputs).not.toBeNull();
     }));
 
-    it('stores withdependenices when changed', fakeAsync(() => {
+    it('stores with dependencies when changed', fakeAsync(() => {
         const route = TestBed.inject(ActivatedRoute);
         route.params = of({ courseId });
         route.url = of([{ path: 'new' } as UrlSegment]);

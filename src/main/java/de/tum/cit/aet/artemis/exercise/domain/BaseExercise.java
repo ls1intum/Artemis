@@ -251,4 +251,17 @@ public abstract class BaseExercise extends DomainObject {
         }
         return StringUtil.sanitizeStringForFileName(title);
     }
+
+    /**
+     * helper method to get an exercise title for use in notifications, i.e. not null or empty
+     *
+     * @return a non-empty title for the exercise
+     **/
+    @JsonIgnore
+    public String getExerciseNotificationTitle() {
+        if (title == null || title.isBlank()) {
+            return "unnamed exercise";
+        }
+        return title;
+    }
 }

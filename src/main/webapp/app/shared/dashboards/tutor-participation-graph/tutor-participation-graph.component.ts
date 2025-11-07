@@ -24,7 +24,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
     @Input() public tutorParticipation: TutorParticipation;
     @Input() public numberOfSubmissions?: DueDateStat;
-    @Input() public totalNumberOfAssessments?: DueDateStat;
+    @Input() public totalNumberOfAssessments?: number;
     @Input() public numberOfComplaints: number;
     @Input() public numberOfOpenComplaints: number;
     @Input() public numberOfMoreFeedbackRequests: number;
@@ -171,7 +171,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
         if (
             this.tutorParticipationStatus === this.COMPLETED ||
-            (this.numberOfSubmissions && this.totalNumberOfAssessments && this.numberOfSubmissions.inTime === this.totalNumberOfAssessments.inTime) ||
+            (this.numberOfSubmissions && this.totalNumberOfAssessments && this.numberOfSubmissions.inTime === this.totalNumberOfAssessments) ||
             this.numberOfOpenComplaints + this.numberOfOpenMoreFeedbackRequests === 0
         ) {
             return 'active';

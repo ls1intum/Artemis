@@ -3,10 +3,12 @@ package de.tum.cit.aet.artemis.lecture.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.net.IDN;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -26,8 +28,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.google.common.net.InternetDomainName;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
@@ -155,6 +155,24 @@ public class OnlineUnitResource {
         return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId())).body(persistedOnlineUnit);
     }
 
+    private static final Pattern DOMAIN_PATTERN = Pattern.compile("^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\\.[A-Za-z]{2,}$");
+
+    private static boolean isValidDomain(String host) {
+        if (host == null || host.isBlank()) {
+            return false;
+        }
+
+        // Reject localhost explicitly
+        if ("localhost".equalsIgnoreCase(host)) {
+            return false;
+        }
+
+        // Convert to ASCII (punycode) for IDN safety
+        String asciiHost = IDN.toASCII(host);
+
+        return DOMAIN_PATTERN.matcher(asciiHost).matches();
+    }
+
     /**
      * GET /lectures/online-units/fetch-online-resource : Fetch the website's metadata from the specified link to an online resource.
      *
@@ -171,7 +189,7 @@ public class OnlineUnitResource {
             throw new BadRequestException("The specified link uses an unsupported protocol");
         }
 
-        if (!InternetDomainName.isValid(url.getHost()) || "localhost".equalsIgnoreCase(url.getHost())) {
+        if (!isValidDomain(url.getHost())) {
             throw new BadRequestException("The specified link does not contain a valid domain");
         }
 

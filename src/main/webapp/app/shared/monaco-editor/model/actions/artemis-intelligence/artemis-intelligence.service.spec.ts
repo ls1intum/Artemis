@@ -11,12 +11,31 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HyperionReviewAndRefineApiService } from 'app/openapi/api/hyperionReviewAndRefineApi.service';
 import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import {
+    InlineConsistencyIssue,
+    addCommentBoxes,
+    formatArtifactType,
+    formatConsistencyCheckResults,
+    humanizeCategory,
+    isMatchingRepository,
+    issuesForSelectedFile,
+    severityToString,
+} from './consistency-check';
+import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 describe('ArtemisIntelligenceService', () => {
     let httpMock: HttpTestingController;
     let service: ArtemisIntelligenceService;
     let websocketService: WebsocketService;
     let alertService: AlertService;
+    let translateService: TranslateService;
+
+    const monacoEditorComponent = {
+        addLineWidget: jest.fn(),
+    } as unknown as MonacoEditorComponent;
 
     const mockWebsocketService = {
         subscribe: jest.fn(),
@@ -40,6 +59,75 @@ describe('ArtemisIntelligenceService', () => {
         checkExerciseConsistency: jest.fn(),
     };
 
+    const mockIssues: ConsistencyIssue[] = [
+        {
+            severity: ConsistencyIssue.SeverityEnum.High,
+            category: ConsistencyIssue.CategoryEnum.MethodReturnTypeMismatch,
+            description: 'Description 1.',
+            suggestedFix: 'Fix 1',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.TemplateRepository,
+                    filePath: 'template_repository/src/Class1.java',
+                    startLine: 1,
+                    endLine: 1,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    filePath: 'solution_repository/src/Class1.java',
+                    startLine: 1,
+                    endLine: 1,
+                },
+            ],
+        },
+        {
+            severity: ConsistencyIssue.SeverityEnum.Medium,
+            category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+            description: 'Description 2',
+            suggestedFix: 'Fix 2',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.TemplateRepository,
+                    filePath: 'template_repository/src/Class2.java',
+                    startLine: 1,
+                    endLine: 2,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    filePath: 'solution_repository/src/Class2.java',
+                    startLine: 1,
+                    endLine: 2,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'tests_repository/src/Class2.java',
+                    startLine: 1,
+                    endLine: 2,
+                },
+            ],
+        },
+        {
+            severity: ConsistencyIssue.SeverityEnum.Low,
+            category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
+            description: 'Description 2',
+            suggestedFix: 'Fix 2',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.ProblemStatement,
+                    filePath: 'problem_statement.md',
+                    startLine: 1,
+                    endLine: 3,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'tests_repository/src/Class3.java',
+                    startLine: 1,
+                    endLine: 3,
+                },
+            ],
+        },
+    ];
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
@@ -56,6 +144,7 @@ describe('ArtemisIntelligenceService', () => {
         service = TestBed.inject(ArtemisIntelligenceService);
         websocketService = TestBed.inject(WebsocketService);
         alertService = TestBed.inject(AlertService);
+        translateService = TestBed.inject(TranslateService);
     });
 
     afterEach(() => {
@@ -183,6 +272,125 @@ describe('ArtemisIntelligenceService', () => {
             service.consistencyCheck(exerciseId).subscribe(() => {
                 expect(service.isLoading()).toBeFalsy();
             });
+        });
+
+        it('matches correct repositories', () => {
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.ProblemStatement, RepositoryType.TEMPLATE)).toBeFalsy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.ProblemStatement, RepositoryType.SOLUTION)).toBeFalsy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.SolutionRepository, RepositoryType.TEMPLATE)).toBeFalsy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.SolutionRepository, RepositoryType.TESTS)).toBeFalsy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TestsRepository, RepositoryType.SOLUTION)).toBeFalsy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TestsRepository, RepositoryType.TEMPLATE)).toBeFalsy();
+
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.ProblemStatement, 'PROBLEM_STATEMENT')).toBeTruthy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.SolutionRepository, RepositoryType.SOLUTION)).toBeTruthy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TemplateRepository, RepositoryType.TEMPLATE)).toBeTruthy();
+            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TestsRepository, RepositoryType.TESTS)).toBeTruthy();
+        });
+
+        it('severity to string correct', () => {
+            expect(severityToString(ConsistencyIssue.SeverityEnum.Medium)).toBe('MEDIUM');
+            expect(severityToString(ConsistencyIssue.SeverityEnum.Low)).toBe('LOW');
+            expect(severityToString(ConsistencyIssue.SeverityEnum.High)).toBe('HIGH');
+            expect(severityToString(undefined as any)).toBe('UNKNOWN');
+        });
+
+        it('humanized category correctly', () => {
+            expect(humanizeCategory('IDENTIFIER_NAMING_INCONSISTENCY')).toBe('Identifier Naming Inconsistency');
+            expect(humanizeCategory('VISIBILITY_MISMATCH')).toBe('Visibility Mismatch');
+            expect(humanizeCategory('METHOD_PARAMETER_MISMATCH')).toBe('Method Parameter Mismatch');
+            expect(humanizeCategory('GENERAL')).toBe('General');
+        });
+
+        it('format artifact type correctly', () => {
+            expect(formatArtifactType(ArtifactLocation.TypeEnum.TestsRepository)).toBe('Tests');
+            expect(formatArtifactType(ArtifactLocation.TypeEnum.ProblemStatement)).toBe('Problem Statement');
+            expect(formatArtifactType(ArtifactLocation.TypeEnum.SolutionRepository)).toBe('Solution');
+            expect(formatArtifactType(ArtifactLocation.TypeEnum.TemplateRepository)).toBe('Template');
+            expect(formatArtifactType(undefined as any)).toBe('Other');
+        });
+
+        it('correct issues for selected files: problem statement', () => {
+            const res = issuesForSelectedFile('problem_statement.md', 'PROBLEM_STATEMENT', mockIssues);
+            expect(res).toHaveLength(1);
+            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.ProblemStatement);
+            expect(res[0].startLine).toBe(1);
+            expect(res[0].endLine).toBe(3);
+            expect(res[0].category).toEqual(mockIssues[2].category);
+            expect(res[0].severity).toEqual(mockIssues[2].severity);
+            expect(res[0].description).toEqual(mockIssues[2].description);
+            expect(res[0].suggestedFix).toEqual(mockIssues[2].suggestedFix);
+        });
+
+        it('correct issues for selected files: template', () => {
+            const res = issuesForSelectedFile('src/Class2.java', RepositoryType.TEMPLATE, mockIssues);
+            expect(res).toHaveLength(1);
+            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.TemplateRepository);
+            expect(res[0].startLine).toBe(1);
+            expect(res[0].endLine).toBe(2);
+            expect(res[0].category).toEqual(mockIssues[1].category);
+            expect(res[0].severity).toEqual(mockIssues[1].severity);
+            expect(res[0].description).toEqual(mockIssues[1].description);
+            expect(res[0].suggestedFix).toEqual(mockIssues[1].suggestedFix);
+        });
+
+        it('correct issues for selected files: solution', () => {
+            const res = issuesForSelectedFile('src/Class1.java', RepositoryType.SOLUTION, mockIssues);
+            expect(res).toHaveLength(1);
+            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.SolutionRepository);
+            expect(res[0].startLine).toBe(1);
+            expect(res[0].endLine).toBe(1);
+            expect(res[0].category).toEqual(mockIssues[0].category);
+            expect(res[0].severity).toEqual(mockIssues[0].severity);
+            expect(res[0].description).toEqual(mockIssues[0].description);
+            expect(res[0].suggestedFix).toEqual(mockIssues[0].suggestedFix);
+        });
+
+        it('correct issues for selected files: tests', () => {
+            const res = issuesForSelectedFile('src/Class3.java', RepositoryType.TESTS, mockIssues);
+            expect(res).toHaveLength(1);
+            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.TestsRepository);
+            expect(res[0].startLine).toBe(1);
+            expect(res[0].endLine).toBe(3);
+            expect(res[0].description).toEqual(mockIssues[2].description);
+            expect(res[0].suggestedFix).toEqual(mockIssues[2].suggestedFix);
+            expect(res[0].category).toEqual(mockIssues[2].category);
+            expect(res[0].severity).toEqual(mockIssues[2].severity);
+        });
+
+        it('correct issues for selected files: undefined', () => {
+            const res = issuesForSelectedFile(undefined, RepositoryType.TEMPLATE, mockIssues);
+            expect(res).toHaveLength(0);
+
+            const res2 = issuesForSelectedFile('template_repository/src/Class2.java', undefined, mockIssues);
+            expect(res2).toHaveLength(0);
+        });
+
+        it('format contains necessary information', () => {
+            const mockIssue: InlineConsistencyIssue = {
+                filePath: 'path',
+                type: ArtifactLocation.TypeEnum.TemplateRepository,
+                startLine: 1,
+                endLine: 3,
+                description: 'Example description',
+                suggestedFix: 'Example fix',
+                category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+                severity: ConsistencyIssue.SeverityEnum.Medium,
+            };
+
+            const res = formatConsistencyCheckResults(mockIssue);
+
+            expect(res).toContain(mockIssue.description);
+            expect(res).toContain(mockIssue.suggestedFix);
+            expect(res).toContain(humanizeCategory(mockIssue.category));
+            expect(res).toContain(severityToString(mockIssue.severity));
+            expect(res).toContain(String(mockIssue.startLine));
+            expect(res).toContain(String(mockIssue.endLine));
+        });
+
+        it('addCommentBoxes calls correct functions', () => {
+            addCommentBoxes(monacoEditorComponent, mockIssues, 'problem_statement.md', 'PROBLEM_STATEMENT', translateService);
+            expect(monacoEditorComponent.addLineWidget).toHaveBeenCalledOnce();
         });
     });
 
