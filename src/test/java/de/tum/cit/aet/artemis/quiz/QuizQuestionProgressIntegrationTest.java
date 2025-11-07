@@ -327,9 +327,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(data.getBox()).isEqualTo(1);
         ZonedDateTime expectedUtc = TimeUtil.now().plusDays(1);
         assertThat(savedProgress.get().getDueDate()).isEqualTo(expectedUtc);
-
-        TimeUtil.resetClock();
-
     }
 
     @Test
