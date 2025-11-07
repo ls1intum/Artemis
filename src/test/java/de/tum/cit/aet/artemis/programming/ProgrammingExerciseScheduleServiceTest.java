@@ -54,7 +54,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @BeforeEach
     void init() throws Exception {
-        studentRepository.configureRepos(localVCRepoPath, "studentLocalRepo", "studentOriginRepo");
+        studentRepository.configureRepos(localVCBasePath, "studentLocalRepo", "studentOriginRepo");
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
