@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasMLEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
@@ -21,8 +21,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * API for interacting with the AtlasML microservice.
  * Provides methods for saving competencies and exercises to AtlasML for clustering and analysis.
  */
+@Conditional(AtlasMLEnabled.class)
 @Controller
-@Conditional(AtlasEnabled.class)
 @Lazy
 public class AtlasMLApi extends AbstractAtlasApi {
 

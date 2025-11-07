@@ -7,6 +7,7 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 
@@ -15,8 +16,8 @@ import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
  * Reports the health status of the AtlasML service to Spring Boot Actuator.
  * Uses ObjectProvider to defer AtlasMLService instantiation until the health check is actually called.
  */
-@Conditional(AtlasEnabled.class)
-// @Component // temporarily disabled
+@Conditional(AtlasMLEnabled.class)
+@Component
 @Lazy
 public class AtlasMLHealthIndicator implements HealthIndicator {
 

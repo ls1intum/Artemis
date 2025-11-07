@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ACTIVE_MODULE_FEATURES;
 import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_ATLAS;
+import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_ATLASML;
 import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_HYPERION;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -41,6 +42,9 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
         List<String> enabledArtemisFeatures = new ArrayList<>();
         if (artemisConfigHelper.isAtlasEnabled(environment)) {
             enabledArtemisFeatures.add(MODULE_FEATURE_ATLAS);
+        }
+        if (artemisConfigHelper.isAtlasMLEnabled(environment)) {
+            enabledArtemisFeatures.add(MODULE_FEATURE_ATLASML);
         }
         if (artemisConfigHelper.isHyperionEnabled(environment)) {
             enabledArtemisFeatures.add(MODULE_FEATURE_HYPERION);
