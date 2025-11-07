@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -93,7 +93,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalled();
+        expect(submitFormSpy).toHaveBeenCalledOnce();
         expect(submitFormEventSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 transcriptionProperties: {
@@ -169,7 +169,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalled();
+        expect(submitFormSpy).toHaveBeenCalledOnce();
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -231,7 +231,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
         const fileInput = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         fileInput.dispatchEvent(new Event('change'));
-        expect(onFileChangeStub).toHaveBeenCalled();
+        expect(onFileChangeStub).toHaveBeenCalledOnce();
     });
 
     it('should disable submit button for too big file', () => {
@@ -312,7 +312,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalled();
+        expect(submitFormSpy).toHaveBeenCalledOnce();
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -372,7 +372,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalled();
+        expect(submitFormSpy).toHaveBeenCalledOnce();
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -568,7 +568,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         checkSpy.mockRestore();
     });
 
-    it('checkTumLivePlaylist: non-TUM hosts disable transcript, clear playlist, and reset checkbox', () => {
+    it('checkTumLivePlaylist: non-TUM hosts disable transcript, clear playlist, and reset checkbox', fakeAsync(() => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
         // Pre-set to ensure reset occurs
         attachmentVideoUnitFormComponent.canGenerateTranscript.set(true);
@@ -578,16 +578,19 @@ describe('AttachmentVideoUnitFormComponent', () => {
         // Non TUM-Live URL
         const nonTumUrl = 'https://example.com/video/123';
 
-        // Mock the service to return null (no playlist found)
-        const httpMock = TestBed.inject(HttpClient);
-        jest.spyOn(httpMock, 'get').mockReturnValue(of(null));
+        // Mock the service to return null (no playlist found for non-TUM URLs)
+        const http = TestBed.inject(HttpClient);
+        jest.spyOn(http, 'get').mockReturnValue(of(null));
 
         attachmentVideoUnitFormComponent.checkPlaylistAvailability(nonTumUrl);
+
+        // Wait for async operations to complete
+        flushMicrotasks();
 
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
         expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')!.value).toBeFalse();
-    });
+    }));
 
     it('onFileChange: auto-fills name when empty and marks large files', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
@@ -639,7 +642,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         attachmentVideoUnitFormComponent.submitForm();
 
-        expect(emitSpy).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledOnce();
         const payload = emitSpy.mock.calls[0][0] as AttachmentVideoUnitFormData;
         expect(payload.playlistUrl).toBe(playlist);
 
