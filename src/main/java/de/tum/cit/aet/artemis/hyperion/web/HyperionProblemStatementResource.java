@@ -93,7 +93,7 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST programming-exercises/{courseId}/problem-statements/generate: Generate a draft problem statement for a programming exercise context.
+     * POST courses/{courseId}/problem-statements/generate: Generate a draft problem statement for a programming exercise context.
      *
      * @param courseId the id of the course the problem statement belongs to
      * @param request  the request containing the user prompt
