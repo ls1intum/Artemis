@@ -3,7 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <!--
-    Increase passkey_credential.credential_id column length from VARCHAR(64) to VARCHAR(100)
+    Increase passkey_credential.credential_id column length from VARCHAR(64) to VARCHAR(255)
 
     Reason:
     The 1Password8 authenticator creates credential IDs that exceed the previous 64-character limit (usually around 80-90 characters),
@@ -24,12 +24,12 @@
     2. 1Password8 creates longer IDs (80-90 characters, which is ~60-67 bytes of binary data)
     3. There's no maximum limit in the spec, so authenticators are free to use whatever length they want
 
-    => We increase to VARCHAR(100) to allow for longer credential IDs from modern authenticators.
+    => We increase to VARCHAR(255) to allow for longer credential IDs from modern authenticators.
     -->
     <changeSet id="20251106150715-increase-credential-id-length" author="florian-glombik">
         <modifyDataType tableName="passkey_credential"
                         columnName="credential_id"
-                        newDataType="varchar(100)"/>
+                        newDataType="varchar(255)"/>
 
         <rollback>
             <modifyDataType tableName="passkey_credential"
