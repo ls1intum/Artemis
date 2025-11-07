@@ -32,8 +32,11 @@ import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-ed
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange } from '../model/code-editor.model';
+import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { TranslateService } from '@ngx-translate/core';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -66,6 +69,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private readonly localStorageService = inject(LocalStorageService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly fileTypeService = inject(FileTypeService);
+    private readonly translateService = inject(TranslateService);
 
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
@@ -80,8 +84,10 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly isTutorAssessment = input<boolean>(false);
     readonly disableActions = input<boolean>(false);
     readonly selectedFile = input<string>();
+    readonly selectedRepository = input<RepositoryType>();
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
 
     readonly onError = output<string>();
     readonly onFileContentChange = output<{ fileName: string; text: string }>();
@@ -138,6 +144,10 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         effect(() => {
             const annotations = this.buildAnnotations();
             untracked(() => this.setBuildAnnotations(annotations));
+        });
+
+        effect(() => {
+            this.renderFeedbackWidgets();
         });
     }
 
@@ -379,6 +389,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     protected renderFeedbackWidgets(lineOfWidgetToFocus?: number) {
         // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node, hence the timeout.
         this.changeDetectorRef.detectChanges();
+        const issues = this.consistencyIssues();
         setTimeout(() => {
             this.editor().disposeWidgets();
             for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
@@ -395,6 +406,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             if (lineOfWidgetToFocus !== undefined) {
                 this.getInlineFeedbackNode(lineOfWidgetToFocus)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
             }
+
+            // Readd inconsistency issue comments, because all widgets got removed
+            addCommentBoxes(this.editor(), issues, this.selectedFile(), this.selectedRepository(), this.translateService);
         }, 0);
     }
 

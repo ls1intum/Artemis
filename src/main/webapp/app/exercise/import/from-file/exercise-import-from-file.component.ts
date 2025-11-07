@@ -55,7 +55,10 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 const progEx = this.exercise as ProgrammingExercise;
                 // This is needed to make sure that old exported programming exercises can be imported
                 if (!progEx.buildConfig) {
-                    progEx.buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
+                    const buildConfig = new ProgrammingExerciseBuildConfig();
+                    const raw = exerciseJson as unknown as Partial<ProgrammingExerciseBuildConfig>;
+                    Object.assign(buildConfig, raw);
+                    progEx.buildConfig = copyBuildConfigFromExerciseJson(buildConfig);
                 }
                 if (progEx.auxiliaryRepositories) {
                     progEx.auxiliaryRepositories!.forEach((repo, index) => {

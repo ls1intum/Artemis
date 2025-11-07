@@ -271,11 +271,11 @@
 .rg-sidebar-left,
 .rg-sidebar-right {
     cursor: col-resize;
-    margin-left: 4px;
-    margin-right: 4px;
+    margin-left: 1px;
+    margin-right: 1px;
 
     /* easier to grab + avoid selecting editor text while dragging */
-    padding: 6px 6px;
+    padding: 1px 1px;
     -webkit-user-select: none;
     user-select: none;
     touch-action: none;

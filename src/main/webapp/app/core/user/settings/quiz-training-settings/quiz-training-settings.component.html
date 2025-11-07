@@ -16,14 +16,10 @@
                             [(ngModel)]="isVisibleInLeaderboard"
                             (change)="toggleLeaderboardVisibility()"
                         />
-                        <label
-                            class="form-check-label ms-2"
-                            for="leaderboardVisibilityToggle"
-                            jhiTranslate="artemisApp.userSettings.quizTrainingSettings.leaderboardVisibility"
-                        ></label>
+                        <label class="form-check-label ms-2" for="leaderboardVisibilityToggle" jhiTranslate="artemisApp.quizTraining.showInLeaderboard"></label>
+                        <jhi-help-icon placement="right auto" text="artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo" />
                     </div>
                 </div>
-                <p class="text-muted mt-2" jhiTranslate="artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo"></p>
             } @else {
                 <div class="alert alert-info" jhiTranslate="artemisApp.userSettings.quizTrainingSettings.visitQuizTrainingFirst"></div>
             }
