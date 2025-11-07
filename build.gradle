@@ -216,6 +216,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:1.2025.9"
+
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
@@ -339,6 +340,8 @@ dependencies {
     implementation "org.apache.commons:commons-text:${commons_text_version}"
     implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "org.apache.commons:commons-lang3:${commons_lang3_version}"
+    implementation "org.apache.commons:commons-collections4:4.5.0"
+
     // required by eureka, but actually superseded by commons-lang3 above
     implementation "commons-lang:commons-lang:2.6"
 
@@ -446,6 +449,7 @@ dependencies {
     // make sure to use the latest version to avoid security vulnerabilities
     runtimeOnly "commons-beanutils:commons-beanutils:1.11.0"
     checkstyle "commons-beanutils:commons-beanutils:1.11.0"
+
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 

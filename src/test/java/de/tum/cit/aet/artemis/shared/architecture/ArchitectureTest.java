@@ -109,6 +109,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testNoGoogleImport() {
+        ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google");
+        noGoogleDependencies.check(allClasses);
+    }
+
+    @Test
     void testClassNameAndVisibility() {
         ArchRule classNames = methods().that().areAnnotatedWith(Test.class).should().beDeclaredInClassesThat().haveNameMatching(".*Test").orShould().beDeclaredInClassesThat()
                 .areAnnotatedWith(Nested.class);
