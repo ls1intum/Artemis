@@ -44,6 +44,9 @@ describe('CourseTutorialGroupDetailComponent', () => {
             declarations: [MockDirective(TranslateDirective), MockDirective(RouterLink)],
         }).compileComponents();
 
+        const lectureService = TestBed.inject(LectureService);
+        lectureService.currentTutorialLectureId = 3;
+
         fixture = TestBed.createComponent(CourseTutorialGroupDetailComponent);
         component = fixture.componentInstance;
 
@@ -162,7 +165,27 @@ describe('CourseTutorialGroupDetailComponent', () => {
         expect(tutorChatButton).not.toBeNull();
     });
 
-    // TODO: should display current lesson button if currentTutorialLectureId available
+    it('should display current lesson button if currentTutorialLectureId available', () => {
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: undefined,
+            tutorChatId: undefined,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
+        fixture.detectChanges();
+        const currentTutorialLectureLink = fixture.debugElement.query(By.css('[data-testid="tutorial-lecture-link"]'));
+        expect(currentTutorialLectureLink).not.toBeNull();
+    });
 
     it('should expose correct language', () => {
         const raw: RawTutorialGroupDetailGroupDTO = {
