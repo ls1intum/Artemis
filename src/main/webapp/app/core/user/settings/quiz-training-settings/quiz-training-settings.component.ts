@@ -5,11 +5,13 @@ import { QuizTrainingSettingsService } from 'app/core/user/settings/quiz-trainin
 import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
+import { TooltipModule } from 'primeng/tooltip';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-quiz-training-settings',
     templateUrl: './quiz-training-settings.component.html',
-    imports: [TranslateDirective, FormsModule],
+    imports: [TranslateDirective, FormsModule, TooltipModule, HelpIconComponent],
 })
 export class QuizTrainingSettingsComponent implements OnInit {
     quizService = inject(QuizTrainingSettingsService);

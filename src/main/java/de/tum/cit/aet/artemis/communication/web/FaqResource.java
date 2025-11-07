@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +30,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
+import de.tum.cit.aet.artemis.communication.dto.CreateFaqDTO;
 import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdateFaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.service.FaqService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -76,24 +80,26 @@ public class FaqResource {
     /**
      * POST /courses/:courseId/faqs : Create a new faq.
      *
-     * @param faq      the faq to create *
-     * @param courseId the id of the course the faq belongs to
+     * @param createFaqDTO the faq to create *
+     * @param courseId     the id of the course the faq belongs to
      * @return the ResponseEntity with status 201 (Created) and with body the new faq, or with status 400 (Bad Request)
      *         if the faq has already an ID or if the faq course id does not match with the path variable
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/faqs")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<FaqDTO> createFaq(@RequestBody Faq faq, @PathVariable Long courseId) throws URISyntaxException {
-        log.debug("REST request to save Faq : {}", faq);
-        if (faq.getId() != null) {
-            throw new BadRequestAlertException("A new faq cannot already have an ID", ENTITY_NAME, "idExists");
-        }
-        checkIsInstructorForAcceptedFaq(faq.getFaqState(), courseId);
-        if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
+    public ResponseEntity<FaqDTO> createFaq(@Valid @RequestBody CreateFaqDTO createFaqDTO, @PathVariable Long courseId) throws URISyntaxException {
+        log.debug("REST request to save Faq : {}", createFaqDTO);
+
+        checkIsInstructorForAcceptedFaq(createFaqDTO.faqState(), courseId);
+        if (!courseId.equals(createFaqDTO.courseId())) {
             throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
         }
-        Faq savedFaq = faqRepository.save(faq);
+
+        Faq faqToSave = createFaqDTO.toEntity();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        faqToSave.setCourse(course);
+        Faq savedFaq = faqRepository.save(faqToSave);
         FaqDTO dto = new FaqDTO(savedFaq);
         faqService.autoIngestFaqIntoPyris(savedFaq);
         return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
@@ -102,26 +108,30 @@ public class FaqResource {
     /**
      * PUT /courses/:courseId/faqs/:faqId : Updates an existing faq.
      *
-     * @param faq      the faq to update
-     * @param faqId    id of the faq to be updated *
-     * @param courseId the id of the course the faq belongs to
+     * @param updateFaqDTO the faq to update
+     * @param faqId        id of the faq to be updated *
+     * @param courseId     the id of the course the faq belongs to
      * @return the ResponseEntity with status 200 (OK) and with body the updated faq, or with status 400 (Bad Request)
      *         if the faq is not valid or if the faq course id does not match with the path variable
      */
     @PutMapping("courses/{courseId}/faqs/{faqId}")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<FaqDTO> updateFaq(@RequestBody Faq faq, @PathVariable Long faqId, @PathVariable Long courseId) {
-        log.debug("REST request to update Faq : {}", faq);
-        if (faqId == null || !faqId.equals(faq.getId())) {
+    public ResponseEntity<FaqDTO> updateFaq(@Valid @RequestBody UpdateFaqDTO updateFaqDTO, @PathVariable Long faqId, @PathVariable Long courseId) {
+        log.debug("REST request to update Faq : {}", updateFaqDTO);
+        if (faqId == null || !faqId.equals(updateFaqDTO.id())) {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
-        checkIsInstructorForAcceptedFaq(faq.getFaqState(), courseId);
+        checkIsInstructorForAcceptedFaq(updateFaqDTO.faqState(), courseId);
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
-        checkIsInstructorForAcceptedFaq(faq.getFaqState(), courseId);
+        checkIsInstructorForAcceptedFaq(existingFaq.getFaqState(), courseId);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
-        Faq updatedFaq = faqRepository.save(faq);
+        existingFaq.setQuestionTitle(updateFaqDTO.questionTitle());
+        existingFaq.setQuestionAnswer(updateFaqDTO.questionAnswer());
+        existingFaq.setFaqState(updateFaqDTO.faqState());
+        existingFaq.setCategories(updateFaqDTO.categories());
+        Faq updatedFaq = faqRepository.save(existingFaq);
         faqService.autoIngestFaqIntoPyris(updatedFaq);
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);

@@ -18,11 +18,15 @@ const routes: Routes = [
     {
         path: '',
         loadChildren: () => import('app/core/user/settings/user-settings.route').then((m) => m.routes),
+        data: {
+            usesModuleBackground: true,
+        },
     },
     {
         path: 'admin',
         data: {
             authorities: [Authority.ADMIN],
+            usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService],
         loadChildren: () => import('app/core/admin/admin.routes'),
@@ -32,6 +36,7 @@ const routes: Routes = [
         loadComponent: () => import('app/core/legal/privacy.component').then((m) => m.PrivacyComponent),
         data: {
             pageTitle: 'artemisApp.legal.privacyStatement.title',
+            usesModuleBackground: true,
         },
     },
     {
@@ -40,6 +45,7 @@ const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.dataExport.title',
+            usesModuleBackground: true,
         },
     },
     {
@@ -48,6 +54,7 @@ const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.dataExport.title',
+            usesModuleBackground: true,
         },
     },
     {
@@ -55,6 +62,7 @@ const routes: Routes = [
         loadComponent: () => import('app/core/legal/imprint.component').then((m) => m.ImprintComponent),
         data: {
             pageTitle: 'artemisApp.legal.imprint.title',
+            usesModuleBackground: true,
         },
     },
     {
@@ -62,16 +70,23 @@ const routes: Routes = [
         loadComponent: () => import('app/core/about-us/about-us.component').then((m) => m.AboutUsComponent),
         data: {
             pageTitle: 'overview.aboutUs',
+            usesModuleBackground: true,
         },
     },
     // ===== TEAM ====
     {
         path: 'course-management/:courseId/exercises/:exerciseId/teams',
         loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
+        data: {
+            usesModuleBackground: true,
+        },
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/teams',
         loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
+        data: {
+            usesModuleBackground: true,
+        },
     },
     // ===== ACCOUNT ====
     {
@@ -130,11 +145,17 @@ const routes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
         ],
+        data: {
+            usesModuleBackground: true,
+        },
     },
     // ===== COURSE MANAGEMENT =====
     {
         path: 'course-management',
         loadChildren: () => import('./core/course/manage/course-management.route').then((m) => m.courseManagementState),
+        data: {
+            usesModuleBackground: true,
+        },
     },
     {
         path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
@@ -154,6 +175,9 @@ const routes: Routes = [
     {
         path: 'courses/:courseId/grading-system',
         loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemState),
+        data: {
+            usesModuleBackground: true,
+        },
     },
 
     {
@@ -202,6 +226,7 @@ const routes: Routes = [
         loadComponent: () => import('app/iris/overview/about-iris/about-iris.component').then((m) => m.AboutIrisComponent),
         data: {
             pageTitle: 'artemisApp.exerciseChatbot.title',
+            usesModuleBackground: true,
         },
     },
     // ===== SHARING =====

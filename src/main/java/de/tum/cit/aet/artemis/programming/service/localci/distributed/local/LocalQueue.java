@@ -10,10 +10,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
@@ -36,7 +35,7 @@ public class LocalQueue<T> implements DistributedQueue<T> {
     private final ConcurrentHashMap<UUID, QueueListener> queueListeners = new ConcurrentHashMap<>();
 
     private static final ExecutorService notificationExecutor = Executors
-            .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("local-queue-listener-%d").setDaemon(true).build());
+            .newCachedThreadPool(BasicThreadFactory.builder().namingPattern("local-queue-listener-%d").daemon().build());
 
     public LocalQueue(Queue<T> queue, String name) {
         this.queue = queue;
