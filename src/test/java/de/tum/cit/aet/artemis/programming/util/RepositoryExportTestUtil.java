@@ -15,6 +15,7 @@ import java.util.zip.ZipInputStream;
 import org.eclipse.jgit.api.Git;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 
@@ -70,6 +71,24 @@ public final class RepositoryExportTestUtil {
     }
 
     /**
+     * Create and wire a LocalVC student repository for a given participation.
+     * Does not persist the participation; callers should save it via their repository.
+     *
+     * @param localVCLocalCITestService LocalVC helper service
+     * @param participation             the student participation to seed a repository for
+     * @return the configured LocalRepository
+     */
+    public static LocalRepository seedStudentRepositoryForParticipation(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExerciseStudentParticipation participation)
+            throws Exception {
+        String projectKey = participation.getProgrammingExercise().getProjectKey();
+        String slug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
+        LocalRepository repo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, slug);
+        String uri = localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, slug);
+        participation.setRepositoryUri(uri);
+        return repo;
+    }
+
+    /**
      * Build a LocalVC repository URI for the given project + slug and wire it to the exercise by repository type.
      * Persisting the exercise/participations is left to the caller.
      *
@@ -91,6 +110,28 @@ public final class RepositoryExportTestUtil {
             }
         }
         return uri;
+    }
+
+    /**
+     * Creates LocalVC repositories for template, solution, and tests, and wires their URIs on the exercise.
+     * Does not persist the exercise; callers should save changes themselves.
+     *
+     * @param localVCLocalCITestService LocalVC helper service
+     * @param exercise                  the exercise whose base repositories should be set up
+     */
+    public static void createAndWireBaseRepositories(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise) throws Exception {
+        String projectKey = exercise.getProjectKey();
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        String testsRepositorySlug = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+
+        wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.TEMPLATE, templateRepositorySlug);
+        wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.SOLUTION, solutionRepositorySlug);
+        wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.TESTS, testsRepositorySlug);
+
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug);
     }
 
     /**
