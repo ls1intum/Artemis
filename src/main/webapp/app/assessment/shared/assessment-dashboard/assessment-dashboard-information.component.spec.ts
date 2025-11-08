@@ -28,15 +28,11 @@ describe('AssessmentDashboardInformationComponent', () => {
     });
 
     it('should display open and closed assessments correctly', () => {
-        const totalAssessments = new DueDateStat();
-        totalAssessments.inTime = 150;
-        totalAssessments.late = 460;
-
         const submissions = new DueDateStat();
         submissions.inTime = 400;
         submissions.late = 350;
 
-        fixture.componentRef.setInput('totalNumberOfAssessments', totalAssessments);
+        fixture.componentRef.setInput('totalNumberOfAssessments', 150);
         fixture.componentRef.setInput('numberOfSubmissions', submissions);
         fixture.componentRef.setInput('numberOfCorrectionRounds', 1);
         const setupSpy = jest.spyOn(component, 'setup');
@@ -51,8 +47,8 @@ describe('AssessmentDashboardInformationComponent', () => {
 
         expect(component.customColors[0].name).toBe('artemisApp.exerciseAssessmentDashboard.openAssessments');
         expect(component.customColors[1].name).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');
-        expect(component.assessments[0].value).toBe(140);
-        expect(component.assessments[1].value).toBe(610);
+        expect(component.assessments[0].value).toBe(600);
+        expect(component.assessments[1].value).toBe(150);
     });
 
     it('should set up links correctly', () => {

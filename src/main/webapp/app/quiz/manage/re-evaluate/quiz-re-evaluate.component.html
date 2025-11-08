@@ -98,10 +98,9 @@
                 <div class="card mb-3" style="width: 100%">
                     @if (question.type === MULTIPLE_CHOICE) {
                         <div>
-                            <jhi-re-evaluate-multiple-choice-question
+                            <jhi-multiple-choice
                                 [question]="question"
                                 [questionIndex]="i + 1"
-                                [backupQuestion]="savedEntity.quizQuestions![i]"
                                 (questionUpdated)="onQuestionUpdated()"
                                 (questionDeleted)="deleteQuestion(question)"
                                 (questionMoveUp)="moveUp(question)"

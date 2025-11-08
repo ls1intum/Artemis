@@ -187,7 +187,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
     @Test
     void startNebulaTranscription_wrongLecture_throws() {
         var lecture1 = new Lecture();
-        lecture1.setTitle("Lecture 1");
+        lecture1.setTitle("Lecture 23791");
         lecture1 = lectureRepository.save(lecture1);
         Long lectureId = lecture1.getId();
 

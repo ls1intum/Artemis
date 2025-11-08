@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, input, output, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, input, output, signal, viewChildren } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -161,7 +161,11 @@ export class QuizQuestionListEditComponent {
 
     async importApollonDragAndDropQuestion() {
         const modalRef: NgbModalRef = this.modalService.open(ApollonDiagramImportDialogComponent as Component, { size: 'xl', backdrop: 'static' });
-        modalRef.componentInstance.courseId = this.courseId();
+
+        const courseIdValue = this.courseId();
+
+        const instance = modalRef.componentInstance;
+        instance.courseId = signal(courseIdValue);
 
         const question = await modalRef.result;
         if (question) {
