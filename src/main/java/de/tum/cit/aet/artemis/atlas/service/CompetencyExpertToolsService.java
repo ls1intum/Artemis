@@ -117,15 +117,39 @@ public class CompetencyExpertToolsService {
 
     private final CourseRepository courseRepository;
 
+    private final AtlasAgentService atlasAgentService;
+
     // ThreadLocal storage for preview data - enables deterministic extraction without parsing LLM output
     private static final ThreadLocal<SingleCompetencyPreviewResponseDTO> currentSinglePreview = ThreadLocal.withInitial(() -> null);
 
     private static final ThreadLocal<BatchCompetencyPreviewResponseDTO> currentBatchPreview = ThreadLocal.withInitial(() -> null);
 
-    public CompetencyExpertToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository) {
+    // ThreadLocal to store the current sessionId for tool calls
+    private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
+
+    public CompetencyExpertToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository,
+            @Lazy AtlasAgentService atlasAgentService) {
         this.objectMapper = objectMapper;
         this.competencyRepository = competencyRepository;
         this.courseRepository = courseRepository;
+        this.atlasAgentService = atlasAgentService;
+    }
+
+    /**
+     * Set the current session ID for this request.
+     * Called by AtlasAgentService before routing to Competency Expert.
+     *
+     * @param sessionId the session ID
+     */
+    public static void setCurrentSessionId(String sessionId) {
+        currentSessionId.set(sessionId);
+    }
+
+    /**
+     * Clear the current session ID after request completes.
+     */
+    public static void clearCurrentSessionId() {
+        currentSessionId.remove();
     }
 
     /**
@@ -164,6 +188,39 @@ public class CompetencyExpertToolsService {
     }
 
     /**
+     * Retrieves the last previewed competency data for refinement operations.
+     * This tool enables deterministic refinements by providing access to the exact competency data
+     * that was last previewed in this session.
+     *
+     * Use this when:
+     * - User requests changes to a previewed competency (e.g., "change taxonomy to UNDERSTAND")
+     * - You need to modify only specific fields while preserving others
+     * - You want to ensure you're working with the exact data from the last preview
+     *
+     * @return JSON response with the cached competency data or error if none exists
+     */
+    @Tool(description = "Get the last previewed competency data for refinement. Use this when user requests changes to a previewed competency.")
+    public String getLastPreviewedCompetency() {
+        String sessionId = currentSessionId.get();
+        if (sessionId == null) {
+            record ErrorResponse(String error) {
+            }
+            return toJson(new ErrorResponse("No active session"));
+        }
+
+        List<CompetencyOperation> cachedData = atlasAgentService.getCachedCompetencyData(sessionId);
+        if (cachedData == null || cachedData.isEmpty()) {
+            record ErrorResponse(String error) {
+            }
+            return toJson(new ErrorResponse("No previewed competency data found for this session"));
+        }
+
+        record Response(String sessionId, List<CompetencyOperation> competencies) {
+        }
+        return toJson(new Response(sessionId, cachedData));
+    }
+
+    /**
      * Unified tool for previewing one or multiple competencies.
      * Supports both single and batch operations.
      *
@@ -175,7 +232,7 @@ public class CompetencyExpertToolsService {
      * @param viewOnly     optional flag for view-only mode
      * @return Simple confirmation message for the LLM to use in its response
      */
-    @Tool(description = "Preview one or multiple competencies before creating/updating. Pass a list with one item for single preview, or multiple items for batch preview.")
+    @Tool(description = "Preview one or multiple competencies before creating/updating. SINGLE: pass [{comp}]. BATCH: pass [{comp1}, {comp2}, {comp3}]. CRITICAL: For batch operations, pass ALL competencies in ONE call, not multiple separate calls.")
     public String previewCompetencies(@ToolParam(description = "the ID of the course") Long courseId,
             @ToolParam(description = "list of competency operations to preview") List<CompetencyOperation> competencies,
             @ToolParam(description = "optional: set to true for view-only mode (no action buttons)", required = false) Boolean viewOnly) {
@@ -202,6 +259,14 @@ public class CompetencyExpertToolsService {
             // Batch preview
             BatchCompetencyPreviewResponseDTO batchPreview = new BatchCompetencyPreviewResponseDTO(true, previews.size(), previews, viewOnly);
             currentBatchPreview.set(batchPreview);
+        }
+
+        // Cache the competency operation data for refinement operations
+        // This enables deterministic modifications (e.g., changing taxonomy while preserving title/description)
+        String sessionId = currentSessionId.get();
+        if (sessionId != null && !Boolean.TRUE.equals(viewOnly)) {
+            // Only cache if not in view-only mode (view-only is for browsing, not editing)
+            atlasAgentService.cacheCompetencyData(sessionId, new ArrayList<>(competencies));
         }
 
         // Return simple confirmation message that the LLM can use naturally in its response
@@ -374,14 +439,6 @@ public class CompetencyExpertToolsService {
     public static BatchCompetencyPreviewResponseDTO getAndClearBatchPreview() {
         BatchCompetencyPreviewResponseDTO preview = currentBatchPreview.get();
         return preview;
-    }
-
-    public static void setCurrentSinglePreview(SingleCompetencyPreviewResponseDTO preview) {
-        currentSinglePreview.set(preview);
-    }
-
-    public static void setCurrentBatchPreview(BatchCompetencyPreviewResponseDTO preview) {
-        currentBatchPreview.set(preview);
     }
 
     /**

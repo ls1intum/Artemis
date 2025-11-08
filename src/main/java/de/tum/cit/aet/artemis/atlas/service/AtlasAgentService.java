@@ -35,12 +35,6 @@ public class AtlasAgentService {
         MAIN_AGENT, COMPETENCY_EXPERT
     }
 
-    public enum InteractionStage {
-        PREVIEW, APPROVAL, SAVE, UPDATE
-    }
-
-    private final Map<String, InteractionStage> sessionStageMap = new ConcurrentHashMap<>();
-
     private static final String DELEGATE_TO_COMPETENCY_EXPERT = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%";
 
     private static final String CREATE_APPROVED_COMPETENCY = "[CREATE_APPROVED_COMPETENCY]";
@@ -60,15 +54,47 @@ public class AtlasAgentService {
 
     private final ChatMemory chatMemory;
 
-    private final Map<String, SingleCompetencyPreviewResponseDTO> sessionSinglePreviewMap = new ConcurrentHashMap<>();
-
-    private final Map<String, BatchCompetencyPreviewResponseDTO> sessionBatchPreviewMap = new ConcurrentHashMap<>();
+    // Session-scoped cache for competency operation data (single source of truth for refinement and persistence)
+    // Stores the actual competency data that was last previewed, enabling deterministic refinements
+    private final Map<String, java.util.List<CompetencyExpertToolsService.CompetencyOperation>> sessionCompetencyDataCache = new ConcurrentHashMap<>();
 
     public Boolean getCompetencyModifiedInCurrentRequest() {
         return competencyModifiedInCurrentRequest.get();
     }
 
     private static final ThreadLocal<Boolean> competencyModifiedInCurrentRequest = ThreadLocal.withInitial(() -> false);
+
+    /**
+     * Get the cached competency data for a session.
+     * Used by Competency Expert to retrieve previous preview data for refinement.
+     *
+     * @param sessionId the session ID
+     * @return the cached competency operations, or null if none exist
+     */
+    public java.util.List<CompetencyExpertToolsService.CompetencyOperation> getCachedCompetencyData(String sessionId) {
+        return sessionCompetencyDataCache.get(sessionId);
+    }
+
+    /**
+     * Cache competency data for a session.
+     * Called after preview generation to enable deterministic refinements.
+     *
+     * @param sessionId the session ID
+     * @param data      the competency operations to cache
+     */
+    public void cacheCompetencyData(String sessionId, java.util.List<CompetencyExpertToolsService.CompetencyOperation> data) {
+        sessionCompetencyDataCache.put(sessionId, data);
+    }
+
+    /**
+     * Clear cached competency data for a session.
+     * Called after successful save or when starting a new competency flow.
+     *
+     * @param sessionId the session ID
+     */
+    public void clearCachedCompetencyData(String sessionId) {
+        sessionCompetencyDataCache.remove(sessionId);
+    }
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
             @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ChatMemory chatMemory) {
@@ -91,23 +117,13 @@ public class AtlasAgentService {
      */
     public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
         try {
+            // Set sessionId in ThreadLocal so tools can access it
+            CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
-            InteractionStage currentStage = sessionStageMap.get(sessionId);
-
-            // Only clear previews if we're starting a completely new flow
-            boolean shouldClear = (currentStage == null) || currentStage == InteractionStage.SAVE || currentStage == InteractionStage.UPDATE;
-
-            if (shouldClear) {
-                CompetencyExpertToolsService.clearAllPreviews();
-                sessionStageMap.put(sessionId, InteractionStage.PREVIEW); // default next
-            }
+            CompetencyExpertToolsService.clearAllPreviews();
 
             // Determine which agent should handle this message
             AgentType activeAgent = sessionAgentMap.getOrDefault(sessionId, AgentType.MAIN_AGENT);
-
-            if (getCompetencyModifiedInCurrentRequest()) {
-                sessionStageMap.put(sessionId, InteractionStage.SAVE);
-            }
 
             // Route to the appropriate agent
             String response;
@@ -120,7 +136,7 @@ public class AtlasAgentService {
 
             // Check for delegation markers and update session state
             if (response.contains(DELEGATE_TO_COMPETENCY_EXPERT)) {
-                // Extract brief from marker: [DELEGATE_TO_COMPETENCY_EXPERT:brief_content]
+                // Extract brief from marker: %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:brief_content]
                 String brief = extractBriefFromDelegationMarker(response);
 
                 // Delegate to Competency Expert
@@ -129,25 +145,32 @@ public class AtlasAgentService {
                 // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
-                sessionStageMap.put(sessionId, InteractionStage.APPROVAL);
+                // Agent is requesting to save the previewed competency
+                // Retrieve the cached competency data
+                java.util.List<CompetencyExpertToolsService.CompetencyOperation> cachedData = getCachedCompetencyData(sessionId);
 
-                SingleCompetencyPreviewResponseDTO lastSingle = sessionSinglePreviewMap.get(sessionId);
-                BatchCompetencyPreviewResponseDTO lastBatch = sessionBatchPreviewMap.get(sessionId);
+                if (cachedData != null && !cachedData.isEmpty()) {
+                    // Agent will call saveCompetencies() with the cached data via [CREATE_APPROVED_COMPETENCY] marker
+                    String creationResponse = processWithCompetencyExpert(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
 
-                if (lastSingle != null) {
-                    CompetencyExpertToolsService.setCurrentSinglePreview(lastSingle);
+                    // Clear the cache after successful save
+                    clearCachedCompetencyData(sessionId);
+
+                    // Retrieve preview data from ThreadLocal (set by saveCompetencies tool)
+                    SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getAndClearSinglePreview();
+                    BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getAndClearBatchPreview();
+
+                    return CompletableFuture.completedFuture(new AgentChatResult(creationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
                 }
-                if (lastBatch != null) {
-                    CompetencyExpertToolsService.setCurrentBatchPreview(lastBatch);
+                else {
+                    // No cached data - fallback to agent's own logic
+                    String creationResponse = processWithCompetencyExpert(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
+
+                    SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getAndClearSinglePreview();
+                    BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getAndClearBatchPreview();
+
+                    return CompletableFuture.completedFuture(new AgentChatResult(creationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
                 }
-
-                String creationResponse = processWithCompetencyExpert(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
-
-                // Return combined result deterministically
-                return CompletableFuture.completedFuture(new AgentChatResult(creationResponse,                       // LLM text (e.g., “Competency created successfully”)
-                        competencyModifiedInCurrentRequest.get(), lastSingle, lastBatch));
-
-                // Use the creation response
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
@@ -162,17 +185,6 @@ public class AtlasAgentService {
             SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getAndClearSinglePreview();
             BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getAndClearBatchPreview();
 
-            if (singlePreview != null || batchPreview != null) {
-                sessionStageMap.put(sessionId, InteractionStage.PREVIEW);
-            }
-
-            if (singlePreview != null) {
-                sessionSinglePreviewMap.put(sessionId, singlePreview);
-            }
-            if (batchPreview != null) {
-                sessionBatchPreviewMap.put(sessionId, batchPreview);
-            }
-
             // Use the LLM's natural language response
             String finalResponse = (response != null && !response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
 
@@ -185,6 +197,7 @@ public class AtlasAgentService {
         finally {
             // Clean up ThreadLocal to prevent memory leaks
             competencyModifiedInCurrentRequest.remove();
+            CompetencyExpertToolsService.clearCurrentSessionId();
         }
     }
 
