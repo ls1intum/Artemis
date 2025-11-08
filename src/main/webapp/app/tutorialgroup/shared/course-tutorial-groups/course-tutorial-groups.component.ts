@@ -1,9 +1,9 @@
 import { Component, Signal, computed, effect, inject, signal } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { map } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -53,7 +53,7 @@ export class CourseTutorialGroupsComponent {
     tutorialGroups = signal<TutorialGroup[]>([]);
     tutorialLectures = signal<Lecture[]>([]);
     sidebarData = signal<SidebarData | undefined>(undefined);
-    itemSelected = signal(true);
+    itemSelected = this.getItemSelectedSignal();
     isCollapsed = false;
     currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
 
@@ -72,7 +72,7 @@ export class CourseTutorialGroupsComponent {
             const tutorialLectures = this.tutorialLectures();
             if (tutorialGroups.length > 0 || tutorialLectures.length > 0) {
                 this.prepareSidebarData(tutorialGroups, tutorialLectures);
-                this.navigateToGroupOrLesson(tutorialGroups);
+                this.autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups);
             }
         });
 
@@ -192,22 +192,14 @@ export class CourseTutorialGroupsComponent {
         return accordionGroups;
     }
 
-    private navigateToGroupOrLesson(tutorialGroups: TutorialGroup[]) {
+    private autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups: TutorialGroup[]) {
         const upcomingTutorialGroup = this.courseOverviewService.getUpcomingTutorialGroup(tutorialGroups);
         const lastSelectedSubRoute = this.getLastSelectedSubRoute();
-        const tutorialGroupId = this.activatedRoute.firstChild?.snapshot.params.tutorialGroupId;
-        const lectureId = this.activatedRoute.firstChild?.snapshot.params.lectureId;
-        const nothingSelected = !tutorialGroupId && !lectureId;
+        const nothingSelected = !this.itemSelected();
         if (nothingSelected && lastSelectedSubRoute) {
             this.router.navigate([lastSelectedSubRoute], { relativeTo: this.activatedRoute, replaceUrl: true });
-            this.itemSelected.set(true);
         } else if (nothingSelected && upcomingTutorialGroup) {
             this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
-            this.itemSelected.set(true);
-        } else if (tutorialGroupId || lectureId) {
-            this.itemSelected.set(true);
-        } else {
-            this.itemSelected.set(false);
         }
     }
 
@@ -239,5 +231,15 @@ export class CourseTutorialGroupsComponent {
         }
         const currentTutorialLecture = groupedData.currentTutorialLecture.entityData.at(0);
         return currentTutorialLecture ? (currentTutorialLecture.id as number) : undefined;
+    }
+
+    private getItemSelectedSignal(): Signal<boolean> {
+        return toSignal(
+            this.router.events.pipe(
+                filter((event) => event instanceof NavigationEnd),
+                map(() => !!this.activatedRoute.firstChild),
+            ),
+            { initialValue: !!this.activatedRoute.firstChild },
+        );
     }
 }

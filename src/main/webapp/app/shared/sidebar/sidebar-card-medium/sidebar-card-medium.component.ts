@@ -31,7 +31,9 @@ export class SidebarCardMediumComponent {
         const sidebarItemId = this.sidebarItem.id;
         const targetComponentRoute = targetComponentSubRoute ? targetComponentSubRoute + '/' + sidebarItemId : sidebarItemId;
         this.sidebarEventService.emitSidebarCardEvent(targetComponentRoute);
-        this.refreshChildComponent();
+        if (this.itemSelected) {
+            this.refreshChildComponent();
+        }
     }
 
     emitPageChangeForExam() {
@@ -41,14 +43,9 @@ export class SidebarCardMediumComponent {
     refreshChildComponent(): void {
         const targetComponentSubRoute = this.sidebarItem?.targetComponentSubRoute;
         const itemId = this.sidebarItem?.id;
+        const pathSegments = targetComponentSubRoute ? ['./', targetComponentSubRoute, itemId] : ['./', itemId];
         this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
-            if (this.itemSelected) {
-                const pathSegments = targetComponentSubRoute ? ['./', targetComponentSubRoute, itemId] : ['./', itemId];
-                this.router.navigate(pathSegments, { relativeTo: this.route });
-            } else {
-                const pathSegments = targetComponentSubRoute ? [this.router.url, targetComponentSubRoute, itemId] : [this.router.url, itemId];
-                this.router.navigate(pathSegments, { replaceUrl: true });
-            }
+            this.router.navigate(pathSegments, { relativeTo: this.route });
         });
     }
 }
