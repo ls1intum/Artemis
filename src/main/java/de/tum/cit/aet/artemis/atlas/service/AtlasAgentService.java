@@ -130,6 +130,9 @@ public class AtlasAgentService {
             }
             List<Message> messages = chatMemory.get(sessionId);
 
+            if (messages.isEmpty()) {
+                return List.of();
+            }
             return messages.stream().map(message -> {
                 boolean isUser = message.getMessageType() == MessageType.USER;
                 return new AtlasAgentHistoryMessageDTO(message.getText(), isUser);
