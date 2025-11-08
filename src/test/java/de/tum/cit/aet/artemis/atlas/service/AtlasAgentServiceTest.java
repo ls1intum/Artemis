@@ -50,8 +50,8 @@ class AtlasAgentServiceTest {
     @BeforeEach
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        // Pass null for ToolCallbackProvider in tests
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null, "gpt-4o");
+        // Pass null for ToolCallbackProvider and ChatMemory in tests
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, "gpt-4o");
     }
 
     @Test
@@ -151,7 +151,7 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, "gpt-4o");
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, "gpt-4o");
 
         boolean available = serviceWithNullClient.isAvailable();
 
@@ -190,9 +190,6 @@ class AtlasAgentServiceTest {
 
     @Test
     void testProcessChatMessage_WithCompetencyCreated() throws ExecutionException, InterruptedException {
-        ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService serviceWithToolsService = new AtlasAgentService(chatClient, templateService, null, null, mockToolsService, "gpt-4o");
-
         String testMessage = "Create a competency";
         Long courseId = 123L;
         String sessionId = "session_create_comp";
@@ -200,12 +197,12 @@ class AtlasAgentServiceTest {
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         // Simulate tool execution by calling markCompetencyCreated() when chatModel.call() is invoked
-        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
             AtlasAgentService.markCompetencyCreated();
             return new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse))));
         });
 
-        CompletableFuture<AgentChatResult> result = service.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
@@ -215,9 +212,6 @@ class AtlasAgentServiceTest {
 
     @Test
     void testProcessChatMessage_WithCompetencyNotCreated() throws ExecutionException, InterruptedException {
-        ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService serviceWithToolsService = new AtlasAgentService(chatClient, templateService, null, null, mockToolsService, "gpt-4o");
-
         String testMessage = "Show me competencies";
         Long courseId = 123L;
         String sessionId = "session_no_comp_created";
@@ -226,7 +220,7 @@ class AtlasAgentServiceTest {
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
 
-        CompletableFuture<AgentChatResult> result = service.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
