@@ -62,6 +62,9 @@ public class AtlasAgentService {
         }
 
         try {
+            // Reset the ThreadLocal flag at the start of each request
+            competencyCreatedInCurrentRequest.set(false);
+
             // Load system prompt from external template
             String resourcePath = "/prompts/atlas/agent_system_prompt.st";
             Map<String, String> variables = Map.of();
@@ -97,6 +100,10 @@ public class AtlasAgentService {
         }
         catch (Exception e) {
             return CompletableFuture.completedFuture(new AgentChatResult("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
+        }
+        finally {
+            // Always clean up ThreadLocal to prevent memory leaks and state pollution
+            competencyCreatedInCurrentRequest.remove();
         }
 
     }

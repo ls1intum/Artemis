@@ -59,7 +59,7 @@ class AtlasAgentServiceTest {
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
         // Pass null for ToolCallbackProvider and AtlasAgentToolsService in basic tests
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, chatMemory, null);
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, chatMemory);
     }
 
     @Test
@@ -159,7 +159,7 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, chatMemory, null);
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, chatMemory);
 
         boolean available = serviceWithNullClient.isAvailable();
 
@@ -169,7 +169,7 @@ class AtlasAgentServiceTest {
     @Test
     void testIsAvailable_WithNullChatMemory() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null, null);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null);
 
         boolean available = serviceWithNullMemory.isAvailable();
 
@@ -289,7 +289,7 @@ class AtlasAgentServiceTest {
     @Test
     void testGetConversationHistoryAsDTO_NullChatMemory() {
         String sessionId = "course_456_user_789";
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null);
 
         List<AtlasAgentHistoryMessageDTO> result = serviceWithNullMemory.getConversationHistoryAsDTO(sessionId);
 
