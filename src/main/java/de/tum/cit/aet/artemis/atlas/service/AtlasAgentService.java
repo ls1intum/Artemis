@@ -37,21 +37,19 @@ public class AtlasAgentService {
 
     private final ChatMemory chatMemory;
 
-    private final AtlasAgentToolsService atlasAgentToolsService;
+    private static final ThreadLocal<Boolean> competencyCreatedInCurrentRequest = ThreadLocal.withInitial(() -> false);
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
-            @Nullable ChatMemory chatMemory, @Nullable AtlasAgentToolsService atlasAgentToolsService) {
+            @Nullable ChatMemory chatMemory) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.toolCallbackProvider = toolCallbackProvider;
         this.chatMemory = chatMemory;
-        this.atlasAgentToolsService = atlasAgentToolsService;
     }
 
     /**
      * Process a chat message for the given course and return AI response with modification status.
-     * Uses request-scoped state tracking to detect competency modifications.
-     * Supports conversation context through sessionId with persistent memory.
+     * Uses ThreadLocal state tracking to detect competency modifications.
      *
      * @param message   The user's message
      * @param courseId  The course ID for context
@@ -87,10 +85,10 @@ public class AtlasAgentService {
             }
 
             // Execute the chat (tools are executed internally by Spring AI)
-            String response = promptSpec.call().content();
+            String response = promptSpec.call().chatResponse().getResult().getOutput().getText();
 
-            // Check if createCompetency was called by examining the service state
-            boolean competenciesModified = atlasAgentToolsService != null && atlasAgentToolsService.wasCompetencyCreated();
+            // Check if competency was created during this request
+            boolean competenciesModified = competencyCreatedInCurrentRequest.get();
 
             String finalResponse = response != null && !response.trim().isEmpty() ? response : "I apologize, but I couldn't generate a response.";
 
@@ -100,6 +98,16 @@ public class AtlasAgentService {
         catch (Exception e) {
             return CompletableFuture.completedFuture(new AgentChatResult("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
         }
+     
+    }
+
+    /**
+     * Marks that a competency was created during the current request.
+     * This method is called by tool methods (e.g., createCompetency) to signal
+     * that a competency modification occurred during tool execution.
+     */
+    public static void markCompetencyCreated() {
+        competencyCreatedInCurrentRequest.set(true);
     }
 
     /**
