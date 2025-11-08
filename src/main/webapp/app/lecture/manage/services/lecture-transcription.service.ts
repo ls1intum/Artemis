@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { LectureTranscriptionDTO, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 @Injectable({ providedIn: 'root' })
 export class LectureTranscriptionService {
@@ -42,6 +42,23 @@ export class LectureTranscriptionService {
             })
             .pipe(
                 map((response) => response.body ?? undefined),
+                catchError(() => of(undefined)),
+            );
+    }
+
+    getTranscriptionStatus(lectureUnitId: number): Observable<TranscriptionStatus | undefined> {
+        return this.httpClient
+            .get<string>(`api/lecture/lecture-unit/${lectureUnitId}/transcript/status`, {
+                observe: 'response',
+                responseType: 'text' as 'json',
+            })
+            .pipe(
+                map((response) => {
+                    if (response.body) {
+                        return response.body as TranscriptionStatus;
+                    }
+                    return undefined;
+                }),
                 catchError(() => of(undefined)),
             );
     }

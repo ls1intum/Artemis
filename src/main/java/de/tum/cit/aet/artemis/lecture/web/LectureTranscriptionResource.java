@@ -109,4 +109,23 @@ public class LectureTranscriptionResource {
         return ResponseEntity.ok(dto);
     }
 
+    /**
+     * GET /lecture-unit/{lectureUnitId}/transcript/status : Get the status of a transcription for a lecture unit.
+     *
+     * @param lectureUnitId the ID of the lecture unit to check
+     * @return ResponseEntity with the transcription status (PENDING, PROCESSING, COMPLETED, FAILED) or 404 if no transcription exists
+     */
+    @GetMapping("lecture-unit/{lectureUnitId}/transcript/status")
+    @EnforceAtLeastInstructorInLectureUnit
+    public ResponseEntity<String> getTranscriptStatus(@PathVariable Long lectureUnitId) {
+        Optional<LectureTranscription> transcriptionOpt = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
+
+        if (transcriptionOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        LectureTranscription transcription = transcriptionOpt.get();
+        return ResponseEntity.ok(transcription.getTranscriptionStatus().name());
+    }
+
 }

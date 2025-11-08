@@ -652,12 +652,14 @@ describe('LectureUpdateUnitsComponent', () => {
 
         jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
         const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(transcript));
+        const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
             expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+            expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
             expect(wizardUnitComponent.currentlyProcessedAttachmentVideoUnit?.transcriptionProperties).toBe(transcript);
         });
     }));
@@ -680,12 +682,14 @@ describe('LectureUpdateUnitsComponent', () => {
 
         jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
         const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription');
+        const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus');
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
             expect(getTranscriptionSpy).not.toHaveBeenCalled();
+            expect(getTranscriptionStatusSpy).not.toHaveBeenCalled();
         });
     }));
 
