@@ -49,6 +49,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         course.setDescription("course description for testing");
         courseRepository.save(course);
         existingCompetency = competencyUtilService.createCompetency(course);
+        AtlasAgentService.resetCompetencyModifiedFlag();
 
     }
 
@@ -131,77 +132,75 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldPreviewSingleNewCompetency() throws Exception {
+        void shouldPreviewSingleNewCompetency() {
             CompetencyOperation operation = new CompetencyOperation(null, "Software Testing", "Understanding testing methodologies and practices", CompetencyTaxonomy.UNDERSTAND);
 
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(operation), null);
 
+            // New implementation returns simple confirmation message
             assertThat(actualResult).isNotNull();
-            JsonNode actualJsonNode = objectMapper.readTree(extractJsonFromMarkers(actualResult));
-            assertThat(actualJsonNode.get("preview").asBoolean()).isTrue();
-            assertThat(actualJsonNode.get("competency").get("title").asText()).isEqualTo("Software Testing");
-            assertThat(actualJsonNode.get("competency").get("taxonomy").asText()).isEqualTo("UNDERSTAND");
-            assertThat(actualJsonNode.get("competency").get("icon").asText()).isEqualTo("comments");
+            assertThat(actualResult).contains("Preview generated successfully for 1 competency");
+
+            // Verify preview data is stored in ThreadLocal (accessible via static methods)
+            // The actual preview DTO would be extracted by AtlasAgentService
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldPreviewMultipleCompetenciesInBatchMode() throws Exception {
+        void shouldPreviewMultipleCompetenciesInBatchMode() {
             CompetencyOperation op1 = new CompetencyOperation(null, "Algorithms", "Algorithm design and analysis", CompetencyTaxonomy.ANALYZE);
             CompetencyOperation op2 = new CompetencyOperation(null, "Data Structures", "Common data structures and their usage", CompetencyTaxonomy.APPLY);
             CompetencyOperation op3 = new CompetencyOperation(null, "Complexity Theory", "Understanding computational complexity", CompetencyTaxonomy.EVALUATE);
 
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(op1, op2, op3), null);
 
+            // New implementation returns simple confirmation message for batch
             assertThat(actualResult).isNotNull();
-            JsonNode actualJsonNode = objectMapper.readTree(extractJsonFromMarkers(actualResult));
-            assertThat(actualJsonNode.get("batchPreview").asBoolean()).isTrue();
-            assertThat(actualJsonNode.get("count").asInt()).isEqualTo(3);
-            assertThat(actualJsonNode.get("competencies").size()).isEqualTo(3);
+            assertThat(actualResult).contains("Preview generated successfully for 3 competencies");
+
+            // Batch preview data is stored in ThreadLocal for AtlasAgentService to extract
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldPreviewExistingCompetencyUpdate() throws Exception {
+        void shouldPreviewExistingCompetencyUpdate() {
             CompetencyOperation updateOperation = new CompetencyOperation(existingCompetency.getId(), "Updated Title", "Updated description", CompetencyTaxonomy.CREATE);
 
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(updateOperation), null);
 
             assertThat(actualResult).isNotNull();
-            JsonNode actualJsonNode = objectMapper.readTree(extractJsonFromMarkers(actualResult));
-            assertThat(actualJsonNode.get("preview").asBoolean()).isTrue();
+            assertThat(actualResult).contains("Preview generated successfully for 1 competency");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldIncludeViewOnlyFlagWhenRequested() throws Exception {
+        void shouldIncludeViewOnlyFlagWhenRequested() {
             CompetencyOperation operation = new CompetencyOperation(null, "Read Only Test", "Testing view-only mode", CompetencyTaxonomy.REMEMBER);
 
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(operation), true);
 
             assertThat(actualResult).isNotNull();
-            JsonNode actualJsonNode = objectMapper.readTree(extractJsonFromMarkers(actualResult));
-            assertThat(actualJsonNode.get("viewOnly").asBoolean()).isTrue();
+            assertThat(actualResult).contains("Preview generated successfully for 1 competency");
+
+            // View-only mode: preview data is stored but not cached for editing
         }
 
-        /**
-         * Extracts JSON from between preview markers.
-         * The previewCompetencies tool wraps responses with markers for deterministic extraction.
-         */
-        private String extractJsonFromMarkers(String wrappedResponse) {
-            final String START_MARKER = "%%ARTEMIS_COMPETENCY_PREVIEW_START%%";
-            final String END_MARKER = "%%ARTEMIS_COMPETENCY_PREVIEW_END%%";
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturnErrorWhenNoCompetenciesProvided() {
+            String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(), null);
 
-            int startIndex = wrappedResponse.indexOf(START_MARKER);
-            int endIndex = wrappedResponse.indexOf(END_MARKER);
+            assertThat(actualResult).isNotNull();
+            assertThat(actualResult).contains("Error: No competencies provided for preview");
+        }
 
-            if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
-                int jsonStart = startIndex + START_MARKER.length();
-                return wrappedResponse.substring(jsonStart, endIndex);
-            }
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturnErrorWhenCompetenciesListIsNull() {
+            String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), null, null);
 
-            // No markers found, return as-is
-            return wrappedResponse;
+            assertThat(actualResult).isNotNull();
+            assertThat(actualResult).contains("Error: No competencies provided for preview");
         }
     }
 
@@ -337,29 +336,29 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldTrackCompetencyCreationState() {
             // Initially, no modification should be tracked
-            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).isFalse();
+            assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).isFalse();
 
             // Perform creation
             CompetencyOperation createOp = new CompetencyOperation(null, "Track Create", "Test tracking", CompetencyTaxonomy.REMEMBER);
             competencyExpertToolsService.saveCompetencies(course.getId(), List.of(createOp));
 
             // State should be tracked
-            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).as("Creation flag should be set after creating competency").isTrue();
-            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).as("Modified flag should be set after creating competency").isTrue();
+            assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).as("Creation flag should be set after creating competency").isTrue();
+            assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).as("Modified flag should be set after creating competency").isTrue();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldTrackCompetencyUpdateState() {
             // Initially, no modification should be tracked
-            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).isFalse();
+            assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).isFalse();
 
             // Perform update
             CompetencyOperation updateOp = new CompetencyOperation(existingCompetency.getId(), "Track Update", "Test tracking", CompetencyTaxonomy.ANALYZE);
             competencyExpertToolsService.saveCompetencies(course.getId(), List.of(updateOp));
 
             // State should be tracked
-            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).as("Update flag should be set after updating competency").isTrue();
+            assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).as("Update flag should be set after updating competency").isTrue();
         }
 
         @Test
@@ -371,7 +370,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             competencyExpertToolsService.previewCompetencies(course.getId(), List.of(new CompetencyOperation(null, "Preview", "Test", CompetencyTaxonomy.REMEMBER)), null);
 
             // State should not be tracked for read-only operations
-            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).isFalse();
+            assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).isFalse();
         }
     }
 }

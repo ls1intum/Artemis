@@ -34,9 +34,6 @@ class AtlasAgentServiceTest {
 
     private AtlasAgentService atlasAgentService;
 
-    @Mock
-    private CompetencyExpertToolsService competencyExpertToolsService;
-
     @BeforeEach
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
@@ -87,7 +84,7 @@ class AtlasAgentServiceTest {
         String sessionId = "course_789";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("")))));
 
         CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
@@ -141,7 +138,7 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null);
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null);
 
         boolean available = serviceWithNullClient.isAvailable();
 
@@ -182,8 +179,11 @@ class AtlasAgentServiceTest {
             String sessionId = "test_session";
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Competency created successfully")))));
-            when(atlasAgentService.getcompetencyModifiedInCurrentRequest()).thenReturn(true);
+            // Simulate competency modification during chat model call (mimics tool execution)
+            when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> {
+                AtlasAgentService.markCompetencyModified();
+                return new ChatResponse(List.of(new Generation(new AssistantMessage("Competency created successfully"))));
+            });
 
             CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
@@ -199,8 +199,8 @@ class AtlasAgentServiceTest {
             String sessionId = "test_session";
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            // No modification - just return response without calling markCompetencyModified
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Here are the competencies")))));
-            when(atlasAgentService.getcompetencyModifiedInCurrentRequest()).thenReturn(false);
 
             CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
