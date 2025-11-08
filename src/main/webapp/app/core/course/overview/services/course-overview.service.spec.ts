@@ -247,6 +247,35 @@ describe('CourseOverviewService', () => {
         });
     });
 
+    it('should map lectures correctly to sidebar card elements', () => {
+        const translateService = TestBed.inject(TranslateService);
+        jest.spyOn(translateService, 'instant').mockReturnValue('No Date');
+        const firstLectureStart = dayjs('2025-01-01T00:00:00Z');
+        const lectures: Lecture[] = [
+            { id: 1, title: 'Lecture 1', startDate: dayjs('2025-01-01T00:00:00Z') },
+            { id: 2, title: 'Lecture 2' },
+        ];
+
+        const result = courseOverviewService.mapLecturesToSidebarCardElements(lectures);
+
+        expect(result).toEqual([
+            {
+                title: 'Lecture 1',
+                id: 1,
+                subtitleLeft: firstLectureStart.format('MMM DD, YYYY'),
+                size: 'M',
+                startDate: firstLectureStart,
+            },
+            {
+                title: 'Lecture 2',
+                id: 2,
+                subtitleLeft: 'No Date',
+                size: 'M',
+                startDate: undefined,
+            },
+        ]);
+    });
+
     it('should map tutorial lectures correctly to sidebar card elements', () => {
         const translateService = TestBed.inject(TranslateService);
         jest.spyOn(translateService, 'instant').mockReturnValue('No Date');
