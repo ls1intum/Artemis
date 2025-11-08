@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 
 class SharingInfoDTOTest {
+
+    private final Path tempPath = Path.of(".", "local", "server-integration-test", "temp");
 
     @ParameterizedTest
     @MethodSource("provideEqualsTestCases")
@@ -47,7 +50,7 @@ class SharingInfoDTOTest {
             assertThat(sharingZip.getInputStream()).isNotNull();
             assertThat(sharingZip.isEmpty()).isFalse();
             assertThat(sharingZip.getSize()).isGreaterThan(0);
-            File tmpFile = File.createTempFile("zipTest", "zip");
+            File tmpFile = File.createTempFile("zipTest", "zip", tempPath.toFile());
             sharingZip.transferTo(tmpFile);
             assertThat(tmpFile.length()).isGreaterThan(0);
             assertThat(sharingZip.getSize()).isZero();
