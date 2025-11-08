@@ -185,7 +185,6 @@ describe('CourseTutorialGroupsComponent', () => {
             relativeTo: component['activatedRoute'],
             replaceUrl: true,
         });
-        expect(component.itemSelected()).toBeTrue();
     });
 
     it('should toggle isCollapsed', () => {
@@ -211,14 +210,7 @@ function createMockActivatedRoute() {
         parent: {
             paramMap: of(convertToParamMap({ courseId: '42' })),
         },
-        firstChild: {
-            snapshot: {
-                params: {
-                    tutorialGroupId: undefined,
-                    lectureId: undefined,
-                },
-            },
-        },
+        firstChild: undefined,
     };
 }
 

@@ -3,7 +3,7 @@
         id="test-sidebar-card-medium"
         class="pointer item-border rounded-3 col-12 px-1 pt-2 pb-1 border-5 highlight-card bg-module hover-effect"
         [ngClass]="{ 'bg-selected border-selected': itemSelected }"
-        (click)="emitPageChangeForExam()"
+        (click)="onExamCardClicked()"
     >
         <jhi-sidebar-card-item [groupKey]="groupKey" [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
     </div>
@@ -19,7 +19,7 @@
                 'border-module': !sidebarItem?.difficulty,
             }"
             [routerLink]="sidebarItem?.targetComponentSubRoute ? ['./', sidebarItem.targetComponentSubRoute, sidebarItem.id] : ['./', sidebarItem.id]"
-            (click)="emitStoreAndRefresh()"
+            (click)="onNonExamCardClicked()"
             [routerLinkActive]="'bg-selected border-selected'"
         >
             <jhi-sidebar-card-item

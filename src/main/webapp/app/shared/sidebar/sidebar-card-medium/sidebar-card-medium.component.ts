@@ -26,18 +26,18 @@ export class SidebarCardMediumComponent {
     /** Key used for grouping or categorizing sidebar items */
     @Input() groupKey?: string;
 
-    emitStoreAndRefresh() {
-        const targetComponentSubRoute = this.sidebarItem.targetComponentSubRoute;
-        const sidebarItemId = this.sidebarItem.id;
-        const targetComponentRoute = targetComponentSubRoute ? targetComponentSubRoute + '/' + sidebarItemId : sidebarItemId;
-        this.sidebarEventService.emitSidebarCardEvent(targetComponentRoute);
+    onNonExamCardClicked() {
+        this.storeTargetComponentSubRoute();
         if (this.itemSelected) {
             this.refreshChildComponent();
         }
     }
 
-    emitPageChangeForExam() {
-        this.pageChange.emit();
+    storeTargetComponentSubRoute() {
+        const targetComponentSubRoute = this.sidebarItem.targetComponentSubRoute;
+        const sidebarItemId = this.sidebarItem.id;
+        const targetComponentRoute = targetComponentSubRoute ? targetComponentSubRoute + '/' + sidebarItemId : sidebarItemId;
+        this.sidebarEventService.emitSidebarCardEvent(targetComponentRoute);
     }
 
     refreshChildComponent(): void {
@@ -47,5 +47,9 @@ export class SidebarCardMediumComponent {
         this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
             this.router.navigate(pathSegments, { relativeTo: this.route });
         });
+    }
+
+    onExamCardClicked() {
+        this.pageChange.emit();
     }
 }
