@@ -10,9 +10,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -70,8 +73,11 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ParticipationCommitHashDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
@@ -116,6 +122,8 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     private final CourseRepository courseRepository;
 
     private final ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService;
@@ -130,13 +138,16 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
             Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseValidationService programmingExerciseValidationService,
-            ExerciseVersionService exerciseVersionService) {
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -153,6 +164,8 @@ public class ProgrammingExerciseExportImportResource {
         this.competencyProgressApi = competencyProgressApi;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.exerciseVersionService = exerciseVersionService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -324,7 +337,7 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigGradingCriteriaAndCategoriesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         long start = System.nanoTime();
@@ -360,8 +373,9 @@ public class ProgrammingExerciseExportImportResource {
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
         if (repositoryExportOptions.exportAllParticipants()) {
             // only instructors are allowed to download all repos
@@ -372,28 +386,17 @@ public class ProgrammingExerciseExportImportResource {
             repositoryExportOptions = repositoryExportOptions.copyWith(true, programmingExercise.getDueDate());
         }
 
-        Set<String> participantIdentifierList = new HashSet<>();
+        Set<Long> participationIds = new HashSet<>();
         if (!repositoryExportOptions.exportAllParticipants()) {
             participantIdentifiers = participantIdentifiers.replaceAll("\\s+", "");
-            participantIdentifierList.addAll(List.of(participantIdentifiers.split(",")));
+            Set<String> participantIdentifierList = new HashSet<>(List.of(participantIdentifiers.split(",")));
+            participationIds = programmingExerciseStudentParticipationRepository.findIdsByExerciseIdAndParticipantIdentifier(exerciseId, participantIdentifierList);
         }
 
-        // Select the participations that should be exported
-        final var exportedStudentParticipations = getExportedStudentParticipations(repositoryExportOptions, programmingExercise, participantIdentifierList);
-        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
-    }
+        var participations = loadParticipationsForExercise(programmingExercise, repositoryExportOptions, participationIds);
+        var commitHashes = loadLatestValidCommitHash(participations, repositoryExportOptions, programmingExercise);
 
-    private static List<ProgrammingExerciseStudentParticipation> getExportedStudentParticipations(RepositoryExportOptionsDTO repositoryExportOptions,
-            ProgrammingExercise programmingExercise, Set<String> participantIdentifierList) {
-        List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = new ArrayList<>();
-        for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
-            ProgrammingExerciseStudentParticipation programmingStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            if (repositoryExportOptions.exportAllParticipants() || (programmingStudentParticipation.getRepositoryUri() != null && studentParticipation.getParticipant() != null
-                    && participantIdentifierList.contains(studentParticipation.getParticipantIdentifier()))) {
-                exportedStudentParticipations.add(programmingStudentParticipation);
-            }
-        }
-        return exportedStudentParticipations;
+        return provideZipForParticipations(participations, programmingExercise, repositoryExportOptions, commitHashes);
     }
 
     /**
@@ -410,11 +413,12 @@ public class ProgrammingExerciseExportImportResource {
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
 
         // Only instructors or higher may override the anonymization setting
-        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, null)) {
+        if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
             repositoryExportOptions = repositoryExportOptions.copyWithAnonymizeRepository(true);
         }
 
@@ -423,25 +427,58 @@ public class ProgrammingExerciseExportImportResource {
         }
 
         var participationIdSet = new ArrayList<>(Arrays.asList(participationIds.split(","))).stream().map(String::trim).map(Long::parseLong).collect(Collectors.toSet());
+        var participations = loadParticipationsForExercise(programmingExercise, repositoryExportOptions, participationIdSet);
+        var commitHashes = loadLatestValidCommitHash(participations, repositoryExportOptions, programmingExercise);
 
-        // Select the participations that should be exported
-        List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
-                .filter(participation -> participationIdSet.contains(participation.getId())).map(participation -> (ProgrammingExerciseStudentParticipation) participation).toList();
-        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
+        return provideZipForParticipations(participations, programmingExercise, repositoryExportOptions, commitHashes);
     }
 
-    private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,
-            ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
+    // load the minimal amount of data from the database
+    private Set<ProgrammingExerciseStudentParticipation> loadParticipationsForExercise(ProgrammingExercise exercise, RepositoryExportOptionsDTO repositoryExportOptions,
+            Collection<Long> participationIds) {
+        // We need to load the participations with submissions here to be able to filter late submissions
+        // only when repositoryExportOptions.filterLateSubmissions is true we need submissions at all
+        // TODO: filter late submissions directly in the database query to avoid loading unnecessary data, because one participation could have hundreds of submissions
+        // effectively, we simply need the latest relevant commit hash before the due date, see ProgrammingExerciseExportService.filterLateSu bmissions
+        // it uses latestAllowedDate as repositoryExportOptions.filterLateSubmissionsIndividualDueDate or participation.getIndividualDueDate() or exercise.getDueDate() or null
+        Set<ProgrammingExerciseStudentParticipation> participations;
+        if (repositoryExportOptions.exportAllParticipants()) {
+            participations = programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId());
+        }
+        else {
+            participations = programmingExerciseStudentParticipationRepository.findByIds(participationIds);
+        }
+
+        return participations;
+    }
+
+    // only load the commit hashes when required
+    private Map<Long, String> loadLatestValidCommitHash(Collection<ProgrammingExerciseStudentParticipation> participations, RepositoryExportOptionsDTO repositoryExportOptions,
+            ProgrammingExercise exercise) {
+        Map<Long, String> commitHashes = new HashMap<>();
+        if (repositoryExportOptions.filterLateSubmissions()) {
+            Set<Long> loadedParticipationIds = participations.stream().map(StudentParticipation::getId).collect(Collectors.toSet());
+            // Load the commit hash for the latest submission before the allowed date for each participation
+            var participationCommitHashes = programmingSubmissionRepository.findLatestValidCommitHashForParticipations(loadedParticipationIds,
+                    repositoryExportOptions.filterLateSubmissionsDate(), exercise.getDueDate());
+            commitHashes = participationCommitHashes.stream().collect(Collectors.toMap(ParticipationCommitHashDTO::participationId, ParticipationCommitHashDTO::commitHash));
+        }
+        return commitHashes;
+    }
+
+    private ResponseEntity<Resource> provideZipForParticipations(@NotNull Collection<ProgrammingExerciseStudentParticipation> studentParticipations,
+            ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions, Map<Long, String> participationCommitHashes) throws IOException {
         long start = System.nanoTime();
 
         // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
-        if (exportedStudentParticipations.isEmpty()) {
+        if (studentParticipations.isEmpty()) {
             return ResponseEntity.notFound()
                     .headers(HeaderUtil.createFailureAlert(applicationName, false, ENTITY_NAME, "noparticipations", "No existing user was specified or no submission exists."))
                     .build();
         }
 
-        File zipFile = programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise.getId(), exportedStudentParticipations, repositoryExportOptions);
+        File zipFile = programmingExerciseExportService.exportStudentRepositoriesToZipFile(programmingExercise, studentParticipations, repositoryExportOptions,
+                participationCommitHashes);
         if (zipFile == null) {
             return ResponseEntity.internalServerError().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "There was an error on the server and the zip file could not be created.")).body(null);
@@ -449,8 +486,8 @@ public class ProgrammingExerciseExportImportResource {
 
         InputStreamResource resource = new InputStreamResource(Files.newInputStream(zipFile.toPath()));
 
-        log.info("Export {} student repositories of programming exercise {} with title '{}' was successful in {}.", exportedStudentParticipations.size(),
-                programmingExercise.getId(), programmingExercise.getTitle(), formatDurationFrom(start));
+        log.info("Export {} student repositories of programming exercise {} with title '{}' was successful in {}.", studentParticipations.size(), programmingExercise.getId(),
+                programmingExercise.getTitle(), formatDurationFrom(start));
 
         return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }

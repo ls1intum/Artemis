@@ -80,6 +80,17 @@ describe('AssessmentHeaderComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(AssessmentHeaderComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('isLoading', false);
+        fixture.componentRef.setInput('saveBusy', false);
+        fixture.componentRef.setInput('submitBusy', false);
+        fixture.componentRef.setInput('cancelBusy', false);
+        fixture.componentRef.setInput('nextSubmissionBusy', false);
+        fixture.componentRef.setInput('isTeamMode', false);
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('exerciseDashboardLink', []);
+        fixture.componentRef.setInput('canOverride', false);
+        fixture.componentRef.setInput('assessmentsAreValid', false);
+        fixture.componentRef.setInput('hasAssessmentDueDatePassed', true);
         fixture.detectChanges();
     });
 
@@ -88,19 +99,19 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should display warning when assessment due date has not passed', () => {
-        component.exercise = {
+        fixture.componentRef.setInput('exercise', {
             id: 16,
             dueDate: dayjs().subtract(2, 'days'),
-        } as Exercise;
-        component.result = undefined;
+        } as Exercise);
+        fixture.componentRef.setInput('result', undefined);
         fixture.detectChanges();
         const warningComponent = fixture.debugElement.query(By.directive(AssessmentWarningComponent));
         expect(warningComponent).toBeTruthy();
     });
 
     it('should display alert when assessment due date has passed', () => {
-        component.hasAssessmentDueDatePassed = true;
-        component.result = undefined;
+        fixture.componentRef.setInput('hasAssessmentDueDatePassed', true);
+        fixture.componentRef.setInput('result', undefined);
         fixture.detectChanges();
 
         const alertComponent = fixture.debugElement.query(By.css('ngb-alert'));
@@ -109,20 +120,20 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should hide right side row-container if loading', () => {
-        component.isLoading = false;
+        fixture.componentRef.setInput('isLoading', false);
         fixture.detectChanges();
         let container = fixture.debugElement.query(By.css('.row-container:nth-of-type(2)'));
         expect(container).toBeTruthy();
 
-        component.isLoading = true;
+        fixture.componentRef.setInput('isLoading', true);
         fixture.detectChanges();
         container = fixture.debugElement.query(By.css('.row-container:nth-of-type(2)'));
         expect(container).toBeFalsy();
     });
 
     it('should show if submission is locked by other user', () => {
-        component.isLoading = false;
-        component.isAssessor = true;
+        fixture.componentRef.setInput('isLoading', false);
+        fixture.componentRef.setInput('isAssessor', true);
         fixture.detectChanges();
 
         let assessmentLocked = fixture.debugElement.query(By.css('[jhiTranslate$=assessmentLocked]'));
@@ -131,7 +142,7 @@ describe('AssessmentHeaderComponent', () => {
         let assessmentLockedCurrentUser = fixture.debugElement.query(By.css('[jhiTranslate$=assessmentLockedCurrentUser]'));
         expect(assessmentLockedCurrentUser).toBeTruthy();
 
-        component.isAssessor = false;
+        fixture.componentRef.setInput('isAssessor', false);
         fixture.detectChanges();
 
         assessmentLocked = fixture.debugElement.query(By.css('[jhiTranslate$=assessmentLocked]'));
@@ -142,7 +153,7 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should show save/submit buttons when no result present', () => {
-        component.isLoading = false;
+        fixture.componentRef.setInput('isLoading', false);
         fixture.detectChanges();
 
         const saveButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=save]'));
@@ -168,9 +179,10 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should show override button when result is present', () => {
-        component.isLoading = false;
-        component.result = new Result();
-        component.result.completionDate = dayjs();
+        fixture.componentRef.setInput('isLoading', false);
+        const result = new Result();
+        result.completionDate = dayjs();
+        fixture.componentRef.setInput('result', result);
         fixture.detectChanges();
 
         const saveButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=save]'));
@@ -181,7 +193,7 @@ describe('AssessmentHeaderComponent', () => {
         let overrideAssessmentButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=overrideAssessment]'));
         expect(overrideAssessmentButtonSpan).toBeFalsy();
 
-        component.canOverride = true;
+        fixture.componentRef.setInput('canOverride', true);
         fixture.detectChanges();
 
         overrideAssessmentButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=overrideAssessment]'));
@@ -194,45 +206,52 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should show next submission if assessor or instructor, result is present and no complaint', () => {
         jest.spyOn(component.nextSubmission, 'emit');
-        component.isLoading = false;
-        component.isAssessor = false;
-        component.hasComplaint = false;
-        component.exercise = {
+        fixture.componentRef.setInput('isLoading', false);
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.componentRef.setInput('hasComplaint', false);
+        fixture.componentRef.setInput('exercise', {
             id: 1,
-        } as Exercise;
+        } as Exercise);
         fixture.detectChanges();
 
         let nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeFalsy();
 
-        component.result = new Result();
-        component.result.completionDate = dayjs();
+        const result = new Result();
+        result.completionDate = dayjs();
+        fixture.componentRef.setInput('result', result);
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeFalsy();
 
-        component.exercise.isAtLeastInstructor = true;
+        fixture.componentRef.setInput('exercise', {
+            id: 1,
+            isAtLeastInstructor: true,
+        } as Exercise);
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
 
-        component.isAssessor = true;
+        fixture.componentRef.setInput('isAssessor', true);
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
 
-        component.exercise.isAtLeastInstructor = false;
+        fixture.componentRef.setInput('exercise', {
+            id: 1,
+            isAtLeastInstructor: false,
+        } as Exercise);
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
 
-        component.hasComplaint = true;
+        fixture.componentRef.setInput('hasComplaint', true);
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeFalsy();
 
-        component.hasComplaint = false;
-        component.nextSubmissionBusy = true;
+        fixture.componentRef.setInput('hasComplaint', false);
+        fixture.componentRef.setInput('nextSubmissionBusy', true);
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeTruthy();
@@ -240,15 +259,15 @@ describe('AssessmentHeaderComponent', () => {
         expect(nextSubmissionButton).toBeTruthy();
         expect(nextSubmissionButton!.nativeElement.disabled).toBeTruthy();
 
-        component.nextSubmissionBusy = false;
+        fixture.componentRef.setInput('nextSubmissionBusy', false);
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         nextSubmissionButtonSpan.nativeElement.click();
         expect(component.nextSubmission.emit).toHaveBeenCalledOnce();
     });
     it('should not show assess next button if is test run mode', () => {
-        component.isTestRun = true;
-        component.isLoading = false;
+        fixture.componentRef.setInput('isTestRun', true);
+        fixture.componentRef.setInput('isLoading', false);
         fixture.detectChanges();
         const nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         expect(nextSubmissionButtonSpan).toBeFalsy();
@@ -275,9 +294,9 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should send assessment event on assess next button click when exercise set to Text', () => {
-        component.exercise = {
+        fixture.componentRef.setInput('exercise', {
             type: ExerciseType.TEXT,
-        } as Exercise;
+        } as Exercise);
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendAssessNextEventToAnalytics();
         fixture.detectChanges();
@@ -285,9 +304,9 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should not send assessment event on assess next button click when exercise is not Text', () => {
-        component.exercise = {
+        fixture.componentRef.setInput('exercise', {
             type: ExerciseType.FILE_UPLOAD,
-        } as Exercise;
+        } as Exercise);
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendAssessNextEventToAnalytics();
         fixture.detectChanges();
@@ -295,9 +314,9 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should send assessment event on submit button click when exercise set to Text', () => {
-        component.exercise = {
+        fixture.componentRef.setInput('exercise', {
             type: ExerciseType.TEXT,
-        } as Exercise;
+        } as Exercise);
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendSubmitAssessmentEventToAnalytics();
         fixture.detectChanges();
@@ -305,9 +324,9 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should not send assessment event on submit button click when exercise is not Text', () => {
-        component.exercise = {
+        fixture.componentRef.setInput('exercise', {
             type: ExerciseType.FILE_UPLOAD,
-        } as Exercise;
+        } as Exercise);
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendSubmitAssessmentEventToAnalytics();
         fixture.detectChanges();
@@ -315,12 +334,12 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should save assessment on control and s', () => {
-        component.isLoading = false;
-        component.assessmentsAreValid = true;
-        component.isAssessor = true;
-        component.saveBusy = false;
-        component.submitBusy = false;
-        component.cancelBusy = false;
+        fixture.componentRef.setInput('isLoading', false);
+        fixture.componentRef.setInput('assessmentsAreValid', true);
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('saveBusy', false);
+        fixture.componentRef.setInput('submitBusy', false);
+        fixture.componentRef.setInput('cancelBusy', false);
         fixture.detectChanges();
 
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 's' });
@@ -333,12 +352,12 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should submit assessment on control and enter', () => {
-        component.isLoading = false;
-        component.assessmentsAreValid = true;
-        component.isAssessor = true;
-        component.saveBusy = false;
-        component.submitBusy = false;
-        component.cancelBusy = false;
+        fixture.componentRef.setInput('isLoading', false);
+        fixture.componentRef.setInput('assessmentsAreValid', true);
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('saveBusy', false);
+        fixture.componentRef.setInput('submitBusy', false);
+        fixture.componentRef.setInput('cancelBusy', false);
         fixture.detectChanges();
 
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
@@ -351,11 +370,12 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should override assessment on control and enter', () => {
-        component.result = new Result();
-        component.result.completionDate = dayjs();
-        component.canOverride = true;
-        component.assessmentsAreValid = true;
-        component.submitBusy = false;
+        const result = new Result();
+        result.completionDate = dayjs();
+        fixture.componentRef.setInput('result', result);
+        fixture.componentRef.setInput('canOverride', true);
+        fixture.componentRef.setInput('assessmentsAreValid', true);
+        fixture.componentRef.setInput('submitBusy', false);
         fixture.detectChanges();
 
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
@@ -368,11 +388,12 @@ describe('AssessmentHeaderComponent', () => {
     });
 
     it('should assess next submission on control, shift and arrow right', () => {
-        component.isAssessor = true;
-        component.result = new Result();
-        component.result.completionDate = dayjs();
-        component.isTeamMode = false;
-        component.isTestRun = false;
+        fixture.componentRef.setInput('isAssessor', true);
+        const result = new Result();
+        result.completionDate = dayjs();
+        fixture.componentRef.setInput('result', result);
+        fixture.componentRef.setInput('isTeamMode', false);
+        fixture.componentRef.setInput('isTestRun', false);
         fixture.detectChanges();
 
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, shiftKey: true, key: 'ArrowRight' });
@@ -386,21 +407,24 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should enable saving after entering an internal assessment note', () => {
         expect(component.saveDisabled).toBeTrue();
-        component.isAssessor = true;
-        component.result = new Result();
-        component.result.assessmentNote = new AssessmentNote();
+        fixture.componentRef.setInput('isAssessor', true);
+        const result = new Result();
+        result.assessmentNote = new AssessmentNote();
+        fixture.componentRef.setInput('result', result);
         expect(component.saveDisabled).toBeTrue();
-        component.result.assessmentNote.note = 'some input';
+        result.assessmentNote.note = 'some input';
+        fixture.componentRef.setInput('result', result);
         // ToDo: refactor the assessment header component in such a way that the booleans are never undefined
         expect(component.saveDisabled).toBeOneOf([false, undefined]);
     });
 
     it('should not enable submitting after entering an internal assessment note', () => {
         expect(component.submitDisabled).toBeTrue();
-        component.isAssessor = true;
-        component.result = new Result();
-        component.result.assessmentNote = new AssessmentNote();
-        component.result.assessmentNote.note = 'some input';
+        fixture.componentRef.setInput('isAssessor', true);
+        const result = new Result();
+        result.assessmentNote = new AssessmentNote();
+        result.assessmentNote.note = 'some input';
+        fixture.componentRef.setInput('result', result);
         expect(component.submitDisabled).toBeTrue();
     });
 });

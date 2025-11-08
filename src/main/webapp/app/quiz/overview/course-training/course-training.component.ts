@@ -12,10 +12,13 @@ import { FormsModule } from '@angular/forms';
 import { faCheck, faClock, faQuestion, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { AccordionModule } from 'primeng/accordion';
 import { LeagueBadgeComponent } from 'app/quiz/overview/course-training/league-badge/league-badge.component';
 import dayjs from 'dayjs/esm';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+import { QuizTrainingDialogComponent } from 'app/quiz/overview/course-training/quiz-training-dialog.component';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-course-training',
@@ -27,9 +30,10 @@ import { ButtonModule } from 'primeng/button';
         FormsModule,
         FontAwesomeModule,
         ToggleSwitchModule,
-        AccordionModule,
         LeagueBadgeComponent,
         ButtonModule,
+        TooltipModule,
+        QuizTrainingDialogComponent,
     ],
     templateUrl: './course-training.component.html',
     styleUrl: './course-training.component.scss',
@@ -38,6 +42,7 @@ export class CourseTrainingComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly leaderboardService = inject(LeaderboardService);
+    private readonly alertService = inject(AlertService);
 
     protected readonly faClock = faClock;
     protected readonly faQuestion = faQuestion;
@@ -57,6 +62,7 @@ export class CourseTrainingComponent {
     isLoading = signal<boolean>(false);
     isDataLoaded = signal<boolean>(false);
     currentTime = signal<string>('');
+    initialShowInLeaderboard = signal<boolean>(true);
 
     showDialog = true;
     showInLeaderboard = true;
@@ -155,23 +161,24 @@ export class CourseTrainingComponent {
         });
     }
 
-    loadLeaderboard(courseId: number): void {
+    async loadLeaderboard(courseId: number): Promise<void> {
         this.isLoading.set(true);
-        this.leaderboardService.getQuizTrainingLeaderboard(courseId).subscribe({
-            next: (leaderboard) => {
-                this.leaderboardEntries.set(leaderboard.leaderboardEntries);
-                this.currentUserEntry.set(leaderboard.currentUserEntry);
-                this.currentTime.set(leaderboard.currentTime);
-                this.isLoading.set(false);
-                this.isDataLoaded.set(true);
+        try {
+            const leaderboard = await this.leaderboardService.getQuizTrainingLeaderboard(courseId);
+            this.leaderboardEntries.set(leaderboard.leaderboardEntries);
+            this.currentUserEntry.set(leaderboard.currentUserEntry);
+            this.currentTime.set(leaderboard.currentTime);
+            this.isLoading.set(false);
+            this.isDataLoaded.set(true);
 
-                if (leaderboard.hasUserSetSettings) {
-                    this.showDialog = false;
-                    this.isFirstVisit.set(false);
-                }
-            },
-            error: () => this.isLoading.set(false),
-        });
+            if (leaderboard.hasUserSetSettings) {
+                this.showDialog = false;
+                this.isFirstVisit.set(false);
+            }
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
     }
 
     public navigateToTraining(): void {
@@ -181,26 +188,54 @@ export class CourseTrainingComponent {
         }
     }
 
-    onSaveDialog(): void {
+    async onSaveDialog(): Promise<void> {
         this.isLoading.set(true);
-        const leaderboardSettings = new LeaderboardSettingsDTO();
-        leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
-
-        this.leaderboardService.initializeLeaderboardEntry(leaderboardSettings).subscribe({
-            next: () => {
-                this.isFirstVisit.set(false);
-                const courseId = this.courseId();
-                if (courseId !== undefined) {
-                    this.loadLeaderboard(courseId);
-                }
-            },
-            error: () => {
-                this.isLoading.set(false);
-            },
-        });
+        try {
+            const leaderboardSettings = new LeaderboardSettingsDTO();
+            leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
+            await this.leaderboardService.updateSettings(leaderboardSettings);
+            this.isFirstVisit.set(false);
+            this.isLoading.set(false);
+            const courseId = this.courseId();
+            if (courseId !== undefined) {
+                this.loadLeaderboard(courseId);
+            }
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
     }
 
-    showInfoDialog(): void {
-        this.displayInfoDialog = true;
+    async showInfoDialog(): Promise<void> {
+        try {
+            const settings = await this.leaderboardService.getSettings();
+            if (settings) {
+                this.showInLeaderboard = settings.showInLeaderboard ?? true;
+                this.initialShowInLeaderboard.set(settings.showInLeaderboard ?? true);
+            }
+            this.isLoading.set(false);
+            this.displayInfoDialog = true;
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
+    }
+
+    async onSaveInfoDialog(): Promise<void> {
+        const leaderboardSettings = new LeaderboardSettingsDTO();
+        leaderboardSettings.showInLeaderboard = this.showInLeaderboard;
+        try {
+            await this.leaderboardService.updateSettings(leaderboardSettings);
+            this.initialShowInLeaderboard.set(this.showInLeaderboard);
+            this.displayInfoDialog = false;
+            const courseId = this.courseId();
+            if (courseId !== undefined) {
+                this.loadLeaderboard(courseId);
+            }
+            this.isLoading.set(false);
+        } catch (error) {
+            onError(this.alertService, error);
+            this.isLoading.set(false);
+        }
     }
 }

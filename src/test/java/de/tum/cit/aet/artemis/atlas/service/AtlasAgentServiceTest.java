@@ -190,7 +190,6 @@ class AtlasAgentServiceTest {
 
     @Test
     void testProcessChatMessage_WithCompetencyCreated() throws ExecutionException, InterruptedException {
-        AtlasAgentToolsService mockToolsService = org.mockito.Mockito.mock(AtlasAgentToolsService.class);
         ChatClient chatClient = ChatClient.create(chatModel);
         AtlasAgentService serviceWithToolsService = new AtlasAgentService(chatClient, templateService, null, null, mockToolsService, "gpt-4o");
 
@@ -200,10 +199,13 @@ class AtlasAgentServiceTest {
         String expectedResponse = "Competency created";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
-        when(mockToolsService.wasCompetencyCreated()).thenReturn(true);
+        // Simulate tool execution by calling markCompetencyCreated() when chatModel.call() is invoked
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+            AtlasAgentService.markCompetencyCreated();
+            return new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse))));
+        });
 
-        CompletableFuture<AgentChatResult> result = serviceWithToolsService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResult> result = service.processChatMessage(testMessage, courseId, sessionId);
 
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
@@ -213,7 +215,6 @@ class AtlasAgentServiceTest {
 
     @Test
     void testProcessChatMessage_WithCompetencyNotCreated() throws ExecutionException, InterruptedException {
-        AtlasAgentToolsService mockToolsService = org.mockito.Mockito.mock(AtlasAgentToolsService.class);
         ChatClient chatClient = ChatClient.create(chatModel);
         AtlasAgentService serviceWithToolsService = new AtlasAgentService(chatClient, templateService, null, null, mockToolsService, "gpt-4o");
 
@@ -224,9 +225,8 @@ class AtlasAgentServiceTest {
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
-        when(mockToolsService.wasCompetencyCreated()).thenReturn(false);
 
-        CompletableFuture<AgentChatResult> result = serviceWithToolsService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResult> result = service.processChatMessage(testMessage, courseId, sessionId);
 
         assertThat(result).isNotNull();
         AgentChatResult chatResult = result.get();
@@ -332,7 +332,6 @@ class AtlasAgentServiceTest {
             assertThat(result).contains("success");
             assertThat(result).contains("Database Design");
             assertThat(result).contains("CREATE");
-            assertThat(toolsService.wasCompetencyCreated()).isTrue();
         }
 
         @Test
@@ -345,7 +344,6 @@ class AtlasAgentServiceTest {
 
             assertThat(result).contains("error");
             assertThat(result).contains("Course not found");
-            assertThat(toolsService.wasCompetencyCreated()).isFalse();
         }
 
         @Test
@@ -376,11 +374,6 @@ class AtlasAgentServiceTest {
         }
 
         @Test
-        void testWasCompetencyCreated_InitiallyFalse() {
-            assertThat(toolsService.wasCompetencyCreated()).isFalse();
-        }
-
-        @Test
         void testGetCourseCompetencies_WithNullTaxonomy() {
             Long courseId = 123L;
             Course course = new Course();
@@ -388,7 +381,7 @@ class AtlasAgentServiceTest {
 
             Competency competency = new Competency();
             competency.setId(1L);
-            competency.setTitle("No Taxonomy");
+            competency.setTitle("test");
             competency.setDescription("Competency without taxonomy");
             competency.setTaxonomy(null);
 
@@ -397,9 +390,9 @@ class AtlasAgentServiceTest {
 
             String result = toolsService.getCourseCompetencies(courseId);
 
-            assertThat(result).contains("No Taxonomy");
+            assertThat(result).contains("test");
             assertThat(result).contains("Competency without taxonomy");
-            assertThat(result).contains("\"taxonomy\":\"\"");
+            assertThat(result).doesNotContain("\"taxonomy\"");
         }
 
         @Test
@@ -410,17 +403,17 @@ class AtlasAgentServiceTest {
 
             Competency savedCompetency = new Competency();
             savedCompetency.setId(1L);
-            savedCompetency.setTitle("No Taxonomy");
+            savedCompetency.setTitle("test");
             savedCompetency.setDescription("Test");
             savedCompetency.setTaxonomy(null);
 
             when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
             when(competencyRepository.save(any(Competency.class))).thenReturn(savedCompetency);
 
-            String result = toolsService.createCompetency(courseId, "No Taxonomy", "Test", CompetencyTaxonomy.APPLY);
+            String result = toolsService.createCompetency(courseId, "test", "Test", CompetencyTaxonomy.APPLY);
 
             assertThat(result).contains("success");
-            assertThat(result).contains("\"taxonomy\":\"\"");
+            assertThat(result).doesNotContain("\"Taxonomy\":\"\"");
         }
 
         @Test
@@ -436,7 +429,6 @@ class AtlasAgentServiceTest {
 
             assertThat(result).contains("error");
             assertThat(result).contains("Failed to create competency");
-            assertThat(toolsService.wasCompetencyCreated()).isFalse();
         }
     }
 
