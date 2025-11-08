@@ -54,18 +54,11 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
 
-        // add two students and create LocalVC repos
-        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
-
-        var projectKey = exercise.getProjectKey();
-        var slug1 = localVCLocalCITestService.getRepositorySlug(projectKey, TEST_PREFIX + "student1");
-        RepositoryExportTestUtil.seedBareRepository(localVCLocalCITestService, projectKey, slug1, git -> {
-        });
-
-        var slug2 = localVCLocalCITestService.getRepositorySlug(projectKey, TEST_PREFIX + "student2");
-        RepositoryExportTestUtil.seedBareRepository(localVCLocalCITestService, projectKey, slug2, git -> {
-        });
+        // add two students and create LocalVC repos using util
+        var p1 = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        var p2 = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, p1);
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, p2);
     }
 
     @AfterEach
@@ -94,28 +87,16 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void generateTests_happyPath() throws Exception {
-        // Ensure template, solution and tests repos exist and are wired to LocalVC
-        String projectKey = exercise.getProjectKey();
-        String templateSlug = projectKey.toLowerCase() + "-exercise";
-        String solutionSlug = projectKey.toLowerCase() + "-solution";
-        String testsSlug = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionSlug);
-        var testsRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsSlug);
-
-        // Wire URIs on exercise
-        var templateUri = localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateSlug);
-        var solutionUri = localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, solutionSlug);
-        var testsUri = localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, testsSlug);
-        exercise.getTemplateParticipation().setRepositoryUri(templateUri);
-        exercise.getSolutionParticipation().setRepositoryUri(solutionUri);
-        exercise.setTestRepositoryUri(testsUri);
+        // Ensure template, solution and tests repos exist and are wired to LocalVC via util
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
         exercise = programmingExerciseRepository.save(exercise);
         // Reload with buildConfig eagerly to avoid LazyInitializationException
         exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(exercise);
 
         // Create tests path in tests repo so generator can write test.json
+        String projectKey = exercise.getProjectKey();
+        String testsSlug = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        var testsRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsSlug);
         String testsPath = java.nio.file.Path.of("test", exercise.getPackageFolderName()).toString();
         if (exercise.getBuildConfig().hasSequentialTestRuns()) {
             testsPath = java.nio.file.Path.of("structural", testsPath).toString();

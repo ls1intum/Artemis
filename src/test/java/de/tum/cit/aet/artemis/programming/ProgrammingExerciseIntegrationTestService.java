@@ -15,7 +15,6 @@ import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -50,9 +49,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.EmptyCommitException;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -401,16 +398,14 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds(boolean excludePracticeSubmissions) throws Exception {
-        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
-        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath2, null);
-        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        // Seed LocalVC repositories for both participations and wire URIs
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation2);
 
         // Set one of the participations to practice mode
         participation1.setPracticeMode(false);
         participation2.setPracticeMode(true);
-        final var participations = List.of(participation1, participation2);
-        programmingExerciseStudentParticipationRepository.saveAll(participations);
+        programmingExerciseStudentParticipationRepository.saveAll(List.of(participation1, participation2));
 
         // Export with excludePracticeSubmissions
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
@@ -427,55 +422,54 @@ public class ProgrammingExerciseIntegrationTestService {
         List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(true);
 
         // Make sure that the practice submission is not included
-        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
-                .noneMatch(entry -> entry.toString().matches(".*practice-[^/]*student2.*.git$"));
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString()))
+                .noneMatch(entry -> entry.toString().matches(".*practice-[^/]*" + userPrefix + "student2.*\\.git$"));
     }
 
     void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
         List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(false);
 
         // Make sure that the practice submission is included
-        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
-                .anyMatch(entry -> entry.toString().matches(".*practice-[^/]*student2.*.git$"));
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString()))
+                .anyMatch(entry -> entry.toString().matches(".*practice-[^/]*" + userPrefix + "student2.*\\.git$"));
     }
 
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
-        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
-        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath2, null);
+        // Seed LocalVC student repos and wire URIs
+        var repo1 = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation2);
+        programmingExerciseStudentParticipationRepository.saveAll(List.of(participation1, participation2));
 
-        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
-        doThrow(EmptyCommitException.class).when(gitService).stageAllChanges(any());
-
-        // Create the eclipse .project file which will be modified.
-        Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
-        File projectFile = Path.of(projectFilePath.toString()).toFile();
+        // Create .project and pom.xml in the student's repo to be modified during export
         String projectFileContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/sample.project");
-        FileUtils.writeStringToFile(projectFile, projectFileContents, StandardCharsets.UTF_8);
-
-        // Create the maven .pom file
-        Path pomPath = Path.of(repository1.getLocalPath().toString(), "pom.xml");
-        File pomFile = Path.of(pomPath.toString()).toFile();
         String pomContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/pom.xml");
-        FileUtils.writeStringToFile(pomFile, pomContents, StandardCharsets.UTF_8);
+        Path projectFilePath = repo1.workingCopyGitRepoFile.toPath().resolve(".project");
+        Path pomPath = repo1.workingCopyGitRepoFile.toPath().resolve("pom.xml");
+        Files.writeString(projectFilePath, projectFileContents, StandardCharsets.UTF_8);
+        Files.writeString(pomPath, pomContents, StandardCharsets.UTF_8);
+        repo1.workingCopyGitRepo.add().addFilepattern(".").call();
+        GitService.commit(repo1.workingCopyGitRepo).setMessage("seed project and pom").call();
+        repo1.workingCopyGitRepo.push().setRemote("origin").call();
 
         var participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), userPrefix + "student1");
         assertThat(participation).isPresent();
 
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/"
                 + String.join(",", List.of(participation.get().getId().toString()));
-        // all options false by default, only test if export works at all
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
-        // Make sure both repositories are present
-        String modifiedEclipseProjectFile = FileUtils.readFileToString(projectFile, StandardCharsets.UTF_8);
-        assertThat(modifiedEclipseProjectFile).contains("student1");
-
-        String modifiedPom = FileUtils.readFileToString(pomFile, StandardCharsets.UTF_8);
-        assertThat(modifiedPom).contains("student1");
+        // Read exported project files and assert participant identifier appended
+        List<Path> entries = unzipExportedFile();
+        Optional<Path> extractedRepo = entries.stream().filter(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString())).findFirst();
+        assertThat(extractedRepo).isPresent();
+        Path repoRoot = extractedRepo.get().getParent();
+        String modifiedEclipseProjectFile = Files.readString(repoRoot.resolve(".project"));
+        assertThat(modifiedEclipseProjectFile).contains(userPrefix + "student1");
+        String modifiedPom = Files.readString(repoRoot.resolve("pom.xml"));
+        assertThat(modifiedPom).contains((userPrefix + "student1").toLowerCase());
 
         Files.deleteIfExists(projectFilePath);
         Files.deleteIfExists(pomPath);
@@ -547,28 +541,33 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionAnonymizationCombining() throws Exception {
-        // provide repositories
-        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        // Ensure base repos exist and are wired for template/solution/tests
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        // Mock and pretend first commit is template commit
-        ObjectId head = localGit.getRepository().findRef("HEAD").getObjectId();
-        when(gitService.getLastCommitHash(any())).thenReturn(head);
-        doNothing().when(gitService).resetToOriginHead(any());
+        // Prepare template working copy handle
+        String projectKey = programmingExercise.getProjectKey();
+        String templateSlug = projectKey.toLowerCase() + "-exercise";
+        var templateRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug);
 
-        // Add commit to anonymize
-        assertThat(localRepoPath.resolve("Test.java").toFile().createNewFile()).isTrue();
-        localGit.add().addFilepattern(".").call();
-        GitService.commit(localGit).setMessage("commit").setAuthor("user1", "email1").call();
+        // Seed student repository from template bare and wire URI
+        String studentSlug = localVCLocalCITestService.getRepositorySlug(projectKey, participation1.getParticipantIdentifier());
+        var studentRepo = RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey, studentSlug, templateRepo);
+        participation1.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, studentSlug));
+        programmingExerciseStudentParticipationRepository.save(participation1);
 
-        // Rest call
+        // Add a student commit to anonymize
+        localVCLocalCITestService.commitFile(studentRepo.workingCopyGitRepoFile.toPath(), studentRepo.workingCopyGitRepo, "Test.java");
+        studentRepo.workingCopyGitRepo.push().setRemote("origin").call();
+
+        // Rest call with options (combine + anonymize enabled in getOptions())
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + participation1.getId();
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         List<Path> entries = unzipExportedFile();
 
-        // Checks
+        // Checks: file present and single anonymized commit
         assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
         Optional<Path> extractedRepo1 = entries.stream()
                 .filter(entry -> entry.toString().endsWith(Path.of("-" + participation1.getId() + "-student-submission.git", ".git").toString())).findFirst();

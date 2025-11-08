@@ -232,11 +232,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(participations).isNotEmpty();
         var studentParticipation = participations.getFirst();
 
-        // Create a LocalVC repository for the student and wire the URI
-        String projectKey = programmingExercise.getProjectKey();
-        String repositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey, TEST_PREFIX + "student1");
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
-        studentParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + repositorySlug + ".git");
+        // Create and wire a LocalVC student repository via util
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
         programmingExerciseStudentParticipationTestRepository.save(studentParticipation);
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository/" + studentParticipation.getId(),
