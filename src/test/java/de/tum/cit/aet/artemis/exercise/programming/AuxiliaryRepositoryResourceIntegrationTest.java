@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -85,7 +84,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     private final String currentLocalFolderName = "currentFolderName";
 
-    private final LocalRepository localAuxiliaryRepo = new LocalRepository(defaultBranch);
+    private LocalRepository localAuxiliaryRepo;
 
     private LocalVCRepositoryUri auxRepoUri;
 
@@ -96,8 +95,10 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
-        // Instantiate the remote repository as non-bare so its files can be manipulated
-        localAuxiliaryRepo.configureRepos(localVCBasePath, "auxLocalRepo", "auxOriginRepo", false);
+        // Create a LocalVC auxiliary repository under the expected LocalVC structure
+        var projectKey = programmingExercise.getProjectKey();
+        String auxSlug = projectKey.toLowerCase() + "-auxiliary";
+        localAuxiliaryRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, auxSlug);
 
         // add file to the repository folder
         Path filePath = Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
@@ -109,9 +110,14 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         filePath = Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath);
 
+        // commit and push changes so the remote bare repo has the content
+        localAuxiliaryRepo.workingCopyGitRepo.add().addFilepattern(".").call();
+        de.tum.cit.aet.artemis.programming.service.GitService.commit(localAuxiliaryRepo.workingCopyGitRepo).setMessage("seed aux content").call();
+        localAuxiliaryRepo.workingCopyGitRepo.push().setRemote("origin").call();
+
         // add the auxiliary repository
         auxiliaryRepositoryRepository.deleteAll();
-        auxRepoUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), programmingExercise.getProjectKey().toLowerCase() + "-auxiliary");
+        auxRepoUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, auxSlug));
         // programmingExercise.setTestRepositoryUri(auxRepoUri.toString());
         var newAuxiliaryRepo = new AuxiliaryRepository();
         newAuxiliaryRepo.setName("AuxiliaryRepo");
@@ -122,21 +128,15 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         auxiliaryRepository = programmingExercise.getAuxiliaryRepositories().getFirst();
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(auxRepoUri), eq(true), anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(auxRepoUri), eq(false), anyBoolean());
-
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(auxRepoUri), eq(true), anyString(), anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(auxRepoUri), eq(false), anyString(), anyBoolean());
+        // No GitService stubs for happy path; LocalVC will checkout the repository for auxRepoUri
     }
 
     @AfterEach
     void tearDown() throws IOException {
         reset(gitService);
-        localAuxiliaryRepo.resetLocalRepo();
+        if (localAuxiliaryRepo != null) {
+            localAuxiliaryRepo.resetLocalRepo();
+        }
     }
 
     @Test
@@ -185,10 +185,10 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     void testCreateFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/newFile")).doesNotExist();
         params.add("file", "newFile");
         request.postWithoutResponseBody(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/newFile")).isRegularFile();
+        var files = request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).containsKey("newFile");
     }
 
     @Test
@@ -223,23 +223,22 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
     void testCreateFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/newFolder")).doesNotExist();
         params.add("folder", "newFolder");
         request.postWithoutResponseBody(testRepoBaseUrl + auxiliaryRepository.getId() + "/folder", HttpStatus.OK, params);
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/newFolder")).isDirectory();
+        var files = request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).containsEntry("newFolder", FileType.FOLDER);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        assertThat((Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFileName))).exists();
         String newLocalFileName = "newFileName";
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + newLocalFileName)).doesNotExist();
         FileMove fileMove = new FileMove(currentLocalFileName, newLocalFileName);
         request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).doesNotExist();
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + newLocalFileName)).exists();
+        var files = request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).doesNotContainKey(currentLocalFileName);
+        assertThat(files).containsKey(newLocalFileName);
     }
 
     @Test
