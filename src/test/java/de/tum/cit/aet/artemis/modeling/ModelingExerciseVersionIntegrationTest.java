@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -38,6 +39,9 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
 
     @Autowired
     private ModelingExerciseRepository modelingExerciseRepository;
+
+    @Autowired
+    private ModelingExerciseTestRepository modelingExerciseTestRepository;
 
     @Autowired
     private ExerciseVersionService exerciseVersionService;

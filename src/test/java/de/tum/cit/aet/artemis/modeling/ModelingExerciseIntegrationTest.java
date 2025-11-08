@@ -70,6 +70,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -84,6 +85,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ModelingExerciseRepository modelingExerciseRepository;
+
+    @Autowired
+    private ModelingExerciseTestRepository modelingExerciseTestRepository;
 
     @Autowired
     private TeamRepository teamRepository;

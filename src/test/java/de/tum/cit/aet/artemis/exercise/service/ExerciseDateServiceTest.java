@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -41,6 +42,9 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ModelingExerciseRepository exerciseRepository;
+
+    @Autowired
+    private ModelingExerciseTestRepository modelingExerciseTestRepository;
 
     @Autowired
     private ParticipationTestRepository participationRepository;
@@ -80,7 +84,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
             modelingExerciseUtilService.addModelingSubmission(exercise, submission, TEST_PREFIX + "student1");
         }
 
-        exercise = exerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exercise.getId());
+        exercise = modelingExerciseTestRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exercise.getId());
     }
 
     @Test

@@ -92,9 +92,6 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             """)
     List<ModelingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
-    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
-    Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
-
     @Query("""
             SELECT m
             FROM ModelingExercise m
@@ -140,11 +137,6 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @NotNull
     default ModelingExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
         return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(exerciseId), exerciseId);
-    }
-
-    @NotNull
-    default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithStudentParticipationsSubmissionsResultsById(exerciseId), exerciseId);
     }
 
     @NotNull

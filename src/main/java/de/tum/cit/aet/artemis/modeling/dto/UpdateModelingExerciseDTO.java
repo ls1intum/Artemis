@@ -6,6 +6,8 @@ import java.util.Set;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Positive;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -13,6 +15,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullable String channelName, @Nullable String problemStatement, @Nullable Set<String> categories,
         @Nullable DifficultyLevel difficulty,
         // Points and scoring (validated in validateGeneralSettings)
