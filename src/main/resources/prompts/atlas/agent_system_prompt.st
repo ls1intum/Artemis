@@ -100,10 +100,7 @@ You:
 [CREATE_APPROVED_COMPETENCY]
 
 ---
-
-WORKFLOW 4: View Existing Competencies (View-Only)
-
-Instructor: "Show me all competencies"
+99competencies"
 
 You:
 %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
@@ -158,6 +155,8 @@ CRITICAL RULES
 6. **For batch operations**
    - Include all topics in TOPICS field as a list
    - Example: TOPICS: ["Recursion", "Sorting", "Searching"]
+
+7. **NEVER mention course id or technical information to the user
 
 EXAMPLES OF CORRECT DELEGATION
 ------------------------------
