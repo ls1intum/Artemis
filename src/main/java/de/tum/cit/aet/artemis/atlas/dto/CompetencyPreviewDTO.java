@@ -10,6 +10,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Note: For batch previews, competencyId is included per-item to enable create/update detection.
  * For single previews, competencyId is at the wrapper level (SingleCompetencyPreviewResponseDTO).
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyPreviewDTO(String title, String description, String taxonomy, String icon, Long competencyId) {
 }

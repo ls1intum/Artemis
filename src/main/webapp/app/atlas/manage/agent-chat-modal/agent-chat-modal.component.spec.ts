@@ -12,6 +12,7 @@ import { CompetencyService } from 'app/atlas/manage/services/competency.service'
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
+import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 
 describe('AgentChatModalComponent', () => {
     let component: AgentChatModalComponent;
@@ -732,7 +733,7 @@ describe('AgentChatModalComponent', () => {
                     competency: {
                         title: 'Object-Oriented Programming',
                         description: 'Understanding OOP principles',
-                        taxonomy: 'UNDERSTAND',
+                        taxonomy: CompetencyTaxonomy.UNDERSTAND,
                         icon: 'comments',
                     },
                 },
@@ -748,7 +749,7 @@ describe('AgentChatModalComponent', () => {
             expect(agentMessage).toBeDefined();
             expect(agentMessage?.competencyPreview?.title).toBe('Object-Oriented Programming');
             expect(agentMessage?.competencyPreview?.description).toBe('Understanding OOP principles');
-            expect(agentMessage?.competencyPreview?.taxonomy).toBe('UNDERSTAND');
+            expect(agentMessage?.competencyPreview?.taxonomy).toBe(CompetencyTaxonomy.UNDERSTAND);
             expect(agentMessage?.competencyPreview?.icon).toBe('comments');
         });
 
@@ -764,7 +765,7 @@ describe('AgentChatModalComponent', () => {
                     competency: {
                         title: 'Data Structures',
                         description: 'Arrays, lists, trees, and graphs',
-                        taxonomy: 'APPLY',
+                        taxonomy: CompetencyTaxonomy.APPLY,
                         icon: 'pen-fancy',
                     },
                 },
@@ -779,7 +780,7 @@ describe('AgentChatModalComponent', () => {
             const agentMessage = component.messages.find((msg) => !msg.isUser && msg.competencyPreview);
             expect(agentMessage).toBeDefined();
             expect(agentMessage?.competencyPreview?.title).toBe('Data Structures');
-            expect(agentMessage?.competencyPreview?.taxonomy).toBe('APPLY');
+            expect(agentMessage?.competencyPreview?.taxonomy).toBe(CompetencyTaxonomy.APPLY);
         });
 
         it('should extract competencyId for update operations', () => {
@@ -795,7 +796,7 @@ describe('AgentChatModalComponent', () => {
                     competency: {
                         title: 'Updated Title',
                         description: 'Updated description',
-                        taxonomy: 'ANALYZE',
+                        taxonomy: CompetencyTaxonomy.UNDERSTAND,
                         icon: 'magnifying-glass',
                     },
                 },
@@ -825,7 +826,7 @@ describe('AgentChatModalComponent', () => {
                     competency: {
                         title: 'Read-only Competency',
                         description: 'For viewing only',
-                        taxonomy: 'REMEMBER',
+                        taxonomy: CompetencyTaxonomy.UNDERSTAND,
                         icon: 'brain',
                     },
                 },
@@ -901,9 +902,9 @@ describe('AgentChatModalComponent', () => {
                     batchPreview: true,
                     count: 3,
                     competencies: [
-                        { title: 'Comp 1', description: 'Desc 1', taxonomy: 'REMEMBER', icon: 'brain' },
-                        { title: 'Comp 2', description: 'Desc 2', taxonomy: 'UNDERSTAND', icon: 'comments' },
-                        { title: 'Comp 3', description: 'Desc 3', taxonomy: 'APPLY', icon: 'pen-fancy' },
+                        { title: 'Comp 1', description: 'Desc 1', taxonomy: CompetencyTaxonomy.REMEMBER, icon: 'brain' },
+                        { title: 'Comp 2', description: 'Desc 2', taxonomy: CompetencyTaxonomy.UNDERSTAND, icon: 'comments' },
+                        { title: 'Comp 3', description: 'Desc 3', taxonomy: CompetencyTaxonomy.APPLY, icon: 'pen-fancy' },
                     ],
                 },
             };
@@ -933,8 +934,8 @@ describe('AgentChatModalComponent', () => {
                     batchPreview: true,
                     count: 2,
                     competencies: [
-                        { title: 'Batch 1', description: 'Desc 1', taxonomy: 'APPLY', icon: 'pen-fancy' },
-                        { title: 'Batch 2', description: 'Desc 2', taxonomy: 'ANALYZE', icon: 'magnifying-glass' },
+                        { title: 'Batch 1', description: 'Desc 1', taxonomy: CompetencyTaxonomy.APPLY, icon: 'pen-fancy' },
+                        { title: 'Batch 2', description: 'Desc 2', taxonomy: CompetencyTaxonomy.ANALYZE, icon: 'magnifying-glass' },
                     ],
                 },
             };

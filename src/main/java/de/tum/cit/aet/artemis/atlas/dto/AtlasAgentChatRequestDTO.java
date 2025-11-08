@@ -10,11 +10,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * DTO for Atlas Agent chat requests.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasAgentChatRequestDTO(
-
-        @NotBlank @Size(max = 8000) String message,
-
-        @NotNull String sessionId
-
-) {
+public record AtlasAgentChatRequestDTO(@NotBlank @Size(max = 8000) String message, @NotNull String sessionId) {
 }

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import de.tum.cit.aet.artemis.atlas.dto.BatchCompetencyPreviewResponseDTO;
@@ -11,7 +12,7 @@ import de.tum.cit.aet.artemis.atlas.dto.SingleCompetencyPreviewResponseDTO;
  * Contains the response message, competency modification flag, and optional preview data.
  */
 public record AgentChatResult(@NotNull String message, boolean competenciesModified, @Nullable SingleCompetencyPreviewResponseDTO competencyPreview,
-        @Nullable BatchCompetencyPreviewResponseDTO batchCompetencyPreview) {
+        @NotEmpty BatchCompetencyPreviewResponseDTO batchCompetencyPreview) {
 
     /**
      * Constructor for simple responses without preview data.
