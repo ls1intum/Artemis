@@ -98,7 +98,7 @@ public class AtlasAgentService {
         catch (Exception e) {
             return CompletableFuture.completedFuture(new AgentChatResult("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
         }
-     
+
     }
 
     /**
