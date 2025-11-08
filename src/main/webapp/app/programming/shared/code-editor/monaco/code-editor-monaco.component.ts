@@ -3,6 +3,7 @@ import {
     ChangeDetectorRef,
     Component,
     OnChanges,
+    OnDestroy,
     SimpleChanges,
     ViewEncapsulation,
     computed,
@@ -25,13 +26,17 @@ import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programmin
 import { fromPairs, pickBy } from 'lodash-es';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
+import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { FileTypeService } from 'app/programming/shared/services/file-type.service';
 import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange } from '../model/code-editor.model';
+import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { TranslateService } from '@ngx-translate/core';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -51,7 +56,7 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     providers: [RepositoryFileService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CodeEditorMonacoComponent implements OnChanges {
+export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
     static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
     static readonly FILE_TIMEOUT = 10000;
@@ -64,6 +69,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     private readonly localStorageService = inject(LocalStorageService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly fileTypeService = inject(FileTypeService);
+    private readonly translateService = inject(TranslateService);
 
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
@@ -78,8 +84,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
     readonly isTutorAssessment = input<boolean>(false);
     readonly disableActions = input<boolean>(false);
     readonly selectedFile = input<string>();
+    readonly selectedRepository = input<RepositoryType>();
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
 
     readonly onError = output<string>();
     readonly onFileContentChange = output<{ fileName: string; text: string }>();
@@ -122,6 +130,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     annotationsArray: Array<Annotation> = [];
+    private addFeedbackKeydownListener?: Disposable;
 
     constructor() {
         effect(() => {
@@ -135,6 +144,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
         effect(() => {
             const annotations = this.buildAnnotations();
             untracked(() => this.setBuildAnnotations(annotations));
+        });
+
+        effect(() => {
+            this.renderFeedbackWidgets();
         });
     }
 
@@ -158,6 +171,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.renderFeedbackWidgets();
             if (this.isTutorAssessment() && !this.readOnlyManualFeedback()) {
                 this.setupAddFeedbackButton();
+                this.setupAddFeedbackShortcut();
+            } else {
+                this.disposeAddFeedbackShortcut();
             }
             this.onFileLoad.emit(this.selectedFile()!);
         }
@@ -168,6 +184,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
 
         this.editor().layout();
+    }
+
+    ngOnDestroy(): void {
+        this.disposeAddFeedbackShortcut();
     }
 
     async selectFileInEditor(fileName: string | undefined): Promise<void> {
@@ -251,6 +271,37 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     setupAddFeedbackButton(): void {
         this.editor().setLineDecorationsHoverButton(CodeEditorMonacoComponent.CLASS_FEEDBACK_HOVER_BUTTON, (lineNumber) => this.addNewFeedback(lineNumber));
+    }
+
+    /**
+     * Registers a keyboard shortcut to add a new inline feedback at the current cursor line when pressing the '+' key.
+     * Includes Numpad '+' and Shift+'=' across layouts. Active only when tutor can edit manual feedback.
+     */
+    private setupAddFeedbackShortcut(): void {
+        this.disposeAddFeedbackShortcut();
+        this.addFeedbackKeydownListener = this.editor().onKeyDown((event: any) => {
+            const browserEvent = event?.browserEvent as KeyboardEvent | undefined;
+            const code = browserEvent?.code;
+            const key = browserEvent?.key;
+            const isPlus = key === '+' || code === 'NumpadAdd';
+            if (!isPlus) {
+                return;
+            }
+            if (!this.isTutorAssessment() || this.readOnlyManualFeedback()) {
+                return;
+            }
+            // Prevent Monaco from handling typing (avoids read-only message)
+            event.preventDefault?.();
+            const position = this.editor().getPosition();
+            if (position?.lineNumber) {
+                this.addNewFeedback(position.lineNumber);
+            }
+        });
+    }
+
+    private disposeAddFeedbackShortcut(): void {
+        this.addFeedbackKeydownListener?.dispose();
+        this.addFeedbackKeydownListener = undefined;
     }
 
     /**
@@ -338,6 +389,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     protected renderFeedbackWidgets(lineOfWidgetToFocus?: number) {
         // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node, hence the timeout.
         this.changeDetectorRef.detectChanges();
+        const issues = this.consistencyIssues();
         setTimeout(() => {
             this.editor().disposeWidgets();
             for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
@@ -354,6 +406,9 @@ export class CodeEditorMonacoComponent implements OnChanges {
             if (lineOfWidgetToFocus !== undefined) {
                 this.getInlineFeedbackNode(lineOfWidgetToFocus)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
             }
+
+            // Readd inconsistency issue comments, because all widgets got removed
+            addCommentBoxes(this.editor(), issues, this.selectedFile(), this.selectedRepository(), this.translateService);
         }, 0);
     }
 

@@ -3,20 +3,32 @@ import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, Update
 
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faLightbulb, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
+
+interface SuggestedRelationDTO {
+    tail_id: string;
+    head_id: string;
+    relation_type: string; // "MATCHES" | "EXTENDS" | "REQUIRES"
+}
 
 @Component({
     selector: 'jhi-course-competency-relation-form',
     templateUrl: './course-competency-relation-form.component.html',
     styleUrl: './course-competency-relation-form.component.scss',
-    imports: [TranslateDirective, CommonModule, FontAwesomeModule, FormsModule],
+    imports: [TranslateDirective, CommonModule, FontAwesomeModule, FormsModule, FeatureToggleHideDirective, ButtonComponent],
 })
 export class CourseCompetencyRelationFormComponent {
     protected readonly faSpinner = faSpinner;
+    protected readonly faLightbulb = faLightbulb;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ButtonType = ButtonType;
 
     protected readonly competencyRelationType = CompetencyRelationType;
 
@@ -46,8 +58,145 @@ export class CourseCompetencyRelationFormComponent {
 
     readonly showCircularDependencyError = computed(() => this.tailCompetencyId() && !this.selectableTailCourseCompetencyIds().includes(this.tailCompetencyId()!));
 
+    readonly suggestedRelations = signal<SuggestedRelationDTO[]>([]);
+    readonly isLoadingSuggestions = signal<boolean>(false);
+    readonly selectedSuggestions = signal<Set<number>>(new Set());
+    readonly selectedSuggestionsCount = computed(() => this.selectedSuggestions().size);
+    readonly shouldShowSuggestionsButton = computed(() => this.courseCompetencies().length > 1);
+
     constructor() {
         effect(() => this.selectRelation(this.selectedRelationId()));
+        // Suggestions are fetched on demand via user action
+    }
+
+    async fetchSuggestions(): Promise<void> {
+        await this.loadSuggestedRelations(this.courseId());
+    }
+
+    private async loadSuggestedRelations(courseId: number) {
+        try {
+            this.isLoadingSuggestions.set(true);
+            const response = await this.courseCompetencyApiService.getSuggestedCompetencyRelations(courseId);
+            this.suggestedRelations.set(response.relations ?? []);
+            // Auto-select all suggestions when fetched, but exclude existing relations
+            const allIndices = new Set((response.relations ?? []).map((_, index) => index).filter((index) => !this.doesSuggestionAlreadyExist(response.relations![index])));
+            this.selectedSuggestions.set(allIndices);
+        } catch (error) {
+            // Non-blocking: show toast but keep UI working
+            this.alertService.warning('Failed to load suggested relations');
+        } finally {
+            this.isLoadingSuggestions.set(false);
+        }
+    }
+
+    protected getUiRelationTypeKey(s: SuggestedRelationDTO): keyof typeof CompetencyRelationType {
+        // Map backend "REQUIRES" to frontend enum key "ASSUMES"
+        const key = s.relation_type === 'REQUIRES' ? 'ASSUMES' : s.relation_type;
+        // Fallback safety
+        if (key in CompetencyRelationType) {
+            return key as keyof typeof CompetencyRelationType;
+        }
+        return 'ASSUMES';
+    }
+
+    protected applySuggestion(s: SuggestedRelationDTO) {
+        const headId = Number(s.head_id);
+        const tailId = Number(s.tail_id);
+        const uiKey = this.getUiRelationTypeKey(s);
+        const type = CompetencyRelationType[uiKey];
+        this.headCompetencyId.set(headId);
+        this.tailCompetencyId.set(tailId);
+        this.relationType.set(type);
+        const existing = this.getExactRelation(headId, tailId, type);
+        this.selectedRelationId.set(existing?.id);
+    }
+
+    protected toggleSuggestionSelection(index: number): void {
+        // Don't allow selection of existing relations
+        const suggestion = this.suggestedRelations()[index];
+        if (this.doesSuggestionAlreadyExist(suggestion)) {
+            return;
+        }
+
+        this.selectedSuggestions.update((selected) => {
+            const newSelected = new Set(selected);
+            if (newSelected.has(index)) {
+                newSelected.delete(index);
+            } else {
+                newSelected.add(index);
+            }
+            return newSelected;
+        });
+    }
+
+    protected isSuggestionSelected(index: number): boolean {
+        return this.selectedSuggestions().has(index);
+    }
+
+    protected doesSuggestionAlreadyExist(s: SuggestedRelationDTO): boolean {
+        const headId = Number(s.head_id);
+        const tailId = Number(s.tail_id);
+        const uiKey = this.getUiRelationTypeKey(s);
+        const type = CompetencyRelationType[uiKey];
+        return this.getExactRelation(headId, tailId, type) !== undefined;
+    }
+
+    protected async addSelectedSuggestions(): Promise<void> {
+        const selectedIndices = Array.from(this.selectedSuggestions());
+        const selectedSuggestions = selectedIndices.map((index) => this.suggestedRelations()[index]);
+
+        if (selectedSuggestions.length === 0) {
+            return;
+        }
+
+        try {
+            this.isLoading.set(true);
+            const createdRelations: CompetencyRelationDTO[] = [];
+
+            for (const suggestion of selectedSuggestions) {
+                const headId = Number(suggestion.head_id);
+                const tailId = Number(suggestion.tail_id);
+                const uiKey = this.getUiRelationTypeKey(suggestion);
+                const type = CompetencyRelationType[uiKey];
+
+                // Check if relation already exists
+                const existing = this.getExactRelation(headId, tailId, type);
+                if (!existing) {
+                    try {
+                        const courseCompetencyRelation = await this.courseCompetencyApiService.createCourseCompetencyRelation(this.courseId(), {
+                            headCompetencyId: headId,
+                            tailCompetencyId: tailId,
+                            relationType: type,
+                        });
+                        createdRelations.push(courseCompetencyRelation);
+                    } catch (error) {
+                        // Continue with other suggestions even if one fails
+                        this.alertService.error(`Failed to create relation: ${this.getCompetencyTitleById(headId)} → ${this.getCompetencyTitleById(tailId)}`);
+                    }
+                }
+            }
+
+            // Update relations with all successfully created relations
+            this.relations.update((relations) => [...relations, ...createdRelations]);
+
+            // Clear selections and suggestions
+            this.selectedSuggestions.set(new Set());
+            this.suggestedRelations.set([]);
+
+            if (createdRelations.length > 0) {
+                this.alertService.success(`Successfully added ${createdRelations.length} relation(s)`);
+            }
+        } catch (error) {
+            this.alertService.error('Failed to add selected suggestions');
+        } finally {
+            this.isLoading.set(false);
+        }
+    }
+
+    protected getCompetencyTitleById(idLike: number | string): string {
+        const id = Number(idLike);
+        const found = this.courseCompetencies().find((c) => c.id === id);
+        return found?.title ?? String(idLike);
     }
 
     protected isCourseCompetencySelectable(courseCompetencyId: number): boolean {
@@ -145,8 +294,12 @@ export class CourseCompetencyRelationFormComponent {
                 ({ headCompetencyId, tailCompetencyId, relationType }) =>
                     headCompetencyId == this.headCompetencyId() && tailCompetencyId == this.tailCompetencyId() && relationType === this.relationType(),
             );
-            await this.courseCompetencyApiService.deleteCourseCompetencyRelation(this.courseId(), deletedRelation!.id!);
-            this.relations.update((relations) => relations.filter(({ id }) => id !== deletedRelation!.id));
+            if (!deletedRelation) {
+                this.isLoading.set(false);
+                return;
+            }
+            await this.courseCompetencyApiService.deleteCourseCompetencyRelation(this.courseId(), deletedRelation.id!);
+            this.relations.update((relations) => relations.filter(({ id }) => id !== deletedRelation.id));
             this.selectedRelationId.set(undefined);
         } catch (error) {
             this.alertService.error(error.message);
@@ -158,17 +311,11 @@ export class CourseCompetencyRelationFormComponent {
     /**
      * Function to get the selectable tail competency ids for the given head
      * competency and relation type without creating a cyclic dependency
-     *
-     * @param headCompetencyId The selected head competency id
-     * @param relationType The selected relation type
-     * @private
-     *
-     * @returns The selectable tail competency ids
      */
     private getSelectableTailCompetencyIds(headCompetencyId: number, relationType: CompetencyRelationType): number[] {
         return this.courseCompetencies()
             .map(({ id }) => id!)
-            .filter((id) => id !== headCompetencyId) // Exclude the head itself
+            .filter((id) => id !== headCompetencyId)
             .filter((id) => {
                 let relations = this.relations();
                 const existingRelation = this.getRelation(headCompetencyId, id);
@@ -184,24 +331,12 @@ export class CourseCompetencyRelationFormComponent {
             });
     }
 
-    /**
-     * Function to detect cycles in the competency relations
-     * @param relations The list of competency relations
-     * @param numOfCompetencies The total number of competencies
-     * @private
-     *
-     * @returns True if a cycle is detected, false otherwise
-     */
     private detectCycleInRelations(relations: CompetencyRelationDTO[], numOfCompetencies: number): boolean {
-        // Create a map to store the competency IDs and map them to incremental indices
         const idToIndexMap = new Map<number, number>();
         let currentIndex = 0;
-
-        // map the competency IDs to incremental indices
         relations.forEach((relation) => {
             const tail = relation.tailCompetencyId!;
             const head = relation.headCompetencyId!;
-
             if (!idToIndexMap.has(tail)) {
                 idToIndexMap.set(tail, currentIndex++);
             }
@@ -209,46 +344,33 @@ export class CourseCompetencyRelationFormComponent {
                 idToIndexMap.set(head, currentIndex++);
             }
         });
-
         const unionFind = new UnionFind(numOfCompetencies);
-
-        // Apply Union-Find based on the MATCHES relations
         relations.forEach((relation) => {
             if (relation.relationType === CompetencyRelationType.MATCHES) {
                 const tailIndex = idToIndexMap.get(relation.tailCompetencyId!);
                 const headIndex = idToIndexMap.get(relation.headCompetencyId!);
-
                 if (tailIndex !== undefined && headIndex !== undefined) {
-                    // Perform union operation to group matching course competencies into sets
                     unionFind.union(tailIndex, headIndex);
                 }
             }
         });
-
-        // Build the reduced graph for EXTENDS and ASSUMES relations
         const reducedGraph: number[][] = Array.from({ length: numOfCompetencies }, () => []);
-
         relations.forEach((relation) => {
             const tail = unionFind.find(idToIndexMap.get(relation.tailCompetencyId!)!);
             const head = unionFind.find(idToIndexMap.get(relation.headCompetencyId!)!);
-
             if (relation.relationType === CompetencyRelationType.EXTENDS || relation.relationType === CompetencyRelationType.ASSUMES) {
                 reducedGraph[tail].push(head);
             }
         });
-
         return this.hasCycle(reducedGraph, numOfCompetencies);
     }
 
     private hasCycle(graph: number[][], noOfCourseCompetencies: number): boolean {
         const visited: boolean[] = Array(noOfCourseCompetencies).fill(false);
         const recursionStack: boolean[] = Array(noOfCourseCompetencies).fill(false);
-
-        // Depth-first search to detect cycles
         const depthFirstSearch = (v: number): boolean => {
             visited[v] = true;
             recursionStack[v] = true;
-
             for (const neighbor of graph[v] || []) {
                 if (!visited[neighbor]) {
                     if (depthFirstSearch(neighbor)) return true;
@@ -256,11 +378,9 @@ export class CourseCompetencyRelationFormComponent {
                     return true;
                 }
             }
-
             recursionStack[v] = false;
             return false;
         };
-
         for (let node = 0; node < noOfCourseCompetencies; node++) {
             if (!visited[node]) {
                 if (depthFirstSearch(node)) {
@@ -272,30 +392,23 @@ export class CourseCompetencyRelationFormComponent {
     }
 }
 
-// Union-Find (Disjoint Set) class (https://en.wikipedia.org/wiki/Disjoint-set_data_structure -> union by rank)
 export class UnionFind {
     parent: number[];
     rank: number[];
-
     constructor(size: number) {
         this.parent = Array.from({ length: size }, (_, index) => index);
         this.rank = Array(size).fill(1);
     }
-
-    // Find the representative of the set that contains the `competencyId`
     public find(competencyId: number): number {
         if (this.parent[competencyId] !== competencyId) {
-            this.parent[competencyId] = this.find(this.parent[competencyId]); // Path compression
+            this.parent[competencyId] = this.find(this.parent[competencyId]);
         }
         return this.parent[competencyId];
     }
-
-    // Union the sets containing `tailCompetencyId` and `headCompetencyId`
     public union(tailCompetencyId: number, headCompetencyId: number) {
         const rootU = this.find(tailCompetencyId);
         const rootV = this.find(headCompetencyId);
         if (rootU !== rootV) {
-            // Union by rank
             if (this.rank[rootU] > this.rank[rootV]) {
                 this.parent[rootV] = rootU;
             } else if (this.rank[rootU] < this.rank[rootV]) {

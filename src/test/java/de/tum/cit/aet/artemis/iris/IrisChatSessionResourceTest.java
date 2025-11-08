@@ -167,4 +167,27 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         assertThat(textExerciseSession.entityName()).isEqualTo(textExercise.getShortName());
         assertThat(programmingExerciseSession.entityName()).isEqualTo(programmingExercise.getShortName());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getAllSessionsForCourseWithSessions_shouldReturnTitlesWhenPresent() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        var titledCourseSession = IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user);
+        titledCourseSession.setTitle("New chat");
+        saveChatSessionWithMessages(titledCourseSession);
+
+        var untitledLectureSession = IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user);
+        saveChatSessionWithMessages(untitledLectureSession);
+
+        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+
+        assertThat(irisChatSessions).hasSize(2);
+
+        IrisChatSessionDTO titledDto = irisChatSessions.stream().filter(session -> session.entityId() == course.getId()).findFirst().orElse(null);
+        assertThat(titledDto.title()).isEqualTo("New chat");
+
+        IrisChatSessionDTO untitledDto = irisChatSessions.stream().filter(session -> session.entityId() == lecture.getId()).findFirst().orElse(null);
+        assertThat(untitledDto.title()).isNull();
+    }
 }

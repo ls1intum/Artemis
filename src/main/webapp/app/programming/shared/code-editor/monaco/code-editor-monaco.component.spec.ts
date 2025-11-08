@@ -9,12 +9,13 @@ import { CodeEditorFileService } from 'app/programming/shared/code-editor/servic
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
 import { SimpleChange } from '@angular/core';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileType, RenameFileChange } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { IKeyboardEvent } from 'monaco-editor';
 
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
@@ -60,6 +61,8 @@ describe('CodeEditorMonacoComponent', () => {
         comp = fixture.componentInstance;
         codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
         loadFileFromRepositoryStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
+        // Provide a safe default so accidental file loads during change detection don't throw
+        loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: '' }));
         getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
@@ -206,13 +209,16 @@ describe('CodeEditorMonacoComponent', () => {
     ])('should emit the correct error and update the file session when loading a file fails', async (error: Error, errorCode: string) => {
         const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code that will not be loaded' };
         const errorCallbackStub = jest.fn();
-        const loadFileSubject = new BehaviorSubject(fileToLoad);
+        const loadFileSubject = new Subject<typeof fileToLoad>();
         loadFileFromRepositoryStub.mockReturnValue(loadFileSubject);
-        loadFileSubject.error(error);
         comp.fileSession.set({});
         fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
         comp.onError.subscribe(errorCallbackStub);
         fixture.detectChanges();
+        // Emit the error after the component has subscribed to the observable.
+        // Otherwise, the error only surfaces on the next macrotask in the console.
+        // This would break new tests, that await the next macrotask.
+        loadFileSubject.error(error);
         await new Promise(process.nextTick);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
         expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith(errorCode);
@@ -273,7 +279,7 @@ describe('CodeEditorMonacoComponent', () => {
 
     it('should display build annotations for the current file', async () => {
         const setAnnotationsStub = jest.spyOn(comp.editor(), 'setAnnotations').mockImplementation();
-        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
+        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         const buildAnnotations: Annotation[] = [
             {
                 fileName: 'file1',
@@ -309,24 +315,28 @@ describe('CodeEditorMonacoComponent', () => {
         expect(setAnnotationsStub).toHaveBeenNthCalledWith(3, [buildAnnotations[1]], false);
     });
 
-    it('should display feedback when viewing a tutor assessment', fakeAsync(() => {
+    it('should display feedback when viewing a tutor assessment', async () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
-        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
+        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: 'loaded file content' }));
         fixture.componentRef.setInput('isTutorAssessment', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
         fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
         fixture.detectChanges();
-        // Use .then() here instead of await so fakeAsync does not break.
-        comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) }).then(() => {
-            // Rendering of the feedback items happens after one tick to allow the renderer to catch up with the DOM nodes.
-            tick(1);
-            expect(addLineWidgetStub).toHaveBeenCalledTimes(2);
-            expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1`, document.createElement('div'));
-            expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2`, document.createElement('div'));
-            expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(2);
-            expect(selectFileInEditorStub).toHaveBeenCalledOnce();
-        });
-    }));
+        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) });
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(addLineWidgetStub).toHaveBeenCalledTimes(8);
+        // 8=2x3+2 calls, as three renders are triggered with two feedbacks each in ngOnChanges
+        // and the feedbacks=... triggers the render function once more.
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1-line-2`, document.createElement('div'));
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2-line-3`, document.createElement('div'));
+        expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(8);
+        // The same explanation as above applies.
+        expect(selectFileInEditorStub).toHaveBeenCalled();
+        consoleErrorSpy.mockRestore();
+    });
 
     it('should add a new feedback widget', fakeAsync(() => {
         // Feedback is stored as 0-based line numbers, but the editor requires 1-based line numbers.
@@ -343,6 +353,50 @@ describe('CodeEditorMonacoComponent', () => {
         tick(1);
         expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased, `feedback-new-${feedbackLineZeroBased}`, element);
     }));
+
+    const shouldOpenFeedbackUsingKeybindHelper = (isTutorAssessment: boolean, readOnlyManualFeedback: boolean): [any, any, any] => {
+        const feedbackLineOneBased = 4;
+        const addNewFeedbackSpy = jest.spyOn(comp, 'addNewFeedback');
+        let capturedOnKeyDown: ((e: IKeyboardEvent) => void) | undefined;
+
+        jest.spyOn(comp.editor(), 'onKeyDown').mockImplementation((kd) => {
+            capturedOnKeyDown = kd;
+            return { dispose: jest.fn() } as any;
+        });
+        jest.spyOn(comp.editor(), 'getPosition').mockReturnValue({ lineNumber: feedbackLineOneBased, column: 0 });
+
+        fixture.componentRef.setInput('isTutorAssessment', isTutorAssessment);
+        fixture.componentRef.setInput('readOnlyManualFeedback', readOnlyManualFeedback);
+        fixture.detectChanges();
+
+        (comp as any).setupAddFeedbackShortcut();
+
+        const browserEvent = new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd' });
+        const preventDefaultMock = jest.fn();
+        expect(capturedOnKeyDown).toBeDefined();
+        capturedOnKeyDown!({ browserEvent, preventDefault: preventDefaultMock } as unknown as IKeyboardEvent);
+
+        (comp as any).disposeAddFeedbackShortcut();
+        return [feedbackLineOneBased, preventDefaultMock, addNewFeedbackSpy];
+    };
+
+    it('should open feedback widget using keybind viewing a tutor assessment', () => {
+        const [feedbackLineOneBased, preventDefaultMock, addNewFeedbackSpy] = shouldOpenFeedbackUsingKeybindHelper(true, false);
+        expect(preventDefaultMock).toHaveBeenCalled();
+        expect(addNewFeedbackSpy).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased);
+    });
+
+    it('should not open feedback widget using keybind because tutor assessment is disabled', () => {
+        const [_, preventDefaultMock, addNewFeedbackSpy] = shouldOpenFeedbackUsingKeybindHelper(false, false);
+        expect(preventDefaultMock).not.toHaveBeenCalled();
+        expect(addNewFeedbackSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not open feedback widget using keybind because read only manual feedback is disabled', () => {
+        const [_, preventDefaultMock, addNewFeedbackSpy] = shouldOpenFeedbackUsingKeybindHelper(true, true);
+        expect(preventDefaultMock).not.toHaveBeenCalled();
+        expect(addNewFeedbackSpy).not.toHaveBeenCalled();
+    });
 
     it('should delete feedbacks and notify', () => {
         const feedbackToDelete = exampleFeedbacks[0];

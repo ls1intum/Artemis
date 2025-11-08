@@ -434,7 +434,8 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
         }
-        final var tmpFile = File.createTempFile(Objects.requireNonNull(res.getResponse().getHeader("filename")), null);
+        // the header typically includes a suffix already, to prevent adding "...tmp", we use an empty string here
+        final var tmpFile = File.createTempFile(Objects.requireNonNull(res.getResponse().getHeader("filename")), "", tempPath.toFile());
         FileUtils.writeByteArrayToFile(tmpFile, res.getResponse().getContentAsByteArray());
 
         return tmpFile;
@@ -551,6 +552,18 @@ public class RequestUtilService {
         }
         // default encoding is iso-8859-1 since v5.2.0, but we want utf-8
         return mapper.readValue(res.getResponse().getContentAsString(StandardCharsets.UTF_8), responseType);
+    }
+
+    public MockHttpServletResponse putWithoutResponseBody(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+
+        var request = MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
+
+        MvcResult res = performMvcRequest(request).andExpect(status().is(expectedStatus.value())).andReturn();
+
+        restoreSecurityContext();
+
+        return res.getResponse();
     }
 
     @SuppressWarnings("unchecked")

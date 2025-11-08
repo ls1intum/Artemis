@@ -33,6 +33,7 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.title',
+            usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService],
     },
@@ -42,6 +43,7 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.studentDashboard.enroll.title',
+            usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService],
     },
@@ -51,6 +53,7 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.archive',
+            usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService],
     },
@@ -64,6 +67,7 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.studentDashboard.enroll.title',
+            usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService],
     },
@@ -334,7 +338,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.TRAINING,
-                loadComponent: () => import('app/core/course/overview/course-training/course-training.component').then((m) => m.CourseTrainingComponent),
+                loadComponent: () => import('app/quiz/overview/course-training/course-training.component').then((m) => m.CourseTrainingComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.training',
@@ -345,7 +349,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.TRAINING_QUIZ,
-                loadComponent: () => import('app/quiz/overview/course-training-quiz/course-training-quiz.component').then((m) => m.CourseTrainingQuizComponent),
+                loadComponent: () => import('app/quiz/overview/course-training/course-training-quiz/course-training-quiz.component').then((m) => m.CourseTrainingQuizComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.training',

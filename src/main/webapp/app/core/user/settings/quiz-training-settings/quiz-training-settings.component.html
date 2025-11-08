@@ -1,0 +1,28 @@
+<div class="container-fluid">
+    <h2 jhiTranslate="artemisApp.userSettings.quizTrainingSettings.quizTraining"></h2>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4 jhiTranslate="artemisApp.userSettings.quizTrainingSettings.leaderboardSettings"></h4>
+        </div>
+        <div class="card-body">
+            @if (isVisibleInLeaderboard !== undefined) {
+                <div class="d-flex align-items-center">
+                    <div class="form-check form-switch">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="leaderboardVisibilityToggle"
+                            [(ngModel)]="isVisibleInLeaderboard"
+                            (change)="toggleLeaderboardVisibility()"
+                        />
+                        <label class="form-check-label ms-2" for="leaderboardVisibilityToggle" jhiTranslate="artemisApp.quizTraining.showInLeaderboard"></label>
+                        <jhi-help-icon placement="right auto" text="artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo" />
+                    </div>
+                </div>
+            } @else {
+                <div class="alert alert-info" jhiTranslate="artemisApp.userSettings.quizTrainingSettings.visitQuizTrainingFirst"></div>
+            }
+        </div>
+    </div>
+</div>

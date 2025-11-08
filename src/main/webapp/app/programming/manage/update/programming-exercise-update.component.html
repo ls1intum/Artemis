@@ -1,10 +1,10 @@
 <div>
     <div class="d-flex align-items-center gap-2">
-        @if (!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id) {
+        @if (!isImportFromExistingExercise && !(isImportFromFile || isImportFromSharing) && !programmingExercise.id) {
             <h2 id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel"></h2>
         } @else if (!isImportFromExistingExercise && programmingExercise.id) {
             <h2 id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel"></h2>
-        } @else if (isImportFromExistingExercise || isImportFromFile) {
+        } @else if (isImportFromExistingExercise || isImportFromFile || isImportFromSharing) {
             <h2 id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel"></h2>
         }
         <jhi-documentation-button [type]="documentationType" />
@@ -16,7 +16,7 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isExamMode]="isExamMode"
-                [isImport]="isImportFromExistingExercise || isImportFromFile"
+                [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
                 [importOptions]="importOptions"
                 [isSimpleMode]="isSimpleMode()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
@@ -41,6 +41,10 @@
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
             <hr class="mb-5" />
+            @if (!isSimpleMode()) {
+                <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
+                <hr class="mb-5" />
+            }
             <jhi-programming-exercise-problem
                 [(exercise)]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
@@ -62,7 +66,7 @@
             }
             <jhi-form-footer
                 [isCreation]="!programmingExercise.id"
-                [isImport]="isImportFromExistingExercise || isImportFromFile"
+                [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
                 [isSaving]="isSaving"
                 [(notificationText)]="notificationText"
                 [isSimpleMode]="isSimpleMode()"

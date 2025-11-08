@@ -3,11 +3,14 @@ package de.tum.cit.aet.artemis.atlas.service;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jakarta.annotation.Nullable;
+
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -23,44 +26,84 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentService {
 
-    private static final Logger log = LoggerFactory.getLogger(AtlasAgentService.class);
-
     private final ChatClient chatClient;
 
     private final AtlasPromptTemplateService templateService;
 
-    public AtlasAgentService(@Autowired(required = false) ChatClient chatClient, AtlasPromptTemplateService templateService) {
+    private final ToolCallbackProvider toolCallbackProvider;
+
+    private final ChatMemory chatMemory;
+
+    private static final ThreadLocal<Boolean> competencyCreatedInCurrentRequest = ThreadLocal.withInitial(() -> false);
+
+    public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
+            @Nullable ChatMemory chatMemory) {
         this.chatClient = chatClient;
         this.templateService = templateService;
+        this.toolCallbackProvider = toolCallbackProvider;
+        this.chatMemory = chatMemory;
     }
 
     /**
-     * Process a chat message for the given course and return AI response.
+     * Process a chat message for the given course and return AI response with modification status.
+     * Uses ThreadLocal state tracking to detect competency modifications.
      *
-     * @param message  The user's message
-     * @param courseId The course ID for context
-     * @return AI response
+     * @param message   The user's message
+     * @param courseId  The course ID for context
+     * @param sessionId The session ID for chat memory
+     * @return Result containing the AI response and competency modification flag
      */
-    public CompletableFuture<String> processChatMessage(String message, Long courseId) {
+    public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
         try {
-            log.debug("Processing chat message for course {} (messageLength={} chars)", courseId, message.length());
+            // Reset the flag at the start of each request
+            competencyCreatedInCurrentRequest.set(false);
 
             // Load system prompt from external template
             String resourcePath = "/prompts/atlas/agent_system_prompt.st";
-            Map<String, String> variables = Map.of(); // No variables needed for this template
+            Map<String, String> variables = Map.of();
             String systemPrompt = templateService.render(resourcePath, variables);
 
-            String response = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message))
-                    .options(AzureOpenAiChatOptions.builder().temperature(1.0).build()).call().content();
+            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
 
-            log.info("Successfully processed chat message for course {}", courseId);
-            return CompletableFuture.completedFuture(response != null && !response.trim().isEmpty() ? response : "I apologize, but I couldn't generate a response.");
+            ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message)).options(options);
+
+            // Add chat memory advisor
+            if (chatMemory != null) {
+                promptSpec = promptSpec.advisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+            }
+
+            // Add tools
+            if (toolCallbackProvider != null) {
+                promptSpec = promptSpec.toolCallbacks(toolCallbackProvider);
+            }
+
+            // Execute the chat (tools are executed internally by Spring AI)
+            String response = promptSpec.call().chatResponse().getResult().getOutput().getText();
+
+            // Check if competency was created during this request
+            boolean competenciesModified = competencyCreatedInCurrentRequest.get();
+
+            String finalResponse = response != null && !response.trim().isEmpty() ? response : "I apologize, but I couldn't generate a response.";
+
+            return CompletableFuture.completedFuture(new AgentChatResult(finalResponse, competenciesModified));
 
         }
         catch (Exception e) {
-            log.error("Error processing chat message for course {}: {}", courseId, e.getMessage(), e);
-            return CompletableFuture.completedFuture("I apologize, but I'm having trouble processing your request right now. Please try again later.");
+            return CompletableFuture.completedFuture(new AgentChatResult("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
         }
+        finally {
+            // Clean up ThreadLocal to prevent memory leaks
+            competencyCreatedInCurrentRequest.remove();
+        }
+    }
+
+    /**
+     * Marks that a competency was created during the current request.
+     * This method is called by tool methods (e.g., createCompetency) to signal
+     * that a competency modification occurred during tool execution.
+     */
+    public static void markCompetencyCreated() {
+        competencyCreatedInCurrentRequest.set(true);
     }
 
     /**
@@ -73,7 +116,6 @@ public class AtlasAgentService {
             return chatClient != null;
         }
         catch (Exception e) {
-            log.warn("Atlas Agent service availability check failed: {}", e.getMessage());
             return false;
         }
     }

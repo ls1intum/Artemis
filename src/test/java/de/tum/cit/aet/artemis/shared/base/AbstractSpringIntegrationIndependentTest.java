@@ -33,6 +33,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
@@ -41,6 +42,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
+import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
+import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -53,8 +56,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 // TODO: PROFILE_AEOLUS is bound to PROGRAMMING and LOCAL_VC and should not be active in an independent test context.
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS, PROFILE_AEOLUS,
         PROFILE_LTI, "local" })
-@TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.user-management.passkey.enabled=true",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=false" })
+@TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);
@@ -85,6 +88,19 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean
     protected ChatClient chatClient;
 
+    // Spy for lecture transcription tests to allow real method execution in service integration tests
+    @MockitoSpyBean
+    protected LectureTranscriptionService lectureTranscriptionService;
+
+    // Mock for TUM Live service used in Nebula transcription resource
+    @MockitoBean
+    protected TumLiveService tumLiveService;
+
+    // Mock RestTemplate for Nebula API calls
+    // Nebula is enabled in tests; we mock this bean to avoid real HTTP calls and control responses
+    @MockitoBean(name = "nebulaRestTemplate")
+    protected RestTemplate nebulaRestTemplate;
+
     @BeforeEach
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
@@ -101,6 +117,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         }
         if (chatClient != null) {
             Mockito.reset(chatClient);
+        }
+        if (lectureTranscriptionService != null) {
+            Mockito.reset(lectureTranscriptionService);
+        }
+        if (tumLiveService != null) {
+            Mockito.reset(tumLiveService);
         }
         super.resetSpyBeans();
     }
