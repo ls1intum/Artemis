@@ -310,7 +310,7 @@ public class CompetencyExpertToolsService {
             // Single save - store as single preview
             CompetencyOperation firstComp = competencies.get(0);
             CompetencyPreviewDTO firstPreview = previews.get(0);
-            SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), true);
+            SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), false);
             currentSinglePreview.set(singlePreview);
         }
         else {
@@ -333,6 +333,8 @@ public class CompetencyExpertToolsService {
 
         String message = messages.isEmpty() ? null : String.join(", ", messages);
         CompetencySaveResponseDTO response = new CompetencySaveResponseDTO(errors.isEmpty(), createCount, updateCount, errors.size(), errors.isEmpty() ? null : errors, message);
+
+        AtlasAgentService.markCompetencyModified();
 
         return toJson(response);
     }
@@ -360,7 +362,6 @@ public class CompetencyExpertToolsService {
      */
     public static SingleCompetencyPreviewResponseDTO getAndClearSinglePreview() {
         SingleCompetencyPreviewResponseDTO preview = currentSinglePreview.get();
-        currentSinglePreview.remove();
         return preview;
     }
 
@@ -372,8 +373,15 @@ public class CompetencyExpertToolsService {
      */
     public static BatchCompetencyPreviewResponseDTO getAndClearBatchPreview() {
         BatchCompetencyPreviewResponseDTO preview = currentBatchPreview.get();
-        currentBatchPreview.remove();
         return preview;
+    }
+
+    public static void setCurrentSinglePreview(SingleCompetencyPreviewResponseDTO preview) {
+        currentSinglePreview.set(preview);
+    }
+
+    public static void setCurrentBatchPreview(BatchCompetencyPreviewResponseDTO preview) {
+        currentBatchPreview.set(preview);
     }
 
     /**

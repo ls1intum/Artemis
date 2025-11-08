@@ -35,6 +35,12 @@ public class AtlasAgentService {
         MAIN_AGENT, COMPETENCY_EXPERT
     }
 
+    public enum InteractionStage {
+        PREVIEW, APPROVAL, SAVE, UPDATE
+    }
+
+    private final Map<String, InteractionStage> sessionStageMap = new ConcurrentHashMap<>();
+
     private static final String DELEGATE_TO_COMPETENCY_EXPERT = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%";
 
     private static final String CREATE_APPROVED_COMPETENCY = "[CREATE_APPROVED_COMPETENCY]";
@@ -58,7 +64,7 @@ public class AtlasAgentService {
 
     private final Map<String, BatchCompetencyPreviewResponseDTO> sessionBatchPreviewMap = new ConcurrentHashMap<>();
 
-    public Boolean getcompetencyModifiedInCurrentRequest() {
+    public Boolean getCompetencyModifiedInCurrentRequest() {
         return competencyModifiedInCurrentRequest.get();
     }
 
@@ -85,12 +91,23 @@ public class AtlasAgentService {
      */
     public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
         try {
-            // Reset flags and clear preview data at the start of each request
             resetCompetencyModifiedFlag();
-            CompetencyExpertToolsService.clearAllPreviews();
+            InteractionStage currentStage = sessionStageMap.get(sessionId);
+
+            // Only clear previews if we're starting a completely new flow
+            boolean shouldClear = (currentStage == null) || currentStage == InteractionStage.SAVE || currentStage == InteractionStage.UPDATE;
+
+            if (shouldClear) {
+                CompetencyExpertToolsService.clearAllPreviews();
+                sessionStageMap.put(sessionId, InteractionStage.PREVIEW); // default next
+            }
 
             // Determine which agent should handle this message
             AgentType activeAgent = sessionAgentMap.getOrDefault(sessionId, AgentType.MAIN_AGENT);
+
+            if (getCompetencyModifiedInCurrentRequest()) {
+                sessionStageMap.put(sessionId, InteractionStage.SAVE);
+            }
 
             // Route to the appropriate agent
             String response;
@@ -112,10 +129,19 @@ public class AtlasAgentService {
                 // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
-                String creationResponse = processWithCompetencyExpert(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
+                sessionStageMap.put(sessionId, InteractionStage.APPROVAL);
 
                 SingleCompetencyPreviewResponseDTO lastSingle = sessionSinglePreviewMap.get(sessionId);
                 BatchCompetencyPreviewResponseDTO lastBatch = sessionBatchPreviewMap.get(sessionId);
+
+                if (lastSingle != null) {
+                    CompetencyExpertToolsService.setCurrentSinglePreview(lastSingle);
+                }
+                if (lastBatch != null) {
+                    CompetencyExpertToolsService.setCurrentBatchPreview(lastBatch);
+                }
+
+                String creationResponse = processWithCompetencyExpert(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
 
                 // Return combined result deterministically
                 return CompletableFuture.completedFuture(new AgentChatResult(creationResponse,                       // LLM text (e.g., “Competency created successfully”)
@@ -135,6 +161,10 @@ public class AtlasAgentService {
             // Retrieve preview data from ThreadLocal (set by previewCompetencies tool during execution)
             SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getAndClearSinglePreview();
             BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getAndClearBatchPreview();
+
+            if (singlePreview != null || batchPreview != null) {
+                sessionStageMap.put(sessionId, InteractionStage.PREVIEW);
+            }
 
             if (singlePreview != null) {
                 sessionSinglePreviewMap.put(sessionId, singlePreview);
