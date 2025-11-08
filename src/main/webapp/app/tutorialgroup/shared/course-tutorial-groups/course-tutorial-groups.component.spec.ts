@@ -122,7 +122,7 @@ describe('CourseTutorialGroupsComponent', () => {
     });
 
     it('should load groups and lectures if available to compute correct sidebar data', async () => {
-        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ lectures: undefined, tutorialGroups: undefined });
 
         jest.spyOn(courseOverviewService, 'mapTutorialGroupsToSidebarCardElements').mockReturnValue([
             getSidebarCardElementForTutorialGroup(tutorialGroup1),

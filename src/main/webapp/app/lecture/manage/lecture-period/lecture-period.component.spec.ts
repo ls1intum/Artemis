@@ -30,4 +30,28 @@ describe('LectureWizardPeriodComponent', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
     });
+
+    it('should call validateDatesFunction on date change', () => {
+        const validateSpy = jest.fn();
+        component.validateDatesFunction = validateSpy;
+        fixture.detectChanges();
+        component.onDateChange();
+        expect(validateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should compute isPeriodSectionValid correctly when all children valid', () => {
+        const pickers = component.periodSectionDatepickers();
+        pickers[0].isValid = jest.fn(() => true) as any;
+        pickers[1].isValid = jest.fn(() => true) as any;
+        const result = component.isPeriodSectionValid();
+        expect(result).toBeTrue();
+    });
+
+    it('should compute isPeriodSectionValid correctly when any child invalid', () => {
+        const pickers = component.periodSectionDatepickers();
+        pickers[0].isValid = jest.fn(() => true) as any;
+        pickers[1].isValid = jest.fn(() => false) as any;
+        const result = component.isPeriodSectionValid();
+        expect(result).toBeFalse();
+    });
 });
