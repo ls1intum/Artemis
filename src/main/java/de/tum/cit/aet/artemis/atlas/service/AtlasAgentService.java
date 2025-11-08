@@ -17,10 +17,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.dto.BatchCompetencyPreviewResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.SingleCompetencyPreviewResponseDTO;
 
 /**
  * Service for Atlas Agent functionality with Azure OpenAI integration.
@@ -45,9 +44,6 @@ public class AtlasAgentService {
     // Track which agent is active for each session
     private final Map<String, AgentType> sessionAgentMap = new ConcurrentHashMap<>();
 
-    // Track last preview response for each session (needed for creation approval)
-    private final Map<String, String> sessionLastPreviewMap = new ConcurrentHashMap<>();
-
     private final ChatClient chatClient;
 
     private final AtlasPromptTemplateService templateService;
@@ -58,19 +54,23 @@ public class AtlasAgentService {
 
     private final ChatMemory chatMemory;
 
-    private final CompetencyExpertToolsService competencyExpertToolsService;
+    private final Map<String, SingleCompetencyPreviewResponseDTO> sessionSinglePreviewMap = new ConcurrentHashMap<>();
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Map<String, BatchCompetencyPreviewResponseDTO> sessionBatchPreviewMap = new ConcurrentHashMap<>();
+
+    public Boolean getcompetencyModifiedInCurrentRequest() {
+        return competencyModifiedInCurrentRequest.get();
+    }
+
+    private static final ThreadLocal<Boolean> competencyModifiedInCurrentRequest = ThreadLocal.withInitial(() -> false);
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
-            @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ChatMemory chatMemory,
-            @Nullable CompetencyExpertToolsService competencyExpertToolsService) {
+            @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ChatMemory chatMemory) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
         this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
         this.chatMemory = chatMemory;
-        this.competencyExpertToolsService = competencyExpertToolsService;
     }
 
     /**
@@ -84,6 +84,10 @@ public class AtlasAgentService {
      */
     public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
         try {
+            // Reset flags and clear preview data at the start of each request
+            resetCompetencyModifiedFlag();
+            CompetencyExpertToolsService.clearAllPreviews();
+
             // Determine which agent should handle this message
             AgentType activeAgent = sessionAgentMap.getOrDefault(sessionId, AgentType.MAIN_AGENT);
 
@@ -101,33 +105,22 @@ public class AtlasAgentService {
                 // Extract brief from marker: [DELEGATE_TO_COMPETENCY_EXPERT:brief_content]
                 String brief = extractBriefFromDelegationMarker(response);
 
-                // Check if this is a batch operation - handle directly for determinism
-                String expertResponse;
-                // Single operation - let Competency Expert handle via LLM
-                expertResponse = processWithCompetencyExpert(brief, courseId, sessionId);
-                // Sanitize expert response to extract only clean JSON
-                expertResponse = sanitizeCompetencyExpertResponse(expertResponse);
-
-                // Store preview for potential creation approval
-                sessionLastPreviewMap.put(sessionId, expertResponse);
-
-                // Replace entire response with just the clean JSON
-                // This ensures no unwanted text (like "Let me draft..." or brief content) leaks through
-                response = expertResponse;
+                // Delegate to Competency Expert
+                response = processWithCompetencyExpert(brief, courseId, sessionId);
 
                 // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
-                // Instructor approved the preview, instruct Competency Expert to create
-                response = response.replace(CREATE_APPROVED_COMPETENCY, "").trim();
-
-                // Send creation command to Competency Expert (inline execution)
                 String creationResponse = processWithCompetencyExpert(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
 
-                // Append creation confirmation
-                response = response + "\n\n" + creationResponse;
+                SingleCompetencyPreviewResponseDTO lastSingle = sessionSinglePreviewMap.get(sessionId);
+                BatchCompetencyPreviewResponseDTO lastBatch = sessionBatchPreviewMap.get(sessionId);
 
-                // Stay on MAIN_AGENT for potential next competency creation
+                // Return combined result deterministically
+                return CompletableFuture.completedFuture(new AgentChatResult(creationResponse,                       // LLM text (e.g., “Competency created successfully”)
+                        competencyModifiedInCurrentRequest.get(), lastSingle, lastBatch));
+
+                // Use the creation response
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
@@ -135,16 +128,32 @@ public class AtlasAgentService {
                 response = response.replace(RETURN_TO_MAIN_AGENT, "").trim();
             }
 
-            // Check if competency was created
-            boolean competenciesModified = competencyExpertToolsService != null && competencyExpertToolsService.wasCompetencyModified();
+            // Check if competency was created during this request
+            boolean competenciesModified = competencyModifiedInCurrentRequest.get();
 
-            String finalResponse = !response.trim().isEmpty() ? response : "I apologize, but I couldn't generate a response.";
+            // Retrieve preview data from ThreadLocal (set by previewCompetencies tool during execution)
+            SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getAndClearSinglePreview();
+            BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getAndClearBatchPreview();
 
-            return CompletableFuture.completedFuture(new AgentChatResult(finalResponse, competenciesModified));
+            if (singlePreview != null) {
+                sessionSinglePreviewMap.put(sessionId, singlePreview);
+            }
+            if (batchPreview != null) {
+                sessionBatchPreviewMap.put(sessionId, batchPreview);
+            }
+
+            // Use the LLM's natural language response
+            String finalResponse = (response != null && !response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
+
+            return CompletableFuture.completedFuture(new AgentChatResult(finalResponse, competenciesModified, singlePreview, batchPreview));
 
         }
         catch (Exception e) {
             return CompletableFuture.completedFuture(new AgentChatResult("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
+        }
+        finally {
+            // Clean up ThreadLocal to prevent memory leaks
+            competencyModifiedInCurrentRequest.remove();
         }
     }
 
@@ -242,136 +251,30 @@ public class AtlasAgentService {
     }
 
     /**
-     * Remove the delegation marker and its content from the response.
-     *
-     * @param response The response containing the delegation marker
-     * @return The response with the delegation marker removed
+     * Marks that a competency was created during the current request.
+     * This method is called by tool methods (e.g., createCompetency) to signal
+     * that a competency modification occurred during tool execution.
      */
-    private String removeDelegationMarker(String response) {
-        int startIndex = response.indexOf(DELEGATE_TO_COMPETENCY_EXPERT);
-        if (startIndex == -1) {
-            return response;
-        }
-
-        // Find the closing bracket
-        int endIndex = response.indexOf("]", startIndex);
-        if (endIndex == -1) {
-            return response;
-        }
-
-        // Remove the entire delegation block
-        return response.substring(0, startIndex) + response.substring(endIndex + 1);
+    public static void markCompetencyModified() {
+        competencyModifiedInCurrentRequest.set(true);
     }
 
     /**
-     * Sanitize Competency Expert response by extracting, validating, and re-serializing clean JSON.
-     * This makes the system deterministic by removing any conversational text the LLM might add.
-     * Guarantees that only valid preview JSON reaches the client.
+     * Check if a competency was created during the current request.
+     * Used primarily for testing purposes.
      *
-     * @param response The raw response from Competency Expert
-     * @return Clean, validated JSON string or error message if no valid JSON found
+     * @return true if a competency was created/modified during the current request
      */
-    private String sanitizeCompetencyExpertResponse(String response) {
-        if (response == null || response.trim().isEmpty()) {
-            return response;
-        }
-
-        try {
-            // Step 1: Remove markdown code blocks if present
-            String cleaned = response.replaceAll("```json\\s*", "").replaceAll("```\\s*", "").trim();
-
-            // Step 2: Try multiple strategies to find JSON
-
-            // Strategy A: Try parsing the entire response as JSON first
-            try {
-                JsonNode jsonNode = objectMapper.readTree(cleaned);
-                if (isValidPreviewJson(jsonNode)) {
-                    // Re-serialize to ensure clean output with no extra whitespace or formatting issues
-                    return objectMapper.writeValueAsString(jsonNode);
-                }
-            }
-            catch (Exception e) {
-                // Not pure JSON, continue to next strategy
-            }
-
-            // Strategy B: Find JSON with "preview" or "batchPreview" keys
-            int previewIndex = Math.max(cleaned.indexOf("\"preview\""), cleaned.indexOf("\"batchPreview\""));
-
-            if (previewIndex == -1) {
-                // No preview JSON found - check if this is a success/error message
-                // For non-preview responses (like "Competency created successfully"), return as-is
-                if (!cleaned.startsWith("{")) {
-                    return cleaned;
-                }
-                return response;
-            }
-
-            // Strategy C: Extract JSON by finding matching braces
-            // Search backwards for the opening brace
-            int startIndex = cleaned.lastIndexOf('{', previewIndex);
-            if (startIndex == -1) {
-                return response;
-            }
-
-            // Count braces to find the matching closing brace
-            int braceCount = 0;
-            int endIndex = -1;
-            for (int i = startIndex; i < cleaned.length(); i++) {
-                if (cleaned.charAt(i) == '{') {
-                    braceCount++;
-                }
-                else if (cleaned.charAt(i) == '}') {
-                    braceCount--;
-                    if (braceCount == 0) {
-                        endIndex = i;
-                        break;
-                    }
-                }
-            }
-
-            if (endIndex == -1 || endIndex <= startIndex) {
-                return response;
-            }
-
-            // Extract the JSON substring
-            String jsonString = cleaned.substring(startIndex, endIndex + 1);
-
-            // Parse, validate, and re-serialize to guarantee clean output
-            JsonNode jsonNode = objectMapper.readTree(jsonString);
-
-            if (isValidPreviewJson(jsonNode)) {
-                // Re-serialize the JSON to ensure it's perfectly clean
-                return objectMapper.writeValueAsString(jsonNode);
-            }
-
-            // JSON doesn't have expected structure
-            return response;
-        }
-        catch (Exception e) {
-            // Failed to parse or extract JSON - return original response
-            // In production, you might want to log this error
-            return response;
-        }
+    public static boolean wasCompetencyModified() {
+        return competencyModifiedInCurrentRequest.get();
     }
 
     /**
-     * Validates that a JSON node has the expected preview structure.
-     *
-     * @param jsonNode The JSON node to validate
-     * @return true if the JSON has valid preview structure, false otherwise
+     * Resets the competency created flag.
+     * Used primarily for testing purposes to reset state between tests.
      */
-    private boolean isValidPreviewJson(JsonNode jsonNode) {
-        if (jsonNode == null || !jsonNode.isObject()) {
-            return false;
-        }
-
-        // Check for single preview structure: {"preview": true, "competency": {...}}
-        if (jsonNode.has("preview") && jsonNode.get("preview").isBoolean() && jsonNode.has("competency")) {
-            return true;
-        }
-
-        // Check for batch preview structure: {"batchPreview": true, "count": N, "competencies": [...]}
-        return jsonNode.has("batchPreview") && jsonNode.get("batchPreview").isBoolean() && jsonNode.has("competencies") && jsonNode.get("competencies").isArray();
+    public static void resetCompetencyModifiedFlag() {
+        competencyModifiedInCurrentRequest.remove();
     }
 
     /**

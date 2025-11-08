@@ -721,21 +721,21 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should extract competency preview from JSON in agent response', () => {
-            const competencyPreviewJSON = JSON.stringify({
-                preview: true,
-                competency: {
-                    title: 'Object-Oriented Programming',
-                    description: 'Understanding OOP principles',
-                    taxonomy: 'UNDERSTAND',
-                    icon: 'comments',
-                },
-            });
             const mockResponse = {
-                message: `Here's a competency suggestion:\n${competencyPreviewJSON}`,
+                message: "Here's a competency suggestion:",
                 sessionId: 'course_123',
                 timestamp: '2024-01-01T00:00:00Z',
                 success: true,
                 competenciesModified: false,
+                competencyPreview: {
+                    preview: true,
+                    competency: {
+                        title: 'Object-Oriented Programming',
+                        description: 'Understanding OOP principles',
+                        taxonomy: 'UNDERSTAND',
+                        icon: 'comments',
+                    },
+                },
             };
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
             component.currentMessage.set('Create OOP competency');
@@ -752,22 +752,22 @@ describe('AgentChatModalComponent', () => {
             expect(agentMessage?.competencyPreview?.icon).toBe('comments');
         });
 
-        it('should extract competency preview from markdown-wrapped JSON', () => {
-            const competencyPreviewJSON = {
-                preview: true,
-                competency: {
-                    title: 'Data Structures',
-                    description: 'Arrays, lists, trees, and graphs',
-                    taxonomy: 'APPLY',
-                    icon: 'pen-fancy',
-                },
-            };
+        it('should extract competency preview from structured response', () => {
             const mockResponse = {
-                message: `Here's a suggestion:\n\`\`\`json\n${JSON.stringify(competencyPreviewJSON)}\n\`\`\``,
+                message: "Here's a suggestion:",
                 sessionId: 'course_123',
                 timestamp: '2024-01-01T00:00:00Z',
                 success: true,
                 competenciesModified: false,
+                competencyPreview: {
+                    preview: true,
+                    competency: {
+                        title: 'Data Structures',
+                        description: 'Arrays, lists, trees, and graphs',
+                        taxonomy: 'APPLY',
+                        icon: 'pen-fancy',
+                    },
+                },
             };
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
             component.currentMessage.set('Create data structures competency');
@@ -783,22 +783,22 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should extract competencyId for update operations', () => {
-            const updatePreviewJSON = {
-                preview: true,
-                competencyId: 42,
-                competency: {
-                    title: 'Updated Title',
-                    description: 'Updated description',
-                    taxonomy: 'ANALYZE',
-                    icon: 'magnifying-glass',
-                },
-            };
             const mockResponse = {
-                message: `Updated competency preview:\n${JSON.stringify(updatePreviewJSON)}`,
+                message: 'Updated competency preview:',
                 sessionId: 'course_123',
                 timestamp: '2024-01-01T00:00:00Z',
                 success: true,
                 competenciesModified: false,
+                competencyPreview: {
+                    preview: true,
+                    competencyId: 42,
+                    competency: {
+                        title: 'Updated Title',
+                        description: 'Updated description',
+                        taxonomy: 'ANALYZE',
+                        icon: 'magnifying-glass',
+                    },
+                },
             };
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
             component.currentMessage.set('Update competency 42');
@@ -813,22 +813,22 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should extract viewOnly flag when present', () => {
-            const viewOnlyPreviewJSON = {
-                preview: true,
-                viewOnly: true,
-                competency: {
-                    title: 'Read-only Competency',
-                    description: 'For viewing only',
-                    taxonomy: 'REMEMBER',
-                    icon: 'brain',
-                },
-            };
             const mockResponse = {
-                message: `Preview:\n${JSON.stringify(viewOnlyPreviewJSON)}`,
+                message: 'Preview:',
                 sessionId: 'course_123',
                 timestamp: '2024-01-01T00:00:00Z',
                 success: true,
                 competenciesModified: false,
+                competencyPreview: {
+                    preview: true,
+                    viewOnly: true,
+                    competency: {
+                        title: 'Read-only Competency',
+                        description: 'For viewing only',
+                        taxonomy: 'REMEMBER',
+                        icon: 'brain',
+                    },
+                },
             };
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
             component.currentMessage.set('Show me competency');
@@ -842,18 +842,9 @@ describe('AgentChatModalComponent', () => {
             expect(agentMessage?.competencyPreview?.viewOnly).toBeTrue();
         });
 
-        it('should not extract preview when preview flag is false', () => {
-            const nonPreviewJSON = {
-                preview: false,
-                competency: {
-                    title: 'Not a preview',
-                    description: 'Should not be extracted',
-                    taxonomy: 'APPLY',
-                    icon: 'pen-fancy',
-                },
-            };
+        it('should not extract preview when no preview is sent', () => {
             const mockResponse = {
-                message: `Response:\n${JSON.stringify(nonPreviewJSON)}`,
+                message: 'Response: This is not a preview',
                 sessionId: 'course_123',
                 timestamp: '2024-01-01T00:00:00Z',
                 success: true,
@@ -899,22 +890,22 @@ describe('AgentChatModalComponent', () => {
             component.ngOnInit();
         });
 
-        it('should extract batch competency preview from JSON', () => {
-            const batchPreviewJSON = {
-                batchPreview: true,
-                count: 3,
-                competencies: [
-                    { title: 'Comp 1', description: 'Desc 1', taxonomy: 'REMEMBER', icon: 'brain' },
-                    { title: 'Comp 2', description: 'Desc 2', taxonomy: 'UNDERSTAND', icon: 'comments' },
-                    { title: 'Comp 3', description: 'Desc 3', taxonomy: 'APPLY', icon: 'pen-fancy' },
-                ],
-            };
+        it('should extract batch competency preview from structured response', () => {
             const mockResponse = {
-                message: `Here are multiple competencies:\n${JSON.stringify(batchPreviewJSON)}`,
+                message: 'Here are multiple competencies:',
                 sessionId: 'course_123',
                 timestamp: '2024-01-01T00:00:00Z',
                 success: true,
                 competenciesModified: false,
+                batchCompetencyPreview: {
+                    batchPreview: true,
+                    count: 3,
+                    competencies: [
+                        { title: 'Comp 1', description: 'Desc 1', taxonomy: 'REMEMBER', icon: 'brain' },
+                        { title: 'Comp 2', description: 'Desc 2', taxonomy: 'UNDERSTAND', icon: 'comments' },
+                        { title: 'Comp 3', description: 'Desc 3', taxonomy: 'APPLY', icon: 'pen-fancy' },
+                    ],
+                },
             };
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
             component.currentMessage.set('Create multiple competencies');
@@ -932,20 +923,20 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should prioritize batch preview over single preview', () => {
-            const batchPreviewJSON = {
-                batchPreview: true,
-                count: 2,
-                competencies: [
-                    { title: 'Batch 1', description: 'Desc 1', taxonomy: 'APPLY', icon: 'pen-fancy' },
-                    { title: 'Batch 2', description: 'Desc 2', taxonomy: 'ANALYZE', icon: 'magnifying-glass' },
-                ],
-            };
             const mockResponse = {
-                message: `Batch preview:\n${JSON.stringify(batchPreviewJSON)}`,
+                message: 'Batch preview:',
                 sessionId: 'course_123',
                 timestamp: '2024-01-01T00:00:00Z',
                 success: true,
                 competenciesModified: false,
+                batchCompetencyPreview: {
+                    batchPreview: true,
+                    count: 2,
+                    competencies: [
+                        { title: 'Batch 1', description: 'Desc 1', taxonomy: 'APPLY', icon: 'pen-fancy' },
+                        { title: 'Batch 2', description: 'Desc 2', taxonomy: 'ANALYZE', icon: 'magnifying-glass' },
+                    ],
+                },
             };
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
             component.currentMessage.set('Create batch');
@@ -961,17 +952,17 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should handle empty batch preview gracefully', () => {
-            const emptyBatchJSON = {
-                batchPreview: true,
-                count: 0,
-                competencies: [],
-            };
             const mockResponse = {
-                message: `Empty batch:\n${JSON.stringify(emptyBatchJSON)}`,
+                message: 'Empty batch:',
                 sessionId: 'course_123',
                 timestamp: '2024-01-01T00:00:00Z',
                 success: true,
                 competenciesModified: false,
+                batchCompetencyPreview: {
+                    batchPreview: true,
+                    count: 0,
+                    competencies: [],
+                },
             };
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
             component.currentMessage.set('Empty batch');

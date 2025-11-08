@@ -125,7 +125,7 @@ EDITING EXISTING COMPETENCIES (REQUIRES PLAN APPROVAL)
 When instructor requests to EDIT/MODIFY an existing competency:
 
 1. Follow the full planning workflow (propose plan → get approval)
-2. In the BRIEF, include: COMPETENCY_ID: [the ID of the competency to update]
+2. In the BRIEF, include: COMPETENCY_ID: [the ID of the competency to update] (important)
 
 Example BRIEF for editing:
 ```

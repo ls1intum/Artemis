@@ -41,7 +41,7 @@ class AtlasAgentServiceTest {
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
         // Pass null for ToolCallbackProviders and ChatMemory in tests
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null, competencyExpertToolsService);
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null);
     }
 
     @Test
@@ -141,7 +141,7 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, null);
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null);
 
         boolean available = serviceWithNullClient.isAvailable();
 
@@ -183,7 +183,7 @@ class AtlasAgentServiceTest {
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Competency created successfully")))));
-            when(competencyExpertToolsService.wasCompetencyModified()).thenReturn(true);
+            when(atlasAgentService.getcompetencyModifiedInCurrentRequest()).thenReturn(true);
 
             CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
@@ -200,7 +200,7 @@ class AtlasAgentServiceTest {
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Here are the competencies")))));
-            when(competencyExpertToolsService.wasCompetencyModified()).thenReturn(false);
+            when(atlasAgentService.getcompetencyModifiedInCurrentRequest()).thenReturn(false);
 
             CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
@@ -233,7 +233,7 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldHandleCompetencyExpertToolsServiceNull() throws ExecutionException, InterruptedException {
-            AtlasAgentService serviceWithoutTools = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null);
+            AtlasAgentService serviceWithoutTools = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null);
 
             String testMessage = "Test message";
             Long courseId = 123L;

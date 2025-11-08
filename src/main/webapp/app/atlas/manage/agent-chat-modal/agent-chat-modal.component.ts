@@ -109,7 +109,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.agentChatService.sendMessage(message, this.courseId).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
-                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false);
+
+                // Add message with preview data from response
+                this.addMessageWithPreview(
+                    response.message || this.translateService.instant('artemisApp.agent.chat.error'),
+                    false,
+                    response.competencyPreview,
+                    response.batchCompetencyPreview,
+                );
 
                 // Emit event if competencies were modified so parent can refresh
                 if (response.competenciesModified) {
@@ -239,23 +246,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             timestamp: new Date(),
         };
 
-        // Try to parse JSON to detect competency preview, batch preview, or plan pending
+        // Detect plan pending marker (this is still in the message text)
         if (!isUser) {
-            // Try batch preview first
-            const batchPreviewData = this.extractBatchCompetencyPreview(content);
-            if (batchPreviewData) {
-                message.batchCompetencyPreview = batchPreviewData.previews;
-                message.content = batchPreviewData.cleanedMessage;
-            } else {
-                // Fall back to single preview
-                const previewData = this.extractCompetencyPreview(content);
-                if (previewData) {
-                    message.competencyPreview = previewData.preview;
-                    message.content = previewData.cleanedMessage;
-                }
-            }
-
-            // Detect plan pending marker
             const planPendingData = this.extractPlanPending(content);
             if (planPendingData) {
                 message.planPending = true;
@@ -269,162 +261,52 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     /**
-     * Attempts to extract competency preview data from the agent's response.
-     * The backend returns JSON when the previewCompetency tool is called.
+     * Add a message with structured preview data from the server.
+     * This method receives clean preview data as DTOs instead of parsing JSON.
      */
-    private extractCompetencyPreview(content: string): { preview: CompetencyPreview; cleanedMessage: string } | null {
-        if (!content) {
-            return null;
-        }
-        try {
-            // Try to find JSON with "preview" key - need to match nested braces correctly
-            let jsonMatch: RegExpMatchArray | null = null;
-            let jsonString = '';
+    private addMessageWithPreview(
+        content: string,
+        isUser: boolean,
+        singlePreview?: { preview: boolean; competency: CompetencyPreview; competencyId?: number; viewOnly?: boolean },
+        batchPreview?: { batchPreview: boolean; count: number; competencies: CompetencyPreview[]; viewOnly?: boolean },
+    ): void {
+        const message: ChatMessage = {
+            id: this.generateMessageId(),
+            content,
+            isUser,
+            timestamp: new Date(),
+        };
 
-            // First, try to find markdown-wrapped JSON
-            const markdownMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-            if (markdownMatch) {
-                jsonString = markdownMatch[1];
-                jsonMatch = markdownMatch;
-            } else {
-                // Try to find standalone JSON object with "preview" key
-                // Use a more robust approach: find opening brace, then match balanced braces
-                const previewIndex = content.indexOf('"preview"');
-                if (previewIndex !== -1) {
-                    // Search backwards for opening brace
-                    const startIndex = content.lastIndexOf('{', previewIndex);
-                    if (startIndex !== -1) {
-                        // Count braces to find matching closing brace
-                        let braceCount = 0;
-                        let endIndex = startIndex;
-                        for (let i = startIndex; i < content.length; i++) {
-                            if (content[i] === '{') braceCount++;
-                            if (content[i] === '}') {
-                                braceCount--;
-                                if (braceCount === 0) {
-                                    endIndex = i;
-                                    break;
-                                }
-                            }
-                        }
-                        if (endIndex > startIndex) {
-                            jsonString = content.substring(startIndex, endIndex + 1);
-                            jsonMatch = [jsonString]; // Fake match array
-                        }
-                    }
-                }
-            }
-
-            if (!jsonString || !jsonMatch) {
-                return null;
-            }
-
-            const jsonData = JSON.parse(jsonString);
-
-            // Check if this is a preview response
-            if (jsonData.preview === true && jsonData.competency) {
-                const preview: CompetencyPreview = {
-                    title: jsonData.competency.title,
-                    description: jsonData.competency.description,
-                    taxonomy: jsonData.competency.taxonomy as any,
-                    icon: jsonData.competency.icon,
-                    competencyId: jsonData.competencyId, // Capture competencyId if present (for updates)
-                    viewOnly: jsonData.viewOnly, // Capture viewOnly flag if present (for view-only mode)
-                };
-
-                // Remove the entire JSON block (including markdown wrapper) from the message
-                // Keep only the surrounding text, removing the technical message from the tool
-                let cleanedMessage = content.replace(jsonMatch[0], '').trim();
-
-                // Remove any leftover empty code blocks or extra whitespace
-                cleanedMessage = cleanedMessage
-                    .replace(/```json\s*```/g, '')
-                    .replace(/\n{3,}/g, '\n\n')
-                    .trim();
-
-                return { preview, cleanedMessage };
-            }
-        } catch (e) {
-            // Not valid JSON or not a preview, just return null
+        // Add preview data directly from server response
+        if (singlePreview?.preview) {
+            message.competencyPreview = {
+                ...singlePreview.competency,
+                competencyId: singlePreview.competencyId,
+                viewOnly: singlePreview.viewOnly,
+            };
         }
 
-        return null;
-    }
-
-    /**
-     * Attempts to extract batch competency preview data from the agent's response.
-     * The backend returns JSON with "batchPreview" key when multiple competencies are generated.
-     */
-    private extractBatchCompetencyPreview(content: string): { previews: CompetencyPreview[]; cleanedMessage: string } | null {
-        if (!content) {
-            return null;
-        }
-        try {
-            let jsonMatch: RegExpMatchArray | null = null;
-            let jsonString = '';
-
-            // First, try to find markdown-wrapped JSON
-            const markdownMatch = content.match(/```json\s*(\{[\s\S]*?\})\s*```/);
-            if (markdownMatch) {
-                jsonString = markdownMatch[1];
-                jsonMatch = markdownMatch;
-            } else {
-                // Try to find standalone JSON object with "batchPreview" key
-                const batchPreviewIndex = content.indexOf('"batchPreview"');
-                if (batchPreviewIndex !== -1) {
-                    const startIndex = content.lastIndexOf('{', batchPreviewIndex);
-                    if (startIndex !== -1) {
-                        let braceCount = 0;
-                        let endIndex = startIndex;
-                        for (let i = startIndex; i < content.length; i++) {
-                            if (content[i] === '{') braceCount++;
-                            if (content[i] === '}') {
-                                braceCount--;
-                                if (braceCount === 0) {
-                                    endIndex = i;
-                                    break;
-                                }
-                            }
-                        }
-                        if (endIndex > startIndex) {
-                            jsonString = content.substring(startIndex, endIndex + 1);
-                            jsonMatch = [jsonString];
-                        }
-                    }
-                }
-            }
-
-            if (!jsonString || !jsonMatch) {
-                return null;
-            }
-
-            const jsonData = JSON.parse(jsonString);
-
-            // Check if this is a batch preview response
-            if (jsonData.batchPreview === true && jsonData.competencies && Array.isArray(jsonData.competencies)) {
-                const previews: CompetencyPreview[] = jsonData.competencies.map((comp: any) => ({
-                    title: comp.title,
-                    description: comp.description,
-                    taxonomy: comp.taxonomy as any,
-                    icon: comp.icon,
-                    competencyId: comp.competencyId, // Capture competencyId if present
-                    viewOnly: jsonData.viewOnly, // Apply viewOnly to all if set
-                }));
-
-                // Remove the JSON block from the message
-                let cleanedMessage = content.replace(jsonMatch[0], '').trim();
-                cleanedMessage = cleanedMessage
-                    .replace(/```json\s*```/g, '')
-                    .replace(/\n{3,}/g, '\n\n')
-                    .trim();
-
-                return { previews, cleanedMessage };
-            }
-        } catch (e) {
-            // Not valid JSON or not a batch preview
+        if (batchPreview?.batchPreview) {
+            message.batchCompetencyPreview = batchPreview.competencies.map((comp, index) => ({
+                ...comp,
+                viewOnly: batchPreview.viewOnly,
+                // Note: competencyId comes from the individual competency operation, not from the batch level
+                // It's already part of comp if this is an update operation
+            }));
         }
 
-        return null;
+        // Detect plan pending marker
+        if (!isUser) {
+            const planPendingData = this.extractPlanPending(content);
+            if (planPendingData) {
+                message.planPending = true;
+                message.content = planPendingData.cleanedMessage;
+            }
+        }
+
+        this.messages = [...this.messages, message];
+        this.shouldScrollToBottom = true;
+        this.cdr.markForCheck();
     }
 
     /**
@@ -436,11 +318,21 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             return null;
         }
         const planPendingMarker = '[PLAN_PENDING]';
+        const escapedPlanPendingMarker = '\\[PLAN_PENDING\\]';
+
+        // Check for both escaped and unescaped markers
         if (content.includes(planPendingMarker)) {
             // Remove the marker from the message
             const cleanedMessage = content.replace(planPendingMarker, '').trim();
             return { cleanedMessage };
         }
+
+        if (content.includes(escapedPlanPendingMarker)) {
+            // Remove the escaped marker from the message
+            const cleanedMessage = content.replace(escapedPlanPendingMarker, '').trim();
+            return { cleanedMessage };
+        }
+
         return null;
     }
 

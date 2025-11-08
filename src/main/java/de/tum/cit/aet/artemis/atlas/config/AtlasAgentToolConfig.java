@@ -37,6 +37,7 @@ public class AtlasAgentToolConfig {
      * @return ToolCallbackProvider that exposes the competency expert tools to Spring AI
      */
     @Bean
+    @Lazy
     @Qualifier("competencyExpertToolCallbackProvider")
     public ToolCallbackProvider competencyExpertToolCallbackProvider(CompetencyExpertToolsService expertToolsService) {
         return MethodToolCallbackProvider.builder().toolObjects(expertToolsService).build();

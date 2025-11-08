@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -10,12 +10,12 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.annotation.RequestScope;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentExerciseDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * This agent detects user intent and routes to specialists.
  * Request-scoped to track tool calls per HTTP request.
  */
-@RequestScope
 @Lazy
 @Service
 @Conditional(AtlasEnabled.class)
@@ -71,22 +70,11 @@ public class AtlasAgentToolsService {
 
         Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
 
-        var exerciseList = exercises.stream().map(exercise -> {
-            Map<String, Object> exerciseData = new LinkedHashMap<>();
-            exerciseData.put("id", exercise.getId());
-            exerciseData.put("title", exercise.getTitle());
-            exerciseData.put("type", exercise.getClass().getSimpleName());
-            exerciseData.put("maxPoints", exercise.getMaxPoints() != null ? exercise.getMaxPoints() : 0);
-            exerciseData.put("releaseDate", exercise.getReleaseDate() != null ? exercise.getReleaseDate().toString() : "");
-            exerciseData.put("dueDate", exercise.getDueDate() != null ? exercise.getDueDate().toString() : "");
-            return exerciseData;
-        }).toList();
+        List<AtlasAgentExerciseDTO> exerciseList = exercises.stream().map(AtlasAgentExerciseDTO::of).toList();
 
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("courseId", courseId);
-        response.put("exercises", exerciseList);
-
-        return toJson(response);
+        record Response(Long courseId, List<AtlasAgentExerciseDTO> exercises) {
+        }
+        return toJson(new Response(courseId, exerciseList));
     }
 
     /**

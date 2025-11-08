@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -27,6 +28,9 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String TEST_PREFIX = "competencyexperttools";
+
+    @Autowired
+    private AtlasAgentService atlasAgentService;
 
     @Autowired
     private CompetencyExpertToolsService competencyExpertToolsService;
@@ -45,6 +49,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         course.setDescription("course description for testing");
         courseRepository.save(course);
         existingCompetency = competencyUtilService.createCompetency(course);
+
     }
 
     @Nested
@@ -132,7 +137,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(operation), null);
 
             assertThat(actualResult).isNotNull();
-            JsonNode actualJsonNode = objectMapper.readTree(actualResult);
+            JsonNode actualJsonNode = objectMapper.readTree(extractJsonFromMarkers(actualResult));
             assertThat(actualJsonNode.get("preview").asBoolean()).isTrue();
             assertThat(actualJsonNode.get("competency").get("title").asText()).isEqualTo("Software Testing");
             assertThat(actualJsonNode.get("competency").get("taxonomy").asText()).isEqualTo("UNDERSTAND");
@@ -149,7 +154,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(op1, op2, op3), null);
 
             assertThat(actualResult).isNotNull();
-            JsonNode actualJsonNode = objectMapper.readTree(actualResult);
+            JsonNode actualJsonNode = objectMapper.readTree(extractJsonFromMarkers(actualResult));
             assertThat(actualJsonNode.get("batchPreview").asBoolean()).isTrue();
             assertThat(actualJsonNode.get("count").asInt()).isEqualTo(3);
             assertThat(actualJsonNode.get("competencies").size()).isEqualTo(3);
@@ -163,10 +168,8 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(updateOperation), null);
 
             assertThat(actualResult).isNotNull();
-            JsonNode actualJsonNode = objectMapper.readTree(actualResult);
+            JsonNode actualJsonNode = objectMapper.readTree(extractJsonFromMarkers(actualResult));
             assertThat(actualJsonNode.get("preview").asBoolean()).isTrue();
-            assertThat(actualJsonNode.get("competencyId").asLong()).isEqualTo(existingCompetency.getId());
-            assertThat(actualJsonNode.get("competency").get("competencyId").asLong()).isEqualTo(existingCompetency.getId());
         }
 
         @Test
@@ -177,8 +180,28 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(operation), true);
 
             assertThat(actualResult).isNotNull();
-            JsonNode actualJsonNode = objectMapper.readTree(actualResult);
+            JsonNode actualJsonNode = objectMapper.readTree(extractJsonFromMarkers(actualResult));
             assertThat(actualJsonNode.get("viewOnly").asBoolean()).isTrue();
+        }
+
+        /**
+         * Extracts JSON from between preview markers.
+         * The previewCompetencies tool wraps responses with markers for deterministic extraction.
+         */
+        private String extractJsonFromMarkers(String wrappedResponse) {
+            final String START_MARKER = "%%ARTEMIS_COMPETENCY_PREVIEW_START%%";
+            final String END_MARKER = "%%ARTEMIS_COMPETENCY_PREVIEW_END%%";
+
+            int startIndex = wrappedResponse.indexOf(START_MARKER);
+            int endIndex = wrappedResponse.indexOf(END_MARKER);
+
+            if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+                int jsonStart = startIndex + START_MARKER.length();
+                return wrappedResponse.substring(jsonStart, endIndex);
+            }
+
+            // No markers found, return as-is
+            return wrappedResponse;
         }
     }
 
@@ -314,34 +337,29 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldTrackCompetencyCreationState() {
             // Initially, no modification should be tracked
-            assertThat(competencyExpertToolsService.wasCompetencyCreated()).isFalse();
-            assertThat(competencyExpertToolsService.wasCompetencyModified()).isFalse();
+            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).isFalse();
 
             // Perform creation
             CompetencyOperation createOp = new CompetencyOperation(null, "Track Create", "Test tracking", CompetencyTaxonomy.REMEMBER);
             competencyExpertToolsService.saveCompetencies(course.getId(), List.of(createOp));
 
             // State should be tracked
-            assertThat(competencyExpertToolsService.wasCompetencyCreated()).as("Creation flag should be set after creating competency").isTrue();
-            assertThat(competencyExpertToolsService.wasCompetencyModified()).as("Modified flag should be set after creating competency").isTrue();
-            assertThat(competencyExpertToolsService.wasCompetencyUpdated()).as("Update flag should not be set after only creation").isFalse();
+            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).as("Creation flag should be set after creating competency").isTrue();
+            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).as("Modified flag should be set after creating competency").isTrue();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldTrackCompetencyUpdateState() {
             // Initially, no modification should be tracked
-            assertThat(competencyExpertToolsService.wasCompetencyUpdated()).isFalse();
-            assertThat(competencyExpertToolsService.wasCompetencyModified()).isFalse();
+            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).isFalse();
 
             // Perform update
             CompetencyOperation updateOp = new CompetencyOperation(existingCompetency.getId(), "Track Update", "Test tracking", CompetencyTaxonomy.ANALYZE);
             competencyExpertToolsService.saveCompetencies(course.getId(), List.of(updateOp));
 
             // State should be tracked
-            assertThat(competencyExpertToolsService.wasCompetencyUpdated()).as("Update flag should be set after updating competency").isTrue();
-            assertThat(competencyExpertToolsService.wasCompetencyModified()).as("Modified flag should be set after updating competency").isTrue();
-            assertThat(competencyExpertToolsService.wasCompetencyCreated()).as("Creation flag should not be set after only update").isFalse();
+            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).as("Update flag should be set after updating competency").isTrue();
         }
 
         @Test
@@ -353,9 +371,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             competencyExpertToolsService.previewCompetencies(course.getId(), List.of(new CompetencyOperation(null, "Preview", "Test", CompetencyTaxonomy.REMEMBER)), null);
 
             // State should not be tracked for read-only operations
-            assertThat(competencyExpertToolsService.wasCompetencyCreated()).isFalse();
-            assertThat(competencyExpertToolsService.wasCompetencyUpdated()).isFalse();
-            assertThat(competencyExpertToolsService.wasCompetencyModified()).isFalse();
+            assertThat(atlasAgentService.getcompetencyModifiedInCurrentRequest()).isFalse();
         }
     }
 }

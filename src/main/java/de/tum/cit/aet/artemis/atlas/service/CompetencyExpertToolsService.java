@@ -1,9 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -12,7 +10,6 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.annotation.RequestScope;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -21,16 +18,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO;
+import de.tum.cit.aet.artemis.atlas.dto.BatchCompetencyPreviewResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencySaveResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.SingleCompetencyPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 
 /**
- * Service providing tools for the Competency Expert sub-agent.
- * This agent handles competency creation through conversational refinement.
- * Request-scoped to track tool calls per HTTP request.
+ * Service providing LLM-callable tools for the Atlas Agent using Spring AI's function calling API.
+ * Methods annotated with {@link Tool} are automatically exposed as AI functions that can be invoked
+ * by large language models during conversations. When the LLM determines it needs data or wants to
+ * perform an action, it calls these methods, receives structured JSON responses, and uses that
+ * information to generate natural language answers.
+ *
+ * Rationale: This service allows the Atlas Agent to autonomously retrieve course information and create
+ * competencies based on user conversations, enabling an interactive AI assistant for instructors.
+ *
+ * Main Responsibilities:
+ * - Expose course-related data (competencies, exercises, descriptions) as AI-callable tools
+ * - Create new competencies based on LLM-generated suggestions
+ * - Track whether competencies were changed during a single AI interaction
+ *
+ * @see <a href="https://docs.spring.io/spring-ai/reference/api/tools.html">Spring AI Function Calling</a>
  */
-@RequestScope
 @Lazy
 @Service
 @Conditional(AtlasEnabled.class)
@@ -104,10 +117,10 @@ public class CompetencyExpertToolsService {
 
     private final CourseRepository courseRepository;
 
-    // Track which modification tools were called during this request
-    private boolean competencyCreated = false;
+    // ThreadLocal storage for preview data - enables deterministic extraction without parsing LLM output
+    private static final ThreadLocal<SingleCompetencyPreviewResponseDTO> currentSinglePreview = ThreadLocal.withInitial(() -> null);
 
-    private boolean competencyUpdated = false;
+    private static final ThreadLocal<BatchCompetencyPreviewResponseDTO> currentBatchPreview = ThreadLocal.withInitial(() -> null);
 
     public CompetencyExpertToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository) {
         this.objectMapper = objectMapper;
@@ -116,34 +129,27 @@ public class CompetencyExpertToolsService {
     }
 
     /**
-     * Tool for getting course competencies.
+     * Retrieves all competencies for a given course.
+     * The LLM can call this method when asked questions such as:
+     * “Show me the competencies for course 123” or “What are the learning goals for this course?”
      *
-     * @param courseId the course ID
-     * @return JSON representation of competencies
+     * @param courseId ID of the course
+     * @return JSON response containing the list of competencies or an error message
      */
     @Tool(description = "Get all competencies for a course")
     public String getCourseCompetencies(@ToolParam(description = "the ID of the course") Long courseId) {
         Optional<Course> courseOptional = courseRepository.findById(courseId);
         if (courseOptional.isEmpty()) {
-            return toJson(Map.of("error", "Course not found with ID: " + courseId));
+            record ErrorResponse(String error) {
+            }
+            return toJson(new ErrorResponse("Course not found with ID: " + courseId));
         }
 
         Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
-
-        var competencyList = competencies.stream().map(competency -> {
-            Map<String, Object> competencyData = new LinkedHashMap<>();
-            competencyData.put("id", competency.getId());
-            competencyData.put("title", competency.getTitle());
-            competencyData.put("description", competency.getDescription());
-            competencyData.put("taxonomy", competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : "");
-            return competencyData;
-        }).toList();
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("courseId", courseId);
-        response.put("competencies", competencyList);
-
-        return toJson(response);
+        List<AtlasAgentCompetencyDTO> competencyList = competencies.stream().map(AtlasAgentCompetencyDTO::of).toList();
+        record Response(Long courseId, List<AtlasAgentCompetencyDTO> competencies) {
+        }
+        return toJson(new Response(courseId, competencyList));
     }
 
     /**
@@ -161,10 +167,13 @@ public class CompetencyExpertToolsService {
      * Unified tool for previewing one or multiple competencies.
      * Supports both single and batch operations.
      *
+     * IMPORTANT: This method stores preview data in ThreadLocal for deterministic extraction.
+     * The LLM can respond naturally while the backend extracts structured data separately.
+     *
      * @param courseId     the course ID
      * @param competencies list of competency operations (single or multiple)
      * @param viewOnly     optional flag for view-only mode
-     * @return JSON response with single preview or batch preview
+     * @return Simple confirmation message for the LLM to use in its response
      */
     @Tool(description = "Preview one or multiple competencies before creating/updating. Pass a list with one item for single preview, or multiple items for batch preview.")
     public String previewCompetencies(@ToolParam(description = "the ID of the course") Long courseId,
@@ -172,68 +181,62 @@ public class CompetencyExpertToolsService {
             @ToolParam(description = "optional: set to true for view-only mode (no action buttons)", required = false) Boolean viewOnly) {
 
         if (competencies == null || competencies.isEmpty()) {
-            return toJson(Map.of("error", "No competencies provided"));
+            return "Error: No competencies provided for preview.";
         }
 
-        List<Map<String, Object>> previews = new ArrayList<>();
+        // Convert operations to preview DTOs with consistent taxonomy-to-icon mapping
+        List<CompetencyPreviewDTO> previews = competencies.stream().map(comp -> {
+            String iconName = getTaxonomyIcon(comp.getTaxonomy());
+            return new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), iconName, comp.getCompetencyId());
+        }).toList();
 
-        for (CompetencyOperation comp : competencies) {
-            Map<String, Object> competencyPreview = new LinkedHashMap<>();
-            competencyPreview.put("title", comp.getTitle());
-            competencyPreview.put("description", comp.getDescription());
-            competencyPreview.put("taxonomy", comp.getTaxonomy().toString());
-
-            // Map taxonomy to icon
-            String iconName = switch (comp.getTaxonomy()) {
-                case REMEMBER -> "brain";
-                case UNDERSTAND -> "comments";
-                case APPLY -> "pen-fancy";
-                case ANALYZE -> "magnifying-glass";
-                case EVALUATE -> "plus-minus";
-                case CREATE -> "cubes-stacked";
-            };
-            competencyPreview.put("icon", iconName);
-
-            // Add competencyId if this is an update
-            if (comp.getCompetencyId() != null) {
-                competencyPreview.put("competencyId", comp.getCompetencyId());
-            }
-
-            previews.add(competencyPreview);
-        }
-
-        Map<String, Object> response = new LinkedHashMap<>();
-
-        // Single item: return single preview format (backward compatible)
+        // Store preview data in ThreadLocal for deterministic extraction by AtlasAgentService
         if (competencies.size() == 1) {
-            response.put("preview", true);
-            response.put("competency", previews.getFirst());
-
-            if (competencies.getFirst().getCompetencyId() != null) {
-                response.put("competencyId", competencies.getFirst().getCompetencyId());
-            }
-
-            if (viewOnly != null && viewOnly) {
-                response.put("viewOnly", true);
-            }
+            // Single preview
+            CompetencyOperation firstComp = competencies.get(0);
+            CompetencyPreviewDTO firstPreview = previews.get(0);
+            SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), viewOnly);
+            currentSinglePreview.set(singlePreview);
         }
         else {
-            // Multiple items: return batch preview format
-            response.put("batchPreview", true);
-            response.put("count", competencies.size());
-            response.put("competencies", previews);
-
-            if (viewOnly != null && viewOnly) {
-                response.put("viewOnly", true);
-            }
+            // Batch preview
+            BatchCompetencyPreviewResponseDTO batchPreview = new BatchCompetencyPreviewResponseDTO(true, previews.size(), previews, viewOnly);
+            currentBatchPreview.set(batchPreview);
         }
 
-        return toJson(response);
+        // Return simple confirmation message that the LLM can use naturally in its response
+        // The actual preview data will be extracted from ThreadLocal by AtlasAgentService
+        if (competencies.size() == 1) {
+            return "Preview generated successfully for 1 competency.";
+        }
+        else {
+            return "Preview generated successfully for " + competencies.size() + " competencies.";
+        }
     }
 
     /**
-     * Unified tool for creating/updating one or multiple competencies.
+     * Maps a CompetencyTaxonomy to its corresponding icon name.
+     * This mapping is critical for client-side display and must remain stable.
+     *
+     * @param taxonomy the competency taxonomy
+     * @return the corresponding icon name for FontAwesome
+     */
+    private String getTaxonomyIcon(CompetencyTaxonomy taxonomy) {
+        return switch (taxonomy) {
+            case REMEMBER -> "brain";
+            case UNDERSTAND -> "comments";
+            case APPLY -> "pen-fancy";
+            case ANALYZE -> "magnifying-glass";
+            case EVALUATE -> "plus-minus";
+            case CREATE -> "cubes-stacked";
+        };
+    }
+
+    /**
+     * Unified tool for creating/updating one or multiple competencies for a given course.
      * Supports both single and batch operations. Continues on partial failures.
+     * The LLM typically calls this method when users request to create a new competency
+     * If successful, the competency is persisted and the modification flag is set to true.
      *
      * @param courseId     the course ID
      * @param competencies list of competency operations (single or multiple)
@@ -244,12 +247,16 @@ public class CompetencyExpertToolsService {
             @ToolParam(description = "list of competency operations to save") List<CompetencyOperation> competencies) {
 
         if (competencies == null || competencies.isEmpty()) {
-            return toJson(Map.of("error", "No competencies provided"));
+            record ErrorResponse(String error) {
+            }
+            return toJson(new ErrorResponse("No competencies provided"));
         }
 
         Optional<Course> courseOptional = courseRepository.findById(courseId);
         if (courseOptional.isEmpty()) {
-            return toJson(Map.of("error", "Course not found with ID: " + courseId));
+            record ErrorResponse(String error) {
+            }
+            return toJson(new ErrorResponse("Course not found with ID: " + courseId));
         }
 
         Course course = courseOptional.get();
@@ -268,7 +275,7 @@ public class CompetencyExpertToolsService {
                     competency.setCourse(course);
                     competencyRepository.save(competency);
                     createCount++;
-                    this.competencyCreated = true;
+                    AtlasAgentService.markCompetencyModified();
                 }
                 else {
                     // Update existing competency
@@ -284,7 +291,7 @@ public class CompetencyExpertToolsService {
                     competency.setTaxonomy(comp.getTaxonomy());
                     competencyRepository.save(competency);
                     updateCount++;
-                    this.competencyUpdated = true;
+                    AtlasAgentService.markCompetencyModified();
                 }
             }
             catch (Exception e) {
@@ -292,14 +299,24 @@ public class CompetencyExpertToolsService {
             }
         }
 
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("success", errors.isEmpty());
-        response.put("created", createCount);
-        response.put("updated", updateCount);
-        response.put("failed", errors.size());
+        // Store preview data in ThreadLocal so UI can display cards for what was just saved
+        // This ensures the cards appear in the response showing what was created/updated
+        List<CompetencyPreviewDTO> previews = competencies.stream().map(comp -> {
+            String iconName = getTaxonomyIcon(comp.getTaxonomy());
+            return new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), iconName, comp.getCompetencyId());
+        }).toList();
 
-        if (!errors.isEmpty()) {
-            response.put("errors", errors);
+        if (competencies.size() == 1) {
+            // Single save - store as single preview
+            CompetencyOperation firstComp = competencies.get(0);
+            CompetencyPreviewDTO firstPreview = previews.get(0);
+            SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), true);
+            currentSinglePreview.set(singlePreview);
+        }
+        else {
+            // Batch save - store as batch preview
+            BatchCompetencyPreviewResponseDTO batchPreview = new BatchCompetencyPreviewResponseDTO(true, previews.size(), previews, true);
+            currentBatchPreview.set(batchPreview);
         }
 
         // Construct success message
@@ -314,36 +331,10 @@ public class CompetencyExpertToolsService {
             messages.add(errors.size() + " failed");
         }
 
-        response.put("message", String.join(", ", messages));
+        String message = messages.isEmpty() ? null : String.join(", ", messages);
+        CompetencySaveResponseDTO response = new CompetencySaveResponseDTO(errors.isEmpty(), createCount, updateCount, errors.size(), errors.isEmpty() ? null : errors, message);
 
         return toJson(response);
-    }
-
-    /**
-     * Check if any competency was created during this request.
-     *
-     * @return true if createCompetency was called during this request
-     */
-    public boolean wasCompetencyCreated() {
-        return this.competencyCreated;
-    }
-
-    /**
-     * Check if any competency was updated during this request.
-     *
-     * @return true if updateCompetency was called during this request
-     */
-    public boolean wasCompetencyUpdated() {
-        return this.competencyUpdated;
-    }
-
-    /**
-     * Check if any competency was modified (created or updated) during this request.
-     *
-     * @return true if any modification tool was called
-     */
-    public boolean wasCompetencyModified() {
-        return this.competencyCreated || this.competencyUpdated;
     }
 
     /**
@@ -359,5 +350,38 @@ public class CompetencyExpertToolsService {
         catch (JsonProcessingException e) {
             return "{\"error\": \"Failed to serialize response\"}";
         }
+    }
+
+    /**
+     * Retrieves and clears the current single competency preview from ThreadLocal.
+     * Used by AtlasAgentService to extract preview data after tool execution.
+     *
+     * @return The stored preview, or null if none exists
+     */
+    public static SingleCompetencyPreviewResponseDTO getAndClearSinglePreview() {
+        SingleCompetencyPreviewResponseDTO preview = currentSinglePreview.get();
+        currentSinglePreview.remove();
+        return preview;
+    }
+
+    /**
+     * Retrieves and clears the current batch competency preview from ThreadLocal.
+     * Used by AtlasAgentService to extract preview data after tool execution.
+     *
+     * @return The stored batch preview, or null if none exists
+     */
+    public static BatchCompetencyPreviewResponseDTO getAndClearBatchPreview() {
+        BatchCompetencyPreviewResponseDTO preview = currentBatchPreview.get();
+        currentBatchPreview.remove();
+        return preview;
+    }
+
+    /**
+     * Clears all preview data from ThreadLocal.
+     * Should be called at the start of each request to ensure clean state.
+     */
+    public static void clearAllPreviews() {
+        currentSinglePreview.remove();
+        currentBatchPreview.remove();
     }
 }

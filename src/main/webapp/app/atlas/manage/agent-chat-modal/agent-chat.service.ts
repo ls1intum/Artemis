@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
+import { CompetencyPreview } from 'app/atlas/shared/entities/chat-message.model';
 
 interface AgentChatRequest {
     message: string;
@@ -16,6 +17,22 @@ interface AgentChatResponse {
     timestamp: string;
     success: boolean;
     competenciesModified: boolean;
+    competencyPreview?: SingleCompetencyPreviewResponse;
+    batchCompetencyPreview?: BatchCompetencyPreviewResponse;
+}
+
+interface SingleCompetencyPreviewResponse {
+    preview: boolean;
+    competency: CompetencyPreview;
+    competencyId?: number;
+    viewOnly?: boolean;
+}
+
+interface BatchCompetencyPreviewResponse {
+    batchPreview: boolean;
+    count: number;
+    competencies: CompetencyPreview[];
+    viewOnly?: boolean;
 }
 
 @Injectable({
