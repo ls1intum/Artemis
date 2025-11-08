@@ -22,10 +22,21 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 /**
+ * Service providing LLM-callable tools for the Atlas Agent using Spring AI's function calling API.
+ * Methods annotated with {@link Tool} are automatically exposed as AI functions that can be invoked
+ * by large language models during conversations. When the LLM determines it needs data or wants to
+ * perform an action, it calls these methods, receives structured JSON responses, and uses that
+ * information to generate natural language answers.
  *
- * Service providing tools for the Main Atlas Agent (Requirements Engineer/Orchestrator).
- * This agent detects user intent and routes to specialists.
- * Request-scoped to track tool calls per HTTP request.
+ * Rationale: This service allows the Atlas Agent to autonomously retrieve course information and create
+ * competencies based on user conversations, enabling an interactive AI assistant for instructors.
+ *
+ * Main Responsibilities:
+ * - Expose course-related data (competencies, exercises, descriptions) as AI-callable tools
+ * - Create new competencies based on LLM-generated suggestions
+ * - Track whether competencies were changed during a single AI interaction
+ *
+ * @see <a href="https://docs.spring.io/spring-ai/reference/api/tools.html">Spring AI Function Calling</a>
  */
 @Lazy
 @Service
@@ -47,8 +58,8 @@ public class AtlasAgentToolsService {
     /**
      * Tool for getting course description.
      *
-     * @param courseId the course ID
-     * @return the course description or empty string if not found
+     * @param courseId ID of the course
+     * @return course description or empty string if not found
      */
     @Tool(description = "Get the description of a course")
     public String getCourseDescription(@ToolParam(description = "the ID of the course") Long courseId) {
@@ -56,10 +67,11 @@ public class AtlasAgentToolsService {
     }
 
     /**
-     * Tool for getting exercises for a course.
+     * Lists all exercises for a given course.
+     * The LLM can use this to reason about course structure and existing learning material.
      *
-     * @param courseId the course ID
-     * @return JSON representation of exercises
+     * @param courseId ID of the course
+     * @return JSON containing exercises or an error message if course not found
      */
     @Tool(description = "List exercises for a course")
     public String getExercisesListed(@ToolParam(description = "the ID of the course") Long courseId) {
@@ -69,7 +81,6 @@ public class AtlasAgentToolsService {
         }
 
         Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
-
         List<AtlasAgentExerciseDTO> exerciseList = exercises.stream().map(AtlasAgentExerciseDTO::of).toList();
 
         record Response(Long courseId, List<AtlasAgentExerciseDTO> exercises) {

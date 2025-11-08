@@ -7,7 +7,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
+import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
@@ -103,9 +103,9 @@ export class FaqUpdateComponent implements OnInit {
         this.isSaving = true;
         this.faq.faqState = this.isAtLeastInstructor ? FaqState.ACCEPTED : FaqState.PROPOSED;
         if (this.faq.id !== undefined) {
-            this.subscribeToSaveResponse(this.faqService.update(this.courseId, this.faq));
+            this.subscribeToSaveResponse(this.faqService.update(this.courseId, UpdateFaqDTO.toUpdateDto(this.faq)));
         } else {
-            this.subscribeToSaveResponse(this.faqService.create(this.courseId, this.faq));
+            this.subscribeToSaveResponse(this.faqService.create(this.courseId, CreateFaqDTO.toCreateFaqDto(this.faq)));
         }
     }
 

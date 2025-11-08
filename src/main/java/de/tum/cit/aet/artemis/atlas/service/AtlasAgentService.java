@@ -76,6 +76,7 @@ public class AtlasAgentService {
     /**
      * Process a chat message with multi-agent orchestration.
      * Routes to the appropriate agent based on session state and delegation markers.
+     * Uses ThreadLocal state tracking to detect competency modifications.
      *
      * @param message   The user's message
      * @param courseId  The course ID for context
