@@ -57,7 +57,7 @@ import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -92,7 +92,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    private ModelingExerciseTestRepository modelingExerciseTestRepository;
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseRepository;
@@ -165,7 +165,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Course secondCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         modelingExercise = ExerciseUtilService.getFirstExerciseWithType(secondCourse, ModelingExercise.class);
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        modelingExerciseRepository.save(modelingExercise);
+        modelingExerciseTestRepository.save(modelingExercise);
         studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
         Submission modelingSubmission = participationUtilService.addSubmission(studentParticipation, new ModelingSubmission());
 
@@ -173,7 +173,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         this.examModelingExercise = new ModelingExercise();
         this.examModelingExercise.setMaxPoints(100D);
         this.examModelingExercise.setExerciseGroup(exam.getExerciseGroups().getFirst());
-        this.modelingExerciseRepository.save(this.examModelingExercise);
+        this.modelingExerciseTestRepository.save(this.examModelingExercise);
         this.examRepository.save(exam);
 
         Result result = ParticipationFactory.generateResult(true, 200D).submission(modelingSubmission);
@@ -638,7 +638,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission_dueDateNotPassed() throws Exception {
         modelingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
-        modelingExerciseRepository.save(modelingExercise);
+        modelingExerciseTestRepository.save(modelingExercise);
         Result result = new Result().rated(false);
         request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
@@ -649,7 +649,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         var now = ZonedDateTime.now();
         var modelingExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
         course.addExercises(modelingExercise);
-        modelingExerciseRepository.save(modelingExercise);
+        modelingExerciseTestRepository.save(modelingExercise);
         var participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
         Submission submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         var result = participationUtilService.addResultToSubmission(null, null, submission);

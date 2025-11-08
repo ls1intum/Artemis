@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
@@ -65,10 +64,7 @@ public class ModelingExerciseUtilService {
     private CourseTestRepository courseRepo;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
-
-    @Autowired
-    private ModelingExerciseTestRepository modelingExerciseTestRepository;
+    private ModelingExerciseTestRepository modelingExerciseRepository;
 
     @Autowired
     private ResultTestRepository resultRepo;
