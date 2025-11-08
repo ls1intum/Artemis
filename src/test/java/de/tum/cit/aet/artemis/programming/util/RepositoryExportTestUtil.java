@@ -31,6 +31,44 @@ public final class RepositoryExportTestUtil {
     }
 
     /**
+     * Test cleanup helpers (co-located for convenience).
+     */
+    public static void deleteFileSilently(java.io.File file) {
+        if (file != null && file.exists()) {
+            try {
+                java.nio.file.Files.deleteIfExists(file.toPath());
+            }
+            catch (java.io.IOException ignored) {
+            }
+        }
+    }
+
+    public static void deleteDirectoryIfExists(java.nio.file.Path dir) {
+        if (dir != null && java.nio.file.Files.exists(dir)) {
+            try {
+                org.apache.commons.io.FileUtils.deleteDirectory(dir.toFile());
+            }
+            catch (java.io.IOException ignored) {
+            }
+        }
+    }
+
+    public static void resetRepos(LocalRepository... repos) {
+        if (repos == null) {
+            return;
+        }
+        for (LocalRepository repo : repos) {
+            if (repo != null) {
+                try {
+                    repo.resetLocalRepo();
+                }
+                catch (java.io.IOException ignored) {
+                }
+            }
+        }
+    }
+
+    /**
      * Create a new LocalVC-compatible bare repository and optionally initialize content in its working copy.
      *
      * @param localVCLocalCITestService LocalVC helper service

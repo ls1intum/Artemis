@@ -84,7 +84,7 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
         }
         finally {
             // cleanup extracted folder
-            de.tum.cit.aet.artemis.programming.util.RepositoryTestCleanupUtil.deleteDirectoryIfExists(extracted);
+            RepositoryExportTestUtil.deleteDirectoryIfExists(extracted);
         }
     }
 

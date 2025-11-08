@@ -487,7 +487,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
                 "Initial commit");
 
         // Cleanup local repos
-        de.tum.cit.aet.artemis.programming.util.RepositoryTestCleanupUtil.resetRepos(sourceRepo, studentLocalVCRepo);
+        RepositoryExportTestUtil.resetRepos(sourceRepo, studentLocalVCRepo);
     }
 
     @ParameterizedTest
