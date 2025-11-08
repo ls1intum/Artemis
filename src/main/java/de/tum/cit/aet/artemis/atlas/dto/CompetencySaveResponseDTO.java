@@ -9,6 +9,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Used when creating or updating one or multiple competencies.
  * Provides detailed feedback about the operation results.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencySaveResponseDTO(boolean success, int created, int updated, int failed, List<String> errors, String message) {
 }
