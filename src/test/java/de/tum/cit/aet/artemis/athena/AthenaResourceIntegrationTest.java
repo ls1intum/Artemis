@@ -8,6 +8,8 @@ import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.AT
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +47,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -406,7 +409,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
         // Seed a LocalVC bare repository with content
         var sourceRepo = new LocalRepository(defaultBranch);
-        sourceRepo.configureRepos(localVCRepoPath, "athenaSrcLocalRepo", "athenaSrcOriginRepo");
+        sourceRepo.configureRepos(localVCBasePath, "athenaSrcLocalRepo", "athenaSrcOriginRepo");
 
         // Ensure tests repository URI exists on the exercise
         var testsSlug = programmingExercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
@@ -447,10 +450,23 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingSubmission = (ProgrammingSubmission) result.getSubmission();
 
         // Prepare a LocalVC student repository and wire it to the participation referenced by the submission.
-        var sourceRepo = new LocalRepository(defaultBranch);
-        sourceRepo.configureRepos(localVCRepoPath, "athenaStudentSrcLocalRepo", "athenaStudentSrcOriginRepo");
-
         var projectKey = programmingExercise.getProjectKey();
+        String srcSlug = projectKey.toLowerCase() + "-athena-src";
+        var sourceRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, srcSlug);
+        // Remove default seed file (test.txt) from the working copy and commit deletion
+        var defaultSeed = sourceRepo.workingCopyGitRepoFile.toPath().resolve("test.txt");
+        if (Files.exists(defaultSeed)) {
+            Files.delete(defaultSeed);
+            sourceRepo.workingCopyGitRepo.add().addFilepattern(".").call();
+            GitService.commit(sourceRepo.workingCopyGitRepo).setMessage("Remove default seed").call();
+            sourceRepo.workingCopyGitRepo.push().setRemote("origin").call();
+        }
+        // Seed a README.md so the export contains the expected file
+        Path readme = sourceRepo.workingCopyGitRepoFile.toPath().resolve("README.md");
+        Files.writeString(readme, "Initial commit");
+        sourceRepo.workingCopyGitRepo.add().addFilepattern(".").call();
+        GitService.commit(sourceRepo.workingCopyGitRepo).setMessage("Initial commit").call();
+        sourceRepo.workingCopyGitRepo.push().setRemote("origin").call();
         var studentRepoSlug = localVCLocalCITestService.getRepositorySlug(projectKey, studentLogin);
         var studentLocalVCRepo = RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey, studentRepoSlug, sourceRepo);
 
@@ -470,9 +486,8 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         assertThat(repoFiles).as("student export returns exactly one file: README.md").isNotNull().hasSize(1).containsOnlyKeys("README.md").containsEntry("README.md",
                 "Initial commit");
 
-        // Cleanup local repo
-        sourceRepo.resetLocalRepo();
-        studentLocalVCRepo.resetLocalRepo();
+        // Cleanup local repos
+        de.tum.cit.aet.artemis.programming.util.RepositoryTestCleanupUtil.resetRepos(sourceRepo, studentLocalVCRepo);
     }
 
     @ParameterizedTest

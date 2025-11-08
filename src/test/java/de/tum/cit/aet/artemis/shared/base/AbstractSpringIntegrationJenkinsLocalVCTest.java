@@ -112,7 +112,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    protected Path localVCRepoPath;
+    protected Path localVCBasePath;
 
     @AfterEach
     @Override

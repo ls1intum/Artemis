@@ -82,6 +82,10 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
             assertThat(allPaths).anyMatch(p -> p.toString().endsWith(Path.of(TEST_PREFIX + "student1", ".git").toString()));
             assertThat(allPaths).anyMatch(p -> p.toString().endsWith(Path.of(TEST_PREFIX + "student2", ".git").toString()));
         }
+        finally {
+            // cleanup extracted folder
+            de.tum.cit.aet.artemis.programming.util.RepositoryTestCleanupUtil.deleteDirectoryIfExists(extracted);
+        }
     }
 
     @Test
