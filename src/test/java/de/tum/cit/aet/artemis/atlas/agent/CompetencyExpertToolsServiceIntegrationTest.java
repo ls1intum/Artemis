@@ -152,7 +152,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             CompetencyOperation op2 = new CompetencyOperation(null, "Data Structures", "Common data structures and their usage", CompetencyTaxonomy.APPLY);
             CompetencyOperation op3 = new CompetencyOperation(null, "Complexity Theory", "Understanding computational complexity", CompetencyTaxonomy.EVALUATE);
 
-            String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(op1, op2, op3), null);
+            String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(op1, op2, op3), false);
 
             // New implementation returns simple confirmation message for batch
             assertThat(actualResult).isNotNull();

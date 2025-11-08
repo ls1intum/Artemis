@@ -198,7 +198,7 @@ class CompetencyExpertToolsServiceTest {
             CompetencyOperation op1 = new CompetencyOperation(null, "Algorithms", "Sorting and searching algorithms", CompetencyTaxonomy.APPLY);
             CompetencyOperation op2 = new CompetencyOperation(null, "Testing", "Unit and integration testing", CompetencyTaxonomy.EVALUATE);
 
-            String actualResult = competencyExpertToolsService.previewCompetencies(123L, List.of(op1, op2), null);
+            String actualResult = competencyExpertToolsService.previewCompetencies(123L, List.of(op1, op2), false);
 
             assertThat(actualResult).contains("Preview generated successfully for 2 competencies.");
 
