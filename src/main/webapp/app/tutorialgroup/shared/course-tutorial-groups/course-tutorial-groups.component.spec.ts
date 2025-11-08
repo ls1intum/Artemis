@@ -110,9 +110,10 @@ describe('CourseTutorialGroupsComponent', () => {
             groupByCategory: true,
             storageId: 'tutorialGroup',
             groupedData: {
+                allGroups: { entityData: [] },
                 registeredGroups: { entityData: [expectedSidebarCardElement1] },
                 furtherGroups: { entityData: [expectedSidebarCardElement2] },
-                allGroups: { entityData: [] },
+                allTutorialLectures: { entityData: [] },
                 currentTutorialLecture: { entityData: [expectedSidebarCardElement4] },
                 furtherTutorialLectures: { entityData: [expectedSidebarCardElement3] },
             },
@@ -155,9 +156,10 @@ describe('CourseTutorialGroupsComponent', () => {
             groupByCategory: true,
             storageId: 'tutorialGroup',
             groupedData: {
+                allGroups: { entityData: [] },
                 registeredGroups: { entityData: [expectedSidebarCardElement1] },
                 furtherGroups: { entityData: [expectedSidebarCardElement2] },
-                allGroups: { entityData: [] },
+                allTutorialLectures: { entityData: [] },
                 currentTutorialLecture: { entityData: [expectedSidebarCardElement4] },
                 furtherTutorialLectures: { entityData: [expectedSidebarCardElement3] },
             },

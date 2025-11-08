@@ -26,16 +26,18 @@ import dayjs from 'dayjs/esm';
 })
 export class CourseTutorialGroupsComponent {
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
-        registeredGroups: false,
         allGroups: true,
+        registeredGroups: false,
         furtherGroups: true,
+        allTutorialLectures: true,
         currentTutorialLecture: false,
         furtherTutorialLectures: true,
     };
     protected readonly DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
-        registeredGroups: false,
         allGroups: false,
+        registeredGroups: false,
         furtherGroups: false,
+        allTutorialLectures: false,
         currentTutorialLecture: false,
         furtherTutorialLectures: false,
     };
@@ -158,9 +160,10 @@ export class CourseTutorialGroupsComponent {
 
     private createAccordionGroups(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]): AccordionGroups {
         const accordionGroups: AccordionGroups = {
+            allGroups: { entityData: [] },
             registeredGroups: { entityData: [] },
             furtherGroups: { entityData: [] },
-            allGroups: { entityData: [] },
+            allTutorialLectures: { entityData: [] },
             currentTutorialLecture: { entityData: [] },
             furtherTutorialLectures: { entityData: [] },
         };
@@ -185,8 +188,12 @@ export class CourseTutorialGroupsComponent {
             currentLectures.length === 0 ? undefined : currentLectures.reduce((latest, current) => (current.startDate!.isAfter(latest.startDate) ? current : latest));
         tutorialLectures.forEach((tutorialLecture) => {
             const tutorialLectureCardItem = this.courseOverviewService.mapTutorialLectureToSidebarCardElement(tutorialLecture);
-            const isCurrentTutorialLecture = mostRecentlyStartedCurrentLecture ? tutorialLecture.id === mostRecentlyStartedCurrentLecture.id : false;
-            tutorialGroupCategory = isCurrentTutorialLecture ? 'currentTutorialLecture' : 'furtherTutorialLectures';
+            if (!mostRecentlyStartedCurrentLecture) {
+                tutorialGroupCategory = 'allTutorialLectures';
+            } else {
+                const isCurrentTutorialLecture = mostRecentlyStartedCurrentLecture ? tutorialLecture.id === mostRecentlyStartedCurrentLecture.id : false;
+                tutorialGroupCategory = isCurrentTutorialLecture ? 'currentTutorialLecture' : 'furtherTutorialLectures';
+            }
             accordionGroups[tutorialGroupCategory].entityData.push(tutorialLectureCardItem);
         });
         return accordionGroups;
