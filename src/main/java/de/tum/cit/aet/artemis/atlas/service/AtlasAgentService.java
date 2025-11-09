@@ -40,12 +40,14 @@ public class AtlasAgentService {
     private final String chatModel;
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
-            @Nullable ChatMemory chatMemory, @Value("${artemis.atlas.chat-model}") String chatModel) {
+            @Nullable ChatMemory chatMemory, @Value("${artemis.atlas.chat-model: gpt-4o}") String chatModel) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.toolCallbackProvider = toolCallbackProvider;
         this.chatMemory = chatMemory;
         this.chatModel = chatModel;
+        // if you are using another model other than gpt-4o change the default
+        // value in the parameter in order for tests to pass
     }
 
     /**
