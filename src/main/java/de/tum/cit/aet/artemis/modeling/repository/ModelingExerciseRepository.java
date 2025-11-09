@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.modeling.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -58,39 +57,6 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             WHERE modelingExercise.id = :exerciseId
             """)
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(@Param("exerciseId") Long exerciseId);
-
-    /**
-     * Get all modeling exercises that need to be scheduled: Those must satisfy one of the following requirements:
-     * <ol>
-     * <li>Automatic assessment is enabled and the due date is in the future</li>
-     * </ol>
-     *
-     * @param now the current time
-     * @return List of the exercises that should be scheduled
-     */
-    @Query("""
-            SELECT DISTINCT exercise
-            FROM ModelingExercise exercise
-            WHERE exercise.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
-                AND exercise.dueDate > :now
-            """)
-    List<ModelingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
-
-    /**
-     * Returns the modeling exercises that are part of an exam with an end date after than the provided date.
-     * This method also fetches the exercise group and exam.
-     *
-     * @param dateTime ZonedDatetime object.
-     * @return List<ModelingExercise> (can be empty)
-     */
-    @Query("""
-            SELECT me
-            FROM ModelingExercise me
-                LEFT JOIN FETCH me.exerciseGroup eg
-                LEFT JOIN FETCH eg.exam e
-            WHERE e.endDate > :dateTime
-            """)
-    List<ModelingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
