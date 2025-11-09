@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
@@ -222,39 +223,37 @@ public class ModelingExerciseResource {
     /**
      * PUT modeling-exercises : Updates an existing modelingExercise.
      *
-     * @param modelingExercise the modelingExercise to update
-     * @param notificationText the text shown to students
-     * @return the ResponseEntity with status 200 (OK) and with body the updated
-     *         modelingExercise, or with status 400 (Bad Request) if the
-     *         modelingExercise is not valid, or with
-     *         status 500 (Internal Server Error) if the modelingExercise couldn't
-     *         be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @param updateModelingExerciseDTO the modelingExercise to update
+     * @param notificationText          the text shown to students
+     * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or with status 400 (Bad Request) if the modelingExercise is not valid, or with
+     *         status 500 (Internal Server Error) if the modelingExercise couldn't be updated
      */
+    // NOTE: IMPORTANT we should NEVER call save on an entity retrieved from the client because it is unsafe and can lead to data loss
     @PutMapping("modeling-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
-        log.debug("REST request to update ModelingExercise : {}", modelingExercise);
-        if (modelingExercise.getId() == null) {
-            return createModelingExercise(modelingExercise);
+    public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
+        log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO);
+
+        final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository
+                .findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(updateModelingExerciseDTO.id());
+        // Check that the user is authorized to update the exercise
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        // Important: use the original exercise for permission check
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExerciseBeforeUpdate, user);
+
+        Long currentCourseId = modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId();
+        if (updateModelingExerciseDTO.courseId() != null && !Objects.equals(currentCourseId, updateModelingExerciseDTO.courseId())) {
+            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
+
+        // whether is exam exercise or course exercise are not changeable
+        ModelingExercise modelingExercise = updateModelingExerciseDTO.update(modelingExerciseBeforeUpdate);
+
         // validates general settings: points, dates
         modelingExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
         modelingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-
-        // Check that the user is authorized to update the exercise
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        // Important: use the original exercise for permission check
-        final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository.findWithEagerCompetenciesByIdElseThrow(modelingExercise.getId());
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExerciseBeforeUpdate, user);
-
-        // Forbid changing the course the exercise belongs to.
-        if (!Objects.equals(modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
-            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
-        }
-
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
 
@@ -271,7 +270,7 @@ public class ModelingExerciseResource {
         exerciseService.notifyAboutExerciseChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
         slideApi.ifPresent(api -> api.handleDueDateChange(modelingExerciseBeforeUpdate, updatedModelingExercise));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(updatedModelingExercise)));
 
         // Notify AtlasML about the modeling exercise update
         atlasMLApi.ifPresent(api -> {
@@ -440,38 +439,32 @@ public class ModelingExerciseResource {
      * existing modelingExercise.
      *
      * @param exerciseId                                  of the exercise
-     * @param modelingExercise                            the modelingExercise to
-     *                                                        re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that
-     *                                                        indicates whether the
-     *                                                        associated feedback should
-     *                                                        be deleted or not
-     * @return the ResponseEntity with status 200 (OK) and with body the updated
-     *         modelingExercise, or
-     *         with status 400 (Bad Request) if the modelingExercise is not valid,
-     *         or with status 409 (Conflict)
-     *         if given exerciseId is not same as in the object of the request body,
-     *         or with status 500 (Internal
+     * @param updateModelingExerciseDTO                   the modelingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
+     * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or
+     *         with status 400 (Bad Request) if the modelingExercise is not valid, or with status 409 (Conflict)
+     *         if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
      *         Server Error) if the modelingExercise couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
-    public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
-        log.debug("REST request to re-evaluate ModelingExercise : {}", modelingExercise);
+    public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
+        log.debug("REST request to re-evaluate ModelingExercise : {}", updateModelingExerciseDTO);
 
-        modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
-
-        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, modelingExercise);
+        // Get the existing exercise
+        final ModelingExercise existingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(exerciseId);
+        // Check that the exercise ID in path matches the DTO ID
+        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyIdElseThrow(exerciseId, updateModelingExerciseDTO.id());
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // make sure the course actually exists
-        var course = courseRepository.findByIdElseThrow(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        ModelingExercise exerciseForReevaluation = updateModelingExerciseDTO.update(existingExercise);
+        var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        exerciseService.reEvaluateExercise(modelingExercise, deleteFeedbackAfterGradingInstructionUpdate);
+        exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
-        return updateModelingExercise(modelingExercise, null);
+        return updateModelingExercise(updateModelingExerciseDTO, null);
     }
 }

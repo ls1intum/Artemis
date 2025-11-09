@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingExercise, toUpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
 import { downloadStream } from 'app/shared/util/download.util';
@@ -29,11 +29,9 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
 
     update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const dto = toUpdateModelingExerciseDTO(modelingExercise);
         return this.http
-            .put<ModelingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .put<ModelingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -77,11 +75,9 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      */
     reevaluateAndUpdate(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const dto = toUpdateModelingExerciseDTO(modelingExercise);
         return this.http
-            .put<ModelingExercise>(`${this.resourceUrl}/${modelingExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .put<ModelingExercise>(`${this.resourceUrl}/${modelingExercise.id}/re-evaluate`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 }

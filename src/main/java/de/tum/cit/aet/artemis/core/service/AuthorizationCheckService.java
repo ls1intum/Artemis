@@ -1080,4 +1080,10 @@ public class AuthorizationCheckService {
             throw new AccessForbiddenException("Lecture", lectureId);
         }
     }
+
+    public void checkGivenExerciseIdSameForExerciseInRequestBodyIdElseThrow(Long exerciseId, Long exerciseInRequestBodyId) {
+        if (!exerciseId.equals(exerciseInRequestBodyId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
+        }
+    }
 }
