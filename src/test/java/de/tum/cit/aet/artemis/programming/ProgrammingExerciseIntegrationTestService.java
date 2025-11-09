@@ -786,8 +786,20 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGenerateStructureOracle() throws Exception {
-        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository1.workingCopyGitRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(LocalVCRepositoryUri.class), any(Path.class), anyBoolean(), anyBoolean());
+        // Wire base repositories in LocalVC and ensure tests repo has the expected directory
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(programmingExercise);
+
+        String projectKey = programmingExercise.getProjectKey();
+        String testsSlug = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        var testsRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsSlug);
+        String testsPath = java.nio.file.Path.of("test", programmingExercise.getPackageFolderName()).toString();
+        if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
+            testsPath = java.nio.file.Path.of("structural", testsPath).toString();
+        }
+        RepositoryExportTestUtil.writeFilesAndPush(testsRepo, Map.of(testsPath + "/.placeholder", ""), "Init tests dir");
+
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests";
         var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
         assertThat(result).startsWith("Successfully generated the structure oracle");
