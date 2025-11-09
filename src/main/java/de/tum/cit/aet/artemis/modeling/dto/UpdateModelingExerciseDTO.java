@@ -56,8 +56,12 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         }
         existingExercise.setExampleSolutionModel(this.exampleSolutionModel);
         existingExercise.setExampleSolutionExplanation(this.exampleSolutionExplanation);
-        existingExercise.setCompetencyLinks(this.competencyLinks);
-        existingExercise.setGradingCriteria(gradingCriteria);
+        if (this.competencyLinks != null) {
+            existingExercise.setCompetencyLinks(this.competencyLinks);
+        }
+        if (this.gradingCriteria != null) {
+            existingExercise.setGradingCriteria(gradingCriteria);
+        }
         return existingExercise;
     }
 
