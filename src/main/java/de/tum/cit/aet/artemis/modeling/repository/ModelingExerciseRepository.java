@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.modeling.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -91,6 +90,8 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             WHERE e.endDate > :dateTime
             """)
     List<ModelingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
+    Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
 
     @Query("""
             SELECT m
