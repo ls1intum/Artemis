@@ -34,7 +34,9 @@ const Image = ({
 
     const defaultStyles = {
         ...sizeStyles[size],
+        width: 'auto',
         height: 'auto',
+        objectFit: 'contain' as const,
         border: hideBorder ? 'none' : '1px solid var(--ifm-color-emphasis-300)',
         borderRadius: '8px',
         margin: '1.5rem 0',
