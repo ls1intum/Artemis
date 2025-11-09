@@ -14,14 +14,12 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 
 describe('EditAttachmentVideoUnitComponent', () => {
@@ -29,7 +27,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
     let component: EditAttachmentVideoUnitComponent;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
     let lectureTranscriptionService: LectureTranscriptionService;
-    let accountService: AccountService;
     let router: Router;
     let navigateSpy: jest.SpyInstance;
     let updateAttachmentVideoUnitSpy: jest.SpyInstance;
@@ -76,7 +73,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -86,7 +82,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
         router = TestBed.inject(Router);
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
-        accountService = TestBed.inject(AccountService);
 
         attachment = new Attachment();
         attachment.id = 1;
