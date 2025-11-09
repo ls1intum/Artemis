@@ -40,7 +40,6 @@ export interface Badge {
 }
 
 export interface IResultService {
-    find: (resultId: number) => Observable<EntityResponseType>;
     getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
     getFeedbackDetailsForResult: (participationId: number, result: Result) => Observable<HttpResponse<Feedback[]>>;
     getResultsWithPointsPerGradingCriterion: (exercise: Exercise) => Observable<ResultsWithPointsArrayResponseType>;
@@ -54,17 +53,10 @@ export class ResultService implements IResultService {
     private csvDownloadService = inject(CsvDownloadService);
 
     private exerciseResourceUrl = 'api/assessment/exercises';
-    private resultResourceUrl = 'api/assessment/results';
     private participationResourceUrl = 'api/assessment/participations';
 
     private readonly MAX_VALUE_PROGRAMMING_RESULT_INTS = 255;
     // Size of tinyInt in SQL, that is used to store these values
-
-    find(resultId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertResultResponseDatesFromServer(res)));
-    }
 
     /**
      * Generates the result string for the given exercise and result.

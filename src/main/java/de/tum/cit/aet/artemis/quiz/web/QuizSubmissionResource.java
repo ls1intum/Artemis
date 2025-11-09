@@ -202,9 +202,6 @@ public class QuizSubmissionResource {
         quizSubmission.setType(SubmissionType.MANUAL);
         quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
 
-        // create Participation stub
-        StudentParticipation participation = new StudentParticipation().exercise(quizExercise);
-
         // create result
         Result result = new Result().submission(quizSubmission);
         result.setRated(false);
