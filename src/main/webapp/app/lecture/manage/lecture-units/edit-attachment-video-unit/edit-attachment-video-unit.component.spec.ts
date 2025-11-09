@@ -408,7 +408,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
             fileProperties: {},
         };
 
-        const alertService = TestBed.inject(AlertService);
         jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(throwError(() => ({ status: 500, message: 'Error' })));
         updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
 
