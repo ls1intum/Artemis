@@ -125,6 +125,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         navigateSpy = jest.spyOn(router, 'navigate');
 
         jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
     });
 
     afterEach(() => {
@@ -237,8 +238,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should fetch transcription when user is admin', () => {
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+    it('should fetch transcription data on initialization', () => {
         const transcription = { id: 1, videoUnitId: 1, language: 'en', content: 'test' };
         const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(transcription as any));
         const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
@@ -248,17 +248,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
         expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
         expect(component.formData?.transcriptionProperties?.videoTranscription).toBe(JSON.stringify(transcription));
-    });
-
-    it('should not fetch transcription when user is not admin', () => {
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription');
-        const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus');
-
-        fixture.detectChanges();
-
-        expect(getTranscriptionSpy).not.toHaveBeenCalled();
-        expect(getTranscriptionStatusSpy).not.toHaveBeenCalled();
     });
 
     it('should create transcription when form is submitted with transcription properties', () => {

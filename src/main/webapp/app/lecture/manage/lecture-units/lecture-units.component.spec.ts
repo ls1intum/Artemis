@@ -587,6 +587,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
     it('should open edit attachment form when clicked', fakeAsync(() => {
         jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
 
         wizardUnitComponentFixture.detectChanges();
         tick();

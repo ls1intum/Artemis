@@ -12,7 +12,6 @@ import { combineLatest, of } from 'rxjs';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
-import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-edit-attachment-video-unit',
@@ -25,7 +24,6 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
     private lectureTranscriptionService = inject(LectureTranscriptionService);
-    private accountService = inject(AccountService);
 
     @ViewChild('attachmentVideoUnitForm') attachmentVideoUnitForm: AttachmentVideoUnitFormComponent;
 
@@ -49,9 +47,6 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 }),
                 switchMap((attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
                     const attachmentVideoUnit = attachmentVideoUnitResponse.body!;
-                    if (!this.accountService.isAdmin()) {
-                        return of({ attachmentVideoUnit, transcription: undefined, transcriptionStatus: undefined });
-                    }
                     return combineLatest({
                         transcription: this.lectureTranscriptionService.getTranscription(attachmentVideoUnit.id!),
                         transcriptionStatus: this.lectureTranscriptionService.getTranscriptionStatus(attachmentVideoUnit.id!),
