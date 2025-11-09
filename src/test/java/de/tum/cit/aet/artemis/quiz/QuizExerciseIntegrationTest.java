@@ -37,6 +37,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -137,6 +138,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Autowired
     private ExerciseService exerciseService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private ChannelRepository channelRepository;
@@ -1375,7 +1379,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         Competency fakeCompetency = new Competency();
         fakeCompetency.setId(999L);
         quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(fakeCompetency, quizExercise, 0.25)));
-        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
+        updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.NOT_FOUND);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

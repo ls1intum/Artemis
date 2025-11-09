@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.NotFoundException;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -56,6 +55,7 @@ import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.CalendarEventType;
@@ -1043,7 +1043,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 updatedLinks.add(link);
             }
             else {
-                throw new NotFoundException("Competency with id " + dto.competencyId() + " not found in course " + course.getId());
+                throw new EntityNotFoundException("Competency with id " + dto.competencyId() + " not found in course " + course.getId());
             }
         }
         return updatedLinks;
