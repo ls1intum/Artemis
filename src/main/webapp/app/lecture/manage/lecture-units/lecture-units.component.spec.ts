@@ -651,7 +651,6 @@ describe('LectureUpdateUnitsComponent', () => {
             segments: [],
         };
 
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
         const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(transcript));
         const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
 
