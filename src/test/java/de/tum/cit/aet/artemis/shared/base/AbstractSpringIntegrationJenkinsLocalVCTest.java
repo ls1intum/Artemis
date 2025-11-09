@@ -15,7 +15,6 @@ import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_OBJECT_
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -74,9 +73,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @MockitoSpyBean
     protected JenkinsService continuousIntegrationService;
 
-    // TODO: we should remove @MockitoSpyBean here and use @Autowired instead in the future because we should NOT mock the LocalVCService anymore, all its operations can be
-    // executed in the test environment.
-    @MockitoSpyBean
+    @Autowired
     protected LocalVCService versionControlService;
 
     @MockitoSpyBean
@@ -176,7 +173,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
         // the mocked values do not work as we return file paths and the git service expects git urls.
         // mocking them turned out to be not feasible with reasonable effort as this effects a lot of other test classes and leads to many other test failures.
         // not mocking for all tests also posed a problem due to many test failures in other classes.
-        doCallRealMethod().when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
         doCallRealMethod().when(gitService).getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), anyBoolean());
     }
 

@@ -125,8 +125,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @MockitoSpyBean
     protected SpringSecurityLdapTemplate ldapTemplate;
 
-    // TODO: we should remove @MockitoSpyBean here and use @Autowired instead
-    @MockitoSpyBean
+    @Autowired
     protected LocalVCService versionControlService;
 
     @MockitoSpyBean
@@ -221,8 +220,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(versionControlService, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService, competencyProgressService,
-                competencyProgressApi);
+        if (Mockito.mockingDetails(versionControlService).isMock()) {
+            Mockito.reset(versionControlService);
+        }
+        Mockito.reset(continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService, competencyProgressService, competencyProgressApi);
         super.resetSpyBeans();
     }
 
