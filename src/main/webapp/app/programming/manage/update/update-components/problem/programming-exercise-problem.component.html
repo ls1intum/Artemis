@@ -1,8 +1,8 @@
 <section>
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
-    @if (!programmingExercise()?.id && !programmingExerciseCreationConfig.isExamMode && hyperionEnabled) {
-        <!-- User Prompt Input -->
+    <!-- User Prompt Input -->
+    @if (!programmingExercise()?.id && hyperionEnabled) {
         <div class="mb-4">
             <label for="userPrompt" class="form-label" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.problemStatement.generateDraftDescription" />

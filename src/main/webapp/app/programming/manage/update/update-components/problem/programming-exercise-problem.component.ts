@@ -103,7 +103,8 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
      */
     generateProblemStatement(): void {
         const exercise = this.programmingExercise();
-        if (!this.userPrompt?.trim() || !exercise?.course?.id) {
+        const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
+        if (!this.userPrompt?.trim() || !courseId) {
             return;
         }
 
@@ -114,7 +115,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
         };
 
         this.currentGenerationSubscription = this.hyperionApiService
-            .generateProblemStatement(exercise.course.id, request)
+            .generateProblemStatement(courseId, request)
             .pipe(
                 finalize(() => {
                     this.isGenerating = false;
