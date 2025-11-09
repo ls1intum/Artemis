@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * REST controller for Hyperion Review & Refine features (consistency check and problem statement rewrite).
+ * REST controller for Hyperion problem statement features (generation, rewrite, and consistency check).
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
@@ -93,7 +93,7 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/problem-statements/generate: Generate a draft problem statement for a programming exercise context.
+     * POST courses/{courseId}/problem-statements/generate: Generate a draft problem statement for a programming exercise in the given course.
      *
      * @param courseId the id of the course the problem statement belongs to
      * @param request  the request containing the user prompt
