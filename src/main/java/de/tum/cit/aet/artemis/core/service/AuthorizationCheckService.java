@@ -791,9 +791,7 @@ public class AuthorizationCheckService {
     }
 
     public void checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(Long exerciseId, Exercise exerciseInRequestBody) {
-        if (!exerciseId.equals(exerciseInRequestBody.getId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT);
-        }
+        checkGivenExerciseIdSameForExerciseInRequestBodyIdElseThrow(exerciseId, exerciseInRequestBody.getId());
     }
 
     public void checkIsAllowedToAssessExerciseElseThrow(Exercise exercise, User user, Long resultId) {
