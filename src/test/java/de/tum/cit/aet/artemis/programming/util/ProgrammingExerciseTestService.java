@@ -413,7 +413,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private String convertToLocalVcUriString(LocalRepository localRepository) {
-        return LocalRepositoryUriUtil.convertToLocalVcUriString(localRepository.remoteBareGitRepoFile, localVCBasePath);
+        return LocalRepositoryUriUtil.convertToLocalVcUriString(localRepository.remoteBareGitRepoFile, localVCRepoPath);
     }
 
     private String convertToLocalVcShortUriString(LocalRepository localRepository) {
