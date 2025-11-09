@@ -31,9 +31,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 @Repository
 public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
-    Set<QuizExercise> findWithBatchesByCourseId(long courseId);
-
     @Query("""
             SELECT DISTINCT e
             FROM QuizExercise e

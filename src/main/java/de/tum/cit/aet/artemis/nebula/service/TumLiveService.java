@@ -67,7 +67,7 @@ public class TumLiveService {
         try {
             TumLivePlaylistDTO response = restClient.get().uri("/streams/{courseSlug}/{streamId}", info.courseSlug(), info.streamId()).retrieve().body(TumLivePlaylistDTO.class);
 
-            if (response.stream() != null && response.stream().playlistUrl() != null) {
+            if (response != null && response.stream() != null && response.stream().playlistUrl() != null) {
                 return Optional.of(response.stream().playlistUrl());
             }
             else {

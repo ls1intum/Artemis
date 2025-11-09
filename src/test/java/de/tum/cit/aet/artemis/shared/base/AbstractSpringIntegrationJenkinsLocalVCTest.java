@@ -118,7 +118,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     private RepositoryUriConversionUtil repositoryUriConversionUtil;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    protected Path localVCRepoPath;
+    protected Path localVCBasePath;
 
     @BeforeEach
     void setLocalVcBaseUriInConversionUtil() {

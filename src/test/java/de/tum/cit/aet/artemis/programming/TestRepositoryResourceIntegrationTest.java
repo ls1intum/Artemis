@@ -72,7 +72,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
         // Instantiate the remote repository as non-bare so its files can be manipulated
-        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo", false);
+        testRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo", false);
 
         // add file to the repository folder
         Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
@@ -84,7 +84,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath);
 
-        String shortTestRepoUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(testRepo.workingCopyGitRepoFile, localVCRepoPath);
+        String shortTestRepoUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(testRepo.workingCopyGitRepoFile, localVCBasePath);
         LocalVCRepositoryUri fullTestRepoUri = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(shortTestRepoUri));
         programmingExercise.setTestRepositoryUri(fullTestRepoUri.getURI().toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)

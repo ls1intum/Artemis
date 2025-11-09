@@ -278,7 +278,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         else {
             programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().minusMinutes(1));
         }
-        String shortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCRepoPath);
+        String shortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCBasePath);
         String fullUri = RepositoryUriConversionUtil.toFullRepositoryUri(shortUri);
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin, URI.create(fullUri));
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "abc");
@@ -351,7 +351,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
         var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
-        String shortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCRepoPath);
+        String shortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCBasePath);
         String fullUri = RepositoryUriConversionUtil.toFullRepositoryUri(shortUri);
         examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel, URI.create(fullUri));
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());

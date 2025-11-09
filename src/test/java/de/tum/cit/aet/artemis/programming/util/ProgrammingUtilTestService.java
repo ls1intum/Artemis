@@ -82,7 +82,7 @@ public class ProgrammingUtilTestService {
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCRepoPath;
+    private Path localVCBasePath;
 
     /**
      * Sets up the template repository of a programming exercise with specified files
@@ -92,7 +92,7 @@ public class ProgrammingUtilTestService {
      * @param templateRepo The repository
      */
     public void setupTemplate(Map<String, String> files, ProgrammingExercise exercise, LocalRepository templateRepo) throws Exception {
-        templateRepo.configureRepos(localVCRepoPath, "templateLocalRepo", "templateOriginRepo");
+        templateRepo.configureRepos(localVCBasePath, "templateLocalRepo", "templateOriginRepo");
 
         for (Map.Entry<String, String> entry : files.entrySet()) {
             String fileName = entry.getKey();
@@ -105,7 +105,7 @@ public class ProgrammingUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        String templateRepoShortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(templateRepo.workingCopyGitRepoFile, localVCRepoPath);
+        String templateRepoShortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(templateRepo.workingCopyGitRepoFile, localVCBasePath);
         LocalVCRepositoryUri fullTemplateRepoUri = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(templateRepoShortUri));
         exercise.setTemplateRepositoryUri(fullTemplateRepoUri.getURI().toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
@@ -147,7 +147,7 @@ public class ProgrammingUtilTestService {
         var commits = participationRepo.workingCopyGitRepo.log().call();
         var commitsList = StreamSupport.stream(commits.spliterator(), false).toList();
 
-        var participationRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(participationRepo.workingCopyGitRepoFile, localVCRepoPath));
+        var participationRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(participationRepo.workingCopyGitRepoFile, localVCBasePath));
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(participationRepoUri, true, true);

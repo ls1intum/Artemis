@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.programming.util;
 import java.io.File;
 import java.nio.file.Path;
 
+// TODO DO NOT USE this class anymore for server tests and instead write proper integration tests that use the LocalVC service and the Artemis server API without mocking repos
+@Deprecated
 public class LocalRepositoryUriUtil {
 
     public static String convertToLocalVcUriString(File repoFile, Path localVCRepoPath) {

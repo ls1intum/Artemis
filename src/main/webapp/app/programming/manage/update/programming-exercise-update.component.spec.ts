@@ -635,6 +635,59 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(loadExerciseCategoriesSpy).toHaveBeenCalledOnce();
         });
+
+        // Ensures that exerciseCategories are synchronized in course-mode imports
+        it('should sync exerciseCategories from programmingExercise during import', fakeAsync(() => {
+            // GIVEN
+            const categories = [new ExerciseCategory(undefined, undefined)];
+            const programmingExercise = getProgrammingExerciseForImport();
+            (programmingExercise as any).categories = categories;
+            route.data = of({ programmingExercise });
+
+            const findSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            // WHEN
+            comp.ngOnInit();
+            tick();
+
+            // THEN
+            expect(findSpy).toHaveBeenCalledWith(course.id);
+            expect(comp.isExamMode).toBeFalse();
+            expect(comp.exerciseCategories).toBe(categories);
+        }));
+
+        // Ensures that exerciseCategories remain empty in exam-mode imports.
+        it('should NOT sync exerciseCategories from programmingExercise when importing into an exam', fakeAsync(() => {
+            // GIVEN
+            const examId = 1;
+            const exerciseGroupId = 42;
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = exerciseGroupId;
+            exerciseGroup.exam = { id: examId, course };
+
+            const categories = [new ExerciseCategory(undefined, undefined)];
+            const programmingExercise = getProgrammingExerciseForImport();
+            (programmingExercise as any).categories = categories;
+
+            route.params = of({ courseId, examId, exerciseGroupId });
+            route.data = of({ programmingExercise });
+            route.url = of([{ path: 'import' } as UrlSegment]);
+
+            // mock exerciseGroupService
+            const findSpy = jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            // WHEN
+            comp.ngOnInit();
+            tick();
+
+            // THEN
+            expect(findSpy).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
+            expect(comp.isExamMode).toBeTrue();
+
+            expect(comp.exerciseCategories).toEqual([]);
+        }));
     });
 
     describe('import from file', () => {
@@ -1290,7 +1343,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(problemStepInputs).not.toBeNull();
     }));
 
-    it('stores withdependenices when changed', fakeAsync(() => {
+    it('stores with dependencies when changed', fakeAsync(() => {
         const route = TestBed.inject(ActivatedRoute);
         route.params = of({ courseId });
         route.url = of([{ path: 'new' } as UrlSegment]);
