@@ -93,18 +93,14 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
 
     courseId = 0;
 
-    /*
-    Determines whether the user is currently viewing a specific course context (e.g. /course-management/:courseId).
-
-    When true:
-        - The user is inside a single course (Course Management view).
-        - The Build Overview should hide the Course ID column.
-
-    When false:
-        - The user is in the global Server Administration view (Server Administration > Build Overview).
-        - The Course ID column should be shown to distinguish between builds from different courses.
-    */
-    isCourseContext = false;
+    /**
+     * Indicates whether the user is viewing the global Server Administration view.
+     * (i.e. Server Administration > Build Overview).
+     *
+     * - true:  Show Course ID column (multiple courses visible)
+     * - false: Hide Course ID column (single course context)
+     */
+    isAdministrationView = false;
 
     paginationConfig: PaginationConfig = {
         pageSize: ITEMS_PER_PAGE,
@@ -118,7 +114,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         // NOTE: in the server administration, courseId will be parsed as 0, while in course management, it should be a positive integer
 
-        this.isCourseContext = this.courseId > 0;
+        this.isAdministrationView = this.courseId === 0;
 
         this.loadQueue();
         this.buildDurationInterval = setInterval(() => {

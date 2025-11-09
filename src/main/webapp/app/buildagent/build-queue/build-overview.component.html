@@ -192,7 +192,7 @@
                             </ng-template>
                         </ngx-datatable-column>
 
-                        @if (!isCourseContext) {
+                        @if (isAdministrationView) {
                             <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200">
                                 <ng-template ngx-datatable-header-template>
                                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
@@ -375,7 +375,7 @@
                             </ng-template>
                         </ngx-datatable-column>
 
-                        @if (!isCourseContext) {
+                        @if (isAdministrationView) {
                             <ngx-datatable-column prop="courseId" [minWidth]="150" [width]="200">
                                 <ng-template ngx-datatable-header-template>
                                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('courseId')">
@@ -491,7 +491,7 @@
                                 <fa-icon [icon]="faSort" />
                             </th>
 
-                            @if (!isCourseContext) {
+                            @if (isAdministrationView) {
                                 <th jhiSortBy="courseId" class="finish-jobs-column">
                                     <span jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
                                     <fa-icon [icon]="faSort" />
@@ -646,7 +646,7 @@
                                     }
                                 </td>
 
-                                @if (!isCourseContext) {
+                                @if (isAdministrationView) {
                                     <td class="finish-jobs-column">
                                         <a [routerLink]="['/course-management', finishedBuildJob.courseId]">{{ finishedBuildJob.courseId }}</a>
                                     </td>
