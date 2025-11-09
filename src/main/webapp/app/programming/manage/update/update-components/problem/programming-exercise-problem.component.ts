@@ -25,6 +25,8 @@ import { ButtonSize } from 'app/shared/components/buttons/button/button.componen
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -60,6 +62,8 @@ export class ProgrammingExerciseProblemComponent {
     userPrompt = '';
     isGenerating = false;
     private currentGenerationSubscription: Subscription | null = null;
+    private profileService = inject(ProfileService);
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     // icons
     facArtemisIntelligence = facArtemisIntelligence;
