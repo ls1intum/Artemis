@@ -133,7 +133,10 @@ record BaseCompetencyDTO(Long id, String title, String description, CompetencyTa
 record GradingCriterionDTO(Long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {
 
     public static GradingCriterionDTO of(GradingCriterion gradingCriterion) {
-        Set<GradingInstructionDTO> gradingInstructionDTOs = gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).collect(Collectors.toSet());
+        Set<GradingInstructionDTO> gradingInstructionDTOs = Set.of();
+        if (Hibernate.isInitialized(gradingCriterion.getStructuredGradingInstructions())) {
+            gradingInstructionDTOs = gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).collect(Collectors.toSet());
+        }
         return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(), gradingInstructionDTOs);
     }
 }
