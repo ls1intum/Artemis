@@ -971,4 +971,61 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(createTranscriptionSpy).not.toHaveBeenCalled();
         });
     }));
+
+    it('should handle null transcription when editing attachment video unit', fakeAsync(() => {
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        const attachment = new Attachment();
+        attachment.id = 1;
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
+        attachment.name = 'test';
+        attachment.link = '/path/to/file';
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.attachment = attachment;
+
+        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(null as any));
+        const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(null as any));
+
+        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
+            expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+            expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+            expect(wizardUnitComponent.currentlyProcessedAttachmentVideoUnit?.transcriptionProperties).toBeUndefined();
+        });
+    }));
+
+    it('should handle transcription status when editing attachment video unit', fakeAsync(() => {
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        const attachment = new Attachment();
+        attachment.id = 1;
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
+        attachment.name = 'test';
+        attachment.link = '/path/to/file';
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.attachment = attachment;
+
+        const transcriptionStatus = { status: 'PENDING', progress: 50 };
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus as any));
+
+        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
+            expect(wizardUnitComponent.attachmentVideoUnitFormData?.transcriptionStatus).toEqual(transcriptionStatus);
+        });
+    }));
 });

@@ -271,4 +271,49 @@ describe('EditAttachmentVideoUnitComponent', () => {
 
         expect(createTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, transcription);
     });
+
+    it('should handle error when fetching transcription data', () => {
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
+
+        fixture.detectChanges();
+
+        expect(component.formData?.transcriptionProperties?.videoTranscription).toBe('');
+    });
+
+    it('should handle transcription status when present', () => {
+        const transcriptionStatus = { status: 'PENDING', progress: 50 };
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus as any));
+
+        fixture.detectChanges();
+
+        expect(component.formData?.transcriptionStatus).toEqual(transcriptionStatus);
+    });
+
+    it('should handle error in saveManualTranscription with invalid JSON', () => {
+        fixture.detectChanges();
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                videoSource: attachmentVideoUnit.videoSource,
+                version: 1,
+            },
+            fileProperties: {},
+            transcriptionProperties: {
+                videoTranscription: 'invalid json string',
+            },
+        };
+
+        const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'error');
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+        fixture.detectChanges();
+
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
+    });
 });
