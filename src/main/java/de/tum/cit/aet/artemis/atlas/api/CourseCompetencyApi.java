@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -28,6 +29,16 @@ public class CourseCompetencyApi extends AbstractAtlasApi {
 
     public void save(CourseCompetency courseCompetency) {
         courseCompetencyRepository.save(courseCompetency);
+    }
+
+    /**
+     * Finds all course competencies linked to the given exercise.
+     *
+     * @param exerciseId the ID of the exercise
+     * @return list of course competencies linked to the exercise
+     */
+    public List<CourseCompetency> findAllByExerciseId(long exerciseId) {
+        return courseCompetencyRepository.findAllByExerciseId(exerciseId);
     }
 
     /**
