@@ -54,7 +54,7 @@ public record QuizQuestionStatisticDTO(Long id, Integer participantsRated, Integ
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record MultipleChoiceQuestionStatisticDTO(Set<AnswerCounterDTO> answer) {
+record MultipleChoiceQuestionStatisticDTO(Set<AnswerCounterDTO> answerCounters) {
 
     public static MultipleChoiceQuestionStatisticDTO of(MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic) {
         return new MultipleChoiceQuestionStatisticDTO(multipleChoiceQuestionStatistic.getAnswerCounters().stream().map(AnswerCounterDTO::of).collect(Collectors.toSet()));

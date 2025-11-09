@@ -48,7 +48,10 @@ public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQu
         if (Hibernate.isInitialized(quizExercise.getCompetencyLinks())) {
             competencyExerciseLinkDTOs = quizExercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkDTO::of).collect(Collectors.toSet());
         }
-        Set<GradingCriterionDTO> gradingCriterionDTOs = quizExercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        Set<GradingCriterionDTO> gradingCriterionDTOs = null;
+        if (Hibernate.isInitialized(quizExercise.getGradingCriteria())) {
+            gradingCriterionDTOs = quizExercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        }
 
         return new QuizExerciseWithStatisticsDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise), questionDTOs, categories, quizPointStatisticDTO, competencyExerciseLinkDTOs,
                 gradingCriterionDTOs, quizExercise.getChannelName(), quizExercise.getTestRunParticipationsExist());
