@@ -122,6 +122,8 @@ export class ProgrammingExerciseProblemComponent {
 
                     if (response.draftProblemStatement && exercise) {
                         exercise.problemStatement = response.draftProblemStatement;
+                        this.programmingExerciseCreationConfig.hasUnsavedChanges = true;
+                        this.problemStatementChange.emit(response.draftProblemStatement);
                         this.programmingExerciseChange.emit(exercise);
                     }
                     this.userPrompt = '';
