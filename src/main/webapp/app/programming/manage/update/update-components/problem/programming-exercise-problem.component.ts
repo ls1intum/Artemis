@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, input, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, inject, input, output } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -46,7 +46,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
         HelpIconComponent,
     ],
 })
-export class ProgrammingExerciseProblemComponent {
+export class ProgrammingExerciseProblemComponent implements OnDestroy {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly ProjectType = ProjectType;
     protected readonly AssessmentType = AssessmentType;
@@ -75,6 +75,17 @@ export class ProgrammingExerciseProblemComponent {
     private hyperionApiService = inject(HyperionProblemStatementApiService);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
+
+    /**
+     * Lifecycle hook that is called when the component is destroyed.
+     * Cleans up the subscription to prevent memory leaks.
+     */
+    ngOnDestroy(): void {
+        if (this.currentGenerationSubscription) {
+            this.currentGenerationSubscription.unsubscribe();
+            this.currentGenerationSubscription = null;
+        }
+    }
 
     /**
      * Cancels the problem statement generation and closes the popover
@@ -115,8 +126,6 @@ export class ProgrammingExerciseProblemComponent {
                     // Check if the response contains an empty or invalid problem statement
                     if (!response.draftProblemStatement || response.draftProblemStatement.trim() === '') {
                         this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                        // eslint-disable-next-line no-undef
-                        console.error('AI generation failed: Empty response received');
                         return;
                     }
 
@@ -133,8 +142,6 @@ export class ProgrammingExerciseProblemComponent {
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                    // eslint-disable-next-line no-undef
-                    console.error('Error generating problem statement:', error);
                 },
             });
     }
