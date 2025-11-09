@@ -2,22 +2,30 @@ package de.tum.cit.aet.artemis.programming.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.revwalk.RevCommit;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 
 /**
  * Shared helpers for LocalVC-backed repository export tests.
@@ -33,22 +41,22 @@ public final class RepositoryExportTestUtil {
     /**
      * Test cleanup helpers (co-located for convenience).
      */
-    public static void deleteFileSilently(java.io.File file) {
+    public static void deleteFileSilently(File file) {
         if (file != null && file.exists()) {
             try {
-                java.nio.file.Files.deleteIfExists(file.toPath());
+                Files.deleteIfExists(file.toPath());
             }
-            catch (java.io.IOException ignored) {
+            catch (IOException ignored) {
             }
         }
     }
 
-    public static void deleteDirectoryIfExists(java.nio.file.Path dir) {
-        if (dir != null && java.nio.file.Files.exists(dir)) {
+    public static void deleteDirectoryIfExists(Path dir) {
+        if (dir != null && Files.exists(dir)) {
             try {
-                org.apache.commons.io.FileUtils.deleteDirectory(dir.toFile());
+                FileUtils.deleteDirectory(dir.toFile());
             }
-            catch (java.io.IOException ignored) {
+            catch (IOException ignored) {
             }
         }
     }
@@ -62,7 +70,7 @@ public final class RepositoryExportTestUtil {
                 try {
                     repo.resetLocalRepo();
                 }
-                catch (java.io.IOException ignored) {
+                catch (IOException ignored) {
                 }
             }
         }
@@ -104,7 +112,7 @@ public final class RepositoryExportTestUtil {
         LocalRepository target = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
         File srcBareDir = source.remoteBareGitRepo.getRepository().getDirectory();
         File dstBareDir = target.remoteBareGitRepoFile;
-        org.apache.commons.io.FileUtils.copyDirectory(srcBareDir, dstBareDir);
+        FileUtils.copyDirectory(srcBareDir, dstBareDir);
         return target;
     }
 
@@ -180,9 +188,9 @@ public final class RepositoryExportTestUtil {
      * @param expectedPaths set of expected path entries in the ZIP
      */
     public static void assertZipContainsFiles(byte[] zipBytes, Set<String> expectedPaths) throws IOException {
-        Set<String> remaining = new java.util.HashSet<>(expectedPaths);
+        Set<String> remaining = new HashSet<>(expectedPaths);
 
-        try (ZipInputStream zis = new ZipInputStream(new java.io.ByteArrayInputStream(zipBytes))) {
+        try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(zipBytes))) {
             ZipEntry e;
             while ((e = zis.getNextEntry()) != null) {
                 if (!e.isDirectory() && remaining.contains(e.getName())) {
@@ -215,7 +223,58 @@ public final class RepositoryExportTestUtil {
         Files.createDirectories(file.getParent());
         Files.writeString(file, contents, StandardCharsets.UTF_8);
         repo.workingCopyGitRepo.add().addFilepattern(path).call();
-        de.tum.cit.aet.artemis.programming.service.GitService.commit(repo.workingCopyGitRepo).setMessage("add " + path).call();
+        GitService.commit(repo.workingCopyGitRepo).setMessage("add " + path).call();
+    }
+
+    /**
+     * Writes a set of files into the repo working copy, commits them with the provided message, and pushes to origin.
+     * Returns the created commit for callers that need the hash.
+     */
+    public static RevCommit writeFilesAndPush(LocalRepository repo, Map<String, String> files, String message) throws Exception {
+        for (Map.Entry<String, String> e : files.entrySet()) {
+            var p = repo.workingCopyGitRepoFile.toPath().resolve(e.getKey());
+            Files.createDirectories(p.getParent());
+            Files.writeString(p, e.getValue(), StandardCharsets.UTF_8);
+        }
+        repo.workingCopyGitRepo.add().addFilepattern(".").call();
+        var commit = GitService.commit(repo.workingCopyGitRepo).setMessage(message).call();
+        repo.workingCopyGitRepo.push().setRemote("origin").call();
+        return commit;
+    }
+
+    /**
+     * Creates and returns a working copy repository handle for the template repo of the given exercise.
+     * Assumes base repos have been wired already (use createAndWireBaseRepositories beforehand if needed).
+     */
+    public static LocalRepository createTemplateWorkingCopy(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise)
+            throws GitAPIException, IOException, URISyntaxException {
+        String projectKey = exercise.getProjectKey();
+        String templateSlug = projectKey.toLowerCase() + "-exercise";
+        return localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug);
+    }
+
+    /**
+     * Seeds a student's repository by cloning from the provided template repository's bare content and wires the
+     * participation's repository URI accordingly. Returns the created LocalRepository handle for the student.
+     * The caller is responsible for persisting the updated participation.
+     */
+    public static LocalRepository seedStudentRepoFromTemplateAndWire(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExerciseStudentParticipation participation,
+            LocalRepository templateRepo) throws Exception {
+        String projectKey = participation.getProgrammingExercise().getProjectKey();
+        String studentSlug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
+        LocalRepository studentRepo = seedLocalVcBareFrom(localVCLocalCITestService, projectKey, studentSlug, templateRepo);
+        participation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, studentSlug));
+        return studentRepo;
+    }
+
+    /**
+     * Seeds a student's LocalVC repository with files and pushes, returning the created commit.
+     * The participation's repository URI is wired by seedStudentRepositoryForParticipation.
+     */
+    public static RevCommit seedStudentRepoWithFilesAndPush(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExerciseStudentParticipation participation,
+            Map<String, String> files, String message) throws Exception {
+        LocalRepository repo = seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        return writeFilesAndPush(repo, files, message);
     }
 
     /**

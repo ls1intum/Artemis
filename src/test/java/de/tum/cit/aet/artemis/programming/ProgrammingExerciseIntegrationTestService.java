@@ -8,7 +8,6 @@ import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseEr
 import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
 import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
@@ -41,7 +40,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
@@ -85,6 +83,7 @@ import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -104,6 +103,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
@@ -1746,10 +1746,10 @@ public class ProgrammingExerciseIntegrationTestService {
         FileUtils.writeByteArrayToFile(repo2Dir.resolve("2-Submission2.java").toFile(), exampleProgram.getBytes(StandardCharsets.UTF_8));
 
         // Create mock repositories pointing to these directories
-        de.tum.cit.aet.artemis.programming.domain.Repository mockRepo1 = mock(de.tum.cit.aet.artemis.programming.domain.Repository.class);
+        Repository mockRepo1 = mock(Repository.class);
         when(mockRepo1.getLocalPath()).thenReturn(repo1Dir);
 
-        de.tum.cit.aet.artemis.programming.domain.Repository mockRepo2 = mock(de.tum.cit.aet.artemis.programming.domain.Repository.class);
+        Repository mockRepo2 = mock(Repository.class);
         when(mockRepo2.getLocalPath()).thenReturn(repo2Dir);
 
         // Mock all Git service methods that the plagiarism detection service uses
@@ -1774,7 +1774,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Mock the other required methods
         doNothing().when(gitService).resetToOriginHead(any());
-        doNothing().when(gitService).deleteLocalRepository(any(de.tum.cit.aet.artemis.programming.domain.Repository.class));
+        doNothing().when(gitService).deleteLocalRepository(any(Repository.class));
 
         doReturn(tempDir).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
         doReturn(null).when(uriService).getRepositorySlugFromRepositoryUri(any());
@@ -2109,49 +2109,12 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {
-        BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> redirectFnc = (exercise, files) -> {
-            LocalRepository localRepository = new LocalRepository("main");
-            try {
-                programmingUtilTestService.setupTemplate(files, exercise, localRepository);
-            }
-            catch (Exception e) {
-                fail("Setup template threw unexpected exception: " + e.getMessage());
-            }
-            return localRepository;
-        };
+        // Wire base repos via LocalVC
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries(redirectFnc);
-
-    }
-
-    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
-        BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> redirectFnc = (exercise, files) -> {
-            LocalRepository localRepository = new LocalRepository("main");
-            try {
-                programmingUtilTestService.setupTemplate(files, exercise, localRepository);
-            }
-            catch (Exception e) {
-                fail("Setup template threw unexpected exception: " + e.getMessage());
-            }
-            return localRepository;
-        };
-
-        test_redirectGetTemplateRepositoryFilesWithContent(redirectFnc);
-
-    }
-
-    private void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
-        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-
-        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-
-        request.getWithForwardedUrl("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
-                "/api/programming/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
-    }
-
-    private void test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock)
-            throws Exception {
-        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.jar", "binaryContent")));
+        var templateRepo = RepositoryExportTestUtil.createTemplateWorkingCopy(localVCLocalCITestService, programmingExercise);
+        RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("A.java", "abc", "B.jar", "binaryContent"), "seed template files");
 
         var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
         var queryParams = "?omitBinaries=true";
@@ -2159,56 +2122,73 @@ public class ProgrammingExerciseIntegrationTestService {
                 "/api/programming/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content" + queryParams);
     }
 
-    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
-        testRedirectGetParticipationRepositoryFilesWithContentAtCommit((exercise, files) -> {
-            LocalRepository localRepository = new LocalRepository("main");
-            var studentLogin = testPrefix + "student1";
-            try {
-                localRepository.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-                return programmingUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
-            }
-            catch (Exception e) {
-                fail("Test setup failed", e);
-            }
-            return null;
-        });
+    void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
+        // Wire base repos via LocalVC
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        var templateRepo = RepositoryExportTestUtil.createTemplateWorkingCopy(localVCLocalCITestService, programmingExercise);
+        RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("A.java", "abc", "B.java", "cde", "C.java", "efg"), "seed template files");
+
+        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+        request.getWithForwardedUrl("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
+                "/api/programming/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
     }
 
-    private void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
-            throws Exception {
-        var submission = setupRepositoryMock.apply(programmingExercise, Map.of("A.java", "abc", "B.java", "cde", "C.java", "efg"));
+    // Legacy BiFunction-based helper is no longer needed after LocalVC conversion; removed to simplify the suite.
+
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
+        // Create student participation with LocalVC repo
+        String studentLogin = testPrefix + "student1";
+        var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
+        var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
+        programmingExerciseStudentParticipationRepository.save(studentParticipation);
+
+        // Write files and commit via util (multiple commits acceptable for redirect content check)
+        RepositoryExportTestUtil.writeAndCommit(repo, "README.md", "Initial commit");
+        RepositoryExportTestUtil.writeAndCommit(repo, "A.java", "abc");
+        RepositoryExportTestUtil.writeAndCommit(repo, "B.java", "cde");
+        // Include default seed file expected by endpoint contract
+        RepositoryExportTestUtil.writeAndCommit(repo, "test.txt", "");
+        var commit = GitService.commit(repo.workingCopyGitRepo).setMessage("finalize").call();
+        repo.workingCopyGitRepo.push().setRemote("origin").call();
+
+        // Persist submission with commit hash
+        var submission = new ProgrammingSubmission();
+        submission.setType(SubmissionType.MANUAL);
+        submission.setCommitHash(commit.getId().getName());
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, studentLogin);
+
         String filesWithContentsAsJson = """
                 {
                   "C.java" : "efg",
                   "B.java" : "cde",
                   "A.java" : "abc",
-                  "README.md" : "Initial commit"
+                  "README.md" : "Initial commit",
+                  "test.txt" : "Initial commit"
                 }""";
 
-        request.getWithFileContents("/api/programming/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(),
+        request.getWithFileContents("/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content/" + submission.getCommitHash(),
                 HttpStatus.OK, filesWithContentsAsJson);
     }
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(String testPrefix) throws Exception {
-        testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden((exercise, files) -> {
-            LocalRepository localRepository = new LocalRepository("main");
+        // Seed LocalVC repo for existing participation1 and create a submission for its latest commit
+        var studentLogin = participation1.getParticipantIdentifier();
+        var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
+        programmingExerciseStudentParticipationRepository.save(participation1);
 
-            var studentLogin = testPrefix + "student1";
-            try {
-                localRepository.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-                return programmingUtilTestService.setupSubmission(files, exercise, localRepository, studentLogin);
-            }
-            catch (Exception e) {
-                fail("Test setup failed");
-            }
-            return null;
-        });
-    }
+        // Write files, commit, and push via util
+        var commit = RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("README.md", "Initial commit", "A.java", "abc", "B.java", "cde", "C.java", "efg"),
+                "seed student files");
 
-    private void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(
-            BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock) throws Exception {
-        var submission = setupRepositoryMock.apply(programmingExercise, Map.of("A.java", "abc", "B.java", "cde", "C.java", "efg"));
+        // Persist submission with commit hash
+        var submission = new ProgrammingSubmission();
+        submission.setType(SubmissionType.MANUAL);
+        submission.setCommitHash(commit.getId().getName());
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, studentLogin);
 
+        // Expect forbidden for current user
         request.get("/api/programming/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN,
                 Map.class);
     }
