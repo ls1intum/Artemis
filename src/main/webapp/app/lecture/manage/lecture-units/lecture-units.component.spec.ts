@@ -27,9 +27,7 @@ import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 // Helper type so CI uses the exact method return type
 type StartTxReturn = ReturnType<AttachmentVideoUnitService['startTranscription']>;
@@ -38,7 +36,6 @@ describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
     let wizardUnitComponent: LectureUpdateUnitsComponent;
     let lectureTranscriptionService: LectureTranscriptionService;
-    let accountService: AccountService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -55,7 +52,6 @@ describe('LectureUpdateUnitsComponent', () => {
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(LectureUnitManagementComponent),
                 MockProvider(LectureTranscriptionService),
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -67,7 +63,6 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.lecture = new Lecture();
         wizardUnitComponent.lecture.id = 1;
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
-        accountService = TestBed.inject(AccountService);
     });
 
     afterEach(() => {
