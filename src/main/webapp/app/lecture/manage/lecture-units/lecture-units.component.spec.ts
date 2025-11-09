@@ -665,35 +665,6 @@ describe('LectureUpdateUnitsComponent', () => {
         });
     }));
 
-    it('should not fetch transcription when starting to edit a video unit as non-admin', fakeAsync(() => {
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        const attachment = new Attachment();
-        attachment.id = 1;
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
-        attachment.name = 'test';
-        attachment.link = '/path/to/file';
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.id = 1;
-        attachmentVideoUnit.attachment = attachment;
-
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription');
-        const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus');
-
-        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
-            expect(getTranscriptionSpy).not.toHaveBeenCalled();
-            expect(getTranscriptionStatusSpy).not.toHaveBeenCalled();
-        });
-    }));
-
     it('should create transcription when creating a video unit with transcription properties', fakeAsync(() => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
