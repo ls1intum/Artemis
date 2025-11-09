@@ -106,9 +106,11 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         // write content to the created file
         FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
 
-        // add folder to the repository folder
+        // add folder to the repository folder and ensure it is tracked by adding a placeholder file
         filePath = Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath);
+        var keepFile = Files.createFile(filePath.resolve(".keep")).toFile();
+        FileUtils.write(keepFile, "keep", Charset.defaultCharset());
 
         // commit and push changes so the remote bare repo has the content
         localAuxiliaryRepo.workingCopyGitRepo.add().addFilepattern(".").call();
@@ -284,8 +286,9 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + newLocalFolderName)).doesNotExist();
         FileMove fileMove = new FileMove(currentLocalFolderName, newLocalFolderName);
         request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFolderName)).doesNotExist();
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + newLocalFolderName)).exists();
+        var files = request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).doesNotContainKey(currentLocalFolderName);
+        assertThat(files).containsEntry(newLocalFolderName, FileType.FOLDER);
     }
 
     @Test
@@ -296,7 +299,8 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
         params.add("file", currentLocalFileName);
         request.delete(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.OK, params);
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).doesNotExist();
+        var files = request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).doesNotContainKey(currentLocalFileName);
     }
 
     @Test
@@ -382,9 +386,10 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
         request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
-
-        Path filePath = Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
-        assertThat(filePath).hasContent("updatedFileContent");
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+        var updated = request.get(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        assertThat(new String(updated)).isEqualTo("updatedFileContent");
     }
 
     @Disabled
