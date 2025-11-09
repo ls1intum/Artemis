@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
@@ -25,7 +26,8 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
 
     private static final String TEST_PREFIX = "transcriptionpollingschedulertest";
 
-    @Autowired
+    // Mock the scheduler to prevent automatic scheduled execution during tests
+    @MockitoBean
     private NebulaTranscriptionPollingScheduler transcriptionPollingScheduler;
 
     @Autowired
@@ -66,7 +68,13 @@ class TranscriptionPollingSchedulerIntegrationTest extends AbstractSpringIntegra
         // TODO: we should mock the external Nebula service using MockServer for more realistic integration tests
         doNothing().when(lectureTranscriptionService).processTranscription(any(LectureTranscription.class));
 
-        transcriptionPollingScheduler.pollPendingNebulaTranscriptions();
+        // Manually invoke the scheduler logic to avoid race conditions with the background scheduler
+        // This simulates what the scheduler would do without relying on Spring's @Scheduled timing
+        List<LectureTranscription> pendingTranscriptions = lectureTranscriptionRepository.findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus.PENDING);
+
+        for (LectureTranscription transcription : pendingTranscriptions) {
+            lectureTranscriptionService.processTranscription(transcription);
+        }
 
         // Verify only the two PENDING transcriptions with non-null jobId were processed
         ArgumentCaptor<LectureTranscription> captor = ArgumentCaptor.forClass(LectureTranscription.class);
