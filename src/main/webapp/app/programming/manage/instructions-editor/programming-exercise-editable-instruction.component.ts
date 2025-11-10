@@ -108,6 +108,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     showSaveButton = input(false);
     templateParticipation = input<Participation>();
     forceRender = input<Observable<void>>();
+    consistencyIssues = input<ConsistencyIssue[]>([]);
 
     participationValueChange = output<Participation>();
     hasUnsavedChanges = output<boolean>();

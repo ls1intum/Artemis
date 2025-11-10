@@ -249,7 +249,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    consistencyIssues = input<ConsistencyIssue[]>([]);
 
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
