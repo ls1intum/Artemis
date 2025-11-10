@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -237,6 +238,10 @@ public class ModelingExerciseResource {
 
         final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository
                 .findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(updateModelingExerciseDTO.id());
+
+        ModelingExercise beforeClone = cloneForComparison(modelingExerciseBeforeUpdate);
+        ZonedDateTime previousDueDate = modelingExerciseBeforeUpdate.getDueDate();
+
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
@@ -262,13 +267,13 @@ public class ModelingExerciseResource {
         ModelingExercise updatedModelingExercise = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
 
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
+        exerciseService.updatePointsInRelatedParticipantScores(beforeClone, updatedModelingExercise);
 
-        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedModelingExercise, modelingExerciseBeforeUpdate.getDueDate());
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedModelingExercise, previousDueDate);
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
-        exerciseService.notifyAboutExerciseChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
-        slideApi.ifPresent(api -> api.handleDueDateChange(modelingExerciseBeforeUpdate, updatedModelingExercise));
+        exerciseService.notifyAboutExerciseChanges(beforeClone, updatedModelingExercise, notificationText);
+        slideApi.ifPresent(api -> api.handleDueDateChange(beforeClone, updatedModelingExercise));
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(updatedModelingExercise)));
 
@@ -466,5 +471,27 @@ public class ModelingExerciseResource {
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateModelingExercise(updateModelingExerciseDTO, null);
+    }
+
+    private ModelingExercise cloneForComparison(ModelingExercise source) {
+        ModelingExercise copy = new ModelingExercise();
+        copy.setId(source.getId());
+        copy.setTitle(source.getTitle());
+        copy.setProblemStatement(source.getProblemStatement());
+        copy.setDifficulty(source.getDifficulty());
+        copy.setMaxPoints(source.getMaxPoints());
+        copy.setBonusPoints(source.getBonusPoints());
+        copy.setIncludedInOverallScore(source.getIncludedInOverallScore());
+        copy.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
+        copy.setExerciseGroup(source.getExerciseGroup());
+        copy.setReleaseDate(source.getReleaseDate());
+        copy.setStartDate(source.getStartDate());
+        copy.setDueDate(source.getDueDate());
+        copy.setAssessmentDueDate(source.getAssessmentDueDate());
+        copy.setExampleSolutionModel(source.getExampleSolutionModel());
+        copy.setExampleSolutionExplanation(source.getExampleSolutionExplanation());
+        copy.setDiagramType(source.getDiagramType());
+        copy.setExampleSolutionPublicationDate(source.getExampleSolutionPublicationDate());
+        return copy;
     }
 }
