@@ -23,6 +23,7 @@ public class AtlasAgentToolConfig {
      * @return ToolCallbackProvider that exposes the tools to Spring AI
      */
     @Bean
+    @Lazy
     public ToolCallbackProvider atlasToolCallbackProvider(AtlasAgentToolsService toolsService) {
         return MethodToolCallbackProvider.builder().toolObjects(toolsService).build();
     }

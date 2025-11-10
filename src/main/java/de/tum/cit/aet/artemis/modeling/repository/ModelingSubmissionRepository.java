@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.modeling.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -43,16 +42,6 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
      */
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "results.assessmentNote", "participation.submissions.results" })
     Optional<ModelingSubmission> findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(Long submissionId);
-
-    @Query("""
-            SELECT DISTINCT submission
-            FROM ModelingSubmission submission
-                LEFT JOIN FETCH submission.results r
-                LEFT JOIN FETCH r.feedbacks
-            WHERE submission.participation.exercise.id = :exerciseId
-                AND submission.submitted = TRUE
-            """)
-    List<ModelingSubmission> findSubmittedByExerciseIdWithEagerResultsAndFeedback(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get the modeling submission with the given id from the database. The submission is loaded together with its result, the feedback of the result and the assessor of the

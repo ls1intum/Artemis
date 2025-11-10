@@ -90,7 +90,7 @@ public class LocalVCLocalCITestService {
     private URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCRepoPath;
+    private Path localVCBasePath;
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -183,7 +183,7 @@ public class LocalVCLocalCITestService {
     public LocalRepository createAndConfigureLocalRepository(String projectKey, String repositorySlug) throws GitAPIException, IOException, URISyntaxException {
         Path localRepositoryFolder = createRepositoryFolder(projectKey, repositorySlug);
         LocalRepository repository = new LocalRepository(defaultBranch);
-        repository.configureRepos(localVCRepoPath, "localRepo", localRepositoryFolder);
+        repository.configureRepos(localVCBasePath, "localRepo", localRepositoryFolder);
         return repository;
     }
 
@@ -198,7 +198,7 @@ public class LocalVCLocalCITestService {
      */
     private Path createRepositoryFolder(String projectKey, String repositorySlug) throws IOException {
 
-        Path projectFolder = localVCRepoPath.resolve(projectKey);
+        Path projectFolder = localVCBasePath.resolve(projectKey);
 
         // Create the project folder if it does not exist.
         if (!Files.exists(projectFolder)) {

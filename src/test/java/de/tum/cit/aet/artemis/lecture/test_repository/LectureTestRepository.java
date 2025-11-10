@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -34,28 +35,32 @@ public interface LectureTestRepository extends LectureRepository {
             """)
     Optional<Lecture> findByIdWithAttachmentsAndLectureUnitsAndCompletions(@Param("lectureId") long lectureId);
 
+    @Transactional // ok because of delete
     @Modifying
     @Query("""
             DELETE FROM Attachment a
-             WHERE a.attachmentVideoUnit.lecture.title = :title
+            WHERE a.attachmentVideoUnit.lecture.title = :title
             """)
-    int deleteAttachmentsByLectureTitle(@Param("title") String title);
+    void deleteAttachmentsByLectureTitle(@Param("title") String title);
 
+    @Transactional // ok because of delete
     @Modifying
     @Query("DELETE FROM Attachment a WHERE a.lecture.title = :title")
-    int deleteLectureLevelAttachments(@Param("title") String title);
+    void deleteLectureLevelAttachments(@Param("title") String title);
 
+    @Transactional // ok because of delete
     @Modifying
     @Query("""
             DELETE FROM LectureUnit lu
-             WHERE lu.lecture.title = :title
+            WHERE lu.lecture.title = :title
             """)
-    int deleteLectureUnitsByLectureTitle(@Param("title") String title);
+    void deleteLectureUnitsByLectureTitle(@Param("title") String title);
 
+    @Transactional // ok because of delete
     @Modifying
     @Query("""
             DELETE FROM Lecture l
-             WHERE l.title = :title
+            WHERE l.title = :title
             """)
-    int deleteLecturesByTitle(@Param("title") String title);
+    void deleteLecturesByTitle(@Param("title") String title);
 }

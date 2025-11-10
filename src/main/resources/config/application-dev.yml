@@ -142,6 +142,11 @@ artemis:
                 - ::/0
                 - 0.0.0.0/0
 
+# Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
+sentry:
+  traces-sample-rate: 0.0
+  environment: local
+
 helios:
   status:
     enabled: false
