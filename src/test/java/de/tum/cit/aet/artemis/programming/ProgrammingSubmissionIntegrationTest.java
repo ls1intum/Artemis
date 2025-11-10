@@ -395,8 +395,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void triggerFailedBuild_CIException() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation(TEST_PREFIX + "student2");
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
-        doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
         String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);

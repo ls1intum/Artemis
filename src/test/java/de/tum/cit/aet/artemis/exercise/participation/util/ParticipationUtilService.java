@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.participation.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
@@ -948,15 +947,12 @@ public class ParticipationUtilService {
      * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise. The StudentParticipation's repositoryUri is set to a fake
      * URL.
      *
-     * @param templateRepoName             The expected sourceRepositoryName when calling the copyRepository method of the mocked VersionControlService
-     * @param versionControlService        The mocked VersionControlService
+     * @param templateRepoName             The expected sourceRepositoryName when calling the LocalVC service
+     * @param versionControlService        The VersionControlService (real LocalVC service)
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
      */
     public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService,
             ContinuousIntegrationService continuousIntegrationService) {
-        var someURL = new LocalVCRepositoryUri("http://vcs.fake.fake/git/abc/abcRepoSlug.git");
-        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
-                any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
@@ -964,13 +960,10 @@ public class ParticipationUtilService {
      * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise. The StudentParticipation's repositoryUri is set to a fake
      * URL.
      *
-     * @param versionControlService        The mocked VersionControlService
+     * @param versionControlService        The VersionControlService (real LocalVC service)
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
      */
     public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) {
-        var someURL = new LocalVCRepositoryUri("http://vcs.fake.fake/git/abc/abcRepoSlug.git");
-        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), any(), any(String.class), any(String.class), any(String.class),
-                any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 

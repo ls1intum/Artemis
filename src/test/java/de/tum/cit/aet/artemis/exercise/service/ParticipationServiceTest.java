@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -45,7 +44,6 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -222,8 +220,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     private void setUpProgrammingExerciseMocks() {
-        doReturn(new LocalVCRepositoryUri(localVCBaseUri, "abc", "def")).when(versionControlService).copyRepositoryWithoutHistory(anyString(), anyString(), anyString(),
-                anyString(), anyString(), anyInt());
         doReturn("fake-build-plan-id").when(continuousIntegrationService).copyBuildPlan(any(), anyString(), any(), anyString(), anyString(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(ProgrammingExerciseParticipation.class));
     }

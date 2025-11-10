@@ -10,13 +10,11 @@ import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseEr
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -114,7 +112,6 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -1370,9 +1367,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_updatesTestCaseIds() throws Exception {
-        // TODO: we should not mock this and instead use the real urls for LocalVC
-        doReturn(new LocalVCRepositoryUri(studentRepository1.remoteBareGitRepoFile.toString())).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
-
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         var test1 = tests.getFirst();
@@ -1403,7 +1397,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
         assertThat(savedProgrammingExercise.getProblemStatement()).isEqualTo(newProblemStatement);
 
-        reset(versionControlService);
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
@@ -2160,8 +2153,9 @@ public class ProgrammingExerciseIntegrationTestService {
         RepositoryExportTestUtil.writeAndCommit(repo, "README.md", "Initial commit");
         RepositoryExportTestUtil.writeAndCommit(repo, "A.java", "abc");
         RepositoryExportTestUtil.writeAndCommit(repo, "B.java", "cde");
+        RepositoryExportTestUtil.writeAndCommit(repo, "C.java", "efg");
         // Include default seed file expected by endpoint contract
-        RepositoryExportTestUtil.writeAndCommit(repo, "test.txt", "");
+        RepositoryExportTestUtil.writeAndCommit(repo, "test.txt", "Initial commit");
         var commit = GitService.commit(repo.workingCopyGitRepo).setMessage("finalize").call();
         repo.workingCopyGitRepo.push().setRemote("origin").call();
 
