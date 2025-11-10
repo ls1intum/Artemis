@@ -3,7 +3,7 @@ import 'app/shared/util/string.extension';
 import 'app/shared/util/array.extension';
 import 'app/core/config/dayjs';
 import 'jest-canvas-mock';
-import 'jest-extended';
+import 'jest-extended/all';
 import failOnConsole from 'jest-fail-on-console';
 import { TextDecoder, TextEncoder } from 'util';
 import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
