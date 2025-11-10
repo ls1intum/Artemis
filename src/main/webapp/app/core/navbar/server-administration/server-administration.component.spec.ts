@@ -73,26 +73,26 @@ describe('ServerAdministrationComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.isExamActive()).toBeTrue();
-        expect(component.isExamStarted()).toBeTrue();
-        expect(component.localCIActive()).toBeTrue();
-        expect(component.irisEnabled()).toBeTrue();
-        expect(component.ltiEnabled()).toBeTrue();
-        expect(component.standardizedCompetenciesEnabled()).toBeTrue();
-        expect(component.atlasEnabled()).toBeTrue();
-        expect(component.examEnabled()).toBeTrue();
+        expect(component.isExamActive()).toBeTruthy();
+        expect(component.isExamStarted()).toBeTruthy();
+        expect(component.localCIActive()).toBeTruthy();
+        expect(component.irisEnabled()).toBeTruthy();
+        expect(component.ltiEnabled()).toBeTruthy();
+        expect(component.standardizedCompetenciesEnabled()).toBeTruthy();
+        expect(component.atlasEnabled()).toBeTruthy();
+        expect(component.examEnabled()).toBeTruthy();
     });
 
     it('should have default input values as false', () => {
         fixture.detectChanges();
 
-        expect(component.isExamActive()).toBeFalse();
-        expect(component.isExamStarted()).toBeFalse();
-        expect(component.localCIActive()).toBeFalse();
-        expect(component.irisEnabled()).toBeFalse();
-        expect(component.ltiEnabled()).toBeFalse();
-        expect(component.standardizedCompetenciesEnabled()).toBeFalse();
-        expect(component.atlasEnabled()).toBeFalse();
-        expect(component.examEnabled()).toBeFalse();
+        expect(component.isExamActive()).toBeFalsy();
+        expect(component.isExamStarted()).toBeFalsy();
+        expect(component.localCIActive()).toBeFalsy();
+        expect(component.irisEnabled()).toBeFalsy();
+        expect(component.ltiEnabled()).toBeFalsy();
+        expect(component.standardizedCompetenciesEnabled()).toBeFalsy();
+        expect(component.atlasEnabled()).toBeFalsy();
+        expect(component.examEnabled()).toBeFalsy();
     });
 });
