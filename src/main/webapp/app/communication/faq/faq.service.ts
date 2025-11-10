@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
+import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 
 type EntityResponseType = HttpResponse<Faq>;
@@ -14,8 +14,8 @@ export class FaqService {
 
     private http = inject(HttpClient);
 
-    create(courseId: number, faq: Faq): Observable<EntityResponseType> {
-        const copy = FaqService.convertFaqFromClient(faq);
+    create(courseId: number, createFaqDTO: CreateFaqDTO): Observable<EntityResponseType> {
+        const copy = FaqService.convertCreateFaqFromClient(createFaqDTO);
         return this.http.post<Faq>(`${this.resourceUrl}/${courseId}/faqs`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;
@@ -23,9 +23,9 @@ export class FaqService {
         );
     }
 
-    update(courseId: number, faq: Faq): Observable<EntityResponseType> {
-        const copy = FaqService.convertFaqFromClient(faq);
-        return this.http.put<Faq>(`${this.resourceUrl}/${courseId}/faqs/${faq.id}`, copy, { observe: 'response' }).pipe(
+    update(courseId: number, updateFaqDTO: UpdateFaqDTO): Observable<EntityResponseType> {
+        const copy = FaqService.convertUpdateFaqFromClient(updateFaqDTO);
+        return this.http.put<Faq>(`${this.resourceUrl}/${courseId}/faqs/${updateFaqDTO.id}`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;
             }),
@@ -78,7 +78,7 @@ export class FaqService {
      * Converts a faqs categories into a json string (to send them to the server). Does nothing if no categories exist
      * @param faq the faq
      */
-    static stringifyFaqCategories(faq: Faq) {
+    static stringifyFaqCategories(faq: CreateFaqDTO | UpdateFaqDTO) {
         return faq.categories?.map((category) => JSON.stringify(category) as unknown as FaqCategory);
     }
 
@@ -112,10 +112,20 @@ export class FaqService {
 
     /**
      * Prepare client-faq to be uploaded to the server
-     * @param { Faq } faq - faq that will be modified
+     * @param { CreateFaqDTO } createFaq - faq that will be modified
      */
-    static convertFaqFromClient<F extends Faq>(faq: F): Faq {
-        const copy = Object.assign({}, faq);
+    static convertCreateFaqFromClient<F extends CreateFaqDTO>(createFaq: F): CreateFaqDTO {
+        const copy = Object.assign({}, createFaq);
+        copy.categories = FaqService.stringifyFaqCategories(copy);
+        return copy;
+    }
+
+    /**
+     * Prepare client-faq to be uploaded to the server
+     * @param { UpdateFaqDTO } updateFaq - faq that will be modified
+     */
+    static convertUpdateFaqFromClient<F extends UpdateFaqDTO>(updateFaq: F): UpdateFaqDTO {
+        const copy = Object.assign({}, updateFaq);
         copy.categories = FaqService.stringifyFaqCategories(copy);
         return copy;
     }
