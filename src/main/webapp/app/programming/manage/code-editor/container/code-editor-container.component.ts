@@ -79,8 +79,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input(false);
     isProblemStatementVisible = input<boolean>(true);
-  
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    consistencyIssues = input<ConsistencyIssue[]>([]);
+    course = input<Course | undefined>();
 
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
@@ -88,7 +88,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onFileLoad = output<string>();
     onAcceptSuggestion = output<Feedback>();
     onDiscardSuggestion = output<Feedback>();
-    course = input<Course | undefined>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
