@@ -31,9 +31,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 @Repository
 public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
-    Set<QuizExercise> findWithBatchesByCourseId(long courseId);
-
     @Query("""
             SELECT DISTINCT e
             FROM QuizExercise e
@@ -106,6 +103,17 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
             WHERE exercise.course.id = :courseId
             """)
     Set<QuizExerciseCalendarEventDTO> getQuizExerciseCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Finds a QuizExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or statistics.
+     * This includes: quizQuestions (without specific answer options to avoid polymorphic issues)
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return {@link QuizExercise}
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    Optional<QuizExercise> findForVersioningById(Long exerciseId);
 
     /**
      * Finds a quiz exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.

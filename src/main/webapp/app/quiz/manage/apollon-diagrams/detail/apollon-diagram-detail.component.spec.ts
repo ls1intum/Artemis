@@ -74,7 +74,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('initializeApollonEditor', () => {
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         fixture.componentInstance.initializeApollonEditor(model);
 
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
@@ -82,7 +82,7 @@ describe('ApollonDiagramDetail Component', () => {
 
     it('save', async () => {
         jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         const updateStub = jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
@@ -100,7 +100,7 @@ describe('ApollonDiagramDetail Component', () => {
 
     it('generateExercise', async () => {
         // setup
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         // TODO: we should mock this differently without require
         // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -128,7 +128,7 @@ describe('ApollonDiagramDetail Component', () => {
         const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: {}, relationships: {} } };
 
         // setup
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         fixture.componentInstance.initializeApollonEditor(nonInteractiveModel);
         const errorSpy = jest.spyOn(alertService, 'error');
 
@@ -146,7 +146,7 @@ describe('ApollonDiagramDetail Component', () => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const module = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         jest.spyOn(module, 'convertRenderedSVGToPNG').mockReturnValue(new Blob([]));
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child
 
@@ -186,7 +186,7 @@ describe('ApollonDiagramDetail Component', () => {
         jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
         fixture.detectChanges();
-        expect(fixture.componentInstance.apollonDiagram).toEqual(diagram);
+        expect(fixture.componentInstance.apollonDiagram()).toEqual(diagram);
         fixture.componentInstance.ngOnDestroy();
     });
 
