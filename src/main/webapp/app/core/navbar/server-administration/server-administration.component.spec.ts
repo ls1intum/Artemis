@@ -35,7 +35,7 @@ describe('ServerAdministrationComponent', () => {
     });
 
     it('should create', () => {
-        expect(component).toBeTrue();
+        expect(component).toBeTruthy();
     });
 
     it('should emit collapseNavbarListener when collapseNavbar is called', () => {
