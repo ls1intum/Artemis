@@ -50,6 +50,7 @@ I'll create a competency about [topic] that focuses on [key aspects].
 
 **2. %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:**
 Use this AFTER plan approval or for direct refinements
+**CRITICAL**: When delegating, output ONLY the delegation marker - NO additional text or explanation
 Format:
 ```
 %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
@@ -59,6 +60,7 @@ CONSTRAINTS: [any limitations or preferences]
 CONTEXT: [course context]
 ]
 ```
+**NEVER output both plan description AND delegation marker together - choose one or the other**
 
 **3. [CREATE_APPROVED_COMPETENCY]**
 Use this ONLY when instructor explicitly approves a previewed competency

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,7 +57,7 @@ public class AtlasAgentService {
 
     // Session-scoped cache for competency operation data (single source of truth for refinement and persistence)
     // Stores the actual competency data that was last previewed, enabling deterministic refinements
-    private final Map<String, java.util.List<CompetencyExpertToolsService.CompetencyOperation>> sessionCompetencyDataCache = new ConcurrentHashMap<>();
+    private final Map<String, List<CompetencyExpertToolsService.CompetencyOperation>> sessionCompetencyDataCache = new ConcurrentHashMap<>();
 
     public Boolean getCompetencyModifiedInCurrentRequest() {
         return competencyModifiedInCurrentRequest.get();
@@ -71,7 +72,7 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      * @return the cached competency operations, or null if none exist
      */
-    public java.util.List<CompetencyExpertToolsService.CompetencyOperation> getCachedCompetencyData(String sessionId) {
+    public List<CompetencyExpertToolsService.CompetencyOperation> getCachedCompetencyData(String sessionId) {
         return sessionCompetencyDataCache.get(sessionId);
     }
 
@@ -82,7 +83,7 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      * @param data      the competency operations to cache
      */
-    public void cacheCompetencyData(String sessionId, java.util.List<CompetencyExpertToolsService.CompetencyOperation> data) {
+    public void cacheCompetencyData(String sessionId, List<CompetencyExpertToolsService.CompetencyOperation> data) {
         sessionCompetencyDataCache.put(sessionId, data);
     }
 
@@ -124,15 +125,8 @@ public class AtlasAgentService {
 
             // Determine which agent should handle this message
             AgentType activeAgent = sessionAgentMap.getOrDefault(sessionId, AgentType.MAIN_AGENT);
-
             // Route to the appropriate agent
-            String response;
-            if (activeAgent == AgentType.COMPETENCY_EXPERT) {
-                response = processWithCompetencyExpert(message, courseId, sessionId);
-            }
-            else {
-                response = processWithMainAgent(message, courseId, sessionId);
-            }
+            String response = delegateTheRightAgent(message, courseId, sessionId, activeAgent);
 
             // Check for delegation markers and update session state
             if (response.contains(DELEGATE_TO_COMPETENCY_EXPERT)) {
@@ -140,18 +134,17 @@ public class AtlasAgentService {
                 String brief = extractBriefFromDelegationMarker(response);
 
                 // Delegate to Competency Expert
-                response = processWithCompetencyExpert(brief, courseId, sessionId);
+                response = delegateTheRightAgent(brief, courseId, sessionId, AgentType.COMPETENCY_EXPERT);
 
                 // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
-                // Agent is requesting to save the previewed competency
+                // Agent is requesting to execute the changes
                 // Retrieve the cached competency data
-                java.util.List<CompetencyExpertToolsService.CompetencyOperation> cachedData = getCachedCompetencyData(sessionId);
+                List<CompetencyExpertToolsService.CompetencyOperation> cachedData = getCachedCompetencyData(sessionId);
 
                 if (cachedData != null && !cachedData.isEmpty()) {
-                    // Agent will call saveCompetencies() with the cached data via [CREATE_APPROVED_COMPETENCY] marker
-                    String creationResponse = processWithCompetencyExpert(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
+                    String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId, AgentType.COMPETENCY_EXPERT);
 
                     // Clear the cache after successful save
                     clearCachedCompetencyData(sessionId);
@@ -163,8 +156,7 @@ public class AtlasAgentService {
                     return CompletableFuture.completedFuture(new AgentChatResult(creationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
                 }
                 else {
-                    // No cached data - fallback to agent's own logic
-                    String creationResponse = processWithCompetencyExpert(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
+                    String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId, AgentType.COMPETENCY_EXPERT);
 
                     SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getAndClearSinglePreview();
                     BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getAndClearBatchPreview();
@@ -209,9 +201,15 @@ public class AtlasAgentService {
      * @param sessionId The session ID for chat memory
      * @return The agent's response
      */
-    private String processWithMainAgent(String message, Long courseId, String sessionId) {
-        // Load main agent system prompt
-        String resourcePath = "/prompts/atlas/agent_system_prompt.st";
+    private String delegateTheRightAgent(String message, Long courseId, String sessionId, AgentType agentType) {
+        String resourcePath;
+        if (agentType.equals(AgentType.MAIN_AGENT)) {
+            resourcePath = "/prompts/atlas/agent_system_prompt.st";
+        }
+        else {
+            resourcePath = "/prompts/atlas/competency_expert_system_prompt.st";
+        }
+        // Load agent system prompt
         Map<String, String> variables = Map.of();
         String systemPrompt = templateService.render(resourcePath, variables);
 
@@ -224,41 +222,16 @@ public class AtlasAgentService {
             promptSpec = promptSpec.advisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
         }
 
-        // Add main agent tools
-        if (mainAgentToolCallbackProvider != null) {
-            promptSpec = promptSpec.toolCallbacks(mainAgentToolCallbackProvider);
+        // Add appropriate agent tools based on agent type
+        if (agentType.equals(AgentType.MAIN_AGENT)) {
+            if (mainAgentToolCallbackProvider != null) {
+                promptSpec = promptSpec.toolCallbacks(mainAgentToolCallbackProvider);
+            }
         }
-
-        // Execute the chat
-        return promptSpec.call().content();
-    }
-
-    /**
-     * Process message with the Competency Expert sub-agent.
-     *
-     * @param message   The user's message
-     * @param courseId  The course ID for context
-     * @param sessionId The session ID for chat memory
-     * @return The agent's response
-     */
-    private String processWithCompetencyExpert(String message, Long courseId, String sessionId) {
-        // Load competency expert system prompt
-        String resourcePath = "/prompts/atlas/competency_expert_system_prompt.st";
-        Map<String, String> variables = Map.of();
-        String systemPrompt = templateService.render(resourcePath, variables);
-
-        ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
-
-        ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message)).options(options);
-
-        // Add chat memory advisor
-        if (chatMemory != null) {
-            promptSpec = promptSpec.advisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
-        }
-
-        // Add competency expert tools
-        if (competencyExpertToolCallbackProvider != null) {
-            promptSpec = promptSpec.toolCallbacks(competencyExpertToolCallbackProvider);
+        else {
+            if (competencyExpertToolCallbackProvider != null) {
+                promptSpec = promptSpec.toolCallbacks(competencyExpertToolCallbackProvider);
+            }
         }
 
         // Execute the chat
@@ -334,4 +307,5 @@ public class AtlasAgentService {
             return false;
         }
     }
+
 }

@@ -250,8 +250,8 @@ public class CompetencyExpertToolsService {
         // Store preview data in ThreadLocal for deterministic extraction by AtlasAgentService
         if (competencies.size() == 1) {
             // Single preview
-            CompetencyOperation firstComp = competencies.get(0);
-            CompetencyPreviewDTO firstPreview = previews.get(0);
+            CompetencyOperation firstComp = competencies.getFirst();
+            CompetencyPreviewDTO firstPreview = previews.getFirst();
             SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), viewOnly);
             currentSinglePreview.set(singlePreview);
         }
@@ -364,7 +364,7 @@ public class CompetencyExpertToolsService {
             }
         }
 
-        // Store preview data in ThreadLocal so UI can display cards for what was just saved
+        // Store preview data in ThreadLocal so client can display cards for what was just saved
         // This ensures the cards appear in the response showing what was created/updated
         List<CompetencyPreviewDTO> previews = competencies.stream().map(comp -> {
             String iconName = getTaxonomyIcon(comp.getTaxonomy());
@@ -373,8 +373,8 @@ public class CompetencyExpertToolsService {
 
         if (competencies.size() == 1) {
             // Single save - store as single preview
-            CompetencyOperation firstComp = competencies.get(0);
-            CompetencyPreviewDTO firstPreview = previews.get(0);
+            CompetencyOperation firstComp = competencies.getFirst();
+            CompetencyPreviewDTO firstPreview = previews.getFirst();
             SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), false);
             currentSinglePreview.set(singlePreview);
         }
@@ -426,8 +426,7 @@ public class CompetencyExpertToolsService {
      * @return The stored preview, or null if none exists
      */
     public static SingleCompetencyPreviewResponseDTO getAndClearSinglePreview() {
-        SingleCompetencyPreviewResponseDTO preview = currentSinglePreview.get();
-        return preview;
+        return currentSinglePreview.get();
     }
 
     /**
@@ -437,8 +436,7 @@ public class CompetencyExpertToolsService {
      * @return The stored batch preview, or null if none exists
      */
     public static BatchCompetencyPreviewResponseDTO getAndClearBatchPreview() {
-        BatchCompetencyPreviewResponseDTO preview = currentBatchPreview.get();
-        return preview;
+        return currentBatchPreview.get();
     }
 
     /**
