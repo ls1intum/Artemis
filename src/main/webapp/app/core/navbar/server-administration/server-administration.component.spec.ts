@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
+import { provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ServerAdministrationComponent } from './server-administration.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -21,13 +21,8 @@ describe('ServerAdministrationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [
-                ServerAdministrationComponent,
-                TranslateModule.forRoot(),
-                MockComponent(FeatureOverlayComponent),
-                RouterTestingModule.withRoutes([{ path: '**', component: MockEmptyComponent }]),
-            ],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            imports: [ServerAdministrationComponent, TranslateModule.forRoot(), MockComponent(FeatureOverlayComponent)],
+            providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([{ path: '**', component: MockEmptyComponent }])],
         })
             .overrideComponent(ServerAdministrationComponent, {
                 remove: { imports: [HasAnyAuthorityDirective] },
