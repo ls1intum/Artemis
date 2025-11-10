@@ -1,7 +1,7 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "types": ["jest", "node"],
+        "types": ["jest", "jest-extended", "node"],
         "allowJs": true,
         "outDir": "build/www/app",
         "baseUrl": ".",
@@ -13,7 +13,7 @@
         "emitDecoratorMetadata": false,
         "isolatedModules": true
     },
-    "files": ["src/test/javascript/spec/jest-test-setup.ts"],
+    "files": ["src/test/javascript/spec/jest-test-setup.ts", "src/test/javascript/spec/jest-extended.d.ts"],
     "include": ["src/test/javascript", "src/main/webapp/app/**/*.spec.ts"],
     "exclude": ["node_modules"]
 }
