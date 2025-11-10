@@ -61,7 +61,7 @@ describe('AiQuizGenerationModalComponent', () => {
             },
         };
         comp.generate(mockForm as any);
-        expect(service.generate).toHaveBeenCalledExacltyOnceWith(42, expect.any(Object));
+        expect(service.generate).toHaveBeenCalledExactlyOnceWith(42, expect.any(Object));
         expect(comp.generated().length).toBe(1);
         expect(comp.warnings()).toContain('warn');
     });
