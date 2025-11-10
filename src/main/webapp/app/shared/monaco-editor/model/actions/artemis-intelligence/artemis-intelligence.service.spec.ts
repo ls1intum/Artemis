@@ -37,10 +37,6 @@ describe('ArtemisIntelligenceService', () => {
         addLineWidget: jest.fn(),
     } as unknown as MonacoEditorComponent;
 
-    const monacoEditorComponent = {
-        addLineWidget: jest.fn(),
-    } as unknown as MonacoEditorComponent;
-
     const mockWebsocketService = {
         subscribe: jest.fn(),
         unsubscribe: jest.fn(),
