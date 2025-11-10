@@ -43,7 +43,8 @@
     }
 
     @if (!!videoUrl()) {
-        @if (playlistUrl() && hasTranscript()) {
+        @if (isLoading()) {
+        } @else if (playlistUrl() && !isLoading() && hasTranscript()) {
             <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
         } @else {
             <div class="video-player-container">

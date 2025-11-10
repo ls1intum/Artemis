@@ -48,7 +48,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
+    readonly isLoading = signal<boolean>(false);
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
+
+    private readonly videoUrlAllowList = [RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$')];
 
     /**
      * Return the URL of the video source
@@ -57,30 +60,25 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     /**
      * Computes the video URL based on the video source.
-     * Returns the source if it's a valid URL or can be parsed as a video URL.
+     * Returns undefined if the source is invalid or doesn't match the allow list.
      */
     private computeVideoUrl(): string | undefined {
         const source = this.lectureUnit().videoSource;
-
         if (!source) {
             return undefined;
         }
-
-        // Try to parse with urlParser (for known video platforms like YouTube, Vimeo, etc.)
+        // Check if it matches the allow list (e.g., TUM Live URLs)
+        if (this.videoUrlAllowList.some((r) => r.test(source))) {
+            return source;
+        }
+        // Check if urlParser can parse it (e.g., YouTube, Vimeo, etc.)
         if (urlParser) {
             const parsed = urlParser.parse(source);
             if (parsed) {
                 return source;
             }
         }
-
-        // Check if it's a valid URL (for direct URLs like .m3u8, TUM Live, etc.)
-        try {
-            new URL(source);
-            return source;
-        } catch {
-            return undefined;
-        }
+        return undefined;
     }
 
     override toggleCollapse(isCollapsed: boolean): void {
@@ -92,10 +90,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // reset stale state
             this.transcriptSegments.set([]);
             this.playlistUrl.set(undefined);
+            this.isLoading.set(true);
 
             const src = this.lectureUnit().videoSource;
 
             if (!src) {
+                this.isLoading.set(false);
                 return;
             }
 
@@ -106,10 +106,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                         this.playlistUrl.set(resolvedUrl);
                         this.fetchTranscript();
                     }
+                    this.isLoading.set(false);
                 },
                 error: () => {
                     // Failed to resolve playlist URL, will fall back to iframe
                     this.playlistUrl.set(undefined);
+                    this.isLoading.set(false);
                 },
             });
         }
