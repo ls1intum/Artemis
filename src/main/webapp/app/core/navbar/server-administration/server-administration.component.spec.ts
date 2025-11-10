@@ -11,7 +11,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import type {} from 'jest-extended';
 
 @Component({ template: '' })
 class MockEmptyComponent {}
