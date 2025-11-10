@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.athena;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.zip.ZipFile;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -12,13 +12,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.util.LinkedMultiValueMap;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
@@ -30,6 +34,9 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -56,19 +63,39 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExerciseRepository.save(programmingExercise);
 
-        // Add Git repo for export
-        programmingExerciseUtilService.createGitRepository();
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
 
-        // Get exports from endpoint
+        // Seed a LocalVC bare repository with content
+        var sourceRepo = new LocalRepository(defaultBranch);
+        sourceRepo.configureRepos(localVCBasePath, "athenaInternalSrcLocalRepo", "athenaInternalSrcOriginRepo");
+
+        // Ensure tests repository URI exists on the exercise
+        var testsSlug = programmingExercise.getProjectKey().toLowerCase() + "-tests";
+        var testsUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), testsSlug);
+        programmingExercise.setTestRepositoryUri(testsUri.toString());
+        programmingExerciseRepository.save(programmingExercise);
+
+        var sourceUri = new LocalVCRepositoryUri(localVCBaseUri, sourceRepo.remoteBareGitRepoFile.toPath());
+
+        // Copy source repo contents to target (template, solution, tests)
+        var templateUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri());
+        gitService.copyBareRepositoryWithoutHistory(sourceUri, templateUri, defaultBranch);
+
+        var solutionUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri());
+        gitService.copyBareRepositoryWithoutHistory(sourceUri, solutionUri, defaultBranch);
+
+        var testsRepoUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
+        gitService.copyBareRepositoryWithoutHistory(sourceUri, testsRepoUri, defaultBranch);
+
+        // Get repository contents as map from endpoint
         var authHeaders = new HttpHeaders();
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
-        var repoZip = request.getFile("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, new LinkedMultiValueMap<>(),
-                authHeaders, null);
 
-        // Check that ZIP contains file
-        try (var zipFile = new ZipFile(repoZip)) {
-            assertThat(zipFile.size()).as("zip file contains files").isGreaterThan(0);
-        }
+        String json = request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, String.class, authHeaders);
+        Map<String, String> repoFiles = request.getObjectMapper().readValue(json, new TypeReference<Map<String, String>>() {
+        });
+        assertThat(repoFiles).as("export returns exactly one file: README.md").isNotNull().hasSize(1).containsOnlyKeys("README.md").containsEntry("README.md", "Initial commit");
     }
 
     @ParameterizedTest
