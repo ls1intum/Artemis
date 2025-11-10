@@ -1,19 +1,4 @@
-import {
-    AfterViewInit,
-    Component,
-    HostListener,
-    OnChanges,
-    OnDestroy,
-    OnInit,
-    SimpleChanges,
-    ViewChild,
-    ViewEncapsulation,
-    computed,
-    inject,
-    input,
-    output,
-    signal,
-} from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -22,7 +7,6 @@ import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-ed
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { hasExerciseChanged } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -55,7 +39,7 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
     encapsulation: ViewEncapsulation.None,
     imports: [MarkdownEditorMonacoComponent, NgClass, FaIconComponent, TranslateDirective, NgbTooltip, ProgrammingExerciseInstructionAnalysisComponent, ArtemisTranslatePipe],
 })
-export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
+export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnDestroy, OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
@@ -131,15 +115,25 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
+    constructor() {
+        let oldExercise: ProgrammingExercise | undefined = undefined;
+
+        effect(() => {
+            if (oldExercise && oldExercise.problemStatement !== this.programmingExercise().problemStatement) {
+                this.unsavedChanges = true;
+            }
+
+            if (!oldExercise || oldExercise.id !== this.programmingExercise().id) {
+                this.setupTestCaseSubscription();
+            }
+
+            oldExercise = this.programmingExercise();
+        });
+    }
+
     ngOnInit() {
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
         this.exerciseId = Number(this.activatedRoute.snapshot.paramMap.get('exerciseId'));
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (hasExerciseChanged(changes)) {
-            this.setupTestCaseSubscription();
-        }
     }
 
     ngOnDestroy(): void {
