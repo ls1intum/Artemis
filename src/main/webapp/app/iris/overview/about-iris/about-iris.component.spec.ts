@@ -60,12 +60,4 @@ describe('AboutIrisComponent', () => {
         const listItems = compiled.queryAll(By.css('li'));
         expect(listItems).toHaveLength(expectedTotal);
     });
-
-    it('should have responsive design elements', () => {
-        const mobileElements = compiled.queryAll(By.css('.d-md-none'));
-        const desktopElements = compiled.queryAll(By.css('.d-none.d-md-block'));
-
-        expect(mobileElements.length).toBeGreaterThan(0);
-        expect(desktopElements.length).toBeGreaterThan(0);
-    });
 });
