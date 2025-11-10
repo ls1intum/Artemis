@@ -14,6 +14,7 @@ describe('AboutIrisComponent', () => {
     let compiled: DebugElement;
 
     beforeEach(() => {
+        jest.spyOn(console, 'warn').mockImplementation();
         TestBed.configureTestingModule({
             imports: [MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             declarations: [AboutIrisComponent],
