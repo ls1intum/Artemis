@@ -136,17 +136,32 @@
                         </button>
                     }
                     @if (exercise.isAtLeastInstructor && hyperionEnabled) {
-                        <button (click)="checkConsistencies(exercise)" class="btn btn-primary me-2" [disabled]="isCheckingConsistency()">
-                            @if (isCheckingConsistency()) {
-                                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
-                            } @else {
-                                <fa-icon [icon]="faCheckDouble" class="me-2" />
-                            }
-                            <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
-                        </button>
-                    }
+                        <div ngbDropdown class="btn-group me-2" [autoClose]="false">
+                            <!-- Main action: Check Consistency -->
+                            <button class="btn btn-primary" (click)="checkConsistencies(exercise)" [disabled]="isCheckingConsistency()">
+                                @if (isCheckingConsistency()) {
+                                    <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
+                                } @else {
+                                    <fa-icon [icon]="faCheckDouble" class="text-white me-2" />
+                                }
+                                <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
+                            </button>
 
-                    <jhi-dynamic-dropdown class="ms-2" [issues]="consistencyIssues()" />
+                            <!-- Small arrow part: opens dropdown -->
+                            <button class="btn btn-primary dropdown-toggle dropdown-toggle-split" ngbDropdownToggle [disabled]="!consistencyIssues().length">
+                                <span class="visually-hidden">Toggle consistency issues dropdown</span>
+                            </button>
+
+                            <!-- Dropdown menu with issues -->
+                            <div ngbDropdownMenu>
+                                @for (issue of consistencyIssues(); track issue) {
+                                    <button ngbDropdownItem (click)="onIssueSelected(issue)">
+                                        {{ getIssueLabel(issue) }}
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
             <div editorToolbar class="ms-auto d-flex align-items-center">

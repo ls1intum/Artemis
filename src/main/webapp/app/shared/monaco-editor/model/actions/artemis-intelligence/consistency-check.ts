@@ -80,18 +80,7 @@ export function issuesForSelectedFile(
                 continue;
             }
 
-            // Problem statement filePath is either problem_statement.md or empty
-            const isProblemStatement = loc.filePath === 'problem_statement.md' || loc.filePath === '';
-            // Remove the first part of e.g. template_repository/src/TEST/BubbleSort.java
-            // Remove only known repo prefixes (template_repository/..., solution_repository/..., tests_repository/...)
-            const issueFile = (() => {
-                if (isProblemStatement) {
-                    return 'problem_statement.md';
-                }
-                const parts = (loc.filePath ?? '').split('/');
-                const knownPrefixes = ['template_repository', 'solution_repository', 'tests_repository'];
-                return knownPrefixes.includes(parts[0]) ? parts.slice(1).join('/') : loc.filePath;
-            })();
+            const issueFile = getRepoPath(loc);
 
             if (issueFile !== selectedFile) {
                 continue;
@@ -111,6 +100,19 @@ export function issuesForSelectedFile(
     }
 
     return inlineIssues;
+}
+
+export function getRepoPath(loc: ArtifactLocation) {
+    // Problem statement filePath is either problem_statement.md or empty
+    const isProblemStatement = loc.filePath === 'problem_statement.md' || loc.filePath === '';
+    // Remove the first part of e.g. template_repository/src/TEST/BubbleSort.java
+    // Remove only known repo prefixes (template_repository/..., solution_repository/..., tests_repository/...)
+    if (isProblemStatement) {
+        return 'problem_statement.md';
+    }
+    const parts = (loc.filePath ?? '').split('/');
+    const knownPrefixes = ['template_repository', 'solution_repository', 'tests_repository'];
+    return knownPrefixes.includes(parts[0]) ? parts.slice(1).join('/') : loc.filePath;
 }
 
 /**

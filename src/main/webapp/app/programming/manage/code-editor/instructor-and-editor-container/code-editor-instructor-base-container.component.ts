@@ -303,21 +303,21 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Select the template participation repository and navigate to it
      */
     selectTemplateParticipation() {
-        this.router.navigate(['../..', RepositoryType.TEMPLATE, this.exercise.templateParticipation!.id], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.TEMPLATE, this.exercise.templateParticipation!.id], { relativeTo: this.route });
     }
 
     /**
      * Select the solution participation repository and navigate to it
      */
     selectSolutionParticipation() {
-        this.router.navigate(['../..', RepositoryType.SOLUTION, this.exercise.solutionParticipation!.id], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.SOLUTION, this.exercise.solutionParticipation!.id], { relativeTo: this.route });
     }
 
     /**
      * Select the assignment participation repository and navigate to it
      */
     selectAssignmentParticipation() {
-        this.router.navigate(['../..', RepositoryType.USER, this.exercise.studentParticipations![0].id], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.USER, this.exercise.studentParticipations![0].id], { relativeTo: this.route });
     }
 
     /**
@@ -325,14 +325,14 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     selectTestRepository() {
         // as test repositories do not have any participation nor repository Id associated, we use a 'test' placeholder
-        this.router.navigate(['../..', RepositoryType.TESTS, 'test'], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.TESTS, 'test'], { relativeTo: this.route });
     }
 
     /**
      * Select the auxiliary repository and navigate to it
      */
     selectAuxiliaryRepository(repositoryId: number) {
-        this.router.navigate(['../..', RepositoryType.AUXILIARY, repositoryId], { relativeTo: this.route });
+        return this.router.navigate(['../..', RepositoryType.AUXILIARY, repositoryId], { relativeTo: this.route });
     }
 
     /**

@@ -25,7 +25,8 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { DynamicDropdownComponent } from 'app/programming/manage/code-editor/Dropdown/dynamic-dropdown.component';
+import { formatArtifactType, getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -48,15 +49,98 @@ import { DynamicDropdownComponent } from 'app/programming/manage/code-editor/Dro
         ProgrammingExerciseInstructionComponent,
         NgbTooltip,
         ArtemisTranslatePipe,
-        DynamicDropdownComponent,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
+    //TODO: Remove
+    mockIssues: ConsistencyIssue[] = [
+        {
+            severity: ConsistencyIssue.SeverityEnum.High,
+            category: ConsistencyIssue.CategoryEnum.MethodReturnTypeMismatch,
+            description: 'Description 1.',
+            suggestedFix: 'Fix 1',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.TemplateRepository,
+                    filePath: 'template_repository/src/TESTI/BubbleSort.java',
+                    startLine: 1,
+                    endLine: 1,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    filePath: 'solution_repository/src/TESTI/BubbleSort.java',
+                    startLine: 1,
+                    endLine: 1,
+                },
+            ],
+        },
+        {
+            severity: ConsistencyIssue.SeverityEnum.Medium,
+            category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+            description: 'Description 2',
+            suggestedFix: 'Fix 2',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    filePath: 'solution_repository/src/TESTI/BubbleSort.java',
+                    startLine: 1,
+                    endLine: 2,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.TemplateRepository,
+                    filePath: 'template_repository/src/TESTI/BubbleSort.java',
+                    startLine: 1,
+                    endLine: 2,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'tests_repository/test/TESTI/MethodTest.java',
+                    startLine: 1,
+                    endLine: 2,
+                },
+            ],
+        },
+        {
+            severity: ConsistencyIssue.SeverityEnum.Low,
+            category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
+            description: 'Description 2',
+            suggestedFix: 'Fix 2',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.ProblemStatement,
+                    filePath: 'problem_statement.md',
+                    startLine: 1,
+                    endLine: 3,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'tests_repository/test/TESTI/MethodTest.java',
+                    startLine: 1,
+                    endLine: 3,
+                },
+            ],
+        },
+        {
+            severity: ConsistencyIssue.SeverityEnum.Low,
+            category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
+            description: 'Description 2',
+            suggestedFix: 'Fix 2',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'tests_repository/test/TESTI/MethodTest.java',
+                    startLine: 1,
+                    endLine: 3,
+                },
+            ],
+        },
+    ];
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
+    readonly consistencyIssues = signal<ConsistencyIssue[]>(this.mockIssues);
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
@@ -132,5 +216,30 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 this.alertService.error(this.translateService.instant('artemisApp.consistencyCheck.checkFailedAlert'));
             },
         });
+    }
+
+    async onIssueSelected(issue: ConsistencyIssue) {
+        if (issue.relatedLocations[0].type === 'PROBLEM_STATEMENT') {
+            this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
+            return;
+        }
+
+        if (issue.relatedLocations[0].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'TEMPLATE') {
+            await this.selectTemplateParticipation();
+        } else if (issue.relatedLocations[0].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'SOLUTION') {
+            await this.selectSolutionParticipation();
+        } else if (issue.relatedLocations[0].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'TESTS') {
+            await this.selectTestRepository();
+        }
+
+        // We need to wait for the editor to be fully loaded,
+        // else the file content does not show
+        setTimeout(() => {
+            this.codeEditorContainer.selectedFile = getRepoPath(issue.relatedLocations[0]);
+        }, 0);
+    }
+
+    getIssueLabel(issue: ConsistencyIssue) {
+        return formatArtifactType(issue.relatedLocations[0].type);
     }
 }
