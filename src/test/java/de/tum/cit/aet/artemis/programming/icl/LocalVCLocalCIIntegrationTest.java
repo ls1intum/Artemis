@@ -47,6 +47,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -1250,7 +1251,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             localCITriggerService.triggerBuild(studentParticipation, false); // Does not throw.
 
             assertNetworkName(studentParticipation, null);
-            assertThat(programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig).network()).isEqualTo(null);
+            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+            assertThat(runConfig).isNotNull();
+            assertThat(runConfig.network()).isEqualTo(null);
         }
 
         @Test
@@ -1262,13 +1265,15 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             // Does not throw.
 
             assertNetworkName(studentParticipation, "none");
-            assertThat(programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig).network()).isEqualTo("none");
+            DockerRunConfig runConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+            assertThat(runConfig).isNotNull();
+            assertThat(runConfig.network()).isEqualTo("none");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testDockerInvalidNetworkThrows() {
-            var buildConfig = createBuildConfig("invalid");
+            var _ = createBuildConfig("invalid");
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
             assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(ResponseStatusException.class)
