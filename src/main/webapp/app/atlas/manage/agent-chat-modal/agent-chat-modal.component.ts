@@ -107,6 +107,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         this.isAgentTyping.set(true);
 
+        // Send message - server will use courseId as conversationId for memory
         this.agentChatService.sendMessage(message, this.courseId).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
