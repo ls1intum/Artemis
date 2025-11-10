@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 
-public class AiQuizGenerationRequestDTOTest {
+class AiQuizGenerationRequestDTOTest {
 
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 

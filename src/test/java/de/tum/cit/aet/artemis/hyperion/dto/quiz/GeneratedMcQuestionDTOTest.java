@@ -10,7 +10,7 @@ import jakarta.validation.Validator;
 
 import org.junit.jupiter.api.Test;
 
-public class GeneratedMcQuestionDTOTest {
+class GeneratedMcQuestionDTOTest {
 
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 

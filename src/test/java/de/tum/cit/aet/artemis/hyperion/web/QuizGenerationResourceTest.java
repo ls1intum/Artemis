@@ -16,9 +16,9 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -32,7 +32,7 @@ public class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     private CourseTestRepository courseRepository;
 
-    @MockBean
+    @MockitoBean
     private AiQuizGenerationService aiQuizGenerationService;
 
     @Autowired

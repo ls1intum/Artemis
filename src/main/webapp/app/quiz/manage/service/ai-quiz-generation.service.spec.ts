@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { AiDifficultyLevel, AiLanguage, AiQuizGenerationService, AiRequestedSubtype } from './ai-quiz-generation.service';
 
 describe('AiQuizGenerationService', () => {
@@ -8,7 +8,8 @@ describe('AiQuizGenerationService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [AiQuizGenerationService, provideHttpClientTesting()],
+            imports: [HttpClientTestingModule],
+            providers: [AiQuizGenerationService],
         });
         service = TestBed.inject(AiQuizGenerationService);
         httpMock = TestBed.inject(HttpTestingController);
