@@ -562,7 +562,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalQuizExercise);
         boolean questionsChanged = applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
         questionsChanged = applyQuizQuestionsFromDTOAndCheckIfChanged(quizExerciseDTO, originalQuizExercise) || questionsChanged;
-        validateQuizExerciseFiles(originalQuizExercise, files, false);
+        validateQuizExerciseFiles(originalQuizExercise, files);
         Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
         Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));
         for (var question : originalQuizExercise.getQuizQuestions()) {
@@ -662,7 +662,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     public void handleDndQuizFileCreation(QuizExercise quizExercise, List<MultipartFile> files) throws IOException {
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
-        validateQuizExerciseFiles(quizExercise, nullsafeFiles, true);
+        validateQuizExerciseFiles(quizExercise, nullsafeFiles);
         Map<String, MultipartFile> fileMap = nullsafeFiles.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
 
         for (var question : quizExercise.getQuizQuestions()) {
@@ -735,7 +735,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     public void handleDndQuizFileUpdates(QuizExercise updatedExercise, QuizExercise originalExercise, List<MultipartFile> files) throws IOException {
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
-        validateQuizExerciseFiles(updatedExercise, nullsafeFiles, false);
+        validateQuizExerciseFiles(updatedExercise, nullsafeFiles);
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalExercise);
         Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
 
@@ -807,9 +807,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @param quizExercise  the quiz exercise to validate
      * @param providedFiles the provided files to validate
-     * @param isCreate      On create all files get validated, on update only changed files get validated
      */
-    public void validateQuizExerciseFiles(QuizExercise quizExercise, @NotNull List<MultipartFile> providedFiles, boolean isCreate) {
+    public void validateQuizExerciseFiles(QuizExercise quizExercise, @NotNull List<MultipartFile> providedFiles) {
         long fileCount = providedFiles.size();
 
         Map<FilePathType, Set<String>> exerciseFilePathsMap = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
