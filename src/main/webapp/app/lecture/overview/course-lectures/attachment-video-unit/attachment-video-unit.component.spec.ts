@@ -180,7 +180,7 @@ describe('AttachmentVideoUnitComponent', () => {
         parseSpy.mockRestore();
     });
 
-    it('videoUrl: returns source even when parser returns undefined but URL is valid', () => {
+    it('videoUrl: returns undefined when parser returns undefined and URL is not in allow list', () => {
         const src = 'https://example.com/not-a-video';
         // @ts-ignore - default export object has parse()
         const parseSpy = jest.spyOn(urlParser, 'parse').mockReturnValue(undefined as any);
@@ -188,8 +188,8 @@ describe('AttachmentVideoUnitComponent', () => {
         component.lectureUnit().videoSource = src;
         fixture.detectChanges();
 
-        // The URL is valid, so it should be returned even if parser doesn't recognize it
-        expect(component.videoUrl()).toBe(src);
+        // The URL is not in allow list and parser doesn't recognize it, so it should return undefined
+        expect(component.videoUrl()).toBeUndefined();
         parseSpy.mockRestore();
     });
     it('toggleCollapse(false): resets state, resolves playlist, fetches transcript (happy path)', fakeAsync(() => {
@@ -210,12 +210,17 @@ describe('AttachmentVideoUnitComponent', () => {
 
         fixture.detectChanges();
 
+        // Initial state: isLoading should be false
+        expect(component.isLoading()).toBeFalse();
+
         // Act
         component.toggleCollapse(false);
 
         // state reset happens synchronously
         expect(component.transcriptSegments()).toEqual([]);
         expect(component.playlistUrl()).toBeUndefined();
+        // isLoading should be true immediately after toggleCollapse
+        expect(component.isLoading()).toBeTrue();
 
         // Mock the HTTP request for getPlaylistUrl
         const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === src);
@@ -228,6 +233,8 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.playlistUrl()).toBe(playlist);
         expect(component.transcriptSegments()).toHaveLength(1);
         expect(component.hasTranscript()).toBeTrue();
+        // isLoading should be false after request completes
+        expect(component.isLoading()).toBeFalse();
     }));
 
     it('fetchTranscript: handles server error and keeps segments empty', fakeAsync(() => {
@@ -254,7 +261,13 @@ describe('AttachmentVideoUnitComponent', () => {
 
         const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription');
 
+        // Initial state: isLoading should be false
+        expect(component.isLoading()).toBeFalse();
+
         component.toggleCollapse(false);
+
+        // isLoading should be true immediately after toggleCollapse
+        expect(component.isLoading()).toBeTrue();
 
         // Mock the HTTP request to return an error
         const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist');
@@ -268,6 +281,8 @@ describe('AttachmentVideoUnitComponent', () => {
 
         expect(component.playlistUrl()).toBeUndefined();
         expect(component.hasTranscript()).toBeFalse();
+        // isLoading should be false after error
+        expect(component.isLoading()).toBeFalse();
     }));
 
     it('toggleCollapse(false): .m3u8 URL is resolved through API like any other URL', fakeAsync(() => {
@@ -283,8 +298,14 @@ describe('AttachmentVideoUnitComponent', () => {
 
         fixture.detectChanges();
 
+        // Initial state: isLoading should be false
+        expect(component.isLoading()).toBeFalse();
+
         // Act
         component.toggleCollapse(false);
+
+        // isLoading should be true immediately after toggleCollapse
+        expect(component.isLoading()).toBeTrue();
 
         // Mock the HTTP request (even .m3u8 URLs go through the API)
         const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === m3u8Url);
@@ -298,6 +319,8 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.transcriptSegments()).toHaveLength(1);
         expect(component.hasTranscript()).toBeTrue();
         expect(component.transcriptSegments()[0].text).toBe('Direct HLS transcript');
+        // isLoading should be false after request completes
+        expect(component.isLoading()).toBeFalse();
     }));
 
     it('toggleCollapse(false): non-TUM Live URL does not trigger transcript fetch when resolver returns null', fakeAsync(() => {
@@ -308,8 +331,14 @@ describe('AttachmentVideoUnitComponent', () => {
 
         fixture.detectChanges();
 
+        // Initial state: isLoading should be false
+        expect(component.isLoading()).toBeFalse();
+
         // Act
         component.toggleCollapse(false);
+
+        // isLoading should be true immediately after toggleCollapse
+        expect(component.isLoading()).toBeTrue();
 
         // Mock the HTTP request to return null (no playlist found)
         const req = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist' && request.params.get('url') === nonTumLiveUrl);
@@ -324,7 +353,23 @@ describe('AttachmentVideoUnitComponent', () => {
         // Playlist should remain undefined
         expect(component.playlistUrl()).toBeUndefined();
         expect(component.hasTranscript()).toBeFalse();
+        // isLoading should be false after request completes (even if no playlist found)
+        expect(component.isLoading()).toBeFalse();
     }));
+
+    it('toggleCollapse(false): sets isLoading to false immediately when no video source', () => {
+        component.lectureUnit().videoSource = undefined;
+        fixture.detectChanges();
+
+        // Initial state: isLoading should be false
+        expect(component.isLoading()).toBeFalse();
+
+        // Act
+        component.toggleCollapse(false);
+
+        // isLoading should be set to false immediately when no video source
+        expect(component.isLoading()).toBeFalse();
+    });
 
     it('hasAttachment / hasVideo and getFileName() when no attachment', () => {
         // initial has attachment
