@@ -3,11 +3,9 @@ package de.tum.cit.aet.artemis.core.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
@@ -26,7 +24,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
-import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -309,8 +306,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var modelingExercises = exerciseRepository.findAllExercisesByCourseId(course1.getId()).stream().filter(exercise -> exercise instanceof ModelingExercise).toList();
         createPlagiarismData(userLogin, programmingExercise, modelingExercises);
         // Mock student repo
-        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
         return course1;
     }
 
@@ -359,8 +354,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         feedback.setDetailText("detailed feedback");
         feedback.setText("feedback");
         participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
-        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean(), anyBoolean());
         return exam;
     }
 

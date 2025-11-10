@@ -155,6 +155,11 @@ public class LocalVCService extends AbstractVersionControlService {
 
         Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);
 
+        if (Files.exists(remoteDirPath)) {
+            log.debug("Local git repo {} at {} already exists – skipping creation", repositorySlug, remoteDirPath);
+            return;
+        }
+
         try {
             Files.createDirectories(remoteDirPath);
 

@@ -356,18 +356,6 @@ public class ProgrammingExerciseTestService {
         examExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
-        exerciseRepo.configureRepos(localVCBasePath, "exerciseLocalRepo", "exerciseOriginRepo");
-        testRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-        solutionRepo.configureRepos(localVCBasePath, "solutionLocalRepo", "solutionOriginRepo");
-        auxRepo.configureRepos(localVCBasePath, "auxLocalRepo", "auxOriginRepo");
-        sourceExerciseRepo.configureRepos(localVCBasePath, "sourceExerciseLocalRepo", "sourceExerciseOriginRepo");
-        sourceTestRepo.configureRepos(localVCBasePath, "sourceTestLocalRepo", "sourceTestOriginRepo");
-        sourceSolutionRepo.configureRepos(localVCBasePath, "sourceSolutionLocalRepo", "sourceSolutionOriginRepo");
-        sourceAuxRepo.configureRepos(localVCBasePath, "sourceAuxLocalRepo", "sourceAuxOriginRepo");
-        studentRepo.configureRepos(localVCBasePath, "studentRepo", "studentOriginRepo");
-        studentTeamRepo.configureRepos(localVCBasePath, "studentTeamRepo", "studentTeamOriginRepo");
-
-        // TODO: we should not mock repositories any more now that everything works with LocalVC
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         setupRepositoryMocksParticipant(exercise, userPrefix + STUDENT_LOGIN, studentRepo);
         setupRepositoryMocksParticipant(exercise, userPrefix + TEAM_SHORT_NAME, studentTeamRepo);
@@ -406,14 +394,10 @@ public class ProgrammingExerciseTestService {
         }
     }
 
-    // TODO: we should not mock repositories any more now that everything works with LocalVC
-    @Deprecated
     public void setupRepositoryMocks(ProgrammingExercise exercise) throws Exception {
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 
-    // TODO: we should not mock repositories any more now that everything works with LocalVC
-    @Deprecated
     public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository,
             LocalRepository auxRepository) throws Exception {
         final var projectKey = exercise.getProjectKey();
@@ -426,6 +410,17 @@ public class ProgrammingExerciseTestService {
 
     private String convertToLocalVcUriString(LocalRepository localRepository) {
         return LocalRepositoryUriUtil.convertToLocalVcUriString(localRepository.remoteBareGitRepoFile, localVCBasePath);
+    }
+
+    private void configureLocalRepositoryForSlug(LocalRepository repository, String projectKey, String repositorySlug) throws Exception {
+        var normalizedProjectKey = projectKey.toUpperCase();
+        Path projectFolder = localVCBasePath.resolve(normalizedProjectKey);
+        Files.createDirectories(projectFolder);
+        Path remotePath = projectFolder.resolve(repositorySlug + ".git");
+        if (Files.exists(remotePath)) {
+            FileUtils.deleteDirectory(remotePath.toFile());
+        }
+        repository.configureRepos(localVCBasePath, repositorySlug + "-local", remotePath);
     }
 
     /**
@@ -442,19 +437,18 @@ public class ProgrammingExerciseTestService {
      * @param auxRepoName        the name of the auxiliary repository
      * @throws Exception in case any repository uri is malformed or the GitService fails
      */
-    // TODO: we should not mock repositories any more now that everything works with LocalVC
-    @Deprecated
     public void setupRepositoryMocks(String projectKey, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository, String solutionRepoName,
             LocalRepository testRepository, String testRepoName, LocalRepository auxRepository, String auxRepoName) throws Exception {
+        var normalizedProjectKey = projectKey.toUpperCase();
+        configureLocalRepositoryForSlug(exerciseRepository, normalizedProjectKey, exerciseRepoName);
+        configureLocalRepositoryForSlug(testRepository, normalizedProjectKey, testRepoName);
+        configureLocalRepositoryForSlug(solutionRepository, normalizedProjectKey, solutionRepoName);
+        configureLocalRepositoryForSlug(auxRepository, normalizedProjectKey, auxRepoName);
+
         var exerciseRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(exerciseRepository));
         var testRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(testRepository));
         var solutionRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(solutionRepository));
         var auxRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(auxRepository));
-
-        doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, exerciseRepoName);
-        doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, testRepoName);
-        doReturn(solutionRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, solutionRepoName);
-        doReturn(auxRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, auxRepoName);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(exerciseRepoTestUrl), eq(true), anyBoolean());
@@ -465,22 +459,6 @@ public class ProgrammingExerciseTestService {
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(auxRepoTestUrl), eq(true), anyBoolean());
 
-        mockDelegate.mockGetRepositorySlugFromRepositoryUri(exerciseRepoName, exerciseRepoTestUrl);
-        mockDelegate.mockGetRepositorySlugFromRepositoryUri(testRepoName, testRepoTestUrl);
-        mockDelegate.mockGetRepositorySlugFromRepositoryUri(solutionRepoName, solutionRepoTestUrl);
-        mockDelegate.mockGetRepositorySlugFromRepositoryUri(auxRepoName, auxRepoTestUrl);
-
-        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, exerciseRepoTestUrl);
-        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, testRepoTestUrl);
-        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, solutionRepoTestUrl);
-        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, auxRepoTestUrl);
-
-        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + exerciseRepoName, exerciseRepoTestUrl);
-        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + testRepoName, testRepoTestUrl);
-        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + solutionRepoName, solutionRepoTestUrl);
-        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + auxRepoName, auxRepoTestUrl);
-
-        mockDelegate.mockGetProjectKeyFromAnyUrl(projectKey);
     }
 
     /**
@@ -493,13 +471,11 @@ public class ProgrammingExerciseTestService {
     public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo, boolean practiceMode) throws Exception {
         final var projectKey = exercise.getProjectKey();
         String participantRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + participantName;
+        var normalizedProjectKey = projectKey.toUpperCase();
+        configureLocalRepositoryForSlug(studentRepo, normalizedProjectKey, participantRepoName);
         var participantRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(studentRepo));
-        doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(participantRepoTestUrl), eq(true), anyBoolean());
-        mockDelegate.mockGetRepositorySlugFromRepositoryUri(participantRepoName, participantRepoTestUrl);
-        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, participantRepoTestUrl);
-        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + participantRepoName, participantRepoTestUrl);
     }
 
     // TEST
@@ -1282,7 +1258,10 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockGetCiProjectMissing(exerciseToBeImported);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
-        doReturn(false).when(versionControlService).checkIfProjectExists(any(), any());
+        Path targetProjectFolder = localVCBasePath.resolve(exerciseToBeImported.getProjectKey());
+        if (Files.exists(targetProjectFolder)) {
+            FileUtils.deleteDirectory(targetProjectFolder.toFile());
+        }
         // Import the exam
         targetExam.setChannelName("testchannel-imported");
         final Exam received = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", targetExam, Exam.class, HttpStatus.CREATED);
