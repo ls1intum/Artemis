@@ -7,7 +7,7 @@ import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/mana
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -25,7 +25,7 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { formatArtifactType, getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { getRepoPath, humanizeCategory, severityToString } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 
 @Component({
@@ -151,8 +151,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
+    faArrowLeft = faArrowLeft;
+    faArrowRight = faArrowRight;
     irisSettings?: IrisSettings;
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    selectedIssue: ConsistencyIssue | undefined = undefined;
+    locationIndex: number = 0;
 
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -218,28 +222,36 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
-    async onIssueSelected(issue: ConsistencyIssue) {
-        if (issue.relatedLocations[0].type === 'PROBLEM_STATEMENT') {
+    getIssueLabel(issue: ConsistencyIssue) {
+        return severityToString(issue.severity) + ': ' + humanizeCategory(issue.category);
+    }
+
+    async onIssueNavigate(issue: ConsistencyIssue, deltaIndex: number, event: Event) {
+        if (issue === this.selectedIssue) {
+            // Stay in bounds of the array
+            this.locationIndex = (this.locationIndex + this.selectedIssue.relatedLocations.length + deltaIndex) % this.selectedIssue.relatedLocations.length;
+        } else {
+            this.selectedIssue = issue;
+            this.locationIndex = 0;
+        }
+
+        if (issue.relatedLocations[this.locationIndex].type === 'PROBLEM_STATEMENT') {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
             return;
         }
 
-        if (issue.relatedLocations[0].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'TEMPLATE') {
+        if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'TEMPLATE') {
             await this.selectTemplateParticipation();
-        } else if (issue.relatedLocations[0].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'SOLUTION') {
+        } else if (issue.relatedLocations[this.locationIndex].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'SOLUTION') {
             await this.selectSolutionParticipation();
-        } else if (issue.relatedLocations[0].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'TESTS') {
+        } else if (issue.relatedLocations[this.locationIndex].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'TESTS') {
             await this.selectTestRepository();
         }
 
         // We need to wait for the editor to be fully loaded,
         // else the file content does not show
         setTimeout(() => {
-            this.codeEditorContainer.selectedFile = getRepoPath(issue.relatedLocations[0]);
+            this.codeEditorContainer.selectedFile = getRepoPath(issue.relatedLocations[this.locationIndex]);
         }, 0);
-    }
-
-    getIssueLabel(issue: ConsistencyIssue) {
-        return formatArtifactType(issue.relatedLocations[0].type);
     }
 }

@@ -153,11 +153,31 @@
                             </button>
 
                             <!-- Dropdown menu with issues -->
-                            <div ngbDropdownMenu>
+                            <div ngbDropdownMenu class="px-2 py-1">
                                 @for (issue of consistencyIssues(); track issue) {
-                                    <button ngbDropdownItem (click)="onIssueSelected(issue)">
-                                        {{ getIssueLabel(issue) }}
-                                    </button>
+                                    <div class="dropdown-item d-flex align-items-center justify-content-between" style="gap: 0.5rem">
+                                        <!-- Left side: issue label -->
+                                        <span>{{ getIssueLabel(issue) }}</span>
+
+                                        <!-- Right side: two arrow buttons -->
+                                        <div class="d-flex align-items-center" style="gap: 0.25rem">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" (click)="onIssueNavigate(issue, -1, $event)">
+                                                <fa-icon [icon]="faArrowLeft" class="opacity-75" />
+                                            </button>
+
+                                            <span class="text-muted small">
+                                                @if (selectedIssue === issue) {
+                                                    {{ locationIndex + 1 }}/{{ issue.relatedLocations.length }}
+                                                } @else {
+                                                    ?/{{ issue.relatedLocations.length }}
+                                                }
+                                            </span>
+
+                                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" (click)="onIssueNavigate(issue, 1, $event)">
+                                                <fa-icon [icon]="faArrowRight" class="opacity-75" />
+                                            </button>
+                                        </div>
+                                    </div>
                                 }
                             </div>
                         </div>
