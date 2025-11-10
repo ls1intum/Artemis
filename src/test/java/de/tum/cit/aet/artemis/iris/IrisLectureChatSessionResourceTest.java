@@ -1,8 +1,14 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,9 +18,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.web.IrisLectureChatSessionResource;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
@@ -177,4 +185,64 @@ class IrisLectureChatSessionResourceTest extends AbstractIrisIntegrationTest {
         var sessionFromDb = irisLectureChatSessionRepository.findById(response.getId()).orElseThrow();
         assertThat(sessionFromDb.getLectureId()).isEqualTo(lecture.getId());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAllSessions_returnsOnlyUsersSessionsOrderedByCreationDateDesc() throws Exception {
+        // Given: 3 sessions for student1
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        IrisLectureChatSession s1 = new IrisLectureChatSession(lecture, student1);
+        s1.setCreationDate(ZonedDateTime.now().minusMinutes(2));
+        s1 = irisLectureChatSessionRepository.save(s1);
+
+        IrisLectureChatSession s2 = new IrisLectureChatSession(lecture, student1);
+        s2.setCreationDate(ZonedDateTime.now().minusMinutes(1));
+        s2 = irisLectureChatSessionRepository.save(s2);
+
+        IrisLectureChatSession s3 = new IrisLectureChatSession(lecture, student1); // newest
+        s3 = irisLectureChatSessionRepository.save(s3);
+
+        // …and a session of a different user (should not be included anyway)
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        irisLectureChatSessionRepository.save(new IrisLectureChatSession(lecture, student2));
+
+        // When
+        List<IrisLectureChatSession> list = request.getList("/api/iris/lecture-chat/" + lecture.getId() + "/sessions", HttpStatus.OK, IrisLectureChatSession.class);
+
+        // Then
+        assertThat(list).hasSize(3);
+        assertThat(list).extracting(IrisLectureChatSession::getId).containsExactly(s3.getId(), s2.getId(), s1.getId()); // DESC by creationDate
+    }
+
+    @Test
+    void testCheckWhetherLectureIsVisibleToStudentsElseThrow_throwsWhenNotVisible() throws Exception {
+        Method m = IrisLectureChatSessionResource.class.getDeclaredMethod("checkWhetherLectureIsVisibleToStudentsElseThrow", Lecture.class);
+        m.setAccessible(true);
+
+        Lecture lectureMock = mock(Lecture.class);
+        when(lectureMock.isVisibleToStudents()).thenReturn(false);
+
+        assertThatThrownBy(() -> {
+            try {
+                m.invoke(null, lectureMock);
+            }
+            catch (InvocationTargetException ite) {
+                throw ite.getTargetException();
+            }
+        }).isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void testCheckWhetherLectureIsVisibleToStudentsElseThrow_noopWhenVisible() throws Exception {
+        Method m = IrisLectureChatSessionResource.class.getDeclaredMethod("checkWhetherLectureIsVisibleToStudentsElseThrow", Lecture.class);
+        m.setAccessible(true);
+
+        Lecture lectureMock = mock(Lecture.class);
+        when(lectureMock.isVisibleToStudents()).thenReturn(true);
+
+        // Should not throw
+        m.invoke(null, lectureMock);
+    }
+
 }
