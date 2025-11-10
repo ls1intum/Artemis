@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -1695,8 +1695,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 ],
             };
 
-            // @ts-expect-error accessing private for test
-            const mc = comp['mapDtoToMcQuestion'](dto);
+            const mc = (comp as any).mapDtoToMcQuestion(dto);
 
             expect(mc.title).toBe('Generated');
             expect(mc.text).toBe('Pick one');
