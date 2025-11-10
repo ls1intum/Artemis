@@ -3,6 +3,7 @@ import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-c
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AiQuizGenerationModalComponent } from 'app/quiz/manage/ai-quiz-generation-modal/ai-quiz-generation-modal.component';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -47,7 +48,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { AiQuizGenerationModalComponent } from 'app/quiz/manage/ai-quiz-generation-modal/ai-quiz-generation-modal.component';
 import { AiDifficultyLevel, AiGeneratedQuestionDTO, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -102,7 +102,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     exerciseGroup?: ExerciseGroup;
     courseRepository: CourseManagementService;
     notificationText?: string;
-
+    difficultyToSlider = AiQuizGenerationModalComponent.prototype.difficultyToSlider;
+    sliderToDifficulty = AiQuizGenerationModalComponent.prototype.sliderToDifficulty;
     isImport = false;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/

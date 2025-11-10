@@ -86,6 +86,9 @@ export class AiQuizGenerationModalComponent {
 
     useInEditor(): void {
         const picked = this.generated().filter((_, i) => this.selected[i]);
+        if (!picked.length) {
+            return;
+        }
         this.activeModal.close({
             questions: picked,
             requestedDifficulty: this.formData.difficultyLevel,

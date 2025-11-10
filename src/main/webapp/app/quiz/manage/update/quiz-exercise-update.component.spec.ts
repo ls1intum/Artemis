@@ -10,6 +10,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
@@ -30,6 +31,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { advanceTo } from 'jest-date-mock';
+import { AiDifficultyLevel, AiGeneratedQuestionDTO, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { of, throwError } from 'rxjs';
@@ -41,6 +43,10 @@ import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+
+class MockProfileService {
+    isModuleFeatureActive = jest.fn().mockReturnValue(true);
+}
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -80,7 +86,10 @@ describe('QuizExerciseUpdateComponent', () => {
 
     resetQuizExercise();
 
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) }, queryParams: of({}) } as any as ActivatedRoute;
+    const route = {
+        snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) },
+        queryParams: of({}),
+    } as any as ActivatedRoute;
 
     const createValidMCQuestion = () => {
         const question = new MultipleChoiceQuestion();
@@ -141,7 +150,15 @@ describe('QuizExerciseUpdateComponent', () => {
         const shortAnswerMapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
         question.correctMappings = [shortAnswerMapping1, shortAnswerMapping2];
         question.points = 10;
-        return { question, shortAnswerMapping1, shortAnswerMapping2, spot1, spot2, shortAnswerSolution1, shortAnswerSolution2 };
+        return {
+            question,
+            shortAnswerMapping1,
+            shortAnswerMapping2,
+            spot1,
+            spot2,
+            shortAnswerSolution1,
+            shortAnswerSolution2,
+        };
     };
 
     const configureTestBed = (testRoute?: ActivatedRoute) => {
@@ -158,6 +175,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
                 MockProvider(CalendarService),
+                { provide: ProfileService, useValue: new MockProfileService() },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -218,7 +236,14 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('with exam id', () => {
             const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                snapshot: {
+                    paramMap: convertToParamMap({
+                        courseId: course.id,
+                        exerciseId: quizExercise.id,
+                        examId: 1,
+                        exerciseGroupId: 2,
+                    }),
+                },
                 queryParams: of({}),
             } as any as ActivatedRoute;
 
@@ -240,7 +265,16 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('with exam id but without exercise id', () => {
-            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) }, queryParams: of({}) } as any as ActivatedRoute;
+            const testRoute = {
+                snapshot: {
+                    paramMap: convertToParamMap({
+                        courseId: course.id,
+                        examId: 1,
+                        exerciseGroupId: 2,
+                    }),
+                },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -259,7 +293,10 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('without exam id and exercise id', () => {
-            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, queryParams: of({}) } as any as ActivatedRoute;
+            const testRoute = {
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -279,7 +316,14 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('with exercise id and exam with test runs', () => {
             const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                snapshot: {
+                    paramMap: convertToParamMap({
+                        courseId: course.id,
+                        exerciseId: quizExercise.id,
+                        examId: 1,
+                        exerciseGroupId: 2,
+                    }),
+                },
                 queryParams: of({}),
             } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
@@ -390,7 +434,14 @@ describe('QuizExerciseUpdateComponent', () => {
 
         describe('set isEditable', () => {
             const testRoute = {
-                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                snapshot: {
+                    paramMap: convertToParamMap({
+                        courseId: course.id,
+                        exerciseId: quizExercise.id,
+                        examId: 1,
+                        exerciseGroupId: 2,
+                    }),
+                },
                 queryParams: of({}),
             } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
@@ -1543,6 +1594,114 @@ describe('QuizExerciseUpdateComponent', () => {
                     checkForInvalidFlaggedQuestionAndReason();
                 });
             });
+        });
+    });
+    describe('Hyperion AI quiz generation integration', () => {
+        let modalService: NgbModal;
+        let profileService: ProfileService;
+
+        beforeEach(waitForAsync(() => configureTestBed()));
+        // 2) create component + wire services
+        beforeEach(() => {
+            configureFixtureAndServices();
+            modalService = TestBed.inject(NgbModal);
+            profileService = TestBed.inject(ProfileService);
+
+            // make sure the component looks like a normal editable quiz
+            comp.quizExercise = new QuizExercise({ id: 123 } as Course, undefined);
+            comp.quizExercise.isEditable = true;
+            comp.courseId = 123;
+        });
+
+        it('courseIdForGeneration should prefer route courseId, then quizExercise.course, then exam course', () => {
+            // route id already set in your test setup to 123
+            expect(comp.courseIdForGeneration).toBe(123);
+
+            // remove explicit courseId so it falls back
+            comp.courseId = undefined;
+            comp.quizExercise.course = { id: 77 } as Course;
+            expect(comp.courseIdForGeneration).toBe(77);
+
+            // remove course, use exam
+            comp.quizExercise.course = undefined;
+            comp.quizExercise.exerciseGroup = { exam: { course: { id: 55 } as Course } } as any;
+            expect(comp.courseIdForGeneration).toBe(55);
+        });
+
+        it('hyperionEnabled should delegate to ProfileService', () => {
+            (profileService.isModuleFeatureActive as jest.Mock).mockReturnValueOnce(true);
+            expect(comp.hyperionEnabled).toBeTrue();
+
+            (profileService.isModuleFeatureActive as jest.Mock).mockReturnValueOnce(false);
+            expect(comp.hyperionEnabled).toBeFalse();
+        });
+
+        it('generateQuizWithHyperion should open modal and add returned questions', async () => {
+            const mockModalRef: Partial<NgbModalRef> = {
+                componentInstance: {},
+                result: Promise.resolve({
+                    requestedDifficulty: AiDifficultyLevel.HARD,
+                    requestedSubtype: AiRequestedSubtype.SINGLE_CORRECT,
+                    questions: [
+                        {
+                            title: 'AI Q1',
+                            text: 'text',
+                            subtype: AiRequestedSubtype.SINGLE_CORRECT,
+                            tags: [],
+                            competencyIds: [],
+                            options: [{ text: 'a', correct: true }],
+                        } as unknown as AiGeneratedQuestionDTO,
+                    ],
+                }),
+            };
+            const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+
+            comp.generateQuizWithHyperion();
+
+            // wait for modal result to resolve
+            await mockModalRef.result;
+
+            expect(openSpy).toHaveBeenCalled();
+            expect(comp.quizExercise.quizQuestions).toBeDefined();
+            expect(comp.quizExercise.quizQuestions!.length).toBeGreaterThan(0);
+
+            const added = comp.quizExercise.quizQuestions![0] as MultipleChoiceQuestion;
+            expect(added.title).toBe('AI Q1');
+            expect(added.answerOptions?.length).toBe(1);
+            // difficulty was applied
+            expect(comp.quizExercise.difficulty).toBeDefined();
+        });
+
+        it('applyAIDifficultyToForm should map AI difficulty to exercise difficulty', () => {
+            comp.quizExercise = new QuizExercise({ id: 1 } as Course, undefined);
+            expect(comp.difficultyToSlider(AiDifficultyLevel.EASY)).toBe(0);
+            expect(comp.difficultyToSlider(AiDifficultyLevel.MEDIUM)).toBe(1);
+            expect(comp.difficultyToSlider(AiDifficultyLevel.HARD)).toBe(2);
+        });
+
+        it('mapDtoToMcQuestion should create a proper MultipleChoiceQuestion', () => {
+            const dto: AiGeneratedQuestionDTO = {
+                title: 'Generated',
+                text: 'Pick one',
+                explanation: 'because',
+                hint: 'hint',
+                difficulty: 3,
+                tags: [],
+                subtype: AiRequestedSubtype.SINGLE_CORRECT,
+                competencyIds: [],
+                options: [
+                    { text: 'A', correct: true, feedback: 'ok' },
+                    { text: 'B', correct: false, feedback: 'no' },
+                ],
+            };
+
+            // @ts-expect-error accessing private for test
+            const mc = comp['mapDtoToMcQuestion'](dto);
+
+            expect(mc.title).toBe('Generated');
+            expect(mc.text).toBe('Pick one');
+            expect(mc.answerOptions?.length).toBe(2);
+            expect(mc.singleChoice).toBeTrue();
         });
     });
 });
