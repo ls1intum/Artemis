@@ -9,6 +9,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,6 +72,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
@@ -104,6 +106,9 @@ public class ParticipationUtilService {
 
     @Autowired
     private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
+
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -156,6 +161,9 @@ public class ParticipationUtilService {
     @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
 
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCBasePath;
+
     @Autowired
     private ResultTestRepository resultRepository;
 
@@ -182,6 +190,7 @@ public class ParticipationUtilService {
             participation.setInitializationState(InitializationState.INITIALIZED);
             var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
             participation.setRepositoryUri(localVcRepoUri.toString());
+            ensureLocalVcRepositoryExists(localVcRepoUri);
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -363,6 +372,7 @@ public class ParticipationUtilService {
         final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
+        ensureLocalVcRepositoryExists(localVcRepoUri);
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -387,6 +397,7 @@ public class ParticipationUtilService {
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setRepositoryUri(localRepoPath.toString());
+        ensureLocalVcRepositoryExists(localRepoPath);
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();

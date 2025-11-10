@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -19,6 +20,7 @@ import java.util.zip.ZipInputStream;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -240,6 +242,20 @@ public final class RepositoryExportTestUtil {
         var commit = GitService.commit(repo.workingCopyGitRepo).setMessage(message).call();
         repo.workingCopyGitRepo.push().setRemote("origin").call();
         return commit;
+    }
+
+    /**
+     * Returns the latest commit hash reachable from HEAD in the given working copy repository.
+     *
+     * @param repo LocalRepository whose working copy should be inspected
+     * @return ObjectId of the latest commit
+     */
+    public static ObjectId getLatestCommit(LocalRepository repo) throws GitAPIException {
+        Iterator<RevCommit> commits = repo.workingCopyGitRepo.log().setMaxCount(1).call().iterator();
+        if (!commits.hasNext()) {
+            throw new IllegalStateException("Repository has no commits yet");
+        }
+        return commits.next().getId();
     }
 
     /**
