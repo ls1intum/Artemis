@@ -714,6 +714,7 @@
                 "useCustomNetwork": {
                     "title": "Use custom network",
                     "description": "Enable this option to use your own docker network, or no network at all.",
+                    "defaultOption": "Default (Bridge)",
                     "noneOption": "None (no network)",
                     "disableNetworkAccessWarning": "If internet access is disabled, all dependencies must be included in the Docker image or cached within it. Otherwise, the build will fail."
                 },

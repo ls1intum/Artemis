@@ -715,6 +715,7 @@
                 "useCustomNetwork": {
                     "title": "Eigenes Dockernetzwerk verwenden",
                     "description": "Aktiviere diese Option, wenn du ein eigenes Docker Netzwerk, oder gar keins, verwenden willst.",
+                    "defaultOption": "Default (Bridge)",
                     "noneOption": "None (kein Netzwerk)",
                     "disableNetworkAccessWarning": "Wenn der Internetzugang deaktiviert ist, müssen alle Abhängigkeiten im Docker-Image enthalten oder darin zwischengespeichert sein. Andernfalls schlägt der Build fehl."
                 },

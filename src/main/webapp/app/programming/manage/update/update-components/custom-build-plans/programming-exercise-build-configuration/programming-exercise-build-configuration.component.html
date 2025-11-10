@@ -76,7 +76,7 @@
                     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.description" />
                 </label>
                 <select id="networkMode" class="form-select mb-2" [ngModel]="network() ?? ''" (ngModelChange)="onNetworkChange($event)">
-                    <option value="">Default (Docker)</option>
+                    <option value="" jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.defaultOption"></option>
                     @if (allowedCustomNetworks?.length) {
                         @for (customNetwork of allowedCustomNetworks; track customNetwork) {
                             @if (customNetwork === 'none') {
