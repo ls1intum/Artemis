@@ -5,7 +5,7 @@ import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { QuizBatch, QuizExercise, QuizMode, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -248,11 +248,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }
 
-        if (this.isImport || this.isExamMode) {
+        if (this.isImport) {
             resetQuizForImport(this.quizExercise);
         }
 
         if (this.isExamMode) {
+            resetQuizForExam(this.quizExercise);
             this.quizExercise.course = undefined;
             if (!this.quizExercise.exerciseGroup || this.isImport) {
                 this.quizExercise.exerciseGroup = this.exerciseGroup;
@@ -430,6 +431,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return numberOfCorrectMappings * numberOfDragItems * numberOfDropLocations > 2197;
         });
     }
+
     checkItemCountShortAnswer(shortAnswerQuestions: ShortAnswerQuestion[]): boolean {
         if (!shortAnswerQuestions) return false;
         return shortAnswerQuestions?.some((shortAnswerQuestion) => {
@@ -478,6 +480,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.save();
         }
     }
+
     /**
      * Save the quiz to the server and invoke callback functions depending on result
      */
@@ -496,35 +499,29 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.isSaving = true;
         this.quizQuestionListEditComponent().parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
-            if (this.isImport) {
-                this.quizExerciseService.import(this.quizExercise, files).subscribe({
-                    next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                        if (quizExerciseResponse.body) {
-                            this.onSaveSuccess(quizExerciseResponse.body, true);
-                        } else {
-                            this.onSaveError();
-                        }
-                    },
-                    error: (error) => this.onSaveError(error),
-                });
-            } else {
-                const requestOptions = {} as any;
-                if (this.notificationText) {
-                    requestOptions.notificationText = this.notificationText;
-                }
-                this.quizExerciseService.update(this.quizExercise.id, this.quizExercise, files, requestOptions).subscribe({
-                    next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                        this.notificationText = undefined;
-                        if (quizExerciseResponse.body) {
-                            this.onSaveSuccess(quizExerciseResponse.body, false);
-                        } else {
-                            this.onSaveError();
-                        }
-                    },
-                    error: (error) => this.onSaveError(error),
-                });
+            const requestOptions = {} as any;
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
             }
+            this.quizExerciseService.update(this.quizExercise.id, this.quizExercise, files, requestOptions).subscribe({
+                next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
+                    this.notificationText = undefined;
+                    if (quizExerciseResponse.body) {
+                        this.onSaveSuccess(quizExerciseResponse.body, false);
+                    } else {
+                        this.onSaveError();
+                    }
+                },
+                error: (error) => this.onSaveError(error),
+            });
         } else {
+            if (this.isImport) {
+                if (this.exerciseGroup) {
+                    this.quizExercise.exerciseGroup = this.exerciseGroup;
+                } else {
+                    this.quizExercise.course = this.course;
+                }
+            }
             this.quizExerciseService.create(this.quizExercise, files).subscribe({
                 next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                     if (quizExerciseResponse.body) {

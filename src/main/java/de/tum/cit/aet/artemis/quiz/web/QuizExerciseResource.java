@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  * REST controller for managing QuizExercise actions.
  * CRUD operations have been moved to specialized resource files:
  * - Creation/Update: QuizExerciseCreationUpdateResource
- * - Deletion/Import: QuizExerciseImportDeletionResource
+ * - Deletion/Import: QuizExerciseDeletionResource
  * - Retrieval: QuizExerciseRetrievalResource
  * - Evaluation: QuizExerciseEvaluationResource
  * - Batches: QuizExerciseBatchResource

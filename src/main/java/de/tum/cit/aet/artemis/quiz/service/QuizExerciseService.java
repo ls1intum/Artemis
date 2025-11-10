@@ -668,17 +668,58 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    saveDndQuestionBackground(dragAndDropQuestion, fileMap, null);
+                    handleDndBackgroundForCreation(dragAndDropQuestion, fileMap);
                 }
                 handleDndQuizDragItemsCreation(dragAndDropQuestion, fileMap);
             }
         }
     }
 
+    /**
+     * Handles the background file for a DragAndDropQuestion during creation. If the file already exists in the file system, it copies it to a new location.
+     * This logic is necessary to handle the case where a DragAndDropQuestion is created based on an existing one (e.g. via import).
+     *
+     * @param question the DragAndDropQuestion
+     * @param fileMap  the map of provided files
+     * @throws IOException if file operations fail
+     */
+    public void handleDndBackgroundForCreation(DragAndDropQuestion question, Map<String, MultipartFile> fileMap) throws IOException {
+        String path = question.getBackgroundFilePath();
+        FilePathType type = FilePathType.DRAG_AND_DROP_BACKGROUND;
+        Path basePath = FilePathConverter.getDragAndDropBackgroundFilePath();
+
+        if (Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type))) {
+            Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type);
+            Path newPath = FileUtil.copyExistingFileToTarget(oldPath, basePath, type);
+            question.setBackgroundFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, null).toString());
+        }
+        else {
+            saveDndQuestionBackground(question, fileMap, null);
+        }
+    }
+
+    /**
+     * Handles the drag items for a DragAndDropQuestion during creation. If the files already exist in the file system, it copies them to new locations.
+     *
+     * @param dragAndDropQuestion the DragAndDropQuestion
+     * @param fileMap             the map of provided files
+     * @throws IOException if file operations fail
+     */
     private void handleDndQuizDragItemsCreation(DragAndDropQuestion dragAndDropQuestion, Map<String, MultipartFile> fileMap) throws IOException {
+        FilePathType type = FilePathType.DRAG_ITEM;
+        Path basePath = FilePathConverter.getDragItemFilePath();
+
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
             if (dragItem.getPictureFilePath() != null) {
-                saveDndDragItemPicture(dragItem, fileMap, null);
+                String path = dragItem.getPictureFilePath();
+                if (Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type))) {
+                    Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type);
+                    Path newPath = FileUtil.copyExistingFileToTarget(oldPath, basePath, type);
+                    dragItem.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, null).toString());
+                }
+                else {
+                    saveDndDragItemPicture(dragItem, fileMap, null);
+                }
             }
         }
     }
@@ -772,28 +813,28 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         long fileCount = providedFiles.size();
 
         Map<FilePathType, Set<String>> exerciseFilePathsMap = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
-
         Map<FilePathType, Set<String>> newFilePathsMap = new HashMap<>();
 
-        if (isCreate) {
-            newFilePathsMap = new HashMap<>(exerciseFilePathsMap);
-        }
-        else {
-            for (Map.Entry<FilePathType, Set<String>> entry : exerciseFilePathsMap.entrySet()) {
-                FilePathType type = entry.getKey();
-                Set<String> paths = entry.getValue();
-                paths.forEach(FileUtil::sanitizeFilePathByCheckingForInvalidCharactersElseThrow);
-                paths.stream().filter(path -> Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type))).forEach(path -> {
+        for (Map.Entry<FilePathType, Set<String>> entry : exerciseFilePathsMap.entrySet()) {
+            FilePathType type = entry.getKey();
+            Set<String> paths = entry.getValue();
+            Set<String> newPaths = new HashSet<>();
+            for (String path : paths) {
+                FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(path);
+                URI uri = URI.create(path);
+                Path fsPath = FilePathConverter.fileSystemPathForExternalUri(uri, type);
+
+                if (Files.exists(fsPath)) {
                     URI intendedSubPath = type == FilePathType.DRAG_AND_DROP_BACKGROUND ? URI.create(FileUtil.BACKGROUND_FILE_SUBPATH) : URI.create(FileUtil.PICTURE_FILE_SUBPATH);
-                    FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), intendedSubPath);
-                });
-
-                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), type)))
-                        .collect(Collectors.toSet());
-
-                if (!newPaths.isEmpty()) {
-                    newFilePathsMap.put(type, newPaths);
+                    FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(uri, intendedSubPath);
                 }
+                else {
+                    newPaths.add(path);
+                }
+            }
+
+            if (!newPaths.isEmpty()) {
+                newFilePathsMap.put(type, newPaths);
             }
         }
 

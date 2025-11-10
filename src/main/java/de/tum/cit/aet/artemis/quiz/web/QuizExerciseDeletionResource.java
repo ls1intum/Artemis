@@ -2,11 +2,8 @@ package de.tum.cit.aet.artemis.quiz.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -17,25 +14,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
@@ -59,9 +48,9 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 @Lazy
 @RestController
 @RequestMapping("api/quiz/")
-public class QuizExerciseImportDeletionResource {
+public class QuizExerciseDeletionResource {
 
-    private static final Logger log = LoggerFactory.getLogger(QuizExerciseImportDeletionResource.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizExerciseDeletionResource.class);
 
     private static final String ENTITY_NAME = "quizExercise";
 
@@ -88,7 +77,7 @@ public class QuizExerciseImportDeletionResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
-    public QuizExerciseImportDeletionResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, UserRepository userRepository,
+    public QuizExerciseDeletionResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, UserRepository userRepository,
             ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, QuizExerciseImportService quizExerciseImportService, CourseService courseService,
             AuthorizationCheckService authCheckService, ExerciseVersionService exerciseVersionService, Optional<AtlasMLApi> atlasMLApi) {
         this.quizExerciseService = quizExerciseService;
@@ -147,69 +136,6 @@ public class QuizExerciseImportDeletionResource {
             log.warn("Could not find file {} for deletion", pathString);
             return null;
         }
-    }
-
-    /**
-     * POST /quiz-exercises/import: Imports an existing quiz exercise into an
-     * existing course
-     * <p>
-     * This will import the whole exercise except for the participations and dates.
-     * Referenced
-     * entities will get cloned and assigned a new id.
-     *
-     * @param sourceExerciseId The ID of the original exercise which should get
-     *                             imported
-     * @param importedExercise The new exercise containing values that should get
-     *                             overwritten in the imported exercise, s.a. the title
-     *                             or difficulty
-     * @param files            the files for drag and drop questions to upload
-     *                             (optional). The original file name must equal the
-     *                             file path of the image in {@code quizExercise}
-     * @return The imported exercise (200), a not found error (404) if the template
-     *         does not exist,
-     *         or a forbidden error (403) if the user is not at least an instructor
-     *         in the target course.
-     * @throws URISyntaxException When the URI of the response entity is invalid
-     */
-    @PostMapping(value = "quiz-exercises/import/{sourceExerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastEditor
-    public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestPart("exercise") QuizExercise importedExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
-        log.info("REST request to import from quiz exercise : {}", sourceExerciseId);
-        if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
-            log.debug("Either the courseId or exerciseGroupId must be set for an import");
-            throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
-        }
-
-        // Valid exercises have set either a course or an exerciseGroup
-        importedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-
-        // Retrieve the course over the exerciseGroup or the given courseId
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(importedExercise);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-
-        if (!importedExercise.isValid()) {
-            // TODO: improve error message and tell the client why the quiz is invalid (also
-            // see above in create Quiz)
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
-        }
-
-        List<MultipartFile> nullsafeFiles = files != null ? files : new ArrayList<>();
-
-        // validates general settings: points, dates
-        importedExercise.validateGeneralSettings();
-        quizExerciseService.validateQuizExerciseFiles(importedExercise, nullsafeFiles, false);
-
-        final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
-        QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
-
-        // Notify AtlasML about the imported exercise
-        notifyAtlasML(newQuizExercise, OperationTypeDTO.UPDATE, "quiz exercise import");
-
-        exerciseVersionService.createExerciseVersion(newQuizExercise);
-
-        return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + newQuizExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
 
     /**
