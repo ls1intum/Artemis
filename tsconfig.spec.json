@@ -1,7 +1,7 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
-        "types": ["jest", "node"],
+        "types": ["jest", "node", "jest-extended"],
         "allowJs": true,
         "outDir": "build/www/app",
         "baseUrl": ".",
