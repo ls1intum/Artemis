@@ -44,7 +44,12 @@
 
     @if (!!videoUrl()) {
         @if (isLoading()) {
-        } @else if (playlistUrl() && !isLoading() && hasTranscript()) {
+            <div class="d-flex justify-content-center p-3">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        } @else if (playlistUrl() && hasTranscript()) {
             <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
         } @else {
             <div class="video-player-container">
