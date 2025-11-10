@@ -50,6 +50,7 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         Course course = new Course();
         course.setTitle("Quiz Generation Test Course");
+        course.setShortName(TEST_PREFIX + "course");
         course.setStudentGroupName(TEST_PREFIX + "student");
         course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
         course.setEditorGroupName(TEST_PREFIX + "editor");

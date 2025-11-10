@@ -213,8 +213,10 @@ describe('QuizExerciseUpdateComponent', () => {
         };
 
         describe('without exam id', () => {
-            beforeEach(waitForAsync(configureTestBed));
-            beforeEach(configureFixtureAndServices);
+            beforeEach(waitForAsync(() => {
+                configureTestBed();
+                configureFixtureAndServices();
+            }));
             it('should call courseExerciseService.find and quizExerciseService.find', () => {
                 // GIVEN
                 configureStubs();

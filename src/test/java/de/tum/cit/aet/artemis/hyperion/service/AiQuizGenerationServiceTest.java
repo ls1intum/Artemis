@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuestionSubtype;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationResponseDTO;
 
-public class AiQuizGenerationServiceTest {
+class AiQuizGenerationServiceTest {
 
     @Mock
     private ChatModel chatModel;

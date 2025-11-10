@@ -51,9 +51,17 @@ describe('AiQuizGenerationModalComponent', () => {
 
         (service.generate as jest.Mock).mockReturnValue(of(mockResponse));
 
-        comp.generate({ valid: true } as any);
-
-        expect(service.generate).toHaveBeenCalledWith(42, expect.any(Object));
+        const mockForm = {
+            valid: true,
+            value: {
+                topic: 'Test Topic',
+                numberOfQuestions: 5,
+                difficulty: AiDifficultyLevel.MEDIUM,
+                subtype: AiRequestedSubtype.SINGLE_CORRECT,
+            },
+        };
+        comp.generate(mockForm as any);
+        expect(service.generate).toHaveBeenCalledExacltyOnceWith(42, expect.any(Object));
         expect(comp.generated().length).toBe(1);
         expect(comp.warnings()).toContain('warn');
     });
@@ -78,10 +86,17 @@ describe('AiQuizGenerationModalComponent', () => {
 
         comp.useInEditor();
 
-        expect(activeModal.close).toHaveBeenCalledWith(
+        expect(activeModal.close).toHaveBeenCalledExactlyOnceWith(
             expect.objectContaining({
-                questions: [expect.objectContaining({ title: 'Q1', text: 'T' })],
-                requestedSubtype: expect.anything(),
+                questions: [
+                    expect.objectContaining({
+                        title: 'Q1',
+                        text: 'T',
+                        subtype: AiRequestedSubtype.SINGLE_CORRECT,
+                        options: [{ text: 'A', correct: true }],
+                    }),
+                ],
+                requestedSubtype: AiRequestedSubtype.SINGLE_CORRECT,
             }),
         );
     });
@@ -104,7 +119,7 @@ describe('AiQuizGenerationModalComponent', () => {
         ]);
         comp.selected = { 0: false };
 
-        expect(comp.anySelected).toBe(false);
+        expect(comp.anySelected).toBeFalse();
     });
 
     it('should return default subtype label key for unknown subtype', () => {
@@ -134,7 +149,7 @@ describe('AiQuizGenerationModalComponent', () => {
 
         comp.generate({ valid: true } as any);
 
-        expect(service.generate).toHaveBeenCalled();
+        expect(service.generate).toHaveBeenCalledOnce();
         expect(comp.generated().length).toBe(0);
         expect(comp.warnings()).toContain('No questions were generated');
     });
