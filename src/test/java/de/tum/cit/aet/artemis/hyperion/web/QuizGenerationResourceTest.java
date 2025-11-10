@@ -18,6 +18,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +28,8 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-public class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+@ActiveProfiles("hyperion")
+class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private CourseTestRepository courseRepository;
