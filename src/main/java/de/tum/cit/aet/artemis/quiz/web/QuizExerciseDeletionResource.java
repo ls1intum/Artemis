@@ -26,19 +26,15 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
 /**
@@ -63,32 +59,19 @@ public class QuizExerciseDeletionResource {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    private final QuizExerciseImportService quizExerciseImportService;
-
-    private final CourseService courseService;
-
-    private final AuthorizationCheckService authCheckService;
-
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final UserRepository userRepository;
 
-    private final ExerciseVersionService exerciseVersionService;
-
     private final Optional<AtlasMLApi> atlasMLApi;
 
     public QuizExerciseDeletionResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, UserRepository userRepository,
-            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, QuizExerciseImportService quizExerciseImportService, CourseService courseService,
-            AuthorizationCheckService authCheckService, ExerciseVersionService exerciseVersionService, Optional<AtlasMLApi> atlasMLApi) {
+            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, Optional<AtlasMLApi> atlasMLApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
-        this.quizExerciseImportService = quizExerciseImportService;
-        this.courseService = courseService;
-        this.authCheckService = authCheckService;
-        this.exerciseVersionService = exerciseVersionService;
         this.atlasMLApi = atlasMLApi;
     }
 
