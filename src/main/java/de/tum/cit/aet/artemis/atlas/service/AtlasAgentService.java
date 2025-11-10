@@ -46,8 +46,6 @@ public class AtlasAgentService {
         this.toolCallbackProvider = toolCallbackProvider;
         this.chatMemory = chatMemory;
         this.chatModel = chatModel;
-        // if you are using another model other than gpt-4o change the default
-        // value in the parameter in order for tests to pass
     }
 
     /**

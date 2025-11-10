@@ -36,6 +36,8 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
     }
+    // if you are using another model other than gpt-4o change the default
+    // value in the parameter of AtlasAgentService constructor accordingly in order for tests to pass
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
