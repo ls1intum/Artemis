@@ -79,6 +79,7 @@ import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { TranslateService } from '@ngx-translate/core';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -152,6 +153,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    private readonly translateService = inject(TranslateService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
 
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
@@ -358,12 +360,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             return;
         }
 
-        setTimeout(() => {
-            this.monacoEditor.disposeWidgets();
-
-            // Readd inconsistency issue comments, because all widgets got removed
-            addCommentBoxes(this.monacoEditor, issues, 'problem_statement.md', 'PROBLEM_STATEMENT');
-        }, 0);
+        this.monacoEditor.disposeWidgets();
+        addCommentBoxes(this.monacoEditor, issues, 'problem_statement.md', 'PROBLEM_STATEMENT', this.translateService);
     }
 
     ngAfterContentInit(): void {

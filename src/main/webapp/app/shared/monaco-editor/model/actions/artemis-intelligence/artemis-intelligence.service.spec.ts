@@ -31,6 +31,11 @@ describe('ArtemisIntelligenceService', () => {
     let service: ArtemisIntelligenceService;
     let websocketService: WebsocketService;
     let alertService: AlertService;
+    let translateService: TranslateService;
+
+    const monacoEditorComponent = {
+        addLineWidget: jest.fn(),
+    } as unknown as MonacoEditorComponent;
 
     const monacoEditorComponent = {
         addLineWidget: jest.fn(),
@@ -143,6 +148,7 @@ describe('ArtemisIntelligenceService', () => {
         service = TestBed.inject(ArtemisIntelligenceService);
         websocketService = TestBed.inject(WebsocketService);
         alertService = TestBed.inject(AlertService);
+        translateService = TestBed.inject(TranslateService);
     });
 
     afterEach(() => {
@@ -387,7 +393,7 @@ describe('ArtemisIntelligenceService', () => {
         });
 
         it('addCommentBoxes calls correct functions', () => {
-            addCommentBoxes(monacoEditorComponent, mockIssues, 'problem_statement.md', 'PROBLEM_STATEMENT');
+            addCommentBoxes(monacoEditorComponent, mockIssues, 'problem_statement.md', 'PROBLEM_STATEMENT', translateService);
             expect(monacoEditorComponent.addLineWidget).toHaveBeenCalledOnce();
         });
     });

@@ -11,17 +11,19 @@
                     <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
                 </fa-stack>
             }
-            <jhi-button
-                [btnType]="ButtonType.WARNING"
-                [disabled]="isSuggesting || disabled || !exerciseDescription()?.trim()"
-                (onClick)="suggestCompetencies()"
-                [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip'"
-                [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
-                [btnSize]="ButtonSize.SMALL"
-                [icon]="faLightbulb"
-                [isLoading]="isSuggesting"
-                class="ms-2"
-            />
+            @if (competencyLinks && competencyLinks.length > 0) {
+                <jhi-button
+                    [btnType]="ButtonType.WARNING"
+                    [disabled]="isSuggesting || disabled || !exerciseDescription()?.trim()"
+                    (onClick)="suggestCompetencies()"
+                    [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip'"
+                    [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
+                    [btnSize]="ButtonSize.SMALL"
+                    [icon]="faLightbulb"
+                    [isLoading]="isSuggesting"
+                    class="ms-2"
+                />
+            }
         </div>
         @if (isLoading) {
             <div>

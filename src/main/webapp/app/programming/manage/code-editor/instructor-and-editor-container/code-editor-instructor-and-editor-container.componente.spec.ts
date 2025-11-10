@@ -1,5 +1,5 @@
 import { AlertService } from 'app/shared/service/alert.service';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
@@ -33,8 +33,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     error1.programmingExercise = programmingExercise;
     error1.type = ErrorType.TEMPLATE_BUILD_PLAN_MISSING;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(waitForAsync(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 MockProvider(ArtemisIntelligenceService),
                 MockProvider(ConsistencyCheckService),
@@ -57,7 +57,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         artemisIntelligenceService = TestBed.inject(ArtemisIntelligenceService);
         consistencyCheckService = TestBed.inject(ConsistencyCheckService);
         alertService = TestBed.inject(AlertService);
-    });
+    }));
 
     afterEach(() => {
         jest.restoreAllMocks();

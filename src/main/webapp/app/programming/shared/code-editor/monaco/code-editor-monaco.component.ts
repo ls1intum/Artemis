@@ -36,6 +36,7 @@ import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChang
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { TranslateService } from '@ngx-translate/core';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -68,6 +69,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private readonly localStorageService = inject(LocalStorageService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly fileTypeService = inject(FileTypeService);
+    private readonly translateService = inject(TranslateService);
 
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
@@ -406,7 +408,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             }
 
             // Readd inconsistency issue comments, because all widgets got removed
-            addCommentBoxes(this.editor(), issues, this.selectedFile(), this.selectedRepository());
+            addCommentBoxes(this.editor(), issues, this.selectedFile(), this.selectedRepository(), this.translateService);
         }, 0);
     }
 
