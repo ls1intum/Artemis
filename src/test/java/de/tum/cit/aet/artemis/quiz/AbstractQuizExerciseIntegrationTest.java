@@ -62,7 +62,7 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
         return quizExerciseUtilService.createAndSaveCourse(1L, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, Set.of());
     }
 
-    protected QuizExercise importQuizExerciseWithFiles(QuizExercise quizExercise, Long id, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
+    protected QuizExercise importQuizExerciseWithFiles(QuizExercise quizExercise, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
         String url;
         if (quizExercise.isExamExercise()) {
             url = "/api/quiz/exercise-groups/" + quizExercise.getExerciseGroup().getId() + "/quiz-exercises";

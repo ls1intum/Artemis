@@ -1899,6 +1899,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         quiz.addQuestions(QuizExerciseFactory.createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
         quiz.addQuestions(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
         quiz.addQuestions(QuizExerciseFactory.createSingleChoiceQuestion());
+        quiz.addQuestions(QuizExerciseFactory.createDragAndDropQuestion());
         quizGroup.addExercise(quiz);
         exerciseRepository.save(quiz);
 
@@ -1915,7 +1916,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
         // Quiz questions should get imported into the exam
-        assertThat(exercise.getQuizQuestions()).hasSize(3);
+        assertThat(exercise.getQuizQuestions()).hasSize(4);
     }
 
     @Test
