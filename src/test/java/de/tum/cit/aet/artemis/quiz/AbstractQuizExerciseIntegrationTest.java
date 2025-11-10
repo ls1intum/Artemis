@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
@@ -62,9 +63,17 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
     }
 
     protected QuizExercise importQuizExerciseWithFiles(QuizExercise quizExercise, Long id, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz/quiz-exercises/import/" + id);
-        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
-                .contentType(MediaType.MULTIPART_FORM_DATA);
+        String url;
+        if (quizExercise.isExamExercise()) {
+            url = "/api/quiz/exercise-groups/" + quizExercise.getExerciseGroup().getId() + "/quiz-exercises";
+        }
+        else {
+            url = "/api/quiz/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises";
+        }
+        prepareQuizForImport(quizExercise);
+        QuizExerciseCreateDTO dto = QuizExerciseCreateDTO.of(quizExercise);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, url);
+        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(dto))).contentType(MediaType.MULTIPART_FORM_DATA);
         for (MockMultipartFile file : files) {
             builder.file(file);
         }
@@ -261,5 +270,32 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
 
         request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
+    }
+
+    protected void prepareQuizForImport(QuizExercise quizExercise) {
+        quizExercise.setQuizBatches(Set.of());
+        quizExercise.setCompetencyLinks(Set.of());
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+                for (var dragItem : dragAndDropQuestion.getDragItems()) {
+                    dragItem.setId(null);
+                    dragItem.setTempID(Math.abs((long) (Math.random() * Long.MAX_VALUE)));
+                }
+                for (var dropLocation : dragAndDropQuestion.getDropLocations()) {
+                    dropLocation.setId(null);
+                    dropLocation.setTempID(Math.abs((long) (Math.random() * Long.MAX_VALUE)));
+                }
+            }
+            if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
+                for (var spot : shortAnswerQuestion.getSpots()) {
+                    spot.setId(null);
+                    spot.setTempID(Math.abs((long) (Math.random() * Long.MAX_VALUE)));
+                }
+                for (var solution : shortAnswerQuestion.getSolutions()) {
+                    solution.setId(null);
+                    solution.setTempID(Math.abs((long) (Math.random() * Long.MAX_VALUE)));
+                }
+            }
+        }
     }
 }

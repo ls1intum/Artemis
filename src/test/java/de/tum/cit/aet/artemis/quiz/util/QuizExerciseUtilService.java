@@ -28,9 +28,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -224,22 +222,6 @@ public class QuizExerciseUtilService {
         Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises, "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course);
         return course;
-    }
-
-    /**
-     * Sets up a team quiz exercise by creating the team assignment config with the passed values and setting it to the quiz.
-     *
-     * @param quiz        The quiz which should be a team exercise.
-     * @param minTeamSize The minimum number of members the team is allowed to have.
-     * @param maxTeamSize The maximum number of members the team is allowed to have.
-     */
-    public void setupTeamQuizExercise(QuizExercise quiz, int minTeamSize, int maxTeamSize) {
-        var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(quiz);
-        teamAssignmentConfig.setMinTeamSize(minTeamSize);
-        teamAssignmentConfig.setMaxTeamSize(maxTeamSize);
-        quiz.setMode(ExerciseMode.TEAM);
-        quiz.setTeamAssignmentConfig(teamAssignmentConfig);
     }
 
     /**
