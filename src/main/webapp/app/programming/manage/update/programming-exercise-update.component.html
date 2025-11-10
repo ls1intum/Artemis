@@ -41,6 +41,10 @@
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
             <hr class="mb-5" />
+            @if (!isSimpleMode()) {
+                <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
+                <hr class="mb-5" />
+            }
             <jhi-programming-exercise-problem
                 [(programmingExercise)]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"

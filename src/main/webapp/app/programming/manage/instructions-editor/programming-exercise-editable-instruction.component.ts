@@ -44,9 +44,9 @@ import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-int
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ActivatedRoute } from '@angular/router';
-import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -88,18 +88,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
                 ),
             );
-            if (this.exerciseId) {
-                actions.push(new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId, this.renderedConsistencyCheckResultMarkdown));
-            }
         }
         return actions;
     });
 
     savingInstructions = false;
     unsavedChangesValue = false;
-
-    renderedConsistencyCheckResultMarkdown = signal<string>('');
-    showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown());
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
@@ -208,10 +202,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.unsavedChanges = true;
         }
         this.instructionChange.emit(problemStatement);
-    }
-
-    dismissConsistencyCheck() {
-        this.renderedConsistencyCheckResultMarkdown.set('');
     }
 
     /**
