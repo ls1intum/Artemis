@@ -48,7 +48,7 @@ describe('AgentChatModalComponent', () => {
 
         mockTranslateService = {
             instant: jest.fn(),
-        };
+        } as Partial<TranslateService> as TranslateService;
 
         mockTranslateService.instant.mockImplementation((key: string, params?: any) => {
             switch (key) {
