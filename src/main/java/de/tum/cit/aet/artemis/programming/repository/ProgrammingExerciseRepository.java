@@ -107,6 +107,43 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
 
+    @EntityGraph(type = LOAD, attributePaths = "buildConfig")
+    List<ProgrammingExercise> findWithBuildConfigByProjectKey(String projectKey);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissionPolicy", "buildConfig" })
+    List<ProgrammingExercise> findWithSubmissionPolicyAndBuildConfigByProjectKey(String projectKey);
+
+    /**
+     * Finds one programming exercise including its submission policy by the exercise's project key.
+     *
+     * @param projectKey           the project key of the programming exercise.
+     * @param withSubmissionPolicy whether the submission policy should be included in the result.
+     * @param withBuildConfig      whether the build policy should be included in the result.
+     * @return the programming exercise.
+     * @throws EntityNotFoundException if no programming exercise or multiple exercises with the given project key exist.
+     */
+    default ProgrammingExercise findOneByProjectKeyOrThrow(String projectKey, boolean withSubmissionPolicy, boolean withBuildConfig) throws EntityNotFoundException {
+        List<ProgrammingExercise> exercises;
+
+        if (withSubmissionPolicy && withBuildConfig) {
+            exercises = findWithSubmissionPolicyAndBuildConfigByProjectKey(projectKey);
+        }
+        else if (withSubmissionPolicy) {
+            exercises = findWithSubmissionPolicyByProjectKey(projectKey);
+        }
+        else if (withBuildConfig) {
+            exercises = findWithBuildConfigByProjectKey(projectKey);
+        }
+        else {
+            exercises = findAllByProjectKey(projectKey);
+        }
+
+        if (exercises.size() != 1) {
+            throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
+        }
+        return exercises.getFirst();
+    }
+
     /**
      * Finds a ProgrammingExercise with minimal data necessary for exercise versioning.
      * Only includes core configuration data, NOT submissions, results, or participation data.

@@ -421,6 +421,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * React to mouse down events on the background to start dragging
      */
     backgroundMouseDown(): void {
+        if (this.reEvaluationInProgress()) {
+            return;
+        }
         const question = this.question();
         if (question.backgroundFilePath && this.draggingState === DragState.NONE) {
             // Save current mouse position as starting position
