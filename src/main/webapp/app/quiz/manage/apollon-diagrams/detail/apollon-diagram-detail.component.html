@@ -1,5 +1,5 @@
 <div class="modal-header">
-    <h4 class="modal-title" jhiTranslate="artemisApp.apollonDiagram.detail.title" [translateValues]="{ title: this.apollonDiagram?.title }"></h4>
+    <h4 class="modal-title" jhiTranslate="artemisApp.apollonDiagram.detail.title" [translateValues]="{ title: this.apollonDiagram()?.title }"></h4>
     <button type="button" class="btn ms-auto text-secondary" (click)="confirmExitDetailView(true)"><fa-icon [icon]="faX" size="lg" /></button>
 </div>
 <div class="modal-body">
@@ -14,15 +14,15 @@
                 <span jhiTranslate="artemisApp.apollonDiagram.detail.crop"></span>
             </label>
             <fa-icon class="me-1" [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.apollonDiagram.detail.help' | artemisTranslate }}" />
-            <button class="btn btn-info me-1" (click)="downloadSelection()" [hidden]="!apollonDiagram">
+            <button class="btn btn-info me-1" (click)="downloadSelection()" [hidden]="!apollonDiagram()">
                 <fa-icon [icon]="faDownload" />&nbsp;<span jhiTranslate="entity.action.download"></span>
             </button>
         </div>
     </div>
-    @if (apollonDiagram) {
+    @if (apollonDiagram()) {
         <div class="form-group mb-3">
             <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_title"></label>
-            <input #titleField="ngModel" required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram.title" />
+            <input #titleField="ngModel" required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram().title" />
         </div>
     }
     <div #editorContainer style="width: 100%; height: calc(100vh - 400px); display: flex; flex: 1"></div>
@@ -32,7 +32,7 @@
     <button
         class="btn btn-outline-primary"
         (click)="saveDiagram()"
-        [hidden]="!apollonDiagram"
+        [hidden]="!apollonDiagram()"
         [disabled]="isSaved || (titleField() && titleField()?.invalid)"
         jhiTranslate="artemisApp.apollonDiagram.detail.save"
     ></button>
@@ -41,7 +41,7 @@
             id="generate-quiz-exercise"
             class="btn btn-primary"
             (click)="generateExercise()"
-            [hidden]="!apollonDiagram"
+            [hidden]="!apollonDiagram()"
             [disabled]="!hasInteractive"
             jhiTranslate="artemisApp.apollonDiagram.detail.createLabel"
         ></button>

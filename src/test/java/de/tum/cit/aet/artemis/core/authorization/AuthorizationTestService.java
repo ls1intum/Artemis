@@ -48,6 +48,8 @@ public class AuthorizationTestService {
 
     private static final String REST_PUBLIC_PATH = REST_BASE_PATH + "/(.*)/public/(.*)";
 
+    private static final String REST_INTERNAL_PATH = REST_BASE_PATH + "/(.*)/internal/(.*)";
+
     /**
      * Tests all endpoints and prints the reports
      *
@@ -169,6 +171,14 @@ public class AuthorizationTestService {
                     if (!pattern.startsWith(REST_BASE_PATH)) {
                         addElement(methodReports, javaMethod, "Expect path of method " + javaMethod.getName() + " annotated with @" + annotationType + " to start with "
                                 + REST_BASE_PATH + " but is " + pattern + ".");
+                    }
+                }
+            }
+            case "Internal" -> {
+                for (String pattern : patterns) {
+                    if (!pattern.matches(REST_INTERNAL_PATH)) {
+                        addElement(methodReports, javaMethod,
+                                "Expect path of method " + javaMethod.getName() + " annotated with @Internal to start with " + REST_PUBLIC_PATH + " but is " + pattern + ".");
                     }
                 }
             }

@@ -19,6 +19,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
 describe('ExerciseImportFromFileComponent', () => {
     let component: ExerciseImportFromFileComponent;
@@ -57,7 +58,7 @@ describe('ExerciseImportFromFileComponent', () => {
     // using fakeasync and tick didn't work here, that's why I used whenStable and async
     it.each([ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
         'should raise error alert if not supported exercise type',
-        async (exerciseType) => {
+        async (exerciseType: ExerciseType) => {
             // GIVEN
             const alertServiceSpy = jest.spyOn(alertService, 'error');
             component.exerciseType = exerciseType;
@@ -118,6 +119,19 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(component.exercise).toMatchObject({ type: 'programming', id: undefined, title: 'Test exercise' });
         expect(openImportSpy).toHaveBeenCalledOnce();
         expect(openImportSpy).toHaveBeenCalledWith(component.exercise);
+    });
+
+    it('should load build configs in the old format', async () => {
+        component.exerciseType = ExerciseType.PROGRAMMING;
+        component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING, true)) as File;
+        await fixture.whenStable();
+        fixture.detectChanges();
+        // WHEN
+        await component.uploadExercise();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        // THEN
+        expect((component.exercise as ProgrammingExercise).buildConfig).toBeDefined();
     });
 
     it('should disable upload button as long as no file is selected', () => {
@@ -198,9 +212,89 @@ describe('ExerciseImportFromFileComponent', () => {
         // THEN
         expect(component.fileForImport).toEqual(file);
     });
+
+    // Verifies that exercise categories are correctly parsed from stringified JSON entries during import.
+    it('should correctly parse exercise categories during import', async () => {
+        // GIVEN
+        component.exerciseType = ExerciseType.PROGRAMMING;
+
+        const progEx = new ProgrammingExercise(undefined, undefined);
+        progEx.id = 999;
+        progEx.title = 'Category test exercise';
+        progEx.type = ExerciseType.PROGRAMMING;
+
+        (progEx as any).categories = ['{"color":"#0d3cc2","category":"Testing categories"}', '{"color":"#691b0b","category":"Issue"}'];
+
+        const zip = new JSZip();
+        zip.file('exercise.json', JSON.stringify(progEx));
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+        component.fileForImport = zipBlob as any;
+        const openImportSpy = jest.spyOn(component, 'openImport');
+        await fixture.whenStable();
+
+        // WHEN
+        await component.uploadExercise();
+        await fixture.whenStable();
+
+        // THEN
+        const importedEx = component.exercise as ProgrammingExercise;
+        expect(importedEx).toBeDefined();
+        expect(importedEx.title).toBe('Category test exercise');
+        expect(importedEx.type).toBe(ExerciseType.PROGRAMMING);
+
+        expect(importedEx.categories!).toHaveLength(2);
+
+        expect(importedEx.categories![0]).toBeInstanceOf(ExerciseCategory);
+        expect(importedEx.categories![0].category).toBe('Testing categories');
+        expect(importedEx.categories![0].color).toBe('#0d3cc2');
+
+        expect(importedEx.categories![1]).toBeInstanceOf(ExerciseCategory);
+        expect(importedEx.categories![1].category).toBe('Issue');
+        expect(importedEx.categories![1].color).toBe('#691b0b');
+
+        expect(openImportSpy).toHaveBeenCalledOnce();
+        expect(openImportSpy).toHaveBeenCalledWith(importedEx);
+    });
+
+    // Ensures backward compatibility when old exercise JSONs do not contain 'categories' field.
+    // parseExerciseCategories() should safely handle undefined categories without throwing errors.
+    it('should import exercise correctly even if categories are missing', async () => {
+        // GIVEN
+        component.exerciseType = ExerciseType.PROGRAMMING;
+        const progEx = new ProgrammingExercise(undefined, undefined);
+        progEx.id = 555;
+        progEx.title = 'No category test exercise';
+        progEx.type = ExerciseType.PROGRAMMING;
+
+        delete (progEx as any).categories;
+
+        const zip = new JSZip();
+        zip.file('exercise.json', JSON.stringify(progEx));
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+        component.fileForImport = zipBlob as any;
+        const openImportSpy = jest.spyOn(component, 'openImport');
+        await fixture.whenStable();
+
+        // WHEN
+        await component.uploadExercise();
+        await fixture.whenStable();
+
+        // THEN
+        const importedEx = component.exercise as ProgrammingExercise;
+        expect(importedEx).toBeDefined();
+        expect(importedEx.title).toBe('No category test exercise');
+        expect(importedEx.type).toBe(ExerciseType.PROGRAMMING);
+
+        expect(importedEx.categories).toBeUndefined();
+
+        expect(openImportSpy).toHaveBeenCalledOnce();
+        expect(openImportSpy).toHaveBeenCalledWith(importedEx);
+    });
 });
 
-async function generateValidTestZipFileWithExerciseType(exerciseType: ExerciseType): Promise<Blob> {
+async function generateValidTestZipFileWithExerciseType(exerciseType: ExerciseType, oldStyleBuildConfig: boolean = false): Promise<Blob> {
     const zip = new JSZip();
     let exercise;
 
@@ -219,6 +313,11 @@ async function generateValidTestZipFileWithExerciseType(exerciseType: ExerciseTy
             break;
         case ExerciseType.PROGRAMMING:
             exercise = new ProgrammingExercise(undefined, undefined);
+            if (oldStyleBuildConfig) {
+                // old format: build config is not a separate object, but the attributes are part of the exercise itself
+                // simplification: we just remove it completely here, the component will generate a new default config object
+                exercise.buildConfig = undefined;
+            }
             break;
         default:
             throw new Error('Unexpected exercise type');

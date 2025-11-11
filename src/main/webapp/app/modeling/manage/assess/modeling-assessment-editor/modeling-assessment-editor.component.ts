@@ -545,9 +545,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.nextSubmissionBusy = false;
                 this.isLoading = false;
 
-                // navigate to root and then to new assessment page to trigger re-initialization of the components
                 const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, undefined, submission.id!, this.examId, this.exerciseGroupId);
-                this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } }));
+                this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
             },
             error: (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy = false;

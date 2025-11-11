@@ -1,86 +1,89 @@
 <h3 class="top-container flex-wrap flex-lg-nowrap">
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2">
-        @if (isTestRun) {
+        @if (isTestRun()) {
             <span jhiTranslate="artemisApp.assessment.testRunAssessment"></span>
         } @else {
             <span jhiTranslate="artemisApp.assessment.assessment"></span>
         }
     </div>
-    @if (hasAssessmentDueDatePassed && !result?.completionDate) {
-        <ngb-alert [style.fontSize]="'65%'" [type]="'warning'" (close)="hasAssessmentDueDatePassed = false" jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver" />
+    @if (hasAssessmentDueDatePassed() && !result()?.completionDate) {
+        <ngb-alert [style.fontSize]="'65%'" [type]="'warning'" (close)="hasAssessmentDueDatePassed.set(false)" jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver" />
     }
-    @if (!isLoading) {
+    @if (!isLoading()) {
         <div class="row-container flex-wrap flex-lg-nowrap">
-            @if (!isAssessor && !hasComplaint) {
+            @if (!isAssessor() && !hasComplaint()) {
                 <span
                     id="assessmentLocked"
                     class="text-danger m-2"
                     style="font-size: 65%"
                     jhiTranslate="artemisApp.assessment.assessmentLocked"
-                    [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
+                    [translateValues]="{ otherUser: result()?.assessor?.name + ' (' + result()?.assessor?.login + ')' }"
                 ></span>
             }
-            @if (
-                isAssessor &&
-                exercise &&
-                !exercise.isAtLeastInstructor &&
-                hasComplaint &&
-                complaintType !== ComplaintType.COMPLAINT &&
-                !complaintHandled &&
-                exercise.assessmentType !== AssessmentType.AUTOMATIC
-            ) {
-                <span id="moreFeedbackRequest" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.moreFeedbackRequest"></span>
+            @if (exercise(); as exercise) {
+                @if (
+                    isAssessor() &&
+                    !exercise.isAtLeastInstructor &&
+                    hasComplaint() &&
+                    complaintType() !== ComplaintType.COMPLAINT &&
+                    !complaintHandled() &&
+                    exercise.assessmentType !== AssessmentType.AUTOMATIC
+                ) {
+                    <span id="moreFeedbackRequest" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.moreFeedbackRequest"></span>
+                }
+                @if (
+                    isAssessor() &&
+                    !exercise.isAtLeastInstructor &&
+                    hasComplaint() &&
+                    complaintType() !== ComplaintType.COMPLAINT &&
+                    exercise.assessmentType === AssessmentType.AUTOMATIC &&
+                    !complaintHandled() &&
+                    !exercise.teamMode
+                ) {
+                    <span id="automaticAssessmentFeedbackRequest" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.automaticAssessmentFeedbackRequest"></span>
+                }
+                @if (isAssessor() && !exercise.isAtLeastInstructor && hasComplaint() && complaintType() === ComplaintType.COMPLAINT && !complaintHandled() && exercise.teamMode) {
+                    <span id="teamComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.teamComplaint"></span>
+                }
+                @if (
+                    isAssessor() &&
+                    !exercise.isAtLeastInstructor &&
+                    hasComplaint() &&
+                    complaintType() === ComplaintType.COMPLAINT &&
+                    exercise.assessmentType === AssessmentType.AUTOMATIC &&
+                    !complaintHandled() &&
+                    !exercise.teamMode
+                ) {
+                    <span id="automaticAssessmentComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.automaticAssessmentComplaint"></span>
+                }
+                @if (
+                    isAssessor() &&
+                    !exercise.isAtLeastInstructor &&
+                    hasComplaint() &&
+                    exercise.assessmentType !== AssessmentType.AUTOMATIC &&
+                    complaintType() === ComplaintType.COMPLAINT &&
+                    !complaintHandled() &&
+                    !exercise.teamMode
+                ) {
+                    <span
+                        id="assessmentReadOnlyUnhandledComplaint"
+                        class="m-2"
+                        style="font-size: 65%"
+                        jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"
+                    ></span>
+                }
+                @if (isAssessor() && !exercise.isAtLeastInstructor && hasComplaint() && complaintHandled() && !exercise.teamMode) {
+                    <span id="assessmentReadOnlyHandled" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint"></span>
+                }
             }
-            @if (
-                isAssessor &&
-                exercise &&
-                !exercise.isAtLeastInstructor &&
-                hasComplaint &&
-                complaintType !== ComplaintType.COMPLAINT &&
-                exercise.assessmentType === AssessmentType.AUTOMATIC &&
-                !complaintHandled &&
-                !exercise.teamMode
-            ) {
-                <span id="automaticAssessmentFeedbackRequest" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.automaticAssessmentFeedbackRequest"></span>
-            }
-            @if (isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintType === ComplaintType.COMPLAINT && !complaintHandled && exercise.teamMode) {
-                <span id="teamComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.teamComplaint"></span>
-            }
-            @if (
-                isAssessor &&
-                exercise &&
-                !exercise.isAtLeastInstructor &&
-                hasComplaint &&
-                complaintType === ComplaintType.COMPLAINT &&
-                exercise.assessmentType === AssessmentType.AUTOMATIC &&
-                !complaintHandled &&
-                !exercise.teamMode
-            ) {
-                <span id="automaticAssessmentComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.automaticAssessmentComplaint"></span>
-            }
-            @if (
-                isAssessor &&
-                exercise &&
-                !exercise.isAtLeastInstructor &&
-                hasComplaint &&
-                exercise.assessmentType !== AssessmentType.AUTOMATIC &&
-                complaintType === ComplaintType.COMPLAINT &&
-                !complaintHandled &&
-                !exercise.teamMode
-            ) {
-                <span id="assessmentReadOnlyUnhandledComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"></span>
-            }
-            @if (isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintHandled && !exercise.teamMode) {
-                <span id="assessmentReadOnlyHandled" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint"></span>
-            }
-            @if (isAssessor && (!hasComplaint || exercise?.isAtLeastInstructor)) {
+            @if (isAssessor() && (!hasComplaint() || exercise()?.isAtLeastInstructor)) {
                 <span id="assessmentLockedCurrentUser" class="text-danger m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"></span>
             }
 
             <!-- Highlight the difference between first and second correction -->
-            @if (!isProgrammingExercise && result && correctionRound > 0) {
-                <button class="btn ms-2 btn-primary" (click)="toggleHighlightDifferences()" [disabled]="saveBusy || submitBusy || cancelBusy">
+            @if (!isProgrammingExercise() && result() && correctionRound() > 0) {
+                <button class="btn ms-2 btn-primary" (click)="toggleHighlightDifferences()" [disabled]="saveBusy() || submitBusy() || cancelBusy()">
                     @if (!highlightDifferences) {
                         <span
                             ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
@@ -97,14 +100,14 @@
             }
             <br />
             <div class="d-flex flex-wrap flex-lg-nowrap">
-                @if (!result?.completionDate) {
+                @if (!result()?.completionDate) {
                     <button
                         class="btn m-1 btn-primary"
                         (click)="save.emit()"
                         [disabled]="saveDisabled"
                         [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + S'"
                     >
-                        @if (saveBusy) {
+                        @if (saveBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         }
                         <fa-icon [icon]="faSave" />
@@ -117,18 +120,18 @@
                         [disabled]="submitDisabled"
                         [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
                     >
-                        @if (submitBusy) {
+                        @if (submitBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         }
                         <span jhiTranslate="entity.action.submit"></span>
                     </button>
-                    @if (!isTestRun) {
+                    @if (!isTestRun()) {
                         <button
                             class="btn m-1 btn-danger"
                             (click)="onCancel.emit()"
-                            [disabled]="!(exercise?.isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy"
+                            [disabled]="!(exercise()?.isAtLeastInstructor || isAssessor()) || saveBusy() || submitBusy() || cancelBusy()"
                         >
-                            @if (cancelBusy) {
+                            @if (cancelBusy()) {
                                 <fa-icon [icon]="faSpinner" animation="spin" />
                             }
                             <span jhiTranslate="entity.action.cancel"></span>
@@ -142,15 +145,15 @@
                         [disabled]="overrideDisabled"
                         [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
                     >
-                        @if (submitBusy) {
+                        @if (submitBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         }
                         <span jhiTranslate="artemisApp.assessment.button.overrideAssessment"></span>
                     </button>
                 }
-                @if (result?.completionDate && exercise?.isAtLeastInstructor && (exercise!.type === ExerciseType.MODELING || exercise!.type === ExerciseType.TEXT)) {
+                @if (result()?.completionDate && exercise()?.isAtLeastInstructor && (exercise()!.type === ExerciseType.MODELING || exercise()!.type === ExerciseType.TEXT)) {
                     <button class="btn m-1 btn-primary" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()">
-                        @if (submitBusy) {
+                        @if (submitBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         }
                         <span jhiTranslate="artemisApp.assessment.button.useAsExampleSubmission"></span>
@@ -167,19 +170,19 @@
                         (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
                         [ngbTooltip]="nextSubmissionShortcut"
                     >
-                        @if (nextSubmissionBusy) {
+                        @if (nextSubmissionBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         }
                         <span jhiTranslate="artemisApp.assessment.button.nextSubmission"></span>
                     </button>
                 }
-                <a [routerLink]="exerciseDashboardLink" class="btn m-1 btn-info">
+                <a [routerLink]="exerciseDashboardLink()" class="btn m-1 btn-info">
                     <span jhiTranslate="entity.action.exerciseDashboard"></span>
                 </a>
             </div>
         </div>
     }
 </h3>
-@if (exercise) {
+@if (exercise(); as exercise) {
     <jhi-assessment-warning [exercise]="exercise" />
 }

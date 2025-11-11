@@ -74,7 +74,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('initializeApollonEditor', () => {
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         fixture.componentInstance.initializeApollonEditor(model);
 
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
@@ -82,7 +82,7 @@ describe('ApollonDiagramDetail Component', () => {
 
     it('save', async () => {
         jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram, status: 200, statusText: 'OK' });
         const updateStub = jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
@@ -143,7 +143,7 @@ describe('ApollonDiagramDetail Component', () => {
         } as UMLModel & { interactive?: { elements?: Record<string, any>; relationships?: Record<string, any> } };
 
         // setup
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         fixture.componentInstance.initializeApollonEditor(nonInteractiveModel);
         const errorSpy = jest.spyOn(alertService, 'error');
 
@@ -201,7 +201,7 @@ describe('ApollonDiagramDetail Component', () => {
         jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
         fixture.detectChanges();
-        expect(fixture.componentInstance.apollonDiagram).toEqual(diagram);
+        expect(fixture.componentInstance.apollonDiagram()).toEqual(diagram);
         fixture.componentInstance.ngOnDestroy();
     });
 

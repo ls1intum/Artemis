@@ -70,10 +70,7 @@ describe('AssessmentDashboardInformationComponent', () => {
             inTime: 1234,
             late: 0,
         },
-        totalNumberOfAssessments: {
-            inTime: 12,
-            late: 0,
-        },
+        totalNumberOfAssessments: 12,
     } as ProgrammingExercise;
     const modelingExercise = {
         id: 17,
@@ -94,7 +91,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         secondCorrectionEnabled: false,
         numberOfSubmissions: { inTime: 5, late: 0 },
         numberOfAssessmentsOfCorrectionRounds: [{ inTime: 5, late: 0 }],
-        totalNumberOfAssessments: { inTime: 5, late: 0 },
+        totalNumberOfAssessments: 5,
         numberOfOpenComplaints: 0,
         numberOfOpenMoreFeedbackRequests: 0,
         includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
@@ -110,7 +107,7 @@ describe('AssessmentDashboardInformationComponent', () => {
     const tutorLeaderboardEntries = [] as TutorLeaderboardElement[];
     const courseTutorStats = {
         numberOfSubmissions: { inTime: 5, late: 0 } as DueDateStat,
-        totalNumberOfAssessments: { inTime: 3, late: 0 } as DueDateStat,
+        totalNumberOfAssessments: 3,
         numberOfAssessmentsOfCorrectionRounds,
         numberOfComplaints: 0,
         numberOfMoreFeedbackRequests: 0,

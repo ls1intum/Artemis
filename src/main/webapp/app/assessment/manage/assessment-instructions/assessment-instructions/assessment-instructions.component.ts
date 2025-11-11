@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, input, model } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
@@ -41,13 +41,13 @@ export class AssessmentInstructionsComponent {
     sampleSolutionModel?: UMLModel;
     sampleSolutionDiagramType?: UMLDiagramType;
 
-    @Input() isAssessmentTraining = false;
-    @Input() showAssessmentInstructions = true;
+    readonly isAssessmentTraining = input(false);
+    readonly showAssessmentInstructions = input(true);
 
-    @Input() readOnly: boolean;
+    readonly readOnly = input<boolean>();
     // For programming exercises we hand over the participation or use the template participation
-    @Input() programmingParticipation?: ProgrammingExerciseStudentParticipation;
-    @Input() gradingCriteria?: GradingCriterion[];
+    readonly programmingParticipation = input<ProgrammingExerciseStudentParticipation>();
+    readonly gradingCriteria = model<GradingCriterion[]>();
 
     readonly ExerciseType = ExerciseType;
 
@@ -58,7 +58,7 @@ export class AssessmentInstructionsComponent {
         if (exercise.gradingInstructions) {
             this.gradingInstructions = this.markdownService.safeHtmlForMarkdown(exercise.gradingInstructions);
         }
-        this.gradingCriteria = exercise.gradingCriteria;
+        this.gradingCriteria.set(exercise.gradingCriteria);
 
         let sampleSolutionMarkdown: string | undefined;
         switch (exercise.type) {
