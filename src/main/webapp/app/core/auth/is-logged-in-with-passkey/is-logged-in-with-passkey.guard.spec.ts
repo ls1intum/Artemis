@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { IsLoggedInWithPasskeyGuard } from './is-logged-in-with-passkey.guard';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../test/helpers/mocks/service/mock-account.service';
-import { MockRouter } from '../../../test/helpers/mocks/mock-router';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { beforeEach, describe, it, jest } from '@jest/globals';
 
 describe('IsLoggedInWithPasskeyGuard', () => {
     let guard: IsLoggedInWithPasskeyGuard;
