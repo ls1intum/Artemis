@@ -1,0 +1,35 @@
+<div class="passkey-required-container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="passkey-required-card card shadow-lg">
+        <div class="card-body p-5">
+            <div class="text-center mb-4">
+                <fa-icon [icon]="faShieldAlt" size="4x" class="text-primary mb-3" />
+                <h2 class="mb-3">
+                    <fa-icon [icon]="faLock" class="me-2" />
+                    <span jhiTranslate="artemisApp.passkeyRequired.title">Passkey Required</span>
+                </h2>
+            </div>
+
+            <div class="alert alert-info mb-4" role="alert">
+                <p class="mb-2" jhiTranslate="artemisApp.passkeyRequired.explanation">The page you are trying to access requires strong authentication with a passkey.</p>
+                <p class="mb-0 font-weight-bold" jhiTranslate="global.menu.admin.passkeyRestrictionExplanation">
+                    To protect student data and ensure platform reliability, administrator actions require strong authentication with a passkey.
+                </p>
+            </div>
+
+            <div class="info-section mb-4">
+                <p class="text-muted" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText">
+                    Passkeys are a secure and convenient way to authenticate without passwords.
+                </p>
+            </div>
+
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <jhi-button (onClick)="cancel()" [title]="'entity.action.cancel'" [btnType]="ButtonType.SECONDARY" />
+                @if (userHasRegisteredAPasskey) {
+                    <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" [icon]="faKey" />
+                } @else {
+                    <jhi-button (onClick)="setupPasskeyAndLogin()" [title]="'global.menu.admin.setupAndLoginWithPasskey'" [icon]="faKey" />
+                }
+            </div>
+        </div>
+    </div>
+</div>

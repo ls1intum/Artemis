@@ -6,6 +6,7 @@ import { errorRoute } from 'app/core/layouts/error/error.route';
 import { IsLoggedInWithPasskeyGuard } from 'app/core/auth/is-logged-in-with-passkey/is-logged-in-with-passkey.guard';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
+// TODO fix the type issues here
 
 const routes: Routes = [
     ...LAYOUT_ROUTES,
@@ -14,6 +15,14 @@ const routes: Routes = [
         loadComponent: () => import('./core/home/home.component').then((m) => m.HomeComponent),
         data: {
             pageTitle: 'home.title',
+        },
+    },
+    {
+        path: 'passkey-required',
+        loadComponent: () => import('./core/auth/passkey-required/passkey-required.component').then((m) => m.PasskeyRequiredComponent),
+        data: {
+            pageTitle: 'artemisApp.passkeyRequired.pageTitle',
+            usesModuleBackground: false,
         },
     },
     {

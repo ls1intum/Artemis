@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({
@@ -11,14 +11,19 @@ export class IsLoggedInWithPasskeyGuard implements CanActivate {
 
     /**
      * Check if the client can activate a route.
+     * @param route The activated route snapshot
+     * @param state The router state snapshot
      * @return true if the user has logged in with a passkey, false otherwise
      */
-    canActivate(): boolean {
+    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
         if (this.accountService.isLoggedInWithPasskey()) {
             return true;
         }
 
-        this.router.navigate(['/']); // TODO redirect to a page that explains to login with passkey
+        // Redirect to passkey-required page with the attempted URL as a query parameter
+        this.router.navigate(['/passkey-required'], {
+            queryParams: { returnUrl: state.url },
+        });
 
         return false;
     }

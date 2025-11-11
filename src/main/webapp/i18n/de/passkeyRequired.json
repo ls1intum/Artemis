@@ -1,0 +1,9 @@
+{
+    "artemisApp": {
+        "passkeyRequired": {
+            "title": "Passkey erforderlich",
+            "explanation": "Die Seite, auf die Sie zugreifen möchten, erfordert eine starke Authentifizierung mit einem Passkey.",
+            "pageTitle": "Passkey erforderlich"
+        }
+    }
+}
