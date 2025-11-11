@@ -8,6 +8,10 @@ import failOnConsole from 'jest-fail-on-console';
 import { TextDecoder, TextEncoder } from 'util';
 import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
 import { Text } from '@ls1intum/apollon/lib/es6/utils/svg/text';
+import { expect } from '@jest/globals';
+import * as matchers from 'jest-extended';
+
+expect.extend(matchers);
 
 /*
  * In the Jest configuration, we only import the basic features of monaco (editor.api.js) instead
