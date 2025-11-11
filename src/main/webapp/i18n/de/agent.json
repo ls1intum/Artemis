@@ -11,7 +11,7 @@
                 "you": "Du",
                 "aiAssistant": "KI-Assistent",
                 "planApproval": "Ich billige den Plan",
-                "competencyProcessFailure": "fehlgeschlagen, einige Kompetenzen zu verarbeiten. Bitte versuchen Sie es erneut.",
+                "competencyProcessFailure": "fehlgeschlagen, einige Kompetenzen zu verarbeiten. Bitte versuche es erneut",
                 "success": {
                     "processed": "{{count}} Kompetenz(en) erfolgreich bearbeitet!",
                     "updated": "{{count}} Kompetenz(en) erfolgreich aktualisiert!",

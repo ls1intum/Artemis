@@ -43,6 +43,9 @@ class CompetencyExpertToolsServiceTest {
     @Mock
     private CourseTestRepository courseRepository;
 
+    @Mock
+    private AtlasAgentService atlasAgentService;
+
     private ObjectMapper objectMapper;
 
     private CompetencyExpertToolsService competencyExpertToolsService;
@@ -54,7 +57,7 @@ class CompetencyExpertToolsServiceTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        competencyExpertToolsService = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, new AtlasAgentService(null, null, null, null, null));
+        competencyExpertToolsService = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, atlasAgentService);
 
         // Setup test course
         testCourse = new Course();

@@ -14,8 +14,8 @@
                 "competencyProcessFailure": "Failed to process some competencies. Please try again.",
                 "success": {
                     "processed": "Successfully processed {{count}} competencies!",
-                    "updated": "Successfully updated {{count}} {{count, plural, one {competency} other {competencies}}}!",
-                    "created": "Successfully created {{count}} {{count, plural, one {competency} other {competencies}}}!",
+                    "updated": "Successfully updated {{count}} competencies!",
+                    "created": "Successfully created {{count}} competencies!",
                     "updatedSingle": "Competency updated successfully!",
                     "createdSingle": "Competency created successfully!"
                 }
