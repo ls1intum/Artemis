@@ -52,10 +52,10 @@ describe('AgentChatModalComponent', () => {
             detectChanges: jest.fn(),
         } as jest.Mocked<ChangeDetectorRef>;
 
-        // Create mock DOM elements
+        const mockStyle = { height: '' } as CSSStyleDeclaration;
         mockTextarea = {
             focus: jest.fn(),
-            style: { height: '' },
+            style: mockStyle,
             scrollHeight: 100,
         };
 
@@ -84,14 +84,13 @@ describe('AgentChatModalComponent', () => {
 
         fixture = TestBed.createComponent(AgentChatModalComponent);
         component = fixture.componentInstance;
-        mockTranslateService = TestBed.inject(TranslateService) as jest.Mocked<mockTranslateService>;
+        mockTranslateService = TestBed.inject(TranslateService) as jest.Mocked<TranslateService>;
 
         // Set required inputs
         component.courseId = 123;
 
-        // Mock viewChild signals using bracket notation to access readonly properties
-        jest.spyOn<typeof component, 'messagesContainer'>(component, 'messagesContainer' as keyof typeof component).mockReturnValue(mockMessagesContainer);
-        jest.spyOn<typeof component, 'messageInput'>(component, 'messageInput' as keyof typeof component).mockReturnValue(mockMessageInput);
+        jest.spyOn(component as any, 'messagesContainer').mockReturnValue(mockMessagesContainer);
+        jest.spyOn(component as any, 'messageInput').mockReturnValue(mockMessageInput);
     });
 
     afterEach(() => {
@@ -106,12 +105,12 @@ describe('AgentChatModalComponent', () => {
 
         it('should show welcome message after init', () => {
             const welcomeMessage = 'Welcome to the agent chat!';
-            jest.spyOn(mockTranslateService, 'instant').mockReturnValue(welcomeMessage);
+            const translateSpy = jest.spyOn(mockTranslateService, 'instant').mockReturnValue(welcomeMessage);
 
             component.ngOnInit();
 
-            expect(jest.spyOn(mockTranslateService, 'instant')).toHaveBeenCalledOnce();
-            expect(jest.spyOn(mockTranslateService, 'instant')).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
+            expect(translateSpy).toHaveBeenCalledOnce();
+            expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
             expect(component.messages).toHaveLength(1);
             expect(component.messages[0].content).toBe(welcomeMessage);
             expect(component.messages[0].isUser).toBeFalse();
