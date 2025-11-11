@@ -30,11 +30,18 @@ export class PasskeyRequiredComponent implements OnInit {
     // TODO handle the passkey is not yet super admin approved
 
     ngOnInit() {
-        this.userHasRegisteredAPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
+        this.initializeUserIdentity().then((response) => {});
 
         this.route.queryParams.subscribe((params) => {
             this.returnUrl = params['returnUrl'] || '/';
         });
+    }
+
+    private async initializeUserIdentity() {
+        // Ensure user identity is loaded from server (important for page reloads)
+        await this.accountService.identity();
+
+        this.userHasRegisteredAPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
 
         const redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey = this.accountService.isLoggedInWithPasskey() && this.returnUrl;
         if (redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey) {
