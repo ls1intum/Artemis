@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.annotation.Nullable;
 
@@ -17,6 +17,9 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.BatchCompetencyPreviewResponseDTO;
@@ -42,8 +45,23 @@ public class AtlasAgentService {
 
     private static final String RETURN_TO_MAIN_AGENT = "%%ARTEMIS_RETURN_TO_MAIN_AGENT%%";
 
-    // Track which agent is active for each session
-    private final Map<String, AgentType> sessionAgentMap = new ConcurrentHashMap<>();
+    // Session timeout duration: 2 hours of inactivity
+    private static final Duration SESSION_EXPIRY_DURATION = Duration.ofHours(2);
+
+    // Maximum number of concurrent sessions to prevent unbounded memory growth
+    private static final int MAX_SESSIONS = 5000;
+
+    /**
+     * Track which agent is active for each session.
+     * Uses Guava Cache with automatic eviction to prevent memory leaks:
+     * - Entries expire after 2 hours of inactivity (expireAfterAccess)
+     * - Maximum 5000 sessions cached (maximumSize)
+     * - Automatic cleanup on access and during GC
+     */
+    private final Cache<String, AgentType> sessionAgentMap = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
+
+    private final Cache<String, List<CompetencyExpertToolsService.CompetencyOperation>> sessionCompetencyDataCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
 
     private final ChatClient chatClient;
 
@@ -54,10 +72,6 @@ public class AtlasAgentService {
     private final ToolCallbackProvider competencyExpertToolCallbackProvider;
 
     private final ChatMemory chatMemory;
-
-    // Session-scoped cache for competency operation data (single source of truth for refinement and persistence)
-    // Stores the actual competency data that was last previewed, enabling deterministic refinements
-    private final Map<String, List<CompetencyExpertToolsService.CompetencyOperation>> sessionCompetencyDataCache = new ConcurrentHashMap<>();
 
     public Boolean getCompetencyModifiedInCurrentRequest() {
         return competencyModifiedInCurrentRequest.get();
@@ -73,7 +87,7 @@ public class AtlasAgentService {
      * @return the cached competency operations, or null if none exist
      */
     public List<CompetencyExpertToolsService.CompetencyOperation> getCachedCompetencyData(String sessionId) {
-        return sessionCompetencyDataCache.get(sessionId);
+        return sessionCompetencyDataCache.getIfPresent(sessionId);
     }
 
     /**
@@ -94,7 +108,7 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      */
     public void clearCachedCompetencyData(String sessionId) {
-        sessionCompetencyDataCache.remove(sessionId);
+        sessionCompetencyDataCache.invalidate(sessionId);
     }
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
@@ -123,8 +137,11 @@ public class AtlasAgentService {
             resetCompetencyModifiedFlag();
             CompetencyExpertToolsService.clearAllPreviews();
 
-            // Determine which agent should handle this message
-            AgentType activeAgent = sessionAgentMap.getOrDefault(sessionId, AgentType.MAIN_AGENT);
+            // Determine which agent should handle this message (Guava Cache returns null if not present)
+            AgentType activeAgent = sessionAgentMap.getIfPresent(sessionId);
+            if (activeAgent == null) {
+                activeAgent = AgentType.MAIN_AGENT;
+            }
             // Route to the appropriate agent
             String response = delegateTheRightAgent(message, courseId, sessionId, activeAgent);
 
@@ -134,9 +151,15 @@ public class AtlasAgentService {
                 String brief = extractBriefFromDelegationMarker(response);
 
                 // Delegate to Competency Expert
-                response = delegateTheRightAgent(brief, courseId, sessionId, AgentType.COMPETENCY_EXPERT);
+                String delegationResponse = delegateTheRightAgent(brief, courseId, sessionId, AgentType.COMPETENCY_EXPERT);
 
+                // Retrieve preview data from ThreadLocal (set by Competency Expert's previewCompetencies tool)
+                SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getAndClearSinglePreview();
+                BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getAndClearBatchPreview();
+
+                // Return immediately with Competency Expert's response and preview data
                 // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
+                return CompletableFuture.completedFuture(new AgentChatResult(delegationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
                 // Agent is requesting to execute the changes
@@ -178,7 +201,7 @@ public class AtlasAgentService {
             BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getAndClearBatchPreview();
 
             // Use the LLM's natural language response
-            String finalResponse = (response != null && !response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
+            String finalResponse = (!response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
 
             return CompletableFuture.completedFuture(new AgentChatResult(finalResponse, competenciesModified, singlePreview, batchPreview));
 
@@ -251,20 +274,13 @@ public class AtlasAgentService {
             return "";
         }
 
-        // Find the colon after the marker
-        int colonIndex = response.indexOf(":", startIndex);
-        if (colonIndex == -1) {
+        int markerEnd = startIndex + DELEGATE_TO_COMPETENCY_EXPERT.length();
+        if (markerEnd >= response.length() || response.charAt(markerEnd) != ':') {
             return "";
         }
-
-        // Find the closing bracket
-        int endIndex = response.indexOf("]", colonIndex);
-        if (endIndex == -1) {
-            return "";
-        }
-
-        // Extract the brief content between colon and closing bracket
-        return response.substring(colonIndex + 1, endIndex).trim();
+        int nextMarker = response.indexOf("%%", markerEnd + 1);
+        String briefSection = nextMarker == -1 ? response.substring(markerEnd + 1) : response.substring(markerEnd + 1, nextMarker);
+        return briefSection.strip();
     }
 
     /**

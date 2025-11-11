@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
@@ -59,12 +62,14 @@ public class CompetencyExpertToolsService {
         private Long competencyId; // null for create, set for update
 
         @JsonProperty
+        @NotBlank(message = "Title is required for all competencies")
         private String title;
 
         @JsonProperty
         private String description;
 
         @JsonProperty
+        @NotNull(message = "Taxonomy is required for all competencies")
         private CompetencyTaxonomy taxonomy;
 
         // Default constructor for Jackson
@@ -331,10 +336,23 @@ public class CompetencyExpertToolsService {
 
         for (CompetencyOperation comp : competencies) {
             try {
+                // Validate and normalize title once before using it
+                String rawTitle = comp.getTitle();
+                if (rawTitle == null) {
+                    errors.add("Missing or null title for competency");
+                    continue;
+                }
+
+                String sanitizedTitle = rawTitle.trim();
+                if (sanitizedTitle.isBlank()) {
+                    errors.add("Missing or empty title for competency");
+                    continue;
+                }
+
                 if (comp.getCompetencyId() == null) {
                     // Create new competency
                     Competency competency = new Competency();
-                    competency.setTitle(comp.getTitle());
+                    competency.setTitle(sanitizedTitle);
                     competency.setDescription(comp.getDescription());
                     competency.setTaxonomy(comp.getTaxonomy());
                     competency.setCourse(course);
@@ -351,7 +369,7 @@ public class CompetencyExpertToolsService {
                     }
 
                     Competency competency = existing.get();
-                    competency.setTitle(comp.getTitle().trim());
+                    competency.setTitle(sanitizedTitle);
                     competency.setDescription(comp.getDescription());
                     competency.setTaxonomy(comp.getTaxonomy());
                     competencyRepository.save(competency);
@@ -360,7 +378,9 @@ public class CompetencyExpertToolsService {
                 }
             }
             catch (Exception e) {
-                errors.add("Failed to save '" + comp.getTitle() + "': " + e.getMessage());
+                // Use sanitized title if available, otherwise use a placeholder for error message
+                String titleForError = comp.getTitle() != null ? comp.getTitle().trim() : "[no title]";
+                errors.add("Failed to save '" + titleForError + "': " + e.getMessage());
             }
         }
 

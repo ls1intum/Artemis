@@ -9,7 +9,16 @@
                 "error": "Entschuldigung, aber ich habe derzeit Probleme bei der Bearbeitung deiner Anfrage. Bitte versuch es erneut.",
                 "messageTooLong": "Die Nachricht ist zu lang. Bitte kürze deine Nachricht.",
                 "you": "Du",
-                "aiAssistant": "KI-Assistent"
+                "aiAssistant": "KI-Assistent",
+                "planApproval": "Ich billige den Plan",
+                "competencyProcessFailure": "fehlgeschlagen, einige Kompetenzen zu verarbeiten. Bitte versuchen Sie es erneut.",
+                "success": {
+                    "processed": "{{count}} Kompetenz(en) erfolgreich bearbeitet!",
+                    "updated": "{{count}} Kompetenz(en) erfolgreich aktualisiert!",
+                    "created": "{{count}} Kompetenz(en) erfolgreich erstellt!",
+                    "updatedSingle": "Kompetenz erfolgreich aktualisiert!",
+                    "createdSingle": "Kompetenz erfolgreich erstellt!"
+                }
             }
         }
     }

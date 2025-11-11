@@ -184,7 +184,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.messages = this.messages.map((msg) => (msg.id === message.id ? { ...msg, competencyCreated: true } : msg));
                 this.cdr.markForCheck();
 
-                this.addMessage(isUpdate ? 'Competency updated successfully!' : 'Competency created successfully!', false);
+                const translationKey = isUpdate ? 'artemisApp.agent.chat.success.updatedSingle' : 'artemisApp.agent.chat.success.createdSingle';
+
+                this.addMessage(this.translateService.instant(translationKey), false);
 
                 // Emit event to refresh competencies in parent component
                 this.competencyChanged.emit();
@@ -194,7 +196,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             },
             error: () => {
                 this.isAgentTyping.set(false);
-                this.addMessage(isUpdate ? 'Failed to update competency. Please try again.' : 'Failed to create competency. Please try again.', false);
+                const errorKey = isUpdate ? 'artemisApp.agent.chat.error.updateFailed' : 'artemisApp.agent.chat.error.createFailed';
+                this.addMessage(this.translateService.instant(errorKey), false);
 
                 // Restore focus to input
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
@@ -217,7 +220,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.isAgentTyping.set(true);
 
         // Send approval - backend will process it
-        this.agentChatService.sendMessage('I approve the plan', this.courseId).subscribe({
+        this.agentChatService.sendMessage(this.translateService.instant('artemisApp.agent.chat.planApproval'), this.courseId).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
                 this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false);
@@ -246,18 +249,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             timestamp: new Date(),
         };
 
-        // Detect plan pending marker (this is still in the message text)
-        if (!isUser) {
-            const planPendingData = this.extractPlanPending(content);
-            if (planPendingData) {
-                message.planPending = true;
-                message.content = planPendingData.cleanedMessage;
-            }
-        }
-
-        this.messages = [...this.messages, message];
-        this.shouldScrollToBottom = true;
-        this.cdr.markForCheck();
+        this.finalizeMessage(message, isUser);
     }
 
     /**
@@ -277,7 +269,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             timestamp: new Date(),
         };
 
-        // Add preview data directly from server response
         if (singlePreview?.preview) {
             message.competencyPreview = {
                 ...singlePreview.competency,
@@ -287,23 +278,32 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         }
 
         if (batchPreview?.batchPreview) {
-            message.batchCompetencyPreview = batchPreview.competencies.map((comp, index) => ({
+            message.batchCompetencyPreview = batchPreview.competencies.map((comp) => ({
                 ...comp,
                 viewOnly: batchPreview.viewOnly,
-                // Note: competencyId comes from the individual competency operation, not from the batch level
-                // It's already part of comp if this is an update operation
             }));
         }
 
-        // Detect plan pending marker
+        this.finalizeMessage(message, isUser);
+    }
+
+    /**
+     * Finalizes a message before displaying it:
+     * - Detects plan approval markers
+     * - Appends it to the message list
+     * - Marks for scroll and change detection
+     */
+    private finalizeMessage(message: ChatMessage, isUser: boolean): void {
+        // Detect [PLAN_PENDING] markers and clean message text
         if (!isUser) {
-            const planPendingData = this.extractPlanPending(content);
+            const planPendingData = this.extractPlanPending(message.content);
             if (planPendingData) {
                 message.planPending = true;
                 message.content = planPendingData.cleanedMessage;
             }
         }
 
+        // Append message and trigger UI updates
         this.messages = [...this.messages, message];
         this.shouldScrollToBottom = true;
         this.cdr.markForCheck();
@@ -380,13 +380,13 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 const hasUpdates = operations.some((op) => op.id !== undefined);
                 const hasCreates = operations.some((op) => op.id === undefined);
 
-                let successMessage = '';
+                let successMessage;
                 if (hasUpdates && hasCreates) {
-                    successMessage = `Successfully processed ${count} competencies!`;
+                    successMessage = this.translateService.instant('artemisApp.agent.chat.success.processed', { count });
                 } else if (hasUpdates) {
-                    successMessage = `Successfully updated ${count} ${count === 1 ? 'competency' : 'competencies'}!`;
+                    successMessage = this.translateService.instant('artemisApp.agent.chat.success.updated', { count });
                 } else {
-                    successMessage = `Successfully created ${count} ${count === 1 ? 'competency' : 'competencies'}!`;
+                    successMessage = this.translateService.instant('artemisApp.agent.chat.success.created', { count });
                 }
 
                 this.addMessage(successMessage, false);
@@ -399,7 +399,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             })
             .catch(() => {
                 this.isAgentTyping.set(false);
-                this.addMessage('Failed to process some competencies. Please try again.', false);
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.competencyProcessFailure'), false);
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
             });
     }

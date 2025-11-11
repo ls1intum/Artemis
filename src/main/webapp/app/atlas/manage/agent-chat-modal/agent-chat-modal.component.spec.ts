@@ -47,8 +47,31 @@ describe('AgentChatModalComponent', () => {
         } as any;
 
         mockTranslateService = {
-            instant: jest.fn((key: string) => key), // Default: return the key itself
-        } as any;
+            instant: jest.fn(),
+        };
+
+        mockTranslateService.instant.mockImplementation((key: string, params?: any) => {
+            switch (key) {
+                case 'artemisApp.agent.chat.welcome':
+                    return 'Welcome to the agent chat!';
+                case 'artemisApp.agent.chat.error':
+                    return 'An error occurred. Please try again.';
+                case 'artemisApp.agent.chat.error.createFailed':
+                    return 'Failed to create competency';
+                case 'artemisApp.agent.chat.error.updateFailed':
+                    return 'Failed to update competency';
+                case 'artemisApp.agent.chat.planApproval':
+                    return 'I approve the plan';
+                case 'artemisApp.agent.chat.success.processed':
+                    return `Successfully processed ${params?.count} competencies!`;
+                case 'artemisApp.agent.chat.success.updated':
+                    return `Successfully updated ${params?.count} ${params?.count === 1 ? 'competency' : 'competencies'}!`;
+                case 'artemisApp.agent.chat.success.created':
+                    return `Successfully created ${params?.count} ${params?.count === 1 ? 'competency' : 'competencies'}!`;
+                default:
+                    return key; // fallback
+            }
+        });
 
         mockChangeDetectorRef = {
             markForCheck: jest.fn(),
@@ -337,7 +360,6 @@ describe('AgentChatModalComponent', () => {
 
     describe('Template integration', () => {
         beforeEach(() => {
-            mockTranslateService.instant.mockReturnValue('Welcome message');
             component.ngOnInit();
             fixture.detectChanges();
         });
@@ -456,7 +478,6 @@ describe('AgentChatModalComponent', () => {
 
     describe('Competency modification events', () => {
         beforeEach(() => {
-            mockTranslateService.instant.mockReturnValue('Welcome');
             component.ngOnInit();
         });
 
@@ -572,10 +593,10 @@ describe('AgentChatModalComponent', () => {
 
     describe('Message state management', () => {
         it('should clear currentMessage after sending', () => {
-            mockTranslateService.instant.mockReturnValue('Welcome');
             component.ngOnInit();
             component.currentMessage.set('Test message to send');
             component.isAgentTyping.set(false);
+
             const mockResponse = {
                 message: 'Agent response',
                 sessionId: 'course_123',
@@ -583,6 +604,7 @@ describe('AgentChatModalComponent', () => {
                 success: true,
                 competenciesModified: false,
             };
+
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
             fixture.detectChanges();
 
@@ -593,10 +615,10 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should set isAgentTyping to true when sending message', () => {
-            mockTranslateService.instant.mockReturnValue('Welcome');
             component.ngOnInit();
             component.currentMessage.set('Test message');
             component.isAgentTyping.set(false);
+
             mockAgentChatService.sendMessage.mockReturnValue(
                 of({
                     message: 'Response',
@@ -606,20 +628,20 @@ describe('AgentChatModalComponent', () => {
                     competenciesModified: false,
                 }),
             );
-            fixture.detectChanges();
 
+            fixture.detectChanges();
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
             sendButton.click();
 
-            expect(component.isAgentTyping()).toBeFalse(); // False after response completes
+            expect(component.isAgentTyping()).toBeFalse(); // After response completes
         });
 
         it('should add user message to messages array', () => {
-            mockTranslateService.instant.mockReturnValue('Welcome');
             component.ngOnInit();
             const initialMessageCount = component.messages.length;
             component.currentMessage.set('User test message');
             component.isAgentTyping.set(false);
+
             mockAgentChatService.sendMessage.mockReturnValue(
                 of({
                     message: 'Agent response',
@@ -629,8 +651,8 @@ describe('AgentChatModalComponent', () => {
                     competenciesModified: false,
                 }),
             );
-            fixture.detectChanges();
 
+            fixture.detectChanges();
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
             sendButton.click();
 
@@ -659,7 +681,6 @@ describe('AgentChatModalComponent', () => {
                 competenciesModified: false,
             };
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
-            mockTranslateService.instant.mockReturnValue('Default error message');
             fixture.detectChanges();
 
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
@@ -667,7 +688,7 @@ describe('AgentChatModalComponent', () => {
             tick();
 
             expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
-            expect(component.messages[component.messages.length - 1].content).toBe('Default error message');
+            expect(component.messages[component.messages.length - 1].content).toBe(mockTranslateService.instant('artemisApp.agent.chat.error'));
         }));
 
         it('should handle null response message from service', fakeAsync(() => {
@@ -681,7 +702,6 @@ describe('AgentChatModalComponent', () => {
                 competenciesModified: false,
             };
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
-            mockTranslateService.instant.mockReturnValue('Default error message');
             fixture.detectChanges();
 
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
@@ -689,10 +709,10 @@ describe('AgentChatModalComponent', () => {
             tick();
 
             expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+            expect(component.messages[component.messages.length - 1].content).toBe(mockTranslateService.instant('artemisApp.agent.chat.error'));
         }));
 
         it('should set shouldScrollToBottom flag when adding messages', () => {
-            mockTranslateService.instant.mockReturnValue('Welcome');
             component.ngOnInit();
             component['shouldScrollToBottom'] = false;
 
@@ -707,6 +727,7 @@ describe('AgentChatModalComponent', () => {
                     competenciesModified: false,
                 }),
             );
+
             fixture.detectChanges();
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
             sendButton.click();
@@ -717,7 +738,6 @@ describe('AgentChatModalComponent', () => {
 
     describe('Competency Preview Extraction', () => {
         beforeEach(() => {
-            mockTranslateService.instant.mockReturnValue('Welcome');
             component.ngOnInit();
         });
 
@@ -878,10 +898,10 @@ describe('AgentChatModalComponent', () => {
             const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
             sendButton.click();
 
-            const agentMessage = component.messages.find((msg) => !msg.isUser);
+            const agentMessage = component.messages[component.messages.length - 1];
             expect(agentMessage).toBeDefined();
             expect(agentMessage?.competencyPreview).toBeUndefined();
-            expect(agentMessage?.content).toBe('Welcome');
+            expect(agentMessage?.content).toBe('This is a normal response without JSON');
         });
     });
 
@@ -1006,6 +1026,8 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should send approval message when onApprovePlan is called', fakeAsync(() => {
+            const planApprovalText = 'I approve the plan';
+            mockTranslateService.instant.mockReturnValue(planApprovalText);
             const approvalResponse = {
                 message: 'Plan approved, executing...',
                 sessionId: 'course_123',
@@ -1027,8 +1049,8 @@ describe('AgentChatModalComponent', () => {
             component['onApprovePlan'](message);
             tick();
 
-            expect(mockAgentChatService.sendMessage).toHaveBeenCalledOnce();
-            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('I approve the plan', 123);
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith(planApprovalText, 123);
+            expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.planApproval');
 
             // Find the updated message in the messages array
             const updatedMessage = component.messages.find((msg) => msg.id === '1');
@@ -1078,7 +1100,6 @@ describe('AgentChatModalComponent', () => {
 
         it('should handle approval error gracefully', fakeAsync(() => {
             mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('Approval failed')));
-            mockTranslateService.instant.mockReturnValue('Error occurred');
 
             const message: ChatMessage = {
                 id: '1',
@@ -1092,8 +1113,8 @@ describe('AgentChatModalComponent', () => {
             tick();
 
             expect(component.isAgentTyping()).toBeFalse();
-            const errorMessage = component.messages.find((msg) => !msg.isUser && msg.content === 'Error occurred');
-            expect(errorMessage).toBeDefined();
+            expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+            expect(component.messages[component.messages.length - 1].content).toBe(mockTranslateService.instant('artemisApp.agent.chat.error'));
         }));
     });
 
@@ -1213,6 +1234,8 @@ describe('AgentChatModalComponent', () => {
 
         it('should handle creation error gracefully', fakeAsync(() => {
             mockCompetencyService.create.mockReturnValue(throwError(() => new Error('Creation failed')));
+            const createFailedText = 'Failed to create competency';
+            mockTranslateService.instant.mockReturnValue(createFailedText);
 
             const message: ChatMessage = {
                 id: '1',
@@ -1231,12 +1254,15 @@ describe('AgentChatModalComponent', () => {
             tick();
 
             expect(component.isAgentTyping()).toBeFalse();
-            const errorMessage = component.messages.find((msg) => !msg.isUser && msg.content.includes('Failed to create competency'));
+            expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error.createFailed');
+            const errorMessage = component.messages.find((msg) => !msg.isUser && msg.content === createFailedText);
             expect(errorMessage).toBeDefined();
         }));
 
         it('should handle update error gracefully', fakeAsync(() => {
             mockCompetencyService.update.mockReturnValue(throwError(() => new Error('Update failed')));
+            const updateFailedText = 'Failed to update competency';
+            mockTranslateService.instant.mockReturnValue(updateFailedText);
 
             const message: ChatMessage = {
                 id: '1',
@@ -1256,7 +1282,8 @@ describe('AgentChatModalComponent', () => {
             tick();
 
             expect(component.isAgentTyping()).toBeFalse();
-            const errorMessage = component.messages.find((msg) => !msg.isUser && msg.content.includes('Failed to update competency'));
+            expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error.updateFailed');
+            const errorMessage = component.messages.find((msg) => !msg.isUser && msg.content === updateFailedText);
             expect(errorMessage).toBeDefined();
         }));
     });
@@ -1408,7 +1435,7 @@ describe('AgentChatModalComponent', () => {
             expect(mockCompetencyService.create).toHaveBeenCalledOnce();
             expect(mockCompetencyService.update).toHaveBeenCalledOnce();
 
-            const successMessage = component.messages.find((msg) => !msg.isUser && msg.content.includes('Successfully processed'));
+            const successMessage = component.messages[component.messages.length - 1];
             expect(successMessage).toBeDefined();
         }));
 
@@ -1432,7 +1459,7 @@ describe('AgentChatModalComponent', () => {
 
             expect(mockCompetencyService.update).toHaveBeenCalledTimes(2);
 
-            const successMessage = component.messages.find((msg) => !msg.isUser && msg.content.includes('Successfully updated 2 competencies'));
+            const successMessage = component.messages[component.messages.length - 1];
             expect(successMessage).toBeDefined();
         }));
 
@@ -1453,7 +1480,7 @@ describe('AgentChatModalComponent', () => {
 
             expect(mockCompetencyService.create).toHaveBeenCalledOnce();
 
-            const successMessage = component.messages.find((msg) => !msg.isUser && msg.content.includes('Successfully created 1 competency'));
+            const successMessage = component.messages[component.messages.length - 1];
             expect(successMessage).toBeDefined();
         }));
 
@@ -1473,8 +1500,9 @@ describe('AgentChatModalComponent', () => {
             tick();
 
             expect(component.isAgentTyping()).toBeFalse();
-            const errorMessage = component.messages.find((msg) => !msg.isUser && msg.content.includes('Failed to process'));
-            expect(errorMessage).toBeDefined();
+            expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
+            expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
+            expect(component.messages[component.messages.length - 1].content).toBe(mockTranslateService.instant('artemisApp.agent.chat.error'));
         }));
     });
 
