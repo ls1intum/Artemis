@@ -49,6 +49,8 @@ export class AccountService implements IAccountService {
 
     readonly authenticated = computed(() => !!this.userIdentity());
 
+    readonly isLoggedInWithPasskey = computed(() => this.userIdentity()?.isLoggedInWithPasskey ?? false);
+
     constructor() {
         effect(() => {
             this.handleSideEffectsWhenUserLogsInOrOut();

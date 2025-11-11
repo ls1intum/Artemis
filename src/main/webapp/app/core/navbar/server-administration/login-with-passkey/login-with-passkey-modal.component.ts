@@ -8,9 +8,7 @@ import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauth
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Router } from '@angular/router';
-import { addNewPasskey } from 'app/core/user/settings/passkey-settings/util/credential.util';
 import { AlertService } from 'app/shared/service/alert.service';
-import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 
 @Component({
     selector: 'jhi-login-with-passkey-modal',
@@ -29,7 +27,6 @@ export class LoginWithPasskeyModalComponent implements OnInit {
     private readonly eventManager = inject(EventManager);
     private readonly accountService = inject(AccountService);
     private readonly webauthnService = inject(WebauthnService);
-    private readonly webauthnApiService = inject(WebauthnApiService);
     private readonly alertService = inject(AlertService);
 
     isLoggedInWithPasskeyOutput = output<boolean>();
@@ -40,12 +37,12 @@ export class LoginWithPasskeyModalComponent implements OnInit {
     userHasRegisteredAPasskey: boolean = false;
 
     ngOnInit() {
-        this.userHasRegisteredAPasskey = !this.accountService.userIdentity?.askToSetupPasskey;
+        this.userHasRegisteredAPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
     }
 
     async setupPasskeyAndLogin() {
         this.showModal = false;
-        await addNewPasskey(this.accountService.userIdentity, this.webauthnApiService, this.alertService);
+        await this.webauthnService.addNewPasskey(this.accountService.userIdentity());
         this.alertService.success('artemisApp.userSettings.passkeySettingsPage.success.registration');
         await this.signInWithPasskey();
     }
@@ -62,11 +59,11 @@ export class LoginWithPasskeyModalComponent implements OnInit {
 
     private handleLoginSuccess() {
         // TODO this could be done in the loginWithPasskey method
-        this.accountService.userIdentity = {
-            ...this.accountService.userIdentity,
+        this.accountService.userIdentity.set({
+            ...this.accountService.userIdentity(),
             isLoggedInWithPasskey: true,
-            internal: this.accountService.userIdentity?.internal ?? false,
-        };
+            internal: this.accountService.userIdentity()?.internal ?? false,
+        });
 
         this.isLoggedInWithPasskeyOutput.emit(true); // TODO can be done via effect one other PR is merged
         this.justLoggedInWithPasskey.emit(true);

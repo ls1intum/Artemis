@@ -26,8 +26,8 @@ import {
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { IsLoggedInWithPasskeyGuard } from 'app/core/auth/is-logged-in-with-passkey/is-logged-in-with-passkey.guard';
 import { LoginWithPasskeyModalComponent } from 'app/core/navbar/server-administration/login-with-passkey/login-with-passkey-modal.component';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-server-administration',
@@ -67,7 +67,7 @@ export class ServerAdministrationComponent implements OnInit {
     protected readonly faUser = faUser;
     protected readonly faUserPlus = faUserPlus;
 
-    private readonly isLoggedInWithPasskeyGuard = inject(IsLoggedInWithPasskeyGuard);
+    private readonly accountService = inject(AccountService);
 
     adminMenuDropdown = viewChild.required<NgbDropdown>('adminMenuDropdown');
     loginWithPasskeyModal = viewChild.required<LoginWithPasskeyModalComponent>(LoginWithPasskeyModalComponent);
@@ -106,7 +106,7 @@ export class ServerAdministrationComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.isLoggedInWithPasskey.set(this.isLoggedInWithPasskeyGuard.isLoggedInWithPasskey());
+        this.isLoggedInWithPasskey.set(this.accountService.isLoggedInWithPasskey());
     }
 
     collapseNavbar() {
