@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, effect, inject, input, output, viewChild } from '@angular/core';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -46,7 +46,7 @@ import { AccountService } from 'app/core/auth/account.service';
     templateUrl: './server-administration.component.html',
     styleUrl: '../navbar.scss',
 })
-export class ServerAdministrationComponent implements OnInit {
+export class ServerAdministrationComponent {
     protected readonly faUniversity = faUniversity;
     protected readonly faStamp = faStamp;
     protected readonly faTasks = faTasks;
@@ -83,7 +83,6 @@ export class ServerAdministrationComponent implements OnInit {
 
     collapseNavbarListener = output<void>();
 
-    protected isLoggedInWithPasskey = signal<boolean>(false);
     private justLoggedInWithPasskey = false;
 
     constructor() {
@@ -93,7 +92,7 @@ export class ServerAdministrationComponent implements OnInit {
     }
 
     private openDropdownIfUserLoggedInWithPasskey() {
-        if (this.isLoggedInWithPasskey() && this.justLoggedInWithPasskey) {
+        if (this.accountService.isLoggedInWithPasskey() && this.justLoggedInWithPasskey) {
             this.justLoggedInWithPasskey = false;
 
             // Use setTimeout to wait for the next JavaScript tick (macrotask).
@@ -105,25 +104,17 @@ export class ServerAdministrationComponent implements OnInit {
         }
     }
 
-    ngOnInit() {
-        this.isLoggedInWithPasskey.set(this.accountService.isLoggedInWithPasskey());
-    }
-
     collapseNavbar() {
         this.collapseNavbarListener.emit();
     }
 
     protected showModalForPasskeyLogin() {
-        if (this.isLoggedInWithPasskey()) {
+        if (this.accountService.isLoggedInWithPasskey()) {
             return;
         }
 
         this.adminMenuDropdown().close();
         this.loginWithPasskeyModal().showModal = true;
-    }
-
-    onIsLoggedInWithPasskeyOutput(value: boolean) {
-        this.isLoggedInWithPasskey.set(value);
     }
 
     onJustLoggedInWithPasskey(value: boolean) {

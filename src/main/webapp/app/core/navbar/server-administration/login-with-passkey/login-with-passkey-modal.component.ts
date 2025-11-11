@@ -29,7 +29,6 @@ export class LoginWithPasskeyModalComponent implements OnInit {
     private readonly webauthnService = inject(WebauthnService);
     private readonly alertService = inject(AlertService);
 
-    isLoggedInWithPasskeyOutput = output<boolean>();
     justLoggedInWithPasskey = output<boolean>();
 
     showModal: boolean = false;
@@ -65,7 +64,6 @@ export class LoginWithPasskeyModalComponent implements OnInit {
             internal: this.accountService.userIdentity()?.internal ?? false,
         });
 
-        this.isLoggedInWithPasskeyOutput.emit(true); // TODO can be done via effect one other PR is merged
         this.justLoggedInWithPasskey.emit(true);
 
         if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
