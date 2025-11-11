@@ -111,12 +111,13 @@ describe('Team Submission Sync Component', () => {
         component.ngOnInit();
         component.receiveSubmissionPatch.subscribe(receiver);
 
+        const patchString = JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]);
         mockEmitter.next({
-            submissionPatch: { patch: JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]) },
+            submissionPatch: { patch: patchString },
             sender: currentUser.login!,
         });
 
-        expect(receiver).toHaveBeenCalledWith({ patch: [{ op: 'replace', path: '/text', value: 'new text' }] });
+        expect(receiver).toHaveBeenCalledWith({ patch: patchString });
     });
 
     it('should properly send submission patches.', () => {

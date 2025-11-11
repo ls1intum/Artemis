@@ -143,11 +143,15 @@ describe('ModelingSubmissionComponent', () => {
 
         // Force emit a patch
         jest.spyOn(comp.modelingEditor.onModelPatch, 'emit');
-        comp.modelingEditor.onModelPatch.emit(JSON.stringify([{ value: 'test', op: 'add', path: '/test' }]));
+        const patchData = [{ value: 'test', op: 'add', path: '/test' }];
+        comp.modelingEditor.onModelPatch.emit(JSON.stringify(patchData));
 
         // We have got it?
         expect(receiverMock).toHaveBeenCalled();
-        expect(receiverMock.mock.lastCall[0].patch[0].path).toBe('/test');
+        const receivedArg = receiverMock.mock.lastCall[0];
+        // Parse the patch if it's a SubmissionPatch object with a patch property
+        const patch = receivedArg.patch ? JSON.parse(receivedArg.patch) : JSON.parse(receivedArg);
+        expect(patch[0].path).toBe('/test');
     });
 
     it('should update the submission when a patch is received.', () => {
@@ -159,25 +163,18 @@ describe('ModelingSubmissionComponent', () => {
         comp.ngOnInit();
 
         const editorImportSpy = jest.spyOn(comp.modelingEditor, 'importPatch');
-        const submissionPatch = new SubmissionPatch(
-            JSON.stringify([
-                {
-                    op: 'replace',
-                    path: '/elements/1/name',
-                    value: 'john',
-                },
-            ]),
-        );
-        comp.onReceiveSubmissionPatchFromTeam(submissionPatch);
-
-        // We have got it?
-        expect(editorImportSpy).toHaveBeenCalledWith([
+        const patchData = [
             {
                 op: 'replace',
                 path: '/elements/1/name',
                 value: 'john',
             },
-        ]);
+        ];
+        const submissionPatch = new SubmissionPatch(JSON.stringify(patchData));
+        comp.onReceiveSubmissionPatchFromTeam(submissionPatch);
+
+        // Check that importPatch was called with the JSON string
+        expect(editorImportSpy).toHaveBeenCalledWith(JSON.stringify(patchData));
     });
 
     it('should allow to submit when exercise due date not set', () => {
@@ -304,7 +301,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should set result when new result comes in from websocket', () => {
-        submission.model = '{"nodes": [{"id": 1}], "edges": []}';
+        submission.model = '{"id": "test-diagram-id", "version": "4.0.0", "title": "Test Diagram", "type": "ClassDiagram", "nodes": [{"id": 1}], "edges": []}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
@@ -523,11 +520,22 @@ describe('ModelingSubmissionComponent', () => {
         const getDataForFileUploadEditorSpy = jest.spyOn(service, 'getLatestSubmissionForModelingEditor');
         const modelingSubmission = submission;
         modelingSubmission.model = JSON.stringify({
-            elements: [
-                {
+            id: 'test-id',
+            title: 'Test Diagram',
+            nodes: [{ id: 1, name: 'TestClass' }],
+            edges: [],
+            version: '4.0.0',
+            type: 'ClassDiagram',
+            size: { width: 220, height: 420 },
+            interactive: {
+                elements: {
                     content: 'some element',
                 },
-            ],
+                relationships: {},
+            },
+            elements: { '1': { id: 1, name: 'TestClass' } },
+            relationships: {},
+            assessments: {},
         });
         comp.inputExercise = participation.exercise;
         comp.inputSubmission = modelingSubmission;

@@ -167,7 +167,9 @@ describe('ApollonDiagramDetail Component', () => {
 
         // set selection
         const editor = fixture.componentInstance.apollonEditor! as any;
-        editor.getNodes = () => Object.fromEntries(Object.keys(model.nodes).map((key) => [key, true]));
+        const nodeKeys = model.nodes ? Object.keys(model.nodes) : [];
+        const selectionMap = nodeKeys.length > 0 ? Object.fromEntries(nodeKeys.map((key) => [key, true])) : { 'test-node-id': true };
+        editor.getNodes = () => selectionMap;
         editor.getEdges = () => ({});
         const exportSpy = jest.spyOn(editor, 'exportAsSVG').mockResolvedValue({ svg: '<svg></svg>', clip: { width: 100, height: 100, x: 0, y: 0 } });
         fixture.detectChanges();

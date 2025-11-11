@@ -56,6 +56,7 @@ describe('ModelingSubmissionComponent', () => {
     const participation = new StudentParticipation();
     participation.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
     participation.id = 1;
+    participation.exercise.studentParticipations = [];
     const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
     const result = { id: 1 } as Result;
 
@@ -357,7 +358,7 @@ describe('ModelingSubmissionComponent', () => {
         } as any as ActivatedRoute;
         createModelingSubmissionComponent(route); // Pass the route
 
-        submission.model = '{"nodes": [{"id": 1}], "edges": []}';
+        submission.model = '{"id": "test-diagram-id", "version": "4.0.0", "title": "Test Diagram", "type": "ClassDiagram", "nodes": [{"id": 1}], "edges": []}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
         const alertServiceSpy = jest.spyOn(alertService, 'error');
@@ -400,7 +401,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should handle Athena assessment results separately from manual assessments', () => {
         createModelingSubmissionComponent();
 
-        submission.model = '{"nodes": [{"id": 1}], "edges": []}';
+        submission.model = '{"id": "test-diagram-id", "version": "4.0.0", "title": "Test Diagram", "type": "ClassDiagram", "nodes": [{"id": 1}], "edges": []}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
         const alertServiceInfoSpy = jest.spyOn(alertService, 'info');
@@ -445,7 +446,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should set result when new result comes in from websocket', () => {
         createModelingSubmissionComponent();
 
-        submission.model = '{"nodes": [{"id": 1}], "edges": []}';
+        submission.model = '{"id": "test-diagram-id", "version": "4.0.0", "title": "Test Diagram", "type": "ClassDiagram", "nodes": [{"id": 1}], "edges": []}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
@@ -711,11 +712,22 @@ describe('ModelingSubmissionComponent', () => {
         const getDataForFileUploadEditorSpy = jest.spyOn(service, 'getLatestSubmissionForModelingEditor');
         const modelingSubmission = submission;
         modelingSubmission.model = JSON.stringify({
-            elements: [
-                {
+            id: 'test-id',
+            title: 'Test Diagram',
+            nodes: [{ id: 1, name: 'TestClass' }],
+            edges: [],
+            version: '4.0.0',
+            type: 'ClassDiagram',
+            size: { width: 220, height: 420 },
+            interactive: {
+                elements: {
                     content: 'some element',
                 },
-            ],
+                relationships: {},
+            },
+            elements: { '1': { id: 1, name: 'TestClass' } },
+            relationships: {},
+            assessments: {},
         });
         comp.inputExercise = participation.exercise;
         comp.inputSubmission = modelingSubmission;

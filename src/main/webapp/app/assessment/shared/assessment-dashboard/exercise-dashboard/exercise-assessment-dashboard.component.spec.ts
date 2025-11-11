@@ -134,6 +134,16 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         exampleSolutionModel: '{"elements": [{"id": 1}]}',
         exampleSolutionExplanation: 'explanation',
     } as ModelingExercise;
+
+    const exerciseForTest = {
+        ...modelingExercise,
+        dueDate: undefined,
+        teamMode: false,
+        secondCorrectionEnabled: true,
+        allowFeedbackRequests: true,
+        exerciseGroup: exerciseGroup,
+        exampleSolutionModel: undefined, // ADD THIS - remove the invalid diagram
+    } as ModelingExercise;
     const textExercise = {
         id: 18,
         exerciseGroup,
@@ -145,6 +155,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             { id: 2, usedForTutorial: true },
         ],
     } as TextExercise;
+
     const fileUploadExercise = {
         id: 19,
         exerciseGroup,
@@ -301,14 +312,18 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     it('should initialize', fakeAsync(() => {
         const user = { id: 10, login: 'tutor1' } as User;
         accountService.userIdentity = user;
+
+        // Set initial exercise to prevent undefined access
+        comp.exercise = modelingExercise;
+        comp.tutorParticipation = modelingExercise.tutorParticipations![0];
+        comp.tutorParticipationStatus = modelingExercise.tutorParticipations![0].status!; // ADD THIS LINE
+
         fixture.detectChanges();
+        tick(); // Process all async operations
 
         expect(comp.courseId).toBe(1);
         expect(comp.examId).toBe(2);
         expect(comp.exerciseId).toBe(modelingExercise.id);
-
-        tick();
-
         expect(comp.tutor).toEqual(user);
 
         const setupGraphSpy = jest.spyOn(comp, 'setupGraph');
@@ -316,7 +331,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         translateService.use('en'); // Change language.
         expect(setupGraphSpy).toHaveBeenCalledOnce();
     }));
-
     it('should initialize with tutor leaderboard entry', () => {
         const tutor = { id: 10, login: 'tutor1' } as User;
         accountService.userIdentity = tutor;
@@ -335,6 +349,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ body: statsWithTutor, headers: new HttpHeaders() })));
 
+        comp.exercise = modelingExercise;
+        comp.tutorParticipation = modelingExercise.tutorParticipations![0];
+        comp.tutorParticipationStatus = modelingExercise.tutorParticipations![0].status!;
+
         fixture.detectChanges();
 
         expect(comp.numberOfTutorAssessments).toBe(tutorLeaderBoardEntry.numberOfAssessments);
@@ -347,11 +365,13 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         translateService.use('en'); // Change language.
         expect(setupGraphSpy).toHaveBeenCalledOnce();
     });
-
-    it('should set unassessedSubmission if lock limit is not reached', () => {
+    it('should set unassessedSubmission if lock limit is not reached', fakeAsync(() => {
         modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForTest, headers: new HttpHeaders() })));
 
         comp.loadAll();
+
+        tick();
 
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
@@ -361,13 +381,16 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.unassessedSubmissionByRound?.get(0)?.latestResult).toBeUndefined();
         expect(comp.submissionLockLimitReached).toBeFalse();
         expect(comp.assessedSubmissionsByRound?.get(0)).toHaveLength(0);
-    });
-
-    it('should not set unassessedSubmission if lock limit is reached', () => {
+    }));
+    it('should not set unassessedSubmission if lock limit is reached', fakeAsync(() => {
         modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
         modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForTest, headers: new HttpHeaders() })));
+
         comp.loadAll();
+
+        tick();
 
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
@@ -376,23 +399,34 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.unassessedSubmissionByRound?.get(1)).toBeUndefined();
         expect(comp.submissionLockLimitReached).toBeTrue();
         expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
-    });
-
-    it('should handle if no more submissions are assessable', () => {
+    }));
+    it('should handle if no more submissions are assessable', fakeAsync(() => {
         comp.unassessedSubmissionByRound = new Map<number, Submission>();
         comp.unassessedSubmissionByRound.set(0, modelingSubmission);
         comp.unassessedSubmissionByRound.set(1, modelingSubmission);
 
         modelingSubmissionStubWithoutAssessment.mockReturnValue(of(undefined));
 
+        exerciseServiceGetForTutorsStub.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: exerciseForTest,
+                    headers: new HttpHeaders(),
+                }),
+            ),
+        );
+
         comp.loadAll();
+
+        tick();
 
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
         expect(comp.unassessedSubmissionByRound.get(0)).toBeUndefined();
         expect(comp.unassessedSubmissionByRound.get(1)).toBeUndefined();
-    });
+    }));
 
-    it('should handle generic error', () => {
+    it('should handle generic error', fakeAsync(() => {
+        // <-- ADDED fakeAsync
         const error = { errorKey: 'mock', detail: 'Mock error' };
         const errorResponse = new HttpErrorResponse({ error });
 
@@ -402,17 +436,28 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => errorResponse));
         modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForTest, headers: new HttpHeaders() })));
+
         comp.loadAll();
+
+        tick();
 
         expect(alertServiceSpy).toHaveBeenCalledTimes(2);
         expect(alertServiceSpy).toHaveBeenNthCalledWith(1, error.detail);
         expect(alertServiceSpy).toHaveBeenNthCalledWith(2, error.detail);
-    });
+    }));
 
-    it('should have correct percentages calculated', () => {
+    it('should have correct percentages calculated', fakeAsync(() => {
+        // <-- ADDED fakeAsync
+
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForTest, headers: new HttpHeaders() })));
         modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
+        modelingSubmissionStubWithoutAssessment.mockReturnValue(of(modelingSubmission));
+
         comp.loadAll();
+
+        tick(); // <-- ADDED tick()
 
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
@@ -422,26 +467,40 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).toBe(2);
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).toBe(7);
         expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
-    });
+    }));
 
-    it('should  set assessed Submission and latest result', () => {
+    it('should set assessed Submission and latest result', fakeAsync(() => {
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForTest, headers: new HttpHeaders() })));
+
+        modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
+
+        modelingSubmissionStubWithoutAssessment.mockReturnValue(of(modelingSubmission));
+
         comp.loadAll();
 
+        tick();
+
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
+
         expect(comp.assessedSubmissionsByRound?.get(1)![0]).toEqual(modelingSubmissionAssessed);
         expect(comp.assessedSubmissionsByRound?.get(1)![0]?.participation!.submissions![0]).toEqual(comp.assessedSubmissionsByRound?.get(1)![0]);
         expect(comp.assessedSubmissionsByRound?.get(1)![0]?.latestResult).toEqual(result2);
-    });
+    }));
 
-    it('should set exam and stats properties', () => {
-        expect(comp.exam).toBeUndefined();
+    it('should set exam and stats properties', fakeAsync(() => {
+        // <--- ADDED fakeAsync
+
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForTest, headers: new HttpHeaders() })));
 
         comp.loadAll();
+
+        tick();
+
         expect(comp.exercise.id).toBe(modelingExercise.id);
-        expect(comp.exam).toEqual(exam);
+        expect(comp.exam).toEqual(exam); // Now asserted after async data is received
         expect(comp.exam?.numberOfCorrectionRoundsInExam).toBe(numberOfAssessmentsOfCorrectionRounds.length);
         expect(comp.numberOfAssessmentsOfCorrectionRounds).toEqual(numberOfAssessmentsOfCorrectionRounds);
-    });
+    }));
 
     it('should calculateStatus DRAFT', () => {
         expect(modelingSubmission.latestResult).toBeUndefined();
@@ -743,6 +802,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should get submissions with more feedback requests for tutor', () => {
+        comp.exercise = modelingExercise;
+        comp.tutorParticipation = modelingExercise.tutorParticipations![0];
+        comp.tutorParticipationStatus = modelingExercise.tutorParticipations![0].status!; // ADD THIS LINE
+
         const submissionServiceSpy = jest.spyOn(submissionService, 'getSubmissionsWithMoreFeedbackRequestsForTutor');
         submissionServiceSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
 

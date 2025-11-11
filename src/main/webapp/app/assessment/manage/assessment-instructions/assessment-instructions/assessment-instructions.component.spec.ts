@@ -40,7 +40,15 @@ describe('AssessmentInstructionsComponent', () => {
     it('should initialize exercise input', () => {
         const modelingExercise = {
             id: 1,
-            exampleSolutionModel: '{"elements": [{"id": 1}]}',
+            exampleSolutionModel: JSON.stringify({
+                id: 'test-diagram-id',
+                version: '4.0.0',
+                title: 'Test Diagram',
+                type: 'ClassDiagram',
+                nodes: [],
+                edges: [],
+                assessments: {},
+            }),
             diagramType: UMLDiagramType.ClassDiagram,
             exampleSolutionExplanation: 'explanation',
             type: ExerciseType.MODELING,
