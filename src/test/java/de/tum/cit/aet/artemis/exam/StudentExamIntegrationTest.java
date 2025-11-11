@@ -4,20 +4,17 @@ import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSe
 import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredModelingExercise;
 import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredProgrammingExercise;
 import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredTextExercise;
-import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_STRING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -25,18 +22,22 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.eclipse.jgit.lib.ObjectId;
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.json.JSONException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -114,7 +115,6 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -233,6 +233,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
+    private final Map<Long, String> programmingInitialCommitHashes = new HashMap<>();
+
+    private final Map<Long, String> programmingUpdatedCommitHashes = new HashMap<>();
+
     private static final int NUMBER_OF_STUDENTS = 2;
 
     private static final boolean IS_TEST_RUN = false;
@@ -273,10 +277,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         studentExamRepository.save(studentExamForTestExam2);
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        // TODO: get rid of these mocks, we should have realistic tests
-        doReturn(new Repository("ab", new LocalVCRepositoryUri(localVCBaseUri, "test", "test-test"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(),
-                any(), anyBoolean());
-        doReturn(new Repository("ab", new LocalVCRepositoryUri(localVCBaseUri, "test", "test-test"))).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), any());
+        studentRepos.clear();
+        programmingInitialCommitHashes.clear();
+        programmingUpdatedCommitHashes.clear();
         // TODO: all parts using programmingExerciseTestService should also be provided for LocalVC+Jenkins
         programmingExerciseTestService.setup(this, versionControlService);
         jenkinsRequestMockProvider.enableMockingOfRequests();
@@ -527,9 +530,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
-        var repo = new LocalRepository(defaultBranch);
-        repo.configureRepos(localVCBasePath, "studentRepo", "studentOriginRepo");
-        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, student1.getLogin(), repo);
         mockConnectorRequestsForStartParticipation(programmingExercise, student1.getLogin(), Set.of(student1), true);
 
         StudentExam studentExamForStart = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
@@ -544,7 +544,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         // TODO: test the conduction / submission of the test exams, in particular that the summary includes all submissions
 
         deleteExamWithInstructor(testExam1);
-        repo.resetLocalRepo();
     }
 
     private void assertParticipationAndSubmissions(StudentExam response, User user) {
@@ -619,9 +618,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         final var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(2).getExercises().iterator().next();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
-        var repo = new LocalRepository(defaultBranch);
-        repo.configureRepos(localVCBasePath, "instructorRepo", "instructorOriginRepo");
-        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, instructor.getLogin(), repo);
         mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getLogin(), Set.of(instructor), true);
 
         assertThat(testRun.isTestRun()).isTrue();
@@ -1357,15 +1353,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         jenkinsRequestMockProvider.reset();
 
-        final String newCommitHash = "2ec6050142b9c187909abede819c083c8745c19b";
-        final ObjectId newCommitHashObjectId = ObjectId.fromString(newCommitHash);
-
         for (var studentExam : studentExamsAfterStart) {
             for (var exercise : studentExam.getExercises()) {
                 var participation = exercise.getStudentParticipations().iterator().next();
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
                     // do another programming submission to check if the StudentExam after submit contains the new commit hash
-                    doReturn(newCommitHashObjectId).when(gitService).getLastCommitHash(any());
+                    var latestCommitHash = commitNewFileToParticipationRepo((ProgrammingExerciseStudentParticipation) participation);
+                    programmingUpdatedCommitHashes.put(participation.getId(), latestCommitHash);
                     jenkinsRequestMockProvider.reset();
                     jenkinsRequestMockProvider.mockTriggerBuild(programmingExercise.getProjectKey(), ((ProgrammingExerciseStudentParticipation) participation).getBuildPlanId(),
                             false);
@@ -1418,10 +1412,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     case ProgrammingExercise ignored -> {
                         var programmingSubmissionAfterStart = (ProgrammingSubmission) submissionAfterStart;
                         var programmingSubmissionAfterFinish = (ProgrammingSubmission) submissionAfterFinish;
-                        // assert that we did not update the submission prematurely
-                        assertThat(programmingSubmissionAfterStart.getCommitHash()).isEqualTo(COMMIT_HASH_STRING);
-                        // assert that we get the correct commit hash after submit
-                        assertThat(programmingSubmissionAfterFinish.getCommitHash()).isEqualTo(newCommitHash);
+                        var participationId = participationAfterStart.getId();
+                        var expectedInitialHash = programmingInitialCommitHashes.get(participationId);
+                        assertThat(expectedInitialHash).as("initial commit hash recorded for participation %s", participationId).isNotNull();
+                        assertThat(programmingSubmissionAfterStart.getCommitHash()).isEqualTo(expectedInitialHash);
+                        var expectedUpdatedHash = programmingUpdatedCommitHashes.get(participationAfterFinish.getId());
+                        assertThat(expectedUpdatedHash).as("updated commit hash recorded for participation %s", participationAfterFinish.getId()).isNotNull();
+                        assertThat(programmingSubmissionAfterFinish.getCommitHash()).isEqualTo(expectedUpdatedHash);
                     }
                     default -> {
                     }
@@ -1442,7 +1439,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     private void saveSubmissionByExerciseType(Exercise exercise) throws Exception {
         var participation = exercise.getStudentParticipations().iterator().next();
         if (exercise instanceof ProgrammingExercise programmingExercise) {
-            doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
             jenkinsRequestMockProvider.reset();
             jenkinsRequestMockProvider.mockTriggerBuild(programmingExercise.getProjectKey(), ((ProgrammingExerciseStudentParticipation) participation).getBuildPlanId(), false);
             request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());
@@ -1450,6 +1446,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             assertThat(programmingSubmission).isPresent();
             assertSensitiveInformationWasFilteredProgrammingExercise(programmingExercise);
             participation.getSubmissions().add(programmingSubmission.get());
+            programmingInitialCommitHashes.put(participation.getId(), programmingSubmission.get().getCommitHash());
             return;
         }
         var submission = participation.getSubmissions().iterator().next();
@@ -1505,6 +1502,23 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             case FileUploadExercise fileUploadExercise -> assertSensitiveInformationWasFilteredFileUploadExercise(fileUploadExercise);
             default -> {
             }
+        }
+    }
+
+    private String commitNewFileToParticipationRepo(ProgrammingExerciseStudentParticipation participation) throws Exception {
+        LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(participation.getRepositoryUri());
+        Path cloneDirectory = Files.createTempDirectory("student-repo-" + participation.getId());
+        Path remotePath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        try (Git git = Git.cloneRepository().setURI(remotePath.toUri().toString()).setDirectory(cloneDirectory.toFile()).call()) {
+            String fileName = "update-" + UUID.randomUUID() + ".txt";
+            Files.writeString(cloneDirectory.resolve(fileName), "updated content");
+            git.add().addFilepattern(fileName).call();
+            RevCommit commit = git.commit().setMessage("Add " + fileName).call();
+            git.push().call();
+            return commit.getId().getName();
+        }
+        finally {
+            FileUtils.deleteDirectory(cloneDirectory.toFile());
         }
     }
 
@@ -1913,7 +1927,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         for (var exercise : studentExamFromServer.getExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
             if (exercise instanceof ProgrammingExercise programmingExercise) {
-                doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
+                commitNewFileToParticipationRepo((ProgrammingExerciseStudentParticipation) participation);
                 jenkinsRequestMockProvider.reset();
                 jenkinsRequestMockProvider.mockTriggerBuild(programmingExercise.getProjectKey(), ((ProgrammingExerciseStudentParticipation) participation).getBuildPlanId(), false);
                 request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build", null, HttpStatus.OK, new HttpHeaders());

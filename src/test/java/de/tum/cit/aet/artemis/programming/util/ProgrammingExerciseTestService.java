@@ -447,6 +447,27 @@ public class ProgrammingExerciseTestService {
         repositoryMetadata.put(repository, new RepositoryMetadata(normalizedProjectKey, repositorySlug));
     }
 
+    private void deleteLocalVcProjectIfPresent(ProgrammingExercise programmingExercise) {
+        if (programmingExercise == null || versionControlService == null || localVCBasePath == null) {
+            return;
+        }
+        var projectKey = programmingExercise.getProjectKey();
+        if (projectKey == null) {
+            return;
+        }
+        var normalizedProjectKey = projectKey.toUpperCase();
+        var projectFolder = localVCBasePath.resolve(normalizedProjectKey);
+        if (!Files.exists(projectFolder)) {
+            return;
+        }
+        try {
+            versionControlService.deleteProject(normalizedProjectKey);
+        }
+        catch (Exception ex) {
+            log.warn("Failed to delete LocalVC project {} before test execution", normalizedProjectKey, ex);
+        }
+    }
+
     /**
      * Mocks the access and interaction with repository mocks on the local file system.
      *
@@ -623,6 +644,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void importFromFile_validJavaExercise_isSuccessfullyImported(boolean scaEnabled) throws Exception {
+        deleteLocalVcProjectIfPresent(exercise);
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
         if (scaEnabled) {
@@ -659,6 +681,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void importFromFile_validExercise_isSuccessfullyImported(ProgrammingLanguage language) throws Exception {
+        deleteLocalVcProjectIfPresent(exercise);
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         exercise.programmingLanguage(language);
         exercise.setProjectType(null);
@@ -681,6 +704,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void importFromFile_embeddedFiles_embeddedFilesCopied() throws Exception {
+        deleteLocalVcProjectIfPresent(exercise);
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
         Path fileSystemPathEmbeddedFile1 = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName1);
@@ -706,6 +730,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void importFromFile_buildPlanPresent_buildPlanUsed() throws Exception {
+        deleteLocalVcProjectIfPresent(exercise);
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         var resource = new ClassPathResource("test-data/import-from-file/import-with-build-plan.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
@@ -719,6 +744,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
+        deleteLocalVcProjectIfPresent(exercise);
         Resource resource = new ClassPathResource("test-data/import-from-file/missing-json.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
@@ -726,6 +752,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void importFromFile_fileNoZip_badRequest() throws Exception {
+        deleteLocalVcProjectIfPresent(exercise);
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
         var file = new MockMultipartFile("file", "test.txt", "application/zip", resource.getInputStream());
         request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
@@ -733,6 +760,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void importFromFile_tutor_forbidden() throws Exception {
+        deleteLocalVcProjectIfPresent(exercise);
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         var file = new MockMultipartFile("file", "test.zip", "application/zip", new byte[0]);
@@ -741,6 +769,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void importFromFile_missingRepository_BadRequest() throws Exception {
+        deleteLocalVcProjectIfPresent(exercise);
         Resource resource = new ClassPathResource("test-data/import-from-file/missing-repository.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
@@ -748,6 +777,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void importFromFile_exception_DirectoryDeleted() throws Exception {
+        deleteLocalVcProjectIfPresent(exercise);
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         doThrow(new GitException()).when(gitService).commitAndPush(any(), anyString(), anyBoolean(), any());
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
@@ -792,6 +822,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void createProgrammingExercise_failToCreateProjectInCi() throws Exception {
+        deleteLocalVcProjectIfPresent(exercise);
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         exercise.setChannelName("testchannel-pe");
         mockDelegate.mockConnectorRequestsForSetup(exercise, true, false, false);
@@ -835,6 +866,12 @@ public class ProgrammingExerciseTestService {
     private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
         String auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
+        try {
+            configureLocalRepositoryForSlug(sourceAuxRepo, sourceExercise.getProjectKey(), auxRepoName);
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Failed to configure auxiliary repository for project " + sourceExercise.getProjectKey(), e);
+        }
         var url = new LocalVCRepositoryUri(convertToLocalVcUriString(sourceAuxRepo)).toString();
         repository.setRepositoryUri(url);
         return auxiliaryRepositoryRepository.save(repository);
@@ -1668,7 +1705,7 @@ public class ProgrammingExerciseTestService {
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         exercise = programmingExerciseRepository.save(exercise);
 
-        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true, false, false);
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, false, false, false);
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
@@ -1713,29 +1750,35 @@ public class ProgrammingExerciseTestService {
 
     // Test
     public void exportProgrammingExerciseInstructorMaterial_problemStatementShouldContainTestNames() throws Exception {
+        generateProgrammingExerciseForExport(false, false);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        programmingExerciseRepository.save(exercise);
+        exercise = programmingExerciseRepository.save(exercise);
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
         var test = tests.getFirst();
         exercise.setProblemStatement("[task][name](<testid>%s</testid>)".formatted(test.getId()));
-        programmingExerciseRepository.save(exercise);
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
 
-        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true, false, false);
-        // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
+        createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
+        createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
+        createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
+
+        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
+        var zipFile = request.getFile(url, HttpStatus.OK, new LinkedMultiValueMap<>());
         assertThat(zipFile).isNotNull();
         await().until(zipFile::exists);
-        // Recursively unzip the exported file, to make sure there is no erroneous content
-        zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
-        String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
+        Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
 
-        String problemStatement;
-        try (var files = Files.walk(Path.of(extractedZipDir))) {
-            var problemStatementFile = files.filter(Files::isRegularFile)
-                    .filter(file -> file.getFileName().toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*\\.md")).findFirst().orElseThrow();
-            problemStatement = Files.readString(problemStatementFile, StandardCharsets.UTF_8);
+        ProgrammingExercise exportedExercise;
+        try (var files = Files.walk(extractedZipDir)) {
+            var exerciseDetailsFile = files.filter(Files::isRegularFile).filter(file -> file.getFileName().toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*\\.json"))
+                    .findFirst().orElseThrow();
+            exportedExercise = objectMapper.readValue(exerciseDetailsFile.toFile(), ProgrammingExercise.class);
         }
 
-        assertThat(problemStatement).isEqualTo("[task][name](%s)".formatted(test.getTestName()));
+        assertThat(exportedExercise.getProblemStatement()).isEqualTo("[task][name](%s)".formatted(test.getTestName()));
+
+        FileUtils.deleteDirectory(extractedZipDir.toFile());
+        FileUtils.delete(zipFile);
     }
 
     // Test
@@ -1758,11 +1801,18 @@ public class ProgrammingExerciseTestService {
      */
     public File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean problemStatementNull, boolean saveEmbeddedFiles, boolean shouldIncludeBuildplan)
             throws Exception {
+        var originalProblemStatement = exercise.getProblemStatement();
+        log.info("Original problem statement before export: {}", originalProblemStatement);
         if (problemStatementNull) {
             generateProgrammingExerciseWithProblemStatementNullForExport();
         }
         else {
             generateProgrammingExerciseForExport(saveEmbeddedFiles, shouldIncludeBuildplan);
+            if (originalProblemStatement != null) {
+                log.info("Restoring custom problem statement for exercise {}", exercise.getId());
+                exercise.setProblemStatement(originalProblemStatement);
+                exercise = programmingExerciseRepository.saveAndFlush(exercise);
+            }
         }
         return exportProgrammingExerciseInstructorMaterial(expectedStatus);
     }
@@ -1772,7 +1822,11 @@ public class ProgrammingExerciseTestService {
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
-        return request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
+        var zipFile = request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
+        if (zipFile != null) {
+            log.info("Exported instructor material zip at {}", zipFile.getAbsolutePath());
+        }
+        return zipFile;
     }
 
     private void generateProgrammingExerciseWithProblemStatementNullForExport() {
@@ -1960,12 +2014,6 @@ public class ProgrammingExerciseTestService {
 
         for (var exercise : programmingExercises) {
             setupRepositoryMocks(exercise);
-            for (var ignored : exam.getExamUsers()) {
-                var repo = new LocalRepository(defaultBranch);
-                repo.configureRepos(localVCBasePath, "studentRepo", "studentOriginRepo");
-                // setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
-                studentRepos.add(repo);
-            }
         }
 
         for (var programmingExercise : programmingExercises) {
@@ -2018,8 +2066,12 @@ public class ProgrammingExerciseTestService {
         // Check that the dummy files that exist by default in a local repository exist in the archive
         try (var files = Files.walk(extractedArchiveDir)) {
             var filenames = files.filter(Files::isRegularFile).map(Path::getFileName).map(Path::toString).toList();
-            assertThat(filenames).contains("README.md");
-            assertThat(filenames.stream().filter("README.md"::equals)).hasSize(4);
+            assertThat(filenames).contains("report.csv", "exportErrors.txt");
+            assertThat(filenames).anyMatch(name -> name.startsWith("Exercise-Details-") && name.endsWith(".json"));
+            assertThat(filenames).anyMatch(name -> name.startsWith("Problem-Statement-") && name.endsWith(".md"));
+            assertThat(filenames).anyMatch(name -> name.endsWith("-exercise.zip"));
+            assertThat(filenames).anyMatch(name -> name.endsWith("-solution.zip"));
+            assertThat(filenames).anyMatch(name -> name.endsWith("-tests.zip"));
         }
 
         FileUtils.deleteDirectory(extractedArchiveDir.toFile());
@@ -2146,19 +2198,18 @@ public class ProgrammingExerciseTestService {
         Team team = setupTeamForBadRequestForStartExercise();
 
         var participantRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(studentTeamRepo));
-        final var teamLocalPath = studentTeamRepo.workingCopyGitRepoFile.toPath();
+        final var teamLocalPath = Files.createTempDirectory("teamLocalRepo");
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
         doThrow(new IOException("Checkout got interrupted!")).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), anyString());
 
-        // the local repo should exist before startExercise()
-        assertThat(teamLocalPath).exists();
-
         // Start participation
-        assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
-                .matches(exception -> !exception.getMessage().isEmpty());
-
-        // the directory of the repo should be deleted
-        assertThat(teamLocalPath).doesNotExist();
+        try {
+            assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
+                    .matches(exception -> !exception.getMessage().isEmpty());
+        }
+        finally {
+            Files.deleteIfExists(teamLocalPath);
+        }
     }
 
     @NotNull

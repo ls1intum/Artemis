@@ -9,6 +9,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -82,6 +84,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -108,7 +111,7 @@ public class ParticipationUtilService {
     private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     @Autowired
-    private LocalVCLocalCITestService localVCLocalCITestService;
+    private ObjectProvider<LocalVCLocalCITestService> localVCLocalCITestService;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -351,6 +354,7 @@ public class ParticipationUtilService {
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
         participationVCSAccessTokenService.createParticipationVCSAccessToken(userUtilService.getUserByLogin(login), participation);
+        ensureLocalVcRepositoryExists(localVcRepoUri);
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
     }
 
@@ -1033,5 +1037,43 @@ public class ParticipationUtilService {
         // Verify submission has both results: one completed, one draft
         assertThat(submission.getResults()).hasSize(2);
 
+    }
+
+    private void ensureLocalVcRepositoryExists(LocalVCRepositoryUri repositoryUri) {
+        if (repositoryUri == null || localVCBasePath == null) {
+            return;
+        }
+        Path repoPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        if (Files.exists(repoPath)) {
+            return;
+        }
+        var relativePath = repositoryUri.getRelativeRepositoryPath();
+        String slugWithGit = relativePath.getFileName().toString();
+        String repositorySlug = slugWithGit.endsWith(".git") ? slugWithGit.substring(0, slugWithGit.length() - 4) : slugWithGit;
+        try {
+            LocalVCLocalCITestService helper = localVCLocalCITestService != null ? localVCLocalCITestService.getIfAvailable() : null;
+            if (helper != null) {
+                helper.createAndConfigureLocalRepository(repositoryUri.getProjectKey(), repositorySlug);
+            }
+            else {
+                Files.createDirectories(repoPath.getParent());
+                LocalRepository.initialize(repoPath, defaultBranch, true).close();
+            }
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Failed to create LocalVC repository for " + repositoryUri.getURI(), e);
+        }
+    }
+
+    private void ensureLocalVcRepositoryExists(URI repositoryUri) {
+        if (repositoryUri == null) {
+            return;
+        }
+        try {
+            ensureLocalVcRepositoryExists(new LocalVCRepositoryUri(repositoryUri.toString()));
+        }
+        catch (RuntimeException ignored) {
+            // ignore non-LocalVC URIs
+        }
     }
 }
