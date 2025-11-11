@@ -21,12 +21,12 @@ import Image, {ImageSize} from "../../src/components/Image/Image";
 Artemis features a calendar that allows users to quickly view all important events related to a specific course.
 
 ## General Information
-The Artemis calendar can be found in the calendar tab of the course overview.
-The calendar contains important events about lectures, tutorials, exercises and exams.
+The Artemis calendar can be found in the Calendar tab of the course overview.
+It displays important events related to lectures, tutorials, exercises, and exams.
 
-The following table shows the dates that are displayed as calendar events if they are available.
-Note that an event can either represent a point in time (in this case it only has a start date) or a time period (in this case it has a start and end date).
-Because of this two dates are occasionally represented as one event (e.g. if both start date and end date of a lecture are available, they are bundled together in one lecture event).
+The following table shows the dates that are displayed as calendar events, if available.
+Note that an event can either represent a specific point in time (in which case it only has a start date) or a time period (in which case it has both a start and an end date).
+Because of this, two dates are occasionally represented as a single event — for example, if both the start and end dates of a lecture are available, they are combined into one lecture event.
 
 | Entity  | Dates                                                            |
 |----------|------------------------------------------------------------------|
@@ -36,15 +36,15 @@ Because of this two dates are occasionally represented as one event (e.g. if bot
 | Exam  | start, end, results release, student review start, student review end |
 
 ## Switching between Presentations
-To view events in the calendar, the user can switch between a high level presentation and a more detailed presentation.
-The presentations vary for small and large devices to optimize the layout of the calendar for a given screen size.
+To view events in the calendar, users can switch between a high-level overview and a more detailed presentation.
+The available views differ between small and large devices to optimize the calendar layout for each screen size.
 
-On big devices such as laptops and desktop computers there is a high-level month presentation and a more detailed week presentation.
+On larger devices, such as laptops and desktop computers, the calendar offers a high-level month presentation and a more detailed week presentation.
 
 <Image src={desktopMonthPresentationImage} alt={"Month Presentation for Large Devices"} size={ImageSize.large}></Image>
 <Image src={desktopWeekPresentationImage} alt={"Week Presentation for Large Devices"} size={ImageSize.large}></Image>
 
-On small devices such as mobile phones there is a high-level month presentation and a detailed day presentation.
+On small devices, such as mobile phones, there is a high-level month presentation and a detailed day presentation.
 
 <div style={{ display: 'flex', gap: '1rem' }}>
     <Image src={mobileMonthPresentationImage} alt={"Month Presentation for Small Devices"} style={{ maxHeight: '550px' }}></Image>
@@ -52,13 +52,13 @@ On small devices such as mobile phones there is a high-level month presentation 
 </div>
 
 ## Viewing Event Details
-In the desktop month and week presentation, as well as in the mobile day presentation, the user can click on an event to reveal its details.
+In the desktop month and week presentations, as well as in the mobile day presentation, users can click on an event to view its details.
 
 <Image src={eventDetailsImage} alt={"Event Details Popover"} size={ImageSize.medium}></Image>
 
 ## Navigating in Time
-On both large and small devices the user can click chevron buttons to navigate backwards or forwards in time.
-Additionally he can use the today button to jump to the instance of the currently selected presentation that displays the current day.
+On both large and small devices, users can click the chevron buttons to navigate backward or forward in time.
+Additionally, they can use the Today button to jump to the instance of the currently selected presentation that includes the current day.
 
 <div style={{ display: 'flex', gap: '1rem' }}>
     <Image src={desktopNavigationControls} alt={"Navigation Controls for Large Devices"} style={{ maxWidth: '330px' }}></Image>
@@ -66,16 +66,16 @@ Additionally he can use the today button to jump to the instance of the currentl
 </div>
 
 ## Filtering Events
-By using the filter component of the calendar, the user can include or exclude events based on their type.
+By using the filter component of the calendar, users can include or exclude events based on their type.
 
 <div style={{ display: 'flex', gap: '1rem' }}>
     <Image src={desktopFilterComponent} alt={"Filter Component for Large Devices"} style={{ maxHeight: '300px', maxWidth: 'none' }}></Image>
     <Image src={mobileFilterComponent} alt={"Filter Component for Small Devices"} style={{ maxHeight: '300px', maxWidth: 'none' }}></Image>
 </div>
 
-## Subscribing external Calendars
-Finally the user can subscribe external calendar applications to the Artemis calendar by clicking the subscribe button, selecting a language, choosing
-which events types to include and copying the generated link. This link can be pasted in the setting of third party calendar apps to subscribe them to the Artemis calendar.
+## Subscribing External Calendars
+Finally, users can subscribe external calendar applications to the Artemis calendar by clicking the Subscribe button, selecting a language, choosing which event types to include, and copying the generated link.
+This link can then be pasted into the settings of third-party calendar applications to subscribe them to the Artemis calendar.
 
 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
     <Image src={desktopSubscriptionComponent} alt={"iCalendar Subscription Component for Large Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>
