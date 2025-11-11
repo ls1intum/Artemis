@@ -32,6 +32,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 export class HomeComponent implements OnInit, AfterViewChecked {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faKey = faKey;
+
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
 

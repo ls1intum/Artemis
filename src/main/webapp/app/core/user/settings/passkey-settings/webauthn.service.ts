@@ -1,16 +1,24 @@
 import { Injectable, inject } from '@angular/core';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/shared/util/base64.util';
-import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
-import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
+import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/errors/invalid-credential.error';
+import {
+    getLoginCredentialWithGracefullyHandlingAuthenticatorIssues,
+    getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues,
+} from 'app/core/user/settings/passkey-settings/util/credential.util';
 import { AlertService } from 'app/shared/service/alert.service';
+import { User } from 'app/core/user/user.model';
+import { createCredentialOptions } from 'app/core/user/settings/passkey-settings/util/credential-option.util';
+import { getOS } from 'app/shared/util/os-detector.util';
+import { UserAbortedPasskeyCreationError } from 'app/core/user/settings/passkey-settings/entities/errors/user-aborted-passkey-creation.error';
+import { InvalidStateError } from 'app/core/user/settings/passkey-settings/entities/errors/invalid-state.error';
 
 @Injectable({ providedIn: 'root' })
 export class WebauthnService {
     private readonly alertService = inject(AlertService);
     private readonly webauthnApiService = inject(WebauthnApiService);
 
-    private async getCredential(): Promise<PublicKeyCredential | undefined> {
+    async getCredential(): Promise<PublicKeyCredential | undefined> {
         const publicKeyCredentialOptions = await this.webauthnApiService.getAuthenticationOptions();
 
         const assertionOptions: PublicKeyCredentialRequestOptions = {
@@ -38,16 +46,60 @@ export class WebauthnService {
         return credential as PublicKeyCredential | undefined;
     }
 
+    async addNewPasskey(user: User | undefined) {
+        try {
+            if (!user) {
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new Error('User or Username is not defined');
+            }
+            const registrationOptions = await this.webauthnApiService.getRegistrationOptions();
+            const credentialOptions = createCredentialOptions(registrationOptions, user);
+
+            const authenticatorCredential = await navigator.credentials.create({
+                publicKey: credentialOptions,
+            });
+            const credential = getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential ?? undefined);
+
+            await this.webauthnApiService.registerPasskey({
+                publicKey: {
+                    credential: credential,
+                    label: `${user.email} - ${getOS()}`,
+                },
+            });
+        } catch (error) {
+            const userPressedCancelInPasskeyCreationDialog = error.name === UserAbortedPasskeyCreationError.name && error.code === UserAbortedPasskeyCreationError.code;
+            if (userPressedCancelInPasskeyCreationDialog) {
+                return;
+            }
+
+            if (error instanceof InvalidCredentialError) {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
+            } else if (error.name === InvalidStateError.name && error.code === InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.passkeyAlreadyRegistered');
+            } else {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.registration');
+            }
+
+            throw error;
+        }
+    }
+
+    /**
+     * Logs in a user using passkey authentication.
+     *
+     * @throws InvalidCredentialError if the credential is invalid
+     * @throws Error for other authentication errors
+     */
     async loginWithPasskey() {
         try {
             const authenticatorCredential = await this.getCredential();
 
-            if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
+            if (!authenticatorCredential || authenticatorCredential.type !== 'public-key') {
                 // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
                 throw new InvalidCredentialError();
             }
 
-            const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential) as unknown as PublicKeyCredential;
+            const credential = getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential) as unknown as PublicKeyCredential;
             if (!credential) {
                 // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
                 throw new InvalidCredentialError();

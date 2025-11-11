@@ -10,10 +10,6 @@ import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/ada
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 export abstract class TextEditorAction implements Disposable {
@@ -327,124 +323,6 @@ export abstract class TextEditorAction implements Disposable {
                     }
                 },
             });
-        }
-    }
-
-    /**
-     * Runs the consistency check on the exercise.
-     *
-     * @param editor The editor for which the consistency check should be run (only used for checking non-empty text).
-     * @param artemisIntelligence The service to use for consistency checking.
-     * @param exerciseId The id of the exercise to check.
-     * @param resultSignal The signal to write the result of the consistency check to.
-     */
-    consistencyCheck(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, exerciseId: number, resultSignal: WritableSignal<string>): void {
-        const text = editor.getFullText();
-        if (text) {
-            artemisIntelligence.consistencyCheck(exerciseId).subscribe({
-                next: (response: ConsistencyCheckResponse) => {
-                    const markdownResult = this.formatConsistencyCheckResults(response);
-                    resultSignal.set(htmlForMarkdown(markdownResult));
-                },
-            });
-        }
-    }
-
-    /**
-     * Formats consistency check results into well-structured markdown for instructor review.
-     */
-    private formatConsistencyCheckResults(response: ConsistencyCheckResponse): string {
-        const issues = response.issues ?? [];
-        let md = '';
-
-        if (!issues.length) {
-            return md + `No consistency issues found.\n`;
-        }
-
-        // Severity summary
-        const severityCount = this.getSeverityCount(issues);
-        const sevBadge = (sev: string | undefined) => {
-            switch (sev) {
-                case ConsistencyIssue.SeverityEnum.High:
-                    return 'HIGH';
-                case ConsistencyIssue.SeverityEnum.Medium:
-                    return 'MEDIUM';
-                case ConsistencyIssue.SeverityEnum.Low:
-                    return 'LOW';
-                default:
-                    return sev ?? 'UNKNOWN';
-            }
-        };
-        const summaryParts: string[] = [];
-        if (severityCount[ConsistencyIssue.SeverityEnum.High]) summaryParts.push(`${severityCount[ConsistencyIssue.SeverityEnum.High]} HIGH`);
-        if (severityCount[ConsistencyIssue.SeverityEnum.Medium]) summaryParts.push(`${severityCount[ConsistencyIssue.SeverityEnum.Medium]} MEDIUM`);
-        if (severityCount[ConsistencyIssue.SeverityEnum.Low]) summaryParts.push(`${severityCount[ConsistencyIssue.SeverityEnum.Low]} LOW`);
-        md += `**${issues.length} issue${issues.length === 1 ? '' : 's'}** (${summaryParts.join(', ')})\n\n`;
-
-        issues.forEach((issue, index) => {
-            const number = index + 1;
-            const categoryRaw = issue.category || 'GENERAL';
-            const category = this.humanizeCategory(categoryRaw);
-            md += `**${number}. [${sevBadge(issue.severity)}] ${category}**\n\n`;
-            md += `${issue.description}\n\n`;
-            if (issue.suggestedFix) {
-                md += `**Suggested fix:** ${issue.suggestedFix}\n\n`;
-            }
-            // Full location listing (no collapsing)
-            if (issue.relatedLocations && issue.relatedLocations.length > 0) {
-                md += `**Locations:**\n`;
-                issue.relatedLocations.forEach((loc) => {
-                    const typeLabel = this.formatArtifactType(loc.type as ArtifactLocation.TypeEnum);
-                    const file = loc.filePath ?? '';
-                    let linePart = '';
-                    if (loc.startLine && loc.endLine) {
-                        linePart = loc.startLine === loc.endLine ? `:L${loc.startLine}` : `:L${loc.startLine}-${loc.endLine}`;
-                    } else if (loc.startLine) {
-                        linePart = `:L${loc.startLine}`;
-                    }
-                    md += `- ${typeLabel}${file ? `: ${file}` : ''}${linePart}\n`;
-                });
-                md += `\n`;
-            }
-        });
-
-        return md;
-    }
-
-    /**
-     * Convert an ENUM_STYLE category (e.g. IDENTIFIER_NAMING_INCONSISTENCY) into Title Case (e.g. Identifier Naming Inconsistency)
-     */
-    private humanizeCategory(category: string): string {
-        return category
-            .split('_')
-            .filter((p) => p.length > 0)
-            .map((p) => p.charAt(0) + p.slice(1).toLowerCase())
-            .join(' ');
-    }
-
-    private getSeverityCount(issues: ConsistencyIssue[]): Record<string, number> {
-        return issues.reduce(
-            (count, issue) => {
-                const severityKey = issue.severity;
-                count[severityKey] = (count[severityKey] || 0) + 1;
-                return count;
-            },
-            {} as Record<string, number>,
-        );
-    }
-
-    private formatArtifactType(type: ArtifactLocation.TypeEnum): string {
-        switch (type) {
-            case ArtifactLocation.TypeEnum.ProblemStatement:
-                return 'Problem Statement';
-            case ArtifactLocation.TypeEnum.TemplateRepository:
-                return 'Template';
-            case ArtifactLocation.TypeEnum.SolutionRepository:
-                return 'Solution';
-            case ArtifactLocation.TypeEnum.TestsRepository:
-                return 'Tests';
-            default:
-                return type;
         }
     }
 }

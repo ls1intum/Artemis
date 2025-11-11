@@ -1,19 +1,20 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { LeaderboardDTO, LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
-import { Observable } from 'rxjs';
+import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 
 @Injectable({
     providedIn: 'root',
 })
-export class LeaderboardService {
-    private http = inject(HttpClient);
-
-    getQuizTrainingLeaderboard(courseId: number): Observable<LeaderboardDTO> {
-        return this.http.get<LeaderboardDTO>(`api/quiz/courses/${courseId}/training/leaderboard`);
+export class LeaderboardService extends BaseApiHttpService {
+    async getQuizTrainingLeaderboard(courseId: number): Promise<LeaderboardDTO> {
+        return this.get<LeaderboardDTO>(`quiz/courses/${courseId}/training/leaderboard`);
     }
 
-    initializeLeaderboardEntry(leaderboardSettings: LeaderboardSettingsDTO): Observable<void> {
-        return this.http.put<void>(`api/quiz/leaderboard-settings`, leaderboardSettings);
+    async updateSettings(leaderboardSettings: LeaderboardSettingsDTO): Promise<void> {
+        return this.put<void>(`quiz/leaderboard-settings`, leaderboardSettings);
+    }
+
+    async getSettings(): Promise<LeaderboardSettingsDTO> {
+        return await this.get<LeaderboardSettingsDTO>(`quiz/leaderboard-settings`);
     }
 }
