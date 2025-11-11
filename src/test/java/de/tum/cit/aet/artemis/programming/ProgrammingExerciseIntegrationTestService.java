@@ -9,7 +9,6 @@ import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseEr
 import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -440,9 +439,6 @@ public class ProgrammingExerciseIntegrationTestService {
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository1.workingCopyGitRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository2.workingCopyGitRepoFile.toPath(), null);
-
-        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
 
         // Create the eclipse .project file which will be modified.
         Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
