@@ -151,7 +151,8 @@ public class QuizExerciseRetrievalResource {
             }
         }
         setQuizBatches(user, quizExercise);
-        QuizExerciseWithStatisticsDTO quizExerciseDTO = QuizExerciseWithStatisticsDTO.of(quizExercise);
+        boolean isEditable = quizExerciseService.isEditable(quizExercise);
+        QuizExerciseWithStatisticsDTO quizExerciseDTO = QuizExerciseWithStatisticsDTO.of(quizExercise, isEditable);
         return ResponseEntity.ok(quizExerciseDTO);
     }
 

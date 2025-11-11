@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQuestionsDTO quizExercise, List<QuizQuestionWithStatisticsDTO> quizQuestions, Set<String> categories,
         QuizPointStatisticDTO quizPointStatistic, Set<CompetencyExerciseLinkDTO> competencyLinks, Set<GradingCriterionDTO> gradingCriteria, String channelName,
-        Boolean testRunParticipationsExist) {
+        Boolean testRunParticipationsExist, Boolean isEditable) {
 
     /**
      * Converts a QuizExercise entity to a QuizExerciseWithStatisticsDTO
@@ -54,7 +54,13 @@ public record QuizExerciseWithStatisticsDTO(@JsonUnwrapped QuizExerciseWithoutQu
         }
 
         return new QuizExerciseWithStatisticsDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise), questionDTOs, categories, quizPointStatisticDTO, competencyExerciseLinkDTOs,
-                gradingCriterionDTOs, quizExercise.getChannelName(), quizExercise.getTestRunParticipationsExist());
+                gradingCriterionDTOs, quizExercise.getChannelName(), quizExercise.getTestRunParticipationsExist(), null);
+    }
+
+    public static QuizExerciseWithStatisticsDTO of(QuizExercise quizExercise, Boolean isEditable) {
+        QuizExerciseWithStatisticsDTO dto = of(quizExercise);
+        return new QuizExerciseWithStatisticsDTO(dto.quizExercise, dto.quizQuestions, dto.categories, dto.quizPointStatistic, dto.competencyLinks, dto.gradingCriteria,
+                dto.channelName, dto.testRunParticipationsExist, isEditable);
     }
 }
 
