@@ -245,33 +245,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(component.formData?.transcriptionProperties?.videoTranscription).toBe(JSON.stringify(transcription));
     });
 
-    it('should create transcription when form is submitted with transcription properties', () => {
-        fixture.detectChanges();
-        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
-
-        const transcription = { language: 'en', lectureUnitId: 1, content: 'test transcription' };
-        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: attachmentVideoUnit.name,
-                description: attachmentVideoUnit.description,
-                releaseDate: attachmentVideoUnit.releaseDate,
-                videoSource: attachmentVideoUnit.videoSource,
-                version: 1,
-            },
-            fileProperties: {},
-            transcriptionProperties: {
-                videoTranscription: JSON.stringify(transcription),
-            },
-        };
-
-        const createTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'createTranscription').mockReturnValue(of(true));
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
-        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
-        fixture.detectChanges();
-
-        expect(createTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, transcription);
-    });
-
     it('should handle error when fetching transcription data', () => {
         jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
         jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
@@ -289,32 +262,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
         fixture.detectChanges();
 
         expect(component.formData?.transcriptionStatus).toEqual(transcriptionStatus);
-    });
-
-    it('should handle error in saveManualTranscription with invalid JSON', () => {
-        fixture.detectChanges();
-        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
-
-        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: attachmentVideoUnit.name,
-                description: attachmentVideoUnit.description,
-                releaseDate: attachmentVideoUnit.releaseDate,
-                videoSource: attachmentVideoUnit.videoSource,
-                version: 1,
-            },
-            fileProperties: {},
-            transcriptionProperties: {
-                videoTranscription: 'invalid json string',
-            },
-        };
-
-        const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'error');
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
-        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
-        fixture.detectChanges();
-
-        expect(alertSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
     });
 
     it('should start transcription when generateTranscript is true and playlistUrl is provided', () => {
@@ -417,66 +364,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should handle error when createTranscription fails', () => {
-        fixture.detectChanges();
-        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
-
-        const transcription = { language: 'en', lectureUnitId: 1, content: 'test transcription' };
-        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: attachmentVideoUnit.name,
-                description: attachmentVideoUnit.description,
-                releaseDate: attachmentVideoUnit.releaseDate,
-                videoSource: attachmentVideoUnit.videoSource,
-                version: 1,
-            },
-            fileProperties: {},
-            transcriptionProperties: {
-                videoTranscription: JSON.stringify(transcription),
-            },
-        };
-
-        jest.spyOn(lectureTranscriptionService, 'createTranscription').mockReturnValue(throwError(() => ({ status: 500 })));
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
-
-        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
-        fixture.detectChanges();
-
-        expect(navigateSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should handle generateTranscript with both manual transcription', () => {
-        fixture.detectChanges();
-        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
-
-        const transcription = { language: 'en', lectureUnitId: 1, content: 'test transcription' };
-        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: attachmentVideoUnit.name,
-                description: attachmentVideoUnit.description,
-                releaseDate: attachmentVideoUnit.releaseDate,
-                videoSource: 'https://example.com/video.mp4',
-                version: 1,
-                generateTranscript: true,
-            },
-            fileProperties: {},
-            transcriptionProperties: {
-                videoTranscription: JSON.stringify(transcription),
-            },
-        };
-
-        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as any);
-        const createTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'createTranscription').mockReturnValue(of(true));
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
-
-        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
-        fixture.detectChanges();
-
-        expect(startTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, 'https://example.com/video.mp4');
-        expect(createTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, transcription);
-    });
-
-    it('should handle update without transcriptionProperties', () => {
+    it('should handle update without transcription generation', () => {
         fixture.detectChanges();
         const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
@@ -487,6 +375,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
                 releaseDate: attachmentVideoUnit.releaseDate,
                 videoSource: attachmentVideoUnit.videoSource,
                 version: 1,
+                generateTranscript: false,
             },
             fileProperties: {},
         };
