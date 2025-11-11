@@ -22,20 +22,33 @@ export class UrlAction extends TextEditorAction {
 
     /**
      * Executes the action in the current editor with the given arguments (url and text).
-     * @param args The text and url of the URL to insert. If one or both are not provided, the default text will be inserted.
+     * @param args The text and url of the URL to insert. If one or both are not provided, checks for selected text to wrap.
      */
     executeInCurrentEditor(args?: UrlArguments): void {
         super.executeInCurrentEditor(args);
     }
 
     /**
-     * Inserts, at the current selection, the markdown URL with the given text and url if they were provided, or the default text otherwise.
+     * Inserts, at the current selection, the markdown URL with the given text and url if they were provided.
+     * If no arguments are provided and there is selected text, wraps the selected text with [selectedText](https://).
+     * Otherwise, inserts the default text.
      * @param editor The editor in which to insert the URL.
-     * @param args The text and url of the URL to insert. If one or both are not provided, the default text will be inserted.
+     * @param args The text and url of the URL to insert. If one or both are not provided, checks for selected text to wrap.
      */
     run(editor: TextEditor, args?: UrlArguments): void {
         if (!args?.text || !args?.url) {
-            this.replaceTextAtCurrentSelection(editor, UrlAction.DEFAULT_INSERT_TEXT);
+            // Check if there's selected text
+            const selectedText = this.getSelectedText(editor);
+            if (selectedText && selectedText.trim()) {
+                // Wrap selected text with link syntax
+                const selection = editor.getSelection();
+                if (selection) {
+                    this.replaceTextAtRange(editor, selection, `[${sanitizeStringForMarkdownEditor(selectedText)}](https://)`);
+                }
+            } else {
+                // No selection, insert default text
+                this.replaceTextAtCurrentSelection(editor, UrlAction.DEFAULT_INSERT_TEXT);
+            }
         } else {
             this.replaceTextAtCurrentSelection(editor, `[${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
         }
