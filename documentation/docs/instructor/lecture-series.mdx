@@ -1,0 +1,22 @@
+---
+id: lecture-series
+title: Lecture Series
+sidebar_label: Lecture Series
+---
+
+import lectureSeriesInputVisualization from './assets/lecture-series/LectureSeriesInputVisualization.png';
+import lectureSeriesImage from './assets/lecture-series/LectureSeriesCreation.png';
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+# Lecture Series
+Lecture series allow you to create multiple lectures without specifying their contents. You can use this to scaffold your lectures at the beginning of the semester and inform students when each lecture will take place.
+
+To open the lecture series creation page, navigate to the Lectures tab in the course management section, click Create Lecture, and select “Lecture Series” using the toggle in the upper right corner.
+
+<Image src={lectureSeriesImage} alt={"Lecture Series Creation Page"} size={ImageSize.medium}></Image>
+
+To create a lecture series, you must first define the initial lectures. The system will repeat these initial lectures weekly until the specified end date.
+
+In the following example, there are two initial lectures that take place on the dates marked in green. The end date is marked in red, and the dates on which the generated lectures occur are marked in blue.
+
+<Image src={lectureSeriesInputVisualization} alt={"Visualization of Required Inputs"} size={ImageSize.medium}></Image>
