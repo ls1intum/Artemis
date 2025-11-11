@@ -1142,7 +1142,7 @@ describe('AgentChatModalComponent', () => {
                 competencyPreview: {
                     title: 'New Competency',
                     description: 'Description',
-                    taxonomy: 'APPLY' as any,
+                    taxonomy: CompetencyTaxonomy.APPLY,
                     icon: 'pen-fancy',
                 },
             };
@@ -1179,7 +1179,7 @@ describe('AgentChatModalComponent', () => {
                 competencyPreview: {
                     title: 'Updated Competency',
                     description: 'Updated description',
-                    taxonomy: 'ANALYZE' as any,
+                    taxonomy: CompetencyTaxonomy.ANALYZE,
                     icon: 'magnifying-glass',
                     competencyId: 42,
                 },
@@ -1207,7 +1207,7 @@ describe('AgentChatModalComponent', () => {
                 competencyPreview: {
                     title: 'Competency',
                     description: 'Description',
-                    taxonomy: 'APPLY' as any,
+                    taxonomy: CompetencyTaxonomy.APPLY,
                     icon: 'pen-fancy',
                 },
                 competencyCreated: true,
@@ -1245,7 +1245,7 @@ describe('AgentChatModalComponent', () => {
                 competencyPreview: {
                     title: 'New Competency',
                     description: 'Description',
-                    taxonomy: 'APPLY' as any,
+                    taxonomy: CompetencyTaxonomy.APPLY,
                     icon: 'pen-fancy',
                 },
             };
@@ -1272,7 +1272,7 @@ describe('AgentChatModalComponent', () => {
                 competencyPreview: {
                     title: 'Updated Competency',
                     description: 'Description',
-                    taxonomy: 'ANALYZE' as any,
+                    taxonomy: CompetencyTaxonomy.ANALYZE,
                     icon: 'magnifying-glass',
                     competencyId: 42,
                 },
@@ -1353,9 +1353,9 @@ describe('AgentChatModalComponent', () => {
                 isUser: false,
                 timestamp: new Date(),
                 batchCompetencyPreview: [
-                    { title: 'Comp 1', description: 'Desc 1', taxonomy: 'REMEMBER' as any, icon: 'brain' },
-                    { title: 'Comp 2', description: 'Desc 2', taxonomy: 'UNDERSTAND' as any, icon: 'comments' },
-                    { title: 'Comp 3', description: 'Desc 3', taxonomy: 'APPLY' as any, icon: 'pen-fancy' },
+                    { title: 'Comp 1', description: 'Desc 1', taxonomy: CompetencyTaxonomy.REMEMBER, icon: 'brain' },
+                    { title: 'Comp 2', description: 'Desc 2', taxonomy: CompetencyTaxonomy.UNDERSTAND, icon: 'comments' },
+                    { title: 'Comp 3', description: 'Desc 3', taxonomy: CompetencyTaxonomy.APPLY, icon: 'pen-fancy' },
                 ],
             };
             component.messages = [message];
@@ -1377,7 +1377,7 @@ describe('AgentChatModalComponent', () => {
                 content: 'Batch',
                 isUser: false,
                 timestamp: new Date(),
-                batchCompetencyPreview: [{ title: 'Test', description: 'Test', taxonomy: 'APPLY' as any, icon: 'pen-fancy' }],
+                batchCompetencyPreview: [{ title: 'Test', description: 'Test', taxonomy: CompetencyTaxonomy.APPLY, icon: 'pen-fancy' }],
                 batchCreated: true,
             };
 
@@ -1423,8 +1423,8 @@ describe('AgentChatModalComponent', () => {
                 isUser: false,
                 timestamp: new Date(),
                 batchCompetencyPreview: [
-                    { title: 'New', description: 'New desc', taxonomy: 'REMEMBER' as any, icon: 'brain' },
-                    { title: 'Update', description: 'Update desc', taxonomy: 'APPLY' as any, icon: 'pen-fancy', competencyId: 10 },
+                    { title: 'New', description: 'New desc', taxonomy: CompetencyTaxonomy.REMEMBER, icon: 'brain' },
+                    { title: 'Update', description: 'Update desc', taxonomy: CompetencyTaxonomy.APPLY, icon: 'pen-fancy', competencyId: 10 },
                 ],
             };
             component.messages = [message];
@@ -1448,8 +1448,8 @@ describe('AgentChatModalComponent', () => {
                 isUser: false,
                 timestamp: new Date(),
                 batchCompetencyPreview: [
-                    { title: 'Update 1', description: 'Desc 1', taxonomy: 'ANALYZE' as any, icon: 'magnifying-glass', competencyId: 1 },
-                    { title: 'Update 2', description: 'Desc 2', taxonomy: 'EVALUATE' as any, icon: 'plus-minus', competencyId: 2 },
+                    { title: 'Update 1', description: 'Desc 1', taxonomy: CompetencyTaxonomy.ANALYZE, icon: 'magnifying-glass', competencyId: 1 },
+                    { title: 'Update 2', description: 'Desc 2', taxonomy: CompetencyTaxonomy.EVALUATE, icon: 'plus-minus', competencyId: 2 },
                 ],
             };
             component.messages = [message];
@@ -1471,7 +1471,7 @@ describe('AgentChatModalComponent', () => {
                 content: 'Single batch',
                 isUser: false,
                 timestamp: new Date(),
-                batchCompetencyPreview: [{ title: 'Single', description: 'Single desc', taxonomy: 'CREATE' as any, icon: 'cubes-stacked' }],
+                batchCompetencyPreview: [{ title: 'Single', description: 'Single desc', taxonomy: CompetencyTaxonomy.CREATE, icon: 'cubes-stacked' }],
             };
             component.messages = [message];
 
@@ -1492,7 +1492,7 @@ describe('AgentChatModalComponent', () => {
                 content: 'Batch error',
                 isUser: false,
                 timestamp: new Date(),
-                batchCompetencyPreview: [{ title: 'Error', description: 'Error desc', taxonomy: 'APPLY' as any, icon: 'pen-fancy' }],
+                batchCompetencyPreview: [{ title: 'Error', description: 'Error desc', taxonomy: CompetencyTaxonomy.APPLY, icon: 'pen-fancy' }],
             };
             component.messages = [message];
 

@@ -226,6 +226,23 @@ public class CompetencyExpertToolsService {
     }
 
     /**
+     * Validates a competency operation for required fields.
+     *
+     * @param comp the competency operation to validate
+     * @return error message if validation fails, null if valid
+     */
+    private String validateCompetencyOperation(CompetencyOperation comp) {
+        if (comp.getTaxonomy() == null) {
+            String titleInfo = comp.getTitle() != null ? " for competency '" + comp.getTitle() + "'" : "";
+            return "Missing taxonomy" + titleInfo;
+        }
+        if (comp.getTitle() == null || comp.getTitle().isBlank()) {
+            return "Missing or empty title for competency";
+        }
+        return null;
+    }
+
+    /**
      * Unified tool for previewing one or multiple competencies.
      * Supports both single and batch operations.
      *
@@ -244,6 +261,14 @@ public class CompetencyExpertToolsService {
 
         if (competencies == null || competencies.isEmpty()) {
             return "Error: No competencies provided for preview.";
+        }
+
+        // Validate all competencies before processing
+        for (CompetencyOperation comp : competencies) {
+            String validationError = validateCompetencyOperation(comp);
+            if (validationError != null) {
+                return "Error: " + validationError;
+            }
         }
 
         // Convert operations to preview DTOs with consistent taxonomy-to-icon mapping
@@ -331,6 +356,7 @@ public class CompetencyExpertToolsService {
 
         Course course = courseOptional.get();
         List<String> errors = new ArrayList<>();
+        List<CompetencyOperation> successfulOperations = new ArrayList<>();
         int createCount = 0;
         int updateCount = 0;
 
@@ -349,6 +375,12 @@ public class CompetencyExpertToolsService {
                     continue;
                 }
 
+                // Validate taxonomy to prevent NPE during preview generation
+                if (comp.getTaxonomy() == null) {
+                    errors.add("Missing taxonomy for competency: " + sanitizedTitle);
+                    continue;
+                }
+
                 if (comp.getCompetencyId() == null) {
                     // Create new competency
                     Competency competency = new Competency();
@@ -359,6 +391,7 @@ public class CompetencyExpertToolsService {
                     competencyRepository.save(competency);
                     createCount++;
                     AtlasAgentService.markCompetencyModified();
+                    successfulOperations.add(comp);
                 }
                 else {
                     // Update existing competency
@@ -375,6 +408,7 @@ public class CompetencyExpertToolsService {
                     competencyRepository.save(competency);
                     updateCount++;
                     AtlasAgentService.markCompetencyModified();
+                    successfulOperations.add(comp);
                 }
             }
             catch (Exception e) {
@@ -386,22 +420,25 @@ public class CompetencyExpertToolsService {
 
         // Store preview data in ThreadLocal so client can display cards for what was just saved
         // This ensures the cards appear in the response showing what was created/updated
-        List<CompetencyPreviewDTO> previews = competencies.stream().map(comp -> {
-            String iconName = getTaxonomyIcon(comp.getTaxonomy());
-            return new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), iconName, comp.getCompetencyId());
-        }).toList();
+        // Only generate previews for successfully processed competencies to prevent NPE
+        if (!successfulOperations.isEmpty()) {
+            List<CompetencyPreviewDTO> previews = successfulOperations.stream().map(comp -> {
+                String iconName = getTaxonomyIcon(comp.getTaxonomy());
+                return new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), iconName, comp.getCompetencyId());
+            }).toList();
 
-        if (competencies.size() == 1) {
-            // Single save - store as single preview
-            CompetencyOperation firstComp = competencies.getFirst();
-            CompetencyPreviewDTO firstPreview = previews.getFirst();
-            SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), false);
-            currentSinglePreview.set(singlePreview);
-        }
-        else {
-            // Batch save - store as batch preview
-            BatchCompetencyPreviewResponseDTO batchPreview = new BatchCompetencyPreviewResponseDTO(true, previews.size(), previews, true);
-            currentBatchPreview.set(batchPreview);
+            if (successfulOperations.size() == 1) {
+                // Single save - store as single preview with viewOnly=false (action completed)
+                CompetencyOperation firstComp = successfulOperations.getFirst();
+                CompetencyPreviewDTO firstPreview = previews.getFirst();
+                SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), false);
+                currentSinglePreview.set(singlePreview);
+            }
+            else {
+                // Batch save - store as batch preview with viewOnly=false (action completed)
+                BatchCompetencyPreviewResponseDTO batchPreview = new BatchCompetencyPreviewResponseDTO(true, previews.size(), previews, false);
+                currentBatchPreview.set(batchPreview);
+            }
         }
 
         // Construct success message
