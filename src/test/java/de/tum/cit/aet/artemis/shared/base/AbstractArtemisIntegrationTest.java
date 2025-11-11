@@ -96,7 +96,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected Lti13Service lti13Service;
 
     // TODO: in the future, we should not mock gitService anymore
-    @MockitoSpyBean
+    @Autowired
     protected GitService gitService;
 
     @MockitoSpyBean
@@ -230,7 +230,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     protected void resetSpyBeans() {
-        Mockito.reset(gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, examAccessService, mailService, instanceMessageSendService,
+        Mockito.reset(groupNotificationService, singleUserNotificationService, websocketMessagingService, examAccessService, mailService, instanceMessageSendService,
                 programmingExerciseScheduleService, programmingExerciseParticipationService, uriService, scheduleService, participantScoreScheduleService, javaMailSender,
                 programmingTriggerService, zipFileService);
     }

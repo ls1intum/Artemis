@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
@@ -17,12 +16,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentMatchers;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -58,8 +55,6 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "programmingassessment";
-
-    private final String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
 
     private final Double offsetByTenThousandth = 0.0001;
 
@@ -106,7 +101,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.rated(true);
         manualResult.setSubmission(programmingSubmission);
 
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
 
     @Test
@@ -762,8 +756,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         participationUtilService.addResultToSubmission(firstSubmission, AssessmentType.AUTOMATIC, null);
         final var secondSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, "2");
         participationUtilService.addResultToSubmission(secondSubmission, AssessmentType.AUTOMATIC, null);
-        // The commit hash must be the same as the one used for initializing the tests because this test calls gitService.getLastCommitHash
-        final var thirdSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, dummyHash);
+        var latestCommitHash = gitService.getLastCommitHash(studentParticipation.getVcsRepositoryUri()).getName();
+        // Ensure the existing submission matches the repository HEAD returned during locking
+        final var thirdSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, latestCommitHash);
         participationUtilService.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
 
         var submissionsOfParticipation = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
