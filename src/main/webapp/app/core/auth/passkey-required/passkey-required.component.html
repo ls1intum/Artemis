@@ -2,10 +2,9 @@
     <div class="passkey-required-card card shadow-lg">
         <div class="card-body p-5">
             <div class="text-center mb-4">
-                <fa-icon [icon]="faShieldAlt" size="4x" class="text-primary mb-3" />
                 <h2 class="mb-3">
                     <fa-icon [icon]="faLock" class="me-2" />
-                    <span jhiTranslate="artemisApp.passkeyRequired.title">Passkey Required</span>
+                    <span jhiTranslate="artemisApp.passkeyRequired.title"></span>
                 </h2>
             </div>
 
@@ -23,7 +22,6 @@
             </div>
 
             <div class="d-flex justify-content-center gap-3 mt-4">
-                <jhi-button (onClick)="cancel()" [title]="'entity.action.cancel'" [btnType]="ButtonType.SECONDARY" />
                 @if (userHasRegisteredAPasskey) {
                     <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" [icon]="faKey" />
                 } @else {

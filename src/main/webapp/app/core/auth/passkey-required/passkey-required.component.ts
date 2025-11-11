@@ -12,7 +12,6 @@ import { AlertService } from 'app/shared/service/alert.service';
     selector: 'jhi-passkey-required',
     imports: [TranslateDirective, FaIconComponent, ButtonComponent],
     templateUrl: './passkey-required.component.html',
-    styleUrl: './passkey-required.component.scss',
 })
 export class PasskeyRequiredComponent implements OnInit {
     protected readonly ButtonType = ButtonType;
@@ -27,19 +26,20 @@ export class PasskeyRequiredComponent implements OnInit {
     private readonly alertService = inject(AlertService);
 
     userHasRegisteredAPasskey: boolean = false;
-    returnUrl: string | null = null;
+    returnUrl: string | undefined = undefined;
+
+    // TODO handle the passkey is not yet super admin approved
 
     ngOnInit() {
         this.userHasRegisteredAPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
 
-        // Get the return URL from query parameters
         this.route.queryParams.subscribe((params) => {
             this.returnUrl = params['returnUrl'] || '/';
         });
 
-        // If user is already logged in with passkey, redirect immediately
-        if (this.accountService.isLoggedInWithPasskey() && this.returnUrl) {
-            this.router.navigateByUrl(this.returnUrl);
+        const redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey = this.accountService.isLoggedInWithPasskey() && this.returnUrl;
+        if (redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey) {
+            this.router.navigateByUrl(this.returnUrl!);
         }
     }
 
@@ -62,6 +62,14 @@ export class PasskeyRequiredComponent implements OnInit {
         this.router.navigate(['/']);
     }
 
+    private redirectToOriginalUrlOrHome() {
+        if (this.returnUrl) {
+            this.router.navigateByUrl(this.returnUrl);
+        } else {
+            this.router.navigate(['/']);
+        }
+    }
+
     private handleLoginSuccess() {
         // Update the user identity to reflect passkey login
         this.accountService.userIdentity.set({
@@ -70,11 +78,6 @@ export class PasskeyRequiredComponent implements OnInit {
             internal: this.accountService.userIdentity()?.internal ?? false,
         });
 
-        // Redirect to the original URL or home
-        if (this.returnUrl) {
-            this.router.navigateByUrl(this.returnUrl);
-        } else {
-            this.router.navigate(['/']);
-        }
+        this.redirectToOriginalUrlOrHome();
     }
 }
