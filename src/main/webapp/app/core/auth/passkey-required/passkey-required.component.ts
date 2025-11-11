@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { faKey, faLock, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
+import { faKey, faLock } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
@@ -17,7 +17,6 @@ export class PasskeyRequiredComponent implements OnInit {
     protected readonly ButtonType = ButtonType;
     protected readonly faLock = faLock;
     protected readonly faKey = faKey;
-    protected readonly faShieldAlt = faShieldAlt;
 
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);

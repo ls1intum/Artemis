@@ -5,26 +5,16 @@
                 <div class="card shadow">
                     <div class="card-body p-4 p-md-5">
                         <div class="text-center mb-4">
-                            <h1 class="mb-3">
-                                <fa-icon [icon]="faLock" class="me-2 text-primary" />
-                                <span jhiTranslate="artemisApp.passkeyRequired.title"></span>
-                            </h1>
+                            <h3>
+                                <fa-icon [icon]="faLock" />
+                                <span jhiTranslate="global.menu.admin.loginWithPasskeyToUseAdminFeatures"></span>
+                            </h3>
                         </div>
 
-                        <div class="alert alert-info mb-4" role="alert">
-                            <p class="mb-2" jhiTranslate="artemisApp.passkeyRequired.explanation">
-                                The page you are trying to access requires strong authentication with a passkey.
-                            </p>
-                            <p class="mb-0 fw-bold" jhiTranslate="global.menu.admin.passkeyRestrictionExplanation">
-                                To protect student data and ensure platform reliability, administrator actions require strong authentication with a passkey.
-                            </p>
-                        </div>
-
-                        <div class="mb-4">
-                            <p class="text-muted" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText">
-                                Passkeys are a secure and convenient way to authenticate without passwords.
-                            </p>
-                        </div>
+                        <p class="text-wrap text-break mw-100" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
+                        <strong>
+                            <p class="text-wrap text-break mw-100 font-weight-bold" jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"></p>
+                        </strong>
 
                         <div class="d-flex justify-content-center mt-4">
                             @if (userHasRegisteredAPasskey) {
