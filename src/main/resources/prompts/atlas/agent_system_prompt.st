@@ -67,7 +67,7 @@ Output [CREATE_APPROVED_COMPETENCY]
 WORKFLOW EXAMPLES BY COMPLEXITY
 -------------------------------
 
-**Example: High Complexity (70%) - Use Planning**
+**Example: High Complexity (90%) - Use Planning**
 Instructor: "Create 5 competencies about OOP concepts"
 → Complex: Multiple competencies
 → Action: Propose plan first

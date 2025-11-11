@@ -456,7 +456,9 @@ public class CompetencyExpertToolsService {
         String message = messages.isEmpty() ? null : String.join(", ", messages);
         CompetencySaveResponseDTO response = new CompetencySaveResponseDTO(errors.isEmpty(), createCount, updateCount, errors.size(), errors.isEmpty() ? null : errors, message);
 
-        AtlasAgentService.markCompetencyModified();
+        if (createCount > 0 || updateCount > 0) {
+            AtlasAgentService.markCompetencyModified();
+        }
 
         return toJson(response);
     }

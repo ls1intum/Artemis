@@ -277,7 +277,6 @@ class CompetencyExpertToolsServiceTest {
             assertThat(actualSavedCompetency.getTaxonomy()).isEqualTo(CompetencyTaxonomy.ANALYZE);
 
             assertThat(AtlasAgentService.wasCompetencyModified()).isTrue();
-            assertThat(AtlasAgentService.wasCompetencyModified()).isTrue();
         }
 
         @Test

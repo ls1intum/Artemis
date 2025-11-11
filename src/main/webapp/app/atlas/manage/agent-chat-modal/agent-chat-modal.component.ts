@@ -19,6 +19,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
 import { AgentChatService } from './agent-chat.service';
 import { ChatMessage, CompetencyPreview } from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -365,7 +366,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         const promises = operations.map((competency) => {
             const isUpdate = competency.id !== undefined;
             const operation = isUpdate ? this.competencyService.update(competency, this.courseId) : this.competencyService.create(competency, this.courseId);
-            return operation.toPromise();
+            return firstValueFrom(operation);
         });
 
         Promise.all(promises)
