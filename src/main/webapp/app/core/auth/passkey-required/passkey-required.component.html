@@ -12,9 +12,12 @@
                         </div>
 
                         <p class="text-wrap text-break mw-100" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
-                        <strong>
-                            <p class="text-wrap text-break mw-100 font-weight-bold" jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"></p>
-                        </strong>
+
+                        <div class="alert alert-info mb-4" role="alert">
+                            <strong>
+                                <p class="text-wrap text-break mw-100 font-weight-bold" jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"></p>
+                            </strong>
+                        </div>
 
                         <div class="d-flex justify-content-center mt-4">
                             @if (userHasRegisteredAPasskey) {
