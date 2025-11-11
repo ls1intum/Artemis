@@ -11,6 +11,7 @@ import java.util.List;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.sshd.common.NamedResource;
 import org.apache.sshd.common.session.SessionContext;
+import org.apache.sshd.common.util.GenericUtils;
 import org.apache.sshd.common.util.io.IoUtils;
 import org.apache.sshd.server.keyprovider.AbstractGeneratorHostKeyProvider;
 
@@ -47,7 +48,8 @@ public class MultipleHostKeyProvider extends AbstractGeneratorHostKeyProvider {
                 try {
                     // Read a single key pair in the directory
                     Iterable<KeyPair> ids = readKeyPairs(session, file, IoUtils.EMPTY_OPEN_OPTIONS);
-                    if (ids.iterator().hasNext()) {
+                    KeyPair kp = GenericUtils.head(ids);
+                    if (kp != null) {
                         keys.addAll(IteratorUtils.toList(ids.iterator()));
                     }
                 }
