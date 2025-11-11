@@ -86,16 +86,8 @@ public class HyperionConsistencyCheckService {
             String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
             var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage);
 
-            var structuralMono = Mono.fromCallable(() -> {
-                try (Observation.Scope ignore = parent.openScope()) {
-                    return runStructuralCheck(input);
-                }
-            }).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
-            var semanticMono = Mono.fromCallable(() -> {
-                try (Observation.Scope ignore = parent.openScope()) {
-                    return runSemanticCheck(input);
-                }
-            }).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+            var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input, parent)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+            var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input, parent)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
             // @formatter:off
             List<ConsistencyIssue> combinedIssues = Flux.merge(
@@ -119,12 +111,11 @@ public class HyperionConsistencyCheckService {
      * @param input prompt variables (rendered_context, programming_language)
      * @return structural issues (never null)
      */
-    private List<ConsistencyIssue> runStructuralCheck(Map<String, String> input) {
+    private List<ConsistencyIssue> runStructuralCheck(Map<String, String> input, Observation parentObs) {
         var resourcePath = "/prompts/hyperion/consistency_structural.st";
         String renderedPrompt = templates.render(resourcePath, input);
-        Observation parentObsStructural = observationRegistry.getCurrentObservation();
-        Observation wrapper = Observation.createNotStarted("hyperion.consistency.structural", observationRegistry).parentObservation(parentObsStructural)
-                .contextualName("structural check").lowCardinalityKeyValue(KeyValue.of("ai.span", "true")).start();
+        Observation wrapper = Observation.createNotStarted("hyperion.consistency.structural", observationRegistry).parentObservation(parentObs).contextualName("structural check")
+                .lowCardinalityKeyValue(KeyValue.of("ai.span", "true")).start();
         try (Observation.Scope scope = wrapper.openScope()) {
             // @formatter:off
             var structuralIssues = chatClient
@@ -151,12 +142,11 @@ public class HyperionConsistencyCheckService {
      * @param input prompt variables (rendered_context, programming_language)
      * @return semantic issues
      */
-    private List<ConsistencyIssue> runSemanticCheck(Map<String, String> input) {
+    private List<ConsistencyIssue> runSemanticCheck(Map<String, String> input, Observation parentObs) {
         var resourcePath = "/prompts/hyperion/consistency_semantic.st";
         String renderedPrompt = templates.render(resourcePath, input);
-        Observation parentObsSemantic = observationRegistry.getCurrentObservation();
-        Observation wrapper = Observation.createNotStarted("hyperion.consistency.semantic", observationRegistry).parentObservation(parentObsSemantic)
-                .contextualName("semantic check").lowCardinalityKeyValue(KeyValue.of("ai.span", "true")).start();
+        Observation wrapper = Observation.createNotStarted("hyperion.consistency.semantic", observationRegistry).parentObservation(parentObs).contextualName("semantic check")
+                .lowCardinalityKeyValue(KeyValue.of("ai.span", "true")).start();
         try (Observation.Scope scope = wrapper.openScope()) {
             // @formatter:off
             var semanticIssues = chatClient
