@@ -100,7 +100,7 @@ describe('ApollonDiagramDetail Component', () => {
 
     it('generateExercise', async () => {
         // setup
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram, status: 200, statusText: 'OK' });
         // TODO: we should mock this differently without require
         // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -116,7 +116,7 @@ describe('ApollonDiagramDetail Component', () => {
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
         fixture.detectChanges();
 
-        fixture.componentInstance.course = course;
+        fixture.componentInstance.course.set(course);
         jest.spyOn(fixture.componentInstance, 'hasInteractive', 'get').mockReturnValue(true);
 
         const emitSpy = jest.spyOn(fixture.componentInstance.closeEdit, 'emit');
@@ -161,7 +161,7 @@ describe('ApollonDiagramDetail Component', () => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const module = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         jest.spyOn(module, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child
 

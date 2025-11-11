@@ -82,7 +82,7 @@ public class ModelingSubmission extends Submission {
     /**
      * checks if the modeling submission is empty by using a predefined object mapper (in case this is invoked multiple times).
      * A modeling submission is empty if the model is null, blank (no actual characters) or if the elements/nodes in the json description are empty.
-     * Supports both Apollon v2 (with 'elements') and v3 (with 'nodes').
+     * Supports both Apollon v3 (with 'elements') and v4 (with 'nodes').
      *
      * @param jacksonObjectMapper a predefined jackson object mapper
      * @return true if the submission is empty, false otherwise

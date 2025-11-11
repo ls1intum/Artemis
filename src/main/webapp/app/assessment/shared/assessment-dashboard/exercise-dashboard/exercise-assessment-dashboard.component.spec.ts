@@ -311,13 +311,13 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should initialize', fakeAsync(() => {
         const user = { id: 10, login: 'tutor1' } as User;
-        accountService.userIdentity = user;
 
         // Set initial exercise to prevent undefined access
         comp.exercise = modelingExercise;
         comp.tutorParticipation = modelingExercise.tutorParticipations![0];
         comp.tutorParticipationStatus = modelingExercise.tutorParticipations![0].status!; // ADD THIS LINE
 
+        accountService.userIdentity.set(user);
         fixture.detectChanges();
         tick(); // Process all async operations
 
