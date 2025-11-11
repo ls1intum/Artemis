@@ -40,7 +40,7 @@
               AND e.discriminator = 'Q'
               AND e.exercise_group_id IS NULL
               AND p_orig.test_run = FALSE
-              AND p_orig.id = (SELECT MIN (p_inner.id)
+              AND p_orig.id = (SELECT MIN(p_inner.id)
                 FROM participation p_inner
                 WHERE p_inner.student_id = p_orig.student_id
               AND p_inner.exercise_id = p_orig.exercise_id
@@ -85,7 +85,7 @@
               AND e.discriminator = 'Q'
               AND e.exercise_group_id IS NULL
               AND p_orig.test_run = FALSE
-              AND p_orig.id = (SELECT MIN (p_inner.id)
+              AND p_orig.id = (SELECT MIN(p_inner.id)
                 FROM participation p_inner
                 WHERE p_inner.student_id = p_orig.student_id
               AND p_inner.exercise_id = p_orig.exercise_id
