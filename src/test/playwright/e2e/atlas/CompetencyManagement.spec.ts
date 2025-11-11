@@ -1,5 +1,5 @@
-import { test } from './support/fixtures';
-import { admin } from './support/users';
+import { test } from '../../support/fixtures';
+import { admin } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
@@ -25,7 +25,6 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
 
         const closeButton = page.locator('#close-button');
         await closeButton.click();
-
 
         // Create competency
         await page.getByRole('link', { name: 'Create competency' }).click();

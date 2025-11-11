@@ -1,5 +1,5 @@
-import { test } from './support/fixtures';
-import { admin } from './support/users';
+import { test } from '../../support/fixtures';
+import { admin } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
 
@@ -47,7 +47,7 @@ test.describe('Learning Path Management', () => {
     });
 
     test('Instructor disables learning paths via course settings', { tag: '@fast' }, async ({ page, login }) => {
-        await page.goto(`/course-management/${course.id}`)
+        await page.goto(`/course-management/${course.id}`);
 
         await page.getByRole('link', { name: 'Settings' }).click();
 
@@ -100,5 +100,4 @@ test.describe('Learning Path Management', () => {
     test.afterEach(async ({ courseManagementAPIRequests }) => {
         await courseManagementAPIRequests.deleteCourse(course, admin);
     });
-
 });
