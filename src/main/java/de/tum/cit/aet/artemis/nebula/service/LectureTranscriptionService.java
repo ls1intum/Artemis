@@ -18,8 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -118,7 +116,6 @@ public class LectureTranscriptionService {
      * @param jobId The Nebula job ID
      * @param dto   The completed transcription result returned from Nebula
      */
-    @VisibleForTesting
     void saveFinalTranscriptionResult(String jobId, LectureTranscriptionDTO dto) {
         LectureTranscription transcription = lectureTranscriptionsRepositoryApi.findByJobId(jobId)
                 .orElseThrow(() -> new IllegalStateException("No transcription found for jobId: " + jobId));
@@ -136,7 +133,6 @@ public class LectureTranscriptionService {
      * @param transcription The transcription entity to update
      * @param errorMessage  The error message returned by Nebula
      */
-    @VisibleForTesting
     void markTranscriptionAsFailed(LectureTranscription transcription, String errorMessage) {
         transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
         lectureTranscriptionsRepositoryApi.save(transcription);
@@ -151,16 +147,15 @@ public class LectureTranscriptionService {
      * @param lectureUnitId ID of the lecture unit
      * @param jobId         The Nebula job ID for this transcription
      */
-    @VisibleForTesting
     void createEmptyTranscription(Long lectureId, Long lectureUnitId, String jobId) {
         LectureUnit lectureUnit = validateAndCleanup(lectureId, lectureUnitId);
 
-        LectureTranscription t = new LectureTranscription();
-        t.setLectureUnit(lectureUnit);
-        t.setJobId(jobId);
-        t.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        LectureTranscription transcription = new LectureTranscription();
+        transcription.setLectureUnit(lectureUnit);
+        transcription.setJobId(jobId);
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
 
-        lectureTranscriptionsRepositoryApi.save(t);
+        lectureTranscriptionsRepositoryApi.save(transcription);
     }
 
     /**
