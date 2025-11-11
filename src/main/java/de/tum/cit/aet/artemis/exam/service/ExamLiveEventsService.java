@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import java.util.Objects;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -130,7 +132,8 @@ public class ExamLiveEventsService {
      */
     public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message) {
         Exam exam = exercise.getExam();
-        studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().filter(studentExam -> studentExam.getExercises().contains(exercise))
+        studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream()
+                .filter(studentExam -> studentExam.getExercises().stream().anyMatch(e -> Objects.equals(e.getId(), exercise.getId())))
                 .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, exercise, message));
     }
 

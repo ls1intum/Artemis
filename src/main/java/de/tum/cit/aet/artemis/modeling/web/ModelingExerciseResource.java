@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -240,15 +239,14 @@ public class ModelingExerciseResource {
                 .findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(updateModelingExerciseDTO.id());
 
         ModelingExercise beforeClone = cloneForComparison(modelingExerciseBeforeUpdate);
-        ZonedDateTime previousDueDate = modelingExerciseBeforeUpdate.getDueDate();
 
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExerciseBeforeUpdate, user);
 
-        Long currentCourseId = modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId();
-        if (updateModelingExerciseDTO.courseId() != null && !Objects.equals(currentCourseId, updateModelingExerciseDTO.courseId())) {
+        if (updateModelingExerciseDTO.courseId() != null
+                && !Objects.equals(modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), updateModelingExerciseDTO.courseId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
 
@@ -262,20 +260,20 @@ public class ModelingExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
 
-        channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
+        channelService.updateExerciseChannel(beforeClone, modelingExercise);
 
         ModelingExercise updatedModelingExercise = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
 
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(beforeClone, updatedModelingExercise);
 
-        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedModelingExercise, previousDueDate);
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedModelingExercise, beforeClone.getDueDate());
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
         exerciseService.notifyAboutExerciseChanges(beforeClone, updatedModelingExercise, notificationText);
         slideApi.ifPresent(api -> api.handleDueDateChange(beforeClone, updatedModelingExercise));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(updatedModelingExercise)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(beforeClone, Optional.of(updatedModelingExercise)));
 
         // Notify AtlasML about the modeling exercise update
         atlasMLApi.ifPresent(api -> {
@@ -476,8 +474,11 @@ public class ModelingExerciseResource {
     private ModelingExercise cloneForComparison(ModelingExercise source) {
         ModelingExercise copy = new ModelingExercise();
         copy.setId(source.getId());
+        copy.setChannelName(source.getChannelName());
         copy.setTitle(source.getTitle());
+        copy.setShortName(source.getShortName());
         copy.setProblemStatement(source.getProblemStatement());
+        copy.setCategories(source.getCategories());
         copy.setDifficulty(source.getDifficulty());
         copy.setMaxPoints(source.getMaxPoints());
         copy.setBonusPoints(source.getBonusPoints());
@@ -492,6 +493,7 @@ public class ModelingExerciseResource {
         copy.setExampleSolutionExplanation(source.getExampleSolutionExplanation());
         copy.setDiagramType(source.getDiagramType());
         copy.setExampleSolutionPublicationDate(source.getExampleSolutionPublicationDate());
+        copy.setCompetencyLinks(source.getCompetencyLinks());
         return copy;
     }
 }
