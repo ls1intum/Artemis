@@ -421,7 +421,7 @@ approved services such as artifact caches.
 
 - Configure the list of networks that instructors are allowed to choose from using the ``allowed-custom-networks`` property.
 - Provide a comma-separated list of Docker network names. Use ``none`` to offer the "no network" option.
-- The selected network must exist on the build agent host(s) where containers are created (e.g., create with ``docker network create ...``).
+- Custom network names must exist on the build agent host(s) where containers are created (e.g., create with ``docker network create ...``). The special value ``none`` is a built-in Docker option and does not need to be created.
 - If no network is selected in the UI, Docker’s default network mode is used.
 
 Configuration (server/core node):
