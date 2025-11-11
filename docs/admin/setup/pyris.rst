@@ -15,7 +15,7 @@ Overview
 
 Iris is an intelligent virtual tutor integrated into Artemis, providing one-on-one programming assistance, course content support,
 and competency generation for students. Iris relies on Pyris, an intermediary service from the EduTelligence suite that brokers
-requests to Large Language Models (LLMs) via a FastAPI backend.
+requests to Large Language Models (LLMs) using FastAPI.
 
 This guide consolidates everything you need to configure both Artemis and Pyris so they communicate securely and reliably.
 
