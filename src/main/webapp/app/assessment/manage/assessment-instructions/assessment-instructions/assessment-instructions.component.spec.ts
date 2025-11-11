@@ -61,20 +61,21 @@ describe('AssessmentInstructionsComponent', () => {
 
         comp.sampleSolutionExplanation = undefined;
         fixture.detectChanges();
-        const textExercise = { id: 1, exampleSolution: 'sample solution', type: ExerciseType.TEXT } as TextExercise;
-        comp.exerciseInput = textExercise;
+        comp.exerciseInput = { id: 1, exampleSolution: 'sample solution', type: ExerciseType.TEXT } as TextExercise;
         expect(comp.sampleSolutionExplanation).toBeDefined();
 
         comp.sampleSolutionExplanation = undefined;
         fixture.detectChanges();
-        const fileUploadExercise = { id: 1, exampleSolution: 'sample solution', type: ExerciseType.FILE_UPLOAD } as FileUploadExercise;
-        comp.exerciseInput = fileUploadExercise;
+        comp.exerciseInput = {
+            id: 1,
+            exampleSolution: 'sample solution',
+            type: ExerciseType.FILE_UPLOAD,
+        } as FileUploadExercise;
         expect(comp.sampleSolutionExplanation).toBeDefined();
 
         comp.sampleSolutionExplanation = undefined;
         fixture.detectChanges();
-        const programmingExercise = { id: 1, type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
-        comp.exerciseInput = programmingExercise;
+        comp.exerciseInput = { id: 1, type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
         expect(comp.sampleSolutionExplanation).toBeUndefined();
 
         expect(markdownSpy).toHaveBeenCalledTimes(7);

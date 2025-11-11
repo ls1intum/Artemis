@@ -278,8 +278,11 @@ describe('ModelingSubmissionComponent', () => {
     it('should set correct properties on modeling exercise create when submitting', () => {
         fixture.detectChanges();
 
-        const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"nodes": [{"id": 1}], "edges": []}', submitted: true, participation });
-        comp.submission = modelSubmission;
+        comp.submission = <ModelingSubmission>(<unknown>{
+            model: '{"nodes": [{"id": 1}], "edges": []}',
+            submitted: true,
+            participation,
+        });
         const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
