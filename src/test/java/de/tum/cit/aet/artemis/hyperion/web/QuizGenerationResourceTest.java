@@ -21,14 +21,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-@ActiveProfiles("hyperion")
+@ActiveProfiles({ "localci", "hyperion" })
 class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
@@ -36,9 +34,6 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @MockitoBean
     private AiQuizGenerationService aiQuizGenerationService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private static final String TEST_PREFIX = "quizgeneration";
 
