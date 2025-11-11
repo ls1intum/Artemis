@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -24,7 +23,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 
-@Profile("hyperion")
+@Profile({ "localci", "hyperion" })
 @Conditional(HyperionEnabled.class)
 @Lazy
 @RestController
@@ -53,7 +52,7 @@ public class QuizGenerationResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<AiQuizGenerationResponseDTO> generate(@PathVariable long courseId, @Valid @RequestBody AiQuizGenerationRequestDTO generationParams) {
         log.debug("REST request to generate AI quiz for course {}", courseId);
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course with id " + courseId + " not found"));
+        courseRepository.findById(courseId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course with id " + courseId + " not found"));
 
         AiQuizGenerationResponseDTO response = aiQuizGenerationService.generate(courseId, generationParams);
 

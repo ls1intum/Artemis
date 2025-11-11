@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -65,6 +66,11 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         instructor.getGroups().add(course.getInstructorGroupName());
         userTestRepository.save(instructor);
+    }
+
+    @AfterEach
+    void cleanUpTestData() {
+        courseRepository.deleteAll();
     }
 
     private void mockSuccessfulQuizGeneration() {
