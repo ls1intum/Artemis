@@ -24,7 +24,7 @@ import com.github.dockerjava.api.model.HostConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
-public class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
+class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
 
     private static final String CONTAINER_NAME = "containerName";
 
