@@ -186,24 +186,14 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         });
     },
     createCompetency: async ({ competencyManagement }, use) => {
-        await use(
-            async (
-                courseId: number,
-                options: { title: string; description: string; taxonomy?: string; softDueDate?: Date | string; returnToPrevious?: boolean },
-            ) => {
-                await competencyManagement.createCompetency(courseId, options);
-            },
-        );
+        await use(async (courseId: number, options: { title: string; description: string; taxonomy?: string; softDueDate?: Date | string; returnToPrevious?: boolean }) => {
+            await competencyManagement.createCompetency(courseId, options);
+        });
     },
     createPrerequisite: async ({ competencyManagement }, use) => {
-        await use(
-            async (
-                courseId: number,
-                options: { title: string; description: string; taxonomy?: string; softDueDate?: Date | string; returnToPrevious?: boolean },
-            ) => {
-                await competencyManagement.createPrerequisite(courseId, options);
-            },
-        );
+        await use(async (courseId: number, options: { title: string; description: string; taxonomy?: string; softDueDate?: Date | string; returnToPrevious?: boolean }) => {
+            await competencyManagement.createPrerequisite(courseId, options);
+        });
     },
     competencyManagement: async ({ page }, use) => {
         await use(new CompetencyManagementPage(page));

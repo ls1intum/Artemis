@@ -39,7 +39,6 @@ export class CompetencyManagementPage {
         }
     }
 
-
     async createCompetency(courseId: number, options: CreateCompetencyOptions) {
         const { title, description, taxonomy, softDueDate, returnToPrevious = true } = options;
         const previousUrl = this.page.url();
@@ -126,19 +125,22 @@ export class CompetencyManagementPage {
 
         // Optional taxonomy
         if (taxonomy) {
-            await this.page.getByLabel('Taxonomy').selectOption(`2: ${taxonomy}`).catch(async () => {
-                // Fallback: iterate options if direct value not found
-                const select = this.page.getByLabel('Taxonomy');
-                const options = select.locator('option');
-                const count = await options.count();
-                for (let i = 0; i < count; i++) {
-                    const text = (await options.nth(i).textContent())?.trim();
-                    if (text && text.toLowerCase().includes(taxonomy.toLowerCase())) {
-                        await select.selectOption({ label: text });
-                        break;
+            await this.page
+                .getByLabel('Taxonomy')
+                .selectOption(`2: ${taxonomy}`)
+                .catch(async () => {
+                    // Fallback: iterate options if direct value not found
+                    const select = this.page.getByLabel('Taxonomy');
+                    const options = select.locator('option');
+                    const count = await options.count();
+                    for (let i = 0; i < count; i++) {
+                        const text = (await options.nth(i).textContent())?.trim();
+                        if (text && text.toLowerCase().includes(taxonomy.toLowerCase())) {
+                            await select.selectOption({ label: text });
+                            break;
+                        }
                     }
-                }
-            });
+                });
         }
 
         // Submit
