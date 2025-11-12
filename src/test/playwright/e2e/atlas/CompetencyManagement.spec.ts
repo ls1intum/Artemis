@@ -3,6 +3,24 @@ import { admin } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
+import type { Page } from '@playwright/test';
+
+async function navigateToCompetencyManagement(page: Page, courseId?: number) {
+    if (courseId === undefined) {
+        throw new Error('navigateToCompetencyManagement called without courseId');
+    }
+    await page.goto(`/course-management/${courseId}/competency-management`);
+    const closeButton = page.locator('#close-button');
+    await closeButton.click();
+}
+
+async function selectDateInPicker(page: Page, monthsAhead: number, day: number) {
+    await page.locator('.btn.position-absolute').first().click();
+    for (let i = 0; i < monthsAhead; i++) {
+        await page.getByRole('button', { name: 'Next month' }).click();
+    }
+    await page.getByText(String(day)).first().click();
+}
 
 test.describe('Competency Management', { tag: '@fast' }, () => {
     let course: Course;
@@ -12,19 +30,15 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         course = await courseManagementAPIRequests.createCourse();
     });
 
-    test('Creates a competency', async ({ page, navigationBar, courseManagement }) => {
+    test('Creates a competency', async ({ page }) => {
         const competencyData = {
             title: 'Multiplication',
             description: 'The student should learn how to multiply two integers.',
-            softDueDate: dayjs().add(2, 'months').endOf('month'),
+            softDueDate: dayjs().add(2, 'months').date(15),
             taxonomy: 'UNDERSTAND',
         };
 
-        // Navigate to course competency management
-        await page.goto(`/course-management/${course.id}/competency-management`);
-
-        const closeButton = page.locator('#close-button');
-        await closeButton.click();
+        await navigateToCompetencyManagement(page, course!.id);
 
         // Create competency
         await page.getByRole('link', { name: 'Create competency' }).click();
@@ -32,10 +46,7 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         await page.getByRole('textbox', { name: 'Editor content' }).fill(competencyData.description);
 
         // Set soft due date
-        await page.locator('.btn.position-absolute').first().click();
-        await page.getByRole('button', { name: 'Next month' }).click();
-        await page.getByRole('button', { name: 'Next month' }).click();
-        await page.getByText('15').click();
+        await selectDateInPicker(page, 2, 15);
 
         // Set taxonomy
         await page.getByLabel('Taxonomy').selectOption(`2: ${competencyData.taxonomy}`);
@@ -53,32 +64,15 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         const competencyData = {
             title: 'Multiplication',
             description: 'The student should learn how to multiply two integers.',
-            softDueDate: dayjs().add(2, 'months').endOf('month'),
+            softDueDate: dayjs().add(2, 'months').date(15),
             taxonomy: 'UNDERSTAND',
         };
 
-        test.beforeEach('Create competency', async ({ page }) => {
-            // Navigate to course competency management
-            await page.goto(`/course-management/${course.id}/competency-management`);
+        test.beforeEach('Create competency', async ({ page, courseManagementAPIRequests }) => {
+            // Create competency via API
+            await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
 
-            const closeButton = page.locator('#close-button');
-            await closeButton.click();
-
-            // Create competency
-            await page.getByRole('link', { name: 'Create competency' }).click();
-            await page.getByRole('textbox', { name: 'Title' }).fill(competencyData.title);
-            await page.getByRole('textbox', { name: 'Editor content' }).fill(competencyData.description);
-
-            // Optionally set soft due date (kept minimal to reduce flakiness)
-            await page.locator('.btn.position-absolute').first().click();
-            await page.getByRole('button', { name: 'Next month' }).click();
-            await page.getByText('15').click();
-
-            // Set taxonomy
-            await page.getByLabel('Taxonomy').selectOption(`2: ${competencyData.taxonomy}`);
-
-            // Submit
-            await page.getByRole('button', { name: 'Submit' }).click();
+            await navigateToCompetencyManagement(page, course!.id);
 
             // Verify creation
             await expect(page.getByRole('cell', { name: competencyData.title })).toBeVisible();
@@ -124,20 +118,11 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             taxonomy: 'UNDERSTAND',
         };
 
-        test.beforeEach('Create competency to delete', async ({ page }) => {
-            // Navigate to course competency management
-            await page.goto(`/course-management/${course.id}/competency-management`);
+        test.beforeEach('Create competency to delete', async ({ page, courseManagementAPIRequests }) => {
+            // Create competency via API
+            await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
 
-            const closeButton = page.locator('#close-button');
-            await closeButton.click();
-
-            // Create competency to delete
-            await page.getByRole('link', { name: 'Create competency' }).click();
-            await page.getByRole('textbox', { name: 'Title' }).fill(competencyData.title);
-            await page.getByRole('textbox', { name: 'Editor content' }).fill(competencyData.description);
-            await page.getByLabel('Taxonomy').selectOption(`2: ${competencyData.taxonomy}`);
-            await page.getByRole('button', { name: 'Submit' }).click();
-
+            await navigateToCompetencyManagement(page, course!.id);
             await expect(page.getByRole('cell', { name: competencyData.title })).toBeVisible();
         });
 
@@ -175,11 +160,7 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
     });
 
     test('Creates a prerequisite', async ({ page }) => {
-        // Navigate to course competency management
-        await page.goto(`/course-management/${course.id}/competency-management`);
-
-        const closeButton = page.locator('#close-button');
-        await closeButton.click();
+        await navigateToCompetencyManagement(page, course!.id);
 
         // Create prerequisite
         await page.getByRole('link', { name: 'Create prerequisite' }).click();
@@ -187,9 +168,7 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         await page.getByRole('textbox', { name: 'Editor content' }).fill(prerequisiteData.description);
 
         // Set soft due date
-        await page.locator('.btn.position-absolute').first().click();
-        await page.getByRole('button', { name: 'Next month' }).click();
-        await page.getByText('15').click();
+        await selectDateInPicker(page, 1, 15);
 
         // Set taxonomy
         await page.getByLabel('Taxonomy').selectOption(`2: ${prerequisiteData.taxonomy}`);
@@ -204,28 +183,11 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
     });
 
     test.describe('Prerequisite editing', () => {
-        test.beforeEach('Create prerequisite', async ({ page }) => {
-            // Navigate to course competency management
-            await page.goto(`/course-management/${course.id}/competency-management`);
+        test.beforeEach('Create prerequisite', async ({ page, courseManagementAPIRequests }) => {
+            // Create prerequisite via API
+            await courseManagementAPIRequests.createPrerequisite(course, prerequisiteData.title, prerequisiteData.description);
 
-            const closeButton = page.locator('#close-button');
-            await closeButton.click();
-
-            // Create prerequisite
-            await page.getByRole('link', { name: 'Create prerequisite' }).click();
-            await page.getByRole('textbox', { name: 'Prerequisites' }).fill(prerequisiteData.title);
-            await page.getByRole('textbox', { name: 'Editor content' }).fill(prerequisiteData.description);
-
-            // Set soft due date
-            await page.locator('.btn.position-absolute').first().click();
-            await page.getByRole('button', { name: 'Next month' }).click();
-            await page.getByText('15').click();
-
-            // Set taxonomy
-            await page.getByLabel('Taxonomy').selectOption(`2: ${prerequisiteData.taxonomy}`);
-
-            // Submit
-            await page.getByRole('button', { name: 'Submit' }).click();
+            await navigateToCompetencyManagement(page, course!.id);
 
             // Verify prerequisite was created
             await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible();
@@ -250,9 +212,7 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             await prereqEditor.type(updatedPrerequisiteData.description);
 
             // Set updated soft due date
-            await page.locator('.btn.position-absolute').first().click();
-            await page.getByRole('button', { name: 'Next month' }).click();
-            await page.getByText('15').click();
+            await selectDateInPicker(page, 2, 15);
 
             // Set updated taxonomy
             await page.getByLabel('Taxonomy').selectOption(`3: ${updatedPrerequisiteData.taxonomy}`);
@@ -274,20 +234,11 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             taxonomy: 'UNDERSTAND',
         };
 
-        test.beforeEach('Create prerequisite to delete', async ({ page }) => {
-            // Navigate to course competency management
-            await page.goto(`/course-management/${course.id}/competency-management`);
+        test.beforeEach('Create prerequisite to delete', async ({ page, courseManagementAPIRequests }) => {
+            // Create prerequisite via API
+            await courseManagementAPIRequests.createPrerequisite(course, prerequisiteData.title, prerequisiteData.description);
 
-            const closeButton = page.locator('#close-button');
-            await closeButton.click();
-
-            // Create prerequisite to delete
-            await page.getByRole('link', { name: 'Create prerequisite' }).click();
-            await page.getByRole('textbox', { name: 'Prerequisites' }).fill(prerequisiteData.title);
-            await page.getByRole('textbox', { name: 'Editor content' }).fill(prerequisiteData.description);
-            await page.getByLabel('Taxonomy').selectOption(`2: ${prerequisiteData.taxonomy}`);
-            await page.getByRole('button', { name: 'Submit' }).click();
-
+            await navigateToCompetencyManagement(page, course!.id);
             await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible();
         });
 

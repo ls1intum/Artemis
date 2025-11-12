@@ -3,12 +3,7 @@ import { admin } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
 
-/**
- * E2E tests for Learning Paths (Atlas) from both viewpoints: student and instructor.
- * These tests mock Atlas API endpoints to ensure stable UI verification without backend coupling.
- */
-
-test.describe('Learning Path Management', () => {
+test.describe('Learning Path Management', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
@@ -16,7 +11,7 @@ test.describe('Learning Path Management', () => {
         course = await courseManagementAPIRequests.createCourse();
     });
 
-    test('Instructor enables learning paths via activation card', { tag: '@fast' }, async ({ page, login }) => {
+    test('Instructor enables learning paths via activation card', async ({ page }) => {
         // Arrange: course initially without learning paths enabled
         await page.goto(`/course-management/${course.id}/learning-path-management`);
 
@@ -29,7 +24,7 @@ test.describe('Learning Path Management', () => {
         await expect(page.locator('.learning-paths-analytics-container')).toBeVisible();
     });
 
-    test('Instructor enables learning paths via course settings', { tag: '@fast' }, async ({ page, login }) => {
+    test('Instructor enables learning paths via course settings', async ({ page }) => {
         // Arrange: course initially without learning paths enabled
         await page.goto(`/course-management/${course.id}`);
 
@@ -46,7 +41,7 @@ test.describe('Learning Path Management', () => {
         await expect(page.locator('.learning-paths-analytics-container')).toBeVisible();
     });
 
-    test('Instructor disables learning paths via course settings', { tag: '@fast' }, async ({ page, login }) => {
+    test('Instructor disables learning paths via course settings', async ({ page }) => {
         await page.goto(`/course-management/${course.id}`);
 
         await page.getByRole('link', { name: 'Settings' }).click();
@@ -63,7 +58,7 @@ test.describe('Learning Path Management', () => {
         await expect(page.locator('jhi-feature-activation')).toBeVisible();
     });
 
-    test('Create simple learning path', { tag: '@fast' }, async ({ page, courseManagementAPIRequests }) => {
+    test('Create simple learning path', async ({ page, courseManagementAPIRequests }) => {
         // Enable learning paths first
         await page.goto(`/course-management/${course.id}/learning-path-management`);
         const activationCard = page.locator('jhi-feature-activation');
