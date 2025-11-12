@@ -107,7 +107,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.modelChangeCounter();
         try {
             return (
-                !!this.apollonEditor &&
+                !!this.apollonEditor() &&
                 (Object.entries(this.apollonEditor()!.selection.elements).some(([, selected]) => selected) ||
                     Object.entries(this.apollonEditor()!.selection.relationships).some(([, selected]) => selected))
             );
