@@ -194,10 +194,10 @@
                     </div>
                 </div>
             }
-            @if (showTranscriptionPendingWarning()) {
-                <div class="alert alert-warning mt-3 mb-3" role="alert">
-                    <fa-icon [icon]="faQuestionCircle" />
-                    <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.pendingWarning"></span>
+            @if (canCancelTranscription()) {
+                <div class="alert alert-info d-flex justify-content-between align-items-center mt-3 mb-3">
+                    <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.ongoingStatus" [translateValues]="{ status: transcriptionStatus()!.status }"></span>
+                    <button class="btn btn-warning btn-sm" (click)="cancelTranscription()" jhiTranslate="artemisApp.attachmentVideoUnit.transcription.cancelButton"></button>
                 </div>
             }
             @if (shouldShowTranscriptCheckbox()) {

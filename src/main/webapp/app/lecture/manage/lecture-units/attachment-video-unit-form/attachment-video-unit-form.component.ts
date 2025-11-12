@@ -16,6 +16,8 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranscriptionStatus, TranscriptionStatusDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -150,6 +152,8 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     private readonly formBuilder = inject(FormBuilder);
     private readonly accountService = inject(AccountService);
+    private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
+    private readonly alertService = inject(AlertService);
 
     readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
 
@@ -190,10 +194,15 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         return true;
     });
 
-    readonly showTranscriptionPendingWarning = computed(() => {
+    readonly canCancelTranscription = computed(() => {
         const statusDTO = this.transcriptionStatus();
         const status = statusDTO?.status;
         return status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING;
+    });
+
+    readonly showTranscriptionPendingWarning = computed(() => {
+        // Deprecated: use canCancelTranscription instead
+        return this.canCancelTranscription();
     });
 
     readonly showTranscriptionOverwriteWarning = computed(() => {
@@ -369,5 +378,24 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     cancelForm() {
         this.onCancel.emit();
+    }
+
+    cancelTranscription() {
+        const statusDTO = this.transcriptionStatus();
+        if (!statusDTO?.jobId) {
+            return;
+        }
+
+        this.lectureTranscriptionService.cancelTranscription(statusDTO.jobId).subscribe({
+            next: (success) => {
+                if (success) {
+                    this.alertService.success('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
+                    this.transcriptionStatus.set(undefined);
+                } else {
+                    this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
+                }
+            },
+            error: () => this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError'),
+        });
     }
 }

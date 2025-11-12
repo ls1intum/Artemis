@@ -18,11 +18,17 @@ import { HttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { MockProvider } from 'ng-mocks';
+import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 describe('AttachmentVideoUnitFormComponent', () => {
     let attachmentVideoUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
     let attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent;
     let accountService: AccountService;
+    let lectureTranscriptionService: LectureTranscriptionService;
+    let alertService: AlertService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -40,12 +46,16 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                MockProvider(LectureTranscriptionService),
+                MockProvider(AlertService),
             ],
         }).compileComponents();
 
         attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
         attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
         accountService = TestBed.inject(AccountService);
+        lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {
@@ -639,5 +649,119 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(payload.playlistUrl).toBe(playlist);
 
         emitSpy.mockRestore();
+    });
+
+    it('should show cancel button when transcription is PENDING', () => {
+        const transcriptionStatus = { jobId: 'test-job-123', status: TranscriptionStatus.PENDING };
+        attachmentVideoUnitFormComponent.transcriptionStatus.set(transcriptionStatus);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        expect(attachmentVideoUnitFormComponent.canCancelTranscription()).toBeTrue();
+    });
+
+    it('should show cancel button when transcription is PROCESSING', () => {
+        const transcriptionStatus = { jobId: 'test-job-123', status: TranscriptionStatus.PROCESSING };
+        attachmentVideoUnitFormComponent.transcriptionStatus.set(transcriptionStatus);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        expect(attachmentVideoUnitFormComponent.canCancelTranscription()).toBeTrue();
+    });
+
+    it('should not show cancel button when transcription is COMPLETED', () => {
+        const transcriptionStatus = { jobId: 'test-job-123', status: TranscriptionStatus.COMPLETED };
+        attachmentVideoUnitFormComponent.transcriptionStatus.set(transcriptionStatus);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        expect(attachmentVideoUnitFormComponent.canCancelTranscription()).toBeFalse();
+    });
+
+    it('should not show cancel button when transcription is FAILED', () => {
+        const transcriptionStatus = { jobId: 'test-job-123', status: TranscriptionStatus.FAILED };
+        attachmentVideoUnitFormComponent.transcriptionStatus.set(transcriptionStatus);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        expect(attachmentVideoUnitFormComponent.canCancelTranscription()).toBeFalse();
+    });
+
+    it('should not show cancel button when no transcription status', () => {
+        attachmentVideoUnitFormComponent.transcriptionStatus.set(undefined);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        expect(attachmentVideoUnitFormComponent.canCancelTranscription()).toBeFalse();
+    });
+
+    it('should cancel transcription successfully', () => {
+        const transcriptionStatus = { jobId: 'test-job-123', status: TranscriptionStatus.PENDING };
+        attachmentVideoUnitFormComponent.transcriptionStatus.set(transcriptionStatus);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        const cancelSpy = jest.spyOn(lectureTranscriptionService, 'cancelTranscription').mockReturnValue(of(true));
+        const successSpy = jest.spyOn(alertService, 'success');
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        attachmentVideoUnitFormComponent.cancelTranscription();
+
+        expect(cancelSpy).toHaveBeenCalledWith('test-job-123');
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBeUndefined();
+
+        cancelSpy.mockRestore();
+        successSpy.mockRestore();
+        errorSpy.mockRestore();
+    });
+
+    it('should handle cancel transcription error', () => {
+        const transcriptionStatus = { jobId: 'test-job-123', status: TranscriptionStatus.PENDING };
+        attachmentVideoUnitFormComponent.transcriptionStatus.set(transcriptionStatus);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        const cancelSpy = jest.spyOn(lectureTranscriptionService, 'cancelTranscription').mockReturnValue(of(false));
+        const successSpy = jest.spyOn(alertService, 'success');
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        attachmentVideoUnitFormComponent.cancelTranscription();
+
+        expect(cancelSpy).toHaveBeenCalledWith('test-job-123');
+        expect(successSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.cancelError');
+
+        cancelSpy.mockRestore();
+        successSpy.mockRestore();
+        errorSpy.mockRestore();
+    });
+
+    it('should handle cancel transcription exception', () => {
+        const transcriptionStatus = { jobId: 'test-job-123', status: TranscriptionStatus.PENDING };
+        attachmentVideoUnitFormComponent.transcriptionStatus.set(transcriptionStatus);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        const cancelSpy = jest.spyOn(lectureTranscriptionService, 'cancelTranscription').mockReturnValue(throwError(() => new Error('Network error')));
+        const successSpy = jest.spyOn(alertService, 'success');
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        attachmentVideoUnitFormComponent.cancelTranscription();
+
+        expect(cancelSpy).toHaveBeenCalledWith('test-job-123');
+        expect(successSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.cancelError');
+
+        cancelSpy.mockRestore();
+        successSpy.mockRestore();
+        errorSpy.mockRestore();
+    });
+
+    it('should not cancel transcription when jobId is missing', () => {
+        const transcriptionStatus = { jobId: '', status: TranscriptionStatus.PENDING };
+        attachmentVideoUnitFormComponent.transcriptionStatus.set(transcriptionStatus);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        const cancelSpy = jest.spyOn(lectureTranscriptionService, 'cancelTranscription');
+
+        attachmentVideoUnitFormComponent.cancelTranscription();
+
+        expect(cancelSpy).not.toHaveBeenCalled();
+
+        cancelSpy.mockRestore();
     });
 });

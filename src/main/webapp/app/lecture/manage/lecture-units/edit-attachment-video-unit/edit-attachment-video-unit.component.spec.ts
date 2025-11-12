@@ -388,22 +388,16 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should cancel transcription when cancel button is clicked', () => {
+    it('should detect ongoing transcription correctly', () => {
         const transcriptionStatus = { jobId: 'test-job-123', status: 'PENDING' as any };
         jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus));
-        const cancelSpy = jest.spyOn(lectureTranscriptionService, 'cancelTranscription').mockReturnValue(of(true));
 
         fixture.detectChanges();
 
         expect(component.canCancelTranscription()).toBeTrue();
-
-        component.cancelTranscription();
-
-        expect(cancelSpy).toHaveBeenCalledWith('test-job-123');
-        expect(component.transcriptionStatus).toBeUndefined();
     });
 
-    it('should not show cancel button when transcription is completed', () => {
+    it('should not detect ongoing transcription when transcription is completed', () => {
         const transcriptionStatus = { jobId: 'test-job-123', status: 'COMPLETED' as any };
         jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus));
 

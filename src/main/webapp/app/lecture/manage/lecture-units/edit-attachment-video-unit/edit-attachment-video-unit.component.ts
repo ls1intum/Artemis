@@ -104,29 +104,6 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         );
     }
 
-    cancelTranscription(): void {
-        if (!this.transcriptionStatus?.jobId) {
-            return;
-        }
-
-        this.isLoading = true;
-        this.lectureTranscriptionService
-            .cancelTranscription(this.transcriptionStatus.jobId)
-            .pipe(finalize(() => (this.isLoading = false)))
-            .subscribe({
-                next: (success) => {
-                    if (success) {
-                        this.alertService.success('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
-                        this.transcriptionStatus = undefined;
-                        this.formData.transcriptionStatus = undefined;
-                    } else {
-                        this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
-                    }
-                },
-                error: () => this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError'),
-            });
-    }
-
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
