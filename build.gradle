@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.5.0"
+version = "8.5.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -186,6 +186,7 @@ dependencies {
 
     implementation platform("org.springframework.ai:spring-ai-bom:1.0.3")
     implementation "org.springframework.ai:spring-ai-starter-model-azure-openai" // can also use non-azure models
+    implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
