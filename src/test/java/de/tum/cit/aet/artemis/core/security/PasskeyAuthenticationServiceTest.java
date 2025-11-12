@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import de.tum.cit.aet.artemis.core.exception.PasskeyAuthenticationException;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
@@ -50,58 +52,50 @@ class PasskeyAuthenticationServiceTest {
     }
 
     @Test
-    void testIsAuthenticatedWithPasskey_whenNoHttpRequest_shouldReturnFalse() {
+    void testIsAuthenticatedWithPasskey_whenNoHttpRequest_shouldThrowException() {
         // Given
         ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
         RequestContextHolder.resetRequestAttributes();
 
-        // When
-        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey();
-
-        // Then
-        assertThat(result).isFalse();
+        // When / Then
+        assertThatExceptionOfType(PasskeyAuthenticationException.class).isThrownBy(() -> passkeyAuthenticationService.isAuthenticatedWithPasskey())
+                .satisfies(ex -> assertThat(ex.getReason()).isEqualTo(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY));
     }
 
     @Test
-    void testIsAuthenticatedWithPasskey_whenNoJwtToken_shouldReturnFalse() {
+    void testIsAuthenticatedWithPasskey_whenNoJwtToken_shouldThrowException() {
         // Given
         ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
 
-        // When
-        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey();
-
-        // Then
-        assertThat(result).isFalse();
+        // When / Then
+        assertThatExceptionOfType(PasskeyAuthenticationException.class).isThrownBy(() -> passkeyAuthenticationService.isAuthenticatedWithPasskey())
+                .satisfies(ex -> assertThat(ex.getReason()).isEqualTo(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY));
     }
 
     @Test
-    void testIsAuthenticatedWithPasskey_whenAuthMethodIsPassword_shouldReturnFalse() {
+    void testIsAuthenticatedWithPasskey_whenAuthMethodIsPassword_shouldThrowException() {
         // Given
         ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSWORD);
 
-        // When
-        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey();
-
-        // Then
-        assertThat(result).isFalse();
+        // When / Then
+        assertThatExceptionOfType(PasskeyAuthenticationException.class).isThrownBy(() -> passkeyAuthenticationService.isAuthenticatedWithPasskey())
+                .satisfies(ex -> assertThat(ex.getReason()).isEqualTo(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY));
     }
 
     @Test
-    void testIsAuthenticatedWithPasskey_whenAuthMethodIsSaml2_shouldReturnFalse() {
+    void testIsAuthenticatedWithPasskey_whenAuthMethodIsSaml2_shouldThrowException() {
         // Given
         ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.SAML2);
 
-        // When
-        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey();
-
-        // Then
-        assertThat(result).isFalse();
+        // When / Then
+        assertThatExceptionOfType(PasskeyAuthenticationException.class).isThrownBy(() -> passkeyAuthenticationService.isAuthenticatedWithPasskey())
+                .satisfies(ex -> assertThat(ex.getReason()).isEqualTo(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY));
     }
 
     @Test
@@ -120,18 +114,16 @@ class PasskeyAuthenticationServiceTest {
     }
 
     @Test
-    void testIsAuthenticatedWithPasskey_whenAuthMethodIsNull_shouldReturnFalse() {
+    void testIsAuthenticatedWithPasskey_whenAuthMethodIsNull_shouldThrowException() {
         // Given
         ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(null);
 
-        // When
-        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey();
-
-        // Then
-        assertThat(result).isFalse();
+        // When / Then
+        assertThatExceptionOfType(PasskeyAuthenticationException.class).isThrownBy(() -> passkeyAuthenticationService.isAuthenticatedWithPasskey())
+                .satisfies(ex -> assertThat(ex.getReason()).isEqualTo(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY));
     }
 
     @Test
@@ -167,7 +159,7 @@ class PasskeyAuthenticationServiceTest {
     }
 
     @Test
-    void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalIsTrueAndPasskeyIsNotApproved_shouldReturnFalse() {
+    void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalIsTrueAndPasskeyIsNotApproved_shouldThrowException() {
         // Given
         ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
         addJwtCookie(request, VALID_JWT_TOKEN);
@@ -175,26 +167,22 @@ class PasskeyAuthenticationServiceTest {
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSKEY);
         when(tokenProvider.isPasskeySuperAdminApproved(VALID_JWT_TOKEN)).thenReturn(false);
 
-        // When
-        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey(true);
-
-        // Then
-        assertThat(result).isFalse();
+        // When / Then
+        assertThatExceptionOfType(PasskeyAuthenticationException.class).isThrownBy(() -> passkeyAuthenticationService.isAuthenticatedWithPasskey(true))
+                .satisfies(ex -> assertThat(ex.getReason()).isEqualTo(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.PASSKEY_NOT_SUPER_ADMIN_APPROVED));
     }
 
     @Test
-    void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalButNotPasskeyAuth_shouldReturnFalse() {
+    void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalButNotPasskeyAuth_shouldThrowException() {
         // Given
         ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSWORD);
 
-        // When
-        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey(true);
-
-        // Then
-        assertThat(result).isFalse();
+        // When / Then
+        assertThatExceptionOfType(PasskeyAuthenticationException.class).isThrownBy(() -> passkeyAuthenticationService.isAuthenticatedWithPasskey(true))
+                .satisfies(ex -> assertThat(ex.getReason()).isEqualTo(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY));
     }
 
     @Test

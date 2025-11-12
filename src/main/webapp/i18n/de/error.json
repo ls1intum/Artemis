@@ -164,6 +164,10 @@
         "missingFeedbackSuggestionModule": "Die Aufgabe hat kein Feedback-Vorschlagsmodul konfiguriert.",
         "examExerciseNoAccessToAthena": "Klausuraufgaben haben keinen Zugriff auf Athena.",
         "noAccessToAthenaModule": "Die Aufgabe hat keinen Zugriff auf das ausgewählte Athena-Modul.",
-        "athenaModuleChangeAfterDueDate": "Das Athena-Modul kann nach Ablauf der Abgabefrist nicht mehr geändert werden."
+        "athenaModuleChangeAfterDueDate": "Das Athena-Modul kann nach Ablauf der Abgabefrist nicht mehr geändert werden.",
+        "passkeyAuth": {
+            "notAuthenticatedWithPasskey": "Du bist nicht mit einem Passkey authentifiziert. Bitte authentifiziere dich mit einem Passkey, um auf diese Ressource zuzugreifen.",
+            "notSuperAdminApproved": "Dein Passkey ist nicht von einem Super-Admin freigegeben. Bitte verwende einen durch einen Super-Admin freigegebenen Passkey, um auf privilegierte Administrationsfunktionen zuzugreifen."
+        }
     }
 }

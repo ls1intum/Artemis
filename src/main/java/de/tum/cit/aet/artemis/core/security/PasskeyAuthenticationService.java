@@ -17,6 +17,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.PasskeyAuthenticationException;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
@@ -54,7 +55,8 @@ public class PasskeyAuthenticationService {
      * that it was created using passkey authentication.
      *
      * @param requireSuperAdminApproval if true, additionally checks that the passkey is super admin approved
-     * @return true if the user is authenticated with a passkey (and super admin approved if required), false otherwise
+     * @return true if the user is authenticated with a passkey (and super admin approved if required)
+     * @throws PasskeyAuthenticationException if passkey authentication requirements are not met
      */
     public boolean isAuthenticatedWithPasskey(boolean requireSuperAdminApproval) {
         if (!passkeyEnabled) {
@@ -65,13 +67,13 @@ public class PasskeyAuthenticationService {
         HttpServletRequest request = getCurrentHttpRequest();
         if (request == null) {
             log.debug("Passkey authentication check failed: no HTTP request in context");
-            return false;
+            throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY);
         }
 
         JwtWithSource jwtWithSource = extractValidJwt(request, tokenProvider);
         if (jwtWithSource == null) {
             log.debug("Passkey authentication check failed: no valid JWT found");
-            return false;
+            throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY);
         }
 
         AuthenticationMethod method = tokenProvider.getAuthenticationMethod(jwtWithSource.jwt());
@@ -79,14 +81,14 @@ public class PasskeyAuthenticationService {
 
         if (!isPasskey) {
             log.debug("Passkey authentication check failed: authentication method is {} instead of PASSKEY", method);
-            return false;
+            throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY);
         }
 
         if (requireSuperAdminApproval) {
             boolean isSuperAdminApproved = tokenProvider.isPasskeySuperAdminApproved(jwtWithSource.jwt());
             if (!isSuperAdminApproved) {
                 log.debug("Passkey authentication check failed: passkey is not super admin approved");
-                return false;
+                throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.PASSKEY_NOT_SUPER_ADMIN_APPROVED);
             }
         }
 

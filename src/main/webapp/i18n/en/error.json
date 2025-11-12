@@ -164,6 +164,10 @@
         "missingFeedbackSuggestionModule": "Exercise does not have a feedback suggestion module configured.",
         "examExerciseNoAccessToAthena": "Exam exercises do not have access to Athena.",
         "noAccessToAthenaModule": "The exercise has no access to the selected Athena module.",
-        "athenaModuleChangeAfterDueDate": "Athena module cannot be changed after the due date has passed."
+        "athenaModuleChangeAfterDueDate": "Athena module cannot be changed after the due date has passed.",
+        "passkeyAuth": {
+            "notAuthenticatedWithPasskey": "You are not authenticated with a passkey. Please authenticate using a passkey to access this resource.",
+            "notSuperAdminApproved": "Your passkey is not approved by a super admin. Please use a super admin-approved passkey to access privileged administrative features."
+        }
     }
 }
