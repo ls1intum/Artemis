@@ -30,6 +30,11 @@ export enum TranscriptionStatus {
     FAILED = 'FAILED',
 }
 
+export interface TranscriptionStatusDTO {
+    jobId: string;
+    status: TranscriptionStatus;
+}
+
 export interface LectureTranscriptionDTO {
     lectureUnitId: number;
     language: string;

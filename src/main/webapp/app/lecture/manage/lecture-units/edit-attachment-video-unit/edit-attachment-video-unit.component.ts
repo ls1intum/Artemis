@@ -3,7 +3,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, finalize, map, switchMap, take } from 'rxjs/operators';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, TranscriptionStatus, TranscriptionStatusDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -12,11 +12,12 @@ import { combineLatest, of } from 'rxjs';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-edit-attachment-video-unit',
     templateUrl: './edit-attachment-video-unit.component.html',
-    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent],
+    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent, TranslateDirective],
 })
 export class EditAttachmentVideoUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
@@ -33,6 +34,8 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     formData: AttachmentVideoUnitFormData;
     lectureId: number;
     notificationText: string;
+    transcriptionStatus?: TranscriptionStatusDTO;
+    originalVideoSource?: string;
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -66,6 +69,9 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 next: ({ attachmentVideoUnit, transcription, transcriptionStatus }) => {
                     this.attachmentVideoUnit = attachmentVideoUnit;
                     this.attachment = this.attachmentVideoUnit.attachment || {};
+                    this.transcriptionStatus = transcriptionStatus;
+                    this.originalVideoSource = this.attachmentVideoUnit.videoSource;
+
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
                     this.attachmentVideoUnit.attachment = undefined;
                     this.attachment.attachmentVideoUnit = undefined;
@@ -92,6 +98,35 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             });
     }
 
+    canCancelTranscription(): boolean {
+        return (
+            !!this.transcriptionStatus && (this.transcriptionStatus.status === TranscriptionStatus.PENDING || this.transcriptionStatus.status === TranscriptionStatus.PROCESSING)
+        );
+    }
+
+    cancelTranscription(): void {
+        if (!this.transcriptionStatus?.jobId) {
+            return;
+        }
+
+        this.isLoading = true;
+        this.lectureTranscriptionService
+            .cancelTranscription(this.transcriptionStatus.jobId)
+            .pipe(finalize(() => (this.isLoading = false)))
+            .subscribe({
+                next: (success) => {
+                    if (success) {
+                        this.alertService.success('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
+                        this.transcriptionStatus = undefined;
+                        this.formData.transcriptionStatus = undefined;
+                    } else {
+                        this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
+                    }
+                },
+                error: () => this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError'),
+            });
+    }
+
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
@@ -101,6 +136,10 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         if (updateNotificationText) {
             this.notificationText = updateNotificationText;
         }
+
+        // Check if video URL has changed and there's an ongoing transcription
+        const videoUrlChanged = videoSource !== this.originalVideoSource;
+        const hasOngoingTranscription = this.canCancelTranscription();
 
         // === Setting attachment ===
         this.attachment.name = name;
@@ -124,9 +163,23 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         formData.append('attachment', objectToJsonBlob(this.attachment));
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnit));
 
-        this.attachmentVideoUnitService
-            .update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)
+        // Cancel ongoing transcription if video URL changed
+        const cancelIfNeeded$ =
+            videoUrlChanged && hasOngoingTranscription && this.transcriptionStatus?.jobId
+                ? this.lectureTranscriptionService.cancelTranscription(this.transcriptionStatus.jobId).pipe(
+                      map((success) => {
+                          if (success) {
+                              this.alertService.success('artemisApp.attachmentVideoUnit.transcription.cancelledDueToVideoChange');
+                          }
+                          return success;
+                      }),
+                      catchError(() => of(false)),
+                  )
+                : of(true);
+
+        cancelIfNeeded$
             .pipe(
+                switchMap(() => this.attachmentVideoUnitService.update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)),
                 switchMap(() => {
                     // Handle transcription generation if requested
                     if (generateTranscript && this.attachmentVideoUnit.id) {

@@ -387,4 +387,86 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
+
+    it('should cancel transcription when cancel button is clicked', () => {
+        const transcriptionStatus = { jobId: 'test-job-123', status: 'PENDING' as any };
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus));
+        const cancelSpy = jest.spyOn(lectureTranscriptionService, 'cancelTranscription').mockReturnValue(of(true));
+
+        fixture.detectChanges();
+
+        expect(component.canCancelTranscription()).toBeTrue();
+
+        component.cancelTranscription();
+
+        expect(cancelSpy).toHaveBeenCalledWith('test-job-123');
+        expect(component.transcriptionStatus).toBeUndefined();
+    });
+
+    it('should not show cancel button when transcription is completed', () => {
+        const transcriptionStatus = { jobId: 'test-job-123', status: 'COMPLETED' as any };
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus));
+
+        fixture.detectChanges();
+
+        expect(component.canCancelTranscription()).toBeFalse();
+    });
+
+    it('should cancel ongoing transcription when video URL changes', () => {
+        const transcriptionStatus = { jobId: 'test-job-123', status: 'PENDING' as any };
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus));
+        const cancelSpy = jest.spyOn(lectureTranscriptionService, 'cancelTranscription').mockReturnValue(of(true));
+
+        fixture.detectChanges();
+
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                videoSource: 'https://different-url.com/video.mp4', // Changed video URL
+                version: 1,
+            },
+            fileProperties: {},
+        };
+
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+        fixture.detectChanges();
+
+        expect(cancelSpy).toHaveBeenCalledWith('test-job-123');
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not cancel transcription when video URL does not change', () => {
+        const transcriptionStatus = { jobId: 'test-job-123', status: 'PENDING' as any };
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus));
+        const cancelSpy = jest.spyOn(lectureTranscriptionService, 'cancelTranscription');
+
+        fixture.detectChanges();
+
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                videoSource: attachmentVideoUnit.videoSource, // Same video URL
+                version: 1,
+            },
+            fileProperties: {},
+        };
+
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+        fixture.detectChanges();
+
+        expect(cancelSpy).not.toHaveBeenCalled();
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledOnce();
+    });
 });

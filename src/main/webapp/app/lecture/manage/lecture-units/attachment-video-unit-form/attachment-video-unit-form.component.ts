@@ -15,14 +15,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { TranscriptionStatus, TranscriptionStatusDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
     playlistUrl?: string;
     transcriptionProperties?: TranscriptionProperties;
-    transcriptionStatus?: string;
+    transcriptionStatus?: TranscriptionStatusDTO;
 }
 
 // matches structure of the reactive form
@@ -124,7 +124,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     private readonly http = inject(HttpClient);
     canGenerateTranscript = signal(false);
     playlistUrl = signal<string | undefined>(undefined);
-    transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
+    transcriptionStatus = signal<TranscriptionStatusDTO | undefined>(undefined);
 
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
@@ -170,7 +170,8 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
 
     readonly shouldShowTranscriptCheckbox = computed(() => {
-        const status = this.transcriptionStatus();
+        const statusDTO = this.transcriptionStatus();
+        const status = statusDTO?.status;
         const hasPlaylist = !!this.playlistUrl();
 
         // Don't show checkbox if no playlist URL
@@ -190,12 +191,14 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     });
 
     readonly showTranscriptionPendingWarning = computed(() => {
-        const status = this.transcriptionStatus();
+        const statusDTO = this.transcriptionStatus();
+        const status = statusDTO?.status;
         return status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING;
     });
 
     readonly showTranscriptionOverwriteWarning = computed(() => {
-        const status = this.transcriptionStatus();
+        const statusDTO = this.transcriptionStatus();
+        const status = statusDTO?.status;
         const hasPlaylist = !!this.playlistUrl();
 
         // Show overwrite warning when user can generate but a transcription already exists
@@ -203,7 +206,8 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     });
 
     readonly showTranscriptionStatusBadge = computed(() => {
-        const status = this.transcriptionStatus();
+        const statusDTO = this.transcriptionStatus();
+        const status = statusDTO?.status;
         return this.isEditMode() && status && (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.FAILED);
     });
 
@@ -216,7 +220,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
             this.setFormValues(this.formData()!);
             // Set transcription status if provided
             if (this.formData()?.transcriptionStatus) {
-                this.transcriptionStatus.set(this.formData()!.transcriptionStatus as TranscriptionStatus);
+                this.transcriptionStatus.set(this.formData()!.transcriptionStatus);
             }
         }
     }

@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
-import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, TranscriptionStatus, TranscriptionStatusDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -49,7 +49,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
     private readonly accountService = inject(AccountService);
 
-    transcriptionStatus?: TranscriptionStatus;
+    transcriptionStatus?: TranscriptionStatusDTO;
     isLoadingTranscriptionStatus = false;
 
     private readonly videoUrlAllowList = [
@@ -78,12 +78,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     shouldShowTranscriptionStatus(): boolean {
+        const status = this.transcriptionStatus?.status;
         return (
             !this.isLoadingTranscriptionStatus &&
-            !!this.transcriptionStatus &&
-            (this.transcriptionStatus === TranscriptionStatus.PENDING ||
-                this.transcriptionStatus === TranscriptionStatus.PROCESSING ||
-                this.transcriptionStatus === TranscriptionStatus.FAILED)
+            !!status &&
+            (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.FAILED)
         );
     }
 

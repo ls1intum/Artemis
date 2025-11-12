@@ -113,11 +113,11 @@ public class LectureTranscriptionResource {
      * GET /lecture-unit/{lectureUnitId}/transcript/status : Get the status of a transcription for a lecture unit.
      *
      * @param lectureUnitId the ID of the lecture unit to check
-     * @return ResponseEntity with the transcription status (PENDING, PROCESSING, COMPLETED, FAILED) or 404 if no transcription exists
+     * @return ResponseEntity with a map containing jobId and status, or 404 if no transcription exists
      */
     @GetMapping("lecture-unit/{lectureUnitId}/transcript/status")
     @EnforceAtLeastInstructorInLectureUnit
-    public ResponseEntity<String> getTranscriptStatus(@PathVariable Long lectureUnitId) {
+    public ResponseEntity<java.util.Map<String, String>> getTranscriptStatus(@PathVariable Long lectureUnitId) {
         Optional<LectureTranscription> transcriptionOpt = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
 
         if (transcriptionOpt.isEmpty()) {
@@ -125,7 +125,8 @@ public class LectureTranscriptionResource {
         }
 
         LectureTranscription transcription = transcriptionOpt.get();
-        return ResponseEntity.ok(transcription.getTranscriptionStatus().name());
+        return ResponseEntity
+                .ok(java.util.Map.of("jobId", transcription.getJobId() != null ? transcription.getJobId() : "", "status", transcription.getTranscriptionStatus().name()));
     }
 
 }

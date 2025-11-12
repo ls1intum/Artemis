@@ -40,13 +40,13 @@
 
     @if (shouldShowTranscriptionStatus()) {
         <div class="mt-3 mb-3">
-            @if (transcriptionStatus === TranscriptionStatus.PENDING || transcriptionStatus === TranscriptionStatus.PROCESSING) {
+            @if (transcriptionStatus?.status === TranscriptionStatus.PENDING || transcriptionStatus?.status === TranscriptionStatus.PROCESSING) {
                 <div class="alert alert-info d-flex align-items-center" role="alert">
                     <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
                     <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.statusProcessing"></span>
                 </div>
             }
-            @if (transcriptionStatus === TranscriptionStatus.FAILED) {
+            @if (transcriptionStatus?.status === TranscriptionStatus.FAILED) {
                 <div class="alert alert-danger d-flex align-items-center" role="alert">
                     <fa-icon [icon]="faExclamationTriangle" class="me-2" />
                     <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.statusFailed"></span>

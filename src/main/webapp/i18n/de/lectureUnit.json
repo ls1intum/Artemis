@@ -180,7 +180,12 @@
                 "statusProcessing": "Für dieses Video wird eine Transkription generiert. Dies kann einige Minuten dauern. Bitte schaue später noch einmal nach.",
                 "statusFailed": "Die Transkriptionsgenerierung für dieses Video ist fehlgeschlagen. Du kannst es erneut versuchen.",
                 "editStatusProcessing": "Für dieses Video wird derzeit eine Transkription generiert.",
-                "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen."
+                "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen.",
+                "ongoingStatus": "Transkription läuft ({{ status }})",
+                "cancelButton": "Transkription abbrechen",
+                "cancelSuccess": "Transkription erfolgreich abgebrochen.",
+                "cancelError": "Transkription konnte nicht abgebrochen werden. Bitte versuchen Sie es erneut.",
+                "cancelledDueToVideoChange": "Vorherige Transkription wurde aufgrund einer Video-URL-Änderung abgebrochen."
             }
         },
         "exerciseUnit": {
