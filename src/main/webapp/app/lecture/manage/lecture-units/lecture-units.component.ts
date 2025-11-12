@@ -22,9 +22,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { combineLatest, of } from 'rxjs';
 import { LectureTranscriptionService } from '../services/lecture-transcription.service';
-import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-lecture-update-units',
@@ -46,7 +45,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected onlineUnitService = inject(OnlineUnitService);
     protected attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     protected lectureTranscriptionService = inject(LectureTranscriptionService);
-    protected accountService = inject(AccountService);
 
     @Input() lecture: Lecture;
 
@@ -302,13 +300,16 @@ export class LectureUpdateUnitsComponent implements OnInit {
         of(lectureUnit)
             .pipe(
                 switchMap((unit) => {
-                    if (this.accountService.isAdmin() && unit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                        return this.lectureTranscriptionService.getTranscription(unit.id!);
+                    if (unit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                        return combineLatest({
+                            transcription: this.lectureTranscriptionService.getTranscription(unit.id!),
+                            transcriptionStatus: this.lectureTranscriptionService.getTranscriptionStatus(unit.id!),
+                        });
                     }
-                    return of(null);
+                    return of({ transcription: null, transcriptionStatus: undefined });
                 }),
             )
-            .subscribe((transcription) => {
+            .subscribe(({ transcription, transcriptionStatus }) => {
                 switch (lectureUnit.type) {
                     case LectureUnitType.TEXT:
                         this.textUnitFormData = {
@@ -340,6 +341,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
                             transcriptionProperties: {
                                 videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
                             },
+                            transcriptionStatus: transcriptionStatus,
                         };
                         break;
                 }

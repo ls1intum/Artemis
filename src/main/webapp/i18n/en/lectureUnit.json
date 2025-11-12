@@ -174,7 +174,13 @@
             },
             "transcription": {
                 "started": "Transcript generation started.",
-                "error": "Failed to start transcript generation."
+                "error": "Failed to start transcript generation.",
+                "pendingWarning": "A transcription is currently being processed for this video. Please wait for it to complete before generating a new one.",
+                "overwriteWarning": "Generating a new transcript will overwrite the existing transcription for this video.",
+                "statusProcessing": "Transcription is being generated for this video. This may take several minutes. Please check back later.",
+                "statusFailed": "Transcription generation failed for this video. You can try generating it again.",
+                "editStatusProcessing": "A transcription is currently being generated for this video.",
+                "editStatusFailed": "The previous transcription generation failed for this video."
             }
         },
         "exerciseUnit": {
