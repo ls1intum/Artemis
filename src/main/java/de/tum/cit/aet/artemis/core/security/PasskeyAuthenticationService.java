@@ -45,8 +45,15 @@ public class PasskeyAuthenticationService {
     /**
      * @see #isAuthenticatedWithPasskey(boolean)
      */
-    public boolean isAuthenticatedWithPasskey() {
+    public boolean isAuthenticatedWithPasskey() throws PasskeyAuthenticationException {
         return isAuthenticatedWithPasskey(false);
+    }
+
+    /**
+     * @see #isAuthenticatedWithPasskey(boolean)
+     */
+    public boolean isAuthenticatedWithSuperAdminApprovedPasskey() throws PasskeyAuthenticationException {
+        return isAuthenticatedWithPasskey(true);
     }
 
     /**
@@ -58,7 +65,7 @@ public class PasskeyAuthenticationService {
      * @return true if the user is authenticated with a passkey (and super admin approved if required)
      * @throws PasskeyAuthenticationException if passkey authentication requirements are not met
      */
-    public boolean isAuthenticatedWithPasskey(boolean requireSuperAdminApproval) {
+    public boolean isAuthenticatedWithPasskey(boolean requireSuperAdminApproval) throws PasskeyAuthenticationException {
         if (!passkeyEnabled) {
             log.debug("Cannot enforce passkey login when passkey feature is disabled, skipping passkey check");
             return true;

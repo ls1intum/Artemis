@@ -22,7 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("hasRole('ADMIN') and @passkeyAuthenticationService.isAuthenticatedWithPasskey(true)")
+@PreAuthorize("hasRole('ADMIN') and @passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()")
 public @interface EnforceAdmin {
 
 }
