@@ -201,7 +201,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
         newEditor.subscribeToModelChange((newModel) => {
             this.isSaved = JSON.stringify(newModel) === this.apollonDiagram()?.jsonRepresentation;
-            this.modelChangeCounter.update((v) => v + 1);
+            this.modelChangeCounter.update((counter) => counter + 1);
         });
 
         this.apollonEditor.set(newEditor);
