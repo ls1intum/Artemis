@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -13,9 +14,12 @@ import org.springframework.stereotype.Component;
 /**
  * Validates the passkey configuration at application startup.
  * This ensures that invalid configuration combinations are caught early.
+ * This bean is marked as non-lazy to ensure validation happens during normal
+ * Spring Boot startup, allowing the FailureAnalyzer to provide helpful error messages.
  */
 @Component
 @Profile(PROFILE_CORE)
+@Lazy(false)
 public class PasskeyConfigurationValidator {
 
     private static final Logger log = LoggerFactory.getLogger(PasskeyConfigurationValidator.class);
@@ -31,7 +35,7 @@ public class PasskeyConfigurationValidator {
 
     /**
      * Validates the passkey configuration at startup.
-     * Throws a RuntimeException if the configuration is invalid.
+     * Throws a PasskeyConfigurationException if the configuration is invalid.
      */
     @PostConstruct
     public void validatePasskeyConfiguration() {
@@ -44,7 +48,8 @@ public class PasskeyConfigurationValidator {
                             + "Please update your application configuration files to enable passkey or disable the requirement for administrator features.",
                     Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Constants.PASSKEY_ENABLED_PROPERTY_NAME);
             log.error(errorMessage);
-            throw new RuntimeException(errorMessage);
+            throw new PasskeyConfigurationException(errorMessage, Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Constants.PASSKEY_ENABLED_PROPERTY_NAME,
+                    true);
         }
 
         if (passkeyRequiredForAdminFeatures) {
