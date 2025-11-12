@@ -78,7 +78,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.apollonDiagram.set(diagram);
         await fixture.componentInstance.initializeApollonEditor(model);
 
-        expect(fixture.componentInstance.apollonEditor).toBeTruthy();
+        expect(fixture.componentInstance.apollonEditor()).toBeTruthy();
     });
 
     it('save', async () => {
@@ -89,7 +89,7 @@ describe('ApollonDiagramDetail Component', () => {
         const updateStub = jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
         await fixture.componentInstance.initializeApollonEditor(model);
-        expect(fixture.componentInstance.apollonEditor).toBeTruthy();
+        expect(fixture.componentInstance.apollonEditor()).toBeTruthy();
 
         // test
         await fixture.componentInstance.saveDiagram();
@@ -109,7 +109,7 @@ describe('ApollonDiagramDetail Component', () => {
         jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
         await fixture.componentInstance.initializeApollonEditor(model);
-        expect(fixture.componentInstance.apollonEditor).toBeTruthy();
+        expect(fixture.componentInstance.apollonEditor()).toBeTruthy();
         fixture.detectChanges();
 
         const emitSpy = jest.spyOn(fixture.componentInstance.closeEdit, 'emit');

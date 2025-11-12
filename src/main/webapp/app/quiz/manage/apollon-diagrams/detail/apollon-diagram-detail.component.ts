@@ -104,6 +104,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     /** Whether some elements are selected in the apollon editor. */
     hasSelection = computed(() => {
+        this.modelChangeCounter();
         try {
             return (
                 !!this.apollonEditor &&
