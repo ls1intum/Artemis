@@ -23,6 +23,7 @@ artemis:
     user-management:
         passkey:
             enabled: false
+            require-for-administrator-features: false
     nebula:
         enabled: false
     sharing:

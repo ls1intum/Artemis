@@ -38,6 +38,9 @@ public class PasskeyAuthenticationService {
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;
 
+    @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}")
+    private boolean isPasskeyRequiredForAdministratorFeatures;
+
     public PasskeyAuthenticationService(TokenProvider tokenProvider) {
         this.tokenProvider = tokenProvider;
     }
@@ -68,6 +71,11 @@ public class PasskeyAuthenticationService {
     public boolean isAuthenticatedWithPasskey(boolean requireSuperAdminApproval) throws PasskeyAuthenticationException {
         if (!passkeyEnabled) {
             log.debug("Cannot enforce passkey login when passkey feature is disabled, skipping passkey check");
+            return true;
+        }
+
+        if (!isPasskeyRequiredForAdministratorFeatures) {
+            log.debug("Passkey login is not required for administrator features");
             return true;
         }
 

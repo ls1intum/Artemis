@@ -35,6 +35,8 @@ export const FILES_PATH_PREFIX = 'api/core/files/';
 
 export const MODULE_FEATURE_PASSKEY = 'passkey';
 
+export const MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN = 'passkeyRequireForAdministratorFeatures';
+
 export const MODULE_FEATURE_ATLAS = 'atlas';
 
 export const MODULE_FEATURE_HYPERION = 'hyperion';
@@ -53,6 +55,7 @@ export const MODULE_FEATURE_SHARING = 'sharing';
 
 export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
+    | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
     | typeof MODULE_FEATURE_ATLAS
     | typeof MODULE_FEATURE_HYPERION
     | typeof MODULE_FEATURE_EXAM

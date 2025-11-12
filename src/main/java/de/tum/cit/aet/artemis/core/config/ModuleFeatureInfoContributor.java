@@ -59,6 +59,10 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
         }
         if (artemisConfigHelper.isPasskeyEnabled(environment)) {
             enabledArtemisFeatures.add(Constants.FEATURE_PASSKEY);
+
+            if (artemisConfigHelper.isPasskeyRequiredForAdministratorFeatures(environment)) {
+                enabledArtemisFeatures.add(Constants.FEATURE_PASSKEY_REQUIRE_ADMIN);
+            }
         }
         if (artemisConfigHelper.isNebulaEnabled(environment)) {
             enabledArtemisFeatures.add(Constants.MODULE_FEATURE_NEBULA);
