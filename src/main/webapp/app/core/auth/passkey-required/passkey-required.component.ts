@@ -37,8 +37,10 @@ export class PasskeyRequiredComponent implements OnInit {
         });
     }
 
+    /**
+     * Ensures the user identity is loaded from the server (important for page reloads)
+     */
     private async initializeUserIdentity() {
-        // Ensure user identity is loaded from server (important for page reloads)
         await this.accountService.identity();
 
         this.userHasRegisteredAPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
