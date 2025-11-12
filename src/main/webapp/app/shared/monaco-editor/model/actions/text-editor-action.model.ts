@@ -11,6 +11,7 @@ import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-int
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
 
 export abstract class TextEditorAction implements Disposable {
     id: string;
@@ -172,6 +173,25 @@ export abstract class TextEditorAction implements Disposable {
     getSelectedText(editor: TextEditor): string | undefined {
         const selection = editor.getSelection();
         return selection ? this.getTextAtRange(editor, selection) : undefined;
+    }
+    /**
+     * Wraps the selected text with a custom wrapper function, or inserts default text if no selection exists.
+     * This is useful for actions like URL and Attachment that need to wrap selected text with specific syntax.
+     * @param editor The editor to operate on.
+     * @param wrapperFn A function that takes the sanitized selected text and returns the wrapped string.
+     * @param defaultText The default text to insert if there is no selection.
+     */
+    protected wrapSelectionOrInsertDefault(editor: TextEditor, wrapperFn: (sanitizedText: string | undefined) => string, defaultText: string): void {
+        const selectedText = this.getSelectedText(editor)?.trim();
+        const selection = editor.getSelection();
+
+        if (selectedText && selection) {
+            const sanitizedText = sanitizeStringForMarkdownEditor(selectedText);
+            this.replaceTextAtRange(editor, selection, wrapperFn(sanitizedText));
+        } else {
+            // No selection, insert default text
+            this.replaceTextAtCurrentSelection(editor, defaultText);
+        }
     }
 
     /**

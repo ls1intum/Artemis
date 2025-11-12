@@ -37,18 +37,7 @@ export class UrlAction extends TextEditorAction {
      */
     run(editor: TextEditor, args?: UrlArguments): void {
         if (!args?.text || !args?.url) {
-            // Check if there's selected text
-            const selectedText = this.getSelectedText(editor);
-            if (selectedText && selectedText.trim()) {
-                // Wrap selected text with link syntax
-                const selection = editor.getSelection();
-                if (selection) {
-                    this.replaceTextAtRange(editor, selection, `[${sanitizeStringForMarkdownEditor(selectedText)}](https://)`);
-                }
-            } else {
-                // No selection, insert default text
-                this.replaceTextAtCurrentSelection(editor, UrlAction.DEFAULT_INSERT_TEXT);
-            }
+            this.wrapSelectionOrInsertDefault(editor, (sanitizedText) => `[${sanitizedText}](https://)`, UrlAction.DEFAULT_INSERT_TEXT);
         } else {
             this.replaceTextAtCurrentSelection(editor, `[${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
         }

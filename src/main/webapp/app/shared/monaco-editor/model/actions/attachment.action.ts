@@ -79,18 +79,7 @@ export class AttachmentAction extends TextEditorAction {
      */
     run(editor: TextEditor, args?: AttachmentArguments): void {
         if (!args?.text || !args?.url) {
-            // Check if there's selected text
-            const selectedText = this.getSelectedText(editor);
-            if (selectedText && selectedText.trim()) {
-                // Wrap selected text with attachment syntax
-                const selection = editor.getSelection();
-                if (selection) {
-                    this.replaceTextAtRange(editor, selection, `![${sanitizeStringForMarkdownEditor(selectedText)}](https://)`);
-                }
-            } else {
-                // No selection, insert default text
-                this.replaceTextAtCurrentSelection(editor, AttachmentAction.DEFAULT_INSERT_TEXT);
-            }
+            this.wrapSelectionOrInsertDefault(editor, (sanitizedText) => `![${sanitizedText}](https://)`, AttachmentAction.DEFAULT_INSERT_TEXT);
         } else {
             this.replaceTextAtCurrentSelection(editor, `![${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
         }
