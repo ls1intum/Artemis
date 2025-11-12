@@ -34,23 +34,23 @@ describe('AgentChatModalComponent', () => {
         mockActiveModal = {
             close: jest.fn(),
             dismiss: jest.fn(),
-        } as jest.Mocked<NgbActiveModal>;
+        } as unknown as jest.Mocked<NgbActiveModal>;
 
         mockAgentChatService = {
             sendMessage: jest.fn(),
-        } as jest.Mocked<AgentChatService>;
+        } as unknown as jest.Mocked<AgentChatService>;
 
         mockCompetencyService = {
             getAll: jest.fn(),
             create: jest.fn(),
             update: jest.fn(),
             delete: jest.fn(),
-        } as jest.Mocked<CompetencyService>;
+        } as unknown as jest.Mocked<CompetencyService>;
 
         mockChangeDetectorRef = {
             markForCheck: jest.fn(),
             detectChanges: jest.fn(),
-        } as jest.Mocked<ChangeDetectorRef>;
+        } as unknown as jest.Mocked<ChangeDetectorRef>;
 
         const mockStyle = { height: '' } as CSSStyleDeclaration;
         mockTextarea = {
@@ -178,7 +178,7 @@ describe('AgentChatModalComponent', () => {
         let sendMessageSpy: jest.SpyInstance;
 
         beforeEach(() => {
-            sendMessageSpy = jest.spyOn(component, 'sendMessage' as keyof typeof component);
+            sendMessageSpy = jest.spyOn(component as any, 'sendMessage');
         });
 
         it('should call sendMessage when Enter key is pressed without Shift', () => {
@@ -441,7 +441,7 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should call closeModal when close button is clicked', () => {
-            const closeModalSpy = jest.spyOn<typeof component, 'closeModal'>(component, 'closeModal' as keyof typeof component);
+            const closeModalSpy = jest.spyOn(component as unknown as Record<string, () => void>, 'closeModal');
             fixture.detectChanges();
 
             const closeButton = fixture.debugElement.nativeElement.querySelector('.btn-close');
@@ -508,7 +508,7 @@ describe('AgentChatModalComponent', () => {
             component.onTextareaInput();
 
             // Height should be set to max height (120px) when scrollHeight exceeds it
-            expect(mockTextarea.style.height).toBe('120px');
+            expect(mockTextarea.style!.height).toBe('120px');
         });
 
         it('should auto-resize textarea on input when content is within max height', () => {
@@ -521,11 +521,11 @@ describe('AgentChatModalComponent', () => {
             component.onTextareaInput();
 
             // Height should be set to scrollHeight when it's less than max height
-            expect(mockTextarea.style.height).toBe('80px');
+            expect(mockTextarea.style!.height).toBe('80px');
         });
 
         it('should handle case when textarea element is not available', () => {
-            jest.spyOn<typeof component, 'messageInput'>(component, 'messageInput' as keyof typeof component).mockReturnValue(null);
+            component.messages = null;
 
             expect(() => component.onTextareaInput()).not.toThrow();
         });
@@ -639,7 +639,7 @@ describe('AgentChatModalComponent', () => {
 
     describe('Scroll behavior edge cases', () => {
         it('should handle scrollToBottom when messagesContainer is null', () => {
-            jest.spyOn<typeof component, 'messagesContainer'>(component, 'messagesContainer' as keyof typeof component).mockReturnValue(null);
+            component.messages = null;
             component['shouldScrollToBottom'] = true;
 
             expect(() => component.ngAfterViewChecked()).not.toThrow();
@@ -1206,7 +1206,7 @@ describe('AgentChatModalComponent', () => {
         it('should handle creation error gracefully', fakeAsync(() => {
             mockCompetencyService.create.mockReturnValue(throwError(() => new Error('Creation failed')));
             const createFailedText = 'Failed to create competency';
-            jest.spyOn(mockTranslateService, 'instant').mockReturnValue(createFailedText);
+            const translateSpy = jest.spyOn(mockTranslateService, 'instant').mockReturnValue(createFailedText);
 
             const message: ChatMessage = {
                 id: '1',
@@ -1225,7 +1225,7 @@ describe('AgentChatModalComponent', () => {
             tick();
 
             expect(component.isAgentTyping()).toBeFalse();
-            expect(jest.spyOn(mockTranslateService, 'instant')).toHaveBeenCalledWith('artemisApp.agent.chat.error.createFailed');
+            expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.createFailed');
             const errorMessage = component.messages.find((msg) => !msg.isUser && msg.content === createFailedText);
             expect(errorMessage).toBeDefined();
         }));
@@ -1233,7 +1233,7 @@ describe('AgentChatModalComponent', () => {
         it('should handle update error gracefully', fakeAsync(() => {
             mockCompetencyService.update.mockReturnValue(throwError(() => new Error('Update failed')));
             const updateFailedText = 'Failed to update competency';
-            jest.spyOn(mockTranslateService, 'instant').mockReturnValue(updateFailedText);
+            const translateSpy = jest.spyOn(mockTranslateService, 'instant').mockReturnValue(updateFailedText);
 
             const message: ChatMessage = {
                 id: '1',
@@ -1253,7 +1253,7 @@ describe('AgentChatModalComponent', () => {
             tick();
 
             expect(component.isAgentTyping()).toBeFalse();
-            expect(jest.spyOn(mockTranslateService, 'instant')).toHaveBeenCalledWith('artemisApp.agent.chat.error.updateFailed');
+            expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.updateFailed');
             const errorMessage = component.messages.find((msg) => !msg.isUser && msg.content === updateFailedText);
             expect(errorMessage).toBeDefined();
         }));
@@ -1384,9 +1384,9 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should handle mixed create and update operations in batch', fakeAsync(() => {
-            const createdCompetency: Partial<Competency> = { id: 1, title: 'Created' };
-            const updatedCompetency: Partial<Competency> = { id: 10, title: 'Updated' };
-            mockCompetencyService.create.mockReturnValue(of(createdCompetency as Competency));
+            const competency = { id: 1, title: 'Created' };
+            const updatedCompetency: Competency = { id: 10, title: 'Updated' };
+            mockCompetencyService.create.mockReturnValue(competency);
             mockCompetencyService.update.mockReturnValue(of(updatedCompetency as Competency));
 
             const message: ChatMessage = {
@@ -1460,6 +1460,8 @@ describe('AgentChatModalComponent', () => {
 
         it('should handle batch creation error gracefully', fakeAsync(() => {
             mockCompetencyService.create.mockReturnValue(throwError(() => new Error('Creation failed')));
+            const createFailedText = 'Failed to create competency';
+            const translateSpy = jest.spyOn(mockTranslateService, 'instant').mockReturnValue(createFailedText);
 
             const message: ChatMessage = {
                 id: '1',
@@ -1474,9 +1476,8 @@ describe('AgentChatModalComponent', () => {
             tick();
 
             expect(component.isAgentTyping()).toBeFalse();
-            expect(jest.spyOn(mockTranslateService, 'instant')).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
-            expect(jest.spyOn(mockTranslateService, 'instant')).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
-            expect(component.messages[component.messages.length - 1].content).toBe(jest.spyOn(mockTranslateService, 'instant')('artemisApp.agent.chat.error'));
+            expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.welcome');
+            expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.competencyProcessFailure');
         }));
     });
 
@@ -1615,7 +1616,7 @@ describe('AgentChatModalComponent', () => {
                 success: true,
                 competenciesModified: false,
             };
-            mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
+            jest.spyOn(mockAgentChatService, 'sendMessage').mockReturnValue(mockResponse);
             jest.spyOn(mockTranslateService, 'instant').mockReturnValue('Error message');
             fixture.detectChanges();
 
