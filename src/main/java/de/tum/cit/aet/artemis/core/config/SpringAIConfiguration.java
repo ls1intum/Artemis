@@ -35,16 +35,8 @@ public class SpringAIConfiguration {
 
     private final int maxMessages;
 
-    private final String deploymentName;
-
-    private final double temperature;
-
-    public SpringAIConfiguration(@Value("${spring.ai.chat.memory.max-messages: 20}") int maxMessages,
-            @Value("${spring.ai.azure.openai.chat.options.deployment-name: gpt-5-mini}") String deploymentName,
-            @Value("${spring.ai.azure.openai.chat.options.temperature: 1.0}") double temperature) {
+    public SpringAIConfiguration(@Value("${spring.ai.chat.memory.max-messages: 20}") int maxMessages) {
         this.maxMessages = maxMessages;
-        this.deploymentName = deploymentName;
-        this.temperature = temperature;
     }
 
     /**
@@ -106,7 +98,7 @@ public class SpringAIConfiguration {
     public static class SpringAIEnabled implements Condition {
 
         @Override
-        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        public boolean matches(ConditionContext context, @Nullable AnnotatedTypeMetadata metadata) {
             ArtemisConfigHelper artemisConfigHelper = new ArtemisConfigHelper();
             return artemisConfigHelper.isAtlasEnabled(context.getEnvironment()) || artemisConfigHelper.isHyperionEnabled(context.getEnvironment());
         }
