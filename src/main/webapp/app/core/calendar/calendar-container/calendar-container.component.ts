@@ -6,7 +6,7 @@ import { CalendarMobileOverviewComponent } from 'app/core/calendar/mobile/overvi
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
 @Component({
-    selector: 'jhi-calendar-overview',
+    selector: 'jhi-calendar-container',
     imports: [CalendarDesktopOverviewComponent, CalendarMobileOverviewComponent],
     templateUrl: './calendar-container.component.html',
 })
