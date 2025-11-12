@@ -324,7 +324,7 @@ components:
       description: Request to generate a problem statement
       properties:
         userPrompt: {type: string, description: User prompt describing the problem
-            statement requirements, minLength: 1}
+            statement requirements, maxLength: 1000, minLength: 1}
       required: [userPrompt]
     ProblemStatementRewriteResponse:
       type: object
@@ -405,16 +405,6 @@ components:
         notificationText: {type: string, maxLength: 1000, minLength: 1}
         updateTutorialGroupChannelName: {type: boolean}
       required: [tutorialGroup]
-    ExamSeat:
-      type: object
-      properties:
-        name: {type: string}
-        condition:
-          type: string
-          enum: [USABLE, NO_TABLE, DEFECT, WHEELCHAIR]
-        x: {type: number, format: double}
-        y: {type: number, format: double}
-      required: [condition, name]
     ConsistencyCheckResponse:
       type: object
       description: Response containing consistency check results
