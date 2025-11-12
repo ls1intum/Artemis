@@ -51,9 +51,7 @@
                         <div class="form-group d-flex gap-2 align-items-center">
                             <p-checkbox [inputId]="'tutorial-lecture-checkbox'" [(ngModel)]="isTutorialLecture" [binary]="true" name="isTutorialLecture" />
                             <label [for]="'tutorial-lecture-checkbox'" jhiTranslate="artemisApp.lecture.tutorialLectureCheckboxLabel"></label>
-                            <button [pTooltip]="tutorialLectureTooltip()" class="info-button">
-                                <fa-icon [icon]="faCircleInfo" />
-                            </button>
+                            <fa-icon [pTooltip]="tutorialLectureTooltip()" [icon]="faCircleInfo" />
                         </div>
                     </div>
                     <jhi-lecture-update-period [lecture]="lecture()" [validateDatesFunction]="onDatesValuesChanged" />
