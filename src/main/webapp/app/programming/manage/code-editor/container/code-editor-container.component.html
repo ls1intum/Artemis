@@ -13,7 +13,7 @@
             @if (!isTutorAssessment() || commitState === CommitState.CONFLICT) {
                 <jhi-code-editor-actions
                     [buildable]="buildable()"
-                    [disableActions]="!editable() && (!isTutorAssessment || commitState !== CommitState.CONFLICT)"
+                    [disableActions]="!editable() && (!isTutorAssessment() || commitState !== CommitState.CONFLICT)"
                     [unsavedFiles]="unsavedFiles"
                     [(editorState)]="editorState"
                     [(commitState)]="commitState"
