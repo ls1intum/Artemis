@@ -181,13 +181,15 @@ export abstract class TextEditorAction implements Disposable {
      * @param wrapperFn A function that takes the sanitized selected text and returns the wrapped string.
      * @param defaultText The default text to insert if there is no selection.
      */
-    protected wrapSelectionOrInsertDefault(editor: TextEditor, wrapperFn: (sanitizedText: string | undefined) => string, defaultText: string): void {
+    protected wrapSelectionOrInsertDefault(editor: TextEditor, wrapperFn: (sanitizedText: string) => string, defaultText: string): void {
         const selectedText = this.getSelectedText(editor)?.trim();
         const selection = editor.getSelection();
 
         if (selectedText && selection) {
-            const sanitizedText = sanitizeStringForMarkdownEditor(selectedText);
-            this.replaceTextAtRange(editor, selection, wrapperFn(sanitizedText));
+            const sanitizedText = sanitizeStringForMarkdownEditor(selectedText)?.trim();
+            if (sanitizedText) {
+                this.replaceTextAtRange(editor, selection, wrapperFn(sanitizedText));
+            }
         } else {
             // No selection, insert default text
             this.replaceTextAtCurrentSelection(editor, defaultText);
