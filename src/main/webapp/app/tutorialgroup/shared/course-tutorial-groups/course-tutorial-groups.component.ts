@@ -72,7 +72,7 @@ export class CourseTutorialGroupsComponent {
         effect(() => {
             const tutorialGroups = this.tutorialGroups();
             const tutorialLectures = this.tutorialLectures();
-            if (tutorialGroups.length > 0 || tutorialLectures.length > 0) {
+            if (tutorialGroups.length || tutorialLectures.length) {
                 this.prepareSidebarData(tutorialGroups, tutorialLectures);
                 this.autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups);
             }
@@ -92,12 +92,12 @@ export class CourseTutorialGroupsComponent {
         const course = this.courseStorageService.getCourse(courseId);
         const cachedTutorialGroups = course?.tutorialGroups;
         const cachedLectures = course?.lectures;
-        if (cachedTutorialGroups !== undefined) {
+        if (cachedTutorialGroups) {
             this.tutorialGroups.set(cachedTutorialGroups);
         } else {
             this.loadAndSetTutorialGroups(courseId);
         }
-        if (cachedLectures !== undefined) {
+        if (cachedLectures) {
             this.tutorialLectures.set(cachedLectures.filter((lecture) => lecture.isTutorialLecture));
         } else {
             this.loadAndSetTutorialLectures(courseId);
