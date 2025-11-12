@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  */
 public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProvider {
 
-    public static final String IS_PASSKEY_APPROVED_KEY = "isPasskeyApproved";
+    public static final String IS_PASSKEY_SUPER_ADMIN_APPROVED_KEY = "isPasskeySuperAdminApproved";
 
     private final WebAuthnRelyingPartyOperations relyingPartyOperations;
 
@@ -77,9 +77,9 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
             }
 
             Optional<PasskeyCredential> credential = this.passkeyCredentialsRepository.findByCredentialId(credentialId);
-            boolean isPasskeyApproved = credential.map(PasskeyCredential::isApproved).orElse(false);
+            boolean isPasskeyApproved = credential.map(PasskeyCredential::isSuperAdminApproved).orElse(false);
             Map<String, Object> details = new HashMap<>();
-            details.put(IS_PASSKEY_APPROVED_KEY, isPasskeyApproved);
+            details.put(IS_PASSKEY_SUPER_ADMIN_APPROVED_KEY, isPasskeyApproved);
 
             WebAuthnAuthentication auth = new WebAuthnAuthentication(userEntity, user.get().getGrantedAuthorities());
             auth.setDetails(details);

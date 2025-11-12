@@ -148,7 +148,7 @@ public class TokenProvider {
 
         boolean isPasskeyApproved = false;
         if (authenticationMethod == AuthenticationMethod.PASSKEY && authentication.getDetails() instanceof Map<?, ?> details) {
-            isPasskeyApproved = Boolean.TRUE.equals(details.get(ArtemisWebAuthnAuthenticationProvider.IS_PASSKEY_APPROVED_KEY));
+            isPasskeyApproved = Boolean.TRUE.equals(details.get(ArtemisWebAuthnAuthenticationProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED_KEY));
         }
 
         // @formatter:off
