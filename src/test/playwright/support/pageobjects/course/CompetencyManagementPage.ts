@@ -39,6 +39,51 @@ export class CompetencyManagementPage {
         }
     }
 
+    private async selectTaxonomy(taxonomy: string) {
+        const select = this.page.getByLabel('Taxonomy');
+        // First try the fast path which some tests used previously
+        try {
+            await select.selectOption(`2: ${taxonomy}`);
+            return;
+        } catch {
+            // fall through to more robust strategy
+        }
+
+        // Fallback: iterate over option elements and match by visible text
+        const options = select.locator('option');
+        const count = await options.count();
+        const target = taxonomy.trim().toLowerCase();
+        for (let i = 0; i < count; i++) {
+            const text = (await options.nth(i).textContent())?.trim();
+            if (!text) continue;
+            const textLower = text.toLowerCase();
+            if (textLower === target || textLower.includes(target)) {
+                await select.selectOption({ label: text });
+                return;
+            }
+        }
+    }
+
+    private async setSoftDueDate(softDueDate: Date | string) {
+        try {
+            const target = typeof softDueDate === 'string' ? new Date(softDueDate) : softDueDate;
+            if (!isNaN(target.getTime())) {
+                const now = new Date();
+                let monthDiff = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
+                // open datepicker
+                await this.page.locator('.btn.position-absolute').first().click();
+                // only navigate forward to reduce complexity/flakiness
+                while (monthDiff > 0) {
+                    await this.page.getByRole('button', { name: 'Next month' }).click();
+                    monthDiff--;
+                }
+                await this.page.getByText(String(target.getDate())).click();
+            }
+        } catch {
+            // ignore date errors
+        }
+    }
+
     async createCompetency(courseId: number, options: CreateCompetencyOptions) {
         const { title, description, taxonomy, softDueDate, returnToPrevious = true } = options;
         const previousUrl = this.page.url();
@@ -55,27 +100,11 @@ export class CompetencyManagementPage {
 
         // Optional: set soft due date
         if (softDueDate) {
-            try {
-                const target = typeof softDueDate === 'string' ? new Date(softDueDate) : softDueDate;
-                if (!isNaN(target.getTime())) {
-                    const now = new Date();
-                    let monthDiff = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
-                    // open datepicker
-                    await this.page.locator('.btn.position-absolute').first().click();
-                    // only navigate forward to reduce complexity/flakiness
-                    while (monthDiff > 0) {
-                        await this.page.getByRole('button', { name: 'Next month' }).click();
-                        monthDiff--;
-                    }
-                    await this.page.getByText(String(target.getDate())).click();
-                }
-            } catch {
-                // ignore date errors
-            }
+            await this.setSoftDueDate(softDueDate);
         }
-        // Optional taxonomy selection using the existing select pattern
+        // Optional taxonomy selection using robust helper
         if (taxonomy) {
-            await this.page.getByLabel('Taxonomy').selectOption(`2: ${taxonomy}`);
+            await this.selectTaxonomy(taxonomy);
         }
 
         // Submit
@@ -106,41 +135,12 @@ export class CompetencyManagementPage {
 
         // Optional soft due date
         if (softDueDate) {
-            try {
-                const target = typeof softDueDate === 'string' ? new Date(softDueDate) : softDueDate;
-                if (!isNaN(target.getTime())) {
-                    const now = new Date();
-                    let monthDiff = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
-                    await this.page.locator('.btn.position-absolute').first().click();
-                    while (monthDiff > 0) {
-                        await this.page.getByRole('button', { name: 'Next month' }).click();
-                        monthDiff--;
-                    }
-                    await this.page.getByText(String(target.getDate())).click();
-                }
-            } catch {
-                // ignore date issues
-            }
+            await this.setSoftDueDate(softDueDate);
         }
 
         // Optional taxonomy
         if (taxonomy) {
-            await this.page
-                .getByLabel('Taxonomy')
-                .selectOption(`2: ${taxonomy}`)
-                .catch(async () => {
-                    // Fallback: iterate options if direct value not found
-                    const select = this.page.getByLabel('Taxonomy');
-                    const options = select.locator('option');
-                    const count = await options.count();
-                    for (let i = 0; i < count; i++) {
-                        const text = (await options.nth(i).textContent())?.trim();
-                        if (text && text.toLowerCase().includes(taxonomy.toLowerCase())) {
-                            await select.selectOption({ label: text });
-                            break;
-                        }
-                    }
-                });
+            await this.selectTaxonomy(taxonomy);
         }
 
         // Submit
