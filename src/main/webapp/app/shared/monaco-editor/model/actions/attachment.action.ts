@@ -79,7 +79,7 @@ export class AttachmentAction extends TextEditorAction {
      */
     run(editor: TextEditor, args?: AttachmentArguments): void {
         if (!args?.text || !args?.url) {
-            this.wrapSelectionOrInsertDefault(editor, (sanitizedText) => `![${sanitizedText}](https://)`, AttachmentAction.DEFAULT_INSERT_TEXT);
+            this.wrapSelectionOrInsertDefault(editor, (selectedText) => `![${sanitizeStringForMarkdownEditor(selectedText)}](https://)`, AttachmentAction.DEFAULT_INSERT_TEXT);
         } else {
             this.replaceTextAtCurrentSelection(editor, `![${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
         }

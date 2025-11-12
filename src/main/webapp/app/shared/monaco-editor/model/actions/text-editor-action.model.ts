@@ -11,7 +11,6 @@ import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-int
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
-import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
 
 export abstract class TextEditorAction implements Disposable {
     id: string;
@@ -177,23 +176,24 @@ export abstract class TextEditorAction implements Disposable {
     /**
      * Wraps the selected text with a custom wrapper function, or inserts default text if no selection exists.
      * This is useful for actions like URL and Attachment that need to wrap selected text with specific syntax.
+     * The wrapper function receives the selected text and should handle sanitization if needed.
      * @param editor The editor to operate on.
-     * @param wrapperFn A function that takes the sanitized selected text and returns the wrapped string.
+     * @param wrapperFn A function that takes the selected text and returns the wrapped string (should handle sanitization).
      * @param defaultText The default text to insert if there is no selection.
      */
-    protected wrapSelectionOrInsertDefault(editor: TextEditor, wrapperFn: (sanitizedText: string) => string, defaultText: string): void {
+    protected wrapSelectionOrInsertDefault(editor: TextEditor, wrapperFn: (selectedText: string) => string, defaultText: string): void {
         const selectedText = this.getSelectedText(editor)?.trim();
         const selection = editor.getSelection();
 
         if (selectedText && selection) {
-            const sanitizedText = sanitizeStringForMarkdownEditor(selectedText)?.trim();
-            if (sanitizedText) {
-                this.replaceTextAtRange(editor, selection, wrapperFn(sanitizedText));
+            const wrappedText = wrapperFn(selectedText);
+            if (wrappedText) {
+                this.replaceTextAtRange(editor, selection, wrappedText);
                 return;
             }
-            // If sanitization resulted in empty string, fall through to insert default text
+            // If wrapper function returned empty string, fall through to insert default text
         }
-        // No selection or empty sanitized text - insert default text at cursor
+        // No selection or empty wrapped text - insert default text at cursor
         const position = editor.getPosition();
         const cursorRange = new TextEditorRange(position, position);
         this.replaceTextAtRange(editor, cursorRange, defaultText);

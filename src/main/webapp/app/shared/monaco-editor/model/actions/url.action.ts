@@ -37,7 +37,7 @@ export class UrlAction extends TextEditorAction {
      */
     run(editor: TextEditor, args?: UrlArguments): void {
         if (!args?.text || !args?.url) {
-            this.wrapSelectionOrInsertDefault(editor, (sanitizedText) => `[${sanitizedText}](https://)`, UrlAction.DEFAULT_INSERT_TEXT);
+            this.wrapSelectionOrInsertDefault(editor, (selectedText) => `[${sanitizeStringForMarkdownEditor(selectedText)}](https://)`, UrlAction.DEFAULT_INSERT_TEXT);
         } else {
             this.replaceTextAtCurrentSelection(editor, `[${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
         }
