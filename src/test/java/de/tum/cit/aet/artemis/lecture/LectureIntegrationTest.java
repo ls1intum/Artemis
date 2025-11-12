@@ -302,7 +302,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getNormalLecturesForCourse_shouldGetNormalLectures() throws Exception {
-        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/non-tutorial-lectures/with-units", HttpStatus.OK, Lecture.class);
+        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/normal-lectures/with-units", HttpStatus.OK, Lecture.class);
         assertThat(returnedLectures).hasSize(1);
         Lecture lecture = returnedLectures.getFirst();
         assertThat(lecture.getId()).isEqualTo(lecture1.getId());
