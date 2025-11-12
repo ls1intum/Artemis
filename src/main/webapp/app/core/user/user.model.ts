@@ -28,6 +28,8 @@ export class User extends Account {
 
     public isLoggedInWithPasskey?: boolean;
 
+    public isPasskeySuperAdminApproved?: boolean;
+
     constructor(
         id?: number,
         login?: string,
@@ -50,6 +52,7 @@ export class User extends Account {
         memirisEnabled?: boolean,
         askToSetupPasskey?: boolean,
         isLoggedInWithPasskey?: boolean,
+        isPasskeySuperAdminApproved?: boolean,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
@@ -65,6 +68,7 @@ export class User extends Account {
         this.memirisEnabled = memirisEnabled;
         this.askToSetupPasskey = askToSetupPasskey;
         this.isLoggedInWithPasskey = isLoggedInWithPasskey;
+        this.isPasskeySuperAdminApproved = isPasskeySuperAdminApproved;
     }
 }
 /**

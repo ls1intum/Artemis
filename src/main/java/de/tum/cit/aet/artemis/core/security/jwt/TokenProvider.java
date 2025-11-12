@@ -285,4 +285,19 @@ public class TokenProvider {
             return null;
         }
     }
+
+    /**
+     * @param authToken of which the passkey super admin approval status should be extracted
+     * @return true if the passkey was super admin approved, false otherwise
+     */
+    public boolean isPasskeySuperAdminApproved(String authToken) {
+        try {
+            Boolean isApproved = parseClaims(authToken).get(IS_PASSKEY_SUPER_ADMIN_APPROVED, Boolean.class);
+            return Boolean.TRUE.equals(isApproved);
+        }
+        catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
+            log.warn("Failed to parse passkey super admin approval status from token: {}", e.getMessage());
+            return false;
+        }
+    }
 }

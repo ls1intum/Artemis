@@ -200,6 +200,58 @@ class TokenProviderTest {
     }
 
     @Nested
+    class IsPasskeySuperAdminApprovedTests {
+
+        @Test
+        void shouldReturnTrueWhenClaimIsTrue() {
+            String token = Jwts.builder().claim("is-passkey-approved", true).signWith(key, Jwts.SIG.HS512).compact();
+
+            boolean isApproved = tokenProvider.isPasskeySuperAdminApproved(token);
+
+            assertThat(isApproved).isTrue();
+        }
+
+        @Test
+        void shouldReturnFalseWhenClaimIsFalse() {
+            String token = Jwts.builder().claim("is-passkey-approved", false).signWith(key, Jwts.SIG.HS512).compact();
+
+            boolean isApproved = tokenProvider.isPasskeySuperAdminApproved(token);
+
+            assertThat(isApproved).isFalse();
+        }
+
+        @Test
+        void shouldReturnFalseWhenClaimIsNull() {
+            String token = Jwts.builder().claim("is-passkey-approved", null).signWith(key, Jwts.SIG.HS512).compact();
+
+            boolean isApproved = tokenProvider.isPasskeySuperAdminApproved(token);
+
+            assertThat(isApproved).isFalse();
+        }
+
+        @Test
+        void shouldReturnFalseWhenClaimIsMissing() {
+            String token = Jwts.builder().claim("some-other-claim", true).signWith(key, Jwts.SIG.HS512).compact();
+
+            boolean isApproved = tokenProvider.isPasskeySuperAdminApproved(token);
+
+            assertThat(isApproved).isFalse();
+        }
+
+        @Test
+        void shouldReturnFalseWhenTokenIsMalformed() {
+            Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
+            String token = tokenProvider.createToken(authentication, false);
+            String malformedToken = token.substring(1);
+
+            boolean isApproved = tokenProvider.isPasskeySuperAdminApproved(malformedToken);
+
+            assertThat(isApproved).isFalse();
+        }
+
+    }
+
+    @Nested
     class AuthenticationMethodTests {
 
         @Test

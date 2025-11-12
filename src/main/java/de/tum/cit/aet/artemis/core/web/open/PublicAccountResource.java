@@ -189,22 +189,30 @@ public class PublicAccountResource {
         }
 
         boolean isLoggedInWithPasskey = false;
+        boolean isPasskeySuperAdminApproved = false;
         if (passkeyEnabled) {
             JwtWithSource jwtWithSource = extractValidJwt(request, this.tokenProvider);
             if (jwtWithSource != null) {
                 isLoggedInWithPasskey = Objects.equals(this.tokenProvider.getAuthenticationMethod(jwtWithSource.jwt()), AuthenticationMethod.PASSKEY);
+                isPasskeySuperAdminApproved = this.tokenProvider.isPasskeySuperAdminApproved(jwtWithSource.jwt());
             }
         }
 
         user.setVisibleRegistrationNumber();
+        UserDTO userDTO = getUserDTO(user, shouldPromptUserToSetupPasskey, isLoggedInWithPasskey, isPasskeySuperAdminApproved);
+        log.debug("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
+        return ResponseEntity.ok(userDTO);
+    }
+
+    private static UserDTO getUserDTO(User user, boolean shouldPromptUserToSetupPasskey, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved) {
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
         userDTO.setVcsAccessToken(user.getVcsAccessToken());
         userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
         userDTO.setIsLoggedInWithPasskey(isLoggedInWithPasskey);
-        log.debug("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
-        return ResponseEntity.ok(userDTO);
+        userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
+        return userDTO;
     }
 
     /**

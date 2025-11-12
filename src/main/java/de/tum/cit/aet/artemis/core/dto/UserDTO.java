@@ -31,6 +31,8 @@ public class UserDTO extends AuditingEntityDTO {
 
     private static final boolean DEFAULT_IS_LOGGED_IN_WITH_PASSKEY = false;
 
+    private static final boolean DEFAULT_IS_SUPER_ADMIN_APPROVED = false;
+
     private Long id;
 
     @NotBlank
@@ -84,6 +86,8 @@ public class UserDTO extends AuditingEntityDTO {
     private boolean askToSetupPasskey = false;
 
     private boolean isLoggedInWithPasskey = DEFAULT_IS_LOGGED_IN_WITH_PASSKEY;
+
+    private boolean isPasskeySuperAdminApproved = DEFAULT_IS_SUPER_ADMIN_APPROVED;
 
     private ZonedDateTime externalLLMUsageAccepted;
 
@@ -267,6 +271,14 @@ public class UserDTO extends AuditingEntityDTO {
 
     public boolean getIsLoggedInWithPasskey() {
         return isLoggedInWithPasskey;
+    }
+
+    public boolean isPasskeySuperAdminApproved() {
+        return isPasskeySuperAdminApproved;
+    }
+
+    public void setPasskeySuperAdminApproved(boolean passkeySuperAdminApproved) {
+        isPasskeySuperAdminApproved = passkeySuperAdminApproved;
     }
 
     public boolean isInternal() {
