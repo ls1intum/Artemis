@@ -1,10 +1,20 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import jakarta.annotation.Nullable;
+
+import javax.sql.DataSource;
+
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepositoryDialect;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
@@ -12,6 +22,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.type.AnnotatedTypeMetadata;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * Configuration for Spring AI chat clients.
@@ -23,28 +34,74 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 @Lazy
 public class SpringAIConfiguration {
 
+    private final int maxMessages;
+
+    private final String deploymentName;
+
+    private final double temperature;
+
+    public SpringAIConfiguration(@Value("${spring.ai.chat.memory.max-messages: 20}") int maxMessages,
+            @Value("${spring.ai.azure.openai.chat.options.deployment-name: gpt-5-mini}") String deploymentName,
+            @Value("${spring.ai.azure.openai.chat.options.temperature: 1.0}") double temperature) {
+        this.maxMessages = maxMessages;
+        this.deploymentName = deploymentName;
+        this.temperature = temperature;
+    }
+
     /**
-     * Default Chat Client for AI features.
-     * Uses the manually configured chat model if available, with specific optimizations for Azure OpenAI.
+     * Creates a JDBC-based chat memory repository for persistent storage.
+     * Uses an auto-detected JDBC dialect based on the configured DataSource.
+     * This bean is only created if no other ChatMemoryRepository bean exists,
      *
-     * @param chatModel the chat model to use (optional) - can be AzureOpenAiChatModel in production or generic ChatModel in tests
-     * @return a configured ChatClient with Azure-specific options if using AzureOpenAiChatModel,
-     *         basic configuration for other ChatModel implementations, or null if no model is available
+     * @param dataSource the datasource to use for JDBC operations
+     * @return configured ChatMemoryRepository
      */
     @Bean
     @Lazy
-    public ChatClient chatClient(@Autowired(required = false) ChatModel chatModel) {
-        if (chatModel == null) {
+    @ConditionalOnMissingBean
+    public ChatMemoryRepository chatMemoryRepository(DataSource dataSource) {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return JdbcChatMemoryRepository.builder().jdbcTemplate(jdbcTemplate).dialect(JdbcChatMemoryRepositoryDialect.from(dataSource)).build();
+    }
+
+    /**
+     * Creates a message window-based chat memory that retains the last N messages.
+     * This provides context-aware conversations while limiting memory usage.
+     *
+     * @param chatMemoryRepository the repository for storing conversation history
+     * @return configured ChatMemory with windowed message retention
+     */
+    @Bean
+    @Lazy
+    public ChatMemory chatMemory(ChatMemoryRepository chatMemoryRepository) {
+        return MessageWindowChatMemory.builder().chatMemoryRepository(chatMemoryRepository).maxMessages(maxMessages).build();
+    }
+
+    /**
+     * Default Chat Client for AI features.
+     * Uses the manually configured Azure OpenAI model if available.
+     * Includes memory advisor for conversation context retention.
+     *
+     * @param azureOpenAiChatModel the Azure OpenAI chat model to use (optional)
+     * @param chatMemory           the chat memory for conversation history (optional)
+     * @return a configured ChatClient with default options, or null if model is not available
+     */
+    @Bean
+    @Lazy
+    public ChatClient chatClient(@Nullable AzureOpenAiChatModel azureOpenAiChatModel, @Nullable ChatMemory chatMemory) {
+        if (azureOpenAiChatModel == null) {
             return null;
         }
 
-        // If it's an AzureOpenAiChatModel, use specific options
-        if (chatModel instanceof AzureOpenAiChatModel azureModel) {
-            return ChatClient.builder(azureModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName("gpt-5-mini").temperature(1.0).build()).build();
+        ChatClient.Builder builder = ChatClient.builder(azureOpenAiChatModel)
+                .defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build());
+
+        // Add memory advisor if available
+        if (chatMemory != null) {
+            builder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build());
         }
 
-        // For generic ChatModel (including mocks), use basic builder
-        return ChatClient.builder(chatModel).build();
+        return builder.build();
     }
 
     /**
