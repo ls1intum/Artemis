@@ -128,7 +128,7 @@ export class CourseOverviewService {
         return GROUP_DECISION_MATRIX[startGroup][endGroup];
     }
 
-    private getStartDateGroup(exercise: Exercise, now: dayjs.Dayjs): StartDateGroup {
+    private getStartDateGroup(exercise: Exercise, now: Dayjs): StartDateGroup {
         const start = exercise.startDate ?? exercise.releaseDate;
 
         if (start === undefined) {
@@ -142,7 +142,7 @@ export class CourseOverviewService {
         return 'future';
     }
 
-    private getEndDateGroup(exercise: Exercise, now: dayjs.Dayjs): EndDateGroup {
+    private getEndDateGroup(exercise: Exercise, now: Dayjs): EndDateGroup {
         const dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
 
         if (dueDate === undefined) {
@@ -161,7 +161,7 @@ export class CourseOverviewService {
         return 'future';
     }
 
-    getCorrespondingLectureGroupByDate(startDate: dayjs.Dayjs | undefined, endDate?: dayjs.Dayjs | undefined): TimeGroupCategory {
+    getCorrespondingLectureGroupByDate(startDate: Dayjs | undefined, endDate?: Dayjs | undefined): TimeGroupCategory {
         if (!startDate) {
             return 'noDate';
         }
