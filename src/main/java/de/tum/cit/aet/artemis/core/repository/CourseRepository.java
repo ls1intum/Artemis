@@ -130,10 +130,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @Query("""
             SELECT course
             FROM Course course
-                LEFT JOIN FETCH course.lectures lecture
+                LEFT JOIN FETCH course.lectures lecture WITH NOT lecture.isTutorialLecture
                 LEFT JOIN FETCH lecture.lectureUnits
                 LEFT JOIN FETCH lecture.attachments
-            WHERE course.id = :courseId AND NOT lecture.isTutorialLecture
+            WHERE course.id = :courseId
             """)
     Optional<Course> findByIdWithNormalLecturesAndLectureUnitsAndAttachments(@Param("courseId") long courseId);
 
