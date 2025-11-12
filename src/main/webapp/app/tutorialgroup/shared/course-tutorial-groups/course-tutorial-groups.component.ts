@@ -147,7 +147,7 @@ export class CourseTutorialGroupsComponent {
 
     private prepareSidebarData(tutorialGroups: TutorialGroup[], tutorialLectures: Lecture[]) {
         const tutorialGroupCardElements = this.courseOverviewService.mapTutorialGroupsToSidebarCardElements(tutorialGroups);
-        const tutorialLectureCardElements = this.courseOverviewService.mapTutorialLecturesToSidebarCardElements(tutorialLectures);
+        const tutorialLectureCardElements = this.courseOverviewService.mapLecturesToSidebarCardElements(tutorialLectures);
         const cardElements = [...tutorialGroupCardElements, ...tutorialLectureCardElements];
         const accordionGroups: AccordionGroups = this.createAccordionGroups(tutorialGroups, tutorialLectures);
         this.sidebarData.set({
@@ -187,7 +187,7 @@ export class CourseTutorialGroupsComponent {
         const mostRecentlyStartedCurrentLecture =
             currentLectures.length === 0 ? undefined : currentLectures.reduce((latest, current) => (current.startDate!.isAfter(latest.startDate) ? current : latest));
         tutorialLectures.forEach((tutorialLecture) => {
-            const tutorialLectureCardItem = this.courseOverviewService.mapTutorialLectureToSidebarCardElement(tutorialLecture);
+            const tutorialLectureCardItem = this.courseOverviewService.mapLectureToSidebarCardElement(tutorialLecture);
             if (!mostRecentlyStartedCurrentLecture) {
                 tutorialGroupCategory = 'allTutorialLectures';
             } else {

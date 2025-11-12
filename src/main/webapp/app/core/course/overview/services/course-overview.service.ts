@@ -296,10 +296,6 @@ export class CourseOverviewService {
         return lectures.map((lecture) => this.mapLectureToSidebarCardElement(lecture));
     }
 
-    mapTutorialLecturesToSidebarCardElements(lectures: Lecture[]) {
-        return lectures.map((lecture) => this.mapTutorialLectureToSidebarCardElement(lecture));
-    }
-
     mapTutorialGroupsToSidebarCardElements(tutorialGroups: TutorialGroup[]) {
         return tutorialGroups.map((tutorialGroup) => this.mapTutorialGroupToSidebarCardElement(tutorialGroup));
     }
@@ -334,17 +330,7 @@ export class CourseOverviewService {
         return {
             title: lecture.title ?? '',
             id: lecture.id ?? '',
-            subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDate'),
-            size: 'M',
-            startDate: lecture.startDate,
-        };
-    }
-
-    mapTutorialLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {
-        return {
-            title: lecture.title ?? '',
-            id: lecture.id ?? '',
-            targetComponentSubRoute: 'tutorial-lectures',
+            targetComponentSubRoute: lecture.isTutorialLecture ? 'tutorial-lectures' : undefined,
             subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDate'),
             size: 'M',
             startDate: lecture.startDate,
