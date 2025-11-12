@@ -44,8 +44,8 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
         return lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, userId);
     }
 
-    public Set<LectureUnitInformationDTO> findAllNonTutorialLectureUnitInformationByCourseId(long courseId) {
-        return lectureUnitMetricsRepository.findAllNonTutorialLectureUnitInformationByCourseId(courseId);
+    public Set<LectureUnitInformationDTO> findAllNormalLectureUnitInformationByCourseId(long courseId) {
+        return lectureUnitMetricsRepository.findAllNormalLectureUnitInformationByCourseId(courseId);
     }
 
     public Set<Long> findAllCompletedLectureUnitIdsForUserByLectureUnitIds(long userId, Set<Long> lectureUnitIds) {

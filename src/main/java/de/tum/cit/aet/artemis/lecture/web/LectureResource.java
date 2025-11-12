@@ -249,20 +249,20 @@ public class LectureResource {
     }
 
     /**
-     * GET /courses/:courseId/non-tutorial-lectures-with-units : get all the non-tutorial-lectures of a course together with their lecture units
+     * GET /courses/:courseId/normal-lectures/with-units : get all the normal lectures of a course together with their lecture units
      *
      * @param courseId the courseId of the course for which the lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
-    @GetMapping("courses/{courseId}/non-tutorial-lectures/with-units")
+    @GetMapping("courses/{courseId}/normal-lectures/with-units")
     @EnforceAtLeastEditor
-    public ResponseEntity<Set<Lecture>> getNonTutorialLecturesForCourseWithLectureUnits(@PathVariable Long courseId) {
+    public ResponseEntity<Set<Lecture>> getNormalLecturesForCourseWithLectureUnits(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        Set<Lecture> lectures = lectureRepository.findAllNonTutorialLecturesByCourseIdWithAttachmentsAndLectureUnits(courseId);
+        Set<Lecture> lectures = lectureRepository.findAllNormalLecturesByCourseIdWithAttachmentsAndLectureUnits(courseId);
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -415,7 +415,7 @@ public class LectureResource {
     @PostMapping("courses/{courseId}/ingest")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
-        Course course = courseRepository.findByIdWithNonTutorialLecturesAndLectureUnitsAndAttachmentsElseThrow(courseId);
+        Course course = courseRepository.findByIdWithNormalLecturesAndLectureUnitsAndAttachmentsElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (lectureId.isPresent()) {
             Optional<Lecture> lectureToIngest = course.getLectures().stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();

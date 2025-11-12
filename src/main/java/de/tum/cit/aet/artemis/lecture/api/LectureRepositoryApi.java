@@ -42,16 +42,16 @@ public class LectureRepositoryApi extends AbstractLectureApi {
         return lectureRepository.findAllById(lectureIds);
     }
 
-    public Set<Lecture> findAllNonTutorialLecturesByCourseId(long courseId) {
-        return lectureRepository.findAllNonTutorialLecturesByCourseId(courseId);
+    public Set<Lecture> findAllNormalLecturesByCourseId(long courseId) {
+        return lectureRepository.findAllNormalLecturesByCourseId(courseId);
     }
 
     public Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
         return lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
     }
 
-    public Optional<Lecture> findUniqueNonTutorialLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
-        return lectureRepository.findUniqueNonTutorialLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(title, courseId);
+    public Optional<Lecture> findUniqueNormalLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
+        return lectureRepository.findUniqueNormalLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(title, courseId);
     }
 
     public long countByCourseId(long courseId) {
@@ -66,11 +66,11 @@ public class LectureRepositoryApi extends AbstractLectureApi {
         lectureRepository.saveAll(lectures);
     }
 
-    public Set<Lecture> findAllNonTutorialLecturesByCourseIdWithEagerLectureUnits(long courseId) {
-        return lectureRepository.findAllNonTutorialLecturesByCourseIdWithEagerLectureUnits(courseId);
+    public Set<Lecture> findAllNormalLecturesByCourseIdWithEagerLectureUnits(long courseId) {
+        return lectureRepository.findAllNormalLecturesByCourseIdWithEagerLectureUnits(courseId);
     }
 
-    public Set<Lecture> findAllVisibleNonTutorialLecturesByCourseIdWithEagerLectureUnits(long courseId, ZonedDateTime now) {
-        return lectureRepository.findAllVisibleNonTutorialLecturesByCourseIdWithEagerLectureUnits(courseId, now);
+    public Set<Lecture> findAllVisibleNormalLecturesByCourseIdWithEagerLectureUnits(long courseId, ZonedDateTime now) {
+        return lectureRepository.findAllVisibleNormalLecturesByCourseIdWithEagerLectureUnits(courseId, now);
     }
 }

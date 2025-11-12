@@ -35,7 +35,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             FROM Lecture lecture
             WHERE lecture.course.id = :courseId AND NOT lecture.isTutorialLecture
             """)
-    Set<Lecture> findAllNonTutorialLecturesByCourseId(@Param("courseId") Long courseId);
+    Set<Lecture> findAllNormalLecturesByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO(
@@ -57,7 +57,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.course.id = :courseId
                 AND (lecture.visibleDate IS NULL OR lecture.visibleDate <= :now) AND NOT lecture.isTutorialLecture
             """)
-    Set<Lecture> findAllVisibleNonTutorialLecturesByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+    Set<Lecture> findAllVisibleNormalLecturesByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT lecture
@@ -65,7 +65,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             LEFT JOIN FETCH lecture.lectureUnits
             WHERE lecture.course.id = :courseId AND NOT lecture.isTutorialLecture
             """)
-    Set<Lecture> findAllNonTutorialLecturesByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId);
+    Set<Lecture> findAllNormalLecturesByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId);
 
     @Query("""
             SELECT lecture
@@ -100,7 +100,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH TREAT(lectureUnit AS AttachmentVideoUnit).attachment
             WHERE lecture.course.id = :courseId AND NOT lecture.isTutorialLecture
             """)
-    Set<Lecture> findAllNonTutorialLecturesByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
+    Set<Lecture> findAllNormalLecturesByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
 
     // TODO: this query loads too much data, we should reduce the number of left join fetches
     @Query("""
@@ -139,7 +139,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 LEFT JOIN FETCH lecture.lectureUnits
             WHERE lecture.title = :title AND lecture.course.id = :courseId AND NOT lecture.isTutorialLecture
             """)
-    Set<Lecture> findAllNonTutorialLecturesByTitleAndCourseIdWithLectureUnits(@Param("title") String title, @Param("courseId") long courseId);
+    Set<Lecture> findAllNormalLecturesByTitleAndCourseIdWithLectureUnits(@Param("title") String title, @Param("courseId") long courseId);
 
     /**
      * Finds a lecture by its title and course id and throws a NoUniqueQueryException if multiple lectures are found.
@@ -149,8 +149,8 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
      * @return the lecture with the given title and course id
      * @throws NoUniqueQueryException if multiple lectures are found with the same title
      */
-    default Optional<Lecture> findUniqueNonTutorialLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
-        Set<Lecture> allLectures = findAllNonTutorialLecturesByTitleAndCourseIdWithLectureUnits(title, courseId);
+    default Optional<Lecture> findUniqueNormalLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
+        Set<Lecture> allLectures = findAllNormalLecturesByTitleAndCourseIdWithLectureUnits(title, courseId);
         if (allLectures.size() > 1) {
             throw new NoUniqueQueryException("Found multiple lectures with title " + title + " in course with id " + courseId);
         }
@@ -162,12 +162,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             FROM Lecture lecture
             WHERE NOT lecture.isTutorialLecture AND (LOWER(lecture.title) LIKE LOWER(CONCAT('%', :partialTitle, '%')) OR LOWER(lecture.course.title) LIKE LOWER(CONCAT('%', :partialCourseTitle, '%')))
             """)
-    Page<Lecture> findNonTutorialLecturesByTitleOrCourseTitle(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
-            Pageable pageable);
+    Page<Lecture> findNormalLecturesByTitleOrCourseTitle(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle, Pageable pageable);
 
     /**
-     * Query which fetches all lectures for which the user is editor or instructor in the course and
-     * matching the search criteria.
+     * Query which fetches all normal lectures (lectures that are not tutorial lectures) for which
+     * the user is editor or instructor in the course and matching the search criteria.
      *
      * @param partialTitle       lecture title search term
      * @param partialCourseTitle course title search term
@@ -181,7 +180,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE (lecture.course.instructorGroupName IN :groups OR lecture.course.editorGroupName IN :groups)
                 AND (lecture.title LIKE %:partialTitle% OR lecture.course.title LIKE %:partialCourseTitle%) AND NOT lecture.isTutorialLecture
             """)
-    Page<Lecture> findNonTutorialLecturesByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
+    Page<Lecture> findNormalLecturesByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
             @Param("partialCourseTitle") String partialCourseTitle, @Param("groups") Set<String> groups, Pageable pageable);
 
     /**

@@ -111,7 +111,7 @@ describe('EditCompetencyComponent', () => {
             status: 200,
         });
 
-        const findAllByCourseSpy = jest.spyOn(lectureService, 'findAllNonTutorialLecturesByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
+        const findAllByCourseSpy = jest.spyOn(lectureService, 'findAllNormalLecturesByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
 
         editCompetencyComponentFixture.detectChanges();
         const competencyFormComponent = editCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormComponent)).componentInstance;

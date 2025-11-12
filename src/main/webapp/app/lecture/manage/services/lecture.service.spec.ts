@@ -155,13 +155,13 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should get all non tutorial lectures by courseId', async () => {
+        it('should get all normal tutorial lectures by courseId', async () => {
             elemDefault.isTutorialLecture = false;
             const returnedFromService = [elemDefault];
             const expected = returnedFromService;
             const courseId = 1;
             service
-                .findAllNonTutorialLecturesByCourseIdWithUnits(courseId)
+                .findAllNormalLecturesByCourseIdWithUnits(courseId)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({

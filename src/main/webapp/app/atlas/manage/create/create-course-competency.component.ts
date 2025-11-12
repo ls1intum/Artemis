@@ -30,7 +30,7 @@ export abstract class CreateCourseCompetencyComponent implements OnInit {
                 take(1),
                 switchMap((params) => {
                     this.courseId = Number(params.get('courseId'));
-                    return this.lectureService.findAllNonTutorialLecturesByCourseIdWithUnits(this.courseId);
+                    return this.lectureService.findAllNormalLecturesByCourseIdWithUnits(this.courseId);
                 }),
                 finalize(() => {
                     this.isLoading = false;

@@ -78,7 +78,7 @@ describe('CreateCompetency', () => {
             body: [lecture],
             status: 200,
         });
-        jest.spyOn(lectureService, 'findAllNonTutorialLecturesByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
+        jest.spyOn(lectureService, 'findAllNormalLecturesByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
 
         createCompetencyComponentFixture.detectChanges();
 
@@ -93,7 +93,7 @@ describe('CreateCompetency', () => {
             body: [lecture],
             status: 200,
         });
-        jest.spyOn(lectureService, 'findAllNonTutorialLecturesByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
+        jest.spyOn(lectureService, 'findAllNormalLecturesByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
 
         createCompetencyComponentFixture.detectChanges();
 

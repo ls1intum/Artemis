@@ -110,13 +110,13 @@ describe('EditPrerequisiteComponent', () => {
             status: 200,
         });
 
-        const findAllNonTutorialLecturesByCourseIdWithUnits = jest.spyOn(lectureService, 'findAllNonTutorialLecturesByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
+        const findAllNormalLecturesByCourseIdWithUnits = jest.spyOn(lectureService, 'findAllNormalLecturesByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
 
         editPrerequisiteComponentFixture.detectChanges();
         const competencyFormComponent = editPrerequisiteComponentFixture.debugElement.query(By.directive(PrerequisiteFormComponent)).componentInstance;
         expect(findByIdSpy).toHaveBeenCalledOnce();
         expect(getCourseProgressSpy).toHaveBeenCalledOnce();
-        expect(findAllNonTutorialLecturesByCourseIdWithUnits).toHaveBeenCalledOnce();
+        expect(findAllNormalLecturesByCourseIdWithUnits).toHaveBeenCalledOnce();
 
         expect(editPrerequisiteComponent.formData.title).toEqual(competencyOfResponse.title);
         expect(editPrerequisiteComponent.formData.description).toEqual(competencyOfResponse.description);
