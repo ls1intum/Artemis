@@ -123,7 +123,11 @@
                 "setupAndLoginWithPasskey": "Passkey registrieren & mit Passkey anmelden",
                 "passkeyRestrictionExplanation": "Zum Schutz der Studierendendaten und zur Sicherstellung der Zuverlässigkeit von Artemis sind Administratoraktionen nur nach Passkey-Login verfügbar.",
                 "passkeyNotYetApproved": "Dein Passkey ist noch nicht von einem Super-Administrator freigegeben.",
-                "passkeyApprovalInstructions": "Bitte prüfen in den Benutzereinstellungen, ob dein Passkey freigegeben wurde. Wenn dein Passkey freigegeben ist, melden dich bitte erneut mit deinem Passkey an.",
+                "passkeyApprovalInstructions": {
+                    "start": "Bitte prüfen in den ",
+                    "link": "Benutzereinstellungen",
+                    "end": " ob dein Passkey freigegeben wurde. Wenn dein Passkey freigegeben ist, melden dich bitte erneut mit deinem Passkey an."
+                },
                 "upcomingExamsAndExercises": "Kommende Prüfungen & Übungen",
                 "userManagement": "Verwaltung von Nutzer:innen",
                 "organizationManagement": "Organisationsverwaltung",
