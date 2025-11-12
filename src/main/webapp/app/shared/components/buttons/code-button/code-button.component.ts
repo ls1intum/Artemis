@@ -32,6 +32,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IdeSettingsService } from 'app/core/user/settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/core/user/settings/ide-preferences/ide.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -72,6 +74,7 @@ export class CodeButtonComponent implements OnInit {
     private alertService = inject(AlertService);
     private theiaService = inject(TheiaService);
     private router = inject(Router);
+    private readonly scienceService = inject(ScienceService);
 
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
@@ -440,6 +443,10 @@ export class CodeButtonComponent implements OnInit {
         const repositoryUri = this.getHttpOrSshRepositoryUri(false, true, true);
         const userName = this.user.name;
         const userEmail = this.user.email;
+
+        if (this.exercise()) {
+            this.scienceService.logEvent(ScienceEventType.THEIA__OPEN, this.exercise()!.id);
+        }
 
         await this.theiaService.startOnlineIDE(this.theiaPortalURL, theiaImage, repositoryUri, userName, userEmail);
     }
