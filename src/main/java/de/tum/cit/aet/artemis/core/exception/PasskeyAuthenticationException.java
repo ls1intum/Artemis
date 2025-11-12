@@ -23,33 +23,26 @@ public class PasskeyAuthenticationException extends AccessDeniedException {
         /**
          * The user is not authenticated with a passkey
          */
-        NOT_AUTHENTICATED_WITH_PASSKEY("error.passkeyAuth.notAuthenticatedWithPasskey", "User is not authenticated with a passkey"),
+        NOT_AUTHENTICATED_WITH_PASSKEY("error.passkeyAuth.notAuthenticatedWithPasskey"),
 
         /**
          * The passkey is not approved by a super admin
          */
-        PASSKEY_NOT_SUPER_ADMIN_APPROVED("error.passkeyAuth.notSuperAdminApproved", "Passkey is not approved by a super admin");
+        PASSKEY_NOT_SUPER_ADMIN_APPROVED("error.passkeyAuth.notSuperAdminApproved");
 
         private final String errorKey;
 
-        private final String defaultMessage;
-
-        PasskeyAuthenticationFailureReason(String errorKey, String defaultMessage) {
+        PasskeyAuthenticationFailureReason(String errorKey) {
             this.errorKey = errorKey;
-            this.defaultMessage = defaultMessage;
         }
 
         public String getErrorKey() {
             return errorKey;
         }
-
-        public String getDefaultMessage() {
-            return defaultMessage;
-        }
     }
 
     public PasskeyAuthenticationException(PasskeyAuthenticationFailureReason reason) {
-        super(reason.getDefaultMessage());
+        super(reason.getErrorKey());
         this.reason = reason;
     }
 
