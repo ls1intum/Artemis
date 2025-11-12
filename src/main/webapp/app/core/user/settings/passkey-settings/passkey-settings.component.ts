@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,6 +18,7 @@ import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-lengt
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { BadgeModule } from 'primeng/badge';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface DisplayedPasskey extends PasskeyDTO {
     isEditingLabel?: boolean;
@@ -66,6 +67,11 @@ export class PasskeySettingsComponent implements OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     currentUser = signal<User | undefined>(undefined);
+
+    isAdmin = computed(() => {
+        const user = this.currentUser();
+        return user?.authorities?.includes(Authority.ADMIN) ?? false;
+    });
 
     deleteMessage = '';
     isDeletingPasskey = false;
