@@ -23,7 +23,7 @@
                 } @else {
                     <fa-icon [icon]="facArtemisIntelligence" />
                 }
-                <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance">Generation Assistance</span>
+                <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
             </button>
             <button type="button" id="cancel-generation" class="btn btn-sm btn-secondary" (click)="cancelGeneration()">
                 <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
@@ -68,6 +68,7 @@
                     [editMode]="!!programmingExercise()?.id"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
                     (instructionChange)="problemStatementChange.emit($event)"
+                    (exerciseChange)="programmingExerciseChange.emit($event)"
                     [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
                     class="form__editable-instructions"
                 />

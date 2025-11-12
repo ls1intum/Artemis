@@ -61,7 +61,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     // Problem statement generation properties
     userPrompt = '';
     isGenerating = false;
-    private currentGenerationSubscription: Subscription | null = null;
+    private currentGenerationSubscription: Subscription | undefined = undefined;
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
@@ -83,7 +83,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     ngOnDestroy(): void {
         if (this.currentGenerationSubscription) {
             this.currentGenerationSubscription.unsubscribe();
-            this.currentGenerationSubscription = null;
+            this.currentGenerationSubscription = undefined;
         }
     }
 
@@ -93,7 +93,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     cancelGeneration(): void {
         if (this.currentGenerationSubscription) {
             this.currentGenerationSubscription.unsubscribe();
-            this.currentGenerationSubscription = null;
+            this.currentGenerationSubscription = undefined;
         }
         this.isGenerating = false;
         this.userPrompt = '';
@@ -119,7 +119,7 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
             .pipe(
                 finalize(() => {
                     this.isGenerating = false;
-                    this.currentGenerationSubscription = null;
+                    this.currentGenerationSubscription = undefined;
                 }),
             )
             .subscribe({
