@@ -46,9 +46,10 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     }
 
     createAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        const { name, videoSource, description, releaseDate, competencyLinks } = attachmentVideoUnitFormData?.formProperties || {};
+        const { name, videoSource, description, releaseDate, competencyLinks, generateTranscript } = attachmentVideoUnitFormData?.formProperties || {};
         const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
         const { videoTranscription } = attachmentVideoUnitFormData?.transcriptionProperties || {};
+        const playlistUrl = attachmentVideoUnitFormData.playlistUrl;
 
         if (!name || (!(file && fileName) && !videoSource)) {
             return;
@@ -83,6 +84,17 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
             .pipe(
                 switchMap((response) => {
                     const lectureUnit = response.body!;
+
+                    // Handle automatic transcription generation if requested
+                    if (generateTranscript && lectureUnit?.id) {
+                        const transcriptionUrl = playlistUrl ?? lectureUnit.videoSource;
+                        if (transcriptionUrl) {
+                            this.attachmentVideoUnitService.startTranscription(this.lectureId, lectureUnit.id, transcriptionUrl).subscribe({
+                                error: (err) => onError(this.alertService, err),
+                            });
+                        }
+                    }
+
                     if (!videoTranscription) {
                         return of(lectureUnit);
                     }

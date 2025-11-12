@@ -190,4 +190,76 @@ describe('CreateAttachmentVideoUnitComponent', () => {
             );
         });
     }));
+
+    it('should start transcription when generateTranscript is true and playlistUrl is provided', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
+        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as any);
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.name = 'test';
+        attachmentVideoUnit.videoSource = 'https://example.com/video.mp4';
+
+        createSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 201 })));
+
+        createAttachmentVideoUnitComponentFixture.detectChanges();
+
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(
+            By.directive(AttachmentVideoUnitFormComponent),
+        ).componentInstance;
+
+        const playlistUrl = 'https://example.com/playlist.m3u8';
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: 'test',
+                description: 'test description',
+                releaseDate: dayjs(),
+                videoSource: 'https://example.com/video.mp4',
+                generateTranscript: true,
+            },
+            fileProperties: {},
+            playlistUrl: playlistUrl,
+        };
+
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+        createAttachmentVideoUnitComponentFixture.detectChanges();
+
+        expect(startTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, playlistUrl);
+    }));
+
+    it('should start transcription with videoSource when generateTranscript is true and no playlistUrl', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
+        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as any);
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.name = 'test';
+        attachmentVideoUnit.videoSource = 'https://example.com/video.mp4';
+
+        createSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 201 })));
+
+        createAttachmentVideoUnitComponentFixture.detectChanges();
+
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(
+            By.directive(AttachmentVideoUnitFormComponent),
+        ).componentInstance;
+
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: 'test',
+                description: 'test description',
+                releaseDate: dayjs(),
+                videoSource: 'https://example.com/video.mp4',
+                generateTranscript: true,
+            },
+            fileProperties: {},
+        };
+
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+        createAttachmentVideoUnitComponentFixture.detectChanges();
+
+        expect(startTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, 'https://example.com/video.mp4');
+    }));
 });
