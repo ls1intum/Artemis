@@ -90,6 +90,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.authStateSubscription.unsubscribe();
     }
 
+    // TODO add message that user must wait for super admin approval
     async addPasskey() {
         await this.webauthnService.addNewPasskey(this.currentUser());
         await this.updateRegisteredPasskeys();
