@@ -29,7 +29,7 @@ export class IsLoggedInWithPasskeyGuard implements CanActivate {
             return true;
         }
 
-        if (this.accountService.isLoggedInWithPasskey()) {
+        if (this.accountService.isLoggedInWithPasskey() && this.accountService.isPasskeySuperAdminApproved()) {
             return true;
         }
 
