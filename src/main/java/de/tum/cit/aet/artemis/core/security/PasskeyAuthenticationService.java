@@ -42,13 +42,21 @@ public class PasskeyAuthenticationService {
     }
 
     /**
+     * @see #isAuthenticatedWithPasskey(boolean)
+     */
+    public boolean isAuthenticatedWithPasskey() {
+        return isAuthenticatedWithPasskey(false);
+    }
+
+    /**
      * Checks if the current request is authenticated with a passkey.
      * This method extracts the JWT from the current HTTP request and verifies
      * that it was created using passkey authentication.
      *
-     * @return true if the user is authenticated with a passkey, false otherwise
+     * @param requireSuperAdminApproval if true, additionally checks that the passkey is super admin approved
+     * @return true if the user is authenticated with a passkey (and super admin approved if required), false otherwise
      */
-    public boolean isAuthenticatedWithPasskey() {
+    public boolean isAuthenticatedWithPasskey(boolean requireSuperAdminApproval) {
         if (!passkeyEnabled) {
             log.debug("Cannot enforce passkey login when passkey feature is disabled, skipping passkey check");
             return true;
@@ -71,9 +79,18 @@ public class PasskeyAuthenticationService {
 
         if (!isPasskey) {
             log.debug("Passkey authentication check failed: authentication method is {} instead of PASSKEY", method);
+            return false;
         }
 
-        return isPasskey;
+        if (requireSuperAdminApproval) {
+            boolean isSuperAdminApproved = tokenProvider.isPasskeySuperAdminApproved(jwtWithSource.jwt());
+            if (!isSuperAdminApproved) {
+                log.debug("Passkey authentication check failed: passkey is not super admin approved");
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
