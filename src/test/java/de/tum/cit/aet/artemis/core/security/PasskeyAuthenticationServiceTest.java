@@ -134,6 +134,82 @@ class PasskeyAuthenticationServiceTest {
         assertThat(result).isFalse();
     }
 
+    @Test
+    void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalIsFalse_shouldNotCheckApproval() {
+        // Given
+        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        addJwtCookie(request, VALID_JWT_TOKEN);
+        when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
+        when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSKEY);
+        // Passkey approval check is not performed when requireSuperAdminApproval is false
+
+        // When
+        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey(false);
+
+        // Then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalIsTrueAndPasskeyIsApproved_shouldReturnTrue() {
+        // Given
+        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        addJwtCookie(request, VALID_JWT_TOKEN);
+        when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
+        when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSKEY);
+        when(tokenProvider.isPasskeySuperAdminApproved(VALID_JWT_TOKEN)).thenReturn(true);
+
+        // When
+        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey(true);
+
+        // Then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalIsTrueAndPasskeyIsNotApproved_shouldReturnFalse() {
+        // Given
+        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        addJwtCookie(request, VALID_JWT_TOKEN);
+        when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
+        when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSKEY);
+        when(tokenProvider.isPasskeySuperAdminApproved(VALID_JWT_TOKEN)).thenReturn(false);
+
+        // When
+        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey(true);
+
+        // Then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalButNotPasskeyAuth_shouldReturnFalse() {
+        // Given
+        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        addJwtCookie(request, VALID_JWT_TOKEN);
+        when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
+        when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSWORD);
+
+        // When
+        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey(true);
+
+        // Then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void testIsAuthenticatedWithPasskey_whenPasskeyDisabledAndRequireSuperAdminApproval_shouldReturnTrue() {
+        // Given
+        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", false);
+
+        // When
+        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey(true);
+
+        // Then
+        // When passkey is disabled, the check is bypassed completely
+        assertThat(result).isTrue();
+    }
+
     private void addJwtCookie(MockHttpServletRequest request, String token) {
         jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie(JWT_COOKIE_NAME, token);
         request.setCookies(cookie);
