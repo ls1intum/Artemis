@@ -91,12 +91,13 @@ public class SpringAIConfiguration {
         if (azureOpenAiChatModel == null) {
             return null;
         }
+         ChatClient.Builder builder = ChatClient.builder(azureOpenAiChatModel);
         // Add memory advisor if available
         if (chatMemory != null) {
             builder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build());
         }
 
-        return ChatClient.builder(azureOpenAiChatModel).build();
+        return builder.build();
     }
 
     /**
