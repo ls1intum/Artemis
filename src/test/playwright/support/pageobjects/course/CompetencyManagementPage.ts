@@ -62,6 +62,7 @@ export class CompetencyManagementPage {
                 return;
             }
         }
+        throw new Error(`Taxonomy option "${taxonomy}" not found`);
     }
 
     private async setSoftDueDate(softDueDate: Date | string) {
