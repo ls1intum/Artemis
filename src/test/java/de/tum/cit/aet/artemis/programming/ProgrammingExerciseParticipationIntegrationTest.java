@@ -1151,7 +1151,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 Files.writeString(filePath, entry.getValue(), StandardCharsets.UTF_8);
             }
             git.add().addFilepattern(".").call();
-            RevCommit commit = git.commit().setMessage(message).call();
+            RevCommit commit = de.tum.cit.aet.artemis.programming.service.GitService.commit(git).setMessage(message).call();
             git.push().call();
             return commit;
         }

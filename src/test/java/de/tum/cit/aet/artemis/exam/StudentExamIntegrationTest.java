@@ -1513,7 +1513,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             String fileName = "update-" + UUID.randomUUID() + ".txt";
             Files.writeString(cloneDirectory.resolve(fileName), "updated content");
             git.add().addFilepattern(fileName).call();
-            RevCommit commit = git.commit().setMessage("Add " + fileName).call();
+            RevCommit commit = de.tum.cit.aet.artemis.programming.service.GitService.commit(git).setMessage("Add " + fileName).call();
             git.push().call();
             return commit.getId().getName();
         }

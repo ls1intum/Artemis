@@ -184,6 +184,12 @@ public class LocalVCLocalCITestService {
         Path localRepositoryFolder = createRepositoryFolder(projectKey, repositorySlug);
         LocalRepository repository = new LocalRepository(defaultBranch);
         repository.configureRepos(localVCBasePath, "localRepo", localRepositoryFolder);
+
+        // Create an initial commit in both the working copy and bare repository
+        // so that copy operations and other Git operations that require a HEAD commit work correctly
+        de.tum.cit.aet.artemis.programming.service.GitService.commit(repository.workingCopyGitRepo).setMessage("Initial commit").setAllowEmpty(true).call();
+        repository.workingCopyGitRepo.push().call();
+
         return repository;
     }
 
