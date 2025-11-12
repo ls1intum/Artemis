@@ -74,7 +74,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     course = signal<Course>(undefined!);
 
     apollonDiagram = signal<ApollonDiagram>(undefined!);
-    apollonEditor?: ApollonEditor;
+    apollonEditor = signal<ApollonEditor | undefined>(undefined);
+
+    // This is a temporary workaround until Apollon supports signals which would cause the hasInteractive signal to update automatically.
+    modelChangeCounter = signal(0);
 
     isSaved = true;
 
@@ -86,22 +89,31 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     crop = true;
 
     /** Whether some elements are interactive in the apollon editor. */
-    get hasInteractive(): boolean {
-        return (
-            !!this.apollonEditor &&
-            (Object.entries(this.apollonEditor.model.interactive.elements).some(([, selected]) => selected) ||
-                Object.entries(this.apollonEditor.model.interactive.relationships).some(([, selected]) => selected))
-        );
-    }
+    hasInteractive = computed(() => {
+        this.modelChangeCounter();
+        try {
+            return (
+                !!this.apollonEditor() &&
+                (Object.entries(this.apollonEditor()!.model.interactive.elements).some(([, selected]) => selected) ||
+                    Object.entries(this.apollonEditor()!.model.interactive.relationships).some(([, selected]) => selected))
+            );
+        } catch {
+            return false;
+        }
+    });
 
     /** Whether some elements are selected in the apollon editor. */
-    get hasSelection(): boolean {
-        return (
-            !!this.apollonEditor &&
-            (Object.entries(this.apollonEditor.selection.elements).some(([, selected]) => selected) ||
-                Object.entries(this.apollonEditor.selection.relationships).some(([, selected]) => selected))
-        );
-    }
+    hasSelection = computed(() => {
+        try {
+            return (
+                !!this.apollonEditor &&
+                (Object.entries(this.apollonEditor()!.selection.elements).some(([, selected]) => selected) ||
+                    Object.entries(this.apollonEditor()!.selection.relationships).some(([, selected]) => selected))
+            );
+        } catch {
+            return false;
+        }
+    });
 
     // Icons
     faDownload = faDownload;
@@ -148,9 +160,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.languageHelper.language.subscribe(async (languageKey: string) => {
-            if (this.apollonEditor) {
-                await this.apollonEditor.nextRender;
-                this.apollonEditor.locale = languageKey as Locale;
+            const editor = this.apollonEditor();
+            if (editor) {
+                await editor.nextRender;
+                editor.locale = languageKey as Locale;
             }
         });
     }
@@ -160,8 +173,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         clearInterval(this.autoSaveInterval);
-        if (this.apollonEditor) {
-            this.apollonEditor.destroy();
+        const editor = this.apollonEditor();
+        if (editor) {
+            editor.destroy();
         }
     }
 
@@ -169,20 +183,27 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * Initializes Apollon Editor with UML Model
      * @param initialModel
      */
-    initializeApollonEditor(initialModel: UMLModel) {
-        if (this.apollonEditor) {
-            this.apollonEditor.destroy();
+    async initializeApollonEditor(initialModel: UMLModel) {
+        const currentEditor = this.apollonEditor();
+        if (currentEditor) {
+            currentEditor.destroy();
         }
 
-        this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, {
+        const newEditor = new ApollonEditor(this.editorContainer().nativeElement, {
             mode: ApollonMode.Exporting,
             model: initialModel,
             type: this.apollonDiagram()!.diagramType,
             locale: this.translateService.currentLang as Locale,
         });
-        this.apollonEditor.subscribeToModelChange((newModel) => {
+
+        await newEditor.nextRender;
+
+        newEditor.subscribeToModelChange((newModel) => {
             this.isSaved = JSON.stringify(newModel) === this.apollonDiagram()?.jsonRepresentation;
+            this.modelChangeCounter.update((v) => v + 1);
         });
+
+        this.apollonEditor.set(newEditor);
     }
 
     /**
@@ -192,7 +213,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         if (!this.apollonDiagram()) {
             return false;
         }
-        const umlModel = this.apollonEditor!.model;
+        const umlModel = this.apollonEditor()!.model;
         const updatedDiagram: ApollonDiagram = {
             ...this.apollonDiagram(),
             jsonRepresentation: JSON.stringify(umlModel),
@@ -259,15 +280,16 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @async
      */
     async generateExercise() {
-        if (!this.hasInteractive) {
+        if (!this.hasInteractive()) {
             this.alertService.error('artemisApp.apollonDiagram.create.validationError');
             return;
         }
 
-        if (this.apollonEditor && this.apollonDiagram()) {
+        const editor = this.apollonEditor();
+        if (editor && this.apollonDiagram()) {
             const isSaved = await this.saveDiagram();
             if (isSaved) {
-                const question = await generateDragAndDropQuizExercise(this.course(), this.apollonDiagram().title!, this.apollonEditor.model!);
+                const question = await generateDragAndDropQuizExercise(this.course(), this.apollonDiagram().title!, editor.model!);
                 this.closeEdit.emit(question);
             }
         }
@@ -279,19 +301,19 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @async
      */
     async downloadSelection() {
-        if (!this.hasSelection) {
+        if (!this.hasSelection()) {
             return;
         }
 
         const selection = [
-            ...Object.entries(this.apollonEditor!.selection.elements)
+            ...Object.entries(this.apollonEditor()!.selection.elements)
                 .filter(([, selected]) => selected)
                 .map(([id]) => id),
-            ...Object.entries(this.apollonEditor!.selection.relationships)
+            ...Object.entries(this.apollonEditor()!.selection.relationships)
                 .filter(([, selected]) => selected)
                 .map(([id]) => id),
         ];
-        const svg = await this.apollonEditor!.exportAsSVG({
+        const svg = await this.apollonEditor()!.exportAsSVG({
             keepOriginalSize: !this.crop,
             include: selection,
         });
