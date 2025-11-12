@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20251112193700-branch-regex-change" author="erik-stern">
+        <comment>Make branch regex usable.</comment>
+
+        <modifyDataType tableName="programming_exercise_build_config"
+                        columnName="branch_regex" newDataType="varchar(255)" />
+
+        <update tableName="programming_exercise_build_config">
+            <column name="branch_regex" value=".*" />
+            <where>branch_regex IS NULL</where>
+        </update>
+
+        <addNotNullConstraint tableName="programming_exercise_build_config"
+                              columnName="branch_regex"
+                              columnDataType="varchar(255)"/>
+
+        <rollback>
+            <dropNotNullConstraint tableName="programming_exercise_build_config"
+                                   columnName="branch_regex"
+                                   columnDataType="varchar(255)"/>
+
+            <modifyDataType tableName="programming_exercise_build_config"
+                            columnName="branch_regex" newDataType="varchar(128)"/>
+
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
