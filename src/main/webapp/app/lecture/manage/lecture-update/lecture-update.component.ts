@@ -402,6 +402,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
 
     private computeTutorialLectureTooltip(): string {
         this.currentLocale();
-        return this.translateService.instant('artemisApp.lecture.tutorialLectureTooltip');
+        return this.translateService.instant('artemisApp.lecture.tutorialLecture.tutorialLectureTooltip');
     }
 }
