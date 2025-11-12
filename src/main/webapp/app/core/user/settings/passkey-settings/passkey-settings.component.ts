@@ -16,6 +16,8 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
+import { BadgeModule } from 'primeng/badge';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface DisplayedPasskey extends PasskeyDTO {
     isEditingLabel?: boolean;
@@ -24,7 +26,18 @@ export interface DisplayedPasskey extends PasskeyDTO {
 
 @Component({
     selector: 'jhi-passkey-settings',
-    imports: [TranslateDirective, FaIconComponent, DeleteButtonDirective, ArtemisDatePipe, ButtonComponent, CommonModule, FormsModule, CustomMaxLengthDirective],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        ButtonComponent,
+        CommonModule,
+        FormsModule,
+        CustomMaxLengthDirective,
+        BadgeModule,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './passkey-settings.component.html',
     styleUrl: './passkey-settings.component.scss',
 })

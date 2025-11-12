@@ -24,6 +24,15 @@
                                     @if (!passkey.isEditingLabel) {
                                         <fa-icon [icon]="faKey" class="me-1 fw-bold fs-6" />
                                         <span class="fw-bold fs-6">{{ passkey.label }}</span>
+                                        <p-badge
+                                            [value]="
+                                                passkey.isSuperAdminApproved
+                                                    ? ('artemisApp.userSettings.passkeySettingsPage.approved' | artemisTranslate)
+                                                    : ('artemisApp.userSettings.passkeySettingsPage.notApproved' | artemisTranslate)
+                                            "
+                                            [severity]="passkey.isSuperAdminApproved ? 'success' : 'danger'"
+                                            class="ms-2"
+                                        />
                                         <br />
                                         <div class="text-muted">
                                             <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></span>
