@@ -94,9 +94,9 @@ export class CourseOverviewService {
             return undefined;
         }
         return futureGroups.reduce((earliest, current) => {
-            const earliestStart = earliest.nextSession!.start!;
-            const currentStart = current.nextSession!.start!;
-            return currentStart.isBefore(earliestStart) ? current : earliest;
+            const earliestStart = earliest.nextSession?.start;
+            const currentStart = current.nextSession?.start;
+            return currentStart?.isBefore(earliestStart) ? current : earliest;
         });
     }
 
