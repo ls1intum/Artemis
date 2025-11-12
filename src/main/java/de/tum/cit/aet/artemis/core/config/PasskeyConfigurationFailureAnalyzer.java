@@ -26,9 +26,8 @@ public class PasskeyConfigurationFailureAnalyzer extends AbstractFailureAnalyzer
 
     private String buildAction(PasskeyConfigurationException cause) {
         return String.format(
-                "Update your application configuration (e.g., application-local.yml or environment variables):%n%n" + "Option 1: Enable passkey authentication:%n"
-                        + "    %s: true%n%n" + "Option 2: Disable the requirement for administrator features:%n" + "    %s: false%n%n"
-                        + "For more information about passkey configuration, please refer to the Artemis documentation.",
+                "Update your application configuration (e.g., application-core.yml or environment variables):%n%n" + "Option 1: Enable passkey authentication:%n"
+                        + "    %s: true%n%n" + "Option 2: Disable the requirement for administrator features:%n" + "    %s: false%n%n",
                 cause.getConflictingPropertyName(), cause.getPropertyName());
     }
 }
