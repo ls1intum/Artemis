@@ -122,6 +122,8 @@
                 "loginWithPasskeyToUseAdminFeatures": "Sign in with a passkey to use admin features",
                 "setupAndLoginWithPasskey": "Setup & sign in with passkey",
                 "passkeyRestrictionExplanation": "To protect student data and ensure platform reliability, administrator actions require strong authentication with a passkey.",
+                "passkeyNotYetApproved": "Your passkey is not yet super administrator approved.",
+                "passkeyApprovalInstructions": "Please verify in your user settings whether the passkey has been approved. If the passkey is approved, please log in again with your passkey.",
                 "upcomingExamsAndExercises": "Upcoming exams & exercises",
                 "userManagement": "User management",
                 "organizationManagement": "Organization management",

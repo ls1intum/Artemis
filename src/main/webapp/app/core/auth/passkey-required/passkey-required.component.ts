@@ -20,14 +20,12 @@ export class PasskeyRequiredComponent implements OnInit {
 
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
-    private readonly accountService = inject(AccountService);
     private readonly webauthnService = inject(WebauthnService);
     private readonly alertService = inject(AlertService);
+    protected readonly accountService = inject(AccountService);
 
     userHasRegisteredAPasskey: boolean = false;
     returnUrl: string | undefined = undefined;
-
-    // TODO handle the passkey is not yet super admin approved
 
     ngOnInit() {
         this.initializeUserIdentity().then((response) => {});
