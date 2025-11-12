@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestClientException;
 
@@ -67,6 +68,10 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
     @BeforeEach
     void initTestCase() {
         lectureTranscriptionRepository.deleteAll();
+
+        // Configure service with test values via reflection
+        ReflectionTestUtils.setField(lectureTranscriptionService, "nebulaBaseUrl", "http://localhost:8080");
+        ReflectionTestUtils.setField(lectureTranscriptionService, "nebulaSecretToken", "test-token");
 
         // Create test data
         course = courseUtilService.createCourse();
@@ -183,5 +188,78 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
 
         // Invalid TUM Live URL format should return 404
         restNebulaTranscriptionMockMvc.perform(get("/api/nebula/video-utils/tum-live-playlist").param("url", "https://tum.live/invalid-format")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void cancelNebulaTranscription_success() throws Exception {
+        // Create pending transcription
+        var transcription = new de.tum.cit.aet.artemis.lecture.domain.LectureTranscription();
+        transcription.setLectureUnit(lectureUnit);
+        transcription.setJobId("job-to-cancel");
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        transcription = lectureTranscriptionRepository.save(transcription);
+        Long transcriptionId = transcription.getId();
+
+        // Mock Nebula cancel response
+        when(nebulaRestTemplate.exchange(eq("http://localhost:8080/transcribe/cancel/job-to-cancel"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        // Perform POST request to cancel
+        restNebulaTranscriptionMockMvc.perform(post("/api/nebula/transcribe/cancel/{jobId}", "job-to-cancel")).andExpect(status().isOk());
+
+        // Verify transcription was deleted
+        assertThat(lectureTranscriptionRepository.findById(transcriptionId)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void cancelNebulaTranscription_notFound() throws Exception {
+        // Mock Nebula cancel response (should not be called)
+        when(nebulaRestTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class))).thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
+
+        // Should return 404 when transcription not found
+        restNebulaTranscriptionMockMvc.perform(post("/api/nebula/transcribe/cancel/{jobId}", "non-existent-job")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void cancelNebulaTranscription_completed_returnsBadRequest() throws Exception {
+        // Create completed transcription
+        var transcription = new de.tum.cit.aet.artemis.lecture.domain.LectureTranscription();
+        transcription.setLectureUnit(lectureUnit);
+        transcription.setJobId("completed-job");
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        lectureTranscriptionRepository.save(transcription);
+
+        // Should return 400 when trying to cancel completed transcription
+        restNebulaTranscriptionMockMvc.perform(post("/api/nebula/transcribe/cancel/{jobId}", "completed-job")).andExpect(status().isBadRequest());
+
+        // Verify transcription still exists
+        assertThat(lectureTranscriptionRepository.findByJobId("completed-job")).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void cancelNebulaTranscription_failed_returnsBadRequest() throws Exception {
+        // Create failed transcription
+        var transcription = new de.tum.cit.aet.artemis.lecture.domain.LectureTranscription();
+        transcription.setLectureUnit(lectureUnit);
+        transcription.setJobId("failed-job");
+        transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
+        lectureTranscriptionRepository.save(transcription);
+
+        // Should return 400 when trying to cancel failed transcription
+        restNebulaTranscriptionMockMvc.perform(post("/api/nebula/transcribe/cancel/{jobId}", "failed-job")).andExpect(status().isBadRequest());
+
+        // Verify transcription still exists
+        assertThat(lectureTranscriptionRepository.findByJobId("failed-job")).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
+    void cancelNebulaTranscription_asStudent_forbidden() throws Exception {
+        // Students should not be able to cancel transcriptions
+        restNebulaTranscriptionMockMvc.perform(post("/api/nebula/transcribe/cancel/{jobId}", "some-job")).andExpect(status().isForbidden());
     }
 }

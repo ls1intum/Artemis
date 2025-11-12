@@ -229,4 +229,44 @@ public class LectureTranscriptionService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to start transcription: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * Cancels a transcription job with the Nebula service and permanently deletes the transcription record.
+     *
+     * @param jobId The Nebula job ID to cancel
+     * @throws ResponseStatusException if the job is not found, cancellation fails, or Nebula returns an invalid response
+     */
+    public void cancelNebulaTranscription(String jobId) {
+        LectureTranscription transcription = lectureTranscriptionsRepositoryApi.findByJobId(jobId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No transcription found for jobId: " + jobId));
+
+        // Only cancel if transcription is still pending or processing
+        if (transcription.getTranscriptionStatus() == TranscriptionStatus.COMPLETED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot cancel a completed transcription");
+        }
+        if (transcription.getTranscriptionStatus() == TranscriptionStatus.FAILED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot cancel a failed transcription");
+        }
+
+        try {
+            log.info("Cancelling transcription for jobId={}", jobId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", nebulaSecretToken);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            String url = nebulaBaseUrl + "/transcribe/cancel/" + jobId;
+            restTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
+
+            // Permanently delete the transcription record
+            lectureTranscriptionsRepositoryApi.deleteById(transcription.getId());
+            lectureTranscriptionsRepositoryApi.flush();
+
+            log.info("Transcription cancelled and deleted successfully for jobId={}", jobId);
+        }
+        catch (Exception e) {
+            log.error("Error cancelling transcription for jobId: {} → {}", jobId, e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to cancel transcription: " + e.getMessage(), e);
+        }
+    }
 }

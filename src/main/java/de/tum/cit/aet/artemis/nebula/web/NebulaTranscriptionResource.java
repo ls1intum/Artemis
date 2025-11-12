@@ -69,6 +69,20 @@ public class NebulaTranscriptionResource {
     }
 
     /**
+     * POST /transcribe/cancel/{jobId} :
+     * Cancel a transcription job with Nebula and permanently delete the transcription record.
+     *
+     * @param jobId the job ID of the transcription to cancel
+     * @return the ResponseEntity with status 200 (OK) if transcription cancelled and deleted successfully
+     */
+    @PostMapping("transcribe/cancel/{jobId}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> cancelNebulaTranscription(@PathVariable String jobId) {
+        lectureTranscriptionService.cancelNebulaTranscription(jobId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * GET /video-utils/tum-live-playlist : Fetch TUM Live playlist URL for transcription.
      *
      * @param url the TUM Live video URL to fetch the playlist for
