@@ -189,11 +189,14 @@ export abstract class TextEditorAction implements Disposable {
             const sanitizedText = sanitizeStringForMarkdownEditor(selectedText)?.trim();
             if (sanitizedText) {
                 this.replaceTextAtRange(editor, selection, wrapperFn(sanitizedText));
+                return;
             }
-        } else {
-            // No selection, insert default text
-            this.replaceTextAtCurrentSelection(editor, defaultText);
+            // If sanitization resulted in empty string, fall through to insert default text
         }
+        // No selection or empty sanitized text - insert default text at cursor
+        const position = editor.getPosition();
+        const cursorRange = new TextEditorRange(position, position);
+        this.replaceTextAtRange(editor, cursorRange, defaultText);
     }
 
     /**
