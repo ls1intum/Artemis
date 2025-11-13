@@ -43,6 +43,7 @@ export class HyperionProblemStatementApiService extends BaseService {
     }
 
     /**
+     * @endpoint post /api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check
      * @param programmingExerciseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -89,13 +90,14 @@ export class HyperionProblemStatementApiService extends BaseService {
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
                 observe: observe,
-                transferCache: localVarTransferCache,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
                 reportProgress: reportProgress
             }
         );
     }
 
     /**
+     * @endpoint post /api/hyperion/courses/{courseId}/problem-statements/generate
      * @param courseId 
      * @param problemStatementGenerationRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -156,13 +158,14 @@ export class HyperionProblemStatementApiService extends BaseService {
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
                 observe: observe,
-                transferCache: localVarTransferCache,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
                 reportProgress: reportProgress
             }
         );
     }
 
     /**
+     * @endpoint post /api/hyperion/courses/{courseId}/problem-statements/rewrite
      * @param courseId 
      * @param problemStatementRewriteRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -223,7 +226,7 @@ export class HyperionProblemStatementApiService extends BaseService {
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
                 observe: observe,
-                transferCache: localVarTransferCache,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
                 reportProgress: reportProgress
             }
         );

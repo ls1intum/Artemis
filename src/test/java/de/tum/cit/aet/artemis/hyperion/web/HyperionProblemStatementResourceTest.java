@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.web;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -81,6 +82,10 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     private void mockGenerateSuccess() {
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Draft problem statement generated successfully."))))).when(chatModel).call(any(Prompt.class));
+    }
+
+    private void mockGenerateFailure() {
+        doThrow(new RuntimeException("AI service unavailable")).when(chatModel).call(any(Prompt.class));
     }
 
     @Test
@@ -219,5 +224,18 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"userPrompt\":\"Prompt\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnInternalServerErrorWhenGenerationFails() throws Exception {
+        long courseId = persistedCourseId;
+        mockGenerateFailure();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"userPrompt\":\"Prompt\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to generate problem statement: AI service unavailable"))
+                .andExpect(jsonPath("$.message").value("error.problemStatementGenerationFailed")).andExpect(jsonPath("$.errorKey").value("problemStatementGenerationFailed"));
     }
 }

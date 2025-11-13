@@ -13,6 +13,7 @@ import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepositoryDialect;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -79,22 +80,31 @@ public class SpringAIConfiguration {
 
     /**
      * Default Chat Client for AI features.
-     * Uses the manually configured Azure OpenAI model if available.
+     * Uses the manually configured chat model if available.
      * Includes memory advisor for conversation context retention.
+     * Supports both AzureOpenAiChatModel (production) and generic ChatModel (tests).
      *
-     * @param azureOpenAiChatModel the Azure OpenAI chat model to use (optional)
-     * @param chatMemory           the chat memory for conversation history (optional)
+     * @param chatModel  the chat model to use (optional)
+     * @param chatMemory the chat memory for conversation history (optional)
      * @return a configured ChatClient with default options, or null if model is not available
      */
     @Bean
     @Lazy
-    public ChatClient chatClient(@Nullable AzureOpenAiChatModel azureOpenAiChatModel, @Nullable ChatMemory chatMemory) {
-        if (azureOpenAiChatModel == null) {
+    public ChatClient chatClient(@Nullable ChatModel chatModel, @Nullable ChatMemory chatMemory) {
+        if (chatModel == null) {
             return null;
         }
 
-        ChatClient.Builder builder = ChatClient.builder(azureOpenAiChatModel)
-                .defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build());
+        ChatClient.Builder builder;
+
+        // Use Azure-specific options if the model is AzureOpenAiChatModel
+        if (chatModel instanceof AzureOpenAiChatModel azureModel) {
+            builder = ChatClient.builder(azureModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build());
+        }
+        else {
+            // For generic ChatModel (e.g., mocked in tests), use basic builder
+            builder = ChatClient.builder(chatModel);
+        }
 
         // Add memory advisor if available
         if (chatMemory != null) {

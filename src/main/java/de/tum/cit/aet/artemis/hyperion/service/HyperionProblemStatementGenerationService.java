@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 
@@ -22,6 +23,12 @@ import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO
 public class HyperionProblemStatementGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementGenerationService.class);
+
+    /**
+     * Maximum allowed length for generated problem statements (50,000 characters).
+     * This prevents excessively long responses that could cause performance issues.
+     */
+    private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 
     private final ChatClient chatClient;
 
@@ -44,6 +51,7 @@ public class HyperionProblemStatementGenerationService {
      * @param course     the course context for the problem statement
      * @param userPrompt the user's requirements and instructions for the problem statement
      * @return the generated problem statement response
+     * @throws InternalServerErrorAlertException if generation fails or response is too long
      */
     public ProblemStatementGenerationResponseDTO generateProblemStatement(Course course, String userPrompt) {
         log.debug("Generating problem statement for course [{}]", course.getId());
@@ -57,11 +65,23 @@ public class HyperionProblemStatementGenerationService {
             String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);
             String generatedProblemStatement = chatClient.prompt().user(prompt).call().content();
 
+            // Validate response length
+            if (generatedProblemStatement != null && generatedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+                log.warn("Generated problem statement for course [{}] exceeds maximum length: {} characters", course.getId(), generatedProblemStatement.length());
+                throw new InternalServerErrorAlertException(
+                        "Generated problem statement is too long (" + generatedProblemStatement.length() + " characters). Maximum allowed: " + MAX_PROBLEM_STATEMENT_LENGTH,
+                        "ProblemStatement", "problemStatementTooLong");
+            }
+
             return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);
+        }
+        catch (InternalServerErrorAlertException e) {
+            // Re-throw our own exceptions
+            throw e;
         }
         catch (Exception e) {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
-            return new ProblemStatementGenerationResponseDTO("");
+            throw new InternalServerErrorAlertException("Failed to generate problem statement: " + e.getMessage(), "ProblemStatement", "problemStatementGenerationFailed");
         }
     }
 }
