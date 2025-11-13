@@ -19,6 +19,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
+import dayjs from 'dayjs/esm';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 
 @Component({
@@ -133,10 +134,12 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     refreshFaqList(searchTerm: string) {
         this.applyFilters();
         this.applySearch(searchTerm);
+        this.sortFaqs();
     }
 
     sortFaqs() {
-        this.sortService.sortByProperty(this.filteredFaqs, 'id', true);
+        // Sort by createdDate descending (newest first)
+        this.sortService.sortByFunction(this.filteredFaqs, (faq) => (faq.createdDate ? dayjs(faq.createdDate) : undefined), false);
     }
 
     scrollToFaq(faqId: number): void {
