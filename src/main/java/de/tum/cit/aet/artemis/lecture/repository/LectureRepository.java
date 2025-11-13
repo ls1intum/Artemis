@@ -155,8 +155,8 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
 
     /**
-     * Query which fetches all normal lectures (lectures that are not tutorial lectures) for which
-     * the user is editor or instructor in the course and matching the search criteria.
+     * Query which fetches all lectures for which the user is editor or instructor in the course and
+     * matching the search criteria.
      *
      * @param partialTitle       lecture title search term
      * @param partialCourseTitle course title search term
