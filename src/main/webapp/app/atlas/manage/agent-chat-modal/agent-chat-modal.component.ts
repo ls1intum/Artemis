@@ -69,8 +69,20 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     });
 
     ngOnInit(): void {
-        // Add a welcome message
         this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
+        // Load previous conversation history
+        this.agentChatService.getConversationHistory(this.courseId).subscribe({
+            next: (history) => {
+                // Load messages from history
+                history.forEach((msg) => {
+                    this.addMessage(msg.content, msg.isUser);
+                });
+            },
+            error: () => {
+                // On error, just show welcome message
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
+            },
+        });
     }
 
     ngAfterViewInit(): void {
@@ -103,7 +115,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.addMessage(message, true);
         this.currentMessage.set('');
 
-        // Show typing indicator
         this.isAgentTyping.set(true);
 
         // Send message - server will use courseId as conversationId for memory

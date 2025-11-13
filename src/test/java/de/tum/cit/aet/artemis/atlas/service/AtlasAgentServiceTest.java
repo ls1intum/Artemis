@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -17,11 +18,24 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentServiceTest {
@@ -32,20 +46,22 @@ class AtlasAgentServiceTest {
     @Mock
     private AtlasPromptTemplateService templateService;
 
+    @Mock
+    private ChatMemory chatMemory;
+
     private AtlasAgentService atlasAgentService;
 
     @BeforeEach
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        // Pass null for ToolCallbackProviders and ChatMemory in tests
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, null);
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, null, chatMemory);
     }
 
     @Test
     void testProcessChatMessage_Success() throws ExecutionException, InterruptedException {
         String testMessage = "Help me create competencies for Java programming";
         Long courseId = 123L;
-        String sessionId = "course_123";
+        String sessionId = "course_123_user_456";
         String expectedResponse = "I can help you create competencies for Java programming. Here are my suggestions:\n1. Object-Oriented Programming (APPLY)\n2. Data Structures (UNDERSTAND)\n3. Algorithms (ANALYZE)";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
@@ -63,7 +79,7 @@ class AtlasAgentServiceTest {
     void testProcessChatMessage_EmptyResponse() throws ExecutionException, InterruptedException {
         String testMessage = "Test message";
         Long courseId = 456L;
-        String sessionId = "course_456";
+        String sessionId = "course_456_user_789";
         String emptyResponse = "";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
@@ -81,7 +97,7 @@ class AtlasAgentServiceTest {
     void testProcessChatMessage_NullResponse() throws ExecutionException, InterruptedException {
         String testMessage = "Test message";
         Long courseId = 789L;
-        String sessionId = "course_789";
+        String sessionId = "course_789_user_101";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("")))));
@@ -98,7 +114,7 @@ class AtlasAgentServiceTest {
     void testProcessChatMessage_WhitespaceOnlyResponse() throws ExecutionException, InterruptedException {
         String testMessage = "Test message";
         Long courseId = 321L;
-        String sessionId = "course_321";
+        String sessionId = "course_321_user_202";
         String whitespaceResponse = "   \n\t  ";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
@@ -116,7 +132,7 @@ class AtlasAgentServiceTest {
     void testProcessChatMessage_ExceptionHandling() throws ExecutionException, InterruptedException {
         String testMessage = "Test message";
         Long courseId = 654L;
-        String sessionId = "course_654";
+        String sessionId = "course_654_user_303";
 
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("ChatModel error"));
@@ -138,9 +154,19 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null);
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, chatMemory);
 
         boolean available = serviceWithNullClient.isAvailable();
+
+        assertThat(available).isFalse();
+    }
+
+    @Test
+    void testIsAvailable_WithNullChatMemory() {
+        ChatClient chatClient = ChatClient.create(chatModel);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null);
+
+        boolean available = serviceWithNullMemory.isAvailable();
 
         assertThat(available).isFalse();
     }
@@ -167,6 +193,83 @@ class AtlasAgentServiceTest {
         assertThat(chatResult2.message()).isEqualTo("Response for instructor 2");
 
         assertThat(instructor1SessionId).isNotEqualTo(instructor2SessionId);
+    }
+
+    @Test
+    void testGetConversationHistoryAsDTO_Success() {
+        String sessionId = "course_123_user_456";
+        Message userMessage = new UserMessage("What are competencies?");
+        Message assistantMessage = new AssistantMessage("Competencies are learning objectives that define what students should know and be able to do.");
+        List<Message> messages = List.of(userMessage, assistantMessage);
+
+        when(chatMemory.get(sessionId)).thenReturn(messages);
+
+        List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).content()).isEqualTo("What are competencies?");
+        assertThat(result.get(0).isUser()).isTrue();
+        assertThat(result.get(1).content()).isEqualTo("Competencies are learning objectives that define what students should know and be able to do.");
+        assertThat(result.get(1).isUser()).isFalse();
+        verify(chatMemory).get(sessionId);
+    }
+
+    @Test
+    void testGetConversationHistoryAsDTO_EmptyHistory() {
+        String sessionId = "course_789_user_101";
+        List<Message> emptyMessages = List.of();
+
+        when(chatMemory.get(sessionId)).thenReturn(emptyMessages);
+
+        List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+        assertThat(result).isNotNull();
+        assertThat(result).isEmpty();
+        verify(chatMemory).get(sessionId);
+    }
+
+    @Test
+    void testGetConversationHistoryAsDTO_NullChatMemory() {
+        String sessionId = "course_456_user_789";
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null);
+
+        List<AtlasAgentHistoryMessageDTO> result = serviceWithNullMemory.getConversationHistoryAsDTO(sessionId);
+
+        assertThat(result).isNotNull();
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void testGetConversationHistoryAsDTO_ExceptionHandling() {
+        String sessionId = "course_321_user_202";
+
+        when(chatMemory.get(sessionId)).thenThrow(new RuntimeException("Database error"));
+
+        List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+        assertThat(result).isNotNull();
+        assertThat(result).isEmpty();
+        verify(chatMemory).get(sessionId);
+    }
+
+    @Test
+    void testGetConversationHistoryAsDTO_MultipleMessages() {
+        String sessionId = "course_999_user_888";
+        List<Message> messages = List.of(new UserMessage("Hello"), new AssistantMessage("Hi there!"), new UserMessage("How are you?"),
+                new AssistantMessage("I'm doing well, thanks!"));
+
+        when(chatMemory.get(sessionId)).thenReturn(messages);
+
+        List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(4);
+        assertThat(result.get(0).isUser()).isTrue();
+        assertThat(result.get(1).isUser()).isFalse();
+        assertThat(result.get(2).isUser()).isTrue();
+        assertThat(result.get(3).isUser()).isFalse();
+        verify(chatMemory).get(sessionId);
     }
 
     @Nested
@@ -353,6 +456,52 @@ class AtlasAgentServiceTest {
             assertThat(chatResult.message()).isNotNull();
             // The marker itself should be removed (but content around it remains)
             assertThat(chatResult.message()).doesNotContain("[CREATE_APPROVED_COMPETENCY]");
+        }
+    }
+
+    @Nested
+    class AtlasAgentHistoryMessageDTOTests {
+
+        private final ObjectMapper objectMapper = new ObjectMapper();
+
+        @Test
+        void shouldSerializeToJsonWhenValidData() throws Exception {
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("Test message content", true);
+
+            String actualJson = objectMapper.writeValueAsString(dto);
+
+            assertThat(actualJson).contains("\"content\":\"Test message content\"");
+            assertThat(actualJson).contains("\"isUser\":true");
+        }
+
+        @Test
+        void shouldDeserializeFromJsonWhenValidJson() throws Exception {
+            String json = "{\"content\":\"Deserialized content\",\"isUser\":false}";
+
+            AtlasAgentHistoryMessageDTO actualDto = objectMapper.readValue(json, AtlasAgentHistoryMessageDTO.class);
+
+            assertThat(actualDto.content()).isEqualTo("Deserialized content");
+            assertThat(actualDto.isUser()).isFalse();
+        }
+
+        @Test
+        void shouldExcludeContentWhenEmpty() throws Exception {
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("", true);
+
+            String actualJson = objectMapper.writeValueAsString(dto);
+
+            assertThat(actualJson).doesNotContain("content");
+            assertThat(actualJson).contains("\"isUser\":true");
+        }
+
+        @Test
+        void shouldExcludeContentWhenNull() throws Exception {
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO(null, false);
+
+            String actualJson = objectMapper.writeValueAsString(dto);
+
+            assertThat(actualJson).doesNotContain("content");
+            assertThat(actualJson).contains("\"isUser\":false");
         }
     }
 

@@ -10,9 +10,10 @@ import jakarta.annotation.Nullable;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -24,6 +25,7 @@ import com.google.common.cache.CacheBuilder;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.BatchCompetencyPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.SingleCompetencyPreviewResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
 
 /**
  * Service for Atlas Agent functionality with Azure OpenAI integration.
@@ -131,6 +133,10 @@ public class AtlasAgentService {
      * @return Result containing the AI response and competency modification flag
      */
     public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
+        if (chatClient == null) {
+            return CompletableFuture.completedFuture(new AgentChatResult("Atlas Agent is not available. Please contact your administrator.", false));
+        }
+
         try {
             // Set sessionId in ThreadLocal so tools can access it
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
@@ -214,6 +220,7 @@ public class AtlasAgentService {
             competencyModifiedInCurrentRequest.remove();
             CompetencyExpertToolsService.clearCurrentSessionId();
         }
+
     }
 
     /**
@@ -311,17 +318,50 @@ public class AtlasAgentService {
     }
 
     /**
+     * Retrieves the conversation history for a given session as DTOs.
+     *
+     * @param sessionId The session/conversation ID
+     * @return List of conversation history messages as DTOs
+     */
+    public List<AtlasAgentHistoryMessageDTO> getConversationHistoryAsDTO(String sessionId) {
+        try {
+            if (chatMemory == null) {
+                return List.of();
+            }
+            List<Message> messages = chatMemory.get(sessionId);
+
+            if (messages.isEmpty()) {
+                return List.of();
+            }
+            return messages.stream().map(message -> {
+                boolean isUser = message.getMessageType() == MessageType.USER;
+                return new AtlasAgentHistoryMessageDTO(message.getText(), isUser);
+            }).toList();
+        }
+        catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    /**
      * Check if the Atlas Agent service is available and properly configured.
      *
      * @return true if the service is ready, false otherwise
      */
     public boolean isAvailable() {
-        try {
-            return chatClient != null;
-        }
-        catch (Exception e) {
-            return false;
-        }
+        return chatClient != null && chatMemory != null;
     }
 
+    /**
+     * Generates a unique session ID for a user's conversation in a specific course.
+     * This ensures each user has their own isolated chat history per course.
+     * Centralized generation prevents security risks from client-controlled session IDs.
+     *
+     * @param courseId the course ID
+     * @param userId   the user ID
+     * @return the generated session ID in format "course_{courseId}_user_{userId}"
+     */
+    public String generateSessionId(Long courseId, Long userId) {
+        return String.format("course_%d_user_%d", courseId, userId);
+    }
 }

@@ -19,6 +19,7 @@
                     "updatedSingle": "Competency updated successfully!",
                     "createdSingle": "Competency created successfully!"
                 }
+                "authentication": "You must be authenticated to use agent chat"
             }
         }
     }

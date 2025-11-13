@@ -19,6 +19,7 @@
                     "updatedSingle": "Kompetenz erfolgreich aktualisiert!",
                     "createdSingle": "Kompetenz erfolgreich erstellt!"
                 }
+                "authentication": "Du musst authentifiziert sein, um den Agenten-Chat zu nutzen."
             }
         }
     }
