@@ -100,12 +100,14 @@ public class PasskeyAuthenticationService {
             throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY);
         }
 
-        if (requireSuperAdminApproval) {
-            boolean isSuperAdminApproved = tokenProvider.isPasskeySuperAdminApproved(jwtWithSource.jwt());
-            if (!isSuperAdminApproved) {
-                log.debug("Passkey authentication check failed: passkey is not super admin approved");
-                throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.PASSKEY_NOT_SUPER_ADMIN_APPROVED);
-            }
+        if (!requireSuperAdminApproval) {
+            return true;
+        }
+
+        boolean isSuperAdminApproved = tokenProvider.isPasskeySuperAdminApproved(jwtWithSource.jwt());
+        if (!isSuperAdminApproved) {
+            log.debug("Passkey authentication check failed: passkey is not super admin approved");
+            throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.PASSKEY_NOT_SUPER_ADMIN_APPROVED);
         }
 
         return true;
