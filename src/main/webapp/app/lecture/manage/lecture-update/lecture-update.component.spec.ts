@@ -174,7 +174,7 @@ describe('LectureUpdateComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
 
         expect(updateSpy).toHaveBeenCalledOnce();
-        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated' });
+        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated', isTutorialLecture: false });
         expect(refreshSpy).toHaveBeenCalledOnce();
     });
 
