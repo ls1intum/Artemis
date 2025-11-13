@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 
-@Profile({ "localci", "hyperion" })
+@Profile({ "localci & hyperion" })
 @Conditional(HyperionEnabled.class)
 @Lazy
 @RestController

@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.GeneratedMcQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.McOptionDTO;
 
-@Profile({ "localci", "hyperion" })
+@Profile({ "localci & hyperion" })
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
