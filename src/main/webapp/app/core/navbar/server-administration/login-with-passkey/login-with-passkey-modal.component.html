@@ -7,6 +7,6 @@
 
     <ng-template pTemplate="footer">
         <jhi-button (onClick)="cancel()" [title]="'entity.action.cancel'" [btnType]="ButtonType.SECONDARY" />
-        <jhi-passkey-content [showHeader]="false" [showContent]="false" />
+        <jhi-passkey-content (triggerPasskeyLoginSuccessHandler)="handleLoginSuccess()" [showHeader]="false" [showContent]="false" />
     </ng-template>
 </p-dialog>

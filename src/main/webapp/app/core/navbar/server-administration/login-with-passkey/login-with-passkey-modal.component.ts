@@ -30,32 +30,20 @@ export class LoginWithPasskeyModalComponent {
 
     showModal: boolean = false;
 
+    // TODO handle setup
     async setupPasskeyAndLogin() {
         this.showModal = false;
         await this.webauthnService.addNewPasskey(this.accountService.userIdentity());
         this.alertService.success('artemisApp.userSettings.passkeySettingsPage.success.registration');
-        await this.signInWithPasskey();
-    }
-
-    async signInWithPasskey() {
-        this.showModal = false;
-        await this.webauthnService.loginWithPasskey();
-        this.handleLoginSuccess();
     }
 
     cancel() {
         this.showModal = false;
     }
 
-    private handleLoginSuccess() {
-        // TODO this could be done in the loginWithPasskey method
-        this.accountService.userIdentity.set({
-            ...this.accountService.userIdentity(),
-            isLoggedInWithPasskey: true,
-            internal: this.accountService.userIdentity()?.internal ?? false,
-        });
-
+    handleLoginSuccess() {
         this.justLoggedInWithPasskey.emit(true);
+        this.showModal = false;
 
         if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
             this.router.navigate(['']);

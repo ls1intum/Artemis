@@ -2,9 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faKey, faLock } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/shared/service/alert.service';
 import { PasskeyContentComponent } from 'app/core/auth/passkey-content/passkey-content.component';
 
 @Component({
@@ -19,8 +17,6 @@ export class PasskeyRequiredComponent implements OnInit {
 
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
-    private readonly webauthnService = inject(WebauthnService);
-    private readonly alertService = inject(AlertService);
     protected readonly accountService = inject(AccountService);
 
     userHasRegisteredAPasskey: boolean = false;
@@ -42,47 +38,17 @@ export class PasskeyRequiredComponent implements OnInit {
 
         this.userHasRegisteredAPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
 
-        const redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey = this.accountService.isLoggedInWithPasskey() && this.returnUrl;
+        const redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey = this.accountService.isUserLoggedInWithApprovedPasskey() && this.returnUrl;
         if (redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey) {
             this.router.navigateByUrl(this.returnUrl!);
         }
     }
 
-    async setupPasskeyAndLogin() {
-        await this.webauthnService.addNewPasskey(this.accountService.userIdentity());
-        this.alertService.success('artemisApp.userSettings.passkeySettingsPage.success.registration');
-        await this.signInWithPasskey();
-    }
-
-    async signInWithPasskey() {
-        try {
-            await this.webauthnService.loginWithPasskey();
-            this.handleLoginSuccess();
-        } catch (error) {
-            this.alertService.error('artemisApp.userSettings.passkeySettingsPage.error.login');
-        }
-    }
-
-    cancel() {
-        this.router.navigate(['/']);
-    }
-
-    private redirectToOriginalUrlOrHome() {
+    redirectToOriginalUrlOrHome() {
         if (this.returnUrl) {
             this.router.navigateByUrl(this.returnUrl);
         } else {
             this.router.navigate(['/']);
         }
-    }
-
-    private handleLoginSuccess() {
-        // Update the user identity to reflect passkey login
-        this.accountService.userIdentity.set({
-            ...this.accountService.userIdentity(),
-            isLoggedInWithPasskey: true,
-            internal: this.accountService.userIdentity()?.internal ?? false,
-        });
-
-        this.redirectToOriginalUrlOrHome();
     }
 }

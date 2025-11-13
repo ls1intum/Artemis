@@ -273,12 +273,12 @@ public class UserDTO extends AuditingEntityDTO {
         return isLoggedInWithPasskey;
     }
 
-    public boolean isPasskeySuperAdminApproved() {
+    public boolean getIsPasskeySuperAdminApproved() {
         return isPasskeySuperAdminApproved;
     }
 
-    public void setPasskeySuperAdminApproved(boolean passkeySuperAdminApproved) {
-        isPasskeySuperAdminApproved = passkeySuperAdminApproved;
+    public void setIsPasskeySuperAdminApproved(boolean isPasskeySuperAdminApproved) {
+        this.isPasskeySuperAdminApproved = isPasskeySuperAdminApproved;
     }
 
     public boolean isInternal() {
@@ -310,6 +310,6 @@ public class UserDTO extends AuditingEntityDTO {
         return "UserDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='"
                 + imageUrl + '\'' + ", activated=" + activated + ", langKey='" + langKey + '\'' + ", createdBy=" + getCreatedBy() + ", createdDate=" + getCreatedDate()
                 + ", lastModifiedBy='" + getLastModifiedBy() + '\'' + ", lastModifiedDate=" + getLastModifiedDate() + ", isLoggedInWithPasskey=" + isLoggedInWithPasskey
-                + ", authorities=" + authorities + "}";
+                + ", authorities=" + authorities + ", isPasskeySuperAdminApproved=" + isPasskeySuperAdminApproved + "}";
     }
 }

@@ -1,21 +1,12 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { Router, RouterLink } from '@angular/router';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { RouterLink } from '@angular/router';
 import { faArrowUpRightFromSquare, faKey, faLock } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { AlertService } from 'app/shared/service/alert.service';
-
-export interface PasskeyActionButton {
-    onClick: () => void;
-    titleKey: string;
-    icon?: IconDefinition;
-    btnType?: ButtonType;
-}
 
 @Component({
     selector: 'jhi-passkey-content',
@@ -30,8 +21,6 @@ export class PasskeyContentComponent implements OnInit {
 
     protected readonly ButtonType = ButtonType;
 
-    private readonly router = inject(Router);
-    private readonly eventManager = inject(EventManager);
     private readonly webauthnService = inject(WebauthnService);
     private readonly alertService = inject(AlertService);
 
@@ -41,9 +30,20 @@ export class PasskeyContentComponent implements OnInit {
     showContent = input<boolean>(true);
     showFooter = input<boolean>(true);
 
+    triggerPasskeyLoginSuccessHandler = output<void>();
+
     userHasRegisteredAPasskey: boolean = false;
 
     ngOnInit() {
+        this.initializeUserIdentity().then((response) => {});
+    }
+
+    /**
+     * Ensures the user identity is loaded from the server (important for page reloads)
+     */
+    private async initializeUserIdentity() {
+        await this.accountService.identity();
+
         this.userHasRegisteredAPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
     }
 
@@ -55,28 +55,8 @@ export class PasskeyContentComponent implements OnInit {
     }
 
     async signInWithPasskey() {
-        // this.showModal = false;
         await this.webauthnService.loginWithPasskey();
-        this.handleLoginSuccess();
-    }
-
-    private handleLoginSuccess() {
-        // TODO this could be done in the loginWithPasskey method
-        this.accountService.userIdentity.set({
-            ...this.accountService.userIdentity(),
-            isLoggedInWithPasskey: true,
-            internal: this.accountService.userIdentity()?.internal ?? false,
-        });
-
-        // this.justLoggedInWithPasskey.emit(true);
-
-        if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
-            this.router.navigate(['']);
-        }
-
-        this.eventManager.broadcast({
-            name: 'authenticationSuccess',
-            content: 'Sending Authentication Success',
-        });
+        await this.accountService.identity(true);
+        this.triggerPasskeyLoginSuccessHandler.emit();
     }
 }

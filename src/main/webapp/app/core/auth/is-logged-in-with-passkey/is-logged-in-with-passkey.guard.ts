@@ -12,6 +12,17 @@ export class IsLoggedInWithPasskeyGuard implements CanActivate {
     private readonly router = inject(Router);
     private readonly profileService = inject(ProfileService);
 
+    shouldEnforcePasskeyForAdminFeatures() {
+        const isPasskeyDisabled = !this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
+        if (isPasskeyDisabled) {
+            return false;
+        }
+
+        // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+        const isPasskeyRequiredForAdminFeatures = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
+        return isPasskeyRequiredForAdminFeatures;
+    }
+
     /**
      * Check if the client can activate a route.
      * @param route The activated route snapshot
@@ -19,17 +30,11 @@ export class IsLoggedInWithPasskeyGuard implements CanActivate {
      * @return true if the user has logged in with a passkey (or if passkey requirement is disabled), false otherwise
      */
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-        const isPasskeyDisabled = !this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
-        if (isPasskeyDisabled) {
+        if (!this.shouldEnforcePasskeyForAdminFeatures()) {
             return true;
         }
 
-        const isPasskeyRequiredForAdminFeatures = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
-        if (!isPasskeyRequiredForAdminFeatures) {
-            return true;
-        }
-
-        if (this.accountService.isLoggedInWithPasskey() && this.accountService.isPasskeySuperAdminApproved()) {
+        if (this.accountService.isUserLoggedInWithApprovedPasskey()) {
             return true;
         }
 
