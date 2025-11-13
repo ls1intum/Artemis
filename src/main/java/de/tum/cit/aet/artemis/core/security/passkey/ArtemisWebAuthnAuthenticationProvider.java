@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
 /**
  * <p>
@@ -37,8 +38,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  * @see org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationProvider
  */
 public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProvider {
-
-    public static final String IS_PASSKEY_SUPER_ADMIN_APPROVED_KEY = "isPasskeySuperAdminApproved";
 
     private final WebAuthnRelyingPartyOperations relyingPartyOperations;
 
@@ -79,7 +78,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
             Optional<PasskeyCredential> credential = this.passkeyCredentialsRepository.findByCredentialId(credentialId);
             boolean isPasskeyApproved = credential.map(PasskeyCredential::isSuperAdminApproved).orElse(false);
             Map<String, Object> details = new HashMap<>();
-            details.put(IS_PASSKEY_SUPER_ADMIN_APPROVED_KEY, isPasskeyApproved);
+            details.put(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, isPasskeyApproved);
 
             WebAuthnAuthentication auth = new WebAuthnAuthentication(userEntity, user.get().getGrantedAuthorities());
             auth.setDetails(details);

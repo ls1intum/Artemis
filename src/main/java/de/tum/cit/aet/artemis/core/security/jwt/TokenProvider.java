@@ -29,7 +29,6 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
-import de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnAuthenticationProvider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtBuilder;
@@ -52,7 +51,7 @@ public class TokenProvider {
 
     private static final String AUTHENTICATION_METHOD = "auth-method";
 
-    private static final String IS_PASSKEY_SUPER_ADMIN_APPROVED = "is-passkey-approved";
+    public static final String IS_PASSKEY_SUPER_ADMIN_APPROVED = "is-passkey-super-admin-approved";
 
     private static final String TOOLS_KEY = "tools";
 
@@ -148,7 +147,7 @@ public class TokenProvider {
 
         boolean isPasskeyApproved = false;
         if (authenticationMethod == AuthenticationMethod.PASSKEY && authentication.getDetails() instanceof Map<?, ?> details) {
-            isPasskeyApproved = Boolean.TRUE.equals(details.get(ArtemisWebAuthnAuthenticationProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED_KEY));
+            isPasskeyApproved = Boolean.TRUE.equals(details.get(IS_PASSKEY_SUPER_ADMIN_APPROVED));
         }
 
         // @formatter:off
