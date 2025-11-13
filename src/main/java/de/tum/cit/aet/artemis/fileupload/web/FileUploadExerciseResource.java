@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseService;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionExportService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 
 /**
  * REST controller for managing FileUploadExercise.
@@ -167,6 +168,8 @@ public class FileUploadExerciseResource {
         }
         // validates general settings: points, dates
         fileUploadExercise.validateGeneralSettings();
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(fileUploadExercise, ENTITY_NAME);
         // Validate the new file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
         // Retrieve the course over the exerciseGroup or the given courseId
@@ -222,6 +225,8 @@ public class FileUploadExerciseResource {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
         importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(importedFileUploadExercise, ENTITY_NAME);
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var originalFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(sourceId);
@@ -322,6 +327,8 @@ public class FileUploadExerciseResource {
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
         // validates general settings: points, dates
         fileUploadExercise.validateGeneralSettings();
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(fileUploadExercise, ENTITY_NAME);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);

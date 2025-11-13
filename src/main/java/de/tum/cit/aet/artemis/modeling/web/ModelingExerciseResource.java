@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 
 /**
  * REST controller for managing ModelingExercise.
@@ -174,6 +175,8 @@ public class ModelingExerciseResource {
         modelingExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
         modelingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(modelingExercise);
@@ -243,6 +246,8 @@ public class ModelingExerciseResource {
         modelingExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
         modelingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();

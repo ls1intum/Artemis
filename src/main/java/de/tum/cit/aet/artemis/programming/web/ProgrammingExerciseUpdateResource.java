@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 
 /**
  * REST controller for updating complete programming exercise entities.
@@ -126,6 +127,8 @@ public class ProgrammingExerciseUpdateResource {
         // Valid exercises have set either a course or an exerciseGroup
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         programmingExerciseValidationService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedProgrammingExercise, ENTITY_NAME);
 
         // fetch course from database to make sure client didn't change groups
         var user = userRepository.getUserWithGroupsAndAuthorities();
