@@ -39,9 +39,9 @@ public interface LectureUnitMetricsRepository extends ArtemisJpaRepository<Lectu
             )
             FROM LectureUnit lectureUnit
                 LEFT JOIN Attachment attachment ON attachment.attachmentVideoUnit.id = lectureUnit.id
-            WHERE lectureUnit.lecture.course.id = :courseId AND NOT lectureUnit.lecture.isTutorialLecture
+            WHERE lectureUnit.lecture.course.id = :courseId
             """)
-    Set<LectureUnitInformationDTO> findAllNormalLectureUnitInformationByCourseId(@Param("courseId") long courseId);
+    Set<LectureUnitInformationDTO> findAllLectureUnitInformationByCourseId(@Param("courseId") long courseId);
 
     /**
      * Get the ids of the completed lecture units for a user for a set of lecture units.
