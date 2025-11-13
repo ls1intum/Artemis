@@ -79,6 +79,48 @@ public final class RepositoryExportTestUtil {
     }
 
     /**
+     * Cleanup a VCS project directory from LocalVC filesystem, attempting both service-level
+     * deletion and direct filesystem removal. Best-effort operation that logs failures but does not throw.
+     *
+     * @param versionControlService the VCS service (may be null or a spy/mock)
+     * @param localVCBasePath       the base path for LocalVC repositories
+     * @param projectKey            the project key to clean up
+     * @param logger                logger for debug messages
+     */
+    public static void cleanupVcsProject(Object versionControlService, Path localVCBasePath, String projectKey, org.slf4j.Logger logger) {
+        if (projectKey == null) {
+            return;
+        }
+
+        // Try deleting via VersionControlService first (if it's a real service)
+        if (versionControlService != null) {
+            try {
+                versionControlService.getClass().getMethod("deleteProject", String.class).invoke(versionControlService, projectKey);
+            }
+            catch (Exception ex) {
+                if (logger != null) {
+                    logger.debug("Could not delete VCS project via VersionControlService {}: {}", projectKey, ex.getMessage());
+                }
+            }
+        }
+
+        // Also attempt direct filesystem cleanup
+        if (localVCBasePath != null) {
+            try {
+                var projectPath = localVCBasePath.resolve(projectKey).toFile();
+                if (projectPath.exists()) {
+                    FileUtils.deleteDirectory(projectPath);
+                }
+            }
+            catch (Exception ex) {
+                if (logger != null) {
+                    logger.debug("Could not delete VCS project folder {}: {}", projectKey, ex.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
      * Create a new LocalVC-compatible bare repository and optionally initialize content in its working copy.
      *
      * @param localVCLocalCITestService LocalVC helper service
