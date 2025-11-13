@@ -30,12 +30,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 @Repository
 public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
 
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-            WHERE lecture.course.id = :courseId AND NOT lecture.isTutorialLecture
-            """)
-    Set<Lecture> findAllNormalLecturesByCourseId(@Param("courseId") Long courseId);
+    Set<Lecture> findAllByCourseId(Long courseId);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO(
@@ -54,18 +49,17 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
             LEFT JOIN FETCH lecture.lectureUnits
-            WHERE lecture.course.id = :courseId
-                AND (lecture.visibleDate IS NULL OR lecture.visibleDate <= :now) AND NOT lecture.isTutorialLecture
+            WHERE lecture.course.id = :courseId AND (lecture.visibleDate IS NULL OR lecture.visibleDate <= :now)
             """)
-    Set<Lecture> findAllVisibleNormalLecturesByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+    Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT lecture
             FROM Lecture lecture
             LEFT JOIN FETCH lecture.lectureUnits
-            WHERE lecture.course.id = :courseId AND NOT lecture.isTutorialLecture
+            WHERE lecture.course.id = :courseId
             """)
-    Set<Lecture> findAllNormalLecturesByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId);
+    Set<Lecture> findAllByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId);
 
     @Query("""
             SELECT lecture

@@ -254,7 +254,7 @@ public class PyrisWebhookService {
      */
     public Map<Long, IngestionState> getLecturesIngestionState(long courseId) {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
-        Set<Lecture> lectures = api.findAllNormalLecturesByCourseId(courseId);
+        Set<Lecture> lectures = api.findAllByCourseId(courseId);
         return lectures.stream().collect(Collectors.toMap(DomainObject::getId, lecture -> getLectureIngestionState(courseId, lecture.getId())));
 
     }

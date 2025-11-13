@@ -34,9 +34,6 @@ public interface CourseTestRepository extends CourseRepository {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
-    Optional<Course> findWithLecturesAndLectureUnitsAndAttachmentsById(long courseId);
-
     @NotNull
     default Course findWithEagerLearningPathsByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerLearningPathsById(courseId), courseId);
@@ -53,10 +50,5 @@ public interface CourseTestRepository extends CourseRepository {
     @NotNull
     default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId), courseId);
-    }
-
-    @NotNull
-    default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
-        return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
     }
 }

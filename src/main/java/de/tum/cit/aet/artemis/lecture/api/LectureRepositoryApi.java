@@ -42,8 +42,8 @@ public class LectureRepositoryApi extends AbstractLectureApi {
         return lectureRepository.findAllById(lectureIds);
     }
 
-    public Set<Lecture> findAllNormalLecturesByCourseId(long courseId) {
-        return lectureRepository.findAllNormalLecturesByCourseId(courseId);
+    public Set<Lecture> findAllByCourseId(long courseId) {
+        return lectureRepository.findAllByCourseId(courseId);
     }
 
     public Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
@@ -66,11 +66,11 @@ public class LectureRepositoryApi extends AbstractLectureApi {
         lectureRepository.saveAll(lectures);
     }
 
-    public Set<Lecture> findAllNormalLecturesByCourseIdWithEagerLectureUnits(long courseId) {
-        return lectureRepository.findAllNormalLecturesByCourseIdWithEagerLectureUnits(courseId);
+    public Set<Lecture> findAllByCourseIdWithEagerLectureUnits(long courseId) {
+        return lectureRepository.findAllByCourseIdWithEagerLectureUnits(courseId);
     }
 
-    public Set<Lecture> findAllVisibleNormalLecturesByCourseIdWithEagerLectureUnits(long courseId, ZonedDateTime now) {
-        return lectureRepository.findAllVisibleNormalLecturesByCourseIdWithEagerLectureUnits(courseId, now);
+    public Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(long courseId, ZonedDateTime now) {
+        return lectureRepository.findAllVisibleByCourseIdWithEagerLectureUnits(courseId, now);
     }
 }

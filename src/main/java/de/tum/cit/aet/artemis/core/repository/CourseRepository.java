@@ -127,6 +127,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
+    Optional<Course> findWithLecturesAndLectureUnitsAndAttachmentsById(long courseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
 
@@ -435,6 +438,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerCompetenciesAndPrerequisitesById(courseId), courseId);
+    }
+
+    @NotNull
+    default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
     }
 
     Page<Course> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);
