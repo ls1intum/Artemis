@@ -33,7 +33,7 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
             continuousPlagiarismControlPostDueDateChecksEnabled: [false],
             similarityThreshold: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
             minimumScore: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
-            minimumSize: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
+            minimumSize: [null, [Validators.required, Validators.min(0)]],
             continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: [null, [Validators.required, Validators.min(7), Validators.max(31)]],
         });
 
