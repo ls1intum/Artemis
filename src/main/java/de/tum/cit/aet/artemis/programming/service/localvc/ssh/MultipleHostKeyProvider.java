@@ -8,13 +8,12 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.sshd.common.NamedResource;
 import org.apache.sshd.common.session.SessionContext;
 import org.apache.sshd.common.util.GenericUtils;
 import org.apache.sshd.common.util.io.IoUtils;
 import org.apache.sshd.server.keyprovider.AbstractGeneratorHostKeyProvider;
-
-import com.google.common.collect.Lists;
 
 /**
  * A host key provider that can load multiple host keys from a directory.
@@ -51,7 +50,7 @@ public class MultipleHostKeyProvider extends AbstractGeneratorHostKeyProvider {
                     Iterable<KeyPair> ids = readKeyPairs(session, file, IoUtils.EMPTY_OPEN_OPTIONS);
                     KeyPair kp = GenericUtils.head(ids);
                     if (kp != null) {
-                        keys.addAll(Lists.newArrayList(ids));
+                        keys.addAll(IteratorUtils.toList(ids.iterator()));
                     }
                 }
                 catch (Exception e) {

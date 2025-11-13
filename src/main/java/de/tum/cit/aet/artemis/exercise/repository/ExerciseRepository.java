@@ -557,6 +557,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @param userId the id of the user
      * @return a set of exercises the user has participated in with eager participations, submissions, results and feedbacks
      */
+    // TODO: this query is way too big and complex, we MUST optimize it
     @Query("""
             SELECT e
             FROM Course c

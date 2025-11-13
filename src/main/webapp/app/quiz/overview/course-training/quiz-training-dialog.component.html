@@ -1,0 +1,35 @@
+<p-dialog [(visible)]="visible" [modal]="true" [closable]="closable()" [style]="{ width: '600px', height: 'auto' }" appendTo="body" [draggable]="false">
+    <ng-template pTemplate="header">
+        <h5 jhiTranslate="artemisApp.quizTraining.theQuizTraining"></h5>
+    </ng-template>
+    <h6 jhiTranslate="artemisApp.quizTraining.howItWorks.title"></h6>
+    <p jhiTranslate="artemisApp.quizTraining.howItWorks.content"></p>
+    <h6 jhiTranslate="artemisApp.quizTraining.leagues.title"></h6>
+    <p jhiTranslate="artemisApp.quizTraining.leagues.content"></p>
+    <table class="w-40">
+        @for (l of leagues; track l.league) {
+            <tr>
+                <td class="align-middle pb-2">
+                    <jhi-league-icon [class]="'small-icon'" [league]="l.league" />
+                </td>
+                <td class="align-middle pb-2 ps-2" [jhiTranslate]="l.translationKey"></td>
+                <td class="align-middle pb-2 text-start">{{ l.range }}</td>
+            </tr>
+        }
+    </table>
+    <p class="mt-3" jhiTranslate="artemisApp.quizTraining.scoring.content"></p>
+
+    @if (showLeaderboardSettings()) {
+        <h6 class="mb-3" jhiTranslate="artemisApp.quizTraining.leaderboardSetting"></h6>
+        <div class="leaderboard-toggle d-flex align-items-center">
+            <p-toggleswitch [(ngModel)]="showInLeaderboard" />
+            <span class="ms-2" jhiTranslate="artemisApp.quizTraining.showInLeaderboard"></span>
+            <span [pTooltip]="'artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo' | artemisTranslate" tooltipPosition="right">
+                <fa-icon [icon]="faQuestionCircle" class="ms-2" />
+            </span>
+        </div>
+        <ng-template pTemplate="footer">
+            <jhi-button [title]="'artemisApp.quizTraining.confirm'" [disabled]="saveDisabled()" (onClick)="save.emit()" />
+        </ng-template>
+    }
+</p-dialog>

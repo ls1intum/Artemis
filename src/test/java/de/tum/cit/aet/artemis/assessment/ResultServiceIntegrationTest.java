@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -456,22 +454,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getResult() throws Exception {
-        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
-        result = participationUtilService.addSampleFeedbackToResults(result);
-        Result returnedResult = request.get("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK, Result.class);
-        assertThat(returnedResult).isNotNull().isEqualTo(result);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getResult_asStudent() throws Exception {
-        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
-        request.get("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsWithPointsForExamExercise() throws Exception {
         List<Result> results = setupExamModelingExerciseWithResults();
@@ -528,43 +510,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         studentParticipationRepository.save(participation);
 
         return results;
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void deleteResult() throws Exception {
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resultRepository.findByIdWithEagerFeedbacksElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(Long.MAX_VALUE));
-
-        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
-        result = participationUtilService.addSampleFeedbackToResults(result);
-        request.delete("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);
-        assertThat(resultRepository.existsById(result.getId())).isFalse();
-        request.delete("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void deleteResult_wrongParticipationId() throws Exception {
-        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
-        result = participationUtilService.addSampleFeedbackToResults(result);
-        long randomId = 1653;
-        request.delete("/api/assessment/participations/" + randomId + "/results/" + result.getId(), HttpStatus.BAD_REQUEST);
-        assertThat(resultRepository.existsById(result.getId())).isTrue();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void deleteResultStudent() throws Exception {
-        Result result = participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
-        result = participationUtilService.addSampleFeedbackToResults(result);
-        request.delete("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test

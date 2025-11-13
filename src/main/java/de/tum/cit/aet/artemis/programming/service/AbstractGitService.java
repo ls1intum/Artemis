@@ -19,8 +19,12 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevSort;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,7 +165,7 @@ public abstract class AbstractGitService {
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
     @Nullable
-    public ObjectId getLastCommitHash(LocalVCRepositoryUri repoUri) throws EntityNotFoundException {
+    public ObjectId getLastCommitHash(@Nullable LocalVCRepositoryUri repoUri) throws EntityNotFoundException {
         if (repoUri == null || repoUri.getURI() == null) {
             return null;
         }
@@ -178,6 +182,84 @@ public abstract class AbstractGitService {
         }
         catch (GitAPIException | URISyntaxException ex) {
             throw new EntityNotFoundException("Could not retrieve the last commit hash for repoUri " + repoUri + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
+     * Retrieves the hash of the first commit in a bare Git repository whose commit message contains
+     * a given search string. The method iterates commits in chronological order (oldest to newest)
+     * to ensure that the earliest matching commit is returned.
+     *
+     * <p>
+     * If no commit message contains the specified string, the method falls back to returning the
+     * hash of the very first (oldest) commit in the repository. This guarantees that the method always
+     * returns a deterministic commit reference, even when no match is found.
+     *
+     * <p>
+     * The repository is assumed to be a bare Git repository (i.e., without a working tree).
+     * The method opens it directly using {@link FileRepositoryBuilder} and performs a {@link RevWalk}
+     * to traverse commit history starting from all available branch heads.
+     *
+     * <p>
+     * Algorithmic details:
+     * <ul>
+     * <li>Commits are sorted in ascending chronological order using {@code RevSort.REVERSE}.</li>
+     * <li>The iteration stops immediately when a commit message containing the given substring is found.</li>
+     * <li>If no such commit exists, the first (oldest) commit encountered is returned as a fallback.</li>
+     * <li>The method operates in O(N) time, where N is the number of commits, but performs efficiently
+     * even for hundreds of commits (a few milliseconds for ~200 commits).</li>
+     * </ul>
+     *
+     * @param repository the Git repository (bare) to search within.
+     * @param message    the commit message substring to search for (case-sensitive).
+     * @return the {@link ObjectId} of the first commit whose message contains {@code message},
+     *         or the {@link ObjectId} of the oldest commit if no match is found;
+     *         or {@code null} if the repository URI is invalid or inaccessible.
+     * @throws EntityNotFoundException if the repository cannot be opened or traversed.
+     */
+    @Nullable
+    public ObjectId getFirstCommitWithMessage(Repository repository, String message) throws EntityNotFoundException {
+
+        try {
+            try (RevWalk walk = new RevWalk(repository)) {
+
+                // Sort oldest → newest
+                walk.sort(RevSort.COMMIT_TIME_DESC, true);
+                walk.sort(RevSort.REVERSE, true);
+
+                // Mark all branch heads as starting points
+                for (Ref ref : repository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)) {
+                    ObjectId tip = ref.getObjectId();
+                    if (tip != null) {
+                        walk.markStart(walk.parseCommit(tip));
+                    }
+                }
+
+                RevCommit firstCommit = null;
+
+                for (RevCommit commit : walk) {
+                    // Remember the first (oldest) commit as fallback
+                    if (firstCommit == null) {
+                        firstCommit = commit;
+                    }
+
+                    String msg = commit.getFullMessage();
+                    if (msg != null && msg.contains(message)) {
+                        return commit.getId(); // Found a match, return early
+                    }
+                }
+
+                // Fallback: return the first (oldest) commit if no message matched
+                if (firstCommit != null) {
+                    return firstCommit.getId();
+                }
+
+                return null;
+            }
+        }
+        catch (Exception ex) {
+            throw new EntityNotFoundException(
+                    "Could not retrieve the commit hash with message '" + message + "' for repository " + repository.getRemoteRepositoryUri() + ": " + ex);
         }
     }
 

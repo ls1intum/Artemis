@@ -29,8 +29,10 @@ import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
@@ -76,6 +78,8 @@ public class AthenaFeedbackSuggestionsService {
 
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
+    private final Optional<CourseCompetencyApi> courseCompetencyApi;
+
     @Value("${artemis.athena.allowed-feedback-requests:10}")
     private int allowedFeedbackRequests;
 
@@ -84,13 +88,14 @@ public class AthenaFeedbackSuggestionsService {
      *
      * @param athenaRestTemplate        REST template used for the communication with Athena
      * @param athenaModuleService       Athena module serviced used to determine the urls for different modules
-     * @param athenaDTOConverterService Service to convert exrcises and submissions to DTOs
+     * @param athenaDTOConverterService Service to convert exercises and submissions to DTOs
      * @param llmTokenUsageService      Service to store the usage of LLM tokens
      * @param learnerProfileApi         API for learner profile operations
+     * @param courseCompetencyApi       API for course competency operations
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
             AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository,
-            Optional<LearnerProfileApi> learnerProfileApi) {
+            Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseCompetencyApi> courseCompetencyApi) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
@@ -99,11 +104,12 @@ public class AthenaFeedbackSuggestionsService {
         this.llmTokenUsageService = llmTokenUsageService;
         this.learnerProfileApi = learnerProfileApi;
         this.resultRepository = resultRepository;
+        this.courseCompetencyApi = courseCompetencyApi;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record RequestDTO(@NotNull ExerciseBaseDTO exercise, @NotNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, @NotNull boolean isGraded,
-            @Nullable SubmissionBaseDTO latestSubmission) {
+            @Nullable SubmissionBaseDTO latestSubmission, @Nullable List<CourseCompetencyDTO> competencies) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -188,8 +194,10 @@ public class AthenaFeedbackSuggestionsService {
 
         Submission latestSubmission = getLatestSubmission((StudentParticipation) submission.getParticipation());
         SubmissionBaseDTO latestSubmissionDTO = latestSubmission != null ? athenaDTOConverterService.ofSubmission(exercise.getId(), latestSubmission) : null;
+        List<CourseCompetencyDTO> competencies = courseCompetencyApi.map(api -> api.findAllByExerciseId(exercise.getId()).stream().map(CourseCompetencyDTO::of).toList())
+                .orElse(null);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, latestSubmissionDTO);
+                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, latestSubmissionDTO, competencies);
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
@@ -214,7 +222,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
-                isGraded, null);
+                isGraded, null, null);
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
@@ -243,7 +251,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
-                isGraded, null);
+                isGraded, null, null);
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);

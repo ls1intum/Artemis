@@ -34,7 +34,7 @@
                     <div class="row g-0 mb-1">
                         <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.assessments"></div>
                         <div class="col-5">
-                            {{ totalNumberOfAssessments().total }} / {{ numberOfSubmissions().total }} ({{ totalAssessmentPercentage() }}%) | {{ numberOfTutorAssessments() }}
+                            {{ totalNumberOfAssessments() }} / {{ numberOfSubmissions().total }} ({{ totalAssessmentPercentage() }}%) | {{ numberOfTutorAssessments() }}
                         </div>
                     </div>
                     @if (complaintsEnabled()) {
@@ -120,7 +120,7 @@
                     <div class="row g-0 mb-1">
                         <div class="col-7" jhiTranslate="artemisApp.assessmentDashboard.assessments"></div>
                         <div class="col-5">
-                            ({{ totalNumberOfAssessments().total }} / {{ numberOfSubmissions().total * numberOfCorrectionRounds() }}) ({{ totalAssessmentPercentage() }}%) |
+                            ({{ totalNumberOfAssessments() }} / {{ numberOfSubmissions().total * numberOfCorrectionRounds() }}) ({{ totalAssessmentPercentage() }}%) |
                             {{ numberOfTutorAssessments() }}
                         </div>
                     </div>
