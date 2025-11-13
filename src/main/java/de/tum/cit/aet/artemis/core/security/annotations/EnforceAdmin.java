@@ -13,7 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
  * <p>
  * This annotation requires:
  * <ul>
- * <li>The user must have the ADMIN role</li>
+ * <li>The user must have the {@link de.tum.cit.aet.artemis.core.security.Role#ADMIN} role</li>
  * <li>The user must be authenticated with a passkey (WebAuthn)</li>
  * <li>The passkey must be super admin approved</li>
  * </ul>
