@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 
 class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -391,7 +392,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
             localAuxiliaryRepo.remoteBareGitRepo.close();
         }
         if (localAuxiliaryRepo.remoteBareGitRepoFile.exists()) {
-            FileUtils.deleteDirectory(localAuxiliaryRepo.remoteBareGitRepoFile);
+            RepositoryExportTestUtil.safeDeleteDirectory(localAuxiliaryRepo.remoteBareGitRepoFile.toPath());
         }
         if (localAuxiliaryRepo.workingCopyGitRepo != null) {
             localAuxiliaryRepo.workingCopyGitRepo.close();

@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
@@ -210,7 +211,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             assertCorrectContentForExercise(exercisePath, true, assessmentDueDateInTheFuture);
         }
 
-        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
@@ -535,7 +536,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             assertCorrectContentForExercise(exerciseDirPath, false, false);
         }
 
-        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
@@ -561,7 +562,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
 
-        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
@@ -584,7 +585,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             assertCorrectContentForExercise(exerciseDirectory, true, assessmentDueDateInTheFuture);
         }
 
-        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
@@ -629,7 +630,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             assertCorrectContentForExercise(exerciseDirectory, true, assessmentDueDateInTheFuture);
         }
 
-        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 

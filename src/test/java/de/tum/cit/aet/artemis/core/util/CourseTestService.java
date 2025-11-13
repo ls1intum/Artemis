@@ -160,6 +160,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
@@ -1958,7 +1959,7 @@ public class CourseTestService {
                     .noneMatch(missingPathPredicate);
         }
 
-        org.apache.commons.io.FileUtils.deleteDirectory(courseArchiveDir.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(courseArchiveDir);
         org.apache.commons.io.FileUtils.delete(courseArchivePath.toFile());
     }
 
@@ -1984,7 +1985,7 @@ public class CourseTestService {
                     .anyMatch(file -> file.getFileName().toString().contains("short_answer_questions_answers") && file.getFileName().toString().endsWith(".txt"));
         }
 
-        org.apache.commons.io.FileUtils.deleteDirectory(courseArchiveDir.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(courseArchiveDir);
         org.apache.commons.io.FileUtils.delete(courseArchivePath.toFile());
     }
 
@@ -2217,7 +2218,7 @@ public class CourseTestService {
             return files.filter(Files::isRegularFile).map(Path::getFileName).filter(path -> !path.toString().endsWith(".zip")).toList();
         }
         finally {
-            org.apache.commons.io.FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+            RepositoryExportTestUtil.safeDeleteDirectory(extractedArchiveDir);
             org.apache.commons.io.FileUtils.delete(archivePath.toFile());
         }
     }
@@ -2337,7 +2338,7 @@ public class CourseTestService {
             }
         }
 
-        org.apache.commons.io.FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedArchiveDir);
         org.apache.commons.io.FileUtils.delete(archive);
     }
 

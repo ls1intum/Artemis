@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -1156,7 +1155,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             return commit;
         }
         finally {
-            FileUtils.deleteDirectory(workingCopy.toFile());
+            RepositoryExportTestUtil.safeDeleteDirectory(workingCopy);
         }
     }
 

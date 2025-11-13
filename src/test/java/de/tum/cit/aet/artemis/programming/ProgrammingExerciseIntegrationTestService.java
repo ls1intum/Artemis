@@ -300,7 +300,7 @@ public class ProgrammingExerciseIntegrationTestService {
             FileUtils.forceDelete(downloadedFile);
         }
         if (plagiarismChecksTestReposDir != null && plagiarismChecksTestReposDir.exists()) {
-            FileUtils.deleteDirectory(plagiarismChecksTestReposDir);
+            RepositoryExportTestUtil.safeDeleteDirectory(plagiarismChecksTestReposDir.toPath());
         }
     }
 

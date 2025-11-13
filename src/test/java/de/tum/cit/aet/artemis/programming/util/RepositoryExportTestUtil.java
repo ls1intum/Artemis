@@ -23,6 +23,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 
+import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -342,6 +343,83 @@ public final class RepositoryExportTestUtil {
         for (Map.Entry<String, String> e : expectedSubset.entrySet()) {
             assertThat(actual).containsKey(e.getKey());
             assertThat(actual.get(e.getKey())).isNotNull().isNotBlank();
+        }
+    }
+
+    // ===========================================================================
+    // Utilities for reducing code duplication across test suites
+    // ===========================================================================
+
+    /**
+     * Extract a ZIP file, assert it contains expected files, and clean up the extracted directory.
+     * Consolidates a common pattern used throughout export tests.
+     *
+     * @param zipPath       the path to the ZIP file
+     * @param zipUtil       the ZipFileTestUtilService for extracting
+     * @param expectedFiles filenames that must exist in the extracted directory
+     * @throws IOException if extraction or cleanup fails
+     */
+    public static void assertZipContentsAndCleanup(Path zipPath, ZipFileTestUtilService zipUtil, String... expectedFiles) throws IOException {
+        Path extractedDir = zipUtil.extractZipFileRecursively(zipPath.toString());
+        try {
+            for (String expectedFile : expectedFiles) {
+                assertThat(Files.walk(extractedDir).anyMatch(path -> path.getFileName().toString().equals(expectedFile))).as("Expected file exists: " + expectedFile).isTrue();
+            }
+        }
+        finally {
+            FileUtils.deleteDirectory(extractedDir.toFile());
+        }
+    }
+
+    /**
+     * Delete a student's bare repository from the LocalVC file system.
+     * Handles path construction: projectKey (uppercase) + "/" + repositorySlug (lowercase) + ".git"
+     *
+     * @param exercise        the programming exercise
+     * @param username        the student username (used to derive slug)
+     * @param localVCBasePath the base path for LocalVC repositories
+     * @throws IOException if deletion fails
+     */
+    public static void deleteStudentBareRepo(ProgrammingExercise exercise, String username, Path localVCBasePath) throws IOException {
+        String projectKey = exercise.getProjectKey().toUpperCase();
+        String slug = (exercise.getShortName() + "-" + username).toLowerCase();
+        Path bareRepoPath = localVCBasePath.resolve(projectKey).resolve(slug + ".git");
+        if (Files.exists(bareRepoPath)) {
+            FileUtils.deleteDirectory(bareRepoPath.toFile());
+        }
+    }
+
+    /**
+     * Safely delete a directory, ignoring errors if it doesn't exist.
+     * Consolidates scattered FileUtils.deleteDirectory calls with consistent exception handling.
+     *
+     * @param directory the directory to delete
+     */
+    public static void safeDeleteDirectory(Path directory) {
+        if (directory == null || !Files.exists(directory)) {
+            return;
+        }
+        try {
+            FileUtils.deleteDirectory(directory.toFile());
+        }
+        catch (IOException e) {
+            // Log and continue - cleanup failures shouldn't break tests
+            System.err.println("Failed to delete directory " + directory + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Delete a LocalVC project if it exists (project key → all repositories).
+     * Moved from ProgrammingExerciseTestService to consolidate usage.
+     *
+     * @param localVCBasePath the base path for LocalVC repositories
+     * @param projectKey      the project key (will be uppercased)
+     * @throws IOException if deletion fails
+     */
+    public static void deleteLocalVcProjectIfPresent(Path localVCBasePath, String projectKey) throws IOException {
+        Path projectPath = localVCBasePath.resolve(projectKey.toUpperCase());
+        if (Files.exists(projectPath)) {
+            FileUtils.deleteDirectory(projectPath.toFile());
         }
     }
 }

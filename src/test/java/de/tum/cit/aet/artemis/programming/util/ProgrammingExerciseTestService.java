@@ -432,9 +432,7 @@ public class ProgrammingExerciseTestService {
         Path projectFolder = localVCBasePath.resolve(normalizedProjectKey);
         Files.createDirectories(projectFolder);
         Path remotePath = projectFolder.resolve(repositorySlug + ".git");
-        if (Files.exists(remotePath)) {
-            FileUtils.deleteDirectory(remotePath.toFile());
-        }
+        RepositoryExportTestUtil.safeDeleteDirectory(remotePath);
 
         LocalRepository configuredRepository = localVCLocalCITestService.createAndConfigureLocalRepository(normalizedProjectKey, repositorySlug);
         repository.workingCopyGitRepoFile = configuredRepository.workingCopyGitRepoFile;
@@ -1306,9 +1304,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockGetCiProjectMissing(exerciseToBeImported);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         Path targetProjectFolder = localVCBasePath.resolve(exerciseToBeImported.getProjectKey());
-        if (Files.exists(targetProjectFolder)) {
-            FileUtils.deleteDirectory(targetProjectFolder.toFile());
-        }
+        RepositoryExportTestUtil.safeDeleteDirectory(targetProjectFolder);
         // Import the exam
         targetExam.setChannelName("testchannel-imported");
         final Exam received = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", targetExam, Exam.class, HttpStatus.CREATED);
@@ -1689,7 +1685,7 @@ public class ProgrammingExerciseTestService {
             }
         }
 
-        FileUtils.deleteDirectory(extractedZipDir.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDir);
         FileUtils.delete(zipFile);
     }
 
@@ -1722,7 +1718,7 @@ public class ProgrammingExerciseTestService {
             assertThat(exportedExercise.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(10);
         }
 
-        FileUtils.deleteDirectory(extractedZipDir.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDir);
         FileUtils.delete(zipFile);
     }
 
@@ -1741,7 +1737,7 @@ public class ProgrammingExerciseTestService {
 
         }
 
-        FileUtils.deleteDirectory(extractedZipDir.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDir);
         FileUtils.delete(zipFile);
     }
 
@@ -1774,7 +1770,7 @@ public class ProgrammingExerciseTestService {
 
         assertThat(exportedExercise.getProblemStatement()).isEqualTo("[task][name](%s)".formatted(test.getTestName()));
 
-        FileUtils.deleteDirectory(extractedZipDir.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDir);
         FileUtils.delete(zipFile);
     }
 
@@ -1920,12 +1916,7 @@ public class ProgrammingExerciseTestService {
 
         // Delete the LocalVC bare repository to trigger real checkout failure (instead of mocking)
         // This tests that the export service gracefully handles missing/broken repos and continues with others
-        var projectKey = participation.getProgrammingExercise().getProjectKey();
-        var student2RepoSlug = projectKey.toLowerCase() + "-" + userPrefix + "student2";
-        var student2BareRepoPath = localVCBasePath.resolve(projectKey.toUpperCase()).resolve(student2RepoSlug + ".git");
-        if (Files.exists(student2BareRepoPath)) {
-            FileUtils.deleteDirectory(student2BareRepoPath.toFile());
-        }
+        RepositoryExportTestUtil.deleteStudentBareRepo(participation.getProgrammingExercise(), userPrefix + "student2", localVCBasePath);
 
         course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         List<String> errors = new ArrayList<>();
@@ -1942,7 +1933,7 @@ public class ProgrammingExerciseTestService {
             assertThat(filenames).contains(Path.of("Template.java"), Path.of("Solution.java"), Path.of("Tests.java"), Path.of("HelloWorld.java"));
         }
 
-        FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedArchiveDir);
         FileUtils.delete(archivePath.toFile());
     }
 
@@ -2065,7 +2056,7 @@ public class ProgrammingExerciseTestService {
             assertThat(filenames).anyMatch(name -> name.endsWith("-tests.zip"));
         }
 
-        FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedArchiveDir);
         FileUtils.delete(archive);
     }
 

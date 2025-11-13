@@ -80,6 +80,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -1225,9 +1226,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private void deleteDirectoryIfExists(Path path) throws IOException {
-        if (Files.exists(path)) {
-            FileUtils.deleteDirectory(path.toFile());
-        }
+        RepositoryExportTestUtil.safeDeleteDirectory(path);
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {

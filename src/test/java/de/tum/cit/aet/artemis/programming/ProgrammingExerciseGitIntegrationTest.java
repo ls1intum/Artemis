@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +20,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
 
 class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -65,7 +65,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
             localGit.close();
         }
         if (localRepoPath != null && localRepoPath.toFile().exists()) {
-            FileUtils.deleteDirectory(localRepoPath.toFile());
+            RepositoryExportTestUtil.safeDeleteDirectory(localRepoPath);
         }
     }
 
