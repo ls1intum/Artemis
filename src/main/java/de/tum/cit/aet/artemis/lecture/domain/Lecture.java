@@ -2,19 +2,25 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -60,7 +66,7 @@ public class Lecture extends DomainObject {
     private Set<Attachment> attachments = new HashSet<>();
 
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn(name = "lecture_unit_order")
+    @OrderBy("lectureUnitOrder ASC") // DB → Java: always ordered by that column
     @JsonIgnoreProperties("lecture")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<LectureUnit> lectureUnits = new ArrayList<>();
@@ -136,17 +142,70 @@ public class Lecture extends DomainObject {
         this.attachments = attachments;
     }
 
+    /**
+     * Get an unmodifiable list of lecture units when the objects are initialized by Hibernate.
+     * This is important so that external code does not modify the list without updating the back-references and order.
+     *
+     * @return the lecture units
+     */
     public List<LectureUnit> getLectureUnits() {
+        if (Hibernate.isInitialized(lectureUnits)) {
+            return Collections.unmodifiableList(lectureUnits);
+        }
         return lectureUnits;
     }
 
-    public void setLectureUnits(List<LectureUnit> lectureUnits) {
-        this.lectureUnits = lectureUnits;
+    public void reorderLectureUnits(List<Long> orderedIds) {
+        lectureUnits.sort(Comparator.comparing(unit -> orderedIds.indexOf(unit.getId())));
+        updateLectureUnitOrder();
     }
 
-    public void addLectureUnit(LectureUnit lectureUnit) {
-        this.lectureUnits.add(lectureUnit);
+    public void setLectureUnits(List<LectureUnit> lectureUnits) {
+        this.lectureUnits.clear();
+        if (lectureUnits != null) {
+            for (LectureUnit lectureUnit : lectureUnits) {
+                addLectureUnit(lectureUnit);        // ensures back-reference and collection management
+            }
+        }
+        updateLectureUnitOrder();
+    }
+
+    public void addLectureUnit(@Nullable LectureUnit lectureUnit) {
+        if (lectureUnit == null) {
+            return;
+        }
+        lectureUnits.add(lectureUnit);              // order is implicit by position
         lectureUnit.setLecture(this);
+        updateLectureUnitOrder();
+    }
+
+    public void removeLectureUnit(@Nullable LectureUnit lectureUnit) {
+        if (lectureUnit == null) {
+            return;
+        }
+        lectureUnits.remove(lectureUnit);
+        lectureUnit.setLecture(null);
+        updateLectureUnitOrder();
+    }
+
+    public void removeLectureUnitById(@Nullable Long lectureUnitId) {
+        if (lectureUnitId == null) {
+            return;
+        }
+
+        // find the unit to remove
+        LectureUnit toRemove = lectureUnits.stream().filter(unit -> unit != null && lectureUnitId.equals(unit.getId())).findFirst().orElse(null);
+
+        removeLectureUnit(toRemove);
+    }
+
+    @PrePersist
+    @PreUpdate
+    public void updateLectureUnitOrder() {
+        for (int i = 0; i < lectureUnits.size(); i++) {
+            // or through package-private setter:
+            lectureUnits.get(i).setLectureUnitOrder(i);
+        }
     }
 
     public Course getCourse() {

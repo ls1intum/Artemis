@@ -65,7 +65,7 @@ public class FileService implements DisposableBean {
      */
     @CacheEvict(value = "files", key = "#path")
     public void evictCacheForPath(Path path) {
-        log.info("Invalidate files cache for {}", path);
+        log.debug("Invalidate files cache for {}", path);
         // Intentionally blank
     }
 

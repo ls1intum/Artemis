@@ -171,7 +171,7 @@ public class LectureUnitService {
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
         // Creating a new list of lecture units without the one we want to remove
-        lecture.getLectureUnits().removeIf(unit -> unit == null || unit.getId().equals(lectureUnitToDelete.getId()));
+        lecture.removeLectureUnitById(lectureUnit.getId());
         lectureRepository.save(lecture);
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {

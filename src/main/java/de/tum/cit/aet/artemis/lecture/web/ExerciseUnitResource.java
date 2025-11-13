@@ -6,8 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import jakarta.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -23,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -60,27 +59,23 @@ public class ExerciseUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("lectures/{lectureId}/exercise-units")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<ExerciseUnit> createExerciseUnit(@PathVariable Long lectureId, @RequestBody ExerciseUnit exerciseUnit) throws URISyntaxException {
         log.debug("REST request to create ExerciseUnit : {}", exerciseUnit);
         if (exerciseUnit.getId() != null) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("A new exercise unit cannot have an id", ENTITY_NAME, "idExists");
         }
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
-        if (lecture.getCourse() == null) {
-            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.getCourse() == null || (exerciseUnit.getLecture() != null && !lecture.getId().equals(exerciseUnit.getLecture().getId()))) {
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
-        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 
-        // persist lecture unit before lecture to prevent "null index column for collection" error
-        exerciseUnit.setLecture(null);
-        exerciseUnit = exerciseUnitRepository.saveAndFlush(exerciseUnit);
-        exerciseUnit.setLecture(lecture);
         lecture.addLectureUnit(exerciseUnit);
-        Lecture updatedLecture = lectureRepository.save(lecture);
-        ExerciseUnit persistedExerciseUnit = (ExerciseUnit) updatedLecture.getLectureUnits().getLast();
+        Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
+        ExerciseUnit persistedUnit = (ExerciseUnit) updatedLecture.getLectureUnits().getLast();
+        persistedUnit = exerciseUnitRepository.saveAndFlush(persistedUnit);
 
-        return ResponseEntity.created(new URI("/api/exercise-units/" + persistedExerciseUnit.getId())).body(persistedExerciseUnit);
+        return ResponseEntity.created(new URI("/api/exercise-units/" + persistedUnit.getId())).body(persistedUnit);
     }
 
     /**

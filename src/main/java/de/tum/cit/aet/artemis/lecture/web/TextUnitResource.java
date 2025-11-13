@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -124,33 +125,26 @@ public class TextUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("lectures/{lectureId}/text-units")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<TextUnit> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) throws URISyntaxException {
         log.debug("REST request to create TextUnit : {}", textUnit);
         if (textUnit.getId() != null) {
             throw new BadRequestAlertException("A new text unit cannot have an id", ENTITY_NAME, "idExists");
         }
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
-
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null || (textUnit.getLecture() != null && !lecture.getId().equals(textUnit.getLecture().getId()))) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
-        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 
-        // persist lecture unit before lecture to prevent "null index column for collection" error
-        textUnit.setLecture(null);
-
-        textUnit = lectureUnitService.saveWithCompetencyLinks(textUnit, textUnitRepository::saveAndFlush);
-
-        textUnit.setLecture(lecture);
         lecture.addLectureUnit(textUnit);
-        Lecture updatedLecture = lectureRepository.save(lecture);
-        TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().getLast();
+        Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
+        TextUnit persistedUnit = (TextUnit) updatedLecture.getLectureUnits().getLast();
+        // From now on, only use persistedUnit
+        lectureUnitService.saveWithCompetencyLinks(persistedUnit, textUnitRepository::saveAndFlush);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedTextUnit));
-
-        lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedTextUnit);
-        return ResponseEntity.created(new URI("/api/text-units/" + persistedTextUnit.getId())).body(persistedTextUnit);
+        lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
+        return ResponseEntity.created(new URI("/api/text-units/" + persistedUnit.getId())).body(persistedUnit);
     }
 }

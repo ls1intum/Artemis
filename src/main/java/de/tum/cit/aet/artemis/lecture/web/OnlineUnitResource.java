@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -126,33 +127,30 @@ public class OnlineUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("lectures/{lectureId}/online-units")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<OnlineUnit> createOnlineUnit(@PathVariable Long lectureId, @RequestBody final OnlineUnit onlineUnit) throws URISyntaxException {
         log.debug("REST request to create onlineUnit : {}", onlineUnit);
         if (onlineUnit.getId() != null) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("A new online unit cannot have an id", ENTITY_NAME, "idExists");
         }
 
         lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
-        if (lecture.getCourse() == null) {
-            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.getCourse() == null || (onlineUnit.getLecture() != null && !lecture.getId().equals(onlineUnit.getLecture().getId()))) {
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        // persist lecture unit before lecture to prevent "null index column for collection" error
-        onlineUnit.setLecture(null);
+        lecture.addLectureUnit(onlineUnit);
+        Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
 
-        OnlineUnit persistedOnlineUnit = lectureUnitService.saveWithCompetencyLinks(onlineUnit, onlineUnitRepository::saveAndFlush);
+        OnlineUnit persistedUnit = (OnlineUnit) updatedLecture.getLectureUnits().getLast();
+        // From now on, only use persistedUnit
+        lectureUnitService.saveWithCompetencyLinks(persistedUnit, onlineUnitRepository::saveAndFlush);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
-        persistedOnlineUnit.setLecture(lecture);
-        lecture.addLectureUnit(persistedOnlineUnit);
-        lectureRepository.save(lecture);
-
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedOnlineUnit));
-
-        return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId())).body(persistedOnlineUnit);
+        lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
+        return ResponseEntity.created(new URI("/api/online-units/" + persistedUnit.getId())).body(persistedUnit);
     }
 
     private static final Pattern DOMAIN_PATTERN = Pattern.compile("^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\\.[A-Za-z]{2,}$");

@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -68,20 +67,12 @@ public class AttachmentVideoUnitService {
      *
      * @param attachmentVideoUnit The attachmentVideoUnit to create
      * @param attachment          The attachment to create the attachmentVideoUnit for
-     * @param lecture             The lecture linked to the attachmentVideoUnit
      * @param file                The file to upload
      * @param keepFilename        Whether to keep the original filename or not.
      * @return The created attachment video unit
      */
-    public AttachmentVideoUnit createAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, Lecture lecture, MultipartFile file,
-            boolean keepFilename) {
-        // persist lecture unit before lecture to prevent "null index column for collection" error
-        attachmentVideoUnit.setLecture(null);
-
+    public AttachmentVideoUnit saveAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, MultipartFile file, boolean keepFilename) {
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(attachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
-
-        attachmentVideoUnit.setLecture(lecture);
-        lecture.addLectureUnit(savedAttachmentVideoUnit);
 
         if (attachment != null && file != null) {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
@@ -240,8 +231,8 @@ public class AttachmentVideoUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentVideoUnit attachmentVideoUnit) {
         if (file != null && !file.isEmpty()) {
-            this.fileService
-                    .evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT));
+            var attachmentUri = URI.create(attachmentVideoUnit.getAttachment().getLink());
+            this.fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(attachmentUri, FilePathType.ATTACHMENT_UNIT));
         }
     }
 

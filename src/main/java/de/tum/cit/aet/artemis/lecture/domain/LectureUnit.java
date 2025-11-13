@@ -17,6 +17,8 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -63,8 +65,19 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @Column(name = "release_date")
     protected ZonedDateTime releaseDate;
 
-    @ManyToOne
-    @JoinColumn(name = "lecture_id")
+    // internal order field, NOT exposed in public API
+    @JsonIgnore
+    @Column(name = "lecture_unit_order", nullable = false)
+    private int lectureUnitOrder;   // package-private, no getter/setter
+
+    // Must only be used by Lecture to set the order of its lecture units before persisting
+    // TODO: write an architecture test to ensure this
+    void setLectureUnitOrder(int order) {
+        this.lectureUnitOrder = order;
+    }
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "lecture_id", nullable = false)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Lecture lecture;
 
@@ -159,6 +172,20 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         return getCompletedUsers().stream().filter(completion -> completion.getUser().getId().equals(user.getId())).map(LectureUnitCompletion::getCompletedAt).findFirst();
     }
 
+    @PrePersist
+    @PreUpdate
+    private void updateLectureUnitOrder() {
+        if (lecture == null) {
+            return; // should not really happen due to nullable=false, but safe
+        }
+        lecture.updateLectureUnitOrder();
+    }
+
     // Used to distinguish the type when used in a DTO, e.g., LectureUnitForLearningPathNodeDetailsDTO.
     public abstract String getType();
+
+    @Override
+    public String toString() {
+        return "LectureUnit{" + "id=" + getId() + ", type=" + getType() + ", name='" + name + "'" + ", releaseDate=" + releaseDate + ", lectureUnitOrder=" + lectureUnitOrder + '}';
+    }
 }

@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -165,7 +166,7 @@ public class AttachmentVideoUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-video-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<AttachmentVideoUnit> createAttachmentVideoUnit(@PathVariable Long lectureId, @RequestPart AttachmentVideoUnit attachmentVideoUnit,
             @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename)
             throws URISyntaxException {
@@ -186,17 +187,20 @@ public class AttachmentVideoUnitResource {
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, file, keepFilename);
-        lectureRepository.save(lecture);
+        lecture.addLectureUnit(attachmentVideoUnit);
+        Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
+
+        AttachmentVideoUnit persistedUnit = attachmentVideoUnitService.saveAttachmentVideoUnit((AttachmentVideoUnit) updatedLecture.getLectureUnits().getLast(), attachment, file,
+                keepFilename);
+        // From now on, only use persistedUnit
         if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
-            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(persistedUnit);
         }
-        attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedAttachmentVideoUnit));
+        attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(persistedUnit);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
-        return ResponseEntity.created(new URI("/api/attachment-video-units/" + savedAttachmentVideoUnit.getId())).body(savedAttachmentVideoUnit);
+        return ResponseEntity.created(new URI("/api/attachment-video-units/" + persistedUnit.getId())).body(persistedUnit);
     }
 
     /**
@@ -246,12 +250,12 @@ public class AttachmentVideoUnitResource {
 
         try {
             byte[] fileBytes = fileService.getFileForPath(filePath);
-            List<AttachmentVideoUnit> savedAttachmentVideoUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitSplitInformationDTO, fileBytes,
-                    lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId));
-            savedAttachmentVideoUnits.forEach(attachmentVideoUnitService::prepareAttachmentVideoUnitForClient);
+            var lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+            var savedUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitSplitInformationDTO, fileBytes, lecture);
+            savedUnits.forEach(attachmentVideoUnitService::prepareAttachmentVideoUnitForClient);
 
-            competencyProgressApi.ifPresent(api -> savedAttachmentVideoUnits.forEach(api::updateProgressByLearningObjectAsync));
-            return ResponseEntity.ok().body(savedAttachmentVideoUnits);
+            competencyProgressApi.ifPresent(api -> savedUnits.forEach(api::updateProgressByLearningObjectAsync));
+            return ResponseEntity.ok().body(savedUnits);
         }
         catch (IOException e) {
             log.error("Could not create attachment video units automatically", e);

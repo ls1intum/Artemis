@@ -137,17 +137,19 @@ public class LocalCIEventListenerService {
     // TODO: we should add this on all core nodes, not only on the primary scheduling one
     @Scheduled(fixedRate = 10 * 1000) // every 10 seconds
     public void processQueuedResults() {
-        final int initialSize = distributedDataAccessService.getResultQueueSize();
-        log.info("Scheduled task found {} queued results in the Hazelcast distributed build result queue. Will process these results now.", initialSize);
-        for (int i = 0; i < initialSize; i++) {
-            if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
-                break;
-            }
-            try {
-                localCIResultProcessingService.processResultAsync();
-            }
-            catch (Exception ex) {
-                log.warn("Processing a queued result failed. Continuing with remaining items", ex);
+        final int resultQueueSize = distributedDataAccessService.getResultQueueSize();
+        if (resultQueueSize > 0) {
+            log.info("Scheduled task found {} queued results in the Hazelcast distributed build result queue. Will process these results now.", resultQueueSize);
+            for (int i = 0; i < resultQueueSize; i++) {
+                if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
+                    break;
+                }
+                try {
+                    localCIResultProcessingService.processResultAsync();
+                }
+                catch (Exception ex) {
+                    log.warn("Processing a queued result failed. Continuing with remaining items", ex);
+                }
             }
         }
     }
