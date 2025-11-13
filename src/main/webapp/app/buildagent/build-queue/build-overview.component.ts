@@ -31,6 +31,7 @@ import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { Subject, Subscription } from 'rxjs';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
+import { computed } from '@angular/core';
 
 @Component({
     selector: 'jhi-build-overview',
@@ -100,7 +101,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * - true:  Show Course ID column (multiple courses visible)
      * - false: Hide Course ID column (single course context)
      */
-    isAdministrationView = false;
+    isAdministrationView = computed(() => this.courseId === 0);
 
     paginationConfig: PaginationConfig = {
         pageSize: ITEMS_PER_PAGE,
@@ -113,9 +114,6 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         // NOTE: in the server administration, courseId will be parsed as 0, while in course management, it should be a positive integer
-
-        this.isAdministrationView = this.courseId === 0;
-
         this.loadQueue();
         this.buildDurationInterval = setInterval(() => {
             this.runningBuildJobs = this.updateBuildJobDuration(this.runningBuildJobs);

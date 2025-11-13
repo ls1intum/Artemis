@@ -591,4 +591,14 @@ describe('BuildQueueComponent', () => {
         expect(downloadSpy).toHaveBeenCalledTimes(2);
         expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
     });
+
+    it('should set isAdministrationView to true when courseId is 0', () => {
+        component.courseId = 0;
+        expect(component.isAdministrationView()).toBeTrue();
+    });
+
+    it('should set isAdministrationView to false when courseId > 0', () => {
+        component.courseId = 123;
+        expect(component.isAdministrationView()).toBeFalse();
+    });
 });
