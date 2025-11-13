@@ -368,7 +368,7 @@ public class LearningObjectImportService {
 
         Optional<Lecture> foundLecture = Optional.ofNullable(titleToImportedLectures.get(sourceLecture.getTitle()));
         if (foundLecture.isEmpty()) {
-            foundLecture = repositoryApi.findUniqueLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(sourceLecture.getTitle(), courseToImportInto.getId());
+            foundLecture = repositoryApi.findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(sourceLecture.getTitle(), courseToImportInto.getId());
         }
         Lecture importedLecture = foundLecture.orElseGet(() -> importApi.importLecture(sourceLecture, courseToImportInto, false));
         titleToImportedLectures.put(importedLecture.getTitle(), importedLecture);

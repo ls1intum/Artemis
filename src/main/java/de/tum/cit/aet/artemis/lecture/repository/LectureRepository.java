@@ -143,7 +143,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
      * @return the lecture with the given title and course id
      * @throws NoUniqueQueryException if multiple lectures are found with the same title
      */
-    default Optional<Lecture> findUniqueLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
+    default Optional<Lecture> findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
         Set<Lecture> allLectures = findAllByTitleAndCourseIdWithLectureUnits(title, courseId);
         if (allLectures.size() > 1) {
             throw new NoUniqueQueryException("Found multiple lectures with title " + title + " in course with id " + courseId);
