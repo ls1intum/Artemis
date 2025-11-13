@@ -5,8 +5,8 @@ import java.io.Serial;
 import org.springframework.security.access.AccessDeniedException;
 
 /**
- * Exception thrown when passkey authentication requirements are not met.
- * Extends AccessDeniedException to integrate with Spring Security's exception handling.
+ * Exception thrown when passkey authentication requirements are not met (e.g. {@link de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin}.
+ * Extends {@link AccessDeniedException} to integrate with Spring Security's exception handling.
  */
 public class PasskeyAuthenticationException extends AccessDeniedException {
 
@@ -15,9 +15,6 @@ public class PasskeyAuthenticationException extends AccessDeniedException {
 
     private final PasskeyAuthenticationFailureReason reason;
 
-    /**
-     * Reasons why passkey authentication can fail
-     */
     public enum PasskeyAuthenticationFailureReason {
 
         /**
