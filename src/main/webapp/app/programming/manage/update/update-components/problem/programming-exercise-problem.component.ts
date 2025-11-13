@@ -88,7 +88,8 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     }
 
     /**
-     * Cancels the problem statement generation and closes the popover
+     * Cancels the ongoing problem statement generation.
+     * Preserves the user's prompt so they can retry or modify it.
      */
     cancelGeneration(): void {
         if (this.currentGenerationSubscription) {
@@ -96,7 +97,6 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
             this.currentGenerationSubscription = undefined;
         }
         this.isGenerating = false;
-        this.userPrompt = '';
     }
     /**
      * Generates a draft problem statement using the user's prompt
