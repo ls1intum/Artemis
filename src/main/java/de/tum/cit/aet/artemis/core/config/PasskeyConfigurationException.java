@@ -11,13 +11,10 @@ public class PasskeyConfigurationException extends RuntimeException {
 
     private final String conflictingPropertyName;
 
-    private final boolean expectedValue;
-
-    public PasskeyConfigurationException(String message, String propertyName, String conflictingPropertyName, boolean expectedValue) {
+    public PasskeyConfigurationException(String message, String propertyName, String conflictingPropertyName) {
         super(message);
         this.propertyName = propertyName;
         this.conflictingPropertyName = conflictingPropertyName;
-        this.expectedValue = expectedValue;
     }
 
     public String getPropertyName() {
@@ -26,9 +23,5 @@ public class PasskeyConfigurationException extends RuntimeException {
 
     public String getConflictingPropertyName() {
         return conflictingPropertyName;
-    }
-
-    public boolean getExpectedValue() {
-        return expectedValue;
     }
 }

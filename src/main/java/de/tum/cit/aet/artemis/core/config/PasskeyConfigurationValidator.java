@@ -48,8 +48,7 @@ public class PasskeyConfigurationValidator {
                             + "Please update your application configuration files to enable passkey or disable the requirement for administrator features.",
                     Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Constants.PASSKEY_ENABLED_PROPERTY_NAME);
             log.error(errorMessage);
-            throw new PasskeyConfigurationException(errorMessage, Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Constants.PASSKEY_ENABLED_PROPERTY_NAME,
-                    true);
+            throw new PasskeyConfigurationException(errorMessage, Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Constants.PASSKEY_ENABLED_PROPERTY_NAME);
         }
 
         if (passkeyRequiredForAdminFeatures) {
