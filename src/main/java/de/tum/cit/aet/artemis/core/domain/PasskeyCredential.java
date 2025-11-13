@@ -193,8 +193,8 @@ public class PasskeyCredential extends AbstractAuditingEntity {
         return isSuperAdminApproved;
     }
 
-    public void setSuperAdminApproved(boolean superAdminApproved) {
-        this.isSuperAdminApproved = superAdminApproved;
+    public void setSuperAdminApproved(boolean isSuperAdminApproved) {
+        this.isSuperAdminApproved = isSuperAdminApproved;
     }
 
     /**
