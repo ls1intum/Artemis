@@ -68,6 +68,12 @@ export class WebauthnService {
                     label: `${user.email} - ${getOS()}`,
                 },
             });
+
+            this.accountService.userIdentity.set({
+                ...this.accountService.userIdentity(),
+                askToSetupPasskey: false,
+                internal: this.accountService.userIdentity()?.internal ?? false,
+            });
         } catch (error) {
             const userPressedCancelInPasskeyCreationDialog = error.name === UserAbortedPasskeyCreationError.name && error.code === UserAbortedPasskeyCreationError.code;
             if (userPressedCancelInPasskeyCreationDialog) {

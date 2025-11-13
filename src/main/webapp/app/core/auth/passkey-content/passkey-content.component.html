@@ -29,9 +29,9 @@
     }
 }
 @if (showFooter()) {
-    @if (userHasRegisteredAPasskey) {
+    @if (!accountService.askToSetupPasskey()) {
         <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" [icon]="faKey" />
     } @else {
-        <jhi-button (onClick)="setupPasskeyAndLogin()" [title]="'global.menu.admin.setupAndLoginWithPasskey'" [icon]="faKey" />
+        <jhi-button (onClick)="setupPasskey()" [title]="'global.menu.admin.setupPasskey'" [icon]="faKey" />
     }
 }

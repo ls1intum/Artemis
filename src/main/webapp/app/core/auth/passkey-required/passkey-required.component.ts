@@ -1,7 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { faKey, faLock } from '@fortawesome/free-solid-svg-icons';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { PasskeyContentComponent } from 'app/core/auth/passkey-content/passkey-content.component';
 
@@ -11,10 +9,6 @@ import { PasskeyContentComponent } from 'app/core/auth/passkey-content/passkey-c
     templateUrl: './passkey-required.component.html',
 })
 export class PasskeyRequiredComponent implements OnInit {
-    protected readonly ButtonType = ButtonType;
-    protected readonly faLock = faLock;
-    protected readonly faKey = faKey;
-
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     protected readonly accountService = inject(AccountService);

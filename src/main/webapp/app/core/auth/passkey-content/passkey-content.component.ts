@@ -33,8 +33,6 @@ export class PasskeyContentComponent implements OnInit {
     triggerPasskeyLoginSuccessHandler = output<void>();
     linkToUserSettingsWasClicked = output<void>();
 
-    userHasRegisteredAPasskey: boolean = false;
-
     ngOnInit() {
         this.initializeUserIdentity().then((response) => {});
     }
@@ -48,20 +46,21 @@ export class PasskeyContentComponent implements OnInit {
      */
     private async initializeUserIdentity() {
         await this.accountService.identity();
-
-        this.userHasRegisteredAPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
     }
 
-    async setupPasskeyAndLogin() {
-        // this.showModal = false;
+    async setupPasskey() {
         await this.webauthnService.addNewPasskey(this.accountService.userIdentity());
         this.alertService.success('artemisApp.userSettings.passkeySettingsPage.success.registration');
-        await this.signInWithPasskey();
     }
 
     async signInWithPasskey() {
         await this.webauthnService.loginWithPasskey();
         await this.accountService.identity(true);
-        this.triggerPasskeyLoginSuccessHandler.emit();
+
+        if (this.accountService.isUserLoggedInWithApprovedPasskey()) {
+            this.triggerPasskeyLoginSuccessHandler.emit();
+        } else {
+            this.alertService.error('global.menu.admin.usedPasskeyIsNotSuperAdminApproved');
+        }
     }
 }

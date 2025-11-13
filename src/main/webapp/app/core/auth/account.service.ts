@@ -49,6 +49,7 @@ export class AccountService implements IAccountService {
 
     readonly authenticated = computed(() => !!this.userIdentity());
 
+    readonly askToSetupPasskey = computed(() => this.userIdentity()?.askToSetupPasskey ?? false);
     readonly isLoggedInWithPasskey = computed(() => this.userIdentity()?.isLoggedInWithPasskey ?? false);
     readonly isPasskeySuperAdminApproved = computed(() => this.userIdentity()?.isPasskeySuperAdminApproved ?? false);
     readonly isUserLoggedInWithApprovedPasskey = computed(() => {

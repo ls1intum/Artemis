@@ -120,9 +120,10 @@
             "admin": {
                 "main": "Server Administration",
                 "loginWithPasskeyToUseAdminFeatures": "Sign in with a passkey to use admin features",
-                "setupAndLoginWithPasskey": "Setup & sign in with passkey",
+                "setupPasskey": "Setup passkey",
                 "passkeyRestrictionExplanation": "To protect student data and ensure platform reliability, administrator actions require strong authentication with a passkey.",
                 "passkeyNotYetApproved": "Your passkey is not yet super administrator approved.",
+                "usedPasskeyIsNotSuperAdminApproved": "The passkey that you have used for login is not yet super administrator approved. Please login with an approved passkey.",
                 "passkeyApprovalInstructions": {
                     "start": "Please verify in your ",
                     "link": "user settings",
