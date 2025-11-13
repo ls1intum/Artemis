@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.reset;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -102,12 +99,6 @@ public class ContinuousIntegrationTestService {
 
         participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, login, localRepoUri.getURI());
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());
-
-        // mock return of git path
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), eq(true), anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), eq(false), anyBoolean());
     }
 
     public void tearDown() throws IOException {

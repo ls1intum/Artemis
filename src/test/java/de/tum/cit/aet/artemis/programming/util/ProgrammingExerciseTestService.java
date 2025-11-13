@@ -18,7 +18,6 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -47,9 +46,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
@@ -1912,29 +1909,23 @@ public class ProgrammingExerciseTestService {
         }
     }
 
-    // TEST TODO Enable
-    public void testExportCourseCannotExportSingleParticipationCanceledException() throws Exception {
+    // TEST - Validates that course export continues gracefully when one participation repo is missing/corrupted
+    public void testExportCourseCannotExportSingleParticipationMissingRepo() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
-        testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new CanceledException("Checkout canceled"));
+        testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository();
     }
 
-    // TEST TODO Enable
-    public void testExportCourseCannotExportSingleParticipationGitApiException() throws Exception {
-        createCourseWithProgrammingExerciseAndParticipationWithFiles();
-        testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new InvalidRemoteException("InvalidRemoteException"));
-    }
-
-    // TEST TODO Enable
-    public void testExportCourseCannotExportSingleParticipationGitException() throws Exception {
-        createCourseWithProgrammingExerciseAndParticipationWithFiles();
-        testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new GitException("GitException"));
-    }
-
-    private void testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(Exception exceptionToThrow) throws IOException, GitAPIException {
+    private void testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository() throws IOException, GitAPIException {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, userPrefix + "student2");
 
-        // Mock error when exporting a participation
-        doThrow(exceptionToThrow).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        // Delete the LocalVC bare repository to trigger real checkout failure (instead of mocking)
+        // This tests that the export service gracefully handles missing/broken repos and continues with others
+        var projectKey = participation.getProgrammingExercise().getProjectKey();
+        var student2RepoSlug = projectKey.toLowerCase() + "-" + userPrefix + "student2";
+        var student2BareRepoPath = localVCBasePath.resolve(projectKey.toUpperCase()).resolve(student2RepoSlug + ".git");
+        if (Files.exists(student2BareRepoPath)) {
+            FileUtils.deleteDirectory(student2BareRepoPath.toFile());
+        }
 
         course = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         List<String> errors = new ArrayList<>();
