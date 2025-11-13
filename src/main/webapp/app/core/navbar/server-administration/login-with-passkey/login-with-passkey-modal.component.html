@@ -3,7 +3,7 @@
         <jhi-passkey-content [showContent]="false" [showFooter]="false" />
     </ng-template>
 
-    <jhi-passkey-content [showHeader]="false" [showFooter]="false" />
+    <jhi-passkey-content [showHeader]="false" [showFooter]="false" (linkToUserSettingsWasClicked)="cancel()" />
 
     <ng-template pTemplate="footer">
         <jhi-button (onClick)="cancel()" [title]="'entity.action.cancel'" [btnType]="ButtonType.SECONDARY" />

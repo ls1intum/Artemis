@@ -27,7 +27,8 @@ export class IsLoggedInWithPasskeyGuard implements CanActivate {
      * Prevents a flickering when directly accessing e.g. an admin route directly via URL (e.g. bookmark).
      */
     private async ensureUserIdentityLoaded(): Promise<void> {
-        return this.accountService.identity();
+        await this.accountService.identity();
+        return;
     }
 
     private async isLoggedInWithApprovedPasskey(): Promise<boolean> {

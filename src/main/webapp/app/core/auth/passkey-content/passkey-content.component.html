@@ -17,7 +17,7 @@
     } @else {
         <p class="text-wrap text-break mw-100">
             <span jhiTranslate="global.menu.admin.passkeyApprovalInstructions.start"></span>
-            <a routerLink="/user-settings/passkeys" class="text-decoration-none">
+            <a routerLink="/user-settings/passkeys" class="text-decoration-none" (click)="handleLinkToUserSettingsClick()">
                 <span jhiTranslate="global.menu.admin.passkeyApprovalInstructions.link"></span>
                 <fa-icon [icon]="faArrowUpRightFromSquare" />
             </a>

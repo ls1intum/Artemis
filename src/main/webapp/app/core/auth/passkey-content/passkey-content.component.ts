@@ -31,11 +31,16 @@ export class PasskeyContentComponent implements OnInit {
     showFooter = input<boolean>(true);
 
     triggerPasskeyLoginSuccessHandler = output<void>();
+    linkToUserSettingsWasClicked = output<void>();
 
     userHasRegisteredAPasskey: boolean = false;
 
     ngOnInit() {
         this.initializeUserIdentity().then((response) => {});
+    }
+
+    handleLinkToUserSettingsClick() {
+        this.linkToUserSettingsWasClicked.emit();
     }
 
     /**
