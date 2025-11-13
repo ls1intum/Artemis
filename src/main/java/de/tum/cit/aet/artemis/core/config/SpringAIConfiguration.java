@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import javax.sql.DataSource;
 
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
+import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -90,7 +91,8 @@ public class SpringAIConfiguration {
         if (azureOpenAiChatModel == null) {
             return null;
         }
-        ChatClient.Builder builder = ChatClient.builder(azureOpenAiChatModel);
+        ChatClient.Builder builder = ChatClient.builder(azureOpenAiChatModel)
+                .defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build());
         if (chatMemory != null) {
             builder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build());
         }
