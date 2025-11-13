@@ -431,6 +431,11 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     }
 
     @NotNull
+    default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
+    }
+
+    @NotNull
     default Course findByIdForUpdateElseThrow(long courseId) {
         return getValueElseThrow(findForUpdateById(courseId), courseId);
     }
@@ -438,11 +443,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerCompetenciesAndPrerequisitesById(courseId), courseId);
-    }
-
-    @NotNull
-    default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
-        return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
     }
 
     Page<Course> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);
