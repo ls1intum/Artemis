@@ -281,11 +281,11 @@ describe('CourseOverviewService', () => {
         jest.spyOn(translateService, 'instant').mockReturnValue('No Date');
         const firstLectureStart = dayjs('2025-01-01T00:00:00Z');
         const lectures: Lecture[] = [
-            { id: 1, title: 'Lecture 1', startDate: dayjs('2025-01-01T00:00:00Z') },
-            { id: 2, title: 'Lecture 2' },
+            { id: 1, title: 'Lecture 1', startDate: dayjs('2025-01-01T00:00:00Z'), isTutorialLecture: true },
+            { id: 2, title: 'Lecture 2', isTutorialLecture: true },
         ];
 
-        const result = courseOverviewService.mapTutorialLecturesToSidebarCardElements(lectures);
+        const result = courseOverviewService.mapLecturesToSidebarCardElements(lectures);
 
         expect(result).toEqual([
             {

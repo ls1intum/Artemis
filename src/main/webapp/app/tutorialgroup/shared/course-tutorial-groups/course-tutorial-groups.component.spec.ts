@@ -87,12 +87,12 @@ describe('CourseTutorialGroupsComponent', () => {
             getSidebarCardElementForTutorialGroup(tutorialGroup1),
             getSidebarCardElementForTutorialGroup(tutorialGroup2),
         ]);
-        jest.spyOn(courseOverviewService, 'mapTutorialLecturesToSidebarCardElements').mockReturnValue([
+        jest.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([
             getSidebarCardElementForTutorialLecture(tutorialLecture1),
             getSidebarCardElementForTutorialLecture(tutorialLecture2),
         ]);
         jest.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
-        jest.spyOn(courseOverviewService, 'mapTutorialLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
+        jest.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
         const tutorialGroupFetchSpy = jest.spyOn(tutorialGroupService, 'getAllForCourse');
         const tutorialLectureFetchSpy = jest.spyOn(lectureService, 'findAllTutorialLecturesByCourseId');
@@ -129,12 +129,12 @@ describe('CourseTutorialGroupsComponent', () => {
             getSidebarCardElementForTutorialGroup(tutorialGroup1),
             getSidebarCardElementForTutorialGroup(tutorialGroup2),
         ]);
-        jest.spyOn(courseOverviewService, 'mapTutorialLecturesToSidebarCardElements').mockReturnValue([
+        jest.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([
             getSidebarCardElementForTutorialLecture(tutorialLecture1),
             getSidebarCardElementForTutorialLecture(tutorialLecture2),
         ]);
         jest.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
-        jest.spyOn(courseOverviewService, 'mapTutorialLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
+        jest.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
         const tutorialGroupFetchSpy = jest.spyOn(tutorialGroupService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1, tutorialGroup2] })));
 
@@ -177,9 +177,9 @@ describe('CourseTutorialGroupsComponent', () => {
             getSidebarCardElementForTutorialGroup(tutorialGroup1),
             getSidebarCardElementForTutorialGroup(tutorialGroup2),
         ]);
-        jest.spyOn(courseOverviewService, 'mapTutorialLecturesToSidebarCardElements').mockReturnValue([getSidebarCardElementForTutorialLecture(tutorialLecture1)]);
+        jest.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([getSidebarCardElementForTutorialLecture(tutorialLecture1)]);
         jest.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
-        jest.spyOn(courseOverviewService, 'mapTutorialLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
+        jest.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
         fixture.detectChanges();
 
