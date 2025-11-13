@@ -29,6 +29,7 @@ describe('PasskeySettingsComponent', () => {
             label: 'Test Passkey',
             created: new Date().toISOString(),
             lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: true,
         },
     ];
 
@@ -134,6 +135,7 @@ describe('PasskeySettingsComponent', () => {
             label: 'Test Passkey',
             created: '2023-10-01T12:00:00Z',
             lastUsed: '2023-10-02T12:00:00Z',
+            isSuperAdminApproved: true,
         };
 
         const result = component.getDeleteSummary(passkey);
@@ -156,6 +158,7 @@ describe('PasskeySettingsComponent', () => {
             isEditingLabel: true,
             created: new Date().toISOString(),
             lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: true,
         };
 
         component.cancelEditPasskeyLabel(passkey);
