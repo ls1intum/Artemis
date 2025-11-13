@@ -153,10 +153,10 @@ public class LectureService {
         final var searchTerm = search.getSearchTerm();
         final Page<Lecture> lecturePage;
         if (authCheckService.isAdmin(user)) {
-            lecturePage = lectureRepository.findNormalLecturesByTitleOrCourseTitle(searchTerm, searchTerm, pageable);
+            lecturePage = lectureRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
         }
         else {
-            lecturePage = lectureRepository.findNormalLecturesByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            lecturePage = lectureRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
         }
         return new SearchResultPageDTO<>(lecturePage.getContent(), lecturePage.getTotalPages());
     }

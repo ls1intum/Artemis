@@ -151,12 +151,8 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
         return allLectures.stream().findFirst();
     }
 
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-            WHERE NOT lecture.isTutorialLecture AND (LOWER(lecture.title) LIKE LOWER(CONCAT('%', :partialTitle, '%')) OR LOWER(lecture.course.title) LIKE LOWER(CONCAT('%', :partialCourseTitle, '%')))
-            """)
-    Page<Lecture> findNormalLecturesByTitleOrCourseTitle(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle, Pageable pageable);
+    @SuppressWarnings("PMD.MethodNamingConventions")
+    Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
 
     /**
      * Query which fetches all normal lectures (lectures that are not tutorial lectures) for which
@@ -172,10 +168,10 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
             WHERE (lecture.course.instructorGroupName IN :groups OR lecture.course.editorGroupName IN :groups)
-                AND (lecture.title LIKE %:partialTitle% OR lecture.course.title LIKE %:partialCourseTitle%) AND NOT lecture.isTutorialLecture
+                AND (lecture.title LIKE %:partialTitle% OR lecture.course.title LIKE %:partialCourseTitle%)
             """)
-    Page<Lecture> findNormalLecturesByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
-            @Param("partialCourseTitle") String partialCourseTitle, @Param("groups") Set<String> groups, Pageable pageable);
+    Page<Lecture> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
+            @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
      * Returns the title of the lecture with the given id.
