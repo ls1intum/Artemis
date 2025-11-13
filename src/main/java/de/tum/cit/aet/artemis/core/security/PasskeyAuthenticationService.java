@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
 /**
  * Service for checking passkey authentication requirements.
- * Used primarily for security expressions in annotations like @EnforceAdmin.
+ * Used primarily for security expressions in annotations like {@link de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin}.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -35,14 +35,15 @@ public class PasskeyAuthenticationService {
 
     private final TokenProvider tokenProvider;
 
-    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
-    private boolean passkeyEnabled;
+    private final boolean passkeyEnabled;
 
-    @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}")
-    private boolean isPasskeyRequiredForAdministratorFeatures;
+    private final boolean isPasskeyRequiredForAdministratorFeatures;
 
-    public PasskeyAuthenticationService(TokenProvider tokenProvider) {
+    public PasskeyAuthenticationService(TokenProvider tokenProvider, @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}") boolean passkeyEnabled,
+            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures) {
         this.tokenProvider = tokenProvider;
+        this.passkeyEnabled = passkeyEnabled;
+        this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
     }
 
     /**

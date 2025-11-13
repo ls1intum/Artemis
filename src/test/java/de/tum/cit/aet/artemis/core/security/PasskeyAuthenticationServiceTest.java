@@ -10,7 +10,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -34,7 +33,6 @@ class PasskeyAuthenticationServiceTest {
 
     @BeforeEach
     void setUp() {
-        passkeyAuthenticationService = new PasskeyAuthenticationService(tokenProvider);
         request = new MockHttpServletRequest();
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
@@ -42,7 +40,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenPasskeyDisabled_shouldReturnFalse() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", false);
+        passkeyAuthenticationService = createService(false, true);
 
         // When
         boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey();
@@ -54,7 +52,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenNoHttpRequest_shouldThrowException() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        passkeyAuthenticationService = createService(true, true);
         RequestContextHolder.resetRequestAttributes();
 
         // When / Then
@@ -65,7 +63,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenNoJwtToken_shouldThrowException() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        passkeyAuthenticationService = createService(true, true);
 
         // When / Then
         assertThatExceptionOfType(PasskeyAuthenticationException.class).isThrownBy(() -> passkeyAuthenticationService.isAuthenticatedWithPasskey())
@@ -75,7 +73,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenAuthMethodIsPassword_shouldThrowException() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        passkeyAuthenticationService = createService(true, true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSWORD);
@@ -88,7 +86,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenAuthMethodIsSaml2_shouldThrowException() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        passkeyAuthenticationService = createService(true, true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.SAML2);
@@ -101,7 +99,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenAuthMethodIsPasskey_shouldReturnTrue() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        passkeyAuthenticationService = createService(true, true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSKEY);
@@ -116,7 +114,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenAuthMethodIsNull_shouldThrowException() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        passkeyAuthenticationService = createService(true, true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(null);
@@ -129,7 +127,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalIsFalse_shouldNotCheckApproval() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        passkeyAuthenticationService = createService(true, true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSKEY);
@@ -145,7 +143,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalIsTrueAndPasskeyIsApproved_shouldReturnTrue() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        passkeyAuthenticationService = createService(true, true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSKEY);
@@ -161,7 +159,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalIsTrueAndPasskeyIsNotApproved_shouldThrowException() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        passkeyAuthenticationService = createService(true, true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSKEY);
@@ -175,7 +173,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenRequireSuperAdminApprovalButNotPasskeyAuth_shouldThrowException() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", true);
+        passkeyAuthenticationService = createService(true, true);
         addJwtCookie(request, VALID_JWT_TOKEN);
         when(tokenProvider.validateTokenForAuthority(VALID_JWT_TOKEN, "cookie")).thenReturn(true);
         when(tokenProvider.getAuthenticationMethod(VALID_JWT_TOKEN)).thenReturn(AuthenticationMethod.PASSWORD);
@@ -188,7 +186,7 @@ class PasskeyAuthenticationServiceTest {
     @Test
     void testIsAuthenticatedWithPasskey_whenPasskeyDisabledAndRequireSuperAdminApproval_shouldReturnTrue() {
         // Given
-        ReflectionTestUtils.setField(passkeyAuthenticationService, "passkeyEnabled", false);
+        passkeyAuthenticationService = createService(false, true);
 
         // When
         boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey(true);
@@ -196,6 +194,10 @@ class PasskeyAuthenticationServiceTest {
         // Then
         // When passkey is disabled, the check is bypassed completely
         assertThat(result).isTrue();
+    }
+
+    private PasskeyAuthenticationService createService(boolean passkeyEnabled, boolean isPasskeyRequiredForAdministratorFeatures) {
+        return new PasskeyAuthenticationService(tokenProvider, passkeyEnabled, isPasskeyRequiredForAdministratorFeatures);
     }
 
     private void addJwtCookie(MockHttpServletRequest request, String token) {
