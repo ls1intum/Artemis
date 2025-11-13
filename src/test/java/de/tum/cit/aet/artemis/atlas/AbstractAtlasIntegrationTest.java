@@ -187,4 +187,5 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
         atlasMLRequestMockProvider.enableMockingOfRequests();
         atlasMLRequestMockProvider.mockSaveCompetenciesAny();
     }
+
 }
