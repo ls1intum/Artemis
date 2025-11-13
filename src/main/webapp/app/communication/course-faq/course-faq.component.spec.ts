@@ -154,10 +154,12 @@ describe('CourseFaqs', () => {
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });
 
-    it('should call sortService when sortRows is called', () => {
-        jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
+    it('should call sortService when sortFaqs is called', () => {
+        courseFaqComponent.filteredFaqs = [faq1, faq2, faq3];
+        const sortByFunctionSpy = jest.spyOn(sortService, 'sortByFunction').mockReturnValue([faq3, faq2, faq1]);
         courseFaqComponent.sortFaqs();
-        expect(sortService.sortByProperty).toHaveBeenCalledOnce();
+        expect(sortByFunctionSpy).toHaveBeenCalledOnce();
+        expect(sortByFunctionSpy).toHaveBeenCalledWith([faq1, faq2, faq3], expect.any(Function), false);
     });
 
     it('should scroll and focus on the faq element with given id', () => {
