@@ -29,10 +29,13 @@ export class IsLoggedInWithPasskeyGuard implements CanActivate {
      * @param state The router state snapshot
      * @return true if the user has logged in with a passkey (or if passkey requirement is disabled), false otherwise
      */
-    canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
+    async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
         if (!this.shouldEnforcePasskeyForAdminFeatures()) {
             return true;
         }
+
+        // Ensure user identity is loaded before checking passkey status
+        await this.accountService.identity();
 
         if (this.accountService.isUserLoggedInWithApprovedPasskey()) {
             return true;
