@@ -35,7 +35,7 @@ public class PasskeyConfigurationValidator {
 
     /**
      * Validates the passkey configuration at startup.
-     * Throws a PasskeyConfigurationException if the configuration is invalid.
+     * Throws a {@link PasskeyConfigurationException} if the configuration is invalid.
      */
     @PostConstruct
     public void validatePasskeyConfiguration() {
