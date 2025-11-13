@@ -593,12 +593,19 @@ describe('BuildQueueComponent', () => {
     });
 
     it('should set isAdministrationView to true when courseId is 0', () => {
+        // We should only test computed() logic. Need this to avoid calling ngOnInit/rendering: jsdom triggers navigation errors.
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+
         component.courseId = 0;
+
         expect(component.isAdministrationView()).toBeTrue();
     });
 
     it('should set isAdministrationView to false when courseId > 0', () => {
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+
         component.courseId = 123;
+
         expect(component.isAdministrationView()).toBeFalse();
     });
 });
