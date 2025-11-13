@@ -50,8 +50,8 @@ public class LectureRepositoryApi extends AbstractLectureApi {
         return lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
     }
 
-    public Optional<Lecture> findUniqueNormalLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
-        return lectureRepository.findUniqueNormalLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(title, courseId);
+    public Optional<Lecture> findUniqueLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
+        return lectureRepository.findUniqueLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(title, courseId);
     }
 
     public long countByCourseId(long courseId) {

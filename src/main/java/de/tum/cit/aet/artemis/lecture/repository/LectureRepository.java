@@ -131,9 +131,9 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.lectureUnits
-            WHERE lecture.title = :title AND lecture.course.id = :courseId AND NOT lecture.isTutorialLecture
+            WHERE lecture.title = :title AND lecture.course.id = :courseId
             """)
-    Set<Lecture> findAllNormalLecturesByTitleAndCourseIdWithLectureUnits(@Param("title") String title, @Param("courseId") long courseId);
+    Set<Lecture> findAllByTitleAndCourseIdWithLectureUnits(@Param("title") String title, @Param("courseId") long courseId);
 
     /**
      * Finds a lecture by its title and course id and throws a NoUniqueQueryException if multiple lectures are found.
@@ -143,8 +143,8 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
      * @return the lecture with the given title and course id
      * @throws NoUniqueQueryException if multiple lectures are found with the same title
      */
-    default Optional<Lecture> findUniqueNormalLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
-        Set<Lecture> allLectures = findAllNormalLecturesByTitleAndCourseIdWithLectureUnits(title, courseId);
+    default Optional<Lecture> findUniqueLecturesByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
+        Set<Lecture> allLectures = findAllByTitleAndCourseIdWithLectureUnits(title, courseId);
         if (allLectures.size() > 1) {
             throw new NoUniqueQueryException("Found multiple lectures with title " + title + " in course with id " + courseId);
         }

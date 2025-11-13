@@ -156,7 +156,7 @@ public class LearningMetricsService {
     /**
      * Retrieves aggregated lecture unit metrics for a specific student in a given course.
      * <p>
-     * This method queries the underlying lecture unit repository for all lecture units of normal lectures (not tutorial lectures) associated
+     * This method queries the underlying lecture unit repository for all lecture units associated
      * with the specified course, and identifies which units have been completed by the student.
      * The resulting metrics provide a structured overview of the student's progress with respect to lecture units.
      *
