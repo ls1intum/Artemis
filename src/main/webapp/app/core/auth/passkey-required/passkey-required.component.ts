@@ -1,23 +1,21 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { faArrowUpRightFromSquare, faKey, faLock } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faKey, faLock } from '@fortawesome/free-solid-svg-icons';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { PasskeyContentComponent } from 'app/core/auth/passkey-content/passkey-content.component';
 
 @Component({
     selector: 'jhi-passkey-required',
-    imports: [TranslateDirective, FaIconComponent, ButtonComponent, RouterLink],
+    imports: [PasskeyContentComponent],
     templateUrl: './passkey-required.component.html',
 })
 export class PasskeyRequiredComponent implements OnInit {
     protected readonly ButtonType = ButtonType;
     protected readonly faLock = faLock;
     protected readonly faKey = faKey;
-    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
 
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);

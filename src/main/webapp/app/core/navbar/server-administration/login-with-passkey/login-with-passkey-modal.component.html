@@ -1,22 +1,12 @@
 <p-dialog [(visible)]="showModal" [modal]="true" [draggable]="false" [position]="'top'" [style]="{ width: '40rem' }">
     <ng-template pTemplate="header">
-        <h4>
-            <fa-icon [icon]="faLock" />
-            <span jhiTranslate="global.menu.admin.loginWithPasskeyToUseAdminFeatures"></span>
-        </h4>
+        <jhi-passkey-content [showContent]="false" [showFooter]="false" />
     </ng-template>
 
-    <p class="text-wrap text-break mw-100" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
-    <strong>
-        <p class="text-wrap text-break mw-100 font-weight-bold" jhiTranslate="global.menu.admin.passkeyRestrictionExplanation"></p>
-    </strong>
+    <jhi-passkey-content [showHeader]="false" [showFooter]="false" />
 
     <ng-template pTemplate="footer">
         <jhi-button (onClick)="cancel()" [title]="'entity.action.cancel'" [btnType]="ButtonType.SECONDARY" />
-        @if (userHasRegisteredAPasskey) {
-            <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" [icon]="faKey" />
-        } @else {
-            <jhi-button (onClick)="setupPasskeyAndLogin()" [title]="'global.menu.admin.setupAndLoginWithPasskey'" [icon]="faKey" />
-        }
+        <jhi-passkey-content [showHeader]="false" [showContent]="false" />
     </ng-template>
 </p-dialog>
