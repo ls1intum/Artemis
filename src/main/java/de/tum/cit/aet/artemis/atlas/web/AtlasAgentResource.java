@@ -68,13 +68,13 @@ public class AtlasAgentResource {
             final CompletableFuture<AgentChatResult> future = atlasAgentService.processChatMessage(request.message(), courseId, sessionId);
             final AgentChatResult result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-  //sessionId replace request.sessionid
+            // sessionId replace request.sessionid
             return ResponseEntity.ok(new AtlasAgentChatResponseDTO(result.message(), sessionId, ZonedDateTime.now(), true, result.competenciesModified(),
                     result.competencyPreview(), result.batchCompetencyPreview()));
         }
         catch (TimeoutException te) {
             return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
-                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", request.sessionId(), ZonedDateTime.now(), false, false, null, null));
+                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", sessionId, ZonedDateTime.now(), false, false, null, null));
         }
         catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
