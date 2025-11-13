@@ -168,7 +168,7 @@ class AtlasAgentServiceTest {
     @Test
     void testIsAvailable_WithNullChatMemory() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, chatMemory, "gpt-4o");
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null, "gpt-4o");
 
         boolean available = serviceWithNullMemory.isAvailable();
 
