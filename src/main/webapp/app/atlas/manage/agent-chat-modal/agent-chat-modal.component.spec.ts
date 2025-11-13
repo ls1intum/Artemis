@@ -160,7 +160,7 @@ describe('AgentChatModalComponent', () => {
         it('should show welcome message when history is null', () => {
             const welcomeMessage = 'Welcome to the agent chat!';
             const translateSpy = jest.spyOn(mockTranslateService, 'instant').mockReturnValue(welcomeMessage);
-            mockAgentChatService.getConversationHistory.mockReturnValue(of(null as any));
+            mockAgentChatService.getConversationHistory.mockReturnValue(of(null!));
 
             component.ngOnInit();
 
@@ -249,7 +249,7 @@ describe('AgentChatModalComponent', () => {
         let sendMessageSpy: jest.SpyInstance;
 
         beforeEach(() => {
-            sendMessageSpy = jest.spyOn(component as any, 'sendMessage');
+            sendMessageSpy = jest.spyOn(component, 'sendMessage');
         });
 
         it('should call sendMessage when Enter key is pressed without Shift', () => {

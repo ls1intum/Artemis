@@ -12,6 +12,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
@@ -20,6 +21,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
@@ -47,6 +50,10 @@ public class AtlasAgentService {
     private static final String CREATE_APPROVED_COMPETENCY = "[CREATE_APPROVED_COMPETENCY]";
 
     private static final String RETURN_TO_MAIN_AGENT = "%%ARTEMIS_RETURN_TO_MAIN_AGENT%%";
+
+    private static final String PREVIEW_DATA_START_MARKER = "%%PREVIEW_DATA_START%%";
+
+    private static final String PREVIEW_DATA_END_MARKER = "%%PREVIEW_DATA_END%%";
 
     // Session timeout duration: 2 hours of inactivity
     private static final Duration SESSION_EXPIRY_DURATION = Duration.ofHours(2);
@@ -164,6 +171,25 @@ public class AtlasAgentService {
                 SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getAndClearSinglePreview();
                 BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getAndClearBatchPreview();
 
+                // Embed preview data in the response text so it persists in chat memory
+                String responseWithEmbeddedData = embedPreviewDataInResponse(delegationResponse, singlePreview, batchPreview);
+
+                // Replace the last assistant message with the version containing embedded preview data
+                // The MessageChatMemoryAdvisor already added the response, but without preview data
+                if (chatMemory != null && !responseWithEmbeddedData.equals(delegationResponse)) {
+                    // Remove the last assistant message added by the advisor
+                    List<Message> messages = chatMemory.get(sessionId);
+                    if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
+                        // Create a new list without the last message
+                        List<Message> updatedMessages = new java.util.ArrayList<>(messages.subList(0, messages.size() - 1));
+                        // Add the message with embedded preview data
+                        updatedMessages.add(new AssistantMessage(responseWithEmbeddedData));
+                        // Clear and re-add all messages
+                        chatMemory.clear(sessionId);
+                        updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
+                    }
+                }
+
                 // Return immediately with Competency Expert's response and preview data
                 // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
                 return CompletableFuture.completedFuture(new AgentChatResult(delegationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
@@ -246,7 +272,7 @@ public class AtlasAgentService {
 
         ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
 
-        ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message)).options(options);
+        ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(message).options(options);
 
         // Add chat memory advisor
         if (chatMemory != null) {
@@ -320,9 +346,10 @@ public class AtlasAgentService {
 
     /**
      * Retrieves the conversation history for a given session as DTOs.
+     * Filters out internal system messages (delegation markers and briefings) and extracts preview data from messages.
      *
      * @param sessionId The session/conversation ID
-     * @return List of conversation history messages as DTOs
+     * @return List of conversation history messages as DTOs with preview data
      */
     public List<AtlasAgentHistoryMessageDTO> getConversationHistoryAsDTO(String sessionId) {
         try {
@@ -334,10 +361,29 @@ public class AtlasAgentService {
             if (messages.isEmpty()) {
                 return List.of();
             }
-            return messages.stream().map(message -> {
+
+            var result = new java.util.ArrayList<AtlasAgentHistoryMessageDTO>();
+
+            for (Message message : messages) {
+                String text = message.getText();
                 boolean isUser = message.getMessageType() == MessageType.USER;
-                return new AtlasAgentHistoryMessageDTO(message.getText(), isUser);
-            }).toList();
+
+                // Skip internal system messages (delegation markers and briefings)
+                boolean isBriefing = text.startsWith("TOPIC:") || text.startsWith("TOPICS:")
+                        || (text.contains("REQUIREMENTS:") && text.contains("CONSTRAINTS:") && text.contains("CONTEXT:"));
+                boolean isDelegationMarker = text.contains(DELEGATE_TO_COMPETENCY_EXPERT) || text.contains(RETURN_TO_MAIN_AGENT);
+
+                if (isBriefing || isDelegationMarker) {
+                    continue;
+                }
+
+                // Extract preview data from message text if present
+                PreviewDataResult extracted = extractPreviewDataFromMessage(text);
+
+                result.add(new AtlasAgentHistoryMessageDTO(extracted.cleanedText(), isUser, extracted.singlePreview(), extracted.batchPreview()));
+            }
+
+            return result;
         }
         catch (Exception e) {
             return List.of();
@@ -354,6 +400,70 @@ public class AtlasAgentService {
     }
 
     /**
+     * Embed preview data as a JSON marker in the response text.
+     * This allows preview data to persist in chat memory and be reconstructed when loading history.
+     *
+     * @param response      The agent's response text
+     * @param singlePreview Optional single competency preview
+     * @param batchPreview  Optional batch competency preview
+     * @return The response text with embedded preview data marker
+     */
+    private String embedPreviewDataInResponse(String response, @Nullable SingleCompetencyPreviewResponseDTO singlePreview,
+            @Nullable BatchCompetencyPreviewResponseDTO batchPreview) {
+        if (singlePreview == null && batchPreview == null) {
+            return response;
+        }
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            PreviewDataContainer container = new PreviewDataContainer(singlePreview, batchPreview);
+            String jsonData = mapper.writeValueAsString(container);
+
+            // Append marker with JSON data to the response
+            return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
+        }
+        catch (JsonProcessingException e) {
+            // If JSON serialization fails, return response without preview data
+            return response;
+        }
+    }
+
+    /**
+     * Extract preview data from a message text that contains embedded preview markers.
+     *
+     * @param messageText The message text potentially containing preview data markers
+     * @return PreviewDataResult containing the cleaned text and extracted preview data
+     */
+    private PreviewDataResult extractPreviewDataFromMessage(String messageText) {
+        int startIndex = messageText.indexOf(PREVIEW_DATA_START_MARKER);
+        if (startIndex == -1) {
+            return new PreviewDataResult(messageText, null, null);
+        }
+
+        int endIndex = messageText.indexOf(PREVIEW_DATA_END_MARKER, startIndex);
+        if (endIndex == -1) {
+            return new PreviewDataResult(messageText, null, null);
+        }
+
+        // Extract the JSON data between markers
+        int jsonStart = startIndex + PREVIEW_DATA_START_MARKER.length();
+        String jsonData = messageText.substring(jsonStart, endIndex);
+
+        // Remove the marker section from the text
+        String cleanedText = (messageText.substring(0, startIndex) + messageText.substring(endIndex + PREVIEW_DATA_END_MARKER.length())).trim();
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            PreviewDataContainer container = mapper.readValue(jsonData, PreviewDataContainer.class);
+            return new PreviewDataResult(cleanedText, container.singlePreview(), container.batchPreview());
+        }
+        catch (JsonProcessingException e) {
+            // If parsing fails, return cleaned text without preview data
+            return new PreviewDataResult(cleanedText, null, null);
+        }
+    }
+
+    /**
      * Generates a unique session ID for a user's conversation in a specific course.
      * This ensures each user has their own isolated chat history per course.
      * Centralized generation prevents security risks from client-controlled session IDs.
@@ -364,5 +474,17 @@ public class AtlasAgentService {
      */
     public String generateSessionId(Long courseId, Long userId) {
         return String.format("course_%d_user_%d", courseId, userId);
+    }
+
+    /**
+     * Container for embedding preview data in message text.
+     */
+    record PreviewDataContainer(@Nullable SingleCompetencyPreviewResponseDTO singlePreview, @Nullable BatchCompetencyPreviewResponseDTO batchPreview) {
+    }
+
+    /**
+     * Result of extracting preview data from a message.
+     */
+    record PreviewDataResult(String cleanedText, @Nullable SingleCompetencyPreviewResponseDTO singlePreview, @Nullable BatchCompetencyPreviewResponseDTO batchPreview) {
     }
 }

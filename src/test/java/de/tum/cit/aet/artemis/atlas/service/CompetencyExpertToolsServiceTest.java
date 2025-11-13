@@ -190,7 +190,7 @@ class CompetencyExpertToolsServiceTest {
         void shouldPreviewSingleCompetencyInCorrectFormat() {
             CompetencyOperation operation = new CompetencyOperation(null, "Data Structures", "Understanding arrays, lists, trees, and graphs", CompetencyTaxonomy.UNDERSTAND);
 
-            String actualResult = competencyExpertToolsService.previewCompetencies(123L, List.of(operation), null);
+            String actualResult = competencyExpertToolsService.previewCompetencies(List.of(operation), null);
 
             assertThat(actualResult).contains("Preview generated successfully for 1 competency");
 
@@ -201,7 +201,7 @@ class CompetencyExpertToolsServiceTest {
             CompetencyOperation op1 = new CompetencyOperation(null, "Algorithms", "Sorting and searching algorithms", CompetencyTaxonomy.APPLY);
             CompetencyOperation op2 = new CompetencyOperation(null, "Testing", "Unit and integration testing", CompetencyTaxonomy.EVALUATE);
 
-            String actualResult = competencyExpertToolsService.previewCompetencies(123L, List.of(op1, op2), false);
+            String actualResult = competencyExpertToolsService.previewCompetencies(List.of(op1, op2), false);
 
             assertThat(actualResult).contains("Preview generated successfully for 2 competencies.");
 
@@ -209,7 +209,7 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldReturnErrorWhenNoCompetenciesProvided() {
-            String actualResult = competencyExpertToolsService.previewCompetencies(123L, List.of(), null);
+            String actualResult = competencyExpertToolsService.previewCompetencies(List.of(), null);
 
             assertThat(actualResult).isNotNull();
             assertThat(actualResult).contains("Error: No competencies provided for preview.");
@@ -217,7 +217,7 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldReturnErrorWhenCompetenciesListIsNull() {
-            String actualResult = competencyExpertToolsService.previewCompetencies(123L, null, null);
+            String actualResult = competencyExpertToolsService.previewCompetencies(null, null);
 
             assertThat(actualResult).isNotNull();
             assertThat(actualResult).contains("Error: No competencies provided for preview.");
@@ -448,7 +448,7 @@ class CompetencyExpertToolsServiceTest {
         void shouldClearAllPreviewsSuccessfully() {
             // Create and set some previews
             CompetencyOperation op = new CompetencyOperation(null, "Test", "Description", CompetencyTaxonomy.APPLY);
-            competencyExpertToolsService.previewCompetencies(123L, List.of(op), null);
+            competencyExpertToolsService.previewCompetencies(List.of(op), null);
 
             // Clear all previews
             CompetencyExpertToolsService.clearAllPreviews();
@@ -545,7 +545,7 @@ class CompetencyExpertToolsServiceTest {
 
             CompetencyOperation op = new CompetencyOperation(null, "View Only", "Description", CompetencyTaxonomy.APPLY);
 
-            String result = competencyExpertToolsService.previewCompetencies(123L, List.of(op), true);
+            String result = competencyExpertToolsService.previewCompetencies(List.of(op), true);
 
             assertThat(result).contains("Preview generated successfully for 1 competency");
             // The cache should not be updated for view-only previews
@@ -561,7 +561,7 @@ class CompetencyExpertToolsServiceTest {
 
             CompetencyOperation op = new CompetencyOperation(null, "Editable", "Description", CompetencyTaxonomy.APPLY);
 
-            String result = competencyExpertToolsService.previewCompetencies(123L, List.of(op), false);
+            String result = competencyExpertToolsService.previewCompetencies(List.of(op), false);
 
             assertThat(result).contains("Preview generated successfully for 1 competency");
 
@@ -579,7 +579,7 @@ class CompetencyExpertToolsServiceTest {
             for (CompetencyTaxonomy taxonomy : allTaxonomies) {
                 CompetencyOperation op = new CompetencyOperation(null, "Test " + taxonomy, "Description", taxonomy);
 
-                String result = competencyExpertToolsService.previewCompetencies(123L, List.of(op), null);
+                String result = competencyExpertToolsService.previewCompetencies(List.of(op), null);
 
                 assertThat(result).contains("Preview generated successfully for 1 competency");
                 // Icon mapping is tested indirectly through the preview DTO generation

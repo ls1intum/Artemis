@@ -249,16 +249,13 @@ public class CompetencyExpertToolsService {
      * IMPORTANT: This method stores preview data in ThreadLocal for deterministic extraction.
      * The LLM can respond naturally while the backend extracts structured data separately.
      *
-     * @param courseId     the course ID
      * @param competencies list of competency operations (single or multiple)
      * @param viewOnly     optional flag for view-only mode
      * @return Simple confirmation message for the LLM to use in its response
      */
     @Tool(description = "Preview one or multiple competencies before creating/updating. SINGLE: pass [{comp}]. BATCH: pass [{comp1}, {comp2}, {comp3}]. CRITICAL: For batch operations, pass ALL competencies in ONE call, not multiple separate calls.")
-    public String previewCompetencies(@ToolParam(description = "the ID of the course") Long courseId,
-            @ToolParam(description = "list of competency operations to preview") List<CompetencyOperation> competencies,
+    public String previewCompetencies(@ToolParam(description = "list of competency operations to preview") List<CompetencyOperation> competencies,
             @ToolParam(description = "optional: set to true for view-only mode (no action buttons)", required = false) Boolean viewOnly) {
-
         if (competencies == null || competencies.isEmpty()) {
             return "Error: No competencies provided for preview.";
         }

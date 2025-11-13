@@ -38,6 +38,8 @@ interface BatchCompetencyPreviewResponse {
 export interface AgentHistoryMessage {
     content: string;
     isUser: boolean;
+    competencyPreview?: SingleCompetencyPreviewResponse;
+    batchCompetencyPreview?: BatchCompetencyPreviewResponse;
 }
 
 @Injectable({

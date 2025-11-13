@@ -29,13 +29,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentServiceTest {
@@ -164,7 +158,7 @@ class AtlasAgentServiceTest {
     @Test
     void testIsAvailable_WithNullChatMemory() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null, null);
 
         boolean available = serviceWithNullMemory.isAvailable();
 
@@ -208,8 +202,8 @@ class AtlasAgentServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).content()).isEqualTo("What are competencies?");
-        assertThat(result.get(0).isUser()).isTrue();
+        assertThat(result.getFirst().content()).isEqualTo("What are competencies?");
+        assertThat(result.getFirst().isUser()).isTrue();
         assertThat(result.get(1).content()).isEqualTo("Competencies are learning objectives that define what students should know and be able to do.");
         assertThat(result.get(1).isUser()).isFalse();
         verify(chatMemory).get(sessionId);
@@ -232,7 +226,7 @@ class AtlasAgentServiceTest {
     @Test
     void testGetConversationHistoryAsDTO_NullChatMemory() {
         String sessionId = "course_456_user_789";
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null);
 
         List<AtlasAgentHistoryMessageDTO> result = serviceWithNullMemory.getConversationHistoryAsDTO(sessionId);
 
@@ -265,7 +259,7 @@ class AtlasAgentServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result).hasSize(4);
-        assertThat(result.get(0).isUser()).isTrue();
+        assertThat(result.getFirst().isUser()).isTrue();
         assertThat(result.get(1).isUser()).isFalse();
         assertThat(result.get(2).isUser()).isTrue();
         assertThat(result.get(3).isUser()).isFalse();
@@ -466,7 +460,7 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldSerializeToJsonWhenValidData() throws Exception {
-            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("Test message content", true);
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("Test message content", true, null, null);
 
             String actualJson = objectMapper.writeValueAsString(dto);
 
@@ -486,7 +480,7 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldExcludeContentWhenEmpty() throws Exception {
-            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("", true);
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO("", true, null, null);
 
             String actualJson = objectMapper.writeValueAsString(dto);
 
@@ -496,12 +490,194 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldExcludeContentWhenNull() throws Exception {
-            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO(null, false);
+            AtlasAgentHistoryMessageDTO dto = new AtlasAgentHistoryMessageDTO(null, false, null, null);
 
             String actualJson = objectMapper.writeValueAsString(dto);
 
             assertThat(actualJson).doesNotContain("content");
             assertThat(actualJson).contains("\"isUser\":false");
+        }
+    }
+
+    @Nested
+    class ConversationHistoryWithPreviewData {
+
+        @Test
+        void shouldExtractSingleCompetencyPreviewFromHistory() {
+            String sessionId = "course_123_user_456";
+            String responseText = "Here's your competency preview %%PREVIEW_DATA_START%%{\"singlePreview\":{\"preview\":true,\"competency\":{\"title\":\"OOP Basics\",\"description\":\"Object-Oriented Programming fundamentals\",\"taxonomy\":\"UNDERSTAND\",\"icon\":\"comments\"}}}%%PREVIEW_DATA_END%%";
+            List<Message> messages = List.of(new UserMessage("Create a competency"), new AssistantMessage(responseText));
+
+            when(chatMemory.get(sessionId)).thenReturn(messages);
+
+            List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+            assertThat(result).hasSize(2);
+            assertThat(result.getFirst().content()).isEqualTo("Create a competency");
+            assertThat(result.getFirst().isUser()).isTrue();
+            assertThat(result.getFirst().competencyPreview()).isNull();
+
+            assertThat(result.get(1).content()).isEqualTo("Here's your competency preview");
+            assertThat(result.get(1).isUser()).isFalse();
+            assertThat(result.get(1).competencyPreview()).isNotNull();
+            assertThat(result.get(1).competencyPreview().preview()).isTrue();
+            assertThat(result.get(1).competencyPreview().competency().title()).isEqualTo("OOP Basics");
+        }
+
+        @Test
+        void shouldExtractBatchCompetencyPreviewFromHistory() {
+            String sessionId = "course_123_user_789";
+            String responseText = "Here are multiple competencies %%PREVIEW_DATA_START%%{\"batchPreview\":{\"batchPreview\":true,\"count\":2,\"competencies\":[{\"title\":\"Comp 1\",\"description\":\"Description 1\",\"taxonomy\":\"REMEMBER\",\"icon\":\"brain\"},{\"title\":\"Comp 2\",\"description\":\"Description 2\",\"taxonomy\":\"APPLY\",\"icon\":\"pen-fancy\"}]}}%%PREVIEW_DATA_END%%";
+            List<Message> messages = List.of(new UserMessage("Create multiple competencies"), new AssistantMessage(responseText));
+
+            when(chatMemory.get(sessionId)).thenReturn(messages);
+
+            List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+            assertThat(result).hasSize(2);
+            assertThat(result.get(1).content()).isEqualTo("Here are multiple competencies");
+            assertThat(result.get(1).batchCompetencyPreview()).isNotNull();
+            assertThat(result.get(1).batchCompetencyPreview().batchPreview()).isTrue();
+            assertThat(result.get(1).batchCompetencyPreview().count()).isEqualTo(2);
+            assertThat(result.get(1).batchCompetencyPreview().competencies()).hasSize(2);
+            assertThat(result.get(1).batchCompetencyPreview().competencies().getFirst().title()).isEqualTo("Comp 1");
+            assertThat(result.get(1).batchCompetencyPreview().competencies().get(1).title()).isEqualTo("Comp 2");
+        }
+
+        @Test
+        void shouldFilterOutDelegationMarkers() {
+            String sessionId = "course_123_user_101";
+            List<Message> messages = List.of(new UserMessage("Create a competency"), new AssistantMessage("%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:Create OOP competency"),
+                    new AssistantMessage("Competency created successfully"));
+
+            when(chatMemory.get(sessionId)).thenReturn(messages);
+
+            List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+            assertThat(result).hasSize(2);
+            assertThat(result.getFirst().content()).isEqualTo("Create a competency");
+            assertThat(result.get(1).content()).isEqualTo("Competency created successfully");
+            // Delegation marker message should be filtered out
+        }
+
+        @Test
+        void shouldFilterOutBriefingMessages() {
+            String sessionId = "course_123_user_202";
+            List<Message> messages = List.of(new UserMessage("Show me competencies"),
+                    new AssistantMessage("TOPIC: Competency Management\nREQUIREMENTS: List all competencies\nCONSTRAINTS: Read-only\nCONTEXT: Course 123"),
+                    new AssistantMessage("Here are your competencies"));
+
+            when(chatMemory.get(sessionId)).thenReturn(messages);
+
+            List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+            assertThat(result).hasSize(2);
+            assertThat(result.getFirst().content()).isEqualTo("Show me competencies");
+            assertThat(result.get(1).content()).isEqualTo("Here are your competencies");
+            // Briefing message should be filtered out
+        }
+
+        @Test
+        void shouldHandleMessageWithoutPreviewData() {
+            String sessionId = "course_123_user_303";
+            List<Message> messages = List.of(new UserMessage("What are competencies?"),
+                    new AssistantMessage("Competencies are learning objectives that define what students should know and be able to do."));
+
+            when(chatMemory.get(sessionId)).thenReturn(messages);
+
+            List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+            assertThat(result).hasSize(2);
+            assertThat(result.getFirst().content()).isEqualTo("What are competencies?");
+            assertThat(result.get(1).content()).isEqualTo("Competencies are learning objectives that define what students should know and be able to do.");
+            assertThat(result.get(1).competencyPreview()).isNull();
+            assertThat(result.get(1).batchCompetencyPreview()).isNull();
+        }
+
+        @Test
+        void shouldHandleMalformedPreviewData() {
+            String sessionId = "course_123_user_404";
+            String responseText = "Message %%PREVIEW_DATA_START%%{invalid json}%%PREVIEW_DATA_END%%";
+            List<Message> messages = List.of(new UserMessage("Test"), new AssistantMessage(responseText));
+
+            when(chatMemory.get(sessionId)).thenReturn(messages);
+
+            List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+            assertThat(result).hasSize(2);
+            assertThat(result.get(1).content()).isEqualTo("Message");
+            assertThat(result.get(1).competencyPreview()).isNull();
+            assertThat(result.get(1).batchCompetencyPreview()).isNull();
+        }
+
+        @Test
+        void shouldHandlePreviewDataWithoutEndMarker() {
+            String sessionId = "course_123_user_505";
+            String responseText = "Message %%PREVIEW_DATA_START%%{\"singlePreview\":{}}";
+            List<Message> messages = List.of(new UserMessage("Test"), new AssistantMessage(responseText));
+
+            when(chatMemory.get(sessionId)).thenReturn(messages);
+
+            List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+            assertThat(result).hasSize(2);
+            // Should return original text when end marker is missing
+            assertThat(result.get(1).content()).contains("Message");
+            assertThat(result.get(1).competencyPreview()).isNull();
+        }
+
+        @Test
+        void shouldHandleMultipleMessagesWithMixedPreviewData() {
+            String sessionId = "course_123_user_606";
+            String message1 = "First response %%PREVIEW_DATA_START%%{\"singlePreview\":{\"preview\":true,\"competency\":{\"title\":\"Test 1\",\"description\":\"Desc 1\",\"taxonomy\":\"APPLY\",\"icon\":\"pen-fancy\"}}}%%PREVIEW_DATA_END%%";
+            String message2 = "Second response without preview";
+            String message3 = "Third response %%PREVIEW_DATA_START%%{\"batchPreview\":{\"batchPreview\":true,\"count\":1,\"competencies\":[{\"title\":\"Test 2\",\"description\":\"Desc 2\",\"taxonomy\":\"ANALYZE\",\"icon\":\"magnifying-glass\"}]}}%%PREVIEW_DATA_END%%";
+
+            List<Message> messages = List.of(new UserMessage("User message 1"), new AssistantMessage(message1), new UserMessage("User message 2"), new AssistantMessage(message2),
+                    new UserMessage("User message 3"), new AssistantMessage(message3));
+
+            when(chatMemory.get(sessionId)).thenReturn(messages);
+
+            List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+            assertThat(result).hasSize(6);
+
+            // First assistant message with single preview
+            assertThat(result.get(1).content()).isEqualTo("First response");
+            assertThat(result.get(1).competencyPreview()).isNotNull();
+            assertThat(result.get(1).competencyPreview().competency().title()).isEqualTo("Test 1");
+
+            // Second assistant message without preview
+            assertThat(result.get(3).content()).isEqualTo("Second response without preview");
+            assertThat(result.get(3).competencyPreview()).isNull();
+            assertThat(result.get(3).batchCompetencyPreview()).isNull();
+
+            // Third assistant message with batch preview
+            assertThat(result.get(5).content()).isEqualTo("Third response");
+            assertThat(result.get(5).batchCompetencyPreview()).isNotNull();
+            assertThat(result.get(5).batchCompetencyPreview().competencies()).hasSize(1);
+            assertThat(result.get(5).batchCompetencyPreview().competencies().getFirst().title()).isEqualTo("Test 2");
+        }
+
+        @Test
+        void shouldFilterOutAllInternalMessagesAndKeepUserFacingOnes() {
+            String sessionId = "course_123_user_707";
+            List<Message> messages = List.of(new UserMessage("Create OOP competency"), new AssistantMessage("%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:Brief"),
+                    new AssistantMessage("TOPIC: OOP\nREQUIREMENTS: Create\nCONSTRAINTS: None\nCONTEXT: Course"),
+                    new AssistantMessage(
+                            "Competency created %%PREVIEW_DATA_START%%{\"singlePreview\":{\"preview\":true,\"competency\":{\"title\":\"OOP\",\"description\":\"Test\",\"taxonomy\":\"APPLY\",\"icon\":\"pen-fancy\"}}}%%PREVIEW_DATA_END%%"),
+                    new AssistantMessage("%%ARTEMIS_RETURN_TO_MAIN_AGENT%%"), new AssistantMessage("Task completed successfully"));
+
+            when(chatMemory.get(sessionId)).thenReturn(messages);
+
+            List<AtlasAgentHistoryMessageDTO> result = atlasAgentService.getConversationHistoryAsDTO(sessionId);
+
+            // Should only have user message and two assistant messages (competency created and task completed)
+            assertThat(result).hasSize(3);
+            assertThat(result.getFirst().content()).isEqualTo("Create OOP competency");
+            assertThat(result.get(1).content()).isEqualTo("Competency created");
+            assertThat(result.get(1).competencyPreview()).isNotNull();
+            assertThat(result.get(2).content()).isEqualTo("Task completed successfully");
         }
     }
 

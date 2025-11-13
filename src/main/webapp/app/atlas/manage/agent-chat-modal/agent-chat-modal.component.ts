@@ -73,20 +73,21 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         // Load previous conversation history
         this.agentChatService.getConversationHistory(this.courseId).subscribe({
             next: (history) => {
-                // Load messages from history
                 history.forEach((msg) => {
-                    this.addMessage(msg.content, msg.isUser);
+                    if (msg.competencyPreview || msg.batchCompetencyPreview) {
+                        this.addMessageWithPreview(msg.content, msg.isUser, msg.competencyPreview, msg.batchCompetencyPreview);
+                    } else {
+                        this.addMessage(msg.content, msg.isUser);
+                    }
                 });
             },
             error: () => {
-                // On error, just show welcome message
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
             },
         });
     }
 
     ngAfterViewInit(): void {
-        // Auto-focus on textarea when modal opens
         setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
     }
 
@@ -111,18 +112,15 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         // This means they're refining the plan or moving to a different topic
         this.invalidatePendingPlanApprovals();
 
-        // Add user message
         this.addMessage(message, true);
         this.currentMessage.set('');
 
         this.isAgentTyping.set(true);
 
-        // Send message - server will use courseId as conversationId for memory
         this.agentChatService.sendMessage(message, this.courseId).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
 
-                // Add message with preview data from response
                 this.addMessageWithPreview(
                     response.message || this.translateService.instant('artemisApp.agent.chat.error'),
                     false,
@@ -130,12 +128,10 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     response.batchCompetencyPreview,
                 );
 
-                // Emit event if competencies were modified so parent can refresh
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
                 }
 
-                // Restore focus to input after agent responds - using Iris pattern
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
             },
             error: () => {
@@ -182,7 +178,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             competency.id = message.competencyPreview.competencyId;
         }
 
-        // Show typing indicator while creating/updating
         this.isAgentTyping.set(true);
 
         // Call the competency service to create or update the competency

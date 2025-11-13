@@ -826,6 +826,240 @@ describe('AgentChatService', () => {
             expect(req.request.method).toBe('GET');
             req.flush([]);
         });
+
+        it('should fetch conversation history with single competency preview', () => {
+            const mockHistoryWithPreview = [
+                { content: 'Create a competency for OOP', isUser: true },
+                {
+                    content: "Here's your competency preview",
+                    isUser: false,
+                    competencyPreview: {
+                        preview: true,
+                        competency: {
+                            title: 'Object-Oriented Programming',
+                            description: 'OOP fundamentals',
+                            taxonomy: 'UNDERSTAND',
+                            icon: 'comments',
+                        },
+                    },
+                },
+            ];
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.flush(mockHistoryWithPreview);
+
+            expect(result).toHaveLength(2);
+            expect(result[0].content).toBe('Create a competency for OOP');
+            expect(result[0].isUser).toBeTrue();
+            expect(result[0].competencyPreview).toBeUndefined();
+
+            expect(result[1].content).toBe("Here's your competency preview");
+            expect(result[1].isUser).toBeFalse();
+            expect(result[1].competencyPreview).toBeDefined();
+            expect(result[1].competencyPreview.preview).toBeTrue();
+            expect(result[1].competencyPreview.competency.title).toBe('Object-Oriented Programming');
+        });
+
+        it('should fetch conversation history with batch competency preview', () => {
+            const mockHistoryWithBatchPreview = [
+                { content: 'Create multiple competencies', isUser: true },
+                {
+                    content: 'Here are multiple competencies',
+                    isUser: false,
+                    batchCompetencyPreview: {
+                        batchPreview: true,
+                        count: 2,
+                        competencies: [
+                            { title: 'Comp 1', description: 'Desc 1', taxonomy: 'REMEMBER', icon: 'brain' },
+                            { title: 'Comp 2', description: 'Desc 2', taxonomy: 'APPLY', icon: 'pen-fancy' },
+                        ],
+                    },
+                },
+            ];
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.flush(mockHistoryWithBatchPreview);
+
+            expect(result).toHaveLength(2);
+            expect(result[1].batchCompetencyPreview).toBeDefined();
+            expect(result[1].batchCompetencyPreview.batchPreview).toBeTrue();
+            expect(result[1].batchCompetencyPreview.count).toBe(2);
+            expect(result[1].batchCompetencyPreview.competencies).toHaveLength(2);
+            expect(result[1].batchCompetencyPreview.competencies[0].title).toBe('Comp 1');
+        });
+
+        it('should fetch conversation history with mixed messages', () => {
+            const mockMixedHistory = [
+                { content: 'User message 1', isUser: true },
+                {
+                    content: 'Preview response',
+                    isUser: false,
+                    competencyPreview: {
+                        preview: true,
+                        competency: {
+                            title: 'Test',
+                            description: 'Test desc',
+                            taxonomy: 'APPLY',
+                            icon: 'pen-fancy',
+                        },
+                    },
+                },
+                { content: 'User message 2', isUser: true },
+                { content: 'Normal response without preview', isUser: false },
+                { content: 'User message 3', isUser: true },
+                {
+                    content: 'Batch response',
+                    isUser: false,
+                    batchCompetencyPreview: {
+                        batchPreview: true,
+                        count: 1,
+                        competencies: [{ title: 'Batch Comp', description: 'Batch desc', taxonomy: 'ANALYZE', icon: 'magnifying-glass' }],
+                    },
+                },
+            ];
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.flush(mockMixedHistory);
+
+            expect(result).toHaveLength(6);
+            expect(result[0].isUser).toBeTrue();
+            expect(result[1].competencyPreview).toBeDefined();
+            expect(result[3].competencyPreview).toBeUndefined();
+            expect(result[3].batchCompetencyPreview).toBeUndefined();
+            expect(result[5].batchCompetencyPreview).toBeDefined();
+        });
+
+        it('should handle history with competencyId for update operations', () => {
+            const mockHistoryWithUpdate = [
+                { content: 'Update competency 42', isUser: true },
+                {
+                    content: 'Updated competency preview',
+                    isUser: false,
+                    competencyPreview: {
+                        preview: true,
+                        competencyId: 42,
+                        competency: {
+                            title: 'Updated Title',
+                            description: 'Updated description',
+                            taxonomy: 'ANALYZE',
+                            icon: 'magnifying-glass',
+                        },
+                    },
+                },
+            ];
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.flush(mockHistoryWithUpdate);
+
+            expect(result[1].competencyPreview.competencyId).toBe(42);
+            expect(result[1].competencyPreview.competency.title).toBe('Updated Title');
+        });
+
+        it('should handle history with viewOnly flag', () => {
+            const mockHistoryWithViewOnly = [
+                { content: 'Show me competency', isUser: true },
+                {
+                    content: 'Preview (view only)',
+                    isUser: false,
+                    competencyPreview: {
+                        preview: true,
+                        viewOnly: true,
+                        competency: {
+                            title: 'Read-only Competency',
+                            description: 'For viewing only',
+                            taxonomy: 'UNDERSTAND',
+                            icon: 'brain',
+                        },
+                    },
+                },
+            ];
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.flush(mockHistoryWithViewOnly);
+
+            expect(result[1].competencyPreview.viewOnly).toBeTrue();
+        });
+
+        it('should handle history with both preview types in batch', () => {
+            const mockHistoryWithBatchViewOnly = [
+                { content: 'Show competencies', isUser: true },
+                {
+                    content: 'Batch preview',
+                    isUser: false,
+                    batchCompetencyPreview: {
+                        batchPreview: true,
+                        count: 2,
+                        viewOnly: true,
+                        competencies: [
+                            { title: 'Preview 1', description: 'Desc 1', taxonomy: 'REMEMBER', icon: 'brain' },
+                            { title: 'Preview 2', description: 'Desc 2', taxonomy: 'UNDERSTAND', icon: 'comments' },
+                        ],
+                    },
+                },
+            ];
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.flush(mockHistoryWithBatchViewOnly);
+
+            expect(result[1].batchCompetencyPreview.viewOnly).toBeTrue();
+            expect(result[1].batchCompetencyPreview.competencies).toHaveLength(2);
+        });
+
+        it('should handle history with empty competencies array in batch', () => {
+            const mockHistoryWithEmptyBatch = [
+                { content: 'Create nothing', isUser: true },
+                {
+                    content: 'Empty batch',
+                    isUser: false,
+                    batchCompetencyPreview: {
+                        batchPreview: true,
+                        count: 0,
+                        competencies: [],
+                    },
+                },
+            ];
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.flush(mockHistoryWithEmptyBatch);
+
+            expect(result[1].batchCompetencyPreview.count).toBe(0);
+            expect(result[1].batchCompetencyPreview.competencies).toHaveLength(0);
+        });
     });
 
     describe('getSessionId', () => {
