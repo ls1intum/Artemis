@@ -591,21 +591,37 @@ describe('BuildQueueComponent', () => {
         expect(downloadSpy).toHaveBeenCalledTimes(2);
         expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
     });
+});
 
-    it('should set isAdministrationView to true when courseId is 0', () => {
-        // We should only test computed() logic. Need this to avoid calling ngOnInit/rendering: jsdom triggers navigation errors.
+// Minimal unit test for the computed() signal only, avoids template rendering and DOM/navigation side effects.
+describe('BuildQueueComponent – isAdministrationView() [signal test]', () => {
+    let component: BuildOverviewComponent;
+
+    beforeAll(() => {
         jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
 
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({}) } } },
+                { provide: BuildOverviewService, useValue: {} },
+                { provide: AlertService, useValue: {} },
+                { provide: NgbModal, useValue: {} },
+                { provide: AccountService, useValue: {} },
+            ],
+        });
+
+        component = TestBed.runInInjectionContext(() => new BuildOverviewComponent());
+    });
+
+    it('should compute true when courseId is 0', () => {
         component.courseId = 0;
-
         expect(component.isAdministrationView()).toBeTrue();
     });
 
-    it('should set isAdministrationView to false when courseId > 0', () => {
-        jest.spyOn(console, 'error').mockImplementation(() => {});
-
+    it('should compute false when courseId > 0', () => {
         component.courseId = 123;
-
         expect(component.isAdministrationView()).toBeFalse();
     });
 });
