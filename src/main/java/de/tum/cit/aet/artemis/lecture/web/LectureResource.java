@@ -415,10 +415,11 @@ public class LectureResource {
     @PostMapping("courses/{courseId}/ingest")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
-        Course course = courseRepository.findByIdWithNormalLecturesAndLectureUnitsAndAttachmentsElseThrow(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        Set<Lecture> lectures = lectureRepository.findAllNormalLecturesByCourseIdWithAttachmentsAndLectureUnits(courseId);
         if (lectureId.isPresent()) {
-            Optional<Lecture> lectureToIngest = course.getLectures().stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();
+            Optional<Lecture> lectureToIngest = lectures.stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();
             if (lectureToIngest.isPresent()) {
                 Set<Lecture> lecturesToIngest = new HashSet<>();
                 lecturesToIngest.add(lectureToIngest.get());
@@ -427,7 +428,7 @@ public class LectureResource {
             }
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.allLecturesError", "idExists")).body(null);
         }
-        lectureService.ingestLecturesInPyris(course.getLectures());
+        lectureService.ingestLecturesInPyris(lectures);
         return ResponseEntity.ok().build();
     }
 

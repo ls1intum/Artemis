@@ -127,16 +127,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
-    @Query("""
-            SELECT course
-            FROM Course course
-                LEFT JOIN FETCH course.lectures lecture
-                LEFT JOIN FETCH lecture.lectureUnits
-                LEFT JOIN FETCH lecture.attachments
-            WHERE course.id = :courseId AND (lecture IS NULL OR NOT lecture.isTutorialLecture)
-            """)
-    Optional<Course> findByIdWithNormalLecturesAndLectureUnitsAndAttachments(@Param("courseId") long courseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
 
@@ -435,11 +425,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @NotNull
     default Course findByIdWithLecturesElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerLecturesById(courseId), courseId);
-    }
-
-    @NotNull
-    default Course findByIdWithNormalLecturesAndLectureUnitsAndAttachmentsElseThrow(long courseId) {
-        return getValueElseThrow(findByIdWithNormalLecturesAndLectureUnitsAndAttachments(courseId), courseId);
     }
 
     @NotNull
