@@ -35,7 +35,7 @@ export const FILES_PATH_PREFIX = 'api/core/files/';
 
 export const MODULE_FEATURE_PASSKEY = 'passkey';
 
-export const MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN = 'passkeyRequireForAdministratorFeatures';
+export const MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN = 'passkeyRequiredForAdministratorFeatures';
 
 export const MODULE_FEATURE_ATLAS = 'atlas';
 
