@@ -25,6 +25,7 @@ export class LoginWithPasskeyModalComponent {
     }
 
     handleLoginSuccess() {
+        // TODO maybe this can be simplified?
         this.justLoggedInWithPasskey.emit(true);
         this.showModal = false;
 
