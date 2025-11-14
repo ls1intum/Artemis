@@ -227,6 +227,9 @@ public class LectureUnitResource {
     @EnforceAtLeastInstructorInLectureUnit
     public ResponseEntity<Void> ingestLectureUnit(@PathVariable long lectureId, @PathVariable long lectureUnitId) {
         Lecture lecture = this.lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.isTutorialLecture()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
         Optional<LectureUnit> lectureUnitOptional = lecture.getLectureUnits().stream().filter(lu -> lu.getId() == lectureUnitId).findFirst();
         if (lectureUnitOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
