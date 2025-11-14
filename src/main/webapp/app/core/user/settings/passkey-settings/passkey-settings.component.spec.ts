@@ -14,6 +14,8 @@ import { PasskeyDTO } from 'app/core/user/settings/passkey-settings/dto/passkey.
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { User } from 'app/core/user/user.model';
 
 describe('PasskeySettingsComponent', () => {
     let component: PasskeySettingsComponent;
@@ -165,5 +167,34 @@ describe('PasskeySettingsComponent', () => {
 
         expect(passkey.isEditingLabel).toBeFalse();
         expect(passkey.label).toBe('Original Label');
+    });
+
+    it('should display editing label input field when isEditingLabel is true', async () => {
+        const passkey: DisplayedPasskey = {
+            credentialId: '123',
+            label: 'Test Passkey',
+            isEditingLabel: false,
+            created: new Date().toISOString(),
+            lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: true,
+        };
+
+        component.registeredPasskeys.set([passkey]);
+
+        // Test with user (editing disabled)
+        const user: User = { id: 1, login: 'user', authorities: [Authority.USER] };
+        component.currentUser.set(user);
+        fixture.detectChanges();
+
+        let editingInput = fixture.nativeElement.querySelector('input[type="text"]');
+        expect(editingInput).toBeNull();
+
+        // Enable editing mode
+        passkey.isEditingLabel = true;
+        component.registeredPasskeys.set([passkey]);
+        fixture.detectChanges();
+
+        editingInput = fixture.nativeElement.querySelector('input[type="text"]');
+        expect(editingInput).not.toBeNull();
     });
 });
