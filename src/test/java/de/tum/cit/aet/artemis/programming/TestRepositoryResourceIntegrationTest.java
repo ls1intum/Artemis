@@ -73,7 +73,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath);
         Path keepFile = filePath.resolve(".keep");
-        Files.writeString(keepFile, "tracked folder");
+        FileUtils.writeStringToFile(keepFile.toFile(), "tracked folder", java.nio.charset.StandardCharsets.UTF_8);
 
         RepositoryExportTestUtil.wireRepositoryToExercise(localVCLocalCITestService, programmingExercise, RepositoryType.TESTS, testsSlug);
 

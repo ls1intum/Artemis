@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -102,7 +103,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
 
         // Write a file and commit on the remote working copy, then push to origin
         var readmePath = remoteRepo.workingCopyGitRepoFile.toPath().resolve("README.md");
-        Files.writeString(readmePath, "Initial commit");
+        FileUtils.writeStringToFile(readmePath.toFile(), "Initial commit", java.nio.charset.StandardCharsets.UTF_8);
         remoteRepo.workingCopyGitRepo.add().addFilepattern(".").call();
         GitService.commit(remoteRepo.workingCopyGitRepo).setMessage("Initial commit").call();
         remoteRepo.workingCopyGitRepo.push().setRemote("origin").call();
@@ -120,7 +121,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         // Create a local change, commit and push via GitService
         var localFile = targetPath.resolve("hello.txt");
         Files.createDirectories(localFile.getParent());
-        Files.writeString(localFile, "hello world");
+        FileUtils.writeStringToFile(localFile.toFile(), "hello world", java.nio.charset.StandardCharsets.UTF_8);
         gitService.stageAllChanges(checkedOut);
         gitService.commitAndPush(checkedOut, "Add hello.txt", true, null);
 

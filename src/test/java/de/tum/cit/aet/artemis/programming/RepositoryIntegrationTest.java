@@ -1184,11 +1184,11 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         Path workingDir = repository.workingCopyGitRepoFile.toPath();
         Files.createDirectories(workingDir);
 
-        Files.writeString(workingDir.resolve(currentLocalFileName), currentLocalFileContent, StandardCharsets.UTF_8);
-        Files.write(workingDir.resolve(currentLocalFileName + ".jar"), currentLocalBinaryFileContent);
+        FileUtils.writeStringToFile(workingDir.resolve(currentLocalFileName).toFile(), currentLocalFileContent, StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(workingDir.resolve(currentLocalFileName + ".jar").toFile(), currentLocalBinaryFileContent);
         Path folderPath = workingDir.resolve(currentLocalFolderName);
         Files.createDirectories(folderPath);
-        Files.writeString(folderPath.resolve(".keep"), "");
+        FileUtils.writeStringToFile(folderPath.resolve(".keep").toFile(), "", java.nio.charset.StandardCharsets.UTF_8);
 
         repository.workingCopyGitRepo.add().addFilepattern(".").call();
         GitService.commit(repository.workingCopyGitRepo).setMessage("Initial commit for " + currentLocalFileName).call();

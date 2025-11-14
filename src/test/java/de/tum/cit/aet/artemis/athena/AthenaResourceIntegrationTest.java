@@ -14,6 +14,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -463,7 +464,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         }
         // Seed a README.md so the export contains the expected file
         Path readme = sourceRepo.workingCopyGitRepoFile.toPath().resolve("README.md");
-        Files.writeString(readme, "Initial commit");
+        FileUtils.writeStringToFile(readme.toFile(), "Initial commit", java.nio.charset.StandardCharsets.UTF_8);
         sourceRepo.workingCopyGitRepo.add().addFilepattern(".").call();
         GitService.commit(sourceRepo.workingCopyGitRepo).setMessage("Initial commit").call();
         sourceRepo.workingCopyGitRepo.push().setRemote("origin").call();

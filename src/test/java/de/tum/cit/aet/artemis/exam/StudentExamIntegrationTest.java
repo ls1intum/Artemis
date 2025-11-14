@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.json.JSONException;
@@ -1511,7 +1512,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         Path remotePath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
         try (Git git = Git.cloneRepository().setURI(remotePath.toUri().toString()).setDirectory(cloneDirectory.toFile()).call()) {
             String fileName = "update-" + UUID.randomUUID() + ".txt";
-            Files.writeString(cloneDirectory.resolve(fileName), "updated content");
+            FileUtils.writeStringToFile(cloneDirectory.resolve(fileName).toFile(), "updated content", java.nio.charset.StandardCharsets.UTF_8);
             git.add().addFilepattern(fileName).call();
             RevCommit commit = de.tum.cit.aet.artemis.programming.service.GitService.commit(git).setMessage("Add " + fileName).call();
             git.push().call();

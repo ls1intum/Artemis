@@ -402,8 +402,8 @@ public class ProgrammingExerciseIntegrationTestService {
         String pomContents = TestResourceUtils.loadFileFromResources("test-data/repository-export/pom.xml");
         Path projectFilePath = repo1.workingCopyGitRepoFile.toPath().resolve(".project");
         Path pomPath = repo1.workingCopyGitRepoFile.toPath().resolve("pom.xml");
-        Files.writeString(projectFilePath, projectFileContents, StandardCharsets.UTF_8);
-        Files.writeString(pomPath, pomContents, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(projectFilePath.toFile(), projectFileContents, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(pomPath.toFile(), pomContents, StandardCharsets.UTF_8);
         repo1.workingCopyGitRepo.add().addFilepattern(".").call();
         GitService.commit(repo1.workingCopyGitRepo).setMessage("seed project and pom").call();
         repo1.workingCopyGitRepo.push().setRemote("origin").call();
