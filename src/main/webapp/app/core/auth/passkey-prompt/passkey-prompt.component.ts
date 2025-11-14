@@ -32,7 +32,6 @@ export class PasskeyPromptComponent implements OnInit {
     linkToUserSettingsWasClicked = output<void>();
 
     ngOnInit() {
-        // TODO this might not be needed
         this.initializeUserIdentity().then(() => {});
     }
 
