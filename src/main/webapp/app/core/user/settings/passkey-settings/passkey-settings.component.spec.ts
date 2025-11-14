@@ -212,7 +212,7 @@ describe('PasskeySettingsComponent', () => {
         component.registeredPasskeys.set([passkey]);
 
         // Test with user (editing disabled)
-        const user: User = { id: 1, login: 'user', authorities: [Authority.USER] };
+        const user: User = { id: 1, login: 'user', authorities: [Authority.USER], internal: true };
         component.currentUser.set(user);
         fixture.detectChanges();
 
@@ -241,7 +241,7 @@ describe('PasskeySettingsComponent', () => {
         component.registeredPasskeys.set([approvedPasskey]);
 
         // Set user as admin
-        const adminUser: User = { id: 1, login: 'admin', authorities: [Authority.ADMIN] };
+        const adminUser: User = { id: 1, login: 'admin', authorities: [Authority.ADMIN], internal: true };
         component.currentUser.set(adminUser);
         fixture.detectChanges();
 
@@ -267,7 +267,7 @@ describe('PasskeySettingsComponent', () => {
         component.registeredPasskeys.set([notApprovedPasskey]);
 
         // Set user as admin
-        const adminUser: User = { id: 1, login: 'admin', authorities: [Authority.ADMIN] };
+        const adminUser: User = { id: 1, login: 'admin', authorities: [Authority.ADMIN], internal: true };
         component.currentUser.set(adminUser);
         fixture.detectChanges();
 
@@ -293,7 +293,7 @@ describe('PasskeySettingsComponent', () => {
         component.registeredPasskeys.set([passkey]);
 
         // Set user as regular user (not admin)
-        const regularUser: User = { id: 1, login: 'user', authorities: [Authority.USER] };
+        const regularUser: User = { id: 1, login: 'user', authorities: [Authority.USER], internal: true };
         component.currentUser.set(regularUser);
         fixture.detectChanges();
 

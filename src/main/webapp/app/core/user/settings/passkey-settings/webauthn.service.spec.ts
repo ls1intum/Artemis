@@ -8,7 +8,6 @@ import { InvalidStateError } from './entities/errors/invalid-state.error';
 import { User } from 'app/core/user/user.model';
 import * as credentialUtil from './util/credential.util';
 import * as credentialOptionUtil from './util/credential-option.util';
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { encodeAsBase64Url } from 'app/shared/util/base64.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { signal } from '@angular/core';
@@ -204,17 +203,18 @@ describe('WebauthnService', () => {
             webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
 
             // Verify initial state (should not have isLoggedInWithPasskey set)
-            expect(accountService.userIdentity().isLoggedInWithPasskey).toBeUndefined();
+            expect(accountService.userIdentity()?.isLoggedInWithPasskey).toBeUndefined();
 
             await service.loginWithPasskey();
 
             // Verify userIdentity signal was updated
             const updatedIdentity = accountService.userIdentity();
-            expect(updatedIdentity.isLoggedInWithPasskey).toBeTrue();
-            expect(updatedIdentity.internal).toBeTrue();
-            expect(updatedIdentity.id).toBe(1);
-            expect(updatedIdentity.email).toBe('test@example.com');
-            expect(updatedIdentity.login).toBe('testuser');
+            expect(updatedIdentity).toBeDefined();
+            expect(updatedIdentity!.isLoggedInWithPasskey).toBeTrue();
+            expect(updatedIdentity!.internal).toBeTrue();
+            expect(updatedIdentity!.id).toBe(1);
+            expect(updatedIdentity!.email).toBe('test@example.com');
+            expect(updatedIdentity!.login).toBe('testuser');
         });
     });
 
@@ -433,17 +433,18 @@ describe('WebauthnService', () => {
             setupSuccessfulRegistrationMocks();
 
             // Verify initial state
-            expect(accountService.userIdentity().askToSetupPasskey).toBeTrue();
+            expect(accountService.userIdentity()?.askToSetupPasskey).toBeTrue();
 
             await service.addNewPasskey(mockUser);
 
             // Verify userIdentity signal was updated
             const updatedIdentity = accountService.userIdentity();
-            expect(updatedIdentity.askToSetupPasskey).toBeFalse();
-            expect(updatedIdentity.internal).toBeTrue();
-            expect(updatedIdentity.id).toBe(1);
-            expect(updatedIdentity.email).toBe('test@example.com');
-            expect(updatedIdentity.login).toBe('testuser');
+            expect(updatedIdentity).toBeDefined();
+            expect(updatedIdentity!.askToSetupPasskey).toBeFalse();
+            expect(updatedIdentity!.internal).toBeTrue();
+            expect(updatedIdentity!.id).toBe(1);
+            expect(updatedIdentity!.email).toBe('test@example.com');
+            expect(updatedIdentity!.login).toBe('testuser');
         });
     });
 });
