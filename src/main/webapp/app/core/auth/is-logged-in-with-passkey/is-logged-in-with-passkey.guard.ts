@@ -51,9 +51,9 @@ export class IsLoggedInWithPasskeyGuard implements CanActivate {
             return true;
         }
 
-        // Redirect to passkey-required page with the attempted URL as a query parameter
+        const attemptedUrl = state.url;
         this.router.navigate(['/passkey-required'], {
-            queryParams: { returnUrl: state.url },
+            queryParams: { returnUrl: attemptedUrl },
         });
 
         return false;
