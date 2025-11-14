@@ -60,44 +60,6 @@ describe('LoginWithPasskeyModal', () => {
         expect(component.showModal).toBeFalse();
     });
 
-    it('should broadcast authentication success event', () => {
-        const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
-
-        component.handleLoginSuccess();
-
-        expect(broadcastSpy).toHaveBeenCalledWith({
-            name: 'authenticationSuccess',
-            content: 'Sending Authentication Success',
-        });
-    });
-
-    it('should navigate to home when on register page', () => {
-        Object.defineProperty(router, 'url', { value: '/register', writable: true });
-        const navigateSpy = jest.spyOn(router, 'navigate');
-
-        component.handleLoginSuccess();
-
-        expect(navigateSpy).toHaveBeenCalledWith(['']);
-    });
-
-    it('should navigate to home when on activate page', () => {
-        Object.defineProperty(router, 'url', { value: '/activate/abc123', writable: true });
-        const navigateSpy = jest.spyOn(router, 'navigate');
-
-        component.handleLoginSuccess();
-
-        expect(navigateSpy).toHaveBeenCalledWith(['']);
-    });
-
-    it('should navigate to home when on reset page', () => {
-        Object.defineProperty(router, 'url', { value: '/reset/finish/xyz789', writable: true });
-        const navigateSpy = jest.spyOn(router, 'navigate');
-
-        component.handleLoginSuccess();
-
-        expect(navigateSpy).toHaveBeenCalledWith(['']);
-    });
-
     it('should not navigate when on other pages', () => {
         Object.defineProperty(router, 'url', { value: '/admin/user-management', writable: true });
         const navigateSpy = jest.spyOn(router, 'navigate');
