@@ -75,7 +75,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
                 throw new BadCredentialsException("User " + username + " was not found in the database");
             }
 
-            Map<String, Object> details = createAuthenticationDetailsWithPasskeyApproval(credentialId);
+            Map<String, Object> details = createAuthenticationDetailsWithPasskeyApprovalStatus(credentialId);
 
             WebAuthnAuthentication auth = new WebAuthnAuthentication(userEntity, user.get().getGrantedAuthorities());
             auth.setDetails(details);
@@ -98,7 +98,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
      * @param credentialId to check for super admin approval
      * @return a map containing the authentication details with the passkey super admin approval status
      */
-    private Map<String, Object> createAuthenticationDetailsWithPasskeyApproval(String credentialId) {
+    private Map<String, Object> createAuthenticationDetailsWithPasskeyApprovalStatus(String credentialId) {
         Optional<PasskeyCredential> credential = this.passkeyCredentialsRepository.findByCredentialId(credentialId);
         boolean isPasskeyApproved = credential.map(PasskeyCredential::isSuperAdminApproved).orElse(false);
         Map<String, Object> details = new HashMap<>();
