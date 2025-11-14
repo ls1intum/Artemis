@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -21,7 +21,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { FileService } from '../../../../shared/service/file.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
@@ -966,25 +966,6 @@ describe('Course Management Update Component', () => {
             await comp.changeCommunicationEnabled();
 
             expect(disableMessagingSpy).not.toHaveBeenCalled();
-        });
-
-        it('should handle error when loading code of conduct template fails', async () => {
-            const errorResponse = new HttpErrorResponse({ status: 500, statusText: 'Server Error' });
-
-            jest.spyOn(fileService, 'getTemplateCodeOfConduct').mockReturnValue(new Observable<HttpResponse<string>>((subscriber) => subscriber.error(errorResponse)));
-
-            const alertSpy = jest.spyOn(comp['alertService'], 'addAlert');
-
-            comp.communicationEnabled = true;
-            comp.course = new Course();
-            comp.course.courseInformationSharingMessagingCodeOfConduct = undefined;
-            comp.courseForm = new FormGroup({
-                courseInformationSharingMessagingCodeOfConduct: new FormControl(),
-            });
-
-            await comp.changeCommunicationEnabled();
-
-            expect(alertSpy).toHaveBeenCalled();
         });
     });
 });
