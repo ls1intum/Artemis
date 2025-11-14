@@ -234,6 +234,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(account).isNotNull();
         assertThat(account.getAskToSetupPasskey()).isTrue();
         assertThat(account.isLoggedInWithPasskey()).isFalse();
+        assertThat(account.isPasskeySuperAdminApproved()).isFalse();
     }
 
     @Test
