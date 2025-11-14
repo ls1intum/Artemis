@@ -60,8 +60,8 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         this.lecture1.setTitle("Lecture " + lecture1.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(this.lecture1);
         this.lectureUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(2, true);
-        this.emptyLectureUnit = lectureUtilService.createAttachmentVideoUnit(false);
-        this.textUnit = lectureUtilService.createTextUnit();
+        this.emptyLectureUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        this.textUnit = lectureUtilService.createTextUnit(lecture1);
         this.lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(this.lectureUnit, this.emptyLectureUnit, this.textUnit));
 
         Course course2 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getLast().getId());

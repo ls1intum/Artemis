@@ -133,7 +133,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
         // create unreleased attachment video unit
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
         attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
 
@@ -352,7 +352,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAttachmentVideoUnitFileAsEditor() throws Exception {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
 
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
         attachmentVideoUnit.setLecture(lecture);
         Attachment attachment = attachmentVideoUnit.getAttachment();
 
@@ -395,7 +395,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
         lectureRepo.save(lecture);
 
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture, true);
         attachmentVideoUnit.setLecture(lecture);
 
         String unsanitizedName = "test–file"; // contains en-dash

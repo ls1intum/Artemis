@@ -72,12 +72,12 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
-        this.textUnit = lectureUtilService.createTextUnit();
-        this.textUnit2 = lectureUtilService.createTextUnit();
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(false);
-        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
+        this.textUnit = lectureUtilService.createTextUnit(lecture1);
+        this.textUnit2 = lectureUtilService.createTextUnit(lecture1);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit(lecture1);
         // textUnit3 is not one of the lecture units connected to the lecture
-        this.textUnit3 = lectureUtilService.createTextUnit();
+        this.textUnit3 = lectureUtilService.createTextUnit(lecture1);
 
         lectureUtilService.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().orElseThrow(), List.of(textUnit2));
         this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentVideoUnit));

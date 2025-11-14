@@ -121,7 +121,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         persistTextUnitWithLecture();
 
         // Add a second lecture unit
-        TextUnit textUnit = lectureUtilService.createTextUnit();
+        TextUnit textUnit = lectureUtilService.createTextUnit(lecture);
         lecture.addLectureUnit(textUnit);
         lecture = lectureRepository.save(lecture);
 

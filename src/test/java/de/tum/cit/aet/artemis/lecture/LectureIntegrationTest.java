@@ -129,11 +129,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         // Setting up a lecture with various kinds of content
-        ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
-        attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise, lecture1);
+        attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         attachmentOfAttachmentVideoUnit = attachmentVideoUnit.getAttachment();
-        TextUnit textUnit = lectureUtilService.createTextUnit();
-        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
+        TextUnit textUnit = lectureUtilService.createTextUnit(lecture1);
+        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit(lecture1);
         addAttachmentToLecture();
 
         lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(exerciseUnit, attachmentVideoUnit, textUnit, onlineUnit));

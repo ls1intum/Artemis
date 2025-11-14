@@ -290,7 +290,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     void testLectureUnitLinkConstruction() {
         activateIrisFor(lecture1.getCourse());
 
-        AttachmentVideoUnit testUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        AttachmentVideoUnit testUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         String attachmentLink = testUnit.getAttachment().getLink();
         testUnit.setLecture(lecture1);
         lecture1.getLectureUnits().add(testUnit);
@@ -314,7 +314,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIngestTranscriptionForLectureUnit() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(true);
+        AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         unitWithTranscription.setLecture(lecture1);
         unitWithTranscription.setVideoSource("https://example.com/video.mp4");
         lecture1.getLectureUnits().add(unitWithTranscription);
@@ -336,7 +336,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteLectureUnitWithTranscriptionFromPyrisDB() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(true);
+        AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         unitWithTranscription.setLecture(lecture1);
         unitWithTranscription.setVideoSource("https://example.com/video.mp4");
         lecture1.getLectureUnits().add(unitWithTranscription);
@@ -365,7 +365,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteLectureUnitWithTranscriptionKeepsJobIfNotDone() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(true);
+        AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         unitWithTranscription.setLecture(lecture1);
         unitWithTranscription.setVideoSource("https://example.com/video.mp4");
         lecture1.getLectureUnits().add(unitWithTranscription);

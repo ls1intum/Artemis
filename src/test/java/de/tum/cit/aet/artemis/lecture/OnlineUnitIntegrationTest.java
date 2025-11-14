@@ -158,7 +158,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         persistOnlineUnitWithLecture();
 
         // Add a second lecture unit
-        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
+        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit(lecture1);
         lecture1.addLectureUnit(onlineUnit);
         lectureRepository.save(lecture1);
 
