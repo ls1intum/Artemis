@@ -324,7 +324,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changePassword() throws Exception {
         String updatedPassword = "12345678";
-        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
         request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.OK, null);
