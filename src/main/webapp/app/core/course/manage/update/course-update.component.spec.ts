@@ -1,4 +1,4 @@
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,8 +19,10 @@ import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { FileService } from '../../../../shared/service/file.service';
+import { AlertService } from '../../../../shared/service/alert.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
@@ -892,6 +894,98 @@ describe('Course Management Update Component', () => {
         jest.spyOn(modalService, 'open').mockReturnValue({ closed: of(new Organization()), componentInstance: {} } as NgbModalRef);
         comp.openOrganizationsModal();
         expect(comp.courseOrganizations).toHaveLength(1);
+    });
+
+    describe('changeCommunicationEnabled', () => {
+        let httpMock: HttpTestingController;
+        let fileService: FileService;
+
+        beforeEach(() => {
+            httpMock = TestBed.inject(HttpTestingController);
+            fileService = TestBed.inject(FileService);
+        });
+
+        afterEach(() => {
+            httpMock.verify();
+        });
+
+        it('should load code of conduct template when communication is enabled and code of conduct is not set', async () => {
+            const codeOfConduct = '# Code of Conduct Template';
+            jest.spyOn(fileService, 'getTemplateCodeOfConduct').mockReturnValue(of(new HttpResponse({ body: codeOfConduct })));
+
+            comp.communicationEnabled = true;
+            comp.course = new Course();
+            comp.course.courseInformationSharingMessagingCodeOfConduct = undefined;
+            comp.courseForm = new FormGroup({
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(),
+            });
+
+            await comp.changeCommunicationEnabled();
+
+            expect(comp.course.courseInformationSharingMessagingCodeOfConduct).toBe(codeOfConduct);
+            expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].value).toBe(codeOfConduct);
+        });
+
+        it('should not load code of conduct template when communication is enabled and code of conduct is already set', async () => {
+            const existingCodeOfConduct = '# Existing Code of Conduct';
+            const getTemplateSpy = jest.spyOn(fileService, 'getTemplateCodeOfConduct');
+
+            comp.communicationEnabled = true;
+            comp.course = new Course();
+            comp.course.courseInformationSharingMessagingCodeOfConduct = existingCodeOfConduct;
+            comp.courseForm = new FormGroup({
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(existingCodeOfConduct),
+            });
+
+            await comp.changeCommunicationEnabled();
+
+            expect(getTemplateSpy).not.toHaveBeenCalled();
+            expect(comp.course.courseInformationSharingMessagingCodeOfConduct).toBe(existingCodeOfConduct);
+        });
+
+        it('should disable messaging when communication is enabled', async () => {
+            const disableMessagingSpy = jest.spyOn(comp, 'disableMessaging');
+
+            comp.communicationEnabled = true;
+            comp.messagingEnabled = true;
+            comp.course = new Course();
+            comp.course.courseInformationSharingMessagingCodeOfConduct = '# Code of Conduct';
+
+            await comp.changeCommunicationEnabled();
+
+            expect(disableMessagingSpy).toHaveBeenCalled();
+            expect(comp.messagingEnabled).toBeFalsy();
+        });
+
+        it('should not disable messaging when communication is disabled', async () => {
+            const disableMessagingSpy = jest.spyOn(comp, 'disableMessaging');
+
+            comp.communicationEnabled = false;
+            comp.messagingEnabled = true;
+            comp.course = new Course();
+
+            await comp.changeCommunicationEnabled();
+
+            expect(disableMessagingSpy).not.toHaveBeenCalled();
+        });
+
+        it('should handle error when loading code of conduct template fails', async () => {
+            const alertService = TestBed.inject(AlertService);
+            const error = new HttpErrorResponse({ error: 'Error loading template', status: 500 });
+            jest.spyOn(fileService, 'getTemplateCodeOfConduct').mockReturnValue(throwError(() => error));
+            const alertSpy = jest.spyOn(alertService, 'addAlert');
+
+            comp.communicationEnabled = true;
+            comp.course = new Course();
+            comp.course.courseInformationSharingMessagingCodeOfConduct = undefined;
+            comp.courseForm = new FormGroup({
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(),
+            });
+
+            await comp.changeCommunicationEnabled();
+
+            expect(alertSpy).toHaveBeenCalled();
+        });
     });
 });
 
