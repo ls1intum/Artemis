@@ -10,7 +10,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 
-describe('IsLoggedInWithPasskeyGuard', () => {
+describe('PasskeyAuthenticationGuard', () => {
     let guard: PasskeyAuthenticationGuard;
     let accountService: AccountService;
     let router: Router;

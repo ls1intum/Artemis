@@ -13,7 +13,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 
-describe('PasskeyRequiredComponent', () => {
+describe('PasskeyAuthenticationPageComponent', () => {
     let component: PasskeyAuthenticationPageComponent;
     let fixture: ComponentFixture<PasskeyAuthenticationPageComponent>;
     let accountService: AccountService;
@@ -55,12 +55,12 @@ describe('PasskeyRequiredComponent', () => {
         expect(component.returnUrl).toBe('/admin/user-management');
     });
 
-    it('should redirect to returnUrl if user is already logged in with passkey', async () => {
+    it('should redirect to returnUrl if user is already logged in with passkey', () => {
         jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
         const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
         component.returnUrl = '/admin/user-management';
 
-        await component['initializeUserIdentity']();
+        component.ngOnInit();
 
         expect(navigateByUrlSpy).toHaveBeenCalledWith('/admin/user-management');
     });
@@ -83,11 +83,11 @@ describe('PasskeyRequiredComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(['/']);
     });
 
-    it('should set userHasRegisteredAPasskey based on askToSetupPasskey', async () => {
+    it('should set userHasRegisteredAPasskey based on askToSetupPasskey', () => {
         const mockUser = { id: 1, login: 'testuser', askToSetupPasskey: false, internal: true };
         jest.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser);
 
-        await component['initializeUserIdentity']();
+        component.ngOnInit();
 
         expect(component.userHasRegisteredAPasskey).toBeTrue();
     });

@@ -12,11 +12,10 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
-describe('LoginWithPasskeyModal', () => {
+describe('LoginWithPasskeyModalComponent', () => {
     let component: LoginWithPasskeyModalComponent;
     let fixture: ComponentFixture<LoginWithPasskeyModalComponent>;
     let router: Router;
-    let eventManager: EventManager;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -36,7 +35,6 @@ describe('LoginWithPasskeyModal', () => {
         fixture = TestBed.createComponent(LoginWithPasskeyModalComponent);
         component = fixture.componentInstance;
         router = TestBed.inject(Router);
-        eventManager = TestBed.inject(EventManager);
         fixture.detectChanges();
     });
 
