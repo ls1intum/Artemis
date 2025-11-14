@@ -197,4 +197,78 @@ describe('PasskeySettingsComponent', () => {
         editingInput = fixture.nativeElement.querySelector('input[type="text"]');
         expect(editingInput).not.toBeNull();
     });
+
+    it('should display approved badge for admin when passkey is super admin approved', () => {
+        const approvedPasskey: DisplayedPasskey = {
+            credentialId: '123',
+            label: 'Approved Passkey',
+            isEditingLabel: false,
+            created: new Date().toISOString(),
+            lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: true,
+        };
+
+        component.registeredPasskeys.set([approvedPasskey]);
+
+        // Set user as admin
+        const adminUser: User = { id: 1, login: 'admin', authorities: [Authority.ADMIN] };
+        component.currentUser.set(adminUser);
+        fixture.detectChanges();
+
+        // Check that badge exists
+        const badge = fixture.nativeElement.querySelector('p-badge');
+        expect(badge).not.toBeNull();
+
+        // Check badge has success class (PrimeNG badges use classes for severity)
+        const badgeElement = fixture.nativeElement.querySelector('.p-badge-success');
+        expect(badgeElement).not.toBeNull();
+    });
+
+    it('should display not approved badge for admin when passkey is not super admin approved', () => {
+        const notApprovedPasskey: DisplayedPasskey = {
+            credentialId: '456',
+            label: 'Not Approved Passkey',
+            isEditingLabel: false,
+            created: new Date().toISOString(),
+            lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: false,
+        };
+
+        component.registeredPasskeys.set([notApprovedPasskey]);
+
+        // Set user as admin
+        const adminUser: User = { id: 1, login: 'admin', authorities: [Authority.ADMIN] };
+        component.currentUser.set(adminUser);
+        fixture.detectChanges();
+
+        // Check that badge exists
+        const badge = fixture.nativeElement.querySelector('p-badge');
+        expect(badge).not.toBeNull();
+
+        // Check badge has danger class (PrimeNG badges use classes for severity)
+        const badgeElement = fixture.nativeElement.querySelector('.p-badge-danger');
+        expect(badgeElement).not.toBeNull();
+    });
+
+    it('should not display badge for non-admin users', () => {
+        const passkey: DisplayedPasskey = {
+            credentialId: '789',
+            label: 'Regular User Passkey',
+            isEditingLabel: false,
+            created: new Date().toISOString(),
+            lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: true,
+        };
+
+        component.registeredPasskeys.set([passkey]);
+
+        // Set user as regular user (not admin)
+        const regularUser: User = { id: 1, login: 'user', authorities: [Authority.USER] };
+        component.currentUser.set(regularUser);
+        fixture.detectChanges();
+
+        // Check that badge does not exist
+        const badge = fixture.nativeElement.querySelector('p-badge');
+        expect(badge).toBeNull();
+    });
 });
