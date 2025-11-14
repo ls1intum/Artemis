@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -133,7 +132,7 @@ public class PrerequisiteResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/prerequisites")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Prerequisite> createPrerequisite(@PathVariable long courseId, @RequestBody Prerequisite prerequisite) throws URISyntaxException {
         log.debug("REST request to create Prerequisite : {}", prerequisite);
         checkPrerequisitesAttributesForCreation(prerequisite);
@@ -154,7 +153,7 @@ public class PrerequisiteResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/prerequisites/bulk")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<Prerequisite>> createPrerequisite(@PathVariable Long courseId, @RequestBody List<Prerequisite> prerequisites) throws URISyntaxException {
         log.debug("REST request to create Prerequisites : {}", prerequisites);
         for (Prerequisite prerequisite : prerequisites) {
@@ -176,7 +175,7 @@ public class PrerequisiteResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/prerequisites/import")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Prerequisite> importPrerequisite(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions) throws URISyntaxException {
         log.info("REST request to import a prerequisite: {}", importOptions.competencyIds());
 
@@ -243,7 +242,7 @@ public class PrerequisiteResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/prerequisites/import-all")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllPrerequisitesFromCourse(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
             throws URISyntaxException {
         log.info("REST request to all prerequisites from course {} into course {}", importOptions.sourceCourseId(), courseId);
@@ -293,7 +292,7 @@ public class PrerequisiteResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated prerequisite
      */
     @PutMapping("courses/{courseId}/prerequisites")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Prerequisite> updatePrerequisite(@PathVariable long courseId, @RequestBody Prerequisite prerequisite) {
         log.debug("REST request to update Prerequisite : {}", prerequisite);
         checkPrerequisitesAttributesForUpdate(prerequisite);
@@ -315,7 +314,7 @@ public class PrerequisiteResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/prerequisites/{prerequisiteId}")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> deletePrerequisite(@PathVariable long prerequisiteId, @PathVariable long courseId) {
         log.info("REST request to delete a Prerequisite : {}", prerequisiteId);
 

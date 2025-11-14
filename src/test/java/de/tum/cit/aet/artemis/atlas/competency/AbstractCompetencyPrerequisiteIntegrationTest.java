@@ -250,7 +250,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     abstract void deleteCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception;
 
     // Test
-    void shouldDeleteCompetencyWhenInstructor() throws Exception {
+    void shouldDeleteCompetencyWhenEditor() throws Exception {
         deleteCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
         getCall(course.getId(), courseCompetency.getId(), HttpStatus.NOT_FOUND);
     }
