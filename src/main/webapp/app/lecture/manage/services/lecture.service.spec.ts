@@ -155,7 +155,7 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should get all normal tutorial lectures by courseId', async () => {
+        it('should get all normal lectures by courseId', async () => {
             elemDefault.isTutorialLecture = false;
             const returnedFromService = [elemDefault];
             const expected = returnedFromService;
