@@ -163,6 +163,7 @@ public class PublicAccountResource {
     /**
      * {@code GET /account} : get the current user.
      *
+     * @param request the HTTP request
      * @return the ResponseEntity with status 200 (OK) and with body the current user, empty if not logged in.
      * @throws EntityNotFoundException {@code 404 (User not found)} if the user couldn't be returned.
      */

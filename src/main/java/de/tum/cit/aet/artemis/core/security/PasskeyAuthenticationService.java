@@ -47,14 +47,14 @@ public class PasskeyAuthenticationService {
     }
 
     /**
-     * @see #isAuthenticatedWithPasskey(boolean)
+     * @return see #isAuthenticatedWithPasskey(boolean)
      */
     public boolean isAuthenticatedWithPasskey() throws PasskeyAuthenticationException {
         return isAuthenticatedWithPasskey(false);
     }
 
     /**
-     * @see #isAuthenticatedWithPasskey(boolean)
+     * @return see #isAuthenticatedWithPasskey(boolean)
      */
     public boolean isAuthenticatedWithSuperAdminApprovedPasskey() throws PasskeyAuthenticationException {
         return isAuthenticatedWithPasskey(true);
