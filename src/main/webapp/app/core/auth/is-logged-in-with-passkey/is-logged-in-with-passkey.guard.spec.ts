@@ -4,7 +4,7 @@ import { IsLoggedInWithPasskeyGuard } from './is-logged-in-with-passkey.guard';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { beforeEach, describe, it, jest } from '@jest/globals';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('IsLoggedInWithPasskeyGuard', () => {
     let guard: IsLoggedInWithPasskeyGuard;
@@ -13,7 +13,7 @@ describe('IsLoggedInWithPasskeyGuard', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [IsLoggedInWithPasskeyGuard, { provide: AccountService, useClass: MockAccountService }, { provide: Router, useClass: MockRouter }],
+            providers: [IsLoggedInWithPasskeyGuard, { provide: AccountService, useClass: MockAccountService }, { provide: Router, useClass: MockRouter }, provideHttpClient()],
         });
         guard = TestBed.inject(IsLoggedInWithPasskeyGuard);
         accountService = TestBed.inject(AccountService);
