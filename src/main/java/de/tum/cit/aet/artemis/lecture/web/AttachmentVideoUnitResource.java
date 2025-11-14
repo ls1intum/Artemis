@@ -217,7 +217,7 @@ public class AttachmentVideoUnitResource {
         int minutesUntilDeletion = 30;
         String originalFilename = file.getOriginalFilename();
         log.debug("REST request to upload file: {}", originalFilename);
-        checkLecture(lectureId);
+        checkLectureElseThrow(lectureId);
         if (!Objects.equals(FilenameUtils.getExtension(originalFilename), "pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
@@ -240,11 +240,11 @@ public class AttachmentVideoUnitResource {
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment video units
      */
     @PostMapping("lectures/{lectureId}/attachment-video-units/split/{filename}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<List<AttachmentVideoUnit>> createAttachmentVideoUnits(@PathVariable Long lectureId,
             @RequestBody LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, @PathVariable String filename) {
         log.debug("REST request to create AttachmentVideoUnits {} with lectureId {} for file {}", lectureUnitSplitInformationDTO, lectureId, filename);
-        checkLecture(lectureId);
+        checkLectureElseThrow(lectureId);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
         checkFile(filePath);
 
@@ -275,7 +275,7 @@ public class AttachmentVideoUnitResource {
     public ResponseEntity<LectureUnitSplitInformationDTO> getAttachmentVideoUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to split lecture file : {}", filename);
 
-        checkLecture(lectureId);
+        checkLectureElseThrow(lectureId);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
         checkFile(filePath);
 
@@ -302,7 +302,7 @@ public class AttachmentVideoUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<Integer>> getSlidesToRemove(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam String commaSeparatedKeyPhrases) {
         log.debug("REST request to get slides to remove for lecture file : {} and keywords : {}", filename, commaSeparatedKeyPhrases);
-        checkLecture(lectureId);
+        checkLectureElseThrow(lectureId);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
         checkFile(filePath);
 
@@ -364,7 +364,7 @@ public class AttachmentVideoUnitResource {
      *
      * @param lectureId The id of the lecture
      */
-    private void checkLecture(Long lectureId) {
+    private void checkLectureElseThrow(Long lectureId) {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");

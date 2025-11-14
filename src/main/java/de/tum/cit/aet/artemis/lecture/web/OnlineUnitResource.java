@@ -33,11 +33,9 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -58,16 +56,13 @@ public class OnlineUnitResource {
 
     private final LectureRepository lectureRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
-    public OnlineUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, OnlineUnitRepository onlineUnitRepository,
-            Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
+    public OnlineUnitResource(LectureRepository lectureRepository, OnlineUnitRepository onlineUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
+            LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.onlineUnitRepository = onlineUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
@@ -97,7 +92,7 @@ public class OnlineUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated onlineUnit
      */
     @PutMapping("lectures/{lectureId}/online-units")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<OnlineUnit> updateOnlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnit onlineUnit) {
         log.debug("REST request to update an online unit : {}", onlineUnit);
         if (onlineUnit.getId() == null) {
@@ -109,10 +104,7 @@ public class OnlineUnitResource {
         checkOnlineUnitCourseAndLecture(existingOnlineUnit, lectureId);
         lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
 
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
-
         OnlineUnit result = lectureUnitService.saveWithCompetencyLinks(onlineUnit, onlineUnitRepository::save);
-
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingOnlineUnit, Optional.of(onlineUnit)));
 
         return ResponseEntity.ok(result);

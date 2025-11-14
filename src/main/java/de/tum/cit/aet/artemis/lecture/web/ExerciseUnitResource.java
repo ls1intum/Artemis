@@ -19,10 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
@@ -38,16 +35,13 @@ public class ExerciseUnitResource {
 
     private static final String ENTITY_NAME = "exerciseUnit";
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final ExerciseUnitRepository exerciseUnitRepository;
 
     private final LectureRepository lectureRepository;
 
-    public ExerciseUnitResource(LectureRepository lectureRepository, ExerciseUnitRepository exerciseUnitRepository, AuthorizationCheckService authorizationCheckService) {
+    public ExerciseUnitResource(LectureRepository lectureRepository, ExerciseUnitRepository exerciseUnitRepository) {
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureRepository = lectureRepository;
-        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -85,14 +79,13 @@ public class ExerciseUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the found exercise units
      */
     @GetMapping("lectures/{lectureId}/exercise-units")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<List<ExerciseUnit>> getAllExerciseUnitsOfLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all exercise units for lecture : {}", lectureId);
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
-        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
         List<ExerciseUnit> exerciseUnitsOfLecture = exerciseUnitRepository.findByLectureId(lectureId);
         return ResponseEntity.ok().body(exerciseUnitsOfLecture);
     }

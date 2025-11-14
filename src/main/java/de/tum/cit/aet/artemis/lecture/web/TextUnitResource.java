@@ -22,11 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -47,17 +44,14 @@ public class TextUnitResource {
 
     private final TextUnitRepository textUnitRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
-    public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, AuthorizationCheckService authorizationCheckService,
-            Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
+    public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
+            LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
     }
@@ -92,7 +86,7 @@ public class TextUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit
      */
     @PutMapping("lectures/{lectureId}/text-units")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnitForm) {
         log.debug("REST request to update an text unit : {}", textUnitForm);
         if (textUnitForm.getId() == null) {
@@ -104,7 +98,6 @@ public class TextUnitResource {
         if (existingTextUnit.getLecture() == null || existingTextUnit.getLecture().getCourse() == null || !existingTextUnit.getLecture().getId().equals(lectureId)) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
-        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, existingTextUnit.getLecture(), null);
 
         textUnitForm.setId(existingTextUnit.getId());
         textUnitForm.setLecture(existingTextUnit.getLecture());

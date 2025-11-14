@@ -30,11 +30,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -57,8 +55,6 @@ public class LectureUnitResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final UserRepository userRepository;
 
     private final LectureUnitRepository lectureUnitRepository;
@@ -71,10 +67,8 @@ public class LectureUnitResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    public LectureUnitResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, LectureRepository lectureRepository,
-            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi,
-            InstanceMessageSendService instanceMessageSendService) {
-        this.authorizationCheckService = authorizationCheckService;
+    public LectureUnitResource(UserRepository userRepository, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
+            LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi, InstanceMessageSendService instanceMessageSendService) {
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
@@ -229,7 +223,6 @@ public class LectureUnitResource {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         LectureUnit lectureUnit = lectureUnitOptional.get();
-        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture(), null);
         this.instanceMessageSendService.sendLectureUnitAutoIngestionScheduleCancel(lectureUnitId);
         return lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
     }
