@@ -80,3 +80,36 @@ sudo systemctl restart nginx
 <Callout variant={CalloutVariant.info}>
     Ensure all nodes use the same SSH key set and restrict access to configuration files for system users only.
 </Callout>
+
+## Rate Limiting
+
+Artemis provides **cluster-wide rate limiting** powered by Bucket4j (token buckets) and Hazelcast (distributed state).
+It helps protect authentication and account management endpoints from brute-force attempts and other types of abusive traffic.
+
+### What It Does
+
+- Tracks requests per client IP across all nodes in the cluster
+- Restricts how frequently sensitive endpoints can be accessed
+- Enforces limits for REST authentication, WebAuthn, and Git operations
+- Returns HTTP **429 Too Many Requests** with `Retry-After` header
+- Allows per-category configuration of requests per minute
+- Automatically excludes build agents from rate limiting
+
+
+### Configuration
+
+```yaml
+artemis:
+  rate-limiting:
+    enabled: true
+    account-management-requests-per-minute: 5
+    authentication-requests-per-minute: 30
+```
+
+### Where It Is Enforced
+
+- Registration
+- Password reset (init + finish)
+- Username/password login
+- WebAuthn authentication
+- Git over SSH and HTTP operations
