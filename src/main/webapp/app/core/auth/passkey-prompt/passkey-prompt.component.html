@@ -30,8 +30,8 @@
 }
 @if (showFooter()) {
     @if (!accountService.askToSetupPasskey()) {
-        <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" [icon]="faKey" />
+        <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" [icon]="faKey" [shouldSubmit]="false" />
     } @else {
-        <jhi-button (onClick)="setupPasskey()" [title]="'global.menu.admin.setupPasskey'" [icon]="faKey" />
+        <jhi-button (onClick)="setupPasskey()" [title]="'global.menu.admin.setupPasskey'" [icon]="faKey" [shouldSubmit]="false" />
     }
 }
