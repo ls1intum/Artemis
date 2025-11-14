@@ -79,6 +79,16 @@ a:not(.btn):hover {
         }
     }
 
+    @media screen and (min-width: 480px) {
+        ul.navbar-nav:not(.vertical) {
+            justify-content: flex-end;
+
+            .nav-item:first-child {
+                margin-left: 0;
+            }
+        }
+    }
+
     .nav-link {
         color: var(--navbar-dark-color);
 
@@ -89,16 +99,6 @@ a:not(.btn):hover {
 
     a.nav-link {
         font-weight: 400;
-    }
-
-    @media screen and (min-width: 480px) {
-        ul.navbar-nav:not(.vertical) {
-            justify-content: flex-end;
-
-            .nav-item:first-child {
-                margin-left: 0;
-            }
-        }
     }
 
     .jh-logo-container {
