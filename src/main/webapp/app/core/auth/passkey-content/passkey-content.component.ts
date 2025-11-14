@@ -32,7 +32,7 @@ export class PasskeyContentComponent implements OnInit {
     linkToUserSettingsWasClicked = output<void>();
 
     ngOnInit() {
-        this.initializeUserIdentity().then((response) => {});
+        this.initializeUserIdentity().then(() => {});
     }
 
     handleLinkToUserSettingsClick() {
