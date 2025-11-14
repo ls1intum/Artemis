@@ -22,7 +22,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { FileService } from '../../../../shared/service/file.service';
 import { AlertService } from '../../../../shared/service/alert.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
@@ -970,10 +970,14 @@ describe('Course Management Update Component', () => {
         });
 
         it('should handle error when loading code of conduct template fails', async () => {
-            const alertService = TestBed.inject(AlertService);
-            const error = new HttpErrorResponse({ error: 'Error loading template', status: 500 });
-            jest.spyOn(fileService, 'getTemplateCodeOfConduct').mockReturnValue(throwError(() => error));
-            const alertSpy = jest.spyOn(alertService, 'addAlert');
+            const errorResponse = new HttpErrorResponse({ status: 500, statusText: 'Server Error' });
+
+            jest.spyOn(fileService, 'getTemplateCodeOfConduct').mockReturnValue(
+                // Simuliert einen Fehler
+                new Observable<HttpResponse<string>>((subscriber) => subscriber.error(errorResponse)),
+            );
+
+            const alertSpy = jest.spyOn(comp['alertService'], 'addAlert');
 
             comp.communicationEnabled = true;
             comp.course = new Course();
