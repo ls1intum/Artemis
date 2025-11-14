@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output, viewChild } from '@angular/core';
+import { Component, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -85,7 +85,7 @@ export class ServerAdministrationComponent {
 
     collapseNavbarListener = output<void>();
 
-    private justLoggedInWithPasskey = false;
+    private justLoggedInWithPasskey = signal(false);
 
     constructor() {
         effect(() => {
@@ -94,8 +94,8 @@ export class ServerAdministrationComponent {
     }
 
     private openDropdownIfUserLoggedInWithPasskey() {
-        if (this.accountService.isLoggedInWithPasskey() && this.justLoggedInWithPasskey) {
-            this.justLoggedInWithPasskey = false;
+        if (this.accountService.isLoggedInWithPasskey() && this.justLoggedInWithPasskey()) {
+            this.justLoggedInWithPasskey.set(false);
 
             // Use setTimeout to wait for the next JavaScript tick (macrotask).
             // This allows Angular to finish re-rendering the dropdown's
@@ -123,6 +123,6 @@ export class ServerAdministrationComponent {
     }
 
     onJustLoggedInWithPasskey(value: boolean) {
-        this.justLoggedInWithPasskey = value;
+        this.justLoggedInWithPasskey.set(value);
     }
 }

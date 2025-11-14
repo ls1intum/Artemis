@@ -86,7 +86,15 @@ public class PasskeyAuthenticationService {
             throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY);
         }
 
-        JwtWithSource jwtWithSource = extractValidJwt(request, tokenProvider);
+        JwtWithSource jwtWithSource;
+        try {
+            jwtWithSource = extractValidJwt(request, tokenProvider);
+        }
+        catch (Exception exception) {
+            log.debug("Passkey authentication check failed: error extracting JWT", exception);
+            throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY);
+        }
+
         if (jwtWithSource == null) {
             log.debug("Passkey authentication check failed: no valid JWT found");
             throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY);

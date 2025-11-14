@@ -38,7 +38,7 @@ class PasskeyAuthenticationServiceTest {
     }
 
     @Test
-    void testIsAuthenticatedWithPasskey_whenPasskeyDisabled_shouldReturnFalse() {
+    void testIsAuthenticatedWithPasskey_whenPasskeyDisabled_shouldReturnTrue() {
         // Given
         passkeyAuthenticationService = createService(false, true);
 

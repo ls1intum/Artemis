@@ -171,7 +171,7 @@ public class JWTFilter extends GenericFilterBean {
      * @return the valid jwt or null if not found or invalid
      */
     @Nullable
-    public static JwtWithSource extractValidJwt(HttpServletRequest httpServletRequest, TokenProvider tokenProvider) {
+    public static JwtWithSource extractValidJwt(HttpServletRequest httpServletRequest, TokenProvider tokenProvider) throws IllegalArgumentException {
         if (isIgnoredUri(httpServletRequest.getRequestURI())) {
             return null;
         }

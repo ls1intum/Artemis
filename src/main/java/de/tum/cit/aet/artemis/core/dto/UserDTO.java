@@ -99,7 +99,7 @@ public class UserDTO extends AuditingEntityDTO {
 
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
-                user.getImageUrl(), user.getLangKey(), user.isInternal(), DEFAULT_IS_LOGGED_IN_WITH_PASSKEY, DEFAULT_IS_LOGGED_IN_WITH_PASSKEY, user.getCreatedBy(),
+                user.getImageUrl(), user.getLangKey(), user.isInternal(), DEFAULT_IS_LOGGED_IN_WITH_PASSKEY, DEFAULT_IS_SUPER_ADMIN_APPROVED, user.getCreatedBy(),
                 user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(), user.getAuthorities(), user.getGroups(), user.getOrganizations(),
                 user.getExternalLLMUsageAcceptedTimestamp(), user.isMemirisEnabled());
     }
@@ -268,15 +268,15 @@ public class UserDTO extends AuditingEntityDTO {
         return askToSetupPasskey;
     }
 
+    public boolean isLoggedInWithPasskey() {
+        return isLoggedInWithPasskey;
+    }
+
     public void setIsLoggedInWithPasskey(boolean isLoggedInWithPasskey) {
         this.isLoggedInWithPasskey = isLoggedInWithPasskey;
     }
 
-    public boolean getIsLoggedInWithPasskey() {
-        return isLoggedInWithPasskey;
-    }
-
-    public boolean getIsPasskeySuperAdminApproved() {
+    public boolean isPasskeySuperAdminApproved() {
         return isPasskeySuperAdminApproved;
     }
 
