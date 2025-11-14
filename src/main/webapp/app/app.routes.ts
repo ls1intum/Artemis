@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority, IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
@@ -243,7 +243,7 @@ const routes: Routes = [
     {
         path: 'sharing/import/:basketToken',
         data: {
-            authorities: [Authority.EDITOR, Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.sharing.title',
         },
         loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),
