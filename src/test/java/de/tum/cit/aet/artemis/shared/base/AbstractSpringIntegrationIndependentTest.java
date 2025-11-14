@@ -23,6 +23,8 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -88,6 +90,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean
     protected ChatClient chatClient;
 
+    @MockitoBean
+    protected ChatMemory chatMemory;
+
+    @MockitoBean
+    protected ChatMemoryRepository chatMemoryRepository;
+
     // Spy for lecture transcription tests to allow real method execution in service integration tests
     @MockitoSpyBean
     protected LectureTranscriptionService lectureTranscriptionService;
@@ -123,6 +131,12 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);
+        }
+        if (chatMemoryRepository != null) {
+            Mockito.reset(chatMemoryRepository);
+        }
+        if (chatMemory != null) {
+            Mockito.reset(chatMemory);
         }
         super.resetSpyBeans();
     }
