@@ -76,7 +76,7 @@ public class AtlasAgentService {
             // Add course ID to system prompt instead of user message to avoid storing it in chat history
             String enhancedSystemPrompt = String.format("%s\n\nContext: You are assisting with Course ID: %d", systemPrompt, courseId);
 
-            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(chatModel).build();
+            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(chatModel).temperature(0.2).build();
 
             ChatClientRequestSpec promptSpec = chatClient.prompt().system(enhancedSystemPrompt).user(message).options(options);
 
