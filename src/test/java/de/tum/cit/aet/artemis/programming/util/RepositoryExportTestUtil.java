@@ -23,7 +23,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 
-import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -38,22 +37,15 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
  */
 public final class RepositoryExportTestUtil {
 
+    public record BaseRepositories(LocalRepository templateRepository, LocalRepository solutionRepository, LocalRepository testsRepository) {
+    }
+
     private RepositoryExportTestUtil() {
     }
 
     /**
      * Test cleanup helpers (co-located for convenience).
      */
-    public static void deleteFileSilently(File file) {
-        if (file != null && file.exists()) {
-            try {
-                Files.deleteIfExists(file.toPath());
-            }
-            catch (IOException ignored) {
-            }
-        }
-    }
-
     public static void deleteDirectoryIfExists(Path dir) {
         if (dir != null && Files.exists(dir)) {
             try {
@@ -74,48 +66,6 @@ public final class RepositoryExportTestUtil {
                     repo.resetLocalRepo();
                 }
                 catch (IOException ignored) {
-                }
-            }
-        }
-    }
-
-    /**
-     * Cleanup a VCS project directory from LocalVC filesystem, attempting both service-level
-     * deletion and direct filesystem removal. Best-effort operation that logs failures but does not throw.
-     *
-     * @param versionControlService the VCS service (may be null or a spy/mock)
-     * @param localVCBasePath       the base path for LocalVC repositories
-     * @param projectKey            the project key to clean up
-     * @param logger                logger for debug messages
-     */
-    public static void cleanupVcsProject(Object versionControlService, Path localVCBasePath, String projectKey, org.slf4j.Logger logger) {
-        if (projectKey == null) {
-            return;
-        }
-
-        // Try deleting via VersionControlService first (if it's a real service)
-        if (versionControlService != null) {
-            try {
-                versionControlService.getClass().getMethod("deleteProject", String.class).invoke(versionControlService, projectKey);
-            }
-            catch (Exception ex) {
-                if (logger != null) {
-                    logger.debug("Could not delete VCS project via VersionControlService {}: {}", projectKey, ex.getMessage());
-                }
-            }
-        }
-
-        // Also attempt direct filesystem cleanup
-        if (localVCBasePath != null) {
-            try {
-                var projectPath = localVCBasePath.resolve(projectKey).toFile();
-                if (projectPath.exists()) {
-                    FileUtils.deleteDirectory(projectPath);
-                }
-            }
-            catch (Exception ex) {
-                if (logger != null) {
-                    logger.debug("Could not delete VCS project folder {}: {}", projectKey, ex.getMessage());
                 }
             }
         }
@@ -211,6 +161,14 @@ public final class RepositoryExportTestUtil {
      * @param exercise                  the exercise whose base repositories should be set up
      */
     public static void createAndWireBaseRepositories(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise) throws Exception {
+        createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
+    }
+
+    /**
+     * Variant of {@link #createAndWireBaseRepositories(LocalVCLocalCITestService, ProgrammingExercise)} that also returns
+     * the working copy handles for the created template/solution/tests repositories.
+     */
+    public static BaseRepositories createAndWireBaseRepositoriesWithHandles(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise) throws Exception {
         String projectKey = exercise.getProjectKey();
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
         String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
@@ -220,9 +178,11 @@ public final class RepositoryExportTestUtil {
         wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.SOLUTION, solutionRepositorySlug);
         wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.TESTS, testsRepositorySlug);
 
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug);
+        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        LocalRepository solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
+        LocalRepository testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug);
+
+        return new BaseRepositories(templateRepository, solutionRepository, testsRepository);
     }
 
     /**
@@ -265,8 +225,8 @@ public final class RepositoryExportTestUtil {
      */
     public static void writeAndCommit(LocalRepository repo, String path, String contents) throws Exception {
         var file = repo.workingCopyGitRepoFile.toPath().resolve(path);
-        Files.createDirectories(file.getParent());
-        Files.writeString(file, contents, StandardCharsets.UTF_8);
+        FileUtils.forceMkdirParent(file.toFile());
+        FileUtils.writeStringToFile(file.toFile(), contents, StandardCharsets.UTF_8);
         repo.workingCopyGitRepo.add().addFilepattern(path).call();
         GitService.commit(repo.workingCopyGitRepo).setMessage("add " + path).call();
     }
@@ -278,8 +238,8 @@ public final class RepositoryExportTestUtil {
     public static RevCommit writeFilesAndPush(LocalRepository repo, Map<String, String> files, String message) throws Exception {
         for (Map.Entry<String, String> e : files.entrySet()) {
             var p = repo.workingCopyGitRepoFile.toPath().resolve(e.getKey());
-            Files.createDirectories(p.getParent());
-            Files.writeString(p, e.getValue(), StandardCharsets.UTF_8);
+            FileUtils.forceMkdirParent(p.toFile());
+            FileUtils.writeStringToFile(p.toFile(), e.getValue(), StandardCharsets.UTF_8);
         }
         repo.workingCopyGitRepo.add().addFilepattern(".").call();
         var commit = GitService.commit(repo.workingCopyGitRepo).setMessage(message).call();
@@ -312,64 +272,9 @@ public final class RepositoryExportTestUtil {
         return localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug);
     }
 
-    /**
-     * Seeds a student's repository by cloning from the provided template repository's bare content and wires the
-     * participation's repository URI accordingly. Returns the created LocalRepository handle for the student.
-     * The caller is responsible for persisting the updated participation.
-     */
-    public static LocalRepository seedStudentRepoFromTemplateAndWire(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExerciseStudentParticipation participation,
-            LocalRepository templateRepo) throws Exception {
-        String projectKey = participation.getProgrammingExercise().getProjectKey();
-        String studentSlug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
-        LocalRepository studentRepo = seedLocalVcBareFrom(localVCLocalCITestService, projectKey, studentSlug, templateRepo);
-        participation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, studentSlug));
-        return studentRepo;
-    }
-
-    /**
-     * Seeds a student's LocalVC repository with files and pushes, returning the created commit.
-     * The participation's repository URI is wired by seedStudentRepositoryForParticipation.
-     */
-    public static RevCommit seedStudentRepoWithFilesAndPush(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExerciseStudentParticipation participation,
-            Map<String, String> files, String message) throws Exception {
-        LocalRepository repo = seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
-        return writeFilesAndPush(repo, files, message);
-    }
-
-    /**
-     * Validate that a returned file map (e.g. from Athena) contains at least the expected subset and that values are non-empty.
-     */
-    public static void assertFileMapContains(Map<String, String> actual, Map<String, String> expectedSubset) {
-        for (Map.Entry<String, String> e : expectedSubset.entrySet()) {
-            assertThat(actual).containsKey(e.getKey());
-            assertThat(actual.get(e.getKey())).isNotNull().isNotBlank();
-        }
-    }
-
     // ===========================================================================
     // Utilities for reducing code duplication across test suites
     // ===========================================================================
-
-    /**
-     * Extract a ZIP file, assert it contains expected files, and clean up the extracted directory.
-     * Consolidates a common pattern used throughout export tests.
-     *
-     * @param zipPath       the path to the ZIP file
-     * @param zipUtil       the ZipFileTestUtilService for extracting
-     * @param expectedFiles filenames that must exist in the extracted directory
-     * @throws IOException if extraction or cleanup fails
-     */
-    public static void assertZipContentsAndCleanup(Path zipPath, ZipFileTestUtilService zipUtil, String... expectedFiles) throws IOException {
-        Path extractedDir = zipUtil.extractZipFileRecursively(zipPath.toString());
-        try {
-            for (String expectedFile : expectedFiles) {
-                assertThat(Files.walk(extractedDir).anyMatch(path -> path.getFileName().toString().equals(expectedFile))).as("Expected file exists: " + expectedFile).isTrue();
-            }
-        }
-        finally {
-            FileUtils.deleteDirectory(extractedDir.toFile());
-        }
-    }
 
     /**
      * Delete a student's bare repository from the LocalVC file system.
@@ -404,7 +309,7 @@ public final class RepositoryExportTestUtil {
         }
         catch (IOException e) {
             // Log and continue - cleanup failures shouldn't break tests
-            System.err.println("Failed to delete directory " + directory + ": " + e.getMessage());
+            // Silent failure acceptable in test cleanup
         }
     }
 
@@ -417,7 +322,8 @@ public final class RepositoryExportTestUtil {
      * @throws IOException if deletion fails
      */
     public static void deleteLocalVcProjectIfPresent(Path localVCBasePath, String projectKey) throws IOException {
-        Path projectPath = localVCBasePath.resolve(projectKey.toUpperCase());
+        String normalizedProjectKey = projectKey == null ? null : projectKey.toUpperCase();
+        Path projectPath = localVCBasePath.resolve(normalizedProjectKey);
         if (Files.exists(projectPath)) {
             FileUtils.deleteDirectory(projectPath.toFile());
         }

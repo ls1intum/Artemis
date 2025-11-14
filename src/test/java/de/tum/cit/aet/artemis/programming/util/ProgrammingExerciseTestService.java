@@ -404,6 +404,7 @@ public class ProgrammingExerciseTestService {
 
     public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository,
             LocalRepository auxRepository) throws Exception {
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
         final var projectKey = exercise.getProjectKey();
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
@@ -443,23 +444,18 @@ public class ProgrammingExerciseTestService {
     }
 
     private void deleteLocalVcProjectIfPresent(ProgrammingExercise programmingExercise) {
-        if (programmingExercise == null || versionControlService == null || localVCBasePath == null) {
+        if (programmingExercise == null || localVCBasePath == null) {
             return;
         }
         var projectKey = programmingExercise.getProjectKey();
         if (projectKey == null) {
             return;
         }
-        var normalizedProjectKey = projectKey.toUpperCase();
-        var projectFolder = localVCBasePath.resolve(normalizedProjectKey);
-        if (!Files.exists(projectFolder)) {
-            return;
-        }
         try {
-            versionControlService.deleteProject(normalizedProjectKey);
+            RepositoryExportTestUtil.deleteLocalVcProjectIfPresent(localVCBasePath, projectKey);
         }
         catch (Exception ex) {
-            log.warn("Failed to delete LocalVC project {} before test execution", normalizedProjectKey, ex);
+            log.warn("Failed to delete LocalVC project {} before test execution", projectKey, ex);
         }
     }
 
@@ -484,9 +480,6 @@ public class ProgrammingExerciseTestService {
         configureLocalRepositoryForSlug(testRepository, normalizedProjectKey, testRepoName);
         configureLocalRepositoryForSlug(solutionRepository, normalizedProjectKey, solutionRepoName);
         configureLocalRepositoryForSlug(auxRepository, normalizedProjectKey, auxRepoName);
-        exercise.setTemplateRepositoryUri(convertToLocalVcUriString(exerciseRepository));
-        exercise.setSolutionRepositoryUri(convertToLocalVcUriString(solutionRepository));
-        exercise.setTestRepositoryUri(convertToLocalVcUriString(testRepository));
     }
 
     /**

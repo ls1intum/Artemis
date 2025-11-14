@@ -9,12 +9,7 @@ import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseEr
 import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
@@ -94,13 +89,11 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
@@ -304,6 +297,19 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
+    /**
+     * Deletes the LocalVC project folder for the given project key if present.
+     * Useful to avoid false positives in uniqueness checks between tests.
+     */
+    public void cleanupLocalVcProjectForKey(String projectKey) {
+        try {
+            RepositoryExportTestUtil.deleteLocalVcProjectIfPresent(localVCBasePath, projectKey);
+        }
+        catch (IOException ignored) {
+            // best-effort cleanup
+        }
+    }
+
     void testProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
@@ -499,14 +505,13 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionAnonymizationCombining() throws Exception {
-        // Ensure base repos exist and are wired for template/solution/tests
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        // Ensure base repos exist and retrieve handles for template/solution/tests
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // Prepare template working copy handle
+        var templateRepo = baseRepositories.templateRepository();
         String projectKey = programmingExercise.getProjectKey();
-        String templateSlug = projectKey.toLowerCase() + "-exercise";
-        var templateRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug);
 
         // Seed student repository from template bare and wire URI
         String studentSlug = localVCLocalCITestService.getRepositorySlug(projectKey, participation1.getParticipantIdentifier());
@@ -1730,55 +1735,30 @@ public class ProgrammingExerciseIntegrationTestService {
                 }
                 """;
 
-        // Create temporary directories for the mock repositories with proper JPlag structure
-        Path tempDir = Files.createTempDirectory(tempPath, "plagiarism-test-repos");
-        Path projectDir = tempDir.resolve(projectKey);
-        Files.createDirectories(projectDir);
+        // Get student participations (excluding instructor)
+        var studentParticipations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .filter(p -> p.getParticipant() != null && p.getParticipant().getName() != null && !p.getParticipant().getName().contains("instructor"))
+                .sorted(Comparator.comparing(DomainObject::getId)).toList();
 
-        // Create repository directories with simpler names that work with both test cases
-        Path repo1Dir = projectDir.resolve("1-Submission1.java");
-        Path repo2Dir = projectDir.resolve("2-Submission2.java");
+        if (studentParticipations.size() < 2) {
+            throw new IllegalStateException("Expected at least 2 student participations for plagiarism checks");
+        }
 
-        Files.createDirectories(repo1Dir);
-        Files.createDirectories(repo2Dir);
-
-        // Write Java files with the expected names for the test
-        FileUtils.writeByteArrayToFile(repo1Dir.resolve("1-Submission1.java").toFile(), exampleProgram.getBytes(StandardCharsets.UTF_8));
-        FileUtils.writeByteArrayToFile(repo2Dir.resolve("2-Submission2.java").toFile(), exampleProgram.getBytes(StandardCharsets.UTF_8));
-
-        // Create mock repositories pointing to these directories
-        Repository mockRepo1 = mock(Repository.class);
-        when(mockRepo1.getLocalPath()).thenReturn(repo1Dir);
-
-        Repository mockRepo2 = mock(Repository.class);
-        when(mockRepo2.getLocalPath()).thenReturn(repo2Dir);
-
-        // Mock all Git service methods that the plagiarism detection service uses
-        doAnswer(invocation -> {
-            ProgrammingExerciseParticipation participation = invocation.getArgument(0);
-            // Get all student participations for this exercise
-            var studentParticipations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
-                    .filter(p -> p.getParticipant() != null && p.getParticipant().getName() != null && !p.getParticipant().getName().contains("instructor"))
-                    .sorted(Comparator.comparing(DomainObject::getId)).toList();
-
-            if (!studentParticipations.isEmpty() && participation.getId().equals(studentParticipations.get(0).getId())) {
-                return mockRepo1;
+        // Seed real LocalVC repositories for the first two student participations with identical Java content
+        for (int i = 0; i < 2 && i < studentParticipations.size(); i++) {
+            try {
+                var participation = studentParticipations.get(i);
+                var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+                RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("Main.java", exampleProgram), "seed plagiarism test content");
+                programmingExerciseStudentParticipationRepository.save(participation);
             }
-            else if (studentParticipations.size() > 1 && participation.getId().equals(studentParticipations.get(1).getId())) {
-                return mockRepo2;
+            catch (Exception e) {
+                throw new RuntimeException("Failed to seed plagiarism test repository", e);
             }
-            else {
-                // For any other participation (including instructors), return the first repo as fallback
-                return mockRepo1;
-            }
-        }).when(gitService).getOrCheckoutRepositoryForJPlag(any(ProgrammingExerciseParticipation.class), any(Path.class));
+        }
 
-        // Mock the other required methods
-        doNothing().when(gitService).resetToOriginHead(any());
-        doNothing().when(gitService).deleteLocalRepository(any(Repository.class));
-
-        doReturn(tempDir).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));
-        doReturn(null).when(uriService).getRepositorySlugFromRepositoryUri(any());
+        // Ensure the project folder exists
+        Files.createDirectories(localVCBasePath.resolve(projectKey));
     }
 
     void testGetPlagiarismResult() throws Exception {
@@ -2139,21 +2119,20 @@ public class ProgrammingExerciseIntegrationTestService {
     // Legacy BiFunction-based helper is no longer needed after LocalVC conversion; removed to simplify the suite.
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
+        // Ensure base repositories (template, solution, tests) exist and URIs are wired for this exercise
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
         // Create student participation with LocalVC repo
-        String studentLogin = testPrefix + "student1";
+        // Use a unique student to avoid repo collisions with other tests in this class
+        String studentLogin = testPrefix + "student3";
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
         var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
-        // Write files and commit via util (multiple commits acceptable for redirect content check)
-        RepositoryExportTestUtil.writeAndCommit(repo, "README.md", "Initial commit");
-        RepositoryExportTestUtil.writeAndCommit(repo, "A.java", "abc");
-        RepositoryExportTestUtil.writeAndCommit(repo, "B.java", "cde");
-        RepositoryExportTestUtil.writeAndCommit(repo, "C.java", "efg");
-        // Include default seed file expected by endpoint contract
-        RepositoryExportTestUtil.writeAndCommit(repo, "test.txt", "Initial commit");
-        var commit = GitService.commit(repo.workingCopyGitRepo).setMessage("finalize").call();
-        repo.workingCopyGitRepo.push().setRemote("origin").call();
+        // Write files in one commit and push to origin to ensure the commit exists remotely
+        var commit = RepositoryExportTestUtil.writeFilesAndPush(repo,
+                Map.of("README.md", "Initial commit", "A.java", "abc", "B.java", "cde", "C.java", "efg", "test.txt", "Initial commit"), "seed student files");
 
         // Persist submission with commit hash
         var submission = new ProgrammingSubmission();
@@ -2163,11 +2142,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
         String filesWithContentsAsJson = """
                 {
+                  "test.txt" : "Initial commit",
                   "C.java" : "efg",
                   "B.java" : "cde",
                   "A.java" : "abc",
-                  "README.md" : "Initial commit",
-                  "test.txt" : "Initial commit"
+                  "README.md" : "Initial commit"
                 }""";
 
         request.getWithFileContents("/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content/" + submission.getCommitHash(),

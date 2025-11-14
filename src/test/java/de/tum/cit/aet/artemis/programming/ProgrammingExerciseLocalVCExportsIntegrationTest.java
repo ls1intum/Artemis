@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +18,6 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -78,7 +76,7 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
         // Unzip and assert that both participant repos are present (by login suffix) and contain .git
         Path extracted = zipFileTestUtilService.extractZipFileRecursively(file.getAbsolutePath());
         try (var stream = Files.walk(extracted)) {
-            List<Path> allPaths = stream.collect(Collectors.toList());
+            List<Path> allPaths = stream.toList();
             assertThat(allPaths).anyMatch(p -> p.toString().endsWith(Path.of(TEST_PREFIX + "student1", ".git").toString()));
             assertThat(allPaths).anyMatch(p -> p.toString().endsWith(Path.of(TEST_PREFIX + "student2", ".git").toString()));
         }
@@ -92,15 +90,13 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void generateTests_happyPath() throws Exception {
         // Ensure template, solution and tests repos exist and are wired to LocalVC via util
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
         exercise = programmingExerciseRepository.save(exercise);
         // Reload with buildConfig eagerly to avoid LazyInitializationException
         exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(exercise);
 
         // Create tests path in tests repo so generator can write test.json
-        String projectKey = exercise.getProjectKey();
-        String testsSlug = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        var testsRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsSlug);
+        var testsRepo = baseRepositories.testsRepository();
         String testsPath = java.nio.file.Path.of("test", exercise.getPackageFolderName()).toString();
         if (exercise.getBuildConfig().hasSequentialTestRuns()) {
             testsPath = java.nio.file.Path.of("structural", testsPath).toString();

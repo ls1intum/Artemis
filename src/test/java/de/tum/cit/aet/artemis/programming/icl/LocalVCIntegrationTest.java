@@ -57,18 +57,15 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     private LocalRepository testsRepository;
 
     @BeforeEach
-    void initRepositories() throws GitAPIException, IOException, URISyntaxException {
+    void initRepositories() throws Exception {
         // Create assignment repository
         assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
 
-        // Create template repository
-        templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-exercise");
-
-        // Create solution repository
-        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-solution");
-
-        // Create tests repository
-        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-tests");
+        // Create and wire base repositories using the shared helper
+        var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        templateRepository = baseRepositories.templateRepository();
+        solutionRepository = baseRepositories.solutionRepository();
+        testsRepository = baseRepositories.testsRepository();
     }
 
     @Override

@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.reset;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
@@ -102,7 +101,6 @@ public class ContinuousIntegrationTestService {
     }
 
     public void tearDown() throws IOException {
-        reset(gitService);
         localRepo.resetLocalRepo();
     }
 
