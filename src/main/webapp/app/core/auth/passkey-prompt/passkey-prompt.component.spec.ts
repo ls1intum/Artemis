@@ -250,5 +250,35 @@ describe('PasskeyContentComponent', () => {
 
             expect(handleLinkSpy).toHaveBeenCalledOnce();
         });
+
+        it('should set shouldSubmit to false on setup passkey button to prevent duplicate requests', () => {
+            // This test verifies that the setup passkey button has shouldSubmit=false.
+            // Without this, the button would have type="submit" (default behavior),
+            // which triggers both the click handler AND a form submission event,
+            // causing setupPasskey() to be called twice and sending duplicate HTTP requests.
+            jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
+            fixture.componentRef.setInput('showFooter', true);
+            fixture.detectChanges();
+
+            const buttonElement = fixture.nativeElement.querySelector('jhi-button');
+            const button = buttonElement.querySelector('button');
+
+            expect(button.type).toBe('button');
+        });
+
+        it('should set shouldSubmit to false on sign in with passkey button to prevent duplicate requests', () => {
+            // This test verifies that the sign-in button has shouldSubmit=false.
+            // Without this, the button would have type="submit" (default behavior),
+            // which triggers both the click handler AND a form submission event,
+            // causing signInWithPasskey() to be called twice and sending duplicate HTTP requests.
+            jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
+            fixture.componentRef.setInput('showFooter', true);
+            fixture.detectChanges();
+
+            const buttonElement = fixture.nativeElement.querySelector('jhi-button');
+            const button = buttonElement.querySelector('button');
+
+            expect(button.type).toBe('button');
+        });
     });
 });
