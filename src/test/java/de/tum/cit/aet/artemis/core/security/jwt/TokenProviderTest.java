@@ -204,7 +204,7 @@ class TokenProviderTest {
 
         @Test
         void shouldReturnTrueWhenClaimIsTrue() {
-            String token = Jwts.builder().claim("is-passkey-approved", true).signWith(key, Jwts.SIG.HS512).compact();
+            String token = Jwts.builder().claim(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, true).signWith(key, Jwts.SIG.HS512).compact();
 
             boolean isApproved = tokenProvider.isPasskeySuperAdminApproved(token);
 
@@ -213,7 +213,7 @@ class TokenProviderTest {
 
         @Test
         void shouldReturnFalseWhenClaimIsFalse() {
-            String token = Jwts.builder().claim("is-passkey-approved", false).signWith(key, Jwts.SIG.HS512).compact();
+            String token = Jwts.builder().claim(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, false).signWith(key, Jwts.SIG.HS512).compact();
 
             boolean isApproved = tokenProvider.isPasskeySuperAdminApproved(token);
 
@@ -222,7 +222,7 @@ class TokenProviderTest {
 
         @Test
         void shouldReturnFalseWhenClaimIsNull() {
-            String token = Jwts.builder().claim("is-passkey-approved", null).signWith(key, Jwts.SIG.HS512).compact();
+            String token = Jwts.builder().claim(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, null).signWith(key, Jwts.SIG.HS512).compact();
 
             boolean isApproved = tokenProvider.isPasskeySuperAdminApproved(token);
 
