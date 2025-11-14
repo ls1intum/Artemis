@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, input, output } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { RouterLink } from '@angular/router';
 import { faArrowUpRightFromSquare, faKey, faLock } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,8 +18,6 @@ export class PasskeyContentComponent implements OnInit {
     protected readonly faKey = faKey;
     protected readonly faLock = faLock;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
-
-    protected readonly ButtonType = ButtonType;
 
     private readonly webauthnService = inject(WebauthnService);
     private readonly alertService = inject(AlertService);
