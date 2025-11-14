@@ -117,7 +117,7 @@ export class WebauthnService {
 
             this.accountService.userIdentity.set({
                 ...this.accountService.userIdentity(),
-                isLoggedInWithPasskey: true,
+                loggedInWithPasskey: true,
                 internal: this.accountService.userIdentity()?.internal ?? false,
             });
         } catch (error) {
