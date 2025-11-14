@@ -36,15 +36,23 @@ public class SpringAIConfiguration {
 
     private final int maxMessages;
 
-    private final String deploymentName;
-
     private final double temperature;
 
+    private final double atlasAgentTemperature;
+
+    private final String deploymentName;
+
+    private final String atlasChatModel;
+
     public SpringAIConfiguration(@Value("${spring.ai.azure.openai.chat.options.deployment-name: gpt-5-mini}") String deploymentName,
-            @Value("${spring.ai.azure.openai.chat.options.temperature: 1.0}") double temperature, @Value("${spring.ai.chat.memory.max-messages: 20}") int maxMessages) {
+            @Value("${spring.ai.azure.openai.chat.options.temperature: 1.0}") double temperature, @Value("${artemis.atlas.temperature: 0.2}") double atlasAgentTemperature,
+            @Value("${spring.ai.chat.memory.max-messages: 20}") int maxMessages, @Value("${artemis.atlas.chat-model: gpt-4o}") String atlasChatModel) {
         this.deploymentName = deploymentName;
         this.temperature = temperature;
         this.maxMessages = maxMessages;
+        this.atlasChatModel = atlasChatModel;
+        this.atlasAgentTemperature = atlasAgentTemperature;
+
     }
 
     /**
@@ -77,22 +85,40 @@ public class SpringAIConfiguration {
     }
 
     /**
-     * Default Chat Client for AI features.
-     * Uses the manually configured Azure OpenAI model if available.
-     * Includes memory advisor for conversation context retention.
+     * Default ChatClient specifically configured for Hyperion.
+     * Uses the model specified in spring.ai.azure.openai.chat.options.deployment-name (default: gpt-5-mini).
+     * Does NOT include chat memory to ensure stateless operation.
+     * This is the primary/default ChatClient bean that Hyperion services will inject.
      *
      * @param azureOpenAiChatModel the Azure OpenAI chat model to use (optional)
-     * @param chatMemory           the chat memory for conversation history (optional)
-     * @return a configured ChatClient with default options, or null if model is not available
+     * @return a configured ChatClient for Hyperion, or null if model is not available
      */
     @Bean
     @Lazy
-    public ChatClient chatClient(@Nullable AzureOpenAiChatModel azureOpenAiChatModel, @Nullable ChatMemory chatMemory) {
+    public ChatClient chatClient(@Nullable AzureOpenAiChatModel azureOpenAiChatModel) {
+        if (azureOpenAiChatModel == null) {
+            return null;
+        }
+        return ChatClient.builder(azureOpenAiChatModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build()).build();
+    }
+
+    /**
+     * ChatClient specifically configured for Atlas.
+     * Uses the model specified in artemis.atlas.chat-model (default: gpt-4o).
+     * Includes chat memory advisor for conversation context retention.
+     *
+     * @param azureOpenAiChatModel the Azure OpenAI chat model to use (optional)
+     * @param chatMemory           the chat memory for conversation history (optional)
+     * @return a configured ChatClient for Atlas, or null if model is not available
+     */
+    @Bean
+    @Lazy
+    public ChatClient atlasChatClient(@Nullable AzureOpenAiChatModel azureOpenAiChatModel, @Nullable ChatMemory chatMemory) {
         if (azureOpenAiChatModel == null) {
             return null;
         }
         ChatClient.Builder builder = ChatClient.builder(azureOpenAiChatModel)
-                .defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build());
+                .defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(atlasChatModel).temperature(atlasAgentTemperature).build());
         if (chatMemory != null) {
             builder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build());
         }

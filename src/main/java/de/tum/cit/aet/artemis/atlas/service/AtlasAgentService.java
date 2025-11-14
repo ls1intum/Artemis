@@ -6,14 +6,14 @@ import java.util.concurrent.CompletableFuture;
 
 import jakarta.annotation.Nullable;
 
-import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -40,15 +40,12 @@ public class AtlasAgentService {
 
     private static final ThreadLocal<Boolean> competencyCreatedInCurrentRequest = ThreadLocal.withInitial(() -> false);
 
-    private final String chatModel;
-
-    public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
-            @Nullable ChatMemory chatMemory, @Value("${artemis.atlas.chat-model: gpt-4o}") String chatModel) {
-        this.chatClient = chatClient;
+    public AtlasAgentService(@Qualifier("atlasChatClient") @Nullable ChatClient atlasChatClient, AtlasPromptTemplateService templateService,
+            @Nullable ToolCallbackProvider toolCallbackProvider, @Nullable ChatMemory chatMemory) {
+        this.chatClient = atlasChatClient;
         this.templateService = templateService;
         this.toolCallbackProvider = toolCallbackProvider;
         this.chatMemory = chatMemory;
-        this.chatModel = chatModel;
     }
 
     /**
@@ -76,13 +73,11 @@ public class AtlasAgentService {
             // Add course ID to system prompt instead of user message to avoid storing it in chat history
             String enhancedSystemPrompt = String.format("%s\n\nContext: You are assisting with Course ID: %d", systemPrompt, courseId);
 
-            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(chatModel).temperature(0.2).build();
-
-            ChatClientRequestSpec promptSpec = chatClient.prompt().system(enhancedSystemPrompt).user(message).options(options);
+            ChatClientRequestSpec promptSpec = chatClient.prompt().system(enhancedSystemPrompt).user(message);
 
             // Add chat memory advisor using persistent JDBC-based memory
             if (chatMemory != null) {
-                promptSpec = promptSpec.advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, sessionId));
+                promptSpec = promptSpec.advisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
             }
 
             // Add tools
@@ -91,7 +86,8 @@ public class AtlasAgentService {
             }
 
             // Execute the chat (tools are executed internally by Spring AI)
-            String response = promptSpec.call().chatResponse().getResult().getOutput().getText();
+            var chatResponse = promptSpec.call().chatResponse();
+            String response = chatResponse.getResult().getOutput().getText();
 
             // Check if competency was created during this request
             boolean competenciesModified = competencyCreatedInCurrentRequest.get();
@@ -105,10 +101,9 @@ public class AtlasAgentService {
             return CompletableFuture.completedFuture(new AgentChatResult("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
         }
         finally {
-            // Always clean up ThreadLocal to prevent memory leaks and state pollution
+            // Clean up ThreadLocal to prevent memory leaks
             competencyCreatedInCurrentRequest.remove();
         }
-
     }
 
     /**
