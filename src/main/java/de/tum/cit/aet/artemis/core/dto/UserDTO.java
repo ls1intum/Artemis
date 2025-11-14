@@ -272,7 +272,7 @@ public class UserDTO extends AuditingEntityDTO {
         return isLoggedInWithPasskey;
     }
 
-    public void setIsLoggedInWithPasskey(boolean isLoggedInWithPasskey) {
+    public void setLoggedInWithPasskey(boolean isLoggedInWithPasskey) {
         this.isLoggedInWithPasskey = isLoggedInWithPasskey;
     }
 
@@ -280,7 +280,7 @@ public class UserDTO extends AuditingEntityDTO {
         return isPasskeySuperAdminApproved;
     }
 
-    public void setIsPasskeySuperAdminApproved(boolean isPasskeySuperAdminApproved) {
+    public void setPasskeySuperAdminApproved(boolean isPasskeySuperAdminApproved) {
         this.isPasskeySuperAdminApproved = isPasskeySuperAdminApproved;
     }
 

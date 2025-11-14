@@ -211,8 +211,8 @@ public class PublicAccountResource {
         userDTO.setVcsAccessToken(user.getVcsAccessToken());
         userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
-        userDTO.setIsLoggedInWithPasskey(isLoggedInWithPasskey);
-        userDTO.setIsPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
+        userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
+        userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
         return userDTO;
     }
 
