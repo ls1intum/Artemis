@@ -86,8 +86,7 @@ public class AtlasAgentService {
             }
 
             // Execute the chat (tools are executed internally by Spring AI)
-            var chatResponse = promptSpec.call().chatResponse();
-            String response = chatResponse.getResult().getOutput().getText();
+            String response = promptSpec.call().chatResponse().getResult().getOutput().getText();
 
             // Check if competency was created during this request
             boolean competenciesModified = competencyCreatedInCurrentRequest.get();

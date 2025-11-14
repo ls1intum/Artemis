@@ -30,6 +30,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -89,6 +90,10 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
 
     @MockitoBean
     protected ChatClient chatClient;
+
+    @MockitoBean
+    @Qualifier("atlasChatClient")
+    protected ChatClient atlasChatClient;
 
     @MockitoBean
     protected ChatMemory chatMemory;
