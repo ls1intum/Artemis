@@ -17,25 +17,16 @@ export class PasskeyAuthenticationPageComponent implements OnInit {
     returnUrl: string | undefined = undefined;
 
     ngOnInit() {
-        this.initializeUserIdentity().then((response) => {});
-
-        this.route.queryParams.subscribe((params) => {
-            this.returnUrl = params['returnUrl'] || '/';
-        });
-    }
-
-    /**
-     * Ensures the user identity is loaded from the server (important for page reloads)
-     */
-    private async initializeUserIdentity() {
-        await this.accountService.identity();
-
         this.userHasRegisteredAPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
 
         const redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey = this.accountService.isUserLoggedInWithApprovedPasskey() && this.returnUrl;
         if (redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey) {
             this.router.navigateByUrl(this.returnUrl!);
         }
+
+        this.route.queryParams.subscribe((params) => {
+            this.returnUrl = params['returnUrl'] || '/';
+        });
     }
 
     redirectToOriginalUrlOrHome() {
