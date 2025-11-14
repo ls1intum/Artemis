@@ -32,7 +32,7 @@ public class RateLimitConfig {
         return Bucket4jHazelcast.entryProcessorBasedBuilder(bucketStateMap).build();
     }
 
-    public static BucketConfiguration perMinute(int rpm) {
-        return BucketConfiguration.builder().addLimit(limit -> limit.capacity(rpm).refillGreedy(rpm, Duration.ofMinutes(1))).build();
+    public static BucketConfiguration perMinute(int requestsPerMinute) {
+        return BucketConfiguration.builder().addLimit(limit -> limit.capacity(requestsPerMinute).refillGreedy(requestsPerMinute, Duration.ofMinutes(1))).build();
     }
 }

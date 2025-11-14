@@ -41,7 +41,7 @@ class RateLimitConfigurationServiceTest {
 
     @Test
     void testGetEffectiveRpm_PublicType_WithCustomValue_ShouldReturnCustomValue() {
-        when(properties.getAccountManagementRpm()).thenReturn(10);
+        when(properties.getAccountManagementRequestsPerMinute()).thenReturn(10);
 
         int rpm = configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT);
 
@@ -50,7 +50,7 @@ class RateLimitConfigurationServiceTest {
 
     @Test
     void testGetEffectiveRpm_PublicType_WithNullValue_ShouldReturnDefault() {
-        when(properties.getAccountManagementRpm()).thenReturn(null);
+        when(properties.getAccountManagementRequestsPerMinute()).thenReturn(null);
 
         int rpm = configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT);
 
@@ -59,7 +59,7 @@ class RateLimitConfigurationServiceTest {
 
     @Test
     void testGetEffectiveRpm_LoginRelatedType_WithCustomValue_ShouldReturnCustomValue() {
-        when(properties.getAuthenticationRpm()).thenReturn(50);
+        when(properties.getAuthenticationRequestsPerMinute()).thenReturn(50);
 
         int rpm = configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION);
 
@@ -68,7 +68,7 @@ class RateLimitConfigurationServiceTest {
 
     @Test
     void testGetEffectiveRpm_LoginRelatedType_WithNullValue_ShouldReturnDefault() {
-        when(properties.getAuthenticationRpm()).thenReturn(null);
+        when(properties.getAuthenticationRequestsPerMinute()).thenReturn(null);
 
         int rpm = configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION);
 

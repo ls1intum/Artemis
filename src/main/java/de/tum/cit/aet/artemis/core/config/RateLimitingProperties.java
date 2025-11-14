@@ -31,13 +31,13 @@ public class RateLimitingProperties {
      * Requests per minute for public endpoints.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#ACCOUNT_MANAGEMENT}.
      */
-    private Integer accountManagementRpm;
+    private Integer accountManagementRequestsPerMinute;
 
     /**
      * Requests per minute for login-related endpoints.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#AUTHENTICATION}.
      */
-    private Integer authenticationRpm;
+    private Integer authenticationRequestsPerMinute;
 
     public boolean isEnabled() {
         return enabled;
@@ -47,19 +47,19 @@ public class RateLimitingProperties {
         this.enabled = enabled;
     }
 
-    public Integer getAccountManagementRpm() {
-        return accountManagementRpm;
+    public Integer getAccountManagementRequestsPerMinute() {
+        return accountManagementRequestsPerMinute;
     }
 
-    public void setAccountManagementRpm(Integer accountManagementRpm) {
-        this.accountManagementRpm = accountManagementRpm;
+    public void setAccountManagementRequestsPerMinute(Integer accountManagementRequestsPerMinute) {
+        this.accountManagementRequestsPerMinute = accountManagementRequestsPerMinute;
     }
 
-    public Integer getAuthenticationRpm() {
-        return authenticationRpm;
+    public Integer getAuthenticationRequestsPerMinute() {
+        return authenticationRequestsPerMinute;
     }
 
-    public void setAuthenticationRpm(Integer authenticationRpm) {
-        this.authenticationRpm = authenticationRpm;
+    public void setAuthenticationRequestsPerMinute(Integer authenticationRequestsPerMinute) {
+        this.authenticationRequestsPerMinute = authenticationRequestsPerMinute;
     }
 }
