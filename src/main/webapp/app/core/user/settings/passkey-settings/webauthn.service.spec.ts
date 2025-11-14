@@ -10,11 +10,14 @@ import * as credentialUtil from './util/credential.util';
 import * as credentialOptionUtil from './util/credential-option.util';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { encodeAsBase64Url } from 'app/shared/util/base64.util';
+import { AccountService } from 'app/core/auth/account.service';
+import { signal } from '@angular/core';
 
 describe('WebauthnService', () => {
     let service: WebauthnService;
     let webauthnApiService: jest.Mocked<WebauthnApiService>;
     let alertService: jest.Mocked<AlertService>;
+    let accountService: jest.Mocked<AccountService>;
 
     const mockUser: User = {
         id: 1,
@@ -36,13 +39,29 @@ describe('WebauthnService', () => {
             addErrorAlert: jest.fn(),
         };
 
+        const accountServiceMock = {
+            userIdentity: signal<User | undefined>({
+                id: 1,
+                email: 'test@example.com',
+                login: 'testuser',
+                askToSetupPasskey: true,
+                internal: true,
+            } as User),
+        };
+
         TestBed.configureTestingModule({
-            providers: [WebauthnService, { provide: WebauthnApiService, useValue: webauthnApiServiceMock }, { provide: AlertService, useValue: alertServiceMock }],
+            providers: [
+                WebauthnService,
+                { provide: WebauthnApiService, useValue: webauthnApiServiceMock },
+                { provide: AlertService, useValue: alertServiceMock },
+                { provide: AccountService, useValue: accountServiceMock },
+            ],
         });
 
         service = TestBed.inject(WebauthnService);
         webauthnApiService = TestBed.inject(WebauthnApiService) as jest.Mocked<WebauthnApiService>;
         alertService = TestBed.inject(AlertService) as jest.Mocked<AlertService>;
+        accountService = TestBed.inject(AccountService) as jest.Mocked<AccountService>;
 
         // Mock navigator.credentials
         Object.defineProperty(navigator, 'credentials', {
@@ -389,6 +408,23 @@ describe('WebauthnService', () => {
                     label: expect.stringMatching(/test@example.com - (macOS|Windows|Linux|iOS|Android|Unknown)/),
                 },
             });
+        });
+
+        it('should update userIdentity signal with askToSetupPasskey set to false', async () => {
+            setupSuccessfulRegistrationMocks();
+
+            // Verify initial state
+            expect(accountService.userIdentity().askToSetupPasskey).toBeTrue();
+
+            await service.addNewPasskey(mockUser);
+
+            // Verify userIdentity signal was updated
+            const updatedIdentity = accountService.userIdentity();
+            expect(updatedIdentity.askToSetupPasskey).toBeFalse();
+            expect(updatedIdentity.internal).toBeTrue();
+            expect(updatedIdentity.id).toBe(1);
+            expect(updatedIdentity.email).toBe('test@example.com');
+            expect(updatedIdentity.login).toBe('testuser');
         });
     });
 });
