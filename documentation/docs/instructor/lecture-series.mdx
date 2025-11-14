@@ -5,13 +5,19 @@ sidebar_label: Lecture Series
 ---
 
 import lectureSeriesInputVisualization from './assets/lecture-series/LectureSeriesInputVisualization.png';
+import createLectureButtonImage from './assets/lecture-series/CreateLectureButton.png';
+import lectureCreationModeSelectImage from './assets/lecture-series/LectureCreationModeSelect.png';
 import lectureSeriesImage from './assets/lecture-series/LectureSeriesCreation.png';
 import Image, {ImageSize} from "../../src/components/Image/Image";
+import lectureCardsImage from './assets/lecture-series/LectureCards.png';
+import lectureCardRemoveButtonImage from './assets/lecture-series/LectureCardRemoveButton.png';
+import lectureCardEditButtonImage from './assets/lecture-series/LectureCardEditButton.png';
 
 # Lecture Series
 Lecture series allow you to create multiple lectures without specifying their contents. You can use this to scaffold your lectures at the beginning of the semester and inform students when each lecture will take place.
 
-To open the lecture series creation page, navigate to the Lectures tab in the course management section, click Create Lecture, and select “Lecture Series” using the toggle in the upper right corner.
+To open the lecture series creation page, navigate to the Lectures tab in the course management section, click <img src={createLectureButtonImage} alt={"Lecture Create Button"} style={{ verticalAlign: 'bottom', maxHeight: '1.5rem'}} />
+and select 'Lecture Series' in <img src={lectureCreationModeSelectImage} alt={"Lecture Creation Mode Select"} style={{ verticalAlign: 'bottom', maxHeight: '1.5rem'}} />.
 
 <Image src={lectureSeriesImage} alt={"Lecture Series Creation Page"} size={ImageSize.medium}></Image>
 
@@ -20,3 +26,9 @@ To create a lecture series, you must first define the initial lectures. The syst
 In the following example, there are two initial lectures that take place on the dates marked in green. The end date is marked in red, and the dates on which the generated lectures occur are marked in blue.
 
 <Image src={lectureSeriesInputVisualization} alt={"Visualization of Required Inputs"} size={ImageSize.medium}></Image>
+
+As soon as all required inputs are valid, the system generates the lectures and displays them as cards.
+Each lecture can be removed individually by clicking <img src={lectureCardRemoveButtonImage} alt={"Lecture Create Button"} style={{ verticalAlign: 'bottom', maxHeight: '1.5rem'}} />.
+Additionally, the title and timing of each lecture can be adjusted by clicking <img src={lectureCardEditButtonImage} alt={"Lecture Create Button"} style={{ verticalAlign: 'bottom', maxHeight: '1.5rem'}} />
+
+<Image src={lectureCardsImage} alt={"Lecture Cards"} size={ImageSize.medium}></Image>
