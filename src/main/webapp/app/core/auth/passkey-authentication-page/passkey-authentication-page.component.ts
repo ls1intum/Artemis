@@ -1,20 +1,23 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { PasskeyPromptComponent } from 'app/core/auth/passkey-prompt/passkey-prompt.component';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-passkey-required',
     imports: [PasskeyPromptComponent],
     templateUrl: './passkey-authentication-page.component.html',
 })
-export class PasskeyAuthenticationPageComponent implements OnInit {
+export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     protected readonly accountService = inject(AccountService);
 
     userHasRegisteredAPasskey: boolean = false;
     returnUrl: string | undefined = undefined;
+
+    private routeSubscription?: Subscription;
 
     ngOnInit() {
         this.userHasRegisteredAPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
@@ -24,9 +27,13 @@ export class PasskeyAuthenticationPageComponent implements OnInit {
             this.router.navigateByUrl(this.returnUrl!);
         }
 
-        this.route.queryParams.subscribe((params) => {
+        this.routeSubscription = this.route.queryParams.subscribe((params) => {
             this.returnUrl = params['returnUrl'] || '/';
         });
+    }
+
+    ngOnDestroy() {
+        this.routeSubscription?.unsubscribe();
     }
 
     redirectToOriginalUrlOrHome() {
