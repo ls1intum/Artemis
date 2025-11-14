@@ -28,7 +28,7 @@ import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/n
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { LoginWithPasskeyModalComponent } from 'app/core/navbar/server-administration/login-with-passkey/login-with-passkey-modal.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { IsLoggedInWithPasskeyGuard } from 'app/core/auth/is-logged-in-with-passkey/is-logged-in-with-passkey.guard';
+import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
 @Component({
     selector: 'jhi-server-administration',
@@ -69,7 +69,7 @@ export class ServerAdministrationComponent {
     protected readonly faUserPlus = faUserPlus;
 
     private readonly accountService = inject(AccountService);
-    private readonly isLoggedInWithPasskeyGuard = inject(IsLoggedInWithPasskeyGuard);
+    private readonly isLoggedInWithPasskeyGuard = inject(PasskeyAuthenticationGuard);
 
     adminMenuDropdown = viewChild.required<NgbDropdown>('adminMenuDropdown');
     loginWithPasskeyModal = viewChild.required<LoginWithPasskeyModalComponent>(LoginWithPasskeyModalComponent);

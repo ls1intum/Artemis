@@ -3,7 +3,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Authority, IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
-import { IsLoggedInWithPasskeyGuard } from 'app/core/auth/is-logged-in-with-passkey/is-logged-in-with-passkey.guard';
+import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 // TODO fix the type issues here
@@ -19,7 +19,7 @@ const routes: Routes = [
     },
     {
         path: 'passkey-required',
-        loadComponent: () => import('./core/auth/passkey-required/passkey-required.component').then((m) => m.PasskeyRequiredComponent),
+        loadComponent: () => import('app/core/auth/passkey-authentication-page/passkey-authentication-page.component').then((m) => m.PasskeyAuthenticationPageComponent),
         data: {
             pageTitle: 'artemisApp.passkeyRequired.pageTitle',
             usesModuleBackground: false,
@@ -38,7 +38,7 @@ const routes: Routes = [
             authorities: IS_AT_LEAST_ADMIN,
             usesModuleBackground: true,
         },
-        canActivate: [UserRouteAccessService, IsLoggedInWithPasskeyGuard],
+        canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
         loadChildren: () => import('app/core/admin/admin.routes'),
     },
     {

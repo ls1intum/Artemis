@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { PasskeyRequiredComponent } from './passkey-required.component';
+import { PasskeyAuthenticationPageComponent } from './passkey-authentication-page.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -14,14 +14,14 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 
 describe('PasskeyRequiredComponent', () => {
-    let component: PasskeyRequiredComponent;
-    let fixture: ComponentFixture<PasskeyRequiredComponent>;
+    let component: PasskeyAuthenticationPageComponent;
+    let fixture: ComponentFixture<PasskeyAuthenticationPageComponent>;
     let accountService: AccountService;
     let router: Router;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [PasskeyRequiredComponent],
+            imports: [PasskeyAuthenticationPageComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -39,7 +39,7 @@ describe('PasskeyRequiredComponent', () => {
             ],
         });
 
-        fixture = TestBed.createComponent(PasskeyRequiredComponent);
+        fixture = TestBed.createComponent(PasskeyAuthenticationPageComponent);
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService);
         router = TestBed.inject(Router);

@@ -1,14 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { PasskeyContentComponent } from 'app/core/auth/passkey-content/passkey-content.component';
+import { PasskeyPromptComponent } from 'app/core/auth/passkey-prompt/passkey-prompt.component';
 
 @Component({
     selector: 'jhi-passkey-required',
-    imports: [PasskeyContentComponent],
-    templateUrl: './passkey-required.component.html',
+    imports: [PasskeyPromptComponent],
+    templateUrl: './passkey-authentication-page.component.html',
 })
-export class PasskeyRequiredComponent implements OnInit {
+export class PasskeyAuthenticationPageComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     protected readonly accountService = inject(AccountService);

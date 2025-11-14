@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PasskeyContentComponent } from './passkey-content.component';
+import { PasskeyPromptComponent } from './passkey-prompt.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -14,15 +14,15 @@ import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';
 
 describe('PasskeyContentComponent', () => {
-    let component: PasskeyContentComponent;
-    let fixture: ComponentFixture<PasskeyContentComponent>;
+    let component: PasskeyPromptComponent;
+    let fixture: ComponentFixture<PasskeyPromptComponent>;
     let accountService: AccountService;
     let webauthnService: WebauthnService;
     let alertService: AlertService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [PasskeyContentComponent],
+            imports: [PasskeyPromptComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -40,7 +40,7 @@ describe('PasskeyContentComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(PasskeyContentComponent);
+        fixture = TestBed.createComponent(PasskeyPromptComponent);
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService);
         webauthnService = TestBed.inject(WebauthnService);

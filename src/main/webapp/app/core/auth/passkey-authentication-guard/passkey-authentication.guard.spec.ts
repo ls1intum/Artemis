@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
-import { IsLoggedInWithPasskeyGuard } from './is-logged-in-with-passkey.guard';
+import { PasskeyAuthenticationGuard } from './passkey-authentication.guard';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -10,7 +10,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'app/app.constants';
 
 describe('IsLoggedInWithPasskeyGuard', () => {
-    let guard: IsLoggedInWithPasskeyGuard;
+    let guard: PasskeyAuthenticationGuard;
     let accountService: AccountService;
     let router: Router;
     let profileService: ProfileService;
@@ -18,14 +18,14 @@ describe('IsLoggedInWithPasskeyGuard', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                IsLoggedInWithPasskeyGuard,
+                PasskeyAuthenticationGuard,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
             ],
         });
-        guard = TestBed.inject(IsLoggedInWithPasskeyGuard);
+        guard = TestBed.inject(PasskeyAuthenticationGuard);
         accountService = TestBed.inject(AccountService);
         router = TestBed.inject(Router);
         profileService = TestBed.inject(ProfileService);

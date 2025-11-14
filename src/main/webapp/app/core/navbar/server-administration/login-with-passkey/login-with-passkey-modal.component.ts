@@ -3,11 +3,11 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { Router } from '@angular/router';
-import { PasskeyContentComponent } from 'app/core/auth/passkey-content/passkey-content.component';
+import { PasskeyPromptComponent } from 'app/core/auth/passkey-prompt/passkey-prompt.component';
 
 @Component({
     selector: 'jhi-login-with-passkey-modal',
-    imports: [DialogModule, ButtonComponent, PasskeyContentComponent],
+    imports: [DialogModule, ButtonComponent, PasskeyPromptComponent],
     templateUrl: './login-with-passkey-modal.component.html',
 })
 export class LoginWithPasskeyModalComponent {

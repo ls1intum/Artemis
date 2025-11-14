@@ -12,9 +12,9 @@ import { AlertService } from 'app/shared/service/alert.service';
     selector: 'jhi-passkey-content',
     standalone: true,
     imports: [TranslateDirective, FaIconComponent, ButtonComponent, RouterLink],
-    templateUrl: './passkey-content.component.html',
+    templateUrl: './passkey-prompt.component.html',
 })
-export class PasskeyContentComponent implements OnInit {
+export class PasskeyPromptComponent implements OnInit {
     protected readonly faKey = faKey;
     protected readonly faLock = faLock;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;

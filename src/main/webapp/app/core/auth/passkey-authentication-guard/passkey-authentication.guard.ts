@@ -7,7 +7,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 @Injectable({
     providedIn: 'root',
 })
-export class IsLoggedInWithPasskeyGuard implements CanActivate {
+export class PasskeyAuthenticationGuard implements CanActivate {
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly profileService = inject(ProfileService);
