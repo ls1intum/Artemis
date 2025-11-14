@@ -20,9 +20,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { FileService } from '../../../../shared/service/file.service';
-import { AlertService } from '../../../../shared/service/alert.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
@@ -972,10 +971,7 @@ describe('Course Management Update Component', () => {
         it('should handle error when loading code of conduct template fails', async () => {
             const errorResponse = new HttpErrorResponse({ status: 500, statusText: 'Server Error' });
 
-            jest.spyOn(fileService, 'getTemplateCodeOfConduct').mockReturnValue(
-                // Simuliert einen Fehler
-                new Observable<HttpResponse<string>>((subscriber) => subscriber.error(errorResponse)),
-            );
+            jest.spyOn(fileService, 'getTemplateCodeOfConduct').mockReturnValue(new Observable<HttpResponse<string>>((subscriber) => subscriber.error(errorResponse)));
 
             const alertSpy = jest.spyOn(comp['alertService'], 'addAlert');
 
