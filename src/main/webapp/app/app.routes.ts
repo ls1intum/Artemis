@@ -6,7 +6,6 @@ import { errorRoute } from 'app/core/layouts/error/error.route';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
-// TODO fix the type issues here
 
 const routes: Routes = [
     ...LAYOUT_ROUTES,
