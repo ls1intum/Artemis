@@ -12,6 +12,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';
+import { User } from 'app/core/user/user.model';
 
 describe('PasskeyContentComponent', () => {
     let component: PasskeyPromptComponent;
@@ -57,7 +58,7 @@ describe('PasskeyContentComponent', () => {
 
     describe('ngOnInit', () => {
         it('should initialize user identity on init', async () => {
-            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as any);
+            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
 
             fixture.detectChanges();
             await fixture.whenStable();
@@ -87,7 +88,7 @@ describe('PasskeyContentComponent', () => {
     describe('setupPasskey', () => {
         it('should call webauthnService.addNewPasskey with user identity', async () => {
             const mockUser = { id: 1, login: 'testuser' };
-            jest.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as any);
+            jest.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as User);
             const addNewPasskeySpy = jest.spyOn(webauthnService, 'addNewPasskey').mockResolvedValue(undefined);
             const alertSuccessSpy = jest.spyOn(alertService, 'success');
 
@@ -99,7 +100,7 @@ describe('PasskeyContentComponent', () => {
 
         it('should show success alert after passkey setup', async () => {
             const mockUser = { id: 1, login: 'testuser' };
-            jest.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as any);
+            jest.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser as User);
             jest.spyOn(webauthnService, 'addNewPasskey').mockResolvedValue(undefined);
             const alertSuccessSpy = jest.spyOn(alertService, 'success');
 
@@ -112,7 +113,7 @@ describe('PasskeyContentComponent', () => {
     describe('signInWithPasskey', () => {
         it('should login with passkey and trigger success handler when user is logged in with approved passkey', async () => {
             const loginSpy = jest.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
-            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as any);
+            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
             jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
             const triggerSuccessSpy = jest.spyOn(component.triggerPasskeyLoginSuccessHandler, 'emit');
 
@@ -125,7 +126,7 @@ describe('PasskeyContentComponent', () => {
 
         it('should show error when passkey is not super admin approved', async () => {
             jest.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
-            jest.spyOn(accountService, 'identity').mockResolvedValue({} as any);
+            jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
             jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
             const alertErrorSpy = jest.spyOn(alertService, 'error');
             const triggerSuccessSpy = jest.spyOn(component.triggerPasskeyLoginSuccessHandler, 'emit');
@@ -138,7 +139,7 @@ describe('PasskeyContentComponent', () => {
 
         it('should refresh identity after login', async () => {
             jest.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
-            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as any);
+            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
             jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
 
             await component.signInWithPasskey();
