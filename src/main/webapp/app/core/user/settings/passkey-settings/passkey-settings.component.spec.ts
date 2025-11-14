@@ -75,6 +75,36 @@ describe('PasskeySettingsComponent', () => {
         expect(component.registeredPasskeys()).toEqual(mockPasskeys);
     });
 
+    it('should update userIdentity when no passkeys are registered', async () => {
+        // Set initial user identity
+        const initialUser: User = {
+            id: 1,
+            login: 'testuser',
+            authorities: [Authority.USER],
+            askToSetupPasskey: false,
+            internal: true,
+        };
+        accountService.userIdentity.set(initialUser);
+
+        // Mock getRegisteredPasskeys to return empty array
+        jest.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue([]);
+
+        await component.updateRegisteredPasskeys();
+
+        // Verify that registeredPasskeys is empty
+        expect(component.registeredPasskeys()).toEqual([]);
+
+        // Verify that userIdentity has been updated with askToSetupPasskey: true
+        const updatedUser = accountService.userIdentity();
+        expect(updatedUser).toEqual({
+            id: 1,
+            login: 'testuser',
+            authorities: [Authority.USER],
+            askToSetupPasskey: true,
+            internal: true,
+        });
+    });
+
     it('should handle errors when adding a new passkey', async () => {
         jest.spyOn(alertService, 'addErrorAlert');
         jest.spyOn(webauthnApiService, 'getRegistrationOptions').mockRejectedValue(new Error('Test Error'));
