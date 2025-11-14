@@ -20,15 +20,15 @@ import org.springframework.stereotype.Component;
 @Component
 @Profile(PROFILE_CORE)
 @Lazy(false)
-public class PasskeyConfigurationValidator {
+public class ConfigurationValidator {
 
-    private static final Logger log = LoggerFactory.getLogger(PasskeyConfigurationValidator.class);
+    private static final Logger log = LoggerFactory.getLogger(ConfigurationValidator.class);
 
     private final Environment environment;
 
     private final ArtemisConfigHelper artemisConfigHelper;
 
-    public PasskeyConfigurationValidator(Environment environment) {
+    public ConfigurationValidator(Environment environment) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
     }
