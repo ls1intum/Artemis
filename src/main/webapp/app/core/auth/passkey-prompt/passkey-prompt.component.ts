@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
@@ -14,7 +14,7 @@ import { AlertService } from 'app/shared/service/alert.service';
     imports: [TranslateDirective, FaIconComponent, ButtonComponent, RouterLink],
     templateUrl: './passkey-prompt.component.html',
 })
-export class PasskeyPromptComponent implements OnInit {
+export class PasskeyPromptComponent {
     protected readonly faKey = faKey;
     protected readonly faLock = faLock;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
@@ -31,20 +31,8 @@ export class PasskeyPromptComponent implements OnInit {
     triggerPasskeyLoginSuccessHandler = output<void>();
     linkToUserSettingsWasClicked = output<void>();
 
-    ngOnInit() {
-        // TODO this might not be needed
-        this.initializeUserIdentity().then(() => {});
-    }
-
     handleLinkToUserSettingsClick() {
         this.linkToUserSettingsWasClicked.emit();
-    }
-
-    /**
-     * Ensures the user identity is loaded from the server (important for page reloads)
-     */
-    private async initializeUserIdentity() {
-        await this.accountService.identity();
     }
 
     async setupPasskey() {

@@ -55,17 +55,6 @@ describe('PasskeyContentComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    describe('ngOnInit', () => {
-        it('should initialize user identity on init', async () => {
-            const identitySpy = jest.spyOn(accountService, 'identity').mockResolvedValue({} as any);
-
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            expect(identitySpy).toHaveBeenCalledOnce();
-        });
-    });
-
     describe('input properties', () => {
         it('should have default input values', () => {
             expect(component.showHeader()).toBeTrue();
