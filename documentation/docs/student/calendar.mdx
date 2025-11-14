@@ -4,6 +4,7 @@ title: Calendar
 sidebar_label: Calendar
 ---
 
+import calendarTabImage from './assets/calendar/calendar-tab.png';
 import desktopMonthPresentationImage from './assets/calendar/desktop-month-presentation.png';
 import desktopWeekPresentationImage from './assets/calendar/desktop-week-presentation.png';
 import mobileMonthPresentationImage from './assets/calendar/mobile-month-presentation.png';
@@ -24,9 +25,10 @@ Artemis features a calendar that allows users to quickly view all important even
 The Artemis calendar can be found in the Calendar tab of the course overview.
 It displays important events related to lectures, tutorials, exercises, and exams.
 
+<Image src={calendarTabImage} alt={"Calendar Tab in Course Overview Sidebar"} size={ImageSize.small}></Image>
+
 The following table shows the dates that are displayed as calendar events, if available.
 Note that an event can either represent a specific point in time (in which case it only has a start date) or a time period (in which case it has both a start and an end date).
-Because of this, two dates are occasionally represented as a single event — for example, if both the start and end dates of a lecture are available, they are combined into one lecture event.
 
 | Entity  | Dates                                                            |
 |----------|------------------------------------------------------------------|
@@ -41,14 +43,14 @@ The available views differ between small and large devices to optimize the calen
 
 On larger devices, such as laptops and desktop computers, the calendar offers a high-level **month** presentation and a more detailed **week** presentation.
 
-<Image src={desktopMonthPresentationImage} alt={"Month Presentation for Large Devices"} size={ImageSize.large}></Image>
-<Image src={desktopWeekPresentationImage} alt={"Week Presentation for Large Devices"} size={ImageSize.large}></Image>
+<Image src={desktopMonthPresentationImage} alt={"Month Presentation for Large Devices"}  caption={"Month Presentation for Large Devices"} size={ImageSize.large}></Image>
+<Image src={desktopWeekPresentationImage} alt={"Week Presentation for Large Devices"} caption={"Week Presentation for Small Devices"} size={ImageSize.large}></Image>
 
 On small devices, such as mobile phones, there is a high-level **month** presentation and a detailed **day** presentation.
 
 <div style={{ display: 'flex', gap: '1rem' }}>
-    <Image src={mobileMonthPresentationImage} alt={"Month Presentation for Small Devices"} style={{ maxHeight: '550px' }}></Image>
-    <Image src={mobileDayPresentationImage} alt={"Day Presentation for Small Devices"} style={{ maxHeight: '550px' }}></Image>
+    <Image src={mobileMonthPresentationImage} alt={"Month Presentation for Small Devices"} caption={"Month Presentation for Small Devices"} style={{ maxHeight: '550px' }}></Image>
+    <Image src={mobileDayPresentationImage} alt={"Day Presentation for Small Devices"} caption={"Day Presentation for Small Devices"} style={{ maxHeight: '550px' }}></Image>
 </div>
 
 ## Viewing Event Details
@@ -61,24 +63,24 @@ On both large and small devices, users can click the chevron buttons to navigate
 Additionally, they can use the Today button to jump to the instance of the currently selected presentation that includes the current day.
 
 <div style={{ display: 'flex', gap: '1rem' }}>
-    <Image src={desktopNavigationControls} alt={"Navigation Controls for Large Devices"} style={{ maxWidth: '330px' }}></Image>
-    <Image src={mobileNavigationControls} alt={"Navigation Controls for Small Devices"} style={{ maxWidth: '530px' }}></Image>
+    <Image src={desktopNavigationControls} alt={"Navigation Controls for Large Devices"} caption={"Navigation Controls for Large Devices"} style={{ maxWidth: '280px' }}></Image>
+    <Image src={mobileNavigationControls} alt={"Navigation Controls for Small Devices"} caption={"Navigation Controls for Small Devices"} style={{ maxWidth: '580px' }}></Image>
 </div>
 
 ## Filtering Events
 By using the filter component of the calendar, users can include or exclude events based on their type.
 
 <div style={{ display: 'flex', gap: '1rem' }}>
-    <Image src={desktopFilterComponent} alt={"Filter Component for Large Devices"} style={{ maxHeight: '300px', maxWidth: 'none' }}></Image>
-    <Image src={mobileFilterComponent} alt={"Filter Component for Small Devices"} style={{ maxHeight: '300px', maxWidth: 'none' }}></Image>
+    <Image src={desktopFilterComponent} alt={"Filter Component for Large Devices"} caption={"Filter Component for Large Devices"} style={{ maxHeight: '300px', maxWidth: 'none' }}></Image>
+    <Image src={mobileFilterComponent} alt={"Filter Component for Small Devices"} caption={"Filter Component for Small Devices"} style={{ maxHeight: '300px', maxWidth: 'none' }}></Image>
 </div>
 
 ## Subscribing External Calendars
 Finally, users can subscribe external calendar applications to the Artemis calendar by clicking the Subscribe button, selecting a language, choosing which event types to include, and copying the generated link.
 This link can then be pasted into the settings of third-party calendar applications to subscribe them to the Artemis calendar.
 
-<div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-    <Image src={desktopSubscriptionComponent} alt={"iCalendar Subscription Component for Large Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>
-    <Image src={mobileSubscriptionComponent} alt={"iCalendar Subscription Component for Small Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>
+<div style={{ display: 'flex', alignItems: 'start', gap: '1rem' }}>
+    <Image src={desktopSubscriptionComponent} alt={"iCalendar Subscription Popover for Large Devices"} caption={"iCalendar Subscription Popover for Large Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>
+    <Image src={mobileSubscriptionComponent} alt={"iCalendar Subscription Popover for Small Devices"} caption={"iCalendar Subscription Popover for Small Devices"} style={{ maxHeight: '340px', maxWidth: 'none' }}></Image>
 </div>
 
