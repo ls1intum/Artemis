@@ -26,7 +26,7 @@ import {
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { LoginWithPasskeyModalComponent } from 'app/core/navbar/server-administration/login-with-passkey/login-with-passkey-modal.component';
+import { LoginWithPasskeyModalComponent } from 'app/core/navbar/server-administration/login-with-passkey-modal/login-with-passkey-modal.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
