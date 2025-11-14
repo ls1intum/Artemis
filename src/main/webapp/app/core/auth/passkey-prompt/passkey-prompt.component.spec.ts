@@ -14,7 +14,7 @@ import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 
-describe('PasskeyContentComponent', () => {
+describe('PasskeyPromptComponent', () => {
     let component: PasskeyPromptComponent;
     let fixture: ComponentFixture<PasskeyPromptComponent>;
     let accountService: AccountService;
