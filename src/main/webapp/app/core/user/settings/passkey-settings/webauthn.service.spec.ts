@@ -197,6 +197,25 @@ describe('WebauthnService', () => {
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
             expect(console.error).toHaveBeenCalledWith(apiError);
         });
+
+        it('should update userIdentity signal with isLoggedInWithPasskey set to true', async () => {
+            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
+            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
+            webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
+
+            // Verify initial state (should not have isLoggedInWithPasskey set)
+            expect(accountService.userIdentity().isLoggedInWithPasskey).toBeUndefined();
+
+            await service.loginWithPasskey();
+
+            // Verify userIdentity signal was updated
+            const updatedIdentity = accountService.userIdentity();
+            expect(updatedIdentity.isLoggedInWithPasskey).toBeTrue();
+            expect(updatedIdentity.internal).toBeTrue();
+            expect(updatedIdentity.id).toBe(1);
+            expect(updatedIdentity.email).toBe('test@example.com');
+            expect(updatedIdentity.login).toBe('testuser');
+        });
     });
 
     describe('getCredential', () => {
