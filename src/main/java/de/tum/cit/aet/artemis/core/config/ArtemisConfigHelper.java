@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY
 import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEBULA_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARING_ENABLED_PROPERTY_NAME;
 
 import org.springframework.core.env.Environment;
@@ -24,6 +25,16 @@ public class ArtemisConfigHelper {
      */
     public boolean isPasskeyEnabled(Environment environment) {
         return getPropertyOrExitArtemis(PASSKEY_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if passkey authentication is required for administrator features.
+     *
+     * @param environment the Spring environment
+     * @return true if passkey authentication is required for accessing administrator features, false otherwise
+     */
+    public boolean isPasskeyRequiredForAdministratorFeatures(Environment environment) {
+        return getPropertyOrExitArtemis(PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, environment);
     }
 
     /**
