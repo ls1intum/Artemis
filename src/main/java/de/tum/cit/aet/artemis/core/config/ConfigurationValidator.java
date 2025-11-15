@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.core.exception.PasskeyConfigurationException;
+import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
 
 /**
  * Validates the passkey configuration at application startup.
@@ -37,7 +37,7 @@ public class ConfigurationValidator {
 
     /**
      * Validates the passkey configuration at startup.
-     * Throws a {@link PasskeyConfigurationException} if the configuration is invalid.
+     * Throws a {@link ConflictingPasskeyConfigurationException} if the configuration is invalid.
      */
     @PostConstruct
     public void validatePasskeyConfiguration() {
@@ -50,7 +50,8 @@ public class ConfigurationValidator {
                             + "Please update your application configuration files to enable passkey or disable the requirement for administrator features.",
                     Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Constants.PASSKEY_ENABLED_PROPERTY_NAME);
             log.error(errorMessage);
-            throw new PasskeyConfigurationException(errorMessage, Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME, Constants.PASSKEY_ENABLED_PROPERTY_NAME);
+            throw new ConflictingPasskeyConfigurationException(errorMessage, Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME,
+                    Constants.PASSKEY_ENABLED_PROPERTY_NAME);
         }
 
         if (passkeyRequiredForAdminFeatures) {
