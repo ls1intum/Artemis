@@ -100,6 +100,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         // creating lecture units for lecture one
         textUnitOfLectureOne = new TextUnit();
         textUnitOfLectureOne.setName("TextUnitOfLectureOne");
+        textUnitOfLectureOne.setLecture(lecture);
+        textUnitOfLectureOne = lectureUnitRepository.save(textUnitOfLectureOne);
         CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(competency, textUnitOfLectureOne, 1);
         link = competencyLectureUnitLinkRepository.save(link);
         textUnitOfLectureOne = (TextUnit) link.getLectureUnit();
@@ -113,14 +115,18 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         ExerciseUnit textExerciseUnit = new ExerciseUnit();
         textExerciseUnit.setExercise(textExercise);
+        textExerciseUnit.setLecture(lecture);
         textExerciseUnit = exerciseUnitRepository.save(textExerciseUnit);
 
         ExerciseUnit teamTextExerciseUnit = new ExerciseUnit();
+        teamTextExerciseUnit.setLecture(lecture);
         teamTextExerciseUnit.setExercise(teamTextExercise);
         teamTextExerciseUnit = exerciseUnitRepository.save(teamTextExerciseUnit);
 
         for (LectureUnit lectureUnit : List.of(textUnitOfLectureOne, attachmentVideoUnitOfLectureOne, textExerciseUnit, teamTextExerciseUnit)) {
-            lecture.addLectureUnit(lectureUnit);
+            if (!lecture.getLectureUnits().contains(lectureUnit)) {
+                lecture.addLectureUnit(lectureUnit);
+            }
         }
 
         lecture = lectureRepository.save(lecture);
