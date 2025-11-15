@@ -28,31 +28,31 @@ class LectureLectureUnitTest {
     // ----------------------------------------------------------------
 
     private AttachmentVideoUnit attachmentUnit(long id) {
-        AttachmentVideoUnit u = new AttachmentVideoUnit();
-        u.setId(id);
-        u.setName("Attachment " + id);
-        return u;
+        AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setId(id);
+        unit.setName("Attachment " + id);
+        return unit;
     }
 
     private ExerciseUnit exerciseUnit(long id) {
-        ExerciseUnit u = new ExerciseUnit();
-        u.setId(id);
-        u.setName("Exercise " + id);
-        return u;
+        ExerciseUnit unit = new ExerciseUnit();
+        unit.setId(id);
+        unit.setName("Exercise " + id);
+        return unit;
     }
 
     private TextUnit textUnit(long id) {
-        TextUnit u = new TextUnit();
-        u.setId(id);
-        u.setName("Text " + id);
-        return u;
+        TextUnit unit = new TextUnit();
+        unit.setId(id);
+        unit.setName("Text " + id);
+        return unit;
     }
 
     private OnlineUnit onlineUnit(long id) {
-        OnlineUnit u = new OnlineUnit();
-        u.setId(id);
-        u.setName("Online " + id);
-        return u;
+        OnlineUnit unit = new OnlineUnit();
+        unit.setId(id);
+        unit.setName("Online " + id);
+        return unit;
     }
 
     /**
@@ -79,11 +79,11 @@ class LectureLectureUnitTest {
         assertThat(units).containsExactly(expected);
 
         for (int i = 0; i < expected.length; i++) {
-            LectureUnit u = expected[i];
+            LectureUnit unit = expected[i];
 
-            assertThat(units.get(i)).as("unit at index %s", i).isSameAs(u);
+            assertThat(units.get(i)).as("unit at index %s", i).isSameAs(unit);
 
-            assertThat(getLectureUnitOrder(u)).as("lectureUnitOrder of unit %s at index %s", u.getId(), i).isEqualTo(i);
+            assertThat(getLectureUnitOrder(unit)).as("lectureUnitOrder of unit %s at index %s", unit.getId(), i).isEqualTo(i);
         }
     }
 

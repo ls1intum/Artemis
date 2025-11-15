@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
@@ -119,22 +118,23 @@ public class LectureUnitService {
      * @param user         The user that completed/uncompleted the lecture unit
      * @param completed    True if the lecture unit was completed, false otherwise
      */
-    public void setCompletedForAllLectureUnits(List<? extends LectureUnit> lectureUnits, @NotNull User user, boolean completed) {
+    public <T extends LectureUnit> void setCompletedForAllLectureUnits(List<T> lectureUnits, @NotNull User user, boolean completed) {
         var existingCompletion = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, user.getId());
         if (!completed) {
             lectureUnitCompletionRepository.deleteAll(existingCompletion);
             return;
         }
+        // make lectureUnits modifiable
+        List<LectureUnit> completedLectureUnits = new ArrayList<>(lectureUnits);
 
+        // remove existing completions
         if (!existingCompletion.isEmpty()) {
-            var alreadyCompletedUnits = existingCompletion.stream().map(LectureUnitCompletion::getLectureUnit).collect(Collectors.toSet());
-
-            // make lectureUnits modifiable
-            lectureUnits = new ArrayList<>(lectureUnits);
-            lectureUnits.removeAll(alreadyCompletedUnits);
+            for (var completion : existingCompletion) {
+                completedLectureUnits.remove(completion.getLectureUnit());
+            }
         }
 
-        var completions = lectureUnits.stream().map(unit -> createLectureUnitCompletion(unit, user)).toList();
+        var completions = completedLectureUnits.stream().map(unit -> createLectureUnitCompletion(unit, user)).toList();
 
         try {
             lectureUnitCompletionRepository.saveAll(completions);
@@ -241,7 +241,13 @@ public class LectureUnitService {
      * @param lectureUnit The lecture unit to disconnect the competency links
      */
     public void disconnectCompetencyLectureUnitLinks(LectureUnit lectureUnit) {
-        lectureUnit.getCompetencyLinks().forEach(link -> link.getCompetency().setLectureUnitLinks(null));
+        if (lectureUnit.getCompetencyLinks() != null && Hibernate.isInitialized(lectureUnit.getCompetencyLinks())) {
+            lectureUnit.getCompetencyLinks().forEach(link -> {
+                // avoid circular references
+                link.setLectureUnit(null);
+                link.getCompetency().setLectureUnitLinks(null);
+            });
+        }
     }
 
     /**

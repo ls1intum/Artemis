@@ -43,7 +43,7 @@ public class LectureUnitApi extends AbstractLectureApi {
         this.exerciseUnitRepository = exerciseUnitRepository;
     }
 
-    public void setCompletedForAllLectureUnits(List<? extends LectureUnit> lectureUnits, @NotNull User user, boolean completed) {
+    public <T extends LectureUnit> void setCompletedForAllLectureUnits(List<T> lectureUnits, @NotNull User user, boolean completed) {
         lectureUnitService.setCompletedForAllLectureUnits(lectureUnits, user, completed);
     }
 

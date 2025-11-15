@@ -12,7 +12,6 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -245,13 +244,11 @@ public class AttachmentVideoUnitService {
     // TODO: we should consider using DTOs for sending data to the client instead of cleaning entities
     public void prepareAttachmentVideoUnitForClient(AttachmentVideoUnit attachmentVideoUnit) {
         var lecture = attachmentVideoUnit.getLecture();
-        if (Hibernate.isInitialized(lecture.getLectureUnits())) {
+        var lectureUnits = lecture.getLectureUnits();
+        if (lectureUnits != null && !lectureUnits.isEmpty()) {
             lecture.setLectureUnits(null);
         }
         lecture.setAttachments(null);
-        if (attachmentVideoUnit.getCompetencyLinks() != null && Hibernate.isInitialized(attachmentVideoUnit.getCompetencyLinks())) {
-            // avoid circular references
-            attachmentVideoUnit.getCompetencyLinks().forEach(link -> link.setLectureUnit(null));
-        }
+        lectureUnitService.disconnectCompetencyLectureUnitLinks(attachmentVideoUnit);
     }
 }

@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
@@ -60,12 +61,15 @@ public class OnlineUnitResource {
 
     private final LectureUnitService lectureUnitService;
 
+    private final LectureUnitRepository lectureUnitRepository;
+
     public OnlineUnitResource(LectureRepository lectureRepository, OnlineUnitRepository onlineUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService) {
+            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.onlineUnitRepository = onlineUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**
@@ -132,6 +136,8 @@ public class OnlineUnitResource {
         if (lecture.getCourse() == null || (onlineUnit.getLecture() != null && !lecture.getId().equals(onlineUnit.getLecture().getId()))) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
+
+        lectureUnitRepository.reconnectCompetencyLinks(onlineUnit);
 
         lecture.addLectureUnit(onlineUnit);
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);

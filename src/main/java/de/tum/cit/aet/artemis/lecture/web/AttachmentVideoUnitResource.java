@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
@@ -83,10 +84,12 @@ public class AttachmentVideoUnitResource {
 
     private final FileService fileService;
 
+    private final LectureUnitRepository lectureUnitRepository;
+
     public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
-            FileService fileService) {
+            FileService fileService, LectureUnitRepository lectureUnitRepository) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -96,6 +99,7 @@ public class AttachmentVideoUnitResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**
@@ -188,12 +192,7 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
 
-        if (attachmentVideoUnit.getCompetencyLinks() != null && !attachmentVideoUnit.getCompetencyLinks().isEmpty()) {
-            for (var competencyLink : attachmentVideoUnit.getCompetencyLinks()) {
-                // reconnect to avoid: JpaSystemException: attempted to assign id from null one-to-one property
-                competencyLink.setLectureUnit(attachmentVideoUnit);
-            }
-        }
+        lectureUnitRepository.reconnectCompetencyLinks(attachmentVideoUnit);
 
         lecture.addLectureUnit(attachmentVideoUnit);
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);

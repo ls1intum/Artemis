@@ -1,10 +1,9 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -69,7 +68,7 @@ public class Lecture extends DomainObject {
     @OrderBy("lectureUnitOrder ASC") // DB → Java: always ordered by that column
     @JsonIgnoreProperties("lecture")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<LectureUnit> lectureUnits = new ArrayList<>();
+    private Set<LectureUnit> lectureUnits = new LinkedHashSet<>();
 
     @ManyToOne
     @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
@@ -150,13 +149,16 @@ public class Lecture extends DomainObject {
      */
     public List<LectureUnit> getLectureUnits() {
         if (Hibernate.isInitialized(lectureUnits)) {
-            return Collections.unmodifiableList(lectureUnits);
+            return List.copyOf(lectureUnits);
         }
-        return lectureUnits;
+        // when not initialized, return an empty list to avoid LazyInitializationExceptions
+        return List.of();
     }
 
     public void reorderLectureUnits(List<Long> orderedIds) {
-        lectureUnits.sort(Comparator.comparing(unit -> orderedIds.indexOf(unit.getId())));
+        List<LectureUnit> sorted = lectureUnits.stream().sorted(Comparator.comparing(unit -> orderedIds.indexOf(unit.getId()))).toList();
+        lectureUnits.clear();
+        lectureUnits.addAll(sorted);
         updateLectureUnitOrder();
     }
 
@@ -203,9 +205,12 @@ public class Lecture extends DomainObject {
     @PreUpdate
     public void updateLectureUnitOrder() {
         if (Hibernate.isInitialized(lectureUnits)) {
-            for (int i = 0; i < lectureUnits.size(); i++) {
-                // or through package-private setter:
-                lectureUnits.get(i).setLectureUnitOrder(i);
+            int order = 0;
+            for (LectureUnit unit : lectureUnits) {
+                if (unit == null) {
+                    continue;
+                }
+                unit.setLectureUnitOrder(order++);
             }
         }
     }

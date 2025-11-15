@@ -94,4 +94,13 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     default LectureUnit findByIdElseThrow(long lectureUnitId) {
         return getValueElseThrow(findById(lectureUnitId), lectureUnitId);
     }
+
+    default void reconnectCompetencyLinks(LectureUnit lectureUnit) {
+        if (lectureUnit.getCompetencyLinks() != null && !lectureUnit.getCompetencyLinks().isEmpty()) {
+            for (var competencyLink : lectureUnit.getCompetencyLinks()) {
+                // reconnect to avoid: JpaSystemException: attempted to assign id from null one-to-one property
+                competencyLink.setLectureUnit(lectureUnit);
+            }
+        }
+    }
 }
