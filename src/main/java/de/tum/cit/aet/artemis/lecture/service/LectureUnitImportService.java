@@ -80,6 +80,7 @@ public class LectureUnitImportService {
      * This function imports the {@code importedLectureUnit} and returns it
      *
      * @param importedLectureUnit The original lecture unit to be copied
+     * @param newLecture          The new lecture to which the lecture unit is appended
      * @return The imported lecture unit
      */
     public LectureUnit importLectureUnit(final LectureUnit importedLectureUnit, Lecture newLecture) {

@@ -95,6 +95,11 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
         return getValueElseThrow(findById(lectureUnitId), lectureUnitId);
     }
 
+    /**
+     * Reconnects the competency links to the lecture unit to avoid issues with JPA cascading operations.
+     *
+     * @param lectureUnit the lecture unit whose competency links need to be reconnected
+     */
     default void reconnectCompetencyLinks(LectureUnit lectureUnit) {
         if (lectureUnit.getCompetencyLinks() != null && !lectureUnit.getCompetencyLinks().isEmpty()) {
             for (var competencyLink : lectureUnit.getCompetencyLinks()) {

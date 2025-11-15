@@ -155,6 +155,12 @@ public class Lecture extends DomainObject {
         return List.of();
     }
 
+    /**
+     * Reorder the lecture units based on the given list of ordered IDs.
+     * Makes sure to update the order after reordering.
+     *
+     * @param orderedIds the list of lecture unit IDs in the desired order
+     */
     public void reorderLectureUnits(List<Long> orderedIds) {
         List<LectureUnit> sorted = lectureUnits.stream().sorted(Comparator.comparing(unit -> orderedIds.indexOf(unit.getId()))).toList();
         lectureUnits.clear();
@@ -162,6 +168,12 @@ public class Lecture extends DomainObject {
         updateLectureUnitOrder();
     }
 
+    /**
+     * Set the lecture units, replacing any existing ones.
+     * Makes sure to update back-references and order.
+     *
+     * @param lectureUnits the new list of lecture units
+     */
     public void setLectureUnits(List<LectureUnit> lectureUnits) {
         this.lectureUnits.clear();
         if (lectureUnits != null) {
@@ -172,6 +184,12 @@ public class Lecture extends DomainObject {
         updateLectureUnitOrder();
     }
 
+    /**
+     * Add a lecture unit to the end of the list.
+     * Makes sure to update back-references and order.
+     *
+     * @param lectureUnit the lecture unit to add
+     */
     public void addLectureUnit(@Nullable LectureUnit lectureUnit) {
         if (lectureUnit == null) {
             return;
@@ -181,6 +199,12 @@ public class Lecture extends DomainObject {
         updateLectureUnitOrder();
     }
 
+    /**
+     * Remove a lecture unit from the list.
+     * Makes sure to update back-references and order.
+     *
+     * @param lectureUnit the lecture unit to remove
+     */
     public void removeLectureUnit(@Nullable LectureUnit lectureUnit) {
         if (lectureUnit == null) {
             return;
@@ -190,6 +214,12 @@ public class Lecture extends DomainObject {
         updateLectureUnitOrder();
     }
 
+    /**
+     * Remove a lecture unit by its ID.
+     * Makes sure to update back-references and order.
+     *
+     * @param lectureUnitId the ID of the lecture unit to remove
+     */
     public void removeLectureUnitById(@Nullable Long lectureUnitId) {
         if (lectureUnitId == null) {
             return;
@@ -201,6 +231,11 @@ public class Lecture extends DomainObject {
         removeLectureUnit(toRemove);
     }
 
+    /**
+     * Update the lectureUnitOrder field of all lecture units based on their current position in the set.
+     * This method is called before persisting or updating the Lecture entity to ensure consistency.
+     * It can also be called manually after reordering the lecture units or adding/removing some.
+     */
     @PrePersist
     @PreUpdate
     public void updateLectureUnitOrder() {

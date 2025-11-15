@@ -114,6 +114,7 @@ public class LectureUnitService {
      * Set the completion status of all passed lecture units for the give user
      * If the user completed the unit and completion status already exists, nothing happens
      *
+     * @param <T>          The type of the concrete lecture unit
      * @param lectureUnits List of all lecture units for which to set the completion flag
      * @param user         The user that completed/uncompleted the lecture unit
      * @param completed    True if the lecture unit was completed, false otherwise
