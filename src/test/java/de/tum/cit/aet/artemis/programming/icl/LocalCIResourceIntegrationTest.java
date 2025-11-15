@@ -412,6 +412,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testPauseBuildAgent() throws Exception {
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
+        // Wait for distributed map to stabilize after clear
+        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100)).until(() -> processingJobs.size() == 0);
 
         request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(500))
@@ -427,6 +429,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testPauseAllBuildAgents() throws Exception {
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
+        // Wait for distributed map to stabilize after clear
+        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100)).until(() -> processingJobs.size() == 0);
 
         request.put("/api/core/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
         await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(500)).until(() -> {
