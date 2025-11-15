@@ -29,6 +29,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,10 +62,10 @@ class AtlasAgentServiceTest {
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(expectedResponse)))));
 
-        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         assertThat(result).isNotNull();
-        AgentChatResult chatResult = result.get();
+        AgentChatResultDTO chatResult = result.get();
         assertThat(chatResult.message()).isEqualTo(expectedResponse);
         assertThat(chatResult.competenciesModified()).isFalse();
     }
@@ -79,10 +80,10 @@ class AtlasAgentServiceTest {
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(emptyResponse)))));
 
-        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         assertThat(result).isNotNull();
-        AgentChatResult chatResult = result.get();
+        AgentChatResultDTO chatResult = result.get();
         assertThat(chatResult.message()).isEqualTo("I apologize, but I couldn't generate a response.");
         assertThat(chatResult.competenciesModified()).isFalse();
     }
@@ -96,10 +97,10 @@ class AtlasAgentServiceTest {
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("")))));
 
-        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         assertThat(result).isNotNull();
-        AgentChatResult chatResult = result.get();
+        AgentChatResultDTO chatResult = result.get();
         assertThat(chatResult.message()).isEqualTo("I apologize, but I couldn't generate a response.");
         assertThat(chatResult.competenciesModified()).isFalse();
     }
@@ -114,10 +115,10 @@ class AtlasAgentServiceTest {
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(whitespaceResponse)))));
 
-        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         assertThat(result).isNotNull();
-        AgentChatResult chatResult = result.get();
+        AgentChatResultDTO chatResult = result.get();
         assertThat(chatResult.message()).isEqualTo("I apologize, but I couldn't generate a response.");
         assertThat(chatResult.competenciesModified()).isFalse();
     }
@@ -131,10 +132,10 @@ class AtlasAgentServiceTest {
         when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("ChatModel error"));
 
-        CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+        CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
         assertThat(result).isNotNull();
-        AgentChatResult chatResult = result.get();
+        AgentChatResultDTO chatResult = result.get();
         assertThat(chatResult.message()).isEqualTo("I apologize, but I'm having trouble processing your request right now. Please try again later.");
         assertThat(chatResult.competenciesModified()).isFalse();
     }
@@ -177,11 +178,11 @@ class AtlasAgentServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response for instructor 1")))))
                 .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response for instructor 2")))));
 
-        CompletableFuture<AgentChatResult> result1 = atlasAgentService.processChatMessage(instructor1Message, courseId, instructor1SessionId);
-        CompletableFuture<AgentChatResult> result2 = atlasAgentService.processChatMessage(instructor2Message, courseId, instructor2SessionId);
+        CompletableFuture<AgentChatResultDTO> result1 = atlasAgentService.processChatMessage(instructor1Message, courseId, instructor1SessionId);
+        CompletableFuture<AgentChatResultDTO> result2 = atlasAgentService.processChatMessage(instructor2Message, courseId, instructor2SessionId);
 
-        AgentChatResult chatResult1 = result1.get();
-        AgentChatResult chatResult2 = result2.get();
+        AgentChatResultDTO chatResult1 = result1.get();
+        AgentChatResultDTO chatResult2 = result2.get();
 
         assertThat(chatResult1.message()).isEqualTo("Response for instructor 1");
         assertThat(chatResult2.message()).isEqualTo("Response for instructor 2");
@@ -282,10 +283,10 @@ class AtlasAgentServiceTest {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage("Competency created successfully"))));
             });
 
-            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+            CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            AgentChatResult chatResult = result.get();
+            AgentChatResultDTO chatResult = result.get();
             assertThat(chatResult.competenciesModified()).as("Should detect competency modification from tools service").isTrue();
         }
 
@@ -299,10 +300,10 @@ class AtlasAgentServiceTest {
             // No modification - just return response without calling markCompetencyModified
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Here are the competencies")))));
 
-            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+            CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            AgentChatResult chatResult = result.get();
+            AgentChatResultDTO chatResult = result.get();
             assertThat(chatResult.competenciesModified()).as("Should not indicate modification for read-only operations").isFalse();
         }
 
@@ -318,10 +319,10 @@ class AtlasAgentServiceTest {
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithDelegationMarker)))))
                     .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"preview\": true}")))));
 
-            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+            CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            AgentChatResult chatResult = result.get();
+            AgentChatResultDTO chatResult = result.get();
             // The response should be processed and replaced with clean JSON from competency expert
             assertThat(chatResult.message()).isNotNull();
             // At minimum, the raw delegation marker should be sanitized
@@ -339,10 +340,10 @@ class AtlasAgentServiceTest {
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response")))));
 
-            CompletableFuture<AgentChatResult> result = serviceWithoutTools.processChatMessage(testMessage, courseId, sessionId);
+            CompletableFuture<AgentChatResultDTO> result = serviceWithoutTools.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            AgentChatResult chatResult = result.get();
+            AgentChatResultDTO chatResult = result.get();
             assertThat(chatResult.competenciesModified()).as("Should handle null tools service gracefully").isFalse();
         }
 
@@ -359,10 +360,10 @@ class AtlasAgentServiceTest {
                     .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Response 4")))));
 
             // Process messages for both sessions
-            CompletableFuture<AgentChatResult> result1_1 = atlasAgentService.processChatMessage("Message 1 for session 1", courseId, session1);
-            CompletableFuture<AgentChatResult> result2_1 = atlasAgentService.processChatMessage("Message 1 for session 2", courseId, session2);
-            CompletableFuture<AgentChatResult> result1_2 = atlasAgentService.processChatMessage("Message 2 for session 1", courseId, session1);
-            CompletableFuture<AgentChatResult> result2_2 = atlasAgentService.processChatMessage("Message 2 for session 2", courseId, session2);
+            CompletableFuture<AgentChatResultDTO> result1_1 = atlasAgentService.processChatMessage("Message 1 for session 1", courseId, session1);
+            CompletableFuture<AgentChatResultDTO> result2_1 = atlasAgentService.processChatMessage("Message 1 for session 2", courseId, session2);
+            CompletableFuture<AgentChatResultDTO> result1_2 = atlasAgentService.processChatMessage("Message 2 for session 1", courseId, session1);
+            CompletableFuture<AgentChatResultDTO> result2_2 = atlasAgentService.processChatMessage("Message 2 for session 2", courseId, session2);
 
             // All results should be independent
             assertThat(result1_1.get().message()).isEqualTo("Response 1");
@@ -385,10 +386,10 @@ class AtlasAgentServiceTest {
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithMultipleMarkers)))));
 
-            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+            CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            AgentChatResult chatResult = result.get();
+            AgentChatResultDTO chatResult = result.get();
             // Should handle multiple markers without crashing
             assertThat(chatResult.message()).isNotNull();
         }
@@ -403,10 +404,10 @@ class AtlasAgentServiceTest {
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithEmptyBrief)))));
 
-            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+            CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            AgentChatResult chatResult = result.get();
+            AgentChatResultDTO chatResult = result.get();
             // Should handle empty brief gracefully
             assertThat(chatResult.message()).isNotNull();
         }
@@ -421,10 +422,10 @@ class AtlasAgentServiceTest {
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithReturnMarker)))));
 
-            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+            CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            AgentChatResult chatResult = result.get();
+            AgentChatResultDTO chatResult = result.get();
             // The marker should be removed from the response
             assertThat(chatResult.message()).doesNotContain("%%ARTEMIS_RETURN_TO_MAIN_AGENT%%");
             assertThat(chatResult.message()).isEqualTo("Task complete");
@@ -442,10 +443,10 @@ class AtlasAgentServiceTest {
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithApprovalMarker)))))
                     .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"success\": true, \"created\": 1}")))));
 
-            CompletableFuture<AgentChatResult> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+            CompletableFuture<AgentChatResultDTO> result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            AgentChatResult chatResult = result.get();
+            AgentChatResultDTO chatResult = result.get();
             // The response should include both the message and creation confirmation
             assertThat(chatResult.message()).isNotNull();
             // The marker itself should be removed (but content around it remains)

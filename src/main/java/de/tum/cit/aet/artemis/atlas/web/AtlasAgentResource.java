@@ -21,10 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
-import de.tum.cit.aet.artemis.atlas.service.AgentChatResult;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -65,8 +65,8 @@ public class AtlasAgentResource {
         String sessionId = atlasAgentService.generateSessionId(courseId, user.getId());
 
         try {
-            final CompletableFuture<AgentChatResult> future = atlasAgentService.processChatMessage(request.message(), courseId, sessionId);
-            final AgentChatResult result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            final CompletableFuture<AgentChatResultDTO> future = atlasAgentService.processChatMessage(request.message(), courseId, sessionId);
+            final AgentChatResultDTO result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             return ResponseEntity.ok(new AtlasAgentChatResponseDTO(result.message(), sessionId, ZonedDateTime.now(), true, result.competenciesModified(),
                     result.competencyPreview(), result.batchCompetencyPreview()));

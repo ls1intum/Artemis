@@ -27,6 +27,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.dto.BatchCompetencyPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.SingleCompetencyPreviewResponseDTO;
@@ -140,9 +141,9 @@ public class AtlasAgentService {
      * @param sessionId The session ID for chat memory and agent tracking
      * @return Result containing the AI response and competency modification flag
      */
-    public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
+    public CompletableFuture<AgentChatResultDTO> processChatMessage(String message, Long courseId, String sessionId) {
         if (chatClient == null) {
-            return CompletableFuture.completedFuture(new AgentChatResult("Atlas Agent is not available. Please contact your administrator.", false));
+            return CompletableFuture.completedFuture(new AgentChatResultDTO("Atlas Agent is not available. Please contact your administrator.", false));
         }
 
         try {
@@ -192,7 +193,7 @@ public class AtlasAgentService {
 
                 // Return immediately with Competency Expert's response and preview data
                 // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
-                return CompletableFuture.completedFuture(new AgentChatResult(delegationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
+                return CompletableFuture.completedFuture(new AgentChatResultDTO(delegationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
                 // Agent is requesting to execute the changes
@@ -209,7 +210,7 @@ public class AtlasAgentService {
                     SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getSinglePreview();
                     BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getBatchPreview();
 
-                    return CompletableFuture.completedFuture(new AgentChatResult(creationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
+                    return CompletableFuture.completedFuture(new AgentChatResultDTO(creationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
                 }
                 else {
                     String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId, AgentType.COMPETENCY_EXPERT);
@@ -217,7 +218,7 @@ public class AtlasAgentService {
                     SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getSinglePreview();
                     BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getBatchPreview();
 
-                    return CompletableFuture.completedFuture(new AgentChatResult(creationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
+                    return CompletableFuture.completedFuture(new AgentChatResultDTO(creationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
                 }
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
@@ -236,11 +237,12 @@ public class AtlasAgentService {
             // Use the LLM's natural language response
             String finalResponse = (!response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
 
-            return CompletableFuture.completedFuture(new AgentChatResult(finalResponse, competenciesModified, singlePreview, batchPreview));
+            return CompletableFuture.completedFuture(new AgentChatResultDTO(finalResponse, competenciesModified, singlePreview, batchPreview));
 
         }
         catch (Exception e) {
-            return CompletableFuture.completedFuture(new AgentChatResult("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
+            return CompletableFuture
+                    .completedFuture(new AgentChatResultDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
         }
         finally {
             // Clean up ThreadLocal to prevent memory leaks

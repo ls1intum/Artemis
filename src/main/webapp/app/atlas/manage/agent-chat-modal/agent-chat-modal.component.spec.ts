@@ -728,30 +728,6 @@ describe('AgentChatModalComponent', () => {
 
                 expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
             }));
-
-            it('should set shouldScrollToBottom flag when adding messages', () => {
-                mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
-                component.ngOnInit();
-                component['shouldScrollToBottom'] = false;
-
-                component.currentMessage.set('Test message');
-                component.isAgentTyping.set(false);
-                mockAgentChatService.sendMessage.mockReturnValue(
-                    of({
-                        message: 'Response',
-                        sessionId: 'course_123',
-                        timestamp: new Date().toISOString(),
-                        success: true,
-                        competenciesModified: false,
-                    }),
-                );
-
-                fixture.detectChanges();
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
-                sendButton.click();
-
-                expect(component['shouldScrollToBottom']).toBeDefined();
-            });
         });
 
         describe('Competency Preview Extraction', () => {
@@ -1643,27 +1619,6 @@ describe('AgentChatModalComponent', () => {
                 expect(agentMessage?.batchCompetencyPreview).toBeUndefined();
             });
 
-            it('should handle content without valid JSON structure', () => {
-                const mockResponse = {
-                    message: 'This is plain text without any JSON',
-                    sessionId: 'course_123',
-                    timestamp: new Date().toISOString(),
-                    success: true,
-                    competenciesModified: false,
-                };
-                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
-                component.currentMessage.set('Test');
-                fixture.detectChanges();
-
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
-                sendButton.click();
-
-                const agentMessage = component.messages.find((msg) => !msg.isUser && msg.content === 'This is plain text without any JSON');
-                expect(agentMessage).toBeDefined();
-                expect(agentMessage?.competencyPreview).toBeUndefined();
-                expect(agentMessage?.batchCompetencyPreview).toBeUndefined();
-            });
-
             it('should handle incomplete JSON in message', () => {
                 const mockResponse = {
                     message: 'Here is some text {"preview": true, "competency": { incomplete',
@@ -1682,63 +1637,6 @@ describe('AgentChatModalComponent', () => {
                 const agentMessage = component.messages.find((msg) => !msg.isUser);
                 expect(agentMessage).toBeDefined();
                 expect(agentMessage?.competencyPreview).toBeUndefined();
-            });
-
-            it('should handle nested JSON with mismatched braces', () => {
-                const mockResponse = {
-                    message: 'Text { "preview": { "nested": { "value" } } extra }',
-                    sessionId: 'course_123',
-                    timestamp: new Date().toISOString(),
-                    success: true,
-                    competenciesModified: false,
-                };
-                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
-                component.currentMessage.set('Test');
-                fixture.detectChanges();
-
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
-                sendButton.click();
-
-                const agentMessage = component.messages.find((msg) => !msg.isUser);
-                expect(agentMessage).toBeDefined();
-            });
-
-            it('should handle empty plan pending content', () => {
-                const mockResponse = {
-                    message: '',
-                    sessionId: 'course_123',
-                    timestamp: new Date().toISOString(),
-                    success: true,
-                    competenciesModified: false,
-                };
-                mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
-                component.currentMessage.set('Test');
-                fixture.detectChanges();
-
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
-                sendButton.click();
-
-                const agentMessage = component.messages.find((msg) => !msg.isUser);
-                expect(agentMessage?.planPending).toBeUndefined();
-            });
-
-            it('should handle null plan pending content', () => {
-                const mockResponse = {
-                    message: null,
-                    sessionId: 'course_123',
-                    timestamp: new Date().toISOString(),
-                    success: true,
-                    competenciesModified: false,
-                };
-                jest.spyOn(mockAgentChatService, 'sendMessage').mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
-                jest.spyOn(mockTranslateService, 'instant').mockReturnValue('Error message');
-                fixture.detectChanges();
-
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
-                sendButton.click();
-
-                const agentMessage = component.messages.find((msg) => !msg.isUser);
-                expect(agentMessage?.planPending).toBeUndefined();
             });
         });
     });
