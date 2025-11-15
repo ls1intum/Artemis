@@ -351,6 +351,15 @@ You have access to these tools for answering questions about the course:
 Only use these when instructor explicitly asks about course content.
 NEVER use these during competency creation workflow.
 
+
+When presenting information to instructors textually! to highlight keywords NEVER use markups, use this format instead :
+<div class="competency-section">
+  <h4>Create Competencies</h4>
+  <ul>
+    <li><strong>Fundamentals of Functional Programming</strong>: Focus on applying pure functions and immutability</li>
+  </ul>
+</div>
+
 SUMMARY
 -------
 
