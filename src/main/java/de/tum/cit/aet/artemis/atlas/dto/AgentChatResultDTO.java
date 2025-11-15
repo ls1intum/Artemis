@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Contains the response message, competency modification flag, and optional preview data.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AgentChatResultDTO(@NotNull String message, boolean competenciesModified, @Nullable SingleCompetencyPreviewResponseDTO competencyPreview,
+public record AgentChatResultDTO(@NotNull String message, @NotNull boolean competenciesModified, @Nullable SingleCompetencyPreviewResponseDTO competencyPreview,
         @Nullable BatchCompetencyPreviewResponseDTO batchCompetencyPreview) {
 
     /**
