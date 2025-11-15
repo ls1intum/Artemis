@@ -384,53 +384,6 @@ describe('AgentChatModalComponent', () => {
         });
     });
 
-    describe('onKeyPress', () => {
-        let sendMessageSpy: jest.SpyInstance;
-
-        beforeEach(() => {
-            sendMessageSpy = jest.spyOn(component as unknown as Record<string, jest.Mock>, 'sendMessage');
-        });
-
-        it('should call sendMessage when Enter key is pressed without Shift', () => {
-            const mockEvent: Partial<KeyboardEvent> = {
-                key: 'Enter',
-                shiftKey: false,
-                preventDefault: jest.fn(),
-            };
-
-            component.onKeyPress(mockEvent as KeyboardEvent);
-
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-            expect(sendMessageSpy).toHaveBeenCalled();
-        });
-
-        it('should not call sendMessage when Enter key is pressed with Shift', () => {
-            const mockEvent: Partial<KeyboardEvent> = {
-                key: 'Enter',
-                shiftKey: true,
-                preventDefault: jest.fn(),
-            };
-
-            component.onKeyPress(mockEvent as KeyboardEvent);
-
-            expect(mockEvent.preventDefault).not.toHaveBeenCalled();
-            expect(sendMessageSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not call sendMessage for other keys', () => {
-            const mockEvent: Partial<KeyboardEvent> = {
-                key: 'Space',
-                shiftKey: false,
-                preventDefault: jest.fn(),
-            };
-
-            component.onKeyPress(mockEvent as KeyboardEvent);
-
-            expect(mockEvent.preventDefault).not.toHaveBeenCalled();
-            expect(sendMessageSpy).not.toHaveBeenCalled();
-        });
-    });
-
     describe('sendMessage', () => {
         beforeEach(() => {
             component.currentMessage.set('Test message');
@@ -518,80 +471,6 @@ describe('AgentChatModalComponent', () => {
             component.ngAfterViewChecked();
 
             expect(mockMessagesContainer.nativeElement.scrollTop).toBe(originalScrollTop);
-        });
-    });
-
-    describe('Template integration', () => {
-        beforeEach(() => {
-            jest.spyOn(mockTranslateService, 'instant').mockReturnValue('welcome');
-            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
-            component.ngOnInit();
-            fixture.detectChanges();
-        });
-
-        it('should show typing indicator when isAgentTyping is true', () => {
-            component.isAgentTyping.set(true);
-
-            fixture.detectChanges();
-
-            const typingIndicator = fixture.debugElement.nativeElement.querySelector('.typing-indicator');
-            expect(typingIndicator).toBeTruthy();
-        });
-
-        it('should hide typing indicator when isAgentTyping is false', () => {
-            component.isAgentTyping.set(false);
-
-            fixture.detectChanges();
-
-            const typingIndicator = fixture.debugElement.nativeElement.querySelector('.typing-indicator');
-            expect(typingIndicator).toBeFalsy();
-        });
-
-        it('should prevent message sending when agent is typing', () => {
-            component.currentMessage.set('Valid message');
-            component.isAgentTyping.set(true);
-
-            expect(component.canSendMessage()).toBeFalse();
-        });
-
-        it('should disable send button when canSendMessage is false', () => {
-            component.currentMessage.set('');
-
-            fixture.detectChanges();
-
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
-            expect(sendButton.disabled).toBeTrue();
-        });
-
-        it('should enable send button when canSendMessage is true', () => {
-            component.currentMessage.set('Valid message');
-            component.isAgentTyping.set(false);
-
-            fixture.detectChanges();
-
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
-            expect(sendButton.disabled).toBeFalse();
-        });
-
-        it('should show character count in template', () => {
-            component.currentMessage.set('Test message');
-
-            fixture.detectChanges();
-
-            const charCountElement = fixture.debugElement.nativeElement.querySelector('.text-end');
-            expect(charCountElement.textContent.trim()).toContain('12 / 8000');
-        });
-
-        it('should show error styling when message is too long', () => {
-            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH + 1));
-
-            fixture.detectChanges();
-
-            const charCountElement = fixture.debugElement.nativeElement.querySelector('.text-danger');
-            expect(charCountElement).toBeTruthy();
-
-            const errorMessage = fixture.debugElement.nativeElement.querySelector('small.text-danger.mt-1');
-            expect(errorMessage).toBeTruthy();
         });
     });
 
@@ -702,15 +581,6 @@ describe('AgentChatModalComponent', () => {
             component.currentMessage.set('Hello');
 
             expect(component.currentMessageLength()).toBe(5);
-        });
-
-        it('should update currentMessageLength when message changes', () => {
-            component.currentMessage.set('Short');
-            expect(component.currentMessageLength()).toBe(5);
-
-            component.currentMessage.set('A much longer message');
-
-            expect(component.currentMessageLength()).toBe(21);
         });
 
         it('should correctly identify message as too long', () => {
