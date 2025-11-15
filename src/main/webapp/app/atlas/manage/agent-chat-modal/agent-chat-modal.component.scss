@@ -90,14 +90,12 @@
                     padding: 8px;
                     border: 1px solid var(--bs-border-color);
 
-                    ::ng-deep {
-                        .course-exercise-row {
-                            margin: 0 !important;
-                            padding: 8px;
+                    .course-exercise-row {
+                        margin: 0 !important;
+                        padding: 8px;
 
-                            .stretched-link {
-                                display: none;
-                            }
+                        .stretched-link {
+                            display: none;
                         }
                     }
                 }

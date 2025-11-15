@@ -478,22 +478,23 @@ public class CompetencyExpertToolsService {
     }
 
     /**
-     * Retrieves and clears the current single competency preview from ThreadLocal.
+     * Retrieves the current single competency preview from ThreadLocal.
      * Used by AtlasAgentService to extract preview data after tool execution.
      *
      * @return The stored preview, or null if none exists
      */
-    public static SingleCompetencyPreviewResponseDTO getAndClearSinglePreview() {
+    public static SingleCompetencyPreviewResponseDTO getSinglePreview() {
+
         return currentSinglePreview.get();
     }
 
     /**
-     * Retrieves and clears the current batch competency preview from ThreadLocal.
+     * Retrieves the current batch competency preview from ThreadLocal.
      * Used by AtlasAgentService to extract preview data after tool execution.
      *
      * @return The stored batch preview, or null if none exists
      */
-    public static BatchCompetencyPreviewResponseDTO getAndClearBatchPreview() {
+    public static BatchCompetencyPreviewResponseDTO getBatchPreview() {
         return currentBatchPreview.get();
     }
 

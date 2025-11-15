@@ -68,7 +68,6 @@ public class AtlasAgentResource {
             final CompletableFuture<AgentChatResult> future = atlasAgentService.processChatMessage(request.message(), courseId, sessionId);
             final AgentChatResult result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-            // sessionId replace request.sessionid
             return ResponseEntity.ok(new AtlasAgentChatResponseDTO(result.message(), sessionId, ZonedDateTime.now(), true, result.competenciesModified(),
                     result.competencyPreview(), result.batchCompetencyPreview()));
         }
