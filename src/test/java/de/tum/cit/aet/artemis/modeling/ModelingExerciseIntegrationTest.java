@@ -992,6 +992,59 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createModelingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        modelingExercise.setTitle("Exercise with invalid plagiarism config");
+        modelingExercise.setChannelName("test-modeling-channel");
+
+        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(-1); // invalid: below 0
+        config.setMinimumScore(50);
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        modelingExercise.setPlagiarismDetectionConfig(config);
+
+        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid minimumScore
+        config.setSimilarityThreshold(50);
+        config.setMinimumScore(101); // invalid: above 100
+        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid minimumSize
+        config.setMinimumScore(50);
+        config.setMinimumSize(-1); // invalid: negative
+        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid response period
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(32); // invalid: above 31
+        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateModelingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
+
+        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(101); // invalid: above 100
+        config.setMinimumScore(50);
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        modelingExercise.setPlagiarismDetectionConfig(config);
+
+        request.putWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid response period lower bound
+        config.setSimilarityThreshold(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(6); // invalid: below 7
+        request.putWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
         atlasMLRequestMockProvider.enableMockingOfRequests();
         atlasMLRequestMockProvider.mockSaveCompetenciesAny();

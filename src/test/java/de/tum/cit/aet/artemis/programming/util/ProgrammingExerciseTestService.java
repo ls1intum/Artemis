@@ -2428,6 +2428,57 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
+    public void createProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        exercise.setChannelName("test-programming-channel");
+
+        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(-1); // invalid: below 0
+        config.setMinimumScore(50);
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        exercise.setPlagiarismDetectionConfig(config);
+
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid minimumScore
+        config.setSimilarityThreshold(50);
+        config.setMinimumScore(101); // invalid: above 100
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid minimumSize
+        config.setMinimumScore(50);
+        config.setMinimumSize(-1); // invalid: negative
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid response period
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(32); // invalid: above 31
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    // TEST
+    public void updateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
+        exercise = programmingExerciseRepository.save(exercise);
+
+        // Test updating with invalid plagiarism config
+        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(101); // invalid: above 100
+        config.setMinimumScore(50);
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        exercise.setPlagiarismDetectionConfig(config);
+
+        request.putWithResponseBody("/api/programming/programming-exercises", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid response period lower bound
+        config.setSimilarityThreshold(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(6); // invalid: below 7
+        request.putWithResponseBody("/api/programming/programming-exercises", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    // TEST
     public void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
 
         if (isStudent) {

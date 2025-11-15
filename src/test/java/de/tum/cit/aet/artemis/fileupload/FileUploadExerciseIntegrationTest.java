@@ -674,6 +674,83 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.OK);
     }
 
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        courseUtilService.enableMessagingForCourse(course);
+        fileUploadExercise.setId(null);
+        fileUploadExercise.setTitle("new fileupload exercise with invalid config");
+        fileUploadExercise.setFilePattern(creationFilePattern);
+        fileUploadExercise.setChannelName("test-channel");
+
+        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(-1); // invalid: below 0
+        config.setMinimumScore(50);
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        fileUploadExercise.setPlagiarismDetectionConfig(config);
+
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid minimumScore
+        config.setSimilarityThreshold(50);
+        config.setMinimumScore(101); // invalid: above 100
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid minimumSize
+        config.setMinimumScore(50);
+        config.setMinimumSize(-1); // invalid: negative
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid response period
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(5); // invalid: below 7
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+
+        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(101); // invalid: above 100
+        config.setMinimumScore(50);
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        fileUploadExercise.setPlagiarismDetectionConfig(config);
+
+        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+
+        // Test invalid response period upper bound
+        config.setSimilarityThreshold(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(32); // invalid: above 31
+        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        Course course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
+        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
+        Course course2 = courseUtilService.addEmptyCourse();
+        expectedFileUploadExercise.setCourse(course2);
+        expectedFileUploadExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
+
+        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        config.setSimilarityThreshold(50);
+        config.setMinimumScore(-5); // invalid: negative
+        config.setMinimumSize(50);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
+        expectedFileUploadExercise.setPlagiarismDetectionConfig(config);
+
+        var sourceExerciseId = expectedFileUploadExercise.getId();
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFileUploadExercise_asStudent_exampleSolutionVisibility() throws Exception {
