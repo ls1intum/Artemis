@@ -213,7 +213,7 @@ describe('AgentChatModalComponent', () => {
                 },
             };
 
-            component.onCreateCompetency(message);
+            component['onCreateCompetency'](message);
             tick();
 
             expect(mockCompetencyService.create).toHaveBeenCalled();
@@ -243,7 +243,7 @@ describe('AgentChatModalComponent', () => {
                 },
             };
 
-            component.onCreateCompetency(message);
+            component['onCreateCompetency'](message);
             tick();
 
             expect(mockCompetencyService.update).toHaveBeenCalled();
@@ -262,7 +262,7 @@ describe('AgentChatModalComponent', () => {
             };
             (mockAgentChatService.sendMessage as jest.Mock).mockReturnValue(of(response));
             component.currentMessage.set('Test message');
-            component.sendMessage();
+            component['sendMessage']();
             tick();
 
             expect(component.messages.length).toBeGreaterThanOrEqual(2);
@@ -281,7 +281,7 @@ describe('AgentChatModalComponent', () => {
             (mockAgentChatService.sendMessage as jest.Mock).mockReturnValue(of(response));
 
             component.currentMessage.set('Test message');
-            component.sendMessage();
+            component['sendMessage']();
             tick();
 
             expect(component.messages.length).toBeGreaterThanOrEqual(2);
@@ -299,7 +299,7 @@ describe('AgentChatModalComponent', () => {
             (mockAgentChatService.sendMessage as jest.Mock).mockReturnValue(of(response));
 
             component.currentMessage.set('Test message');
-            component.sendMessage();
+            component['sendMessage']();
             tick();
 
             expect(component.messages.length).toBeGreaterThanOrEqual(2);
@@ -329,7 +329,7 @@ describe('AgentChatModalComponent', () => {
 
             component.currentMessage.set('Create batch competencies');
 
-            component.sendMessage();
+            component['sendMessage']();
             tick();
 
             expect(component.messages).toHaveLength(3);
@@ -397,7 +397,7 @@ describe('AgentChatModalComponent', () => {
             const mockResponse = {
                 message: 'Agent response',
                 sessionId: 'course_123',
-                timestamp: '2024-01-01T00:00:00Z',
+                timestamp: new Date().toISOString(),
                 success: true,
                 competenciesModified: false,
             };
@@ -507,7 +507,7 @@ describe('AgentChatModalComponent', () => {
             const mockResponse = {
                 message: 'Competency created successfully',
                 sessionId: 'course_123',
-                timestamp: '2024-01-01T00:00:00Z',
+                timestamp: new Date().toISOString(),
                 success: true,
                 competenciesModified: true,
             };
@@ -527,7 +527,7 @@ describe('AgentChatModalComponent', () => {
             const mockResponse = {
                 message: 'Here are the existing competencies...',
                 sessionId: 'course_123',
-                timestamp: '2024-01-01T00:00:00Z',
+                timestamp: new Date().toISOString(),
                 success: true,
                 competenciesModified: false,
             };
@@ -596,7 +596,7 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should correctly identify empty message as not too long', () => {
-            component.currentMessage = '';
+            component.currentMessage.set('');
 
             expect(component.isMessageTooLong()).toBeFalse();
         });
@@ -613,7 +613,7 @@ describe('AgentChatModalComponent', () => {
             const mockResponse = {
                 message: 'Agent response',
                 sessionId: 'course_123',
-                timestamp: '2024-01-01T00:00:00Z',
+                timestamp: new Date().toISOString(),
                 success: true,
                 competenciesModified: false,
             };
@@ -638,7 +638,7 @@ describe('AgentChatModalComponent', () => {
                 of({
                     message: 'Response',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 }),
@@ -663,7 +663,7 @@ describe('AgentChatModalComponent', () => {
                 of({
                     message: 'Agent response',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 }),
@@ -694,7 +694,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: '',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 };
@@ -715,7 +715,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: null,
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 };
@@ -740,7 +740,7 @@ describe('AgentChatModalComponent', () => {
                     of({
                         message: 'Response',
                         sessionId: 'course_123',
-                        timestamp: '2024-01-01T00:00:00Z',
+                        timestamp: new Date().toISOString(),
                         success: true,
                         competenciesModified: false,
                     }),
@@ -763,7 +763,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: "Here's a competency suggestion:",
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                     competencyPreview: {
@@ -795,7 +795,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: "Here's a suggestion:",
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                     competencyPreview: {
@@ -825,7 +825,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: 'Updated competency preview:',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                     competencyPreview: {
@@ -855,7 +855,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: 'Preview:',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                     competencyPreview: {
@@ -885,7 +885,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: 'Response: This is not a preview',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 };
@@ -905,7 +905,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: 'This is a normal response without JSON',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 };
@@ -933,7 +933,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: 'Here are multiple competencies:',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                     batchCompetencyPreview: {
@@ -980,7 +980,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: 'Batch preview:',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                     batchCompetencyPreview: {
@@ -1051,7 +1051,7 @@ describe('AgentChatModalComponent', () => {
                     const mockResponse = {
                         message: 'Here is my plan:\n1. Step 1\n2. Step 2\n[PLAN_PENDING]',
                         sessionId: 'course_123',
-                        timestamp: '2024-01-01T00:00:00Z',
+                        timestamp: new Date().toISOString(),
                         success: true,
                         competenciesModified: false,
                     };
@@ -1074,7 +1074,7 @@ describe('AgentChatModalComponent', () => {
                     const approvalResponse = {
                         message: 'Plan approved, executing...',
                         sessionId: 'course_123',
-                        timestamp: '2024-01-01T00:00:00Z',
+                        timestamp: new Date().toISOString(),
                         success: true,
                         competenciesModified: false,
                     };
@@ -1105,7 +1105,7 @@ describe('AgentChatModalComponent', () => {
                     const approvalResponse = {
                         message: 'Competencies created successfully',
                         sessionId: 'course_123',
-                        timestamp: '2024-01-01T00:00:00Z',
+                        timestamp: new Date().toISOString(),
                         success: true,
                         competenciesModified: true,
                     };
@@ -1329,7 +1329,7 @@ describe('AgentChatModalComponent', () => {
                         of({
                             message: 'Response',
                             sessionId: 'course_123',
-                            timestamp: '2024-01-01T00:00:00Z',
+                            timestamp: new Date().toISOString(),
                             success: true,
                             competenciesModified: false,
                         }),
@@ -1606,7 +1606,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: null,
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 };
@@ -1627,7 +1627,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: undefined,
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 };
@@ -1648,7 +1648,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: 'This is plain text without any JSON',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 };
@@ -1669,7 +1669,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: 'Here is some text {"preview": true, "competency": { incomplete',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 };
@@ -1689,7 +1689,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: 'Text { "preview": { "nested": { "value" } } extra }',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 };
@@ -1708,7 +1708,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: '',
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 };
@@ -1727,7 +1727,7 @@ describe('AgentChatModalComponent', () => {
                 const mockResponse = {
                     message: null,
                     sessionId: 'course_123',
-                    timestamp: '2024-01-01T00:00:00Z',
+                    timestamp: new Date().toISOString(),
                     success: true,
                     competenciesModified: false,
                 };

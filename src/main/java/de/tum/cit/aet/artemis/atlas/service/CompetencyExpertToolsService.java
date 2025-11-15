@@ -249,6 +249,7 @@ public class CompetencyExpertToolsService {
      * IMPORTANT: This method stores preview data in ThreadLocal for deterministic extraction.
      * The LLM can respond naturally while the backend extracts structured data separately.
      *
+     * @param courseID     the ID of the course
      * @param competencies list of competency operations (single or multiple)
      * @param viewOnly     optional flag for view-only mode
      * @return Simple confirmation message for the LLM to use in its response
