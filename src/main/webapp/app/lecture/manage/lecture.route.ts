@@ -11,9 +11,6 @@ export const lectureRoutes: Routes = [
     {
         path: '',
         loadComponent: () => import('./lecture/lecture.component').then((m) => m.LectureComponent),
-        resolve: {
-            course: CourseManagementResolve,
-        },
         data: {
             authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.lecture.home.title',
@@ -23,13 +20,13 @@ export const lectureRoutes: Routes = [
     {
         // Create a new path without a component defined to prevent the LectureComponent from being always rendered
         path: '',
-        resolve: {
-            course: CourseManagementResolve,
-        },
         children: [
             {
                 path: 'new',
                 loadComponent: () => import('./lecture-update/lecture-update.component').then((m) => m.LectureUpdateComponent),
+                resolve: {
+                    course: CourseManagementResolve,
+                },
                 data: {
                     authorities: IS_AT_LEAST_EDITOR,
                     pageTitle: 'global.generic.create',
@@ -50,13 +47,13 @@ export const lectureRoutes: Routes = [
             },
             {
                 path: ':lectureId',
-                resolve: {
-                    lecture: LectureResolve,
-                },
                 children: [
                     {
                         path: 'attachments',
                         loadComponent: () => import('app/lecture/manage/lecture-attachments/lecture-attachments.component').then((m) => m.LectureAttachmentsComponent),
+                        resolve: {
+                            lecture: LectureResolve,
+                        },
                         data: {
                             authorities: IS_AT_LEAST_EDITOR,
                             pageTitle: 'artemisApp.lecture.attachments.title',
@@ -79,6 +76,10 @@ export const lectureRoutes: Routes = [
                     {
                         path: 'edit',
                         loadComponent: () => import('./lecture-update/lecture-update.component').then((m) => m.LectureUpdateComponent),
+                        resolve: {
+                            course: CourseManagementResolve,
+                            lecture: LectureResolve,
+                        },
                         data: {
                             authorities: IS_AT_LEAST_EDITOR,
                             pageTitle: 'global.generic.edit',
