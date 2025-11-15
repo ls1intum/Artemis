@@ -674,7 +674,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.OK);
     }
 
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {

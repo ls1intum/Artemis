@@ -57,11 +57,11 @@ public final class PlagiarismDetectionConfigHelper {
      * Validates the plagiarism detection config of the given exercise. Throws a BadRequestAlertException if invalid.
      *
      * Rules:
-     *  - similarityThreshold must be between 0 and 100 if config present
-     *  - minimumScore must be between 0 and 100 if config present
-     *  - minimumSize must be >= 0 if config present
-     *  - continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod must be between 7 and 31 if config present
-     *  - If continuousPlagiarismControlEnabled is true, config must not be null
+     * - similarityThreshold must be between 0 and 100 if config present
+     * - minimumScore must be between 0 and 100 if config present
+     * - minimumSize must be >= 0 if config present
+     * - continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod must be between 7 and 31 if config present
+     * - If continuousPlagiarismControlEnabled is true, config must not be null
      *
      * @param exercise   the exercise whose config should be validated
      * @param entityName entity name for error construction
