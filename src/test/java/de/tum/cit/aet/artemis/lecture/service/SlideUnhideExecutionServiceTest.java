@@ -54,8 +54,10 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
         // Create the service with slideTestRepository instead of mocked slideRepository
         slideUnhideExecutionService = new SlideUnhideExecutionService(slideTestRepository, attachmentService);
 
+        var lecture = lectureUtilService.createCourseWithLecture(true);
+
         // Create test data
-        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
         testSlide = slideTestRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).getFirst();
         testAttachment = testAttachmentVideoUnit.getAttachment();
 

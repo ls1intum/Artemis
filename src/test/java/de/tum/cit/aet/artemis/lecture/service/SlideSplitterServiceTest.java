@@ -65,8 +65,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @BeforeEach
     void initTestCase() {
+        var lecture = lectureUtilService.createCourseWithLecture(true);
         // Create a test attachment video unit with a PDF file
-        testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(3, true);
+        testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 3, true);
 
         // Create a real PDF document for tests
         testDocument = new PDDocument();

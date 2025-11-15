@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -65,7 +66,9 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
-        this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
+        var sortedLectures = course1.getLectures().stream().sorted(Comparator.comparing(Lecture::getId)).toList();
+        this.lecture1 = sortedLectures.getFirst();
+        var lecture2 = sortedLectures.get(1);
 
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
@@ -73,17 +76,18 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         this.textUnit = lectureUtilService.createTextUnit(lecture1);
-        this.textUnit2 = lectureUtilService.createTextUnit(lecture1);
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
         OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit(lecture1);
-        // textUnit3 is not one of the lecture units connected to the lecture
-        this.textUnit3 = lectureUtilService.createTextUnit(lecture1);
+        this.textUnit2 = lectureUtilService.createTextUnit(lecture2);
+        // textUnit3 belongs to a different lecture to test invalid lecture-unit combinations
+        this.textUnit3 = lectureUtilService.createTextUnit(lecture2);
 
-        lectureUtilService.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().orElseThrow(), List.of(textUnit2));
+        lectureUtilService.addLectureUnitsToLecture(lecture2, List.of(textUnit2, textUnit3));
         this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentVideoUnit));
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
         this.textUnit = textUnitRepository.findById(this.textUnit.getId()).orElseThrow();
         this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).orElseThrow();
+        this.textUnit3 = textUnitRepository.findById(textUnit3.getId()).orElseThrow();
     }
 
     @Test
@@ -207,8 +211,8 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateLectureUnitOrder_asInstructorWithWrongLectureId_shouldReturnNotFound() throws Exception {
-        request.put("/api/lecture/lectures/" + 0L + "/lecture-units-order", List.of(), HttpStatus.NOT_FOUND);
+    void updateLectureUnitOrder_asInstructorWithWrongLectureId_shouldReturnForbidden() throws Exception {
+        request.put("/api/lecture/lectures/" + 0L + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -250,9 +254,9 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void setLectureUnitCompletion_withoutLecture_shouldReturnForbidden() throws Exception {
+    void setLectureUnitCompletion_withoutLecture_shouldReturnBadRequest() throws Exception {
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit3.getId() + "/completion?completed=true", null,
-                HttpStatus.FORBIDDEN, null);
+                HttpStatus.BAD_REQUEST, null);
     }
 
     @Test

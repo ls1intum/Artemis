@@ -215,10 +215,11 @@ public class LectureUtilService {
      *
      * @return The created AttachmentVideoUnit
      */
-    public AttachmentVideoUnit createAttachmentVideoUnitWithoutAttachment() {
+    public AttachmentVideoUnit createAttachmentVideoUnitWithoutAttachment(Lecture lecture) {
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
         attachmentVideoUnit.setVideoSource("http://video.fake");
+        attachmentVideoUnit.setLecture(lecture);
         return attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }
 
@@ -248,14 +249,16 @@ public class LectureUtilService {
      * Creates and saves an AttachmentVideoUnit with an Attachment that has a file. Also creates and saves the given number of Slides for the AttachmentVideoUnit.
      * The Slides link to image files.
      *
+     * @param lecture        The lecture the unit belongs to. If {@code null}, a placeholder lecture is persisted.
      * @param numberOfSlides The number of Slides to create
      * @param shouldBePdf    if true file will be pdf, else image
      * @return The created AttachmentVideoUnit
      */
-    public AttachmentVideoUnit createAttachmentVideoUnitWithSlidesAndFile(int numberOfSlides, boolean shouldBePdf) {
+    public AttachmentVideoUnit createAttachmentVideoUnitWithSlidesAndFile(Lecture lecture, int numberOfSlides, boolean shouldBePdf) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
         Attachment attachmentOfAttachmentVideoUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentVideoUnit.getId(), true)
                 : LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true);
@@ -295,11 +298,12 @@ public class LectureUtilService {
      * @param numberOfSlides The number of Slides to create
      * @return The created AttachmentVideoUnit
      */
-    public AttachmentVideoUnit createAttachmentVideoUnitWithSlides(int numberOfSlides) {
+    public AttachmentVideoUnit createAttachmentVideoUnitWithSlides(Lecture lecture, int numberOfSlides) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         Attachment attachmentOfAttachmentVideoUnit = LectureFactory.generateAttachment(started);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentVideoUnit.setLecture(lecture);
         attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
         attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
         attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);

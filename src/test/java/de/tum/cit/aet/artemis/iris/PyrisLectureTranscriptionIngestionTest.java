@@ -59,7 +59,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
         this.lecture1.setTitle("Lecture " + lecture1.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(this.lecture1);
-        this.lectureUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(2, true);
+        this.lectureUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture1, 2, true);
         this.emptyLectureUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
         this.textUnit = lectureUtilService.createTextUnit(lecture1);
         this.lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(this.lectureUnit, this.emptyLectureUnit, this.textUnit));
@@ -86,9 +86,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIngestTranscriptionInPyrisWithLectureId() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId() + "/ingest", Optional.empty(), boolean.class,
                 HttpStatus.OK);
         // TODO add assertions to check if the transcription was ingested correctly
@@ -126,9 +124,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testIngestTranscriptionInPyrisWithoutPermission() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         request.post("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId() + "/ingest", Optional.empty(), HttpStatus.FORBIDDEN);
     }
 }
