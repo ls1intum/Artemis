@@ -3,10 +3,13 @@ package de.tum.cit.aet.artemis.atlas.dto;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Internal result object for Atlas Agent chat processing.
  * Contains the response message, competency modification flag, and optional preview data.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AgentChatResultDTO(@NotNull String message, boolean competenciesModified, @Nullable SingleCompetencyPreviewResponseDTO competencyPreview,
         @Nullable BatchCompetencyPreviewResponseDTO batchCompetencyPreview) {
 
