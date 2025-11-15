@@ -249,5 +249,9 @@ public class AttachmentVideoUnitService {
             lecture.setLectureUnits(null);
         }
         lecture.setAttachments(null);
+        if (attachmentVideoUnit.getCompetencyLinks() != null && Hibernate.isInitialized(attachmentVideoUnit.getCompetencyLinks())) {
+            // avoid circular references
+            attachmentVideoUnit.getCompetencyLinks().forEach(link -> link.setLectureUnit(null));
+        }
     }
 }

@@ -188,6 +188,13 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
 
+        if (attachmentVideoUnit.getCompetencyLinks() != null && !attachmentVideoUnit.getCompetencyLinks().isEmpty()) {
+            for (var competencyLink : attachmentVideoUnit.getCompetencyLinks()) {
+                // reconnect to avoid: JpaSystemException: attempted to assign id from null one-to-one property
+                competencyLink.setLectureUnit(attachmentVideoUnit);
+            }
+        }
+
         lecture.addLectureUnit(attachmentVideoUnit);
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
 
