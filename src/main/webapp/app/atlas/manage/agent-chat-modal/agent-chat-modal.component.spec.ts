@@ -30,7 +30,7 @@ describe('AgentChatModalComponent', () => {
     let mockMessagesContainer: ElementRef;
     let mockMessageInput: ElementRef<HTMLTextAreaElement>;
     let mockTextarea: Partial<HTMLTextAreaElement>;
-    let message: AgentChatResponse;
+    let message: ChatMessage;
 
     beforeEach(async () => {
         mockAgentChatService = {
@@ -1116,7 +1116,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Plan',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         planPending: true,
                     };
 
@@ -1131,7 +1131,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Plan',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         planPending: false,
                         planApproved: true,
                     };
@@ -1148,7 +1148,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Plan',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         planPending: true,
                     };
 
@@ -1169,7 +1169,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Create competency',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         competencyPreview: {
                             title: 'New Competency',
                             description: 'Test description',
@@ -1248,7 +1248,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'No preview',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                     };
 
                     component['onCreateCompetency'](message);
@@ -1279,7 +1279,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Preview',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         competencyPreview: {
                             title: 'Updated Competency',
                             description: 'Description',
@@ -1310,14 +1310,14 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Plan 1',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         planPending: true,
                     };
                     const approvedPlanMessage: ChatMessage = {
                         id: '2',
                         content: 'Plan 2',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         planPending: false,
                         planApproved: true,
                     };
@@ -1361,7 +1361,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Batch preview',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         batchCompetencyPreview: [
                             {
                                 title: 'Comp 1',
@@ -1401,7 +1401,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Batch',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         batchCompetencyPreview: [
                             {
                                 title: 'Test',
@@ -1423,7 +1423,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'No batch',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                     };
 
                     component['onCreateBatchCompetencies'](message);
@@ -1436,7 +1436,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Empty batch',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         batchCompetencyPreview: [],
                     };
 
@@ -1469,7 +1469,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Mixed batch',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         batchCompetencyPreview: [
                             {
                                 title: 'New',
@@ -1506,7 +1506,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Update batch',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         batchCompetencyPreview: [
                             {
                                 title: 'Update 1',
@@ -1543,7 +1543,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Single batch',
                         isUser: false,
-                        timestamp: new Date().toISOString(),
+                        timestamp: new Date(),
                         batchCompetencyPreview: [
                             {
                                 title: 'Single',
