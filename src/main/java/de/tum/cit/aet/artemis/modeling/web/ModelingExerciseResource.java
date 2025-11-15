@@ -175,13 +175,13 @@ public class ModelingExerciseResource {
         modelingExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
         modelingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        // Validate plagiarism detection config
-        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(modelingExercise);
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
         ModelingExercise result = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
 
@@ -246,8 +246,6 @@ public class ModelingExerciseResource {
         modelingExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
         modelingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        // Validate plagiarism detection config
-        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -262,6 +260,9 @@ public class ModelingExerciseResource {
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
+
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
         channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
 
@@ -405,6 +406,8 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(importedExercise, ENTITY_NAME);
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
         modelingExerciseRepository.save(newModelingExercise);

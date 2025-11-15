@@ -136,13 +136,14 @@ public class TextExerciseCreationUpdateResource {
         textExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
         textExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        // Validate plagiarism detection config
-        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExercise);
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
 
         // Check that only allowed athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
@@ -190,14 +191,15 @@ public class TextExerciseCreationUpdateResource {
         textExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
         textExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        // Validate plagiarism detection config
-        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
 
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
         final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findWithEagerCompetenciesAndCategoriesByIdElseThrow(textExercise.getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExerciseBeforeUpdate, user);
+
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
 
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(textExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), textExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {

@@ -127,8 +127,6 @@ public class ProgrammingExerciseUpdateResource {
         // Valid exercises have set either a course or an exerciseGroup
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         programmingExerciseValidationService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
-        // Validate plagiarism detection config
-        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedProgrammingExercise, ENTITY_NAME);
 
         // fetch course from database to make sure client didn't change groups
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -136,6 +134,8 @@ public class ProgrammingExerciseUpdateResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         programmingExerciseValidationService.checkProgrammingExerciseForError(updatedProgrammingExercise);
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedProgrammingExercise, ENTITY_NAME);
 
         var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updatedProgrammingExercise.getId());
         if (!Objects.equals(programmingExerciseBeforeUpdate.getShortName(), updatedProgrammingExercise.getShortName())) {

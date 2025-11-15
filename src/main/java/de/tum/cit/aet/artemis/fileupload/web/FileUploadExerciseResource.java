@@ -168,14 +168,15 @@ public class FileUploadExerciseResource {
         }
         // validates general settings: points, dates
         fileUploadExercise.validateGeneralSettings();
-        // Validate plagiarism detection config
-        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(fileUploadExercise, ENTITY_NAME);
         // Validate the new file upload exercise
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(fileUploadExercise, ENTITY_NAME);
+
 
         FileUploadExercise result = exerciseService.saveWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
 
@@ -225,8 +226,6 @@ public class FileUploadExerciseResource {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
         importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        // Validate plagiarism detection config
-        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(importedFileUploadExercise, ENTITY_NAME);
 
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var originalFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(sourceId);
@@ -234,6 +233,9 @@ public class FileUploadExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalFileUploadExercise, user);
         // validates general settings: points, dates, exam score included completely
         importedFileUploadExercise.validateGeneralSettings();
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(importedFileUploadExercise, ENTITY_NAME);
+
 
         final var newFileUploadExercise = fileUploadExerciseImportService.importFileUploadExercise(originalFileUploadExercise, importedFileUploadExercise);
 
@@ -327,8 +329,6 @@ public class FileUploadExerciseResource {
         validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
         // validates general settings: points, dates
         fileUploadExercise.validateGeneralSettings();
-        // Validate plagiarism detection config
-        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(fileUploadExercise, ENTITY_NAME);
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
@@ -340,6 +340,9 @@ public class FileUploadExerciseResource {
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
+
+        // Validate plagiarism detection config
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(fileUploadExercise, ENTITY_NAME);
 
         channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, fileUploadExercise);
 
