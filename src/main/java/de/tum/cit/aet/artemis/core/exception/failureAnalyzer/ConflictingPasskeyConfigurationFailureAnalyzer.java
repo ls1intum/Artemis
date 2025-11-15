@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationExce
  * This analyzer catches {@link ConflictingPasskeyConfigurationException} and formats it into a user-friendly message
  * with both a description of the problem and recommended actions to fix it.
  */
-public class PasskeyConfigurationFailureAnalyzer extends AbstractFailureAnalyzer<ConflictingPasskeyConfigurationException> {
+public class ConflictingPasskeyConfigurationFailureAnalyzer extends AbstractFailureAnalyzer<ConflictingPasskeyConfigurationException> {
 
     @Override
     protected FailureAnalysis analyze(Throwable rootFailure, ConflictingPasskeyConfigurationException cause) {
