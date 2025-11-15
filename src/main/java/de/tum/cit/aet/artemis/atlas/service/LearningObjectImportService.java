@@ -338,16 +338,15 @@ public class LearningObjectImportService {
 
         LectureUnit sourceLectureUnit = sourceLectureUnitLink.getLectureUnit();
         Lecture sourceLecture = sourceLectureUnit.getLecture();
-        Lecture importedLecture = importOrLoadLecture(sourceLecture, courseToImportInto, titleToImportedLectures);
+        Lecture newLecture = importOrLoadLecture(sourceLecture, courseToImportInto, titleToImportedLectures);
 
         Optional<LectureUnit> foundLectureUnit = repositoryApi.findByNameAndLectureTitleAndCourseIdWithCompetencies(sourceLectureUnit.getName(), sourceLecture.getTitle(),
                 courseToImportInto.getId());
         LectureUnit importedLectureUnit;
         if (foundLectureUnit.isEmpty()) {
-            importedLectureUnit = api.importLectureUnit(sourceLectureUnit);
+            importedLectureUnit = api.importLectureUnit(sourceLectureUnit, newLecture);
 
-            importedLecture.addLectureUnit(importedLectureUnit);
-            importedLectureUnit.setLecture(importedLecture);
+            newLecture.addLectureUnit(importedLectureUnit);
         }
         else {
             importedLectureUnit = foundLectureUnit.get();
@@ -370,10 +369,10 @@ public class LearningObjectImportService {
         if (foundLecture.isEmpty()) {
             foundLecture = repositoryApi.findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(sourceLecture.getTitle(), courseToImportInto.getId());
         }
-        Lecture importedLecture = foundLecture.orElseGet(() -> importApi.importLecture(sourceLecture, courseToImportInto, false));
-        titleToImportedLectures.put(importedLecture.getTitle(), importedLecture);
+        Lecture newLecture = foundLecture.orElseGet(() -> importApi.importLecture(sourceLecture, courseToImportInto, false));
+        titleToImportedLectures.put(newLecture.getTitle(), newLecture);
 
-        return importedLecture;
+        return newLecture;
     }
 
     private void setAllDates(Set<Exercise> importedExercises, Set<Lecture> importedLectures, Set<LectureUnit> importedLectureUnits,

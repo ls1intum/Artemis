@@ -97,7 +97,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "editor42", roles = "EDITOR")
     void createTextUnit_EditorNotInCourse_shouldReturnForbidden() throws Exception {
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
-        request.postWithResponseBody("/api/lecture/lectures/" + "2379812738912" + "/text-units", textUnit, TextUnit.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/lecture/lectures/" + "2379812738912" + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
         textUnit.setLecture(new Lecture());
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
         textUnit.setId(21312321L);

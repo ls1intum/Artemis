@@ -12,6 +12,7 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -241,8 +242,12 @@ public class AttachmentVideoUnitService {
      *
      * @param attachmentVideoUnit The attachment video unit to clean.
      */
+    // TODO: we should consider using DTOs for sending data to the client instead of cleaning entities
     public void prepareAttachmentVideoUnitForClient(AttachmentVideoUnit attachmentVideoUnit) {
-        attachmentVideoUnit.getLecture().setLectureUnits(null);
-        attachmentVideoUnit.getLecture().setAttachments(null);
+        var lecture = attachmentVideoUnit.getLecture();
+        if (Hibernate.isInitialized(lecture.getLectureUnits())) {
+            lecture.setLectureUnits(null);
+        }
+        lecture.setAttachments(null);
     }
 }

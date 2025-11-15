@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -57,7 +58,7 @@ public class LectureUnitApi extends AbstractLectureApi {
         }
     }
 
-    public LectureUnit importLectureUnit(LectureUnit sourceLectureUnit) {
-        return lectureUnitImportService.importLectureUnit(sourceLectureUnit);
+    public LectureUnit importLectureUnit(LectureUnit sourceLectureUnit, Lecture newLecture) {
+        return lectureUnitImportService.importLectureUnit(sourceLectureUnit, newLecture);
     }
 }

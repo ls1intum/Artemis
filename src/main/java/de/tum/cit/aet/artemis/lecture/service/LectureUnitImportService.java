@@ -55,19 +55,19 @@ public class LectureUnitImportService {
      * This function imports the lecture units from the {@code importedLecture} and appends them to the {@code lecture}
      *
      * @param importedLecture The original lecture to be copied
-     * @param lecture         The new lecture to which the lecture units are appended
+     * @param newLecture      The new lecture to which the lecture units are appended
      */
-    public void importLectureUnits(Lecture importedLecture, Lecture lecture) {
+    public void importLectureUnits(Lecture importedLecture, Lecture newLecture) {
         log.debug("Importing lecture units from lecture with Id {}", importedLecture.getId());
         List<LectureUnit> lectureUnits = new ArrayList<>();
         for (LectureUnit lectureUnit : importedLecture.getLectureUnits()) {
-            LectureUnit clonedLectureUnit = importLectureUnit(lectureUnit);
+            LectureUnit clonedLectureUnit = importLectureUnit(lectureUnit, newLecture);
             if (clonedLectureUnit != null) {
-                clonedLectureUnit.setLecture(lecture);
+                clonedLectureUnit.setLecture(newLecture);
                 lectureUnits.add(clonedLectureUnit);
             }
         }
-        lecture.setLectureUnits(lectureUnits);
+        newLecture.setLectureUnits(lectureUnits);
         lectureUnitRepository.saveAll(lectureUnits);
 
         // Send lectures to pyris
@@ -82,12 +82,13 @@ public class LectureUnitImportService {
      * @param importedLectureUnit The original lecture unit to be copied
      * @return The imported lecture unit
      */
-    public LectureUnit importLectureUnit(final LectureUnit importedLectureUnit) {
+    public LectureUnit importLectureUnit(final LectureUnit importedLectureUnit, Lecture newLecture) {
         log.debug("Creating a new LectureUnit from lecture unit {}", importedLectureUnit);
 
         switch (importedLectureUnit) {
             case TextUnit importedTextUnit -> {
                 TextUnit textUnit = new TextUnit();
+                textUnit.setLecture(newLecture);
                 textUnit.setName(importedTextUnit.getName());
                 textUnit.setReleaseDate(importedTextUnit.getReleaseDate());
                 textUnit.setContent(importedTextUnit.getContent());
@@ -97,6 +98,7 @@ public class LectureUnitImportService {
             case AttachmentVideoUnit importedAttachmentVideoUnit -> {
                 // Create and save the attachment video unit, then the attachment itself, as the id is needed for file handling
                 AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+                attachmentVideoUnit.setLecture(newLecture);
                 attachmentVideoUnit.setName(importedAttachmentVideoUnit.getName());
                 attachmentVideoUnit.setReleaseDate(importedAttachmentVideoUnit.getReleaseDate());
                 attachmentVideoUnit.setDescription(importedAttachmentVideoUnit.getDescription());
@@ -117,6 +119,7 @@ public class LectureUnitImportService {
             }
             case OnlineUnit importedOnlineUnit -> {
                 OnlineUnit onlineUnit = new OnlineUnit();
+                onlineUnit.setLecture(newLecture);
                 onlineUnit.setName(importedOnlineUnit.getName());
                 onlineUnit.setReleaseDate(importedOnlineUnit.getReleaseDate());
                 onlineUnit.setDescription(importedOnlineUnit.getDescription());
