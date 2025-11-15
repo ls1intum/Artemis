@@ -99,7 +99,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lecture/lectures/" + "2379812738912" + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
         textUnit.setLecture(new Lecture());
-        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
         textUnit.setId(21312321L);
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
     }

@@ -72,6 +72,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         this.onlineUnit.setDescription("LoremIpsum");
         this.onlineUnit.setName("LoremIpsum");
         this.onlineUnit.setSource("oHg5SJYRHA0");
+        this.onlineUnit.setLecture(this.lecture1);
 
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
