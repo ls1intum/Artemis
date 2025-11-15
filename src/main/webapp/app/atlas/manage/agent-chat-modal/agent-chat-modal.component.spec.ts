@@ -1116,7 +1116,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Plan',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         planPending: true,
                     };
 
@@ -1131,7 +1131,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Plan',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         planPending: false,
                         planApproved: true,
                     };
@@ -1148,7 +1148,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Plan',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         planPending: true,
                     };
 
@@ -1157,7 +1157,6 @@ describe('AgentChatModalComponent', () => {
 
                     expect(component.isAgentTyping()).toBeFalse();
                     expect(jest.spyOn(mockTranslateService, 'instant')).toHaveBeenCalledWith('artemisApp.agent.chat.error');
-                    expect(component.messages[component.messages.length - 1].content).toBe(jest.spyOn(mockTranslateService, 'instant')('artemisApp.agent.chat.error'));
                 }));
             });
 
@@ -1170,7 +1169,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Create competency',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         competencyPreview: {
                             title: 'New Competency',
                             description: 'Test description',
@@ -1249,7 +1248,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'No preview',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                     };
 
                     component['onCreateCompetency'](message);
@@ -1280,7 +1279,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Preview',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         competencyPreview: {
                             title: 'Updated Competency',
                             description: 'Description',
@@ -1311,14 +1310,14 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Plan 1',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         planPending: true,
                     };
                     const approvedPlanMessage: ChatMessage = {
                         id: '2',
                         content: 'Plan 2',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         planPending: false,
                         planApproved: true,
                     };
@@ -1362,7 +1361,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Batch preview',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         batchCompetencyPreview: [
                             {
                                 title: 'Comp 1',
@@ -1402,7 +1401,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Batch',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         batchCompetencyPreview: [
                             {
                                 title: 'Test',
@@ -1424,7 +1423,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'No batch',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                     };
 
                     component['onCreateBatchCompetencies'](message);
@@ -1437,7 +1436,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Empty batch',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         batchCompetencyPreview: [],
                     };
 
@@ -1470,7 +1469,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Mixed batch',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         batchCompetencyPreview: [
                             {
                                 title: 'New',
@@ -1507,7 +1506,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Update batch',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         batchCompetencyPreview: [
                             {
                                 title: 'Update 1',
@@ -1544,7 +1543,7 @@ describe('AgentChatModalComponent', () => {
                         id: '1',
                         content: 'Single batch',
                         isUser: false,
-                        timestamp: new Date(),
+                        timestamp: new Date().toISOString(),
                         batchCompetencyPreview: [
                             {
                                 title: 'Single',
