@@ -67,8 +67,8 @@ describe('LectureUnitManagementComponent', () => {
     let lecture: Lecture;
     let course: Course;
 
-    const lectureId = 0;
-    const route = { snapshot: { paramMap: convertToParamMap({ lectureId }) } } as any as ActivatedRoute;
+    const lectureId = 1;
+    const route = { parent: { snapshot: { paramMap: convertToParamMap({ lectureId }) } } } as any as ActivatedRoute;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({

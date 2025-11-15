@@ -7,7 +7,7 @@ import { CourseManagementResolve } from 'app/core/course/manage/services/course-
 import { hasLectureUnsavedChangesGuard } from './hasLectureUnsavedChanges.guard';
 import { AttachmentResolve, LectureResolve } from 'app/lecture/manage/services/lecture-resolve.service';
 
-export const lectureRoute: Routes = [
+export const lectureRoutes: Routes = [
     {
         path: '',
         loadComponent: () => import('./lecture/lecture.component').then((m) => m.LectureComponent),
@@ -72,7 +72,6 @@ export const lectureRoute: Routes = [
                                 loadComponent: () => import('app/lecture/manage/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
                                 resolve: {
                                     attachment: AttachmentResolve,
-                                    course: CourseManagementResolve,
                                 },
                             },
                         ],
