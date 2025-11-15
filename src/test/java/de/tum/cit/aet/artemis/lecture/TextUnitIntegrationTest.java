@@ -165,14 +165,15 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void persistTextUnitWithLecture() {
+        lecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        lecture.addLectureUnit(textUnit);
+        lecture = lectureRepository.save(lecture);
+
         Set<CompetencyLectureUnitLink> link = textUnit.getCompetencyLinks();
         textUnit.setCompetencyLinks(null);
 
         textUnit = textUnitRepository.save(textUnit);
         textUnit.setCompetencyLinks(link);
-        lecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
-        lecture.addLectureUnit(textUnit);
-        lecture = lectureRepository.save(lecture);
         textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
     }
 }

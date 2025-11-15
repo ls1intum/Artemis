@@ -202,9 +202,11 @@ public class Lecture extends DomainObject {
     @PrePersist
     @PreUpdate
     public void updateLectureUnitOrder() {
-        for (int i = 0; i < lectureUnits.size(); i++) {
-            // or through package-private setter:
-            lectureUnits.get(i).setLectureUnitOrder(i);
+        if (Hibernate.isInitialized(lectureUnits)) {
+            for (int i = 0; i < lectureUnits.size(); i++) {
+                // or through package-private setter:
+                lectureUnits.get(i).setLectureUnitOrder(i);
+            }
         }
     }
 

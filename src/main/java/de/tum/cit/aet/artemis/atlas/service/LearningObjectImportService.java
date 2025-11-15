@@ -346,7 +346,7 @@ public class LearningObjectImportService {
         if (foundLectureUnit.isEmpty()) {
             importedLectureUnit = api.importLectureUnit(sourceLectureUnit);
 
-            importedLecture.getLectureUnits().add(importedLectureUnit);
+            importedLecture.addLectureUnit(importedLectureUnit);
             importedLectureUnit.setLecture(importedLecture);
         }
         else {

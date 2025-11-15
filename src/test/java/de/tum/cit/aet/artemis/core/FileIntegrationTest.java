@@ -244,9 +244,11 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Lecture lecture = createLectureWithLectureUnits();
 
         // Change order of units
-        LectureUnit unit3 = lecture.getLectureUnits().get(2);
-        lecture.getLectureUnits().remove(unit3);
-        lecture.getLectureUnits().addFirst(unit3);
+        List<Long> lectureUnitIds = lecture.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toList());
+        // move unit at index 2 to the beginning
+        Long unitId = lectureUnitIds.remove(2);
+        lectureUnitIds.addFirst(unitId);
+        lecture.reorderLectureUnits(lectureUnitIds);
         lectureRepo.save(lecture);
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -292,12 +294,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             doc1.addPage(new PDPage());
             doc1.save(outputStream);
             MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
-            lecture.getLectureUnits().add(uploadAttachmentVideoUnit(lecture, file1, expectedStatus));
+            lecture.addLectureUnit(uploadAttachmentVideoUnit(lecture, file1, expectedStatus));
         }
 
         // create image file
         MockMultipartFile file2 = new MockMultipartFile("file", "filename2.png", "application/json", "some text".getBytes());
-        lecture.getLectureUnits().add(uploadAttachmentVideoUnit(lecture, file2, expectedStatus));
+        lecture.addLectureUnit(uploadAttachmentVideoUnit(lecture, file2, expectedStatus));
 
         // create pdf file 3
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc2 = new PDDocument()) {
@@ -308,7 +310,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             doc2.addPage(new PDPage());
             doc2.save(outputStream);
             MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
-            lecture.getLectureUnits().add(uploadAttachmentVideoUnit(lecture, file3, expectedStatus));
+            lecture.addLectureUnit(uploadAttachmentVideoUnit(lecture, file3, expectedStatus));
         }
 
         // Collect units freshly from the database to prevent issues when persisting the lecture again
