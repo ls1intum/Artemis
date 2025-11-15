@@ -2,4 +2,4 @@ org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
 de.tum.cit.aet.artemis.core.config.SpringAIAutoConfigurationFilter
 
 org.springframework.boot.diagnostics.FailureAnalyzer=\
-de.tum.cit.aet.artemis.core.config.PasskeyConfigurationFailureAnalyzer
+de.tum.cit.aet.artemis.core.exception.failureAnalyzer.ConflictingPasskeyConfigurationFailureAnalyzer
