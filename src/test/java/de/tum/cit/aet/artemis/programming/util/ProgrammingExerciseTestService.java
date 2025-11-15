@@ -15,8 +15,6 @@ import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mockStatic;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
@@ -76,7 +74,6 @@ import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
-import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -173,9 +170,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private RequestUtilService request;
-
-    @Autowired
-    private GitService gitService;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -767,7 +761,6 @@ public class ProgrammingExerciseTestService {
     public void importFromFile_exception_DirectoryDeleted() throws Exception {
         deleteLocalVcProjectIfPresent(exercise);
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
-        doThrow(new GitException()).when(gitService).commitAndPush(any(), anyString(), anyBoolean(), any());
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
@@ -2172,19 +2165,9 @@ public class ProgrammingExerciseTestService {
     public void copyRepository_testNotCreatedError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
 
-        var participantRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(studentTeamRepo));
-        final var teamLocalPath = Files.createTempDirectory("teamLocalRepo");
-        doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
-        doThrow(new IOException("Checkout got interrupted!")).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), anyString());
-
         // Start participation
-        try {
-            assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
-                    .matches(exception -> !exception.getMessage().isEmpty());
-        }
-        finally {
-            Files.deleteIfExists(teamLocalPath);
-        }
+        assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
+                .matches(exception -> !exception.getMessage().isEmpty());
     }
 
     @NotNull
@@ -2212,7 +2195,6 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void configureRepository_testBadRequestError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
-        doThrow(new IOException()).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), anyString());
 
         // Start participation
         assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
@@ -2347,7 +2329,6 @@ public class ProgrammingExerciseTestService {
         createProgrammingParticipationWithSubmissionAndResult(examExercise, "student4", 80D, ZonedDateTime.now().minusDays(6L), false);
 
         automaticProgrammingExerciseCleanupService.cleanupGitWorkingCopiesOnArtemisServer();
-        // Note: at the moment, we cannot easily assert something here, it might be possible to verify mocks on gitService, in case we could define it as MockitoSpyBean
     }
 
     private void validateProgrammingExercise(ProgrammingExercise generatedExercise) {
