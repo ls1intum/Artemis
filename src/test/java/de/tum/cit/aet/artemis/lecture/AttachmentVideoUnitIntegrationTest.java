@@ -331,7 +331,6 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     private void persistAttachmentVideoUnitWithLecture() {
-        this.attachmentVideoUnit = attachmentVideoUnitRepository.saveAndFlush(this.attachmentVideoUnit);
         lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
         lecture1.addLectureUnit(this.attachmentVideoUnit);
         lecture1 = lectureRepository.saveAndFlush(lecture1);

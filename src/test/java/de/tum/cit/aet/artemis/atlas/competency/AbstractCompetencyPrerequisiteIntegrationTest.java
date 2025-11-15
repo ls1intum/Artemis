@@ -308,7 +308,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void shouldUpdateCompetency() throws Exception {
-        LectureUnit textLectureUnit = lectureUnitRepository.findByIdWithCompetenciesBidirectionalElseThrow(textUnitOfLectureOne.getId());
         courseCompetency.setTitle("Updated");
         courseCompetency.setDescription("Updated Description");
 

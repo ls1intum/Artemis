@@ -47,34 +47,6 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     @Query("""
             SELECT lu
             FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencyLinks cl
-                LEFT JOIN FETCH cl.competency c
-                LEFT JOIN FETCH c.lectureUnitLinks lul
-                LEFT JOIN FETCH lul.lectureUnit
-                LEFT JOIN FETCH lu.exercise e
-                LEFT JOIN FETCH e.competencyLinks ecl
-                LEFT JOIN FETCH ecl.competency
-            WHERE lu.id = :lectureUnitId
-            """)
-    Optional<LectureUnit> findByIdWithCompetenciesBidirectional(@Param("lectureUnitId") long lectureUnitId);
-
-    @Query("""
-            SELECT lu
-            FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencyLinks cl
-                LEFT JOIN FETCH cl.competency c
-                LEFT JOIN FETCH c.lectureUnitLinks lul
-                LEFT JOIN FETCH lul.lectureUnit
-                LEFT JOIN FETCH lu.exercise e
-                LEFT JOIN FETCH e.competencyLinks ecl
-                LEFT JOIN FETCH ecl.competency
-            WHERE lu.id IN :lectureUnitIds
-            """)
-    Set<LectureUnit> findAllByIdWithCompetenciesBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);
-
-    @Query("""
-            SELECT lu
-            FROM LectureUnit lu
                 LEFT JOIN FETCH lu.completedUsers
             WHERE lu.id = :lectureUnitId
             """)
@@ -113,10 +85,6 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
 
     default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
         return getValueElseThrow(findByIdWithCompletedUsers(lectureUnitId), lectureUnitId);
-    }
-
-    default LectureUnit findByIdWithCompetenciesBidirectionalElseThrow(long lectureUnitId) {
-        return getValueElseThrow(findByIdWithCompetenciesBidirectional(lectureUnitId), lectureUnitId);
     }
 
     default LectureUnit findByIdWithCompetenciesAndSlidesElseThrow(long lectureUnitId) {
