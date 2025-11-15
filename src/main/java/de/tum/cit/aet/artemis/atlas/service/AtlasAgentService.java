@@ -272,9 +272,12 @@ public class AtlasAgentService {
         Map<String, String> variables = Map.of();
         String systemPrompt = templateService.render(resourcePath, variables);
 
+        // Append courseId to system prompt (invisible to conversation history)
+        String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
+
         ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(0.2).build();
 
-        ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPrompt).user(message).options(options);
+        ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPromptWithContext).user(message).options(options);
 
         // Add chat memory advisor
         if (chatMemory != null) {

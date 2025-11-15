@@ -255,7 +255,7 @@ public class CompetencyExpertToolsService {
      * @return Simple confirmation message for the LLM to use in its response
      */
     @Tool(description = "Preview one or multiple competencies before creating/updating. SINGLE: pass [{comp}]. BATCH: pass [{comp1}, {comp2}, {comp3}]. CRITICAL: For batch operations, pass ALL competencies in ONE call, not multiple separate calls.")
-    public String previewCompetencies(@ToolParam(description = "relevant courseID") Long courseID,
+    public String previewCompetencies(@ToolParam(description = "the Course ID from the CONTEXT section") Long courseID,
             @ToolParam(description = "list of competency operations to preview") List<CompetencyOperation> competencies,
             @ToolParam(description = "optional: set to true for view-only mode (no action buttons)", required = false) Boolean viewOnly) {
         if (competencies == null || competencies.isEmpty()) {
@@ -478,7 +478,7 @@ public class CompetencyExpertToolsService {
     }
 
     /**
-     * Retrieves the current single competency preview from ThreadLocal.
+     * Retrieves the current single competency preview from ThreadLocal
      * Used by AtlasAgentService to extract preview data after tool execution.
      *
      * @return The stored preview, or null if none exists

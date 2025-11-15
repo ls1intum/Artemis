@@ -454,8 +454,8 @@ class CompetencyExpertToolsServiceTest {
             CompetencyExpertToolsService.clearAllPreviews();
 
             // Verify they are cleared by retrieving them
-            assertThat(CompetencyExpertToolsService.getAndClearSinglePreview()).isNull();
-            assertThat(CompetencyExpertToolsService.getAndClearBatchPreview()).isNull();
+            assertThat(CompetencyExpertToolsService.getSinglePreview()).isNull();
+            assertThat(CompetencyExpertToolsService.getBatchPreview()).isNull();
         }
 
         @Test
