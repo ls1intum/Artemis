@@ -237,8 +237,7 @@ public class ModelingExerciseResource {
 
         final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository
                 .findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(updateModelingExerciseDTO.id());
-
-        ModelingExercise beforeClone = cloneForComparison(modelingExerciseBeforeUpdate);
+        final ModelingExercise beforeSnapShot = cloneForComparison(modelingExerciseBeforeUpdate);
 
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -260,20 +259,20 @@ public class ModelingExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
 
-        channelService.updateExerciseChannel(beforeClone, modelingExercise);
+        channelService.updateExerciseChannel(beforeSnapShot, modelingExercise);
 
         ModelingExercise updatedModelingExercise = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
 
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.updatePointsInRelatedParticipantScores(beforeClone, updatedModelingExercise);
+        exerciseService.updatePointsInRelatedParticipantScores(beforeSnapShot, updatedModelingExercise);
 
-        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedModelingExercise, beforeClone.getDueDate());
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedModelingExercise, beforeSnapShot.getDueDate());
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
-        exerciseService.notifyAboutExerciseChanges(beforeClone, updatedModelingExercise, notificationText);
-        slideApi.ifPresent(api -> api.handleDueDateChange(beforeClone, updatedModelingExercise));
+        exerciseService.notifyAboutExerciseChanges(beforeSnapShot, updatedModelingExercise, notificationText);
+        slideApi.ifPresent(api -> api.handleDueDateChange(beforeSnapShot, updatedModelingExercise));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(beforeClone, Optional.of(updatedModelingExercise)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(beforeSnapShot, Optional.of(updatedModelingExercise)));
 
         // Notify AtlasML about the modeling exercise update
         atlasMLApi.ifPresent(api -> {

@@ -2,35 +2,24 @@ package de.tum.cit.aet.artemis.modeling.dto;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Positive;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
-import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullable String channelName, @Nullable String problemStatement, @Nullable Set<String> categories,
-
-        @Nullable DifficultyLevel difficulty,
-
-        // Points and scoring (validated in validateGeneralSettings)
-        @Nullable @Positive Double maxPoints, @Nullable @Positive Double bonusPoints, @Nullable IncludedInOverallScore includedInOverallScore,
-
-        // Dates and timing
+        @Nullable DifficultyLevel difficulty, @Nullable @Positive Double maxPoints, @Nullable @Positive Double bonusPoints, @Nullable IncludedInOverallScore includedInOverallScore,
         @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
-        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable Set<CompetencyExerciseLink> competencyLinks,
-
-        // Modeling-specific fields
-        @Nullable DiagramType diagramType, @Nullable String exampleSolutionModel, @Nullable String exampleSolutionExplanation,
-        // For conflict check
-        @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable Set<GradingCriterion> gradingCriteria) {
+        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolutionModel, @Nullable String exampleSolutionExplanation, @Nullable Long courseId,
+        @Nullable Long exerciseGroupId, @Nullable Set<GradingCriterionDTO> gradingCriteria) {
 
     /**
      * Apply this DTO changes to a ModelingExercise entity.
@@ -78,20 +67,14 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         if (this.exampleSolutionPublicationDate != null) {
             existingExercise.setExampleSolutionPublicationDate(this.exampleSolutionPublicationDate);
         }
-        if (this.diagramType != null) {
-            existingExercise.setDiagramType(this.diagramType);
-        }
         if (this.exampleSolutionModel != null) {
             existingExercise.setExampleSolutionModel(this.exampleSolutionModel);
         }
         if (this.exampleSolutionExplanation != null) {
             existingExercise.setExampleSolutionExplanation(this.exampleSolutionExplanation);
         }
-        if (this.competencyLinks != null) {
-            existingExercise.setCompetencyLinks(this.competencyLinks);
-        }
         if (this.gradingCriteria != null) {
-            existingExercise.setGradingCriteria(this.gradingCriteria);
+            existingExercise.setGradingCriteria(this.gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toSet()));
         }
         return existingExercise;
     }
@@ -106,10 +89,12 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
     public static UpdateModelingExerciseDTO of(ModelingExercise exercise) {
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
-
+        Set<GradingCriterionDTO> gradingCriterionDTOs = exercise.getGradingCriteria() != null
+                ? exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet())
+                : Set.of();
         return new UpdateModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getProblemStatement(), exercise.getCategories(),
                 exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(),
-                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getCompetencyLinks(),
-                exercise.getDiagramType(), exercise.getExampleSolutionModel(), exercise.getExampleSolutionExplanation(), courseId, exerciseGroupId, exercise.getGradingCriteria());
+                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolutionModel(),
+                exercise.getExampleSolutionExplanation(), courseId, exerciseGroupId, gradingCriterionDTOs);
     }
 }

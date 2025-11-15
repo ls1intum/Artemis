@@ -19,4 +19,15 @@ public record GradingInstructionDTO(long id, double credits, String gradingScale
         return new GradingInstructionDTO(gradingInstruction.getId(), gradingInstruction.getCredits(), gradingInstruction.getGradingScale(),
                 gradingInstruction.getInstructionDescription(), gradingInstruction.getFeedback(), gradingInstruction.getUsageCount());
     }
+
+    public static GradingInstruction toEntity(@NotNull GradingInstructionDTO dto) {
+        GradingInstruction gradingInstruction = new GradingInstruction();
+        gradingInstruction.setId(dto.id());
+        gradingInstruction.setCredits(dto.credits());
+        gradingInstruction.setGradingScale(dto.gradingScale());
+        gradingInstruction.setInstructionDescription(dto.instructionDescription());
+        gradingInstruction.setFeedback(dto.feedback());
+        gradingInstruction.setUsageCount(dto.usageCount());
+        return gradingInstruction;
+    }
 }
