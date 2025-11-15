@@ -5,7 +5,7 @@ package de.tum.cit.aet.artemis.core.exception;
  * This exception tracks property names involved in configuration conflicts to enable
  * detailed error reporting through failure analyzers.
  */
-public class ConflictingEntriesConfigurationException extends RuntimeException {
+public abstract class ConflictingEntriesConfigurationException extends RuntimeException {
 
     private final String propertyName;
 
