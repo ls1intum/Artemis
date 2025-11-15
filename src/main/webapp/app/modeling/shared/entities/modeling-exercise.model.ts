@@ -5,6 +5,7 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { type UMLDiagramType, UMLDiagramType as UMLDiagramTypes } from '@ls1intum/apollon';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { convertDateFromClient } from 'app/shared/util/date.utils';
 
 export class ModelingExercise extends Exercise {
     public diagramType?: UMLDiagramType;
@@ -57,29 +58,27 @@ export interface UpdateModelingExerciseDTO {
  * Convert ModelingExercise → Update DTO.
  */
 export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise): UpdateModelingExerciseDTO {
-    let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
-    copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-    copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-
+    modelingExercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(modelingExercise);
+    const categories = ExerciseService.stringifyExerciseDTOCategories(modelingExercise);
     return {
-        id: copy.id!,
-        title: copy.title,
-        channelName: copy.channelName,
-        problemStatement: copy.problemStatement,
-        categories: (copy.categories ?? []) as unknown as string[],
-        difficulty: copy.difficulty,
-        maxPoints: copy.maxPoints,
-        bonusPoints: copy.bonusPoints,
-        includedInOverallScore: copy.includedInOverallScore,
-        releaseDate: copy.releaseDate as unknown as string,
-        startDate: copy.startDate as unknown as string,
-        dueDate: copy.dueDate as unknown as string,
-        assessmentDueDate: copy.assessmentDueDate as unknown as string,
-        exampleSolutionPublicationDate: copy.exampleSolutionPublicationDate as unknown as string,
-        exampleSolutionModel: copy.exampleSolutionModel,
-        exampleSolutionExplanation: copy.exampleSolutionExplanation,
-        courseId: copy.course?.id,
-        exerciseGroupId: copy.exerciseGroup?.id,
-        gradingCriteria: copy.gradingCriteria ?? [],
+        id: modelingExercise.id!,
+        title: modelingExercise.title,
+        channelName: modelingExercise.channelName,
+        problemStatement: modelingExercise.problemStatement,
+        categories: categories,
+        difficulty: modelingExercise.difficulty,
+        maxPoints: modelingExercise.maxPoints,
+        bonusPoints: modelingExercise.bonusPoints,
+        includedInOverallScore: modelingExercise.includedInOverallScore,
+        releaseDate: convertDateFromClient(modelingExercise.releaseDate),
+        startDate: convertDateFromClient(modelingExercise.startDate),
+        dueDate: convertDateFromClient(modelingExercise.dueDate),
+        assessmentDueDate: convertDateFromClient(modelingExercise.assessmentDueDate),
+        exampleSolutionPublicationDate: convertDateFromClient(modelingExercise.exampleSolutionPublicationDate),
+        exampleSolutionModel: modelingExercise.exampleSolutionModel,
+        exampleSolutionExplanation: modelingExercise.exampleSolutionExplanation,
+        courseId: modelingExercise.course?.id,
+        exerciseGroupId: modelingExercise.exerciseGroup?.id,
+        gradingCriteria: modelingExercise.gradingCriteria ?? [],
     };
 }

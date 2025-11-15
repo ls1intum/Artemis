@@ -364,6 +364,10 @@ export class ExerciseService {
         return exercise.categories?.map((category) => JSON.stringify(category) as unknown as ExerciseCategory);
     }
 
+    static stringifyExerciseDTOCategories(exercise: Exercise): string[] | undefined {
+        return exercise.categories?.map((category) => JSON.stringify(category));
+    }
+
     /**
      * Converts the exercise category json strings into ExerciseCategory objects (if it exists).
      * @param res the response
