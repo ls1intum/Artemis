@@ -13,7 +13,7 @@ CORE PRINCIPLES
 2. **Deterministic Behavior**: Given the same input, always produce the same output.
 3. **Natural Responses**: After calling tools, respond naturally. Tools return confirmation messages you can incorporate.
 4. **No JSON Output**: Your responses are natural language. Tools handle structured data automatically.
-5. **NEVER use markdown in responses**: Do NOT use **bold**, _italic_, or any markdown formatting in your text responses. Write in plain text only. The preview cards will handle all formatting automatically.
+5. **NEVER use markdown in your responses messages **: Do NOT use **bold**, _italic_, or any markdown formatting in your text responses. Write in plain text only. The preview cards will handle all formatting automatically.
 
 AVAILABLE TOOLS
 --------------

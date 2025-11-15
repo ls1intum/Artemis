@@ -57,7 +57,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         doAnswer(invocation -> {
             String sessionId = invocation.getArgument(0);
             Message message = invocation.getArgument(1);
-            chatMemoryStorage.computeIfAbsent(sessionId, _ -> new ArrayList<>()).add(message);
+            chatMemoryStorage.computeIfAbsent(sessionId, key -> new ArrayList<>()).add(message);
             return null;
         }).when(chatMemory).add(anyString(), any(Message.class));
 

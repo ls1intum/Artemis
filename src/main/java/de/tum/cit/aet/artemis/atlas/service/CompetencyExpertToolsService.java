@@ -405,6 +405,7 @@ public class CompetencyExpertToolsService {
                     competency.setDescription(comp.getDescription());
                     competency.setTaxonomy(comp.getTaxonomy());
                     competencyRepository.save(competency);
+                    comp.setCompetencyId(competency.getId());
                     updateCount++;
                     AtlasAgentService.markCompetencyModified();
                     successfulOperations.add(comp);
