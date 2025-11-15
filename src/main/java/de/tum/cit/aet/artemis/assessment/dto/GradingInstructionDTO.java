@@ -20,14 +20,20 @@ public record GradingInstructionDTO(long id, double credits, String gradingScale
                 gradingInstruction.getInstructionDescription(), gradingInstruction.getFeedback(), gradingInstruction.getUsageCount());
     }
 
-    public static GradingInstruction toEntity(@NotNull GradingInstructionDTO dto) {
+    /**
+     * Converts this DTO into a {@link GradingInstruction} entity.
+     *
+     * @param gradingInstructionDTO the DTO to convert
+     * @return a new {@link GradingInstruction} with values copied from the DTO
+     */
+    public static GradingInstruction toEntity(@NotNull GradingInstructionDTO gradingInstructionDTO) {
         GradingInstruction gradingInstruction = new GradingInstruction();
-        gradingInstruction.setId(dto.id());
-        gradingInstruction.setCredits(dto.credits());
-        gradingInstruction.setGradingScale(dto.gradingScale());
-        gradingInstruction.setInstructionDescription(dto.instructionDescription());
-        gradingInstruction.setFeedback(dto.feedback());
-        gradingInstruction.setUsageCount(dto.usageCount());
+        gradingInstruction.setId(gradingInstructionDTO.id());
+        gradingInstruction.setCredits(gradingInstructionDTO.credits());
+        gradingInstruction.setGradingScale(gradingInstructionDTO.gradingScale());
+        gradingInstruction.setInstructionDescription(gradingInstructionDTO.instructionDescription());
+        gradingInstruction.setFeedback(gradingInstructionDTO.feedback());
+        gradingInstruction.setUsageCount(gradingInstructionDTO.usageCount());
         return gradingInstruction;
     }
 }

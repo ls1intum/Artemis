@@ -24,13 +24,19 @@ public record GradingCriterionDTO(long id, String title, Set<GradingInstructionD
                 gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).collect(Collectors.toSet()));
     }
 
-    public static GradingCriterion toEntity(@NotNull GradingCriterionDTO dto) {
+    /**
+     * Converts this DTO into a {@link GradingCriterion} entity.
+     *
+     * @param gradingCriterionDTO the DTO to convert
+     * @return a new {@link GradingCriterion} with values copied from the DTO
+     */
+    public static GradingCriterion toEntity(@NotNull GradingCriterionDTO gradingCriterionDTO) {
         GradingCriterion criterion = new GradingCriterion();
-        criterion.setId(dto.id());
-        criterion.setTitle(dto.title());
+        criterion.setId(gradingCriterionDTO.id());
+        criterion.setTitle(gradingCriterionDTO.title());
 
-        if (dto.structuredGradingInstructions() != null && !dto.structuredGradingInstructions().isEmpty()) {
-            Set<GradingInstruction> instructions = dto.structuredGradingInstructions().stream().map(GradingInstructionDTO::toEntity).collect(Collectors.toSet());
+        if (gradingCriterionDTO.structuredGradingInstructions() != null && !gradingCriterionDTO.structuredGradingInstructions().isEmpty()) {
+            Set<GradingInstruction> instructions = gradingCriterionDTO.structuredGradingInstructions().stream().map(GradingInstructionDTO::toEntity).collect(Collectors.toSet());
             criterion.setStructuredGradingInstructions(instructions);
         }
 
