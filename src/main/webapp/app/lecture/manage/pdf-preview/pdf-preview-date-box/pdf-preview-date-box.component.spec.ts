@@ -50,7 +50,7 @@ describe('PdfPreviewDateBoxComponent', () => {
         fixture = TestBed.createComponent(PdfPreviewDateBoxComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('course', mockCourse);
+        fixture.componentRef.setInput('courseId', mockCourse.id);
         fixture.componentRef.setInput('selectedPages', mockSelectedPages);
 
         fixture.detectChanges();

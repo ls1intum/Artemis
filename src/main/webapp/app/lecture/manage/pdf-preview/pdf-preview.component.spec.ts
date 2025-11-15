@@ -1,7 +1,7 @@
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { Subscription, of, throwError } from 'rxjs';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -67,6 +67,11 @@ describe('PdfPreviewComponent', () => {
             delete: jest.fn().mockReturnValue(of({})),
         };
         routeMock = {
+            parent: {
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: 1 }),
+                },
+            },
             data: of({
                 course: { id: 1, name: 'Example Course' },
                 attachment: { id: 1, name: 'Example PDF', lecture: { id: 1 } },

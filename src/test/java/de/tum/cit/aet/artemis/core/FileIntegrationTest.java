@@ -244,7 +244,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Lecture lecture = createLectureWithLectureUnits();
 
         // Change order of units
-        List<Long> lectureUnitIds = lecture.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toList());
+        List<Long> lectureUnitIds = lecture.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toCollection(ArrayList::new));
         // move unit at index 2 to the beginning
         Long unitId = lectureUnitIds.remove(2);
         lectureUnitIds.addFirst(unitId);

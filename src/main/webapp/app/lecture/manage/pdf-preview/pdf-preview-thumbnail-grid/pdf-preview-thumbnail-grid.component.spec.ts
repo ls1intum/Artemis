@@ -262,7 +262,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     it('should handle non-existent button gracefully', () => {
         component.hideActionButton('nonexistent');
 
-        expect(document.getElementById('hide-show-button-nonexistent')).toBeUndefined();
+        expect(document.getElementById('hide-show-button-nonexistent')).toBeNull();
     });
 
     describe('toggleVisibility method', () => {
