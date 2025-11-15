@@ -135,7 +135,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         void shouldPreviewSingleNewCompetency() {
             CompetencyOperation operation = new CompetencyOperation(null, "Software Testing", "Understanding testing methodologies and practices", CompetencyTaxonomy.UNDERSTAND);
 
-            String actualResult = competencyExpertToolsService.previewCompetencies(List.of(operation), null);
+            String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(operation), null);
 
             // New implementation returns simple confirmation message
             assertThat(actualResult).isNotNull();
@@ -152,7 +152,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             CompetencyOperation op2 = new CompetencyOperation(null, "Data Structures", "Common data structures and their usage", CompetencyTaxonomy.APPLY);
             CompetencyOperation op3 = new CompetencyOperation(null, "Complexity Theory", "Understanding computational complexity", CompetencyTaxonomy.EVALUATE);
 
-            String actualResult = competencyExpertToolsService.previewCompetencies(List.of(op1, op2, op3), false);
+            String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(op1, op2, op3), false);
 
             // New implementation returns simple confirmation message for batch
             assertThat(actualResult).isNotNull();
@@ -166,7 +166,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         void shouldPreviewExistingCompetencyUpdate() {
             CompetencyOperation updateOperation = new CompetencyOperation(existingCompetency.getId(), "Updated Title", "Updated description", CompetencyTaxonomy.CREATE);
 
-            String actualResult = competencyExpertToolsService.previewCompetencies(List.of(updateOperation), null);
+            String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(updateOperation), null);
 
             assertThat(actualResult).isNotNull();
             assertThat(actualResult).contains("Preview generated successfully for 1 competency");
@@ -177,7 +177,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         void shouldIncludeViewOnlyFlagWhenRequested() {
             CompetencyOperation operation = new CompetencyOperation(null, "Read Only Test", "Testing view-only mode", CompetencyTaxonomy.REMEMBER);
 
-            String actualResult = competencyExpertToolsService.previewCompetencies(List.of(operation), true);
+            String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(operation), true);
 
             assertThat(actualResult).isNotNull();
             assertThat(actualResult).contains("Preview generated successfully for 1 competency");
@@ -188,7 +188,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnErrorWhenNoCompetenciesProvided() {
-            String actualResult = competencyExpertToolsService.previewCompetencies(List.of(), null);
+            String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(), null);
 
             assertThat(actualResult).isNotNull();
             assertThat(actualResult).contains("Error: No competencies provided for preview");
@@ -197,7 +197,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnErrorWhenCompetenciesListIsNull() {
-            String actualResult = competencyExpertToolsService.previewCompetencies(null, null);
+            String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), null, null);
 
             assertThat(actualResult).isNotNull();
             assertThat(actualResult).contains("Error: No competencies provided for preview");
@@ -367,7 +367,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             // Perform read-only operations
             competencyExpertToolsService.getCourseCompetencies(course.getId());
             competencyExpertToolsService.getCourseDescription(course.getId());
-            competencyExpertToolsService.previewCompetencies(List.of(new CompetencyOperation(null, "Preview", "Test", CompetencyTaxonomy.REMEMBER)), null);
+            competencyExpertToolsService.previewCompetencies(course.getId(), List.of(new CompetencyOperation(null, "Preview", "Test", CompetencyTaxonomy.REMEMBER)), null);
 
             // State should not be tracked for read-only operations
             assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).isFalse();

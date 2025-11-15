@@ -11,7 +11,7 @@ interface AgentChatRequest {
     sessionId?: string;
 }
 
-interface AgentChatResponse {
+export interface AgentChatResponse {
     message: string;
     sessionId?: string;
     timestamp: string;
