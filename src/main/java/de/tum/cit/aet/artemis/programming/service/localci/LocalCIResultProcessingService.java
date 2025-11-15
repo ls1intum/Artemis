@@ -134,6 +134,10 @@ public class LocalCIResultProcessingService {
         log.info("Initialized LocalCI result processing executor with pool size {}", concurrentResultProcessingSize);
     }
 
+    /**
+     * Logs the health status of the result processor every 5 minutes.
+     * Checks if result processing is stuck by comparing processed results with the previous run.
+     */
     @Scheduled(fixedDelay = 300_000, initialDelay = 300_000)
     public void logResultProcessorHealth() {
         int hazelcastQueueSize = distributedDataAccessService.getResultQueueSize();
