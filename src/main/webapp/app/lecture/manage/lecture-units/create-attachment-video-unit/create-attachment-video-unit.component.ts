@@ -86,31 +86,40 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
                     const lectureUnit = response.body!;
 
                     // Handle automatic transcription generation if requested
+                    let transcriptionObservable = of(lectureUnit);
                     if (generateTranscript && lectureUnit?.id) {
                         const transcriptionUrl = playlistUrl ?? lectureUnit.videoSource;
                         if (transcriptionUrl) {
-                            this.attachmentVideoUnitService.startTranscription(this.lectureId, lectureUnit.id, transcriptionUrl).subscribe({
-                                error: (err) => onError(this.alertService, err),
-                            });
+                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lectureId, lectureUnit.id, transcriptionUrl).pipe(
+                                map(() => lectureUnit),
+                                catchError((err) => {
+                                    onError(this.alertService, err);
+                                    return of(lectureUnit);
+                                }),
+                            );
                         }
                     }
 
-                    if (!videoTranscription) {
-                        return of(lectureUnit);
-                    }
-                    let transcription: LectureTranscriptionDTO;
-                    try {
-                        transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
-                    } catch {
-                        this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
-                        return of(lectureUnit);
-                    }
-                    transcription.lectureUnitId = lectureUnit.id!;
-                    return this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnit.id!, transcription).pipe(
-                        map(() => lectureUnit),
-                        catchError((err) => {
-                            onError(this.alertService, err);
-                            return of(lectureUnit);
+                    return transcriptionObservable.pipe(
+                        switchMap(() => {
+                            if (!videoTranscription) {
+                                return of(lectureUnit);
+                            }
+                            let transcription: LectureTranscriptionDTO;
+                            try {
+                                transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
+                            } catch {
+                                this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
+                                return of(lectureUnit);
+                            }
+                            transcription.lectureUnitId = lectureUnit.id!;
+                            return this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnit.id!, transcription).pipe(
+                                map(() => lectureUnit),
+                                catchError((err) => {
+                                    onError(this.alertService, err);
+                                    return of(lectureUnit);
+                                }),
+                            );
                         }),
                     );
                 }),

@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
@@ -45,12 +46,16 @@ public class LectureTranscriptionResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository) {
+    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository,
+            LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi) {
         this.lectureTranscriptionRepository = transcriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
     }
 
     /**
@@ -97,16 +102,13 @@ public class LectureTranscriptionResource {
     @GetMapping("lecture-unit/{lectureUnitId}/transcript")
     @EnforceAtLeastInstructorInLectureUnit
     public ResponseEntity<LectureTranscriptionDTO> getTranscript(@PathVariable Long lectureUnitId) {
-        Optional<LectureTranscription> transcriptionOpt = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
+        Optional<LectureTranscriptionDTO> dtoOpt = lectureTranscriptionsRepositoryApi.getTranscript(lectureUnitId);
 
-        if (transcriptionOpt.isEmpty()) {
+        if (dtoOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        LectureTranscription transcription = transcriptionOpt.get();
-        LectureTranscriptionDTO dto = new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments());
-
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(dtoOpt.get());
     }
 
     /**
@@ -118,14 +120,13 @@ public class LectureTranscriptionResource {
     @GetMapping("lecture-unit/{lectureUnitId}/transcript/status")
     @EnforceAtLeastInstructorInLectureUnit
     public ResponseEntity<String> getTranscriptStatus(@PathVariable Long lectureUnitId) {
-        Optional<LectureTranscription> transcriptionOpt = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
+        Optional<String> statusOpt = lectureTranscriptionsRepositoryApi.getTranscriptStatus(lectureUnitId);
 
-        if (transcriptionOpt.isEmpty()) {
+        if (statusOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        LectureTranscription transcription = transcriptionOpt.get();
-        return ResponseEntity.ok(transcription.getTranscriptionStatus().name());
+        return ResponseEntity.ok(statusOpt.get());
     }
 
 }

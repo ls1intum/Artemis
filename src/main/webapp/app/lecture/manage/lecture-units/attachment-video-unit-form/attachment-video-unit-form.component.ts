@@ -214,7 +214,6 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     ngOnChanges() {
         if (this.isEditMode() && this.formData()) {
             this.setFormValues(this.formData()!);
-            // Set transcription status if provided
             if (this.formData()?.transcriptionStatus) {
                 this.transcriptionStatus.set(this.formData()!.transcriptionStatus as TranscriptionStatus);
             }

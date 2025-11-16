@@ -1,9 +1,10 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { firstValueFrom } from 'rxjs';
 import {
     faDownload,
     faExclamationTriangle,
@@ -49,8 +50,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
     private readonly accountService = inject(AccountService);
 
-    transcriptionStatus?: TranscriptionStatus;
-    isLoadingTranscriptionStatus = false;
+    transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
+    isLoadingTranscriptionStatus = signal(false);
 
     private readonly videoUrlAllowList = [
         // TUM-Live. Example: 'https://live.rbg.tum.de/w/test/26?video_only=1'
@@ -64,28 +65,27 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
-    loadTranscriptionStatus() {
-        this.isLoadingTranscriptionStatus = true;
-        this.lectureTranscriptionService.getTranscriptionStatus(this.lectureUnit().id!).subscribe({
-            next: (status) => {
-                this.transcriptionStatus = status;
-                this.isLoadingTranscriptionStatus = false;
-            },
-            error: () => {
-                this.isLoadingTranscriptionStatus = false;
-            },
-        });
+    async loadTranscriptionStatus() {
+        const id = this.lectureUnit().id;
+        if (!id) {
+            return;
+        }
+
+        this.isLoadingTranscriptionStatus.set(true);
+        try {
+            this.transcriptionStatus.set(await firstValueFrom(this.lectureTranscriptionService.getTranscriptionStatus(id)));
+        } catch {
+            // Error handling - status remains undefined
+        } finally {
+            this.isLoadingTranscriptionStatus.set(false);
+        }
     }
 
-    shouldShowTranscriptionStatus(): boolean {
-        return (
-            !this.isLoadingTranscriptionStatus &&
-            !!this.transcriptionStatus &&
-            (this.transcriptionStatus === TranscriptionStatus.PENDING ||
-                this.transcriptionStatus === TranscriptionStatus.PROCESSING ||
-                this.transcriptionStatus === TranscriptionStatus.FAILED)
-        );
-    }
+    readonly shouldShowTranscriptionStatus = computed(() => {
+        const isLoading = this.isLoadingTranscriptionStatus();
+        const status = this.transcriptionStatus();
+        return !isLoading && !!status && (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.FAILED);
+    });
 
     /**
      * Returns the name of the attachment file (including its file extension)

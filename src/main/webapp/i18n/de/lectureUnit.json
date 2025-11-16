@@ -177,7 +177,7 @@
                 "error": "Transkriptgenerierung konnte nicht gestartet werden.",
                 "pendingWarning": "Für dieses Video wird derzeit eine Transkription verarbeitet. Bitte warte, bis diese abgeschlossen ist, bevor eine neue generiert wird.",
                 "overwriteWarning": "Das Generieren eines neuen Transkripts überschreibt die vorhandene Transkription für dieses Video.",
-                "statusProcessing": "Für dieses Video wird eine Transkription generiert. Dies kann einige Minuten dauern. Bitte schaue später noch einmal nach.",
+                "statusProcessing": "Bitte überprüfe den Status der Transkription etwas später",
                 "statusFailed": "Die Transkriptionsgenerierung für dieses Video ist fehlgeschlagen. Du kannst es erneut versuchen.",
                 "editStatusProcessing": "Für dieses Video wird derzeit eine Transkription generiert.",
                 "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen."
