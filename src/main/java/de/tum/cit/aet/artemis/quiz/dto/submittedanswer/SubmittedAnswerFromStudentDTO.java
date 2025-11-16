@@ -8,4 +8,13 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = DragAndDropSubmittedAnswerFromStudentDTO.class, name = "drag-and-drop"),
         @JsonSubTypes.Type(value = ShortAnswerSubmittedAnswerFromStudentDTO.class, name = "short-answer") })
 public interface SubmittedAnswerFromStudentDTO {
+
+    static Long getQuestionId(SubmittedAnswerFromStudentDTO submittedAnswer) {
+        return switch (submittedAnswer) {
+            case MultipleChoiceSubmittedAnswerFromStudentDTO mcAnswer -> mcAnswer.questionId();
+            case DragAndDropSubmittedAnswerFromStudentDTO dndAnswer -> dndAnswer.questionId();
+            case ShortAnswerSubmittedAnswerFromStudentDTO saAnswer -> saAnswer.questionId();
+            case null, default -> throw new IllegalArgumentException("Unknown SubmittedAnswerFromStudentDTO type");
+        };
+    }
 }
