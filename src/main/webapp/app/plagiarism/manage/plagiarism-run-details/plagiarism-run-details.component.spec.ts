@@ -106,13 +106,13 @@ describe('Plagiarism Run Details', () => {
 
     it('displays the created date (startedAt) in short format without timezone shift', () => {
         const created = dayjs('2024-09-01T10:15:00.000Z');
-        const expected = created.locale('en').format(ArtemisDatePipe.format('en', 'short'));
+        const locale = navigator.language || 'en';
+        const expected = created.locale(locale).format(ArtemisDatePipe.format(locale, 'short'));
 
         fixture.componentRef.setInput('plagiarismResult', { ...plagiarismResult, createdDate: created } as any);
         fixture.detectChanges();
 
-        const items = fixture.nativeElement.querySelectorAll('.plagiarism-run-details-stats-item');
-        const startedAtInfo: HTMLElement = items[4].querySelector('.plagiarism-run-details-info');
+        const startedAtInfo: HTMLElement = fixture.nativeElement.querySelector('.plagiarism-run-details-stats-item:nth-child(5) .plagiarism-run-details-info');
         expect(startedAtInfo.textContent?.trim()).toBe(expected);
     });
 
@@ -123,8 +123,7 @@ describe('Plagiarism Run Details', () => {
 
         const expected = new Date(durationMs).toISOString().substring(11, 19);
 
-        const items = fixture.nativeElement.querySelectorAll('.plagiarism-run-details-stats-item');
-        const durationInfo: HTMLElement = items[3].querySelector('.plagiarism-run-details-info.duration');
+        const durationInfo: HTMLElement = fixture.nativeElement.querySelector('.plagiarism-run-details-stats-item:nth-child(4) .plagiarism-run-details-info.duration');
         expect(durationInfo.textContent?.trim()).toBe(expected);
     });
 
@@ -132,8 +131,7 @@ describe('Plagiarism Run Details', () => {
         fixture.componentRef.setInput('plagiarismResult', { ...plagiarismResult, createdDate: undefined } as any);
         fixture.detectChanges();
 
-        const items = fixture.nativeElement.querySelectorAll('.plagiarism-run-details-stats-item');
-        const startedAtInfo: HTMLElement = items[4].querySelector('.plagiarism-run-details-info');
+        const startedAtInfo: HTMLElement = fixture.nativeElement.querySelector('.plagiarism-run-details-stats-item:nth-child(5) .plagiarism-run-details-info');
         expect(startedAtInfo.textContent?.trim()).toBe('');
     });
 });
