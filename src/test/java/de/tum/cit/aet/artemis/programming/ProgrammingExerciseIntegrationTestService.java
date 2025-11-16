@@ -269,8 +269,8 @@ public class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student2");
 
-        studentRepository1 = new LocalRepository(defaultBranch);
-        studentRepository2 = new LocalRepository(defaultBranch);
+        studentRepository1 = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
+        studentRepository2 = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
 
         studentRepository1.configureRepos(localVCBasePath, "studentLocalRepo1", "studentOriginRepo1", true);
         studentRepository2.configureRepos(localVCBasePath, "studentLocalRepo2", "studentOriginRepo2", true);
@@ -289,6 +289,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void tearDown() throws IOException {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
         if (downloadedFile != null && downloadedFile.exists()) {
             FileUtils.forceDelete(downloadedFile);
         }
@@ -791,7 +792,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         String projectKey = programmingExercise.getProjectKey();
         String testsSlug = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        var testsRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsSlug);
+        var testsRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsSlug));
         String testsPath = java.nio.file.Path.of("test", programmingExercise.getPackageFolderName()).toString();
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             testsPath = java.nio.file.Path.of("structural", testsPath).toString();

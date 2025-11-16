@@ -335,16 +335,16 @@ public class ProgrammingExerciseTestService {
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
         mockDelegate.resetMockProvider();
         repositoryMetadata.clear();
-        exerciseRepo = new LocalRepository(defaultBranch);
-        testRepo = new LocalRepository(defaultBranch);
-        solutionRepo = new LocalRepository(defaultBranch);
-        auxRepo = new LocalRepository(defaultBranch);
-        sourceExerciseRepo = new LocalRepository(defaultBranch);
-        sourceTestRepo = new LocalRepository(defaultBranch);
-        sourceSolutionRepo = new LocalRepository(defaultBranch);
-        sourceAuxRepo = new LocalRepository(defaultBranch);
-        studentRepo = new LocalRepository(defaultBranch);
-        studentTeamRepo = new LocalRepository(defaultBranch);
+        exerciseRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
+        testRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
+        solutionRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
+        auxRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
+        sourceExerciseRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
+        sourceTestRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
+        sourceSolutionRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
+        sourceAuxRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
+        studentRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
+        studentTeamRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
 
@@ -359,6 +359,7 @@ public class ProgrammingExerciseTestService {
     }
 
     public void tearDown() throws Exception {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
         if (exerciseRepo != null) {
             exerciseRepo.resetLocalRepo();
         }

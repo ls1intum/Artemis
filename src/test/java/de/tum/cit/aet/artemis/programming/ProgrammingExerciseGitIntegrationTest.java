@@ -62,6 +62,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
 
     @AfterEach
     void tearDown() throws IOException {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
         if (localGit != null) {
             localGit.close();
         }
@@ -99,7 +100,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         var projectKey = "PROGEXGIT";
         var repoSlug = projectKey.toLowerCase() + "-tests";
 
-        LocalRepository remoteRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repoSlug);
+        LocalRepository remoteRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repoSlug));
 
         // Write a file and commit on the remote working copy, then push to origin
         var readmePath = remoteRepo.workingCopyGitRepoFile.toPath().resolve("README.md");

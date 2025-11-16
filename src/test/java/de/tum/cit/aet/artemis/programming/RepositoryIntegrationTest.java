@@ -200,6 +200,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @AfterEach
     void tearDown() throws IOException {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
         if (studentRepository != null) {
             studentRepository.resetLocalRepo();
         }
@@ -1175,7 +1176,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     private LocalRepository createRepositoryForSlug(String repositorySlug) throws Exception {
-        var repo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
+        var repo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug));
         seedRepositoryWithDefaultContent(repo);
         return repo;
     }

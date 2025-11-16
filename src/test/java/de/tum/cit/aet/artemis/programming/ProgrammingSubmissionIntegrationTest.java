@@ -99,6 +99,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @AfterEach
     void tearDown() throws Exception {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
         jenkinsRequestMockProvider.reset();
     }
 

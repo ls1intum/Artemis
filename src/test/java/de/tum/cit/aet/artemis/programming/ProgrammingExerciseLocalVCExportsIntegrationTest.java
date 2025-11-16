@@ -61,6 +61,7 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
 
     @AfterEach
     void tearDown() throws Exception {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
         programmingExerciseIntegrationTestService.tearDown();
     }
 

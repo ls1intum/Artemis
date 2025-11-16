@@ -85,6 +85,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
     @AfterEach
     void tearDown() throws IOException {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
         testRepo.resetLocalRepo();
     }
 

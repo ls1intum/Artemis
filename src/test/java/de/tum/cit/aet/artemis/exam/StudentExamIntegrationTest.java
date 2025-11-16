@@ -290,6 +290,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void tearDown() throws Exception {
         programmingExerciseTestService.tearDown();
         jenkinsRequestMockProvider.reset();
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
 
         for (var repo : studentRepos) {
             repo.resetLocalRepo();

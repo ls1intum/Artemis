@@ -20,6 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -106,6 +107,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
+    }
+
+    @AfterEach
+    void cleanup() {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
     }
 
     private static Stream<Arguments> argumentsForGetParticipationResults() {
@@ -940,7 +946,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             if (auxiliaryRepository.getRepositoryUri() == null) {
                 String projectKey = programmingExerciseWithAuxRepo.getProjectKey();
                 String repositorySlug = programmingExerciseWithAuxRepo.generateRepositoryName(auxiliaryRepository.getName());
-                localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
+                RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug));
                 auxiliaryRepository.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repositorySlug));
                 auxiliaryRepository = auxiliaryRepositoryRepository.save(auxiliaryRepository);
             }
@@ -1142,7 +1148,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
         String slugWithGit = repositoryUri.getRelativeRepositoryPath().getFileName().toString();
         String repositorySlug = slugWithGit.endsWith(".git") ? slugWithGit.substring(0, slugWithGit.length() - 4) : slugWithGit;
-        localVCLocalCITestService.createAndConfigureLocalRepository(repositoryUri.getProjectKey(), repositorySlug);
+        RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(repositoryUri.getProjectKey(), repositorySlug));
     }
 
     private RevCommit writeFilesAndPush(Path remoteRepoPath, Map<String, String> files, String message) throws Exception {
