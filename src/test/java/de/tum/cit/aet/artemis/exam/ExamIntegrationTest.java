@@ -1919,7 +1919,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     }
 
     @Test
-    @Disabled("Temporary: Investigation in progress for import to other course flow")
+    @Disabled("Test requires actual LocalCI implementation since we converted LocalVC from mock to a real service.")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_successfulWithImportToOtherCourse() throws Exception {
         setupMocks();
