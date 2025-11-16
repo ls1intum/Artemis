@@ -1239,10 +1239,6 @@ public class GitService extends AbstractGitService {
         Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
 
-        if (itr == null) {
-            return files;
-        }
-
         while (itr.hasNext()) {
             File nextFile = new File(itr.next(), repo);
             Path nextPath = nextFile.toPath();

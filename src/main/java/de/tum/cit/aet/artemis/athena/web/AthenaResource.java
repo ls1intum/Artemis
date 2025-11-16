@@ -263,14 +263,17 @@ public class AthenaResource {
     }
 
     /**
-     * GET public/programming-exercises/:exerciseId/submissions/:submissionId/repository : Deprecated, forwards to internal endpoint
+     * GET public/programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a zip file download
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get the repository for
      * @param auth         the auth header value to check
-     * @param request      the HTTP servlet request used for forwarding
-     * @param response     the HTTP servlet response used for forwarding
+     * @param request      the HTTP request
+     * @param response     the HTTP response
+     * @throws ServletException if the forward fails
+     * @deprecated Use {@code api/athena/internal/programming-exercises/{exerciseId}/submissions/{submissionId}/repository} instead
      */
+    @Deprecated
     @GetMapping("public/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
     @EnforceNothing // We check the Athena secret and validation here
     @ManualConfig
@@ -282,7 +285,27 @@ public class AthenaResource {
         request.getRequestDispatcher("/api/athena/internal/programming-exercises/" + exerciseId + "/submissions/" + submissionId + "/repository").forward(request, response);
     }
 
-    // Removed legacy generic instructor repository endpoint in favor of specific endpoints below
+    /**
+     * GET public/programming-exercises/:exerciseId/repository/template : Get the template repository as a zip file download
+     *
+     * @param exerciseId the id of the exercise
+     * @param auth       the auth header value to check
+     * @param request    the HTTP request
+     * @param response   the HTTP response
+     * @throws ServletException if the forward fails
+     * @deprecated Use {@code api/athena/internal/programming-exercises/{exerciseId}/repository/template} instead
+     */
+    @Deprecated
+    @GetMapping("public/programming-exercises/{exerciseId}/repository/template")
+    @EnforceNothing // We check the Athena secret and validation here
+    @ManualConfig
+    public void getTemplateRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth, HttpServletRequest request,
+            HttpServletResponse response) throws ServletException, IOException {
+        log.debug("REST call to deprecated endpoint, forwarding to internal endpoint for exercise {}", exerciseId);
+        checkAthenaSecret(auth);
+        validateAthenaEnabled(exerciseId);
+        request.getRequestDispatcher("/api/athena/internal/programming-exercises/" + exerciseId + "/repository/template").forward(request, response);
+    }
 
     /**
      * GET public/programming-exercises/:exerciseId/repository/solution : Get the solution repository as a zip file download
