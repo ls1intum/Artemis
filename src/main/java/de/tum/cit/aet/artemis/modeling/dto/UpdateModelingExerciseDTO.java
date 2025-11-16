@@ -24,70 +24,69 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         @Nullable String gradingInstructions) {
 
     /**
-     * Returns a new ModelingExercise with this DTO applied on top of the existing exercise.
-     * The existing exercise is treated as the "before" state and is not modified.
+     * Applies this DTO's fields to the given exercise, mutating it in place.
      *
-     * @param updated the exercise to use as base state
+     * @param exercise the exercise to update (will be mutated)
      * @return a new ModelingExercise instance representing the updated state
      */
-    public ModelingExercise update(ModelingExercise updated) {
-        updated.setId(this.id);
+    public ModelingExercise update(ModelingExercise exercise) {
+        exercise.setId(this.id);
         if (this.title != null) {
-            updated.setTitle(this.title);
+            exercise.setTitle(this.title);
         }
         if (this.channelName != null) {
-            updated.setChannelName(this.channelName);
+            exercise.setChannelName(this.channelName);
         }
         if (this.shortName != null) {
-            updated.setShortName(this.shortName);
+            exercise.setShortName(this.shortName);
         }
         if (this.problemStatement != null) {
-            updated.setProblemStatement(this.problemStatement);
+            exercise.setProblemStatement(this.problemStatement);
         }
         if (this.categories != null) {
-            updated.setCategories(this.categories);
+            exercise.setCategories(this.categories);
         }
         if (this.difficulty != null) {
-            updated.setDifficulty(this.difficulty);
+            exercise.setDifficulty(this.difficulty);
         }
         if (this.maxPoints != null) {
-            updated.setMaxPoints(this.maxPoints);
+            exercise.setMaxPoints(this.maxPoints);
         }
         if (this.bonusPoints != null) {
-            updated.setBonusPoints(this.bonusPoints);
+            exercise.setBonusPoints(this.bonusPoints);
         }
         if (this.includedInOverallScore != null) {
-            updated.setIncludedInOverallScore(this.includedInOverallScore);
+            exercise.setIncludedInOverallScore(this.includedInOverallScore);
         }
         if (this.releaseDate != null) {
-            updated.setReleaseDate(this.releaseDate);
+            exercise.setReleaseDate(this.releaseDate);
         }
         if (this.startDate != null) {
-            updated.setStartDate(this.startDate);
+            exercise.setStartDate(this.startDate);
         }
         if (this.dueDate != null) {
-            updated.setDueDate(this.dueDate);
+            exercise.setDueDate(this.dueDate);
         }
         if (this.assessmentDueDate != null) {
-            updated.setAssessmentDueDate(this.assessmentDueDate);
+            exercise.setAssessmentDueDate(this.assessmentDueDate);
         }
         if (this.exampleSolutionModel != null) {
-            updated.setExampleSolutionModel(this.exampleSolutionModel);
+            exercise.setExampleSolutionModel(this.exampleSolutionModel);
         }
         if (this.exampleSolutionExplanation != null) {
-            updated.setExampleSolutionExplanation(this.exampleSolutionExplanation);
+            exercise.setExampleSolutionExplanation(this.exampleSolutionExplanation);
         }
         if (this.exampleSolutionPublicationDate != null) {
-            updated.setExampleSolutionPublicationDate(this.exampleSolutionPublicationDate);
+            exercise.setExampleSolutionPublicationDate(this.exampleSolutionPublicationDate);
         }
         if (this.gradingCriteria != null) {
-            updated.setGradingCriteria(this.gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toSet()));
+            exercise.setGradingCriteria(this.gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toSet()));
         }
         if (this.gradingInstructions != null) {
-            updated.setGradingInstructions(this.gradingInstructions);
+            exercise.setGradingInstructions(this.gradingInstructions);
         }
 
-        return updated;
+        return exercise;
     }
 
     /**
