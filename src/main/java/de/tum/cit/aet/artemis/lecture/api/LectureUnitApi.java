@@ -4,8 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
@@ -42,7 +41,7 @@ public class LectureUnitApi extends AbstractLectureApi {
         this.exerciseUnitRepository = exerciseUnitRepository;
     }
 
-    public void setCompletedForAllLectureUnits(List<? extends LectureUnit> lectureUnits, @NotNull User user, boolean completed) {
+    public void setCompletedForAllLectureUnits(List<? extends LectureUnit> lectureUnits, @NonNull User user, boolean completed) {
         lectureUnitService.setCompletedForAllLectureUnits(lectureUnits, user, completed);
     }
 
