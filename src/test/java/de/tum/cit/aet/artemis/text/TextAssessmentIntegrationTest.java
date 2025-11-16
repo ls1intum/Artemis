@@ -20,9 +20,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.assertj.core.data.Offset;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1066,7 +1065,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(blocksFrom2ndRequest.toArray()).containsExactlyInAnyOrder(blocks.toArray());
     }
 
-    @NotNull
+    @NonNull
     private List<TextSubmission> prepareTextSubmissionsWithFeedbackForAutomaticFeedback() {
         TextSubmission textSubmission1 = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ParticipationFactory.generateTextSubmission("This is another Submission.", Language.ENGLISH, true);

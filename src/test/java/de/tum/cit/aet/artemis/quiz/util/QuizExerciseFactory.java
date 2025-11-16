@@ -9,9 +9,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -59,7 +58,7 @@ public class QuizExerciseFactory {
      * @param quizMode    The quiz mode used. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
      * @return The created quiz.
      */
-    @NotNull
+    @NonNull
     public static QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = generateQuizExercise(releaseDate, dueDate, quizMode, course);
         addQuestionsToQuizExercise(quizExercise);
@@ -100,7 +99,7 @@ public class QuizExerciseFactory {
      * @param exerciseGroup Exercise group of an exam to which the quiz should be added.
      * @return The created quiz.
      */
-    @NotNull
+    @NonNull
     public static QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
         QuizExercise quizExercise = generateQuizExerciseForExam(exerciseGroup);
         addQuestionsToQuizExercise(quizExercise);
@@ -129,7 +128,7 @@ public class QuizExerciseFactory {
      *
      * @return The created short answer question.
      */
-    @NotNull
+    @NonNull
     public static ShortAnswerQuestion createShortAnswerQuestion() {
         ShortAnswerQuestion sa = (ShortAnswerQuestion) new ShortAnswerQuestion().title("SA").score(2d).text("This is a long answer text");
         sa.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
@@ -175,7 +174,7 @@ public class QuizExerciseFactory {
      *
      * @return The created drag and drop question.
      */
-    @NotNull
+    @NonNull
     public static DragAndDropQuestion createDragAndDropQuestion() {
         DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3d).text("Q2");
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
@@ -248,7 +247,7 @@ public class QuizExerciseFactory {
      *
      * @return The created multiple choice question.
      */
-    @NotNull
+    @NonNull
     public static MultipleChoiceQuestion createMultipleChoiceQuestion() {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
@@ -544,7 +543,7 @@ public class QuizExerciseFactory {
      *
      * @return The created multiple choice question.
      */
-    @NotNull
+    @NonNull
     public static MultipleChoiceQuestion createMultipleChoiceQuestionWithAllTypesOfAnswerOptions() {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
@@ -562,7 +561,7 @@ public class QuizExerciseFactory {
      *
      * @return The created single choice question.
      */
-    @NotNull
+    @NonNull
     public static MultipleChoiceQuestion createSingleChoiceQuestion() {
         var singleChoiceQuestion = createMultipleChoiceQuestion();
         singleChoiceQuestion.setSingleChoice(true);
@@ -705,7 +704,7 @@ public class QuizExerciseFactory {
      * @param title         The title which is used to set the quiz title together with a 3 character random UUID suffix.
      * @return The created exam quiz exercise.
      */
-    @NotNull
+    @NonNull
     public static QuizExercise createQuizWithAllQuestionTypesForExam(ExerciseGroup exerciseGroup, String title) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup, title);
         addAllQuestionTypesToQuizExercise(quizExercise);
