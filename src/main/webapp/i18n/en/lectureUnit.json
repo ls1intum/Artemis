@@ -180,12 +180,7 @@
                 "statusProcessing": "Please check the status of the transcription later",
                 "statusFailed": "Transcription generation failed for this video. You can try generating it again.",
                 "editStatusProcessing": "A transcription is currently being generated for this video.",
-                "editStatusFailed": "The previous transcription generation failed for this video.",
-                "ongoingStatus": "Transcription in progress ({{ status }})",
-                "cancelButton": "Cancel Transcription",
-                "cancelSuccess": "Transcription cancelled successfully.",
-                "cancelError": "Failed to cancel transcription. Please try again.",
-                "cancelledDueToVideoChange": "Previous transcription cancelled due to video URL change."
+                "editStatusFailed": "The previous transcription generation failed for this video."
             }
         },
         "exerciseUnit": {
