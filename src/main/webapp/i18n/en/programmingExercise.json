@@ -226,6 +226,8 @@
                 "generating": "Generating...",
                 "description": "Generate solution, template, and test code using AI",
                 "tooltip": "AI Code Generation - Generate solution, template, and test code",
+                "confirmTitle": "Confirm Code Generation",
+                "confirmText": "This action uses an LLM and may take time and spend credits. Do you want to continue?",
                 "success": "{{repositoryType}} code generation completed successfully!",
                 "partialSuccess": "{{repositoryType}} code generation completed with some issues. Please review the generated code.",
                 "error": "{{repositoryType}} code generation failed. Please try again later.",

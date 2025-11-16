@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
@@ -32,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
@@ -80,6 +80,8 @@ public class HyperionCodeGenerationExecutionService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final ResultRepository resultRepository;
@@ -91,13 +93,15 @@ public class HyperionCodeGenerationExecutionService {
     private final HyperionProgrammingExerciseContextRendererService repositoryStructureService;
 
     public HyperionCodeGenerationExecutionService(GitService gitService, RepositoryService repositoryService,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
             HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy) {
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
@@ -226,13 +230,22 @@ public class HyperionCodeGenerationExecutionService {
      * @return the new commit hash
      * @throws GitAPIException if git operations fail
      */
-    private String commitAndGetHash(Repository repository, User user, LocalVCRepositoryUri repositoryUri, ProgrammingExercise exercise) throws GitAPIException {
+    private String commitAndGetHash(Repository repository, User user, LocalVCRepositoryUri repositoryUri, ProgrammingExercise exercise, RepositoryType repositoryType)
+            throws GitAPIException {
         repositoryService.commitChanges(repository, user);
         String newCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
-
+        ProgrammingExerciseParticipation exerciseParticipation = programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
         try {
-            ProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
-            continuousIntegrationTriggerService.triggerBuild(solutionParticipation, newCommitHash, null);
+            if (repositoryType.getName().equals("exercise")) {
+                exerciseParticipation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId());
+                log.debug("Found template participation");
+            }
+            else if (repositoryType.getName().equals("solution")) {
+
+                exerciseParticipation = programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
+                log.debug("Found solution participation");
+            }
+            continuousIntegrationTriggerService.triggerBuild(exerciseParticipation, newCommitHash, null);
             log.debug("Successfully triggered CI build for commit {} in exercise {}", newCommitHash, exercise.getId());
         }
         catch (ContinuousIntegrationException e) {
@@ -262,52 +275,6 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     /**
-     * Executes a single iteration of code generation, compilation, and build checking.
-     *
-     * @param exercise      the programming exercise
-     * @param user          the user
-     * @param repository    the repository
-     * @param repositoryUri the repository URI
-     * @param strategy      the code generation strategy to use
-     * @param lastBuildLogs previous build logs for context
-     * @param iteration     current iteration number (for logging)
-     * @return iteration result with success status and build logs
-     */
-    private IterationResult executeGenerationIteration(ProgrammingExercise exercise, User user, Repository repository, LocalVCRepositoryUri repositoryUri,
-            HyperionCodeGenerationService strategy, String lastBuildLogs, int iteration) {
-        try {
-            String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
-
-            List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure);
-
-            if (generatedFiles == null || generatedFiles.isEmpty()) {
-                log.warn("No files generated for exercise {} on attempt {}. Skipping repository update.", exercise.getId(), iteration);
-                return new IterationResult(null, lastBuildLogs, false);
-            }
-
-            log.debug("Generated {} files for exercise {} on attempt {}", generatedFiles.size(), exercise.getId(), iteration);
-
-            processGeneratedFiles(repository, generatedFiles, exercise);
-            String newCommitHash = commitAndGetHash(repository, user, repositoryUri, exercise);
-            Result result = waitForBuildResult(exercise, newCommitHash);
-
-            if (result != null && result.isSuccessful()) {
-                log.info("Code generation and compilation successful for exercise {} on attempt {}", exercise.getId(), iteration);
-                return new IterationResult(result, null, true);
-            }
-
-            String buildLogs = extractBuildLogs(result);
-            log.info("Code generation and compilation failed for exercise {} on attempt {}. Retrying...", exercise.getId(), iteration);
-            return new IterationResult(result, buildLogs, false);
-
-        }
-        catch (IOException | GitAPIException | InterruptedException | NetworkingException e) {
-            log.error("Error during iteration {} for exercise {}: {}", iteration, exercise.getId(), e.getMessage(), e);
-            return new IterationResult(null, lastBuildLogs, false);
-        }
-    }
-
-    /**
      * Cleans up repository by resetting to original state.
      *
      * @param repository         the repository to clean up
@@ -320,46 +287,102 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     /**
-     * Generates and compiles code for a programming exercise using iterative LLM-powered approach.
-     * Runs up to MAX_ITERATIONS attempts, using build failure feedback to improve code generation.
-     * Manages Git repository operations, code generation, compilation, and cleanup.
+     * Generates and compiles code with websocket publisher callbacks.
      *
-     * @param exercise       the programming exercise to generate code for
-     * @param user           the user initiating the code generation
-     * @param repositoryType the type of repository to generate code for (SOLUTION, TEMPLATE, TESTS)
-     * @return the final build result, or null if all attempts failed
+     * @param exercise       the programming exercise
+     * @param user           the initiating user
+     * @param repositoryType repository type to generate
+     * @param publisher      event publisher for websocket updates
+     * @return the latest build result or null
      */
-    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, RepositoryType repositoryType) {
-        log.warn("Starting code generation and compilation for exercise {} with repository type {}\n\n\n", exercise.getId(), repositoryType);
-
+    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher) {
         RepositorySetupResult setupResult = setupRepository(exercise, repositoryType);
         if (!setupResult.success()) {
+            publisher.error("Repository setup failed");
             return null;
         }
+        log.info("Setup Repo success");
 
         var repositoryUri = exercise.getRepositoryURI(repositoryType);
+        String lastBuildLogs = null;
+        Result result = null;
+        String lastCommitHash = null;
+
         try {
             HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
-            String lastBuildLogs = null;
-            Result result = null;
-
             for (int i = 0; i < MAX_ITERATIONS; i++) {
-                IterationResult iterationResult = executeGenerationIteration(exercise, user, setupResult.repository(), repositoryUri, strategy, lastBuildLogs, i + 1);
+                String repositoryStructure = repositoryStructureService.getRepositoryStructure(setupResult.repository());
+                List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure);
 
-                result = iterationResult.result();
-                if (iterationResult.successful()) {
-                    return result;
+                if (generatedFiles != null && !generatedFiles.isEmpty()) {
+
+                    for (GeneratedFileDTO file : generatedFiles) {
+                        boolean existed = gitService.getFileByName(setupResult.repository(), file.path()).isPresent();
+                        updateSingleFile(setupResult.repository(), file, exercise);
+                        if (existed) {
+                            publisher.fileUpdated(file.path(), repositoryType);
+                        }
+                        else {
+                            publisher.newFile(file.path(), repositoryType);
+                        }
+                    }
+
+                    String newCommitHash = commitAndGetHash(setupResult.repository(), user, repositoryUri, exercise, repositoryType);
+                    lastCommitHash = newCommitHash;
+                    result = waitForBuildResult(exercise, newCommitHash, repositoryType);
                 }
 
-                lastBuildLogs = iterationResult.buildLogs();
+                publisher.progress(i + 1);
+
+                if (result != null) {
+                    break;
+                }
+
+                lastBuildLogs = extractBuildLogs(result);
             }
 
-            log.warn("Code generation and compilation failed for exercise {} after {} attempts.", exercise.getId(), MAX_ITERATIONS);
-            return result;
-
+        }
+        catch (Exception e) {
+            publisher.error(e.getMessage());
         }
         finally {
             cleanupRepository(setupResult.repository(), setupResult.originalCommitHash());
+        }
+
+        // Ensure the remote reflects the last pushed commit before signaling DONE
+        try {
+            if (lastCommitHash != null) {
+                waitUntilRemoteHasCommit(repositoryUri, lastCommitHash, 3000);
+            }
+        }
+        catch (InterruptedException ignored) {
+        }
+
+        boolean success = result != null && result.isSuccessful();
+        publisher.done(success, success ? 1 : MAX_ITERATIONS, success ? "Succeeded" : "Failed");
+
+        return result;
+    }
+
+    /**
+     * Waits until the remote head matches the expected commit hash or timeout.
+     *
+     * @param repositoryUri target repository
+     * @param expectedHash  commit hash to wait for
+     * @param timeoutMs     max wait time in milliseconds
+     */
+    private void waitUntilRemoteHasCommit(LocalVCRepositoryUri repositoryUri, String expectedHash, long timeoutMs) throws InterruptedException {
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() - start < timeoutMs) {
+            try {
+                String head = gitService.getLastCommitHash(repositoryUri).getName();
+                if (expectedHash != null && expectedHash.equals(head)) {
+                    return;
+                }
+            }
+            catch (Exception ignored) {
+            }
+            Thread.sleep(300);
         }
     }
 
@@ -372,23 +395,40 @@ public class HyperionCodeGenerationExecutionService {
      * @return the build result if found within timeout, null if timed out
      * @throws InterruptedException if the waiting thread is interrupted
      */
-    private Result waitForBuildResult(ProgrammingExercise exercise, String commitHash) throws InterruptedException {
+    private Result waitForBuildResult(ProgrammingExercise exercise, String commitHash, RepositoryType repositoryType) throws InterruptedException {
         long startTime = System.currentTimeMillis();
-
+        var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
-        if (solutionParticipation == null) {
+        if (repositoryType.getName().equals("exercise") && templateParticipation == null) {
+            log.warn("Could not find template participation for exercise {}", exercise.getId());
+            return null;
+        }
+        else if (repositoryType.getName().equals("solution") && solutionParticipation == null) {
             log.warn("Could not find solution participation for exercise {}", exercise.getId());
+            return null;
+        }
+        else if (repositoryType.getName().equals("tests") && templateParticipation != null) {
+            log.warn("Could not find test participation for exercise {}", exercise.getId());
             return null;
         }
 
         int pollCount = 0;
+        long id = 0;
         while (System.currentTimeMillis() - startTime < TIMEOUT) {
             try {
-                ProgrammingSubmission submission = programmingSubmissionRepository
-                        .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(solutionParticipation.getId(), commitHash);
+
+                if (repositoryType.getName().equals("exercise")) {
+                    id = templateParticipation.getId();
+                }
+                else if (repositoryType.getName().equals("solution")) {
+                    id = solutionParticipation.getId();
+                }
+
+                ProgrammingSubmission submission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(id, commitHash);
 
                 if (submission != null) {
                     Optional<Result> result = resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId());
+
                     if (result.isPresent()) {
                         log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);
                         return result.get();

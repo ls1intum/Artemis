@@ -13,15 +13,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationRequestDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResultDTO;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationExecutionService;
+import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -47,37 +47,37 @@ public class HyperionCodeGenerationResource {
 
     private final HyperionCodeGenerationExecutionService codeGenerationExecutionService;
 
+    private final HyperionCodeGenerationJobService codeGenerationJobService;
+
     public HyperionCodeGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            HyperionCodeGenerationExecutionService codeGenerationExecutionService) {
+            HyperionCodeGenerationExecutionService codeGenerationExecutionService, HyperionCodeGenerationJobService codeGenerationJobService) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.codeGenerationExecutionService = codeGenerationExecutionService;
+        this.codeGenerationJobService = codeGenerationJobService;
     }
 
     /**
-     * POST exercises/{exerciseId}/generate-code: Generate code for a programming exercise.
+     * POST programming-exercises/{exerciseId}/generate-code: Start code generation asynchronously and return a job id.
      * Uses AI-powered iterative approach to generate, compile, and improve code based on build feedback.
      * Supports generation for SOLUTION, TEMPLATE, and TESTS repositories.
+     * Uses websocket to stream progress and completion events.
      *
-     * @param exerciseId the ID of the programming exercise to generate code for
-     * @param request    the request containing repository type specification
-     * @return ResponseEntity with status 200 (OK) and the generation result, or error status
+     * @param exerciseId the ID of the programming exercise
+     * @param request    the request containing repository type
+     * @return ResponseEntity with status 200 and the created job id
      */
+
     @PostMapping("programming-exercises/{exerciseId}/generate-code")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<CodeGenerationResultDTO> generateCode(@PathVariable long exerciseId, @Valid @RequestBody CodeGenerationRequestDTO request) {
+    public ResponseEntity<CodeGenerationJobStartDTO> generateCode(@PathVariable long exerciseId, @Valid @RequestBody CodeGenerationRequestDTO request) {
         log.debug("REST request to generate code for programming exercise [{}] with repository type [{}]", exerciseId, request.repositoryType());
-
         validateGenerationRequest(exerciseId, request);
-
         ProgrammingExercise exercise = loadProgrammingExercise(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Result generationResult = executeCodeGeneration(exercise, user, request.repositoryType());
-        CodeGenerationResultDTO response = buildGenerationResponse(generationResult, request.repositoryType());
-
-        log.info("Code generation completed for exercise [{}] with repository type [{}]: success=[{}]", exerciseId, request.repositoryType(), response.success());
-
-        return ResponseEntity.ok(response);
+        String jobId = codeGenerationJobService.startJob(user, exercise, request.repositoryType());
+        log.info(ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId)).toString());
+        return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId));
     }
 
     /**
@@ -129,70 +129,6 @@ public class HyperionCodeGenerationResource {
 
         if (exercise.getBuildConfig() == null) {
             throw new BadRequestAlertException("Exercise must have build configuration for code generation", ENTITY_NAME, "missingBuildConfig");
-        }
-    }
-
-    /**
-     * Executes the code generation process.
-     *
-     * @param exercise       the programming exercise
-     * @param user           the requesting user
-     * @param repositoryType the target repository type
-     * @return the generation result, or null if generation failed
-     */
-    private Result executeCodeGeneration(ProgrammingExercise exercise, User user, RepositoryType repositoryType) {
-        try {
-            return codeGenerationExecutionService.generateAndCompileCode(exercise, user, repositoryType);
-        }
-        catch (Exception e) {
-            log.error("Code generation failed for exercise [{}] with repository type [{}]", exercise.getId(), repositoryType, e);
-            return null;
-        }
-    }
-
-    /**
-     * Builds the response DTO from the generation result.
-     *
-     * @param result         the generation result (may be null if failed)
-     * @param repositoryType the repository type that was processed
-     * @return the response DTO
-     */
-    private CodeGenerationResultDTO buildGenerationResponse(Result result, RepositoryType repositoryType) {
-        if (result == null) {
-            return new CodeGenerationResultDTO(false, "Code generation failed after maximum attempts. Please check the exercise configuration and try again.", 3);
-        }
-
-        boolean isSuccessful = result.isSuccessful();
-        String message = buildSuccessMessage(isSuccessful, repositoryType);
-
-        int attempts = isSuccessful ? 1 : 3;
-
-        return new CodeGenerationResultDTO(isSuccessful, message, attempts);
-    }
-
-    /**
-     * Builds an appropriate success/failure message.
-     *
-     * @param isSuccessful   whether the generation was successful
-     * @param repositoryType the repository type that was processed
-     * @return the message string
-     */
-    private String buildSuccessMessage(boolean isSuccessful, RepositoryType repositoryType) {
-        if (isSuccessful) {
-            return switch (repositoryType) {
-                case SOLUTION -> "Solution code generated successfully and compiles without errors.";
-                case TEMPLATE -> "Template code generated successfully and compiles without errors.";
-                case TESTS -> "Test code generated successfully and compiles without errors.";
-                default -> "Code generated successfully and compiles without errors.";
-            };
-        }
-        else {
-            return switch (repositoryType) {
-                case SOLUTION -> "Solution code generation failed. The generated code contains compilation errors that could not be resolved.";
-                case TEMPLATE -> "Template code generation failed. The generated code contains compilation errors that could not be resolved.";
-                case TESTS -> "Test code generation failed. The generated code contains compilation errors that could not be resolved.";
-                default -> "Code generation failed. The generated code contains compilation errors that could not be resolved.";
-            };
         }
     }
 

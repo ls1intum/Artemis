@@ -226,6 +226,8 @@
                 "generating": "Generiere...",
                 "description": "Generiere Lösung, Template und Test-Code mit KI",
                 "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
+                "confirmTitle": "Code-Generierung bestätigen",
+                "confirmText": "Diese Aktion nutzt ein LLM, kann Zeit benötigen und Credits kosten. Möchten Sie fortfahren?",
                 "success": "{{repositoryType}} Code-Generierung erfolgreich abgeschlossen!",
                 "partialSuccess": "{{repositoryType}} Code-Generierung mit einigen Problemen abgeschlossen. Bitte überprüfen Sie den generierten Code.",
                 "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",

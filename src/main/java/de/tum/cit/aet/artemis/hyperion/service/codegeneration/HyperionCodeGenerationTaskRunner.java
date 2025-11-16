@@ -1,0 +1,87 @@
+package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
+
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.HyperionCodeGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+
+@Service
+@Lazy
+@Conditional(HyperionEnabled.class)
+public class HyperionCodeGenerationTaskRunner {
+
+    private final HyperionCodeGenerationExecutionService executionService;
+
+    private final HyperionWebsocketService websocket;
+
+    public HyperionCodeGenerationTaskRunner(HyperionCodeGenerationExecutionService executionService, HyperionWebsocketService websocket) {
+        this.executionService = executionService;
+        this.websocket = websocket;
+    }
+
+    /**
+     * Runs the code generation job asynchronously and publishes websocket updates.
+     *
+     * @param jobId          job identifier
+     * @param user           requesting user
+     * @param exercise       target exercise
+     * @param repositoryType target repository type
+     */
+    @Async("taskExecutor")
+    public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, RepositoryType repositoryType) {
+        var topicSuffix = "code-generation/jobs/" + jobId;
+        var publisher = new HyperionCodeGenerationEventPublisher() {
+
+            @Override
+            public void started() {
+                websocket.send(user.getLogin(), topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.STARTED, jobId, exercise.getId(), null,
+                        repositoryType, null, null, null, "Started"));
+            }
+
+            @Override
+            public void progress(int iteration) {
+                websocket.send(user.getLogin(), topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.PROGRESS, jobId, exercise.getId(), iteration,
+                        repositoryType, null, null, null, "Progress"));
+            }
+
+            @Override
+            public void fileUpdated(String path, RepositoryType repoType) {
+                websocket.send(user.getLogin(), topicSuffix,
+                        new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.FILE_UPDATED, jobId, exercise.getId(), null, repoType, path, null, null, null));
+            }
+
+            @Override
+            public void newFile(String path, RepositoryType repoType) {
+                websocket.send(user.getLogin(), topicSuffix,
+                        new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.NEW_FILE, jobId, exercise.getId(), null, repoType, path, null, null, null));
+            }
+
+            @Override
+            public void done(boolean success, int attemptsUsed, String message) {
+                websocket.send(user.getLogin(), topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.DONE, jobId, exercise.getId(), attemptsUsed,
+                        repositoryType, null, success, attemptsUsed, message));
+            }
+
+            @Override
+            public void error(String message) {
+                websocket.send(user.getLogin(), topicSuffix,
+                        new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.ERROR, jobId, exercise.getId(), null, repositoryType, null, null, null, message));
+            }
+        };
+
+        publisher.started();
+        try {
+            executionService.generateAndCompileCode(exercise, user, repositoryType, publisher);
+        }
+        catch (Exception ex) {
+            publisher.error("Unhandled error: " + ex.getMessage());
+        }
+    }
+}
