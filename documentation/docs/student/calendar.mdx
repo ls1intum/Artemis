@@ -14,8 +14,6 @@ import desktopSubscriptionComponent from './assets/calendar/desktop-subscription
 import mobileSubscriptionComponent from './assets/calendar/mobile-subscription-component.png';
 import desktopFilterComponent from './assets/calendar/desktop-filter-component.png';
 import mobileFilterComponent from './assets/calendar/mobile-filter-component.png';
-import desktopNavigationControls from './assets/calendar/desktop-navigation-controls.png';
-import mobileNavigationControls from './assets/calendar/mobile-navigation-controls.png';
 import Image, {ImageSize} from "../../src/components/Image/Image";
 
 # Calendar
@@ -30,7 +28,7 @@ It displays important events related to lectures, tutorials, exercises, and exam
 The following table shows the dates that are displayed as calendar events, if available.
 Note that an event can either represent a specific point in time (in which case it only has a start date) or a time period (in which case it has both a start and an end date).
 
-| Entity  | Dates                                                            |
+| Artemis Concept  | Dates                                                            |
 |----------|------------------------------------------------------------------|
 | Lecture  | start, end  |
 | Tutorial  | start, end  |
@@ -43,29 +41,20 @@ The available views differ between small and large devices to optimize the calen
 
 On larger devices, such as laptops and desktop computers, the calendar offers a high-level **month** presentation and a more detailed **week** presentation.
 
-<Image src={desktopMonthPresentationImage} alt={"Month Presentation for Large Devices"}  caption={"Month Presentation for Large Devices"} size={ImageSize.large}></Image>
-<Image src={desktopWeekPresentationImage} alt={"Week Presentation for Large Devices"} caption={"Week Presentation for Large Devices"} size={ImageSize.large}></Image>
+<Image src={desktopMonthPresentationImage} alt={"Month Presentation for Large Devices"}  caption={"Month Presentation for Large Devices"} size={ImageSize.large} hideBorder={true}></Image>
+<Image src={desktopWeekPresentationImage} alt={"Week Presentation for Large Devices"} caption={"Week Presentation for Large Devices"} size={ImageSize.large} hideBorder={true}></Image>
 
 On small devices, such as mobile phones, there is a high-level **month** presentation and a detailed **day** presentation.
 
 <div style={{ display: 'flex', gap: '1rem' }}>
-    <Image src={mobileMonthPresentationImage} alt={"Month Presentation for Small Devices"} caption={"Month Presentation for Small Devices"} style={{ maxHeight: '550px' }}></Image>
-    <Image src={mobileDayPresentationImage} alt={"Day Presentation for Small Devices"} caption={"Day Presentation for Small Devices"} style={{ maxHeight: '550px' }}></Image>
+    <Image src={mobileMonthPresentationImage} alt={"Month Presentation for Small Devices"} caption={"Month Presentation for Small Devices"} style={{ maxHeight: '550px' }} hideBorder={true}></Image>
+    <Image src={mobileDayPresentationImage} alt={"Day Presentation for Small Devices"} caption={"Day Presentation for Small Devices"} style={{ maxHeight: '550px' }} hideBorder={true}></Image>
 </div>
 
 ## Viewing Event Details
 In the desktop month and week presentations, as well as in the mobile day presentation, users can click on an event to view its details.
 
 <Image src={eventDetailsImage} alt={"Event Details Popover"} size={ImageSize.medium}></Image>
-
-## Navigating in Time
-On both large and small devices, users can click the chevron buttons to navigate backward or forward in time.
-Additionally, they can use the Today button to jump to the instance of the currently selected presentation that includes the current day.
-
-<div style={{ display: 'flex', gap: '1rem' }}>
-    <Image src={desktopNavigationControls} alt={"Navigation Controls for Large Devices"} caption={"Navigation Controls for Large Devices"} style={{ maxWidth: '280px' }}></Image>
-    <Image src={mobileNavigationControls} alt={"Navigation Controls for Small Devices"} caption={"Navigation Controls for Small Devices"} style={{ maxWidth: '580px' }}></Image>
-</div>
 
 ## Filtering Events
 By using the filter component of the calendar, users can include or exclude events based on their type.
