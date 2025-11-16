@@ -30,8 +30,18 @@ export class HyperionWebsocketService implements OnDestroy {
         const wsSub = this.websocketService
             .subscribe(channel)
             .receive(channel)
-            .subscribe((msg: any) => {
-                subject.next(msg as HyperionEvent);
+            .subscribe({
+                next: (msg: any) => {
+                    subject.next(msg as HyperionEvent);
+                },
+                error: (err) => {
+                    subject.error(err);
+                    this.subscribedJobs.delete(jobId);
+                },
+                complete: () => {
+                    subject.complete();
+                    this.subscribedJobs.delete(jobId);
+                },
             });
         this.subscribedJobs.set(jobId, { wsSubscription: wsSub, subject });
         return subject.asObservable();
@@ -46,6 +56,7 @@ export class HyperionWebsocketService implements OnDestroy {
         if (!s) return;
         s.wsSubscription.unsubscribe();
         this.websocketService.unsubscribe(this.channel(jobId));
+        s.subject.complete();
         this.subscribedJobs.delete(jobId);
     }
 
@@ -56,6 +67,7 @@ export class HyperionWebsocketService implements OnDestroy {
         this.subscribedJobs.forEach((s, jobId) => {
             s.wsSubscription.unsubscribe();
             this.websocketService.unsubscribe(this.channel(jobId));
+            s.subject.complete();
         });
     }
 

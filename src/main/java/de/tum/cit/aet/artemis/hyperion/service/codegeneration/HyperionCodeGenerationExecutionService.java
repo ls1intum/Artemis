@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -50,7 +51,7 @@ public class HyperionCodeGenerationExecutionService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationExecutionService.class);
 
-    private static final int MAX_ITERATIONS = 3;
+    private static final int MAX_ITERATIONS = 2;
 
     private static final long TIMEOUT = 180_000; // 3 minutes
 
@@ -92,12 +93,15 @@ public class HyperionCodeGenerationExecutionService {
 
     private final HyperionProgrammingExerciseContextRendererService repositoryStructureService;
 
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
     public HyperionCodeGenerationExecutionService(GitService gitService, RepositoryService repositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
-            HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy) {
+            HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
+            ProgrammingSubmissionService programmingSubmissionService) {
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -110,6 +114,7 @@ public class HyperionCodeGenerationExecutionService {
         this.solutionStrategy = solutionStrategy;
         this.templateStrategy = templateStrategy;
         this.testStrategy = testStrategy;
+        this.programmingSubmissionService = programmingSubmissionService;
     }
 
     /**
@@ -234,24 +239,27 @@ public class HyperionCodeGenerationExecutionService {
             throws GitAPIException {
         repositoryService.commitChanges(repository, user);
         String newCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
-        ProgrammingExerciseParticipation exerciseParticipation = programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
+        ProgrammingExerciseParticipation exerciseParticipation = switch (repositoryType) {
+            case TEMPLATE -> programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId());
+            case SOLUTION -> programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
+            case TESTS -> programmingExerciseParticipationService.retrieveSolutionParticipation(exercise); // tests use solution participation
+            default -> throw new IllegalArgumentException("Unsupported repository type: " + repositoryType);
+        };
         try {
-            if (repositoryType.getName().equals("exercise")) {
-                exerciseParticipation = programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId());
-                log.debug("Found template participation");
+            if (repositoryType == RepositoryType.TESTS) {
+                // Create TEST submission so polling can find the result
+                programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), newCommitHash);
+                // Make clear this was triggered by a tests change
+                continuousIntegrationTriggerService.triggerBuild(exerciseParticipation, newCommitHash, RepositoryType.TESTS);
             }
-            else if (repositoryType.getName().equals("solution")) {
-
-                exerciseParticipation = programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
-                log.debug("Found solution participation");
+            else {
+                continuousIntegrationTriggerService.triggerBuild(exerciseParticipation, newCommitHash, repositoryType);
             }
-            continuousIntegrationTriggerService.triggerBuild(exerciseParticipation, newCommitHash, null);
-            log.debug("Successfully triggered CI build for commit {} in exercise {}", newCommitHash, exercise.getId());
+            log.debug("Triggered CI build for commit {} (repoType={}) in exercise {}", newCommitHash, repositoryType, exercise.getId());
         }
         catch (ContinuousIntegrationException e) {
             log.warn("Failed to trigger CI build for commit {} in exercise {}: {}", newCommitHash, exercise.getId(), e.getMessage());
         }
-
         return newCommitHash;
     }
 
@@ -334,7 +342,7 @@ public class HyperionCodeGenerationExecutionService {
 
                 publisher.progress(i + 1);
 
-                if (result != null) {
+                if (result != null && result.isSuccessful()) {
                     break;
                 }
 
@@ -399,32 +407,22 @@ public class HyperionCodeGenerationExecutionService {
         long startTime = System.currentTimeMillis();
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
-        if (repositoryType.getName().equals("exercise") && templateParticipation == null) {
-            log.warn("Could not find template participation for exercise {}", exercise.getId());
-            return null;
-        }
-        else if (repositoryType.getName().equals("solution") && solutionParticipation == null) {
-            log.warn("Could not find solution participation for exercise {}", exercise.getId());
-            return null;
-        }
-        else if (repositoryType.getName().equals("tests") && templateParticipation != null) {
-            log.warn("Could not find test participation for exercise {}", exercise.getId());
+        ProgrammingExerciseParticipation participation = switch (repositoryType) {
+            case TEMPLATE -> templateParticipation;
+            case SOLUTION -> solutionParticipation;
+            case TESTS -> solutionParticipation; // tests also use solution participation
+            default -> null;
+        };
+        if (participation == null) {
+            log.warn("Could not find participation for repoType {} in exercise {}", repositoryType, exercise.getId());
             return null;
         }
 
         int pollCount = 0;
-        long id = 0;
         while (System.currentTimeMillis() - startTime < TIMEOUT) {
             try {
-
-                if (repositoryType.getName().equals("exercise")) {
-                    id = templateParticipation.getId();
-                }
-                else if (repositoryType.getName().equals("solution")) {
-                    id = solutionParticipation.getId();
-                }
-
-                ProgrammingSubmission submission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(id, commitHash);
+                ProgrammingSubmission submission = programmingSubmissionRepository
+                        .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), commitHash);
 
                 if (submission != null) {
                     Optional<Result> result = resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId());
@@ -438,6 +436,10 @@ public class HyperionCodeGenerationExecutionService {
                 pollCount++;
 
                 Thread.sleep(POLL_INTERVAL);
+            }
+            catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw ie;
             }
             catch (Exception e) {
                 log.warn("Exception while polling for build result for commit {}: {}. Continuing...", commitHash, e.getMessage());

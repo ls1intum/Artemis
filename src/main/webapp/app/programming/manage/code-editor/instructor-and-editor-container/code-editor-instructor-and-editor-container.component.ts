@@ -106,13 +106,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private startCodeGeneration() {
         this.isGeneratingCode.set(true);
         const request: CodeGenerationRequestDTO = { repositoryType: this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum };
-        //console.log('Exercise ID:', this.exercise?.id);
-        //console.log('Repository type:', this.selectedRepository);
         this.http.post<{ jobId: string }>(`api/hyperion/programming-exercises/${this.exercise!.id}/generate-code`, request).subscribe({
             next: (res) => {
-                //console.log('✅ Response received from backend:', res);
                 if (!res?.jobId) {
-                    //console.warn('⚠️ No jobId found in response, stopping spinner.');
                     this.isGeneratingCode.set(false);
                     this.codeGenAlertService.addAlert({
                         type: AlertType.DANGER,
@@ -120,21 +116,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     });
                     return;
                 }
-                //console.log('📬 Received jobId:', res.jobId);
-                //console.log('🔗 Subscribing to job via websocket...');
                 this.subscribeToJob(res.jobId);
             },
             error: (err) => {
-                //console.error('❌ HTTP request failed:', err);
                 this.isGeneratingCode.set(false);
                 this.codeGenAlertService.addAlert({
                     type: AlertType.DANGER,
                     translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
                 });
             },
-            complete: () => {
-                //console.log('ℹ️ HTTP observable completed.');
-            },
+            complete: () => {},
         });
     }
 
@@ -143,11 +134,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param jobId job identifier
      */
     private subscribeToJob(jobId: string) {
-        //const channel = `/user/topic/hyperion/code-generation/jobs/${jobId}`;
-        // console.log('[Hyperion] Subscribing to channel:', channel);
-
-        const cleanup = (reason: string) => {
-            //console.log('[Hyperion] Cleaning up subscription. Reason =', reason);
+        const cleanup = () => {
             this.isGeneratingCode.set(false);
             this.hyperionWs.unsubscribeFromJob(jobId);
             this.jobSubscription?.unsubscribe();
@@ -159,37 +146,28 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
         this.jobSubscription = this.hyperionWs.subscribeToJob(jobId).subscribe({
             next: (event) => {
-                //console.log('[Hyperion WS event]', event);
-
                 switch (event.type) {
                     case 'STARTED':
                         // spinner already on; just log
-                        //console.log('[Hyperion] Job started.');
                         break;
 
                     case 'PROGRESS':
-                        //console.log('[Hyperion] Progress iteration:', event.iteration);
                         break;
 
                     case 'FILE_UPDATED':
                     case 'NEW_FILE':
-                        //console.log(`[Hyperion] ${event.type} -> pulling repo…`, event.path);
                         this.repoService
                             .pull()
                             .pipe(
                                 take(1),
-                                catchError((err) => {
-                                    //console.error('[Hyperion] Repo pull failed on update:', err);
+                                catchError(() => {
                                     return of(void 0);
                                 }),
                             )
-                            .subscribe(() => {
-                                //console.log('[Hyperion] Repo pull done after', event.type);
-                            });
+                            .subscribe(() => {});
                         break;
 
                     case 'DONE':
-                        //console.log('[Hyperion] DONE event received. success =', event.success, 'attempts =', event.attempts);
                         if (this.codeEditorContainer) {
                             this.codeEditorContainer.editorState = EditorState.REFRESHING;
                         }
@@ -197,15 +175,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                             .pull()
                             .pipe(
                                 take(1),
-                                catchError((err) => {
-                                    //console.error('[Hyperion] Final repo pull failed:', err);
+                                catchError(() => {
                                     return of(void 0);
                                 }),
                                 switchMap(() =>
                                     this.repoFileService.getRepositoryContent().pipe(
                                         take(1),
-                                        catchError((err) => {
-                                            //console.error('[Hyperion] Refresh repository content failed:', err);
+                                        catchError(() => {
                                             return of({});
                                         }),
                                     ),
@@ -215,7 +191,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                                 if (this.codeEditorContainer) {
                                     this.codeEditorContainer.editorState = EditorState.CLEAN;
                                 }
-                                cleanup('DONE');
+                                cleanup();
                                 this.codeGenAlertService.addAlert({
                                     type: event.success ? AlertType.SUCCESS : AlertType.WARNING,
                                     translationKey: event.success
@@ -227,8 +203,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         break;
 
                     case 'ERROR':
-                        //console.error('[Hyperion] ERROR event:', event.message);
-                        cleanup('ERROR');
+                        cleanup();
                         this.codeGenAlertService.addAlert({
                             type: AlertType.DANGER,
                             translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
@@ -237,12 +212,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         break;
 
                     default:
-                    //console.warn('[Hyperion] Unhandled event type:', (event as any).type);
                 }
             },
-            error: (err) => {
-                //console.error('[Hyperion] WebSocket stream error:', err);
-                cleanup('WS_ERROR');
+            error: () => {
+                cleanup();
                 this.codeGenAlertService.addAlert({
                     type: AlertType.DANGER,
                     translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
@@ -250,21 +223,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 });
             },
             complete: () => {
-                //console.log('[Hyperion] WebSocket stream completed.');
                 // don't auto-stop spinner here; DONE/ERROR/timeout handle it
             },
         });
 
-        // Safety timeout (10 minutes)
+        // Safety timeout (20 minutes)
         this.jobTimeoutHandle = window.setTimeout(() => {
             if (this.isGeneratingCode()) {
-                //console.warn('[Hyperion] Job timeout reached — stopping spinner & unsubscribing. jobId =', jobId);
-                cleanup('TIMEOUT');
+                cleanup();
                 this.codeGenAlertService.addAlert({
                     type: AlertType.WARNING,
                     translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout',
                 });
             }
-        }, 600_000);
+        }, 1_200_000);
     }
 }
