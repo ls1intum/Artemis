@@ -235,58 +235,55 @@ public class ModelingExerciseResource {
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO);
 
-        final ModelingExercise modelingExerciseBeforeUpdate = modelingExerciseRepository
-                .findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(updateModelingExerciseDTO.id());
-        final ModelingExercise beforeSnapShot = cloneForComparison(modelingExerciseBeforeUpdate);
-
+        final ModelingExercise originalExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(updateModelingExerciseDTO.id());
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExerciseBeforeUpdate, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalExercise, user);
 
-        if (updateModelingExerciseDTO.courseId() != null
-                && !Objects.equals(modelingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(), updateModelingExerciseDTO.courseId())) {
+        // Forbid changing the course the exercise belongs to.
+        if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateModelingExerciseDTO.courseId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
 
         // whether is exam exercise or course exercise are not changeable
-        ModelingExercise modelingExercise = updateModelingExerciseDTO.update(modelingExerciseBeforeUpdate);
+        ModelingExercise updatedExercise = updateModelingExerciseDTO.update(originalExercise);
 
         // validates general settings: points, dates
-        modelingExercise.validateGeneralSettings();
+        updatedExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
-        modelingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+        updatedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         // Forbid conversion between normal course exercise and exam exercise
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedExercise, originalExercise, ENTITY_NAME);
 
-        channelService.updateExerciseChannel(beforeSnapShot, modelingExercise);
+        channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
-        ModelingExercise updatedModelingExercise = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
+        ModelingExercise persistedExercise = exerciseService.saveWithCompetencyLinks(updatedExercise, modelingExerciseRepository::save);
 
-        exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.updatePointsInRelatedParticipantScores(beforeSnapShot, updatedModelingExercise);
+        exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.updatePointsInRelatedParticipantScores(originalExercise, persistedExercise);
 
-        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedModelingExercise, beforeSnapShot.getDueDate());
-        exerciseService.checkExampleSubmissions(updatedModelingExercise);
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(persistedExercise, originalExercise.getDueDate());
+        exerciseService.checkExampleSubmissions(persistedExercise);
 
-        exerciseService.notifyAboutExerciseChanges(beforeSnapShot, updatedModelingExercise, notificationText);
-        slideApi.ifPresent(api -> api.handleDueDateChange(beforeSnapShot, updatedModelingExercise));
+        exerciseService.notifyAboutExerciseChanges(originalExercise, persistedExercise, notificationText);
+        slideApi.ifPresent(api -> api.handleDueDateChange(originalExercise, persistedExercise));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(beforeSnapShot, Optional.of(updatedModelingExercise)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalExercise, Optional.of(persistedExercise)));
 
         // Notify AtlasML about the modeling exercise update
         atlasMLApi.ifPresent(api -> {
             try {
-                api.saveExerciseWithCompetencies(updatedModelingExercise, OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(persistedExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about modeling exercise update: {}", e.getMessage());
             }
         });
 
-        exerciseVersionService.createExerciseVersion(updatedModelingExercise);
+        exerciseVersionService.createExerciseVersion(persistedExercise);
 
-        return ResponseEntity.ok(updatedModelingExercise);
+        return ResponseEntity.ok(persistedExercise);
     }
 
     /**
@@ -468,31 +465,5 @@ public class ModelingExerciseResource {
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateModelingExercise(updateModelingExerciseDTO, null);
-    }
-
-    private ModelingExercise cloneForComparison(ModelingExercise source) {
-        ModelingExercise copy = new ModelingExercise();
-        copy.setId(source.getId());
-        copy.setChannelName(source.getChannelName());
-        copy.setTitle(source.getTitle());
-        copy.setShortName(source.getShortName());
-        copy.setProblemStatement(source.getProblemStatement());
-        copy.setCategories(source.getCategories());
-        copy.setDifficulty(source.getDifficulty());
-        copy.setMaxPoints(source.getMaxPoints());
-        copy.setBonusPoints(source.getBonusPoints());
-        copy.setIncludedInOverallScore(source.getIncludedInOverallScore());
-        copy.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
-        copy.setExerciseGroup(source.getExerciseGroup());
-        copy.setReleaseDate(source.getReleaseDate());
-        copy.setStartDate(source.getStartDate());
-        copy.setDueDate(source.getDueDate());
-        copy.setAssessmentDueDate(source.getAssessmentDueDate());
-        copy.setExampleSolutionModel(source.getExampleSolutionModel());
-        copy.setExampleSolutionExplanation(source.getExampleSolutionExplanation());
-        copy.setDiagramType(source.getDiagramType());
-        copy.setExampleSolutionPublicationDate(source.getExampleSolutionPublicationDate());
-        copy.setCompetencyLinks(source.getCompetencyLinks());
-        return copy;
     }
 }

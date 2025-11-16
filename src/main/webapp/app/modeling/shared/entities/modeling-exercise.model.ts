@@ -31,6 +31,7 @@ export interface UpdateModelingExerciseDTO {
 
     title?: string;
     channelName?: string;
+    shortName?: string;
     problemStatement?: string;
     categories?: string[];
 
@@ -52,6 +53,7 @@ export interface UpdateModelingExerciseDTO {
     exerciseGroupId?: number;
 
     gradingCriteria?: GradingCriterion[];
+    gradingInstructions?: string;
 }
 
 /**
@@ -64,6 +66,7 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         id: modelingExercise.id!,
         title: modelingExercise.title,
         channelName: modelingExercise.channelName,
+        shortName: modelingExercise.shortName,
         problemStatement: modelingExercise.problemStatement,
         categories: categories,
         difficulty: modelingExercise.difficulty,
@@ -80,5 +83,6 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         courseId: modelingExercise.course?.id,
         exerciseGroupId: modelingExercise.exerciseGroup?.id,
         gradingCriteria: modelingExercise.gradingCriteria ?? [],
+        gradingInstructions: modelingExercise.gradingInstructions,
     };
 }
