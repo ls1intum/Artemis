@@ -248,6 +248,7 @@ public class AtlasAgentService {
             // Clean up ThreadLocal to prevent memory leaks
             competencyModifiedInCurrentRequest.remove();
             CompetencyExpertToolsService.clearCurrentSessionId();
+            CompetencyExpertToolsService.clearAllPreviews();
         }
 
     }
