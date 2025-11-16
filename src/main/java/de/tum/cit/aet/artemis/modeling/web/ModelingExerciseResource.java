@@ -282,7 +282,6 @@ public class ModelingExerciseResource {
         });
 
         exerciseVersionService.createExerciseVersion(persistedExercise);
-
         return ResponseEntity.ok(persistedExercise);
     }
 

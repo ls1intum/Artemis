@@ -26,55 +26,11 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
      * Returns a new ModelingExercise with this DTO applied on top of the existing exercise.
      * The existing exercise is treated as the "before" state and is not modified.
      *
-     * @param existingExercise the exercise to use as base state
+     * @param updated the exercise to use as base state
      * @return a new ModelingExercise instance representing the updated state
      */
-    public ModelingExercise update(ModelingExercise existingExercise) {
-        ModelingExercise updated = new ModelingExercise();
-
-        updated.setId(existingExercise.getId());
-        updated.setTitle(existingExercise.getTitle());
-        updated.setChannelName(existingExercise.getChannelName());
-        updated.setShortName(existingExercise.getShortName());
-        updated.setProblemStatement(existingExercise.getProblemStatement());
-        updated.setCategories(existingExercise.getCategories());
-        updated.setDifficulty(existingExercise.getDifficulty());
-        updated.setMaxPoints(existingExercise.getMaxPoints());
-        updated.setBonusPoints(existingExercise.getBonusPoints());
-        updated.setIncludedInOverallScore(existingExercise.getIncludedInOverallScore());
-        if (existingExercise.isExamExercise()) {
-            updated.setExerciseGroup(existingExercise.getExerciseGroup());
-        }
-        else {
-            updated.setCourse(existingExercise.getCourseViaExerciseGroupOrCourseMember());
-        }
-        updated.setMode(existingExercise.getMode());
-        updated.setReleaseDate(existingExercise.getReleaseDate());
-        updated.setStartDate(existingExercise.getStartDate());
-        updated.setDueDate(existingExercise.getDueDate());
-        updated.setAssessmentDueDate(existingExercise.getAssessmentDueDate());
-        updated.setExampleSolutionModel(existingExercise.getExampleSolutionModel());
-        updated.setExampleSolutionExplanation(existingExercise.getExampleSolutionExplanation());
-        updated.setExampleSolutionPublicationDate(existingExercise.getExampleSolutionPublicationDate());
-        updated.setGradingInstructions(existingExercise.getGradingInstructions());
-        updated.setGradingCriteria(existingExercise.getGradingCriteria());
-        updated.setDiagramType(existingExercise.getDiagramType());
-        updated.setCompetencyLinks(existingExercise.getCompetencyLinks());
-        updated.setFeedbackSuggestionModule(existingExercise.getFeedbackSuggestionModule());
-        updated.setGradingInstructionFeedbackUsed(existingExercise.isGradingInstructionFeedbackUsed());
-        updated.setAssessmentType(existingExercise.getAssessmentType());
-        updated.setAllowComplaintsForAutomaticAssessments(existingExercise.getAllowComplaintsForAutomaticAssessments());
-        updated.setAllowFeedbackRequests(existingExercise.getAllowFeedbackRequests());
-        updated.setAttachments(existingExercise.getAttachments());
-        updated.setExampleSubmissions(existingExercise.getExampleSubmissions());
-        updated.setStudentParticipations(existingExercise.getStudentParticipations());
-        updated.setTutorParticipations(existingExercise.getTutorParticipations());
-        updated.setTeams(existingExercise.getTeams());
-        updated.setTeamAssignmentConfig(existingExercise.getTeamAssignmentConfig());
-        updated.setPlagiarismCases(existingExercise.getPlagiarismCases());
-        updated.setPlagiarismDetectionConfig(existingExercise.getPlagiarismDetectionConfig());
-        updated.setPresentationScoreEnabled(existingExercise.getPresentationScoreEnabled());
-        updated.setSecondCorrectionEnabled(existingExercise.getSecondCorrectionEnabled());
+    public ModelingExercise update(ModelingExercise updated) {
+        updated.setId(this.id);
         if (this.title != null) {
             updated.setTitle(this.title);
         }
