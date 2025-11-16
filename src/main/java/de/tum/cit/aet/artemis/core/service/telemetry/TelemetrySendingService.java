@@ -89,12 +89,13 @@ public class TelemetrySendingService {
     public void sendTelemetryByPostRequest(boolean sendAdminDetails) {
 
         try {
-            String telemetryJson = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(buildTelemetryData(sendAdminDetails));
+            var telemetryData = buildTelemetryData(sendAdminDetails);
+            String telemetryJson = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(telemetryData);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
 
-            log.info("Sending telemetry to {}", destination);
+            log.info("Sending telemetry {} to {}", telemetryJson, destination);
             // NOTE: there should be no module in the following URL
             var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
             log.info("Successfully sent telemetry data. {}", response.getBody());
