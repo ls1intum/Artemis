@@ -6,7 +6,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,7 +28,7 @@ public class ConversationParticipant extends DomainObject {
 
     @ManyToOne
     @JsonIncludeProperties({ "id", "firstName", "lastName" })
-    @NotNull
+    @NonNull
     private User user;
 
     /**

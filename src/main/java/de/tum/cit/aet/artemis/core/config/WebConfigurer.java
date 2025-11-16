@@ -24,11 +24,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -56,6 +59,23 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
         this.toolsInterceptor = toolsInterceptor;
+    }
+
+    @Bean
+    public AsyncTaskExecutor mvcTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(10);          // tune for your load
+        executor.setMaxPoolSize(100);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("mvc-async-");
+        executor.initialize();
+        return executor;
+    }
+
+    @Override
+    public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
+        configurer.setTaskExecutor(mvcTaskExecutor());
+        configurer.setDefaultTimeout(60_000L); // 60 seconds, adjust as needed
     }
 
     @Override
