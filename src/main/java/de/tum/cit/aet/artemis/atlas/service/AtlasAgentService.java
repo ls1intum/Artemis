@@ -303,7 +303,8 @@ public class AtlasAgentService {
 
     /**
      * Extract the brief content from the delegation marker.
-     * Expected format: [DELEGATE_TO_COMPETENCY_EXPERT:brief_content]
+     * Expected format:
+     * %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:TOPIC/TOPICS: ...\\nREQUIREMENTS: ...\\nCONSTRAINTS: ...\\nCONTEXT: ...
      *
      * @param response The response containing the delegation marker
      * @return The extracted brief content
