@@ -64,6 +64,21 @@ public class Lecture extends DomainObject {
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
 
+    /**
+     * The lecture units of this lecture.
+     * <p>
+     * Note: We use a Set here to avoid issues with Hibernate and JPA when managing the collection.
+     * A list without @OrderColumn is treated as Bag and would lead to issues when fetching data like lecture.lectureUnits.competencyLinks
+     * A Set prevents this, a LinkedHashSet is used to maintain insertion order.
+     * <p>
+     * Note: We cannot use @OrderColumn here because this leads to issues when saving the lecture (there were ugly workarounds needed in the past) and could potentially lead to
+     * null values in the order column which leads to unexpected behavior and unresolvable bugs in the user interface. This has happened in the past, therefore, we decided to
+     * NOT rely on @OrderColumn anymore.
+     * <p>
+     * Instead, we manage the order manually via the lectureUnitOrder field in LectureUnit, other developers who use lecture and lectureUnit do not need to worry about it as
+     * long as they use the provided methods to add/remove/reorder lecture units.
+     *
+     */
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("lectureUnitOrder ASC") // DB → Java: always ordered by that column
     @JsonIgnoreProperties("lecture")
