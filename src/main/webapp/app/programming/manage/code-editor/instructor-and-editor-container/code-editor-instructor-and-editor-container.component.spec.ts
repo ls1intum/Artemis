@@ -2,12 +2,15 @@ import 'zone.js';
 import 'zone.js/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+import { HttpClient } from '@angular/common/http';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -28,9 +31,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
-    let codeGenerationService: jest.Mocked<Pick<HyperionCodeGenerationApiService, 'generateCode'>>;
+    let http: jest.Mocked<Pick<HttpClient, 'post'>>;
+    let ws: jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
+    let modal: jest.Mocked<Pick<NgbModal, 'open'>>;
     let alertService: AlertService;
     let profileService: ProfileService;
+    let repoService: jest.Mocked<Pick<CodeEditorRepositoryService, 'pull'>>;
+    let repoFileService: jest.Mocked<Pick<CodeEditorRepositoryFileService, 'getRepositoryContent'>>;
 
     beforeAll(() => {
         try {
@@ -53,10 +60,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
                 { provide: Location, useValue: { replaceState: jest.fn() } },
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: ActivatedRoute, useValue: { params: of({}) } },
-                {
-                    provide: HyperionCodeGenerationApiService,
-                    useValue: { generateCode: jest.fn() },
-                },
+                { provide: HttpClient, useValue: { post: jest.fn() } },
+                { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
+                { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
+                { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
+                { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({} as any)) } },
             ],
         })
             // Avoid rendering heavy template dependencies for these tests
@@ -66,7 +74,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
             .compileComponents();
 
         alertService = TestBed.inject(AlertService);
-        codeGenerationService = TestBed.inject(HyperionCodeGenerationApiService) as any;
+        http = TestBed.inject(HttpClient) as any;
+        modal = TestBed.inject(NgbModal) as any;
+        ws = TestBed.inject(HyperionWebsocketService) as any;
+        repoService = TestBed.inject(CodeEditorRepositoryService) as any;
+        repoFileService = TestBed.inject(CodeEditorRepositoryFileService) as any;
         profileService = TestBed.inject(ProfileService);
 
         // Enable Hyperion by default so property initialization is deterministic
@@ -79,20 +91,22 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         comp.exercise = { id: 42 } as any;
     });
 
-    it('should not generate when no exercise id', () => {
+    it('should not generate when no exercise id', async () => {
         comp.exercise = undefined as any;
         comp.selectedRepository = RepositoryType.TEMPLATE;
 
         comp.generateCode();
-        expect(codeGenerationService.generateCode).not.toHaveBeenCalled();
+        await Promise.resolve();
+        expect(http.post).not.toHaveBeenCalled();
     });
 
-    it('should not generate when a generation is already running', () => {
+    it('should not generate when a generation is already running', async () => {
         comp.selectedRepository = RepositoryType.SOLUTION;
         comp.isGeneratingCode.set(true);
 
         comp.generateCode();
-        expect(codeGenerationService.generateCode).not.toHaveBeenCalled();
+        await Promise.resolve();
+        expect(http.post).not.toHaveBeenCalled();
     });
 
     it('should warn on unsupported repository types', () => {
@@ -101,21 +115,28 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
 
         comp.generateCode();
 
-        expect(codeGenerationService.generateCode).not.toHaveBeenCalled();
+        expect(http.post).not.toHaveBeenCalled();
         expect(addAlertSpy).toHaveBeenCalledWith(
             expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.unsupportedRepository' }),
         );
     });
 
-    it('should call API and show success alert on success', () => {
+    it('should call API, subscribe, and show success alert on DONE success', async () => {
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.TEMPLATE;
 
-        codeGenerationService.generateCode.mockReturnValue(of({ success: true, message: 'ok', attempts: 1 } as any));
+        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-1' }));
+        const job$ = new Subject<any>();
+        (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
 
         comp.generateCode();
+        await Promise.resolve(); // resolve modal
 
-        expect(codeGenerationService.generateCode).toHaveBeenCalledWith(42, { repositoryType: 'TEMPLATE' });
+        expect(http.post).toHaveBeenCalledWith('api/hyperion/programming-exercises/42/generate-code', { repositoryType: 'TEMPLATE' });
+
+        // Emit DONE success event
+        job$.next({ type: 'DONE', success: true });
+
         expect(comp.isGeneratingCode()).toBeFalse();
         expect(addAlertSpy).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -126,15 +147,21 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         );
     });
 
-    it('should call API and show partial success alert when success=false', () => {
+    it('should call API, subscribe, and show partial success alert on DONE failure', async () => {
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.SOLUTION;
 
-        codeGenerationService.generateCode.mockReturnValue(of({ success: false, message: 'partial', attempts: 1 } as any));
+        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-2' }));
+        const job$ = new Subject<any>();
+        (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
 
         comp.generateCode();
+        await Promise.resolve();
 
-        expect(codeGenerationService.generateCode).toHaveBeenCalledWith(42, { repositoryType: 'SOLUTION' });
+        expect(http.post).toHaveBeenCalledWith('api/hyperion/programming-exercises/42/generate-code', { repositoryType: 'SOLUTION' });
+
+        job$.next({ type: 'DONE', success: false });
+
         expect(comp.isGeneratingCode()).toBeFalse();
         expect(addAlertSpy).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -145,21 +172,21 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         );
     });
 
-    it('should show error alert on API error', () => {
+    it('should show error alert on API error', async () => {
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.TESTS;
 
-        codeGenerationService.generateCode.mockReturnValue(throwError(() => new Error('fail')) as any);
+        (http.post as jest.Mock).mockReturnValue(throwError(() => new Error('fail')) as any);
 
         comp.generateCode();
+        await Promise.resolve();
 
-        expect(codeGenerationService.generateCode).toHaveBeenCalledWith(42, { repositoryType: 'TESTS' });
+        expect(http.post).toHaveBeenCalledWith('api/hyperion/programming-exercises/42/generate-code', { repositoryType: 'TESTS' });
         expect(comp.isGeneratingCode()).toBeFalse();
         expect(addAlertSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: AlertType.DANGER,
                 translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
-                translationParams: { repositoryType: RepositoryType.TESTS },
             }),
         );
     });

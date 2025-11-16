@@ -315,10 +315,12 @@ public class HyperionCodeGenerationExecutionService {
         String lastBuildLogs = null;
         Result result = null;
         String lastCommitHash = null;
+        int attemptsUsed = 0;
 
         try {
             HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
             for (int i = 0; i < MAX_ITERATIONS; i++) {
+                attemptsUsed = i + 1;
                 String repositoryStructure = repositoryStructureService.getRepositoryStructure(setupResult.repository());
                 List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure);
 
@@ -350,6 +352,10 @@ public class HyperionCodeGenerationExecutionService {
             }
 
         }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            publisher.error(e.getMessage());
+        }
         catch (Exception e) {
             publisher.error(e.getMessage());
         }
@@ -367,7 +373,8 @@ public class HyperionCodeGenerationExecutionService {
         }
 
         boolean success = result != null && result.isSuccessful();
-        publisher.done(success, success ? 1 : MAX_ITERATIONS, success ? "Succeeded" : "Failed");
+        int reportedAttempts = attemptsUsed == 0 ? MAX_ITERATIONS : attemptsUsed;
+        publisher.done(success, reportedAttempts, success ? "Succeeded" : "Failed");
 
         return result;
     }
