@@ -216,9 +216,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         TextUnit unreleasedLectureUnit = new TextUnit();
         unreleasedLectureUnit.setName("TextUnitOfLectureOne");
         unreleasedLectureUnit.setReleaseDate(ZonedDateTime.now().plusDays(5));
-        unreleasedLectureUnit = textUnitRepository.save(unreleasedLectureUnit);
         lecture.addLectureUnit(unreleasedLectureUnit);
         lectureRepository.save(lecture);
+        unreleasedLectureUnit = textUnitRepository.save(unreleasedLectureUnit);
 
         newCompetency.setTitle("Title");
         newCompetency.setDescription("Description");
@@ -581,7 +581,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         exerciseRepository.save(textExercise);
 
         ZonedDateTime visibleDate = ZonedDateTime.of(2022, 7, 10, 14, 0, 0, 0, ZoneId.of("UTC"));
-        long visibleDateDiff = visibleDate.toEpochSecond() - releaseDate.toEpochSecond();
         lecture.setVisibleDate(visibleDate);
         lectureRepository.save(lecture);
 

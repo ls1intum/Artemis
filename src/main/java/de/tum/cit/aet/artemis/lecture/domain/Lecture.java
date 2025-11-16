@@ -18,6 +18,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
@@ -178,7 +179,7 @@ public class Lecture extends DomainObject {
      *
      * @param orderedIds the list of lecture unit IDs in the desired order
      */
-    public void reorderLectureUnits(List<Long> orderedIds) {
+    public void reorderLectureUnits(@NotNull List<Long> orderedIds) {
         List<LectureUnit> sorted = lectureUnits.stream().sorted(Comparator.comparing(unit -> orderedIds.indexOf(unit.getId()))).toList();
         lectureUnits.clear();
         lectureUnits.addAll(sorted);
@@ -191,14 +192,18 @@ public class Lecture extends DomainObject {
      *
      * @param lectureUnits the new list of lecture units
      */
-    public void setLectureUnits(List<LectureUnit> lectureUnits) {
-        this.lectureUnits.clear();
-        if (lectureUnits != null) {
+    public void setLectureUnits(@Nullable List<LectureUnit> lectureUnits) {
+        // this if statement is important to avoid issues when setting lazy loaded lectureUnits to null or empty which would not work in the else statement
+        if (lectureUnits == null || lectureUnits.isEmpty()) {
+            this.lectureUnits = new LinkedHashSet<>();
+        }
+        else {
+            this.lectureUnits.clear();
             for (LectureUnit lectureUnit : lectureUnits) {
                 addLectureUnit(lectureUnit);        // ensures back-reference and collection management
             }
+            updateLectureUnitOrder();
         }
-        updateLectureUnitOrder();
     }
 
     /**
