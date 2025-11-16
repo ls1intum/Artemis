@@ -144,6 +144,8 @@ public class Lecture extends DomainObject {
     /**
      * Get an unmodifiable list of lecture units when the objects are initialized by Hibernate.
      * This is important so that external code does not modify the list without updating the back-references and order.
+     * <p>
+     * Use {@link #addLectureUnit}, {@link #removeLectureUnit}, {@link #setLectureUnits}, or {@link #reorderLectureUnits} to modify the lecture units.
      *
      * @return the lecture units
      */
