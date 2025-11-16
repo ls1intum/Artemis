@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -29,9 +28,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "textunitintegrationtest";
-
-    @Autowired
-    private TextUnitRepository textUnitRepository;
 
     @Autowired
     private LectureTestRepository lectureRepository;
@@ -53,7 +49,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         this.lecture = lectureUtilService.createCourseWithLecture(true);
         this.textUnit = new TextUnit();
-        this.textUnit.setName("LoremIpsum     ");
+        this.textUnit.setName("LoremIpsum");
         this.textUnit.setContent("This is a Test");
 
         // Add users that are not in the course
@@ -120,17 +116,25 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void updateTextUnit_asEditor_shouldKeepOrdering() throws Exception {
         persistTextUnitWithLecture();
 
+        var databaseLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        assertThat(databaseLecture.getLectureUnits()).hasSize(1);
         // Add a second lecture unit
-        TextUnit textUnit = lectureUtilService.createTextUnit(lecture);
-        lecture.addLectureUnit(textUnit);
+        TextUnit secondTextUnit = lectureUtilService.createTextUnit(lecture);
+        lecture.addLectureUnit(secondTextUnit);
         lecture = lectureRepository.save(lecture);
+
+        assertThat(lecture.getLectureUnits()).hasSize(2);
+        databaseLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        assertThat(databaseLecture.getLectureUnits()).hasSize(2);
 
         List<LectureUnit> orderedUnits = lecture.getLectureUnits();
 
         // Updating the lecture unit should not change order attribute
-        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", secondTextUnit, TextUnit.class, HttpStatus.OK);
+        databaseLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        assertThat(lecture.getLectureUnits()).hasSize(2);
 
-        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow().getLectureUnits();
+        List<LectureUnit> updatedOrderedUnits = databaseLecture.getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
@@ -166,14 +170,18 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private void persistTextUnitWithLecture() {
         lecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        assertThat(lecture.getLectureUnits()).isEmpty();
         lecture.addLectureUnit(textUnit);
         lecture = lectureRepository.save(lecture);
+        assertThat(lecture.getLectureUnits()).hasSize(1);
 
-        Set<CompetencyLectureUnitLink> link = textUnit.getCompetencyLinks();
-        textUnit.setCompetencyLinks(null);
+        // use the saved text unit with id from now on
+        textUnit = (TextUnit) lecture.getLectureUnits().getFirst();
 
-        textUnit = textUnitRepository.save(textUnit);
-        textUnit.setCompetencyLinks(link);
-        textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        lecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
+        assertThat(lecture.getLectureUnits()).hasSize(1);
+
+        assertThat(textUnit.getLecture()).isNotNull();
+        assertThat(textUnit.getLecture().getId()).isEqualTo(lecture.getId());
     }
 }

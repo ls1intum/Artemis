@@ -356,9 +356,8 @@ public class LectureUtilService {
      *
      * @param lectureUnit The LectureUnit that has been completed
      * @param user        The User that completed the LectureUnit
-     * @return The completed LectureUnit
      */
-    public LectureUnit completeLectureUnitForUser(LectureUnit lectureUnit, User user) {
+    public void completeLectureUnitForUser(LectureUnit lectureUnit, User user) {
         var lectureUnitCompletion = new LectureUnitCompletion();
         lectureUnitCompletion.setLectureUnit(lectureUnit);
         lectureUnitCompletion.setUser(user);
@@ -369,6 +368,5 @@ public class LectureUtilService {
             lectureUnit.getCompletedUsers().add(lectureUnitCompletion);
         }
 
-        return lectureUnitCompletion.getLectureUnit();
     }
 }
