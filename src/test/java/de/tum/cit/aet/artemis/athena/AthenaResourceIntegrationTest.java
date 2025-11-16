@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -171,6 +172,11 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         studentParticipationRepository.save(modelingParticipation);
         modelingSubmission.setParticipation(modelingParticipation);
         modelingSubmissionRepository.save(modelingSubmission);
+    }
+
+    @AfterEach
+    void cleanupRepositories() {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
     }
 
     @Test
@@ -409,7 +415,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
 
         // Seed a LocalVC bare repository with content
-        var sourceRepo = new LocalRepository(defaultBranch);
+        var sourceRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
         sourceRepo.configureRepos(localVCBasePath, "athenaSrcLocalRepo", "athenaSrcOriginRepo");
 
         // Ensure tests repository URI exists on the exercise
@@ -453,7 +459,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         // Prepare a LocalVC student repository and wire it to the participation referenced by the submission.
         var projectKey = programmingExercise.getProjectKey();
         String srcSlug = projectKey.toLowerCase() + "-athena-src";
-        var sourceRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, srcSlug);
+        var sourceRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, srcSlug));
         // Remove default seed file (test.txt) from the working copy and commit deletion
         var defaultSeed = sourceRepo.workingCopyGitRepoFile.toPath().resolve("test.txt");
         if (Files.exists(defaultSeed)) {
@@ -486,9 +492,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         });
         assertThat(repoFiles).as("student export returns exactly one file: README.md").isNotNull().hasSize(1).containsOnlyKeys("README.md").containsEntry("README.md",
                 "Initial commit");
-
-        // Cleanup local repos
-        RepositoryExportTestUtil.resetRepos(sourceRepo, studentLocalVCRepo);
     }
 
     @ParameterizedTest

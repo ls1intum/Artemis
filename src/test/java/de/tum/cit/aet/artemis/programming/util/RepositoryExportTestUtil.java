@@ -9,8 +9,10 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -22,6 +24,8 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -37,10 +41,69 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
  */
 public final class RepositoryExportTestUtil {
 
+    private static final Logger log = LoggerFactory.getLogger(RepositoryExportTestUtil.class);
+
     public record BaseRepositories(LocalRepository templateRepository, LocalRepository solutionRepository, LocalRepository testsRepository) {
     }
 
+    /**
+     * Thread-local storage for tracking LocalRepository instances that need cleanup.
+     * Use {@link #trackRepository(LocalRepository)} to register and {@link #cleanupTrackedRepositories()} in @AfterEach.
+     */
+    private static final ThreadLocal<List<LocalRepository>> trackedRepositories = ThreadLocal.withInitial(ArrayList::new);
+
     private RepositoryExportTestUtil() {
+    }
+
+    // ===========================================================================
+    // Repository Lifecycle Tracking - Automatic Cleanup Support
+    // ===========================================================================
+
+    /**
+     * Registers a LocalRepository for automatic cleanup.
+     * Call {@link #cleanupTrackedRepositories()} in your test's @AfterEach method to clean up all tracked repositories.
+     * <p>
+     * This method is thread-safe and supports parallel test execution.
+     *
+     * @param repository the repository to track (can be null, will be ignored)
+     * @return the same repository for chaining convenience
+     */
+    public static LocalRepository trackRepository(LocalRepository repository) {
+        if (repository != null) {
+            trackedRepositories.get().add(repository);
+        }
+        return repository;
+    }
+
+    /**
+     * Cleans up all repositories tracked in the current thread.
+     * Call this method in your test class's @AfterEach method.
+     * <p>
+     * Example usage:
+     *
+     * <pre>
+     *
+     * &#64;AfterEach
+     * void cleanupRepositories() {
+     *     RepositoryExportTestUtil.cleanupTrackedRepositories();
+     * }
+     * </pre>
+     * <p>
+     * This method is fail-safe: exceptions during cleanup are logged but do not prevent other cleanups from executing.
+     */
+    public static void cleanupTrackedRepositories() {
+        List<LocalRepository> repositories = trackedRepositories.get();
+        for (LocalRepository repository : repositories) {
+            if (repository != null) {
+                try {
+                    repository.resetLocalRepo();
+                }
+                catch (IOException e) {
+                    log.warn("Failed to clean up LocalRepository at {}", repository.workingCopyGitRepoFile, e);
+                }
+            }
+        }
+        repositories.clear();
     }
 
     /**
@@ -73,6 +136,7 @@ public final class RepositoryExportTestUtil {
 
     /**
      * Create a new LocalVC-compatible bare repository and optionally initialize content in its working copy.
+     * The returned repository is automatically tracked for cleanup - call {@link #cleanupTrackedRepositories()} in @AfterEach.
      *
      * @param localVCLocalCITestService LocalVC helper service
      * @param projectKey                target project key (UPPERCASE in URIs)
@@ -90,11 +154,12 @@ public final class RepositoryExportTestUtil {
             target.workingCopyGitRepo.push().setRemote("origin").call();
         }
 
-        return target;
+        return trackRepository(target);
     }
 
     /**
      * Clone a prepared source bare repo into a new LocalVC-compatible bare repository.
+     * The returned repository is automatically tracked for cleanup - call {@link #cleanupTrackedRepositories()} in @AfterEach.
      *
      * @param localVCLocalCITestService LocalVC helper service
      * @param projectKey                target project key
@@ -108,12 +173,13 @@ public final class RepositoryExportTestUtil {
         File srcBareDir = source.remoteBareGitRepo.getRepository().getDirectory();
         File dstBareDir = target.remoteBareGitRepoFile;
         FileUtils.copyDirectory(srcBareDir, dstBareDir);
-        return target;
+        return trackRepository(target);
     }
 
     /**
      * Create and wire a LocalVC student repository for a given participation.
      * Does not persist the participation; callers should save it via their repository.
+     * The returned repository is automatically tracked for cleanup - call {@link #cleanupTrackedRepositories()} in @AfterEach.
      *
      * @param localVCLocalCITestService LocalVC helper service
      * @param participation             the student participation to seed a repository for
@@ -126,7 +192,7 @@ public final class RepositoryExportTestUtil {
         LocalRepository repo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, slug);
         String uri = localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, slug);
         participation.setRepositoryUri(uri);
-        return repo;
+        return trackRepository(repo);
     }
 
     /**
@@ -167,6 +233,7 @@ public final class RepositoryExportTestUtil {
     /**
      * Variant of {@link #createAndWireBaseRepositories(LocalVCLocalCITestService, ProgrammingExercise)} that also returns
      * the working copy handles for the created template/solution/tests repositories.
+     * All returned repositories are automatically tracked for cleanup - call {@link #cleanupTrackedRepositories()} in @AfterEach.
      */
     public static BaseRepositories createAndWireBaseRepositoriesWithHandles(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise) throws Exception {
         String projectKey = exercise.getProjectKey();
@@ -178,9 +245,9 @@ public final class RepositoryExportTestUtil {
         wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.SOLUTION, solutionRepositorySlug);
         wireRepositoryToExercise(localVCLocalCITestService, exercise, RepositoryType.TESTS, testsRepositorySlug);
 
-        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-        LocalRepository solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-        LocalRepository testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug);
+        LocalRepository templateRepository = trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug));
+        LocalRepository solutionRepository = trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug));
+        LocalRepository testsRepository = trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug));
 
         return new BaseRepositories(templateRepository, solutionRepository, testsRepository);
     }
@@ -264,12 +331,13 @@ public final class RepositoryExportTestUtil {
     /**
      * Creates and returns a working copy repository handle for the template repo of the given exercise.
      * Assumes base repos have been wired already (use createAndWireBaseRepositories beforehand if needed).
+     * The returned repository is automatically tracked for cleanup - call {@link #cleanupTrackedRepositories()} in @AfterEach.
      */
     public static LocalRepository createTemplateWorkingCopy(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise)
             throws GitAPIException, IOException, URISyntaxException {
         String projectKey = exercise.getProjectKey();
         String templateSlug = projectKey.toLowerCase() + "-exercise";
-        return localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug);
+        return trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug));
     }
 
     // ===========================================================================
