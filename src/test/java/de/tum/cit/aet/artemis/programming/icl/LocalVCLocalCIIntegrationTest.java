@@ -316,6 +316,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         // Get the real commit hash from the seeded test repository instead of mocking
         ObjectId testRepositoryCommitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri());
+        assertThat(testRepositoryCommitHash).as("Test repository should have at least one commit").isNotNull();
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
         // Mock the results for the solution repository build and for the template repository build that will both be triggered as a result of updating the tests.
