@@ -21,11 +21,11 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -558,7 +558,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param files                the files that were uploaded
      * @return the updated quiz exercise with the changed statistics
      */
-    public QuizExercise reEvaluate(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NotNull List<MultipartFile> files) throws IOException {
+    public QuizExercise reEvaluate(QuizExerciseReEvaluateDTO quizExerciseDTO, QuizExercise originalQuizExercise, @NonNull List<MultipartFile> files) throws IOException {
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalQuizExercise);
         boolean questionsChanged = applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
         questionsChanged = applyQuizQuestionsFromDTOAndCheckIfChanged(quizExerciseDTO, originalQuizExercise) || questionsChanged;
@@ -808,7 +808,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param quizExercise  the quiz exercise to validate
      * @param providedFiles the provided files to validate
      */
-    public void validateQuizExerciseFiles(QuizExercise quizExercise, @NotNull List<MultipartFile> providedFiles) {
+    public void validateQuizExerciseFiles(QuizExercise quizExercise, @NonNull List<MultipartFile> providedFiles) {
         long fileCount = providedFiles.size();
 
         Map<FilePathType, Set<String>> exerciseFilePathsMap = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);

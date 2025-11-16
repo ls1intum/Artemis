@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -240,8 +241,7 @@ public class LocalCIEventListenerService {
             log.debug("Build agent updated: {}", newValue);
             localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(newValue.buildAgent().name());
 
-            if (oldValue != null && oldValue.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED
-                    && newValue.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED) {
+            if (oldValue != null && oldValue.status() != BuildAgentStatus.SELF_PAUSED && newValue.status() == BuildAgentStatus.SELF_PAUSED) {
                 notifyAdminAboutAgentPausing(newValue);
             }
         }
