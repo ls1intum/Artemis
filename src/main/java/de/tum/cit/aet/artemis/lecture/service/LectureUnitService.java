@@ -235,6 +235,8 @@ public class LectureUnitService {
 
     /**
      * Disconnects the competency exercise links from the exercise before the cycle is broken by the deserialization.
+     * NOTE: this is a workaround for a Jackson/Hibernate issue with bidirectional relationships and lazy loading.
+     * Ideally, we convert entities to DTOs before sending them to the client.
      *
      * @param lectureUnit The lecture unit to disconnect the competency links
      */

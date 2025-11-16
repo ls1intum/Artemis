@@ -143,6 +143,7 @@ public class TextUnitResource {
         lectureUnitService.saveWithCompetencyLinks(persistedUnit, textUnitRepository::saveAndFlush);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
+        // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client
         lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
         return ResponseEntity.created(new URI("/api/text-units/" + persistedUnit.getId())).body(persistedUnit);
     }

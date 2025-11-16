@@ -241,7 +241,7 @@ public class AttachmentVideoUnitService {
      *
      * @param attachmentVideoUnit The attachment video unit to clean.
      */
-    // TODO: we should consider using DTOs for sending data to the client instead of cleaning entities
+    // TODO: use a DTO for sending data to the client instead of manipulating entity objects
     public void prepareAttachmentVideoUnitForClient(AttachmentVideoUnit attachmentVideoUnit) {
         var lecture = attachmentVideoUnit.getLecture();
         var lectureUnits = lecture.getLectureUnits();
