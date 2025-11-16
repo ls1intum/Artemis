@@ -10,15 +10,16 @@ import { Patch } from '@ls1intum/apollon';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, NgStyle } from '@angular/common';
-import { ModelingExplanationEditorComponent } from '../modeling-explanation-editor/modeling-explanation-editor.component';
 import { captureException } from '@sentry/angular';
+import { FormsModule } from '@angular/forms';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, NgStyle, NgClass, ModelingExplanationEditorComponent],
+    imports: [TranslateDirective, FaIconComponent, NgStyle, NgClass, FormsModule, HtmlForMarkdownPipe],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
     protected readonly faCheck = faCheck;

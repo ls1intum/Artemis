@@ -4,7 +4,7 @@
     id="explanationText"
     class="text-editor-textarea"
     [maxLength]="maxCharacterCount"
-    [ngModel]="explanation | htmlForMarkdown"
+    [(ngModel)]="explanation"
     (keydown.tab)="onTextEditorTab(textEditor, $event)"
     (ngModelChange)="onExplanationInput($event)"
     [readOnly]="readOnly"

@@ -3,13 +3,12 @@ import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { onTextEditorTab } from 'app/shared/util/text.utils';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-modeling-explanation-editor',
     templateUrl: './modeling-explanation-editor.component.html',
     styleUrls: ['./modeling-explanation-editor.component.scss'],
-    imports: [TranslateDirective, FormsModule, HtmlForMarkdownPipe],
+    imports: [TranslateDirective, FormsModule],
 })
 export class ModelingExplanationEditorComponent {
     @Input() readOnly = false;
