@@ -91,6 +91,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         comp.exercise = { id: 42 } as any;
     });
 
+    afterEach(() => {
+        fixture?.destroy();
+        jest.clearAllMocks();
+    });
+
     it('should not generate when no exercise id', async () => {
         comp.exercise = undefined as any;
         comp.selectedRepository = RepositoryType.TEMPLATE;
