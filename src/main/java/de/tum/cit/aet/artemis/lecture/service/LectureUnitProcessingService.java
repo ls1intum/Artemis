@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.Loader;
@@ -22,6 +20,7 @@ import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -307,7 +306,7 @@ public class LectureUnitProcessingService {
      * @param outlineMap   Outline map with unit information
      * @param index        index that shows current page
      */
-    private void updatePreviousUnitEndPage(int outlineCount, @NotNull Map<Integer, LectureUnitSplit> outlineMap, int index) {
+    private void updatePreviousUnitEndPage(int outlineCount, @NonNull Map<Integer, LectureUnitSplit> outlineMap, int index) {
         if (outlineCount > 1) {
             int previousOutlineCount = outlineCount - 1;
             int previousStart = outlineMap.get(previousOutlineCount).startPage;

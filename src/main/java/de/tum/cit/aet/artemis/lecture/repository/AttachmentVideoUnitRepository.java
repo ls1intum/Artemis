@@ -5,8 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
@@ -47,7 +46,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
      * @return the list of all attachment video units with the given lecture id and attachment type
      * @throws EntityNotFoundException if no results are found
      */
-    @NotNull
+    @NonNull
     default List<AttachmentVideoUnit> findAllByLectureIdAndAttachmentTypeElseThrow(Long lectureId, AttachmentType attachmentType) throws EntityNotFoundException {
         List<AttachmentVideoUnit> attachmentVideoUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);
         if (attachmentVideoUnits.isEmpty()) {

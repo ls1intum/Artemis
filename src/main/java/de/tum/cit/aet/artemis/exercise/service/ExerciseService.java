@@ -17,10 +17,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.Strings;
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -760,7 +759,7 @@ public class ExerciseService {
      * @param exerciseLinks set of exercise links
      * @param competency    competency to remove
      */
-    public void removeCompetency(@NotNull Set<CompetencyExerciseLink> exerciseLinks, @NotNull CourseCompetency competency) {
+    public void removeCompetency(@NonNull Set<CompetencyExerciseLink> exerciseLinks, @NonNull CourseCompetency competency) {
         competencyRelationApi.ifPresent(api -> api.deleteAllExerciseLinks(exerciseLinks));
         competency.getExerciseLinks().removeAll(exerciseLinks);
     }
