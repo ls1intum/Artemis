@@ -1,11 +1,12 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import jakarta.annotation.Nullable;
+import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
-import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -13,6 +14,7 @@ import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepositoryDialect;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -34,25 +36,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Lazy
 public class SpringAIConfiguration {
 
+    private static final Logger log = LoggerFactory.getLogger(SpringAIConfiguration.class);
+
     private final int maxMessages;
 
-    private final double temperature;
-
-    private final double atlasAgentTemperature;
-
-    private final String deploymentName;
-
-    private final String atlasChatModel;
-
-    public SpringAIConfiguration(@Value("${spring.ai.azure.openai.chat.options.deployment-name: gpt-5-mini}") String deploymentName,
-            @Value("${spring.ai.azure.openai.chat.options.temperature: 1.0}") double temperature, @Value("${artemis.atlas.temperature: 0.2}") double atlasAgentTemperature,
-            @Value("${spring.ai.chat.memory.max-messages: 20}") int maxMessages, @Value("${artemis.atlas.chat-model: gpt-4o}") String atlasChatModel) {
-        this.deploymentName = deploymentName;
-        this.temperature = temperature;
+    public SpringAIConfiguration(@Value("${spring.ai.chat.memory.max-messages: 20}") int maxMessages) {
         this.maxMessages = maxMessages;
-        this.atlasChatModel = atlasChatModel;
-        this.atlasAgentTemperature = atlasAgentTemperature;
-
     }
 
     /**
@@ -90,35 +79,31 @@ public class SpringAIConfiguration {
      * Does NOT include chat memory to ensure stateless operation.
      * This is the primary/default ChatClient bean that Hyperion services will inject.
      *
-     * @param azureOpenAiChatModel the Azure OpenAI chat model to use (optional)
-     * @return a configured ChatClient for Hyperion, or null if model is not available
+     * @param chatModels chat models that can be used (optional)
+     * @param chatMemory the chat memory for conversation history (optional)
+     * @return a configured ChatClient with default options, or null if model is not available
      */
     @Bean
     @Lazy
-    public ChatClient chatClient(@Nullable AzureOpenAiChatModel azureOpenAiChatModel) {
-        if (azureOpenAiChatModel == null) {
+    public ChatClient chatClient(List<ChatModel> chatModels, @Nullable ChatMemory chatMemory) {
+        if (chatModels == null || chatModels.isEmpty()) {
             return null;
         }
         return ChatClient.builder(azureOpenAiChatModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build()).build();
     }
 
-    /**
-     * ChatClient specifically configured for Atlas.
-     * Uses the model specified in artemis.atlas.chat-model (default: gpt-4o).
-     * Includes chat memory advisor for conversation context retention.
-     *
-     * @param azureOpenAiChatModel the Azure OpenAI chat model to use (optional)
-     * @param chatMemory           the chat memory for conversation history (optional)
-     * @return a configured ChatClient for Atlas, or null if model is not available
-     */
-    @Bean
-    @Lazy
-    public ChatClient atlasChatClient(@Nullable AzureOpenAiChatModel azureOpenAiChatModel, @Nullable ChatMemory chatMemory) {
-        if (azureOpenAiChatModel == null) {
-            return null;
+        for (ChatModel model : chatModels) {
+            if (model.getDefaultOptions() != null) {
+                log.info("Found Chat Model: {} with options: {}", model.getDefaultOptions().getModel(), model.getDefaultOptions());
+            }
+            else {
+                log.info("Found Chat Model: {} with no default options", model);
+            }
         }
-        ChatClient.Builder builder = ChatClient.builder(azureOpenAiChatModel)
-                .defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(atlasChatModel).temperature(atlasAgentTemperature).build());
+        ChatModel chatModel = chatModels.getFirst(); // Use the first available model
+        ChatClient.Builder builder = ChatClient.builder(chatModel);
+
+        // Add memory advisor if available
         if (chatMemory != null) {
             builder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build());
         }
