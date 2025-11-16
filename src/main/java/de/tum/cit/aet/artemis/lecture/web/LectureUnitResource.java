@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
@@ -205,6 +205,8 @@ public class LectureUnitResource {
 
     /**
      * This endpoint triggers the ingestion process for a specified lecture unit into Pyris.
+     * The authorization check is done on the chain lecture unit --> lecture --> course based on the lecture unit id
+     * In case the call includes a mismatched lectureId and lectureUnitId, a BAD_REQUEST is returned.
      *
      * @param lectureId     the ID of the lecture to which the lecture unit belongs
      * @param lectureUnitId the ID of the lecture unit to be ingested
@@ -217,13 +219,14 @@ public class LectureUnitResource {
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest")
     @EnforceAtLeastInstructorInLectureUnit
     public ResponseEntity<Void> ingestLectureUnit(@PathVariable long lectureId, @PathVariable long lectureUnitId) {
-        Lecture lecture = this.lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
-        Optional<LectureUnit> lectureUnitOptional = lecture.getLectureUnits().stream().filter(lu -> lu.getId() == lectureUnitId).findFirst();
-        if (lectureUnitOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
+        if (lectureUnit.getLecture().getId() != lectureId) {
+            throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
         }
-        LectureUnit lectureUnit = lectureUnitOptional.get();
-        this.instanceMessageSendService.sendLectureUnitAutoIngestionScheduleCancel(lectureUnitId);
+        if (!(lectureUnit instanceof AttachmentVideoUnit)) {
+            throw new BadRequestAlertException("Only attachment video units can be ingested into Pyris", ENTITY_NAME, "invalidLectureUnitType");
+        }
+        instanceMessageSendService.sendLectureUnitAutoIngestionScheduleCancel(lectureUnitId);
         return lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
     }
 }

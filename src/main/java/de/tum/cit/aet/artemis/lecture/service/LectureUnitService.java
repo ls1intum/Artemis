@@ -225,9 +225,6 @@ public class LectureUnitService {
      * @return ResponseEntity<Void> representing the outcome of the operation with the appropriate HTTP status.
      */
     public ResponseEntity<Void> ingestLectureUnitInPyris(LectureUnit lectureUnit) {
-        if (!(lectureUnit instanceof AttachmentVideoUnit)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
         if (irisLectureApi.isEmpty()) {
             log.error("Could not send Lecture Unit to Pyris: Pyris webhook service is not available, check if IRIS is enabled.");
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
