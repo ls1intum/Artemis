@@ -7,10 +7,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,13 +26,13 @@ public class TutorialGroupRegistration extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "student_id")
-    @NotNull
+    @NonNull
     @JsonIgnoreProperties("tutorialGroupRegistrations")
     private User student;
 
     @ManyToOne
     @JoinColumn(name = "tutorial_group_id")
-    @NotNull
+    @NonNull
     @JsonIgnoreProperties("registrations")
     private TutorialGroup tutorialGroup;
 

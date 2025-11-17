@@ -68,7 +68,7 @@ class AthenaInternalResourceIntegrationTest extends AbstractAthenaTest {
 
         // Seed a LocalVC bare repository with content
         var sourceRepo = new LocalRepository(defaultBranch);
-        sourceRepo.configureRepos(localVCRepoPath, "athenaInternalSrcLocalRepo", "athenaInternalSrcOriginRepo");
+        sourceRepo.configureRepos(localVCBasePath, "athenaInternalSrcLocalRepo", "athenaInternalSrcOriginRepo");
 
         // Ensure tests repository URI exists on the exercise
         var testsSlug = programmingExercise.getProjectKey().toLowerCase() + "-tests";

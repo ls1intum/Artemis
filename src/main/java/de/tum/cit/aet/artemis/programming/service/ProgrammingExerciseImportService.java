@@ -4,15 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -23,29 +19,20 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
-import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class ProgrammingExerciseImportService {
 
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportService.class);
-
-    private final Optional<VersionControlService> versionControlService;
-
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
-
-    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
     private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
@@ -55,10 +42,6 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    private final UriService uriService;
-
     private final TemplateUpgradePolicyService templateUpgradePolicyService;
 
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
@@ -67,72 +50,22 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
-            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UriService uriService, TemplateUpgradePolicyService templateUpgradePolicyService,
+    public ProgrammingExerciseImportService(Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseValidationService programmingExerciseValidationService,
+            ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, TemplateUpgradePolicyService templateUpgradePolicyService,
             ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository) {
-        this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
-        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
         this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.uriService = uriService;
         this.templateUpgradePolicyService = templateUpgradePolicyService;
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-    }
-
-    /**
-     * Import all base repositories from one exercise. These include the template, the solution and the test
-     * repository. Participation repositories from students or tutors will not get copied!
-     *
-     * @param templateExercise The template exercise having a reference to all base repositories
-     * @param newExercise      The new exercise without any repositories
-     */
-    public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
-        final var targetProjectKey = newExercise.getProjectKey();
-        final var sourceProjectKey = templateExercise.getProjectKey();
-
-        // First, create a new project for our imported exercise
-        VersionControlService versionControl = versionControlService.orElseThrow();
-        versionControl.createProjectForExercise(newExercise);
-        // Copy all repositories
-        String templateRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getTemplateRepositoryUri());
-        String testRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getTestRepositoryUri());
-        String solutionRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getSolutionRepositoryUri());
-
-        String sourceBranch = programmingExerciseRepository.findBranchByExerciseId(templateExercise.getId());
-
-        // TODO: in case one of those operations fail, we should do error handling and revert all previous operations
-        versionControl.copyRepositoryWithHistory(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName(), null);
-        versionControl.copyRepositoryWithHistory(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
-        versionControl.copyRepositoryWithHistory(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
-
-        List<AuxiliaryRepository> auxRepos = templateExercise.getAuxiliaryRepositories();
-        for (int i = 0; i < auxRepos.size(); i++) {
-            AuxiliaryRepository auxRepo = auxRepos.get(i);
-            var repoUri = versionControl.copyRepositoryWithHistory(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null)
-                    .toString();
-            AuxiliaryRepository newAuxRepo = newExercise.getAuxiliaryRepositories().get(i);
-            newAuxRepo.setRepositoryUri(repoUri);
-            auxiliaryRepositoryRepository.save(newAuxRepo);
-        }
-
-        try {
-            // Adjust placeholders that were replaced during creation of template exercise
-            programmingExerciseRepositoryService.adjustProjectNames(templateExercise.getTitle(), newExercise);
-        }
-        catch (GitAPIException | IOException e) {
-            log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);
-        }
     }
 
     /**
@@ -235,7 +168,7 @@ public class ProgrammingExerciseImportService {
         }
 
         newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);
-        importRepositories(originalProgrammingExercise, newProgrammingExercise);
+        programmingExerciseImportBasicService.importRepositories(originalProgrammingExercise, newProgrammingExercise);
 
         if (setTestCaseVisibilityToAfterDueDate) {
             Set<ProgrammingExerciseTestCase> testCases = this.programmingExerciseTestCaseRepository.findByExerciseId(newProgrammingExercise.getId());

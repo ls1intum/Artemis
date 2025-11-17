@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.core.util;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -29,7 +29,7 @@ public final class HttpRequestUtils {
      * @param request Http Request
      * @return String representation of IP Address
      */
-    public static String getIpStringFromRequest(@NotNull HttpServletRequest request) {
+    public static String getIpStringFromRequest(@NonNull HttpServletRequest request) {
         for (String header : IP_HEADER_CANDIDATES) {
             String ipList = request.getHeader(header);
             if (ipList != null && !ipList.isEmpty() && !"unknown".equalsIgnoreCase(ipList)) {
@@ -46,7 +46,7 @@ public final class HttpRequestUtils {
      * @param request Http Request
      * @return IPAddress Object
      */
-    public static Optional<IPAddress> getIpAddressFromRequest(@NotNull HttpServletRequest request) {
+    public static Optional<IPAddress> getIpAddressFromRequest(@NonNull HttpServletRequest request) {
         final String ipString = getIpStringFromRequest(request);
         final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
         return Optional.ofNullable(ipAddress);
@@ -59,7 +59,7 @@ public final class HttpRequestUtils {
      * @param headerName to be retrieved
      * @return the header value as a {@link String}, or an empty string if the header is not present
      */
-    @NotNull
+    @NonNull
     private static String getHeaderValue(HttpServletRequest request, String headerName) {
         String headerValue = request.getHeader(headerName);
         return headerValue == null || headerValue.isEmpty() ? "" : headerValue;
@@ -73,7 +73,7 @@ public final class HttpRequestUtils {
      * @param request the HTTP request
      * @return the detected {@link Browser}, or {@code null} if the browser cannot be determined
      */
-    private static Browser getBrowserName(@NotNull HttpServletRequest request) {
+    private static Browser getBrowserName(@NonNull HttpServletRequest request) {
         String userAgent = getHeaderValue(request, HttpHeaders.USER_AGENT);
         String secureClientHintsUserAgent = getHeaderValue(request, "Sec-Ch-Ua");
 
@@ -117,7 +117,7 @@ public final class HttpRequestUtils {
      * @param request the HTTP request
      * @return the detected {@link OperatingSystem}, or {@code null} if the operating system cannot be determined
      */
-    private static OperatingSystem getOperatingSystem(@NotNull HttpServletRequest request) {
+    private static OperatingSystem getOperatingSystem(@NonNull HttpServletRequest request) {
         String userAgent = getHeaderValue(request, HttpHeaders.USER_AGENT);
         String secureClientHintsUserAgentPlatform = getHeaderValue(request, "Sec-Ch-Ua-Platform");
 
@@ -149,7 +149,7 @@ public final class HttpRequestUtils {
      * @param request the HTTP request
      * @return a {@link ClientEnvironment} object containing the detected client environment, or {@code null} if no environment can be determined
      */
-    public static ClientEnvironment getClientEnvironment(@NotNull HttpServletRequest request) {
+    public static ClientEnvironment getClientEnvironment(@NonNull HttpServletRequest request) {
         Browser browserName = getBrowserName(request);
         OperatingSystem operatingSystem = getOperatingSystem(request);
         if (browserName != null) {

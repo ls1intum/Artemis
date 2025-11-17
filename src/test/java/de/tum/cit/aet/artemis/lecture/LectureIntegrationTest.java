@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -106,16 +105,15 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private PlatformTransactionManager txManager;
 
+    private final String lectureTitle = "Lecture 7349";
+
     @BeforeEach
     void initTestCase() throws Exception {
-        String title = "Lecture 1";
-        new TransactionTemplate(txManager).execute(status -> {
-            lectureRepository.deleteAttachmentsByLectureTitle(title);
-            lectureRepository.deleteLectureLevelAttachments(title);
-            lectureRepository.deleteLectureUnitsByLectureTitle(title);
-            lectureRepository.deleteLecturesByTitle(title);
-            return null;
-        });
+        // Remove all existing lectures with the same title to avoid unique constraint violations
+        lectureRepository.deleteAttachmentsByLectureTitle(lectureTitle);
+        lectureRepository.deleteLectureLevelAttachments(lectureTitle);
+        lectureRepository.deleteLectureUnitsByLectureTitle(lectureTitle);
+        lectureRepository.deleteLecturesByTitle(lectureTitle);
 
         int numberOfTutors = 2;
         userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
@@ -164,7 +162,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Lecture> lectures = this.course1.getLectures().stream().toList();
 
         Lecture firstLecture = lectures.getFirst();
-        firstLecture.setTitle("Lecture 1");
+        firstLecture.setTitle(lectureTitle);
         Channel firstChannel = new Channel();
         firstChannel.setCourse(course1);
         firstChannel.setIsAnnouncementChannel(false);

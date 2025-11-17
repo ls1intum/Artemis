@@ -45,7 +45,7 @@ public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractA
     protected PasswordService passwordService;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    protected Path localVCRepoPath;
+    protected Path localVCBasePath;
 
     // NOTE: this has to be a MockitoBean, because the class cannot be instantiated in the tests
     @MockitoBean

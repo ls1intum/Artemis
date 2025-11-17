@@ -30,6 +30,12 @@ public class SentryConfiguration {
     @Value("${info.testServer}")
     private Optional<Boolean> isTestServer;
 
+    @Value("${sentry.environment}")
+    private Optional<String> environment;
+
+    @Value("${sentry.send-default-pii:false}")
+    private boolean sendDefaultPii;
+
     /**
      * init sentry with the correct package name and Artemis version
      * EventListener cannot be used here, as the bean is lazy
@@ -48,7 +54,7 @@ public class SentryConfiguration {
 
             Sentry.init(options -> {
                 options.setDsn(dsn);
-                options.setSendDefaultPii(true);
+                options.setSendDefaultPii(sendDefaultPii);
                 options.setEnvironment(getEnvironment());
                 options.setRelease(artemisVersion);
                 options.setTracesSampleRate(getTracesSampleRate());
@@ -61,6 +67,9 @@ public class SentryConfiguration {
     }
 
     private String getEnvironment() {
+        if (environment.isPresent() && environment.get().trim().length() > 0) {
+            return environment.get().trim().toLowerCase();
+        }
         if (isTestServer.isPresent()) {
             if (isTestServer.get()) {
                 return "test";
@@ -77,11 +86,17 @@ public class SentryConfiguration {
     /**
      * Get the traces sample rate based on the environment.
      *
-     * @return 0% for local, 100% for test, 20% for production environments
+     * @return 0% for local, 100% for test and staging, 20% for production environments
      */
     private double getTracesSampleRate() {
-        return switch (getEnvironment()) {
-            case "test" -> 1.0;
+        String env = getEnvironment();
+        // All test/staging environments get 1.0 sample rate
+        if (env.startsWith("test") || env.startsWith("staging")) {
+            return 1.0;
+        }
+
+        // Only "prod" get 0.2, all others (like local) are disabled
+        return switch (env) {
             case "prod" -> 0.2;
             default -> 0.0;
         };

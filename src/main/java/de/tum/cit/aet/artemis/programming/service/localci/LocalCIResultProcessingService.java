@@ -13,18 +13,19 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -84,6 +85,10 @@ public class LocalCIResultProcessingService {
 
     private UUID listenerId;
 
+    private final AtomicLong processedResults = new AtomicLong();
+
+    private final AtomicLong lastProcessedResults = new AtomicLong();
+
     @Value("${artemis.continuous-integration.concurrent-result-processing-size:16}")
     private int concurrentResultProcessingSize;
 
@@ -119,13 +124,35 @@ public class LocalCIResultProcessingService {
     }
 
     private void initResultProcessingExecutor() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-result-%d")
-                .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in result processing thread {}", t.getName(), e)).build();
-        // buffer up to 1000 tasks before rejecting new tasks. Rejections will not lead to loss because the results maintain in the queue but this speeds up
+        ThreadFactory threadFactory = BasicThreadFactory.builder().namingPattern("local-ci-result-%d")
+                .uncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in result processing thread {}", t.getName(), e)).build();
+
+        // buffer up to 5000 tasks before rejecting new tasks. Rejections will not lead to loss because the results maintain in the queue but this speeds up
         // result processing under high load so we do not need to wait for the polling schedule if many results are processed very fast.
-        resultProcessingExecutor = new ThreadPoolExecutor(concurrentResultProcessingSize, concurrentResultProcessingSize, 0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(1000), threadFactory, new ThreadPoolExecutor.AbortPolicy());
+        resultProcessingExecutor = new ThreadPoolExecutor(concurrentResultProcessingSize, concurrentResultProcessingSize * 2, 0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(5000), threadFactory, new ThreadPoolExecutor.AbortPolicy());
         log.info("Initialized LocalCI result processing executor with pool size {}", concurrentResultProcessingSize);
+    }
+
+    /**
+     * Logs the health of the result processor every 5 minutes.
+     * If there are items in the Hazelcast queue but no results have been processed since the last check, an error is logged.
+     */
+    @Scheduled(fixedDelay = 300_000, initialDelay = 300_000)
+    public void logResultProcessorHealth() {
+        int hazelcastQueueSize = distributedDataAccessService.getResultQueueSize();
+        long currentProcessed = processedResults.get();
+        long lastProcessed = lastProcessedResults.getAndSet(currentProcessed);
+
+        log.info("Result executor health: active={}, poolSize={}, queueSize={}, completed={}, hazelcastQueue={}, currentProcessed={}, lastProcessed={}",
+                resultProcessingExecutor.getActiveCount(), resultProcessingExecutor.getPoolSize(), resultProcessingExecutor.getQueue().size(),
+                resultProcessingExecutor.getCompletedTaskCount(), hazelcastQueueSize, currentProcessed, lastProcessed);
+
+        if (hazelcastQueueSize > 0 && currentProcessed == lastProcessed) {
+            // We had items in the queue, but processed nothing in the 5 minutes.
+            log.error("Result processing seems stuck: hazelcastQueueSize={} and processedResults did not increase.", hazelcastQueueSize);
+            log.error("Consider restarting the application if this issue persists.");
+        }
     }
 
     /**
@@ -217,6 +244,7 @@ public class LocalCIResultProcessingService {
             }
         }
         finally {
+            processedResults.incrementAndGet();
             ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) participationOptional.orElse(null);
             if (programmingExerciseParticipation != null && programmingExerciseParticipation.getExercise() == null) {
                 ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(programmingExerciseParticipation);

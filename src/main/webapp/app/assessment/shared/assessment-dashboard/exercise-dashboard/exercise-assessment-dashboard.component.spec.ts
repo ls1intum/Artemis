@@ -181,7 +181,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     ];
     const stats = {
         numberOfSubmissions: { inTime: 12, late: 5 },
-        totalNumberOfAssessments: { inTime: 9, late: 1 },
+        totalNumberOfAssessments: 9,
         numberOfAssessmentsOfCorrectionRounds,
         numberOfLockedAssessmentByOtherTutorsOfCorrectionRound,
     } as StatsForDashboard;

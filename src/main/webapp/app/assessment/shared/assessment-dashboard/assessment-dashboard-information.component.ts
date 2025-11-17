@@ -53,7 +53,7 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     readonly numberOfCorrectionRounds = input.required<number>();
     readonly numberOfAssessmentsOfCorrectionRounds = input.required<DueDateStat[]>();
 
-    readonly totalNumberOfAssessments = input.required<DueDateStat>();
+    readonly totalNumberOfAssessments = input.required<number>();
     readonly numberOfSubmissions = input.required<DueDateStat>();
     readonly numberOfTutorAssessments = input.required<number>();
     readonly totalAssessmentPercentage = input.required<number>();
@@ -125,11 +125,11 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
         this.assessments = [
             {
                 name: this.openedAssessmentsTitle,
-                value: this.numberOfSubmissions().total - this.totalNumberOfAssessments().total / this.numberOfCorrectionRounds(),
+                value: this.numberOfSubmissions().total - this.totalNumberOfAssessments() / this.numberOfCorrectionRounds(),
             },
             {
                 name: this.completedAssessmentsTitle,
-                value: this.totalNumberOfAssessments().total / this.numberOfCorrectionRounds(),
+                value: this.totalNumberOfAssessments() / this.numberOfCorrectionRounds(),
             },
         ];
     }
