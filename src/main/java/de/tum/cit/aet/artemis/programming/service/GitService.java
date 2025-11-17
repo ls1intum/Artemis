@@ -584,10 +584,10 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Assesses whether the remote branch and the local branch are divergent, i.e. should not be merged blindly.
-     * If no changes have been pushed into the remote branch yet, the branches are not divergent.
-     * If there are changes that came from the local git client, the branches are divergent
-     * if and only if the online editor commits have branched from the local git client changes.
+     * Assesses whether the remote branch and the local branch are divergent, i.e. a pull would try to merge different
+     * histories while the local working tree still has uncommitted changes.
+     * Divergence is detected only when uncommitted changes exist locally and the remote HEAD points to a different
+     * commit than the local HEAD. If the remote branch has no commits yet, the branches are treated as non-divergent.
      *
      * @param repo Local Repository Object.
      * @param git  The Git Object associated with the Local Repository Object.
