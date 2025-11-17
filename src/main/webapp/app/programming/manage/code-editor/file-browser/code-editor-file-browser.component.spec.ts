@@ -1104,6 +1104,16 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(modalRef.componentInstance.fileType).toBe(FileType.FILE);
     });
 
+    it('should not hide code editor status component regardless of the displayOnly state', () => {
+        comp.displayOnly = true;
+        fixture.detectChanges();
+        expect(comp.status).toBeDefined();
+
+        comp.displayOnly = false;
+        fixture.detectChanges();
+        expect(comp.status).toBeDefined();
+    });
+
     describe('getFolderBadges', () => {
         // Mock fileBadges data
         const mockFileBadges = {
