@@ -8,8 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -157,7 +156,7 @@ public class ConsistencyCheckTestService {
         assertThat(consistencyErrors).hasSize(5).containsAll(expectedErrors);
     }
 
-    @NotNull
+    @NonNull
     private List<ConsistencyErrorDTO> getConsistencyErrorDTOS() {
         List<ConsistencyErrorDTO> expectedErrors = new ArrayList<>();
         expectedErrors.add(new ConsistencyErrorDTO(exercise1, ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING));

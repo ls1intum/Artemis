@@ -8,11 +8,11 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -40,7 +40,7 @@ public class Authority implements Serializable {
 
     public static final Authority USER_AUTHORITY = new Authority(Role.STUDENT.getAuthority());
 
-    @NotNull
+    @NonNull
     @Size(max = 50)
     @Id
     @Column(length = 50)
