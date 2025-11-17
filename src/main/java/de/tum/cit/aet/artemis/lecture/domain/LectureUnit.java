@@ -70,8 +70,9 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @Column(name = "lecture_unit_order", nullable = false)
     private int lectureUnitOrder;   // package-private, no getter/setter
 
-    // Must only be used by Lecture to set the order of its lecture units before persisting
-    // TODO: write an architecture test to ensure this
+    /**
+     * IMPORTANT: Must only be used by Lecture to set the order of its lecture units before persisting
+     */
     void setLectureUnitOrder(int order) {
         this.lectureUnitOrder = order;
     }
