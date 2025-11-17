@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
@@ -489,8 +490,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     void testQuizSubmitPreview_forbidden() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
-        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmissionFromStudentDTO(Set.of()), Result.class,
-                HttpStatus.FORBIDDEN);
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+        QuizSubmissionFromStudentDTO quizSubmissionDTO = QuizSubmissionFromStudentDTO.of(quizSubmission);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmissionDTO, Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -501,8 +503,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         courseRepository.save(course);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
-        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", new QuizSubmissionFromStudentDTO(Set.of()), Result.class,
-                HttpStatus.FORBIDDEN);
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+        QuizSubmissionFromStudentDTO quizSubmissionDTO = QuizSubmissionFromStudentDTO.of(quizSubmission);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmissionDTO, Result.class, HttpStatus.FORBIDDEN);
         verifyNoWebsocketMessageForExercise(quizExercise);
     }
 
@@ -514,20 +517,23 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         courseRepository.save(course);
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
-        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmissionFromStudentDTO(Set.of()), Result.class,
-                HttpStatus.FORBIDDEN);
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+        QuizSubmissionFromStudentDTO quizSubmissionDTO = QuizSubmissionFromStudentDTO.of(quizSubmission);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmissionDTO, Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPreview_badRequest_noQuiz() throws Exception {
-        request.postWithResponseBody("/api/quiz/exercises/" + 11223344 + "/submissions/preview", new QuizSubmissionFromStudentDTO(Set.of()), Result.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/quiz/exercises/" + 11223344 + "/submissions/preview",
+                new QuizSubmissionFromStudentDTO(Set.of(new MultipleChoiceSubmittedAnswerFromStudentDTO(1L, Set.of(1L)))), Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPractice_badRequest_noQuiz() throws Exception {
-        request.postWithResponseBody("/api/quiz/exercises/" + 11223344 + "/submissions/practice", new QuizSubmissionFromStudentDTO(Set.of()), Result.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/quiz/exercises/" + 11223344 + "/submissions/practice",
+                new QuizSubmissionFromStudentDTO(Set.of(new MultipleChoiceSubmittedAnswerFromStudentDTO(1L, Set.of(1L)))), Result.class, HttpStatus.FORBIDDEN);
     }
 
     @Test

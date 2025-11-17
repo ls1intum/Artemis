@@ -134,8 +134,6 @@ public class QuizSubmissionResource {
             @Valid @RequestBody QuizSubmissionFromStudentDTO quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
-        QuizSubmission convertedSubmission = quizSubmissionService.createNewSubmissionFromDTO(quizSubmission, quizExercise);
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeCourseExercise(quizExercise, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -148,6 +146,8 @@ public class QuizSubmissionResource {
                     HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotOpenForPractice", "The exercise is not open for practice or hasn't ended yet."))
                     .body(null);
         }
+
+        QuizSubmission convertedSubmission = quizSubmissionService.createNewSubmissionFromDTO(quizSubmission, quizExercise);
 
         // the following method either reuses an existing participation or creates a new one
         StudentParticipation participation = participationService.startExercise(quizExercise, user, false);
@@ -191,6 +191,8 @@ public class QuizSubmissionResource {
         log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
         QuizSubmission convertedSubmission = quizSubmissionService.createNewSubmissionFromDTO(quizSubmission, quizExercise);
+        StudentParticipation fakeParticipation = new StudentParticipation();
+        fakeParticipation.setExercise(quizExercise);
 
         // update submission
         convertedSubmission.setSubmitted(true);
@@ -206,6 +208,8 @@ public class QuizSubmissionResource {
         result.evaluateQuizSubmission(quizExercise);
 
         result.getSubmission().setResults(null);
+        result.getSubmission().setParticipation(fakeParticipation);
+
         ResultAfterEvaluationWithSubmissionDTO resultAfterEvaluationDTO = ResultAfterEvaluationWithSubmissionDTO.of(result);
         return ResponseEntity.ok(resultAfterEvaluationDTO);
     }
