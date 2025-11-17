@@ -17,10 +17,13 @@ public record QuizSubmissionAfterEvaluationDTO(Long id, String submissionExercis
         Set<SubmittedAnswerAfterEvaluationDTO> submittedAnswers, List<ResultAfterEvaluationDTO> results) {
 
     public static QuizSubmissionAfterEvaluationDTO of(QuizSubmission submission) {
+        List<ResultAfterEvaluationDTO> results = null;
+        if (submission.getResults() != null) {
+            results = submission.getResults().stream().map(ResultAfterEvaluationDTO::of).toList();
+        }
         return new QuizSubmissionAfterEvaluationDTO(submission.getId(), submission.getSubmissionExerciseType(), submission.isSubmitted(), submission.getType(),
                 submission.getSubmissionDate(), submission.getScoreInPoints(),
-                submission.getSubmittedAnswers().stream().map(SubmittedAnswerAfterEvaluationDTO::of).collect(Collectors.toSet()),
-                submission.getResults().stream().map(ResultAfterEvaluationDTO::of).toList());
+                submission.getSubmittedAnswers().stream().map(SubmittedAnswerAfterEvaluationDTO::of).collect(Collectors.toSet()), results);
     }
 
 }

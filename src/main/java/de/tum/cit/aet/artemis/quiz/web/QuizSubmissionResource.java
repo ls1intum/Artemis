@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.dto.result.ResultAfterEvaluationDTO;
+import de.tum.cit.aet.artemis.quiz.dto.result.ResultAfterEvaluationWithSubmissionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
@@ -130,7 +130,8 @@ public class QuizSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/submissions/practice")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<ResultAfterEvaluationDTO> submitForPractice(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromStudentDTO quizSubmission) {
+    public ResponseEntity<ResultAfterEvaluationWithSubmissionDTO> submitForPractice(@PathVariable Long exerciseId,
+            @Valid @RequestBody QuizSubmissionFromStudentDTO quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
         QuizSubmission convertedSubmission = quizSubmissionService.createNewSubmissionFromDTO(quizSubmission, quizExercise);
@@ -170,8 +171,10 @@ public class QuizSubmissionResource {
         resultWebsocketService.broadcastNewResult(result.getSubmission().getParticipation(), result);
 
         quizExercise.setCourse(null);
+        result.getSubmission().setResults(null);
+        result.getSubmission().setParticipation(participation);
         // return result with quizSubmission, participation and quiz exercise (including the solution)
-        ResultAfterEvaluationDTO resultAfterEvaluationDTO = ResultAfterEvaluationDTO.of(result);
+        ResultAfterEvaluationWithSubmissionDTO resultAfterEvaluationDTO = ResultAfterEvaluationWithSubmissionDTO.of(result);
         return ResponseEntity.ok(resultAfterEvaluationDTO);
     }
 
@@ -184,7 +187,7 @@ public class QuizSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/submissions/preview")
     @EnforceAtLeastTutorInExercise
-    public ResponseEntity<ResultAfterEvaluationDTO> submitForPreview(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromStudentDTO quizSubmission) {
+    public ResponseEntity<ResultAfterEvaluationWithSubmissionDTO> submitForPreview(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromStudentDTO quizSubmission) {
         log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
         QuizSubmission convertedSubmission = quizSubmissionService.createNewSubmissionFromDTO(quizSubmission, quizExercise);
@@ -202,7 +205,8 @@ public class QuizSubmissionResource {
         // calculate score and update result accordingly
         result.evaluateQuizSubmission(quizExercise);
 
-        ResultAfterEvaluationDTO resultAfterEvaluationDTO = ResultAfterEvaluationDTO.of(result);
+        result.getSubmission().setResults(null);
+        ResultAfterEvaluationWithSubmissionDTO resultAfterEvaluationDTO = ResultAfterEvaluationWithSubmissionDTO.of(result);
         return ResponseEntity.ok(resultAfterEvaluationDTO);
     }
 
