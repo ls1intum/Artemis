@@ -32,21 +32,31 @@ describe('CourseSidebarService', () => {
         expect(emitSpy).toHaveBeenCalled();
     });
 
+    it('should emit reloadSidebar event', () => {
+        const emitSpy = jest.spyOn(service.reloadSidebar$, 'emit');
+        service.reloadSidebar();
+        expect(emitSpy).toHaveBeenCalled();
+    });
+
     it('should emit events when subscribing', () => {
         const closeSpy = jest.fn();
         const openSpy = jest.fn();
         const toggleSpy = jest.fn();
+        const reloadSpy = jest.fn();
 
         service.closeSidebar$.subscribe(closeSpy);
         service.openSidebar$.subscribe(openSpy);
         service.toggleSidebar$.subscribe(toggleSpy);
+        service.reloadSidebar$.subscribe(reloadSpy);
 
         service.closeSidebar();
         service.openSidebar();
         service.toggleSidebar();
+        service.reloadSidebar();
 
         expect(closeSpy).toHaveBeenCalled();
         expect(openSpy).toHaveBeenCalled();
         expect(toggleSpy).toHaveBeenCalled();
+        expect(reloadSpy).toHaveBeenCalled();
     });
 });
