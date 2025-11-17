@@ -73,7 +73,7 @@ public class HyperionConsistencyCheckService {
      * @return aggregated consistency issues
      */
     public ConsistencyCheckResponseDTO checkConsistency(ProgrammingExercise exercise) {
-        log.debug("Performing consistency check for exercise {}", exercise.getId());
+        log.info("Performing consistency check for exercise {}", exercise.getId());
         // Create an observation containing LLM calls' traces
         Observation parent = Observation.createNotStarted("hyperion.consistency", observationRegistry).contextualName("consistency check for exercise id: " + exercise.getId())
                 .lowCardinalityKeyValue(KeyValue.of("ai.span", "true"))
@@ -98,6 +98,15 @@ public class HyperionConsistencyCheckService {
 
             List<ConsistencyIssueDTO> issueDTOs = Objects.requireNonNullElse(combinedIssues, new ArrayList<ConsistencyIssue>()).stream().map(this::mapConsistencyIssueToDto)
                     .toList();
+            if (issueDTOs.isEmpty()) {
+                log.info("No consistency issues found for exercise {}", exercise.getId());
+            }
+            else {
+                log.info("Consistency check for exercise {} found {} issues", exercise.getId(), issueDTOs.size());
+                for (var issue : issueDTOs) {
+                    log.info("Consistency issue for exercise {}: [{}] {} - Suggested fix: {}", exercise.getId(), issue.severity(), issue.description(), issue.suggestedFix());
+                }
+            }
             return new ConsistencyCheckResponseDTO(issueDTOs);
         }
         finally {
