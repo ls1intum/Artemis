@@ -16,6 +16,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -82,6 +83,14 @@ public class AtlasAgentService {
     private final ToolCallbackProvider competencyExpertToolCallbackProvider;
 
     private final ChatMemory chatMemory;
+
+    @Value("${atlas.chat-model:gpt-4o}")
+    private String deploymentName;
+
+    @Value("${atlas.chat-temperature:0.2}")
+    private double temperature;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public Boolean getCompetencyModifiedInCurrentRequest() {
         return competencyModifiedInCurrentRequest.get();
@@ -199,8 +208,8 @@ public class AtlasAgentService {
                 // Retrieve the cached competency data
                 List<CompetencyExpertToolsService.CompetencyOperation> cachedData = getCachedCompetencyData(sessionId);
 
+                String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId, AgentType.COMPETENCY_EXPERT);
                 if (cachedData != null && !cachedData.isEmpty()) {
-                    String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId, AgentType.COMPETENCY_EXPERT);
 
                     // Clear the cache after successful save
                     clearCachedCompetencyData(sessionId);
@@ -212,7 +221,6 @@ public class AtlasAgentService {
                     return CompletableFuture.completedFuture(new AgentChatResultDTO(creationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
                 }
                 else {
-                    String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId, AgentType.COMPETENCY_EXPERT);
 
                     SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getSinglePreview();
                     BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getBatchPreview();
@@ -275,7 +283,7 @@ public class AtlasAgentService {
         // Append courseId to system prompt (invisible to conversation history)
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
 
-        ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(0.2).build();
+        ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
 
         ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPromptWithContext).user(message).options(options);
 
@@ -421,9 +429,8 @@ public class AtlasAgentService {
         }
 
         try {
-            ObjectMapper mapper = new ObjectMapper();
             PreviewDataContainer container = new PreviewDataContainer(singlePreview, batchPreview);
-            String jsonData = mapper.writeValueAsString(container);
+            String jsonData = objectMapper.writeValueAsString(container);
 
             // Append marker with JSON data to the response
             return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
@@ -459,8 +466,7 @@ public class AtlasAgentService {
         String cleanedText = (messageText.substring(0, startIndex) + messageText.substring(endIndex + PREVIEW_DATA_END_MARKER.length())).trim();
 
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            PreviewDataContainer container = mapper.readValue(jsonData, PreviewDataContainer.class);
+            PreviewDataContainer container = objectMapper.readValue(jsonData, PreviewDataContainer.class);
             return new PreviewDataResult(cleanedText, container.singlePreview(), container.batchPreview());
         }
         catch (JsonProcessingException e) {
