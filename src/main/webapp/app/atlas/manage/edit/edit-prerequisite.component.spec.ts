@@ -110,7 +110,7 @@ describe('EditPrerequisiteComponent', () => {
             status: 200,
         });
 
-        const findAllNormalLecturesByCourseIdWithUnits = jest.spyOn(lectureService, 'findAllNormalLecturesByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
+        const findAllNormalLecturesByCourseIdWithUnits = jest.spyOn(lectureService, 'findAllByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
 
         editPrerequisiteComponentFixture.detectChanges();
         const competencyFormComponent = editPrerequisiteComponentFixture.debugElement.query(By.directive(PrerequisiteFormComponent)).componentInstance;
