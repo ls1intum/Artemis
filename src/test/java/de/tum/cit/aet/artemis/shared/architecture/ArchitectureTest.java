@@ -51,6 +51,8 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Conditional;
@@ -107,6 +109,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testNoGoogleImport() {
+        ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google");
+        noGoogleDependencies.check(allClasses);
+    }
+
+    @Test
     void testClassNameAndVisibility() {
         ArchRule classNames = methods().that().areAnnotatedWith(Test.class).should().beDeclaredInClassesThat().haveNameMatching(".*Test").orShould().beDeclaredInClassesThat()
                 .areAnnotatedWith(Nested.class);
@@ -155,10 +163,13 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNullnessAnnotations() {
-        var notNullPredicate = and(not(resideInPackageAnnotation("jakarta.validation.constraints")), simpleNameAnnotation("NotNull"));
-        var nonNullPredicate = simpleNameAnnotation("NonNull");
+        // Those are non null annotations for compile time checking. We want to avoid NullPointerExceptions by using those annotations.
+        var nonNullPredicate = and(not(resideInPackageAnnotation("org.jspecify.annotations")), simpleNameAnnotation("NonNull"));
+        var nullablePredicate = and(not(resideInPackageAnnotation("org.jspecify.annotations")), simpleNameAnnotation("Nullable"));
+        // Those are validation annotations. They are used to validate input, e.g. REST request bodies.
+        var notNullPredicate = and(not(resideInPackageAnnotation("jakarta.validation.constraints")), simpleNameAnnotation("NonNull"));
+        // We want to avoid all other kinds of nullable annotations to ensure consistency.
         var nonnullPredicate = simpleNameAnnotation("Nonnull");
-        var nullablePredicate = and(not(resideInPackageAnnotation("jakarta.annotation")), simpleNameAnnotation("Nullable"));
 
         Set<DescribedPredicate<? super JavaAnnotation<?>>> allPredicates = Set.of(notNullPredicate, nonNullPredicate, nonnullPredicate, nullablePredicate);
 
@@ -294,8 +305,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
             public void check(JavaClass item, ConditionEvents events) {
                 boolean hasProfileAnnotation = item.isAnnotatedWith(Profile.class);
                 boolean hasConditionalAnnotation = item.isAnnotatedWith(Conditional.class);
-                if (!(hasProfileAnnotation || hasConditionalAnnotation)) {
-                    String message = String.format("Class %s is neither annotated with @Profile or @Conditional", item.getFullName());
+                boolean hasConditionalOnExpression = item.isAnnotatedWith(ConditionalOnExpression.class);
+                boolean hasConditionalOnProperty = item.isAnnotatedWith(ConditionalOnProperty.class);
+                if (!(hasProfileAnnotation || hasConditionalAnnotation || hasConditionalOnExpression || hasConditionalOnProperty)) {
+                    String message = String.format("Class %s is neither annotated with @Profile, @Conditional, @ConditionalOnExpression or @ConditionalOnProperty",
+                            item.getFullName());
                     events.add(SimpleConditionEvent.violated(item, message));
                 }
             }

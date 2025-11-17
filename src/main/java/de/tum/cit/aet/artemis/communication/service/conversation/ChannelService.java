@@ -8,10 +8,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -398,7 +398,7 @@ public class ChannelService {
      * @param backupTitle         used as a basis for the resulting channel name if the provided channel name is empty
      * @return a default channel with the given name
      */
-    private static Channel createDefaultChannel(Optional<String> channelNameOptional, @NotNull String prefix, String backupTitle) {
+    private static Channel createDefaultChannel(Optional<String> channelNameOptional, @NonNull String prefix, String backupTitle) {
         String channelName = channelNameOptional.filter(s -> !s.isEmpty()).orElse(generateChannelNameFromTitle(prefix, Optional.ofNullable(backupTitle)));
         Channel defaultChannel = new Channel();
         defaultChannel.setName(channelName);
@@ -428,7 +428,7 @@ public class ChannelService {
      * @param title  title of the lecture/exercise/exam to derive the channel name from
      * @return the generated channel name
      */
-    private static String generateChannelNameFromTitle(@NotNull String prefix, Optional<String> title) {
+    private static String generateChannelNameFromTitle(@NonNull String prefix, Optional<String> title) {
         String channelName = prefix + title.orElse("");
         // [^a-z0-9]+ matches all occurrences of single or consecutive characters that are no digits and letters
         String specialCharacters = "[^a-z0-9]+";

@@ -2,11 +2,12 @@ package de.tum.cit.aet.artemis.exercise.domain;
 
 import java.time.ZonedDateTime;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.MappedSuperclass;
+
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -250,5 +251,18 @@ public abstract class BaseExercise extends DomainObject {
             return "exercise";
         }
         return StringUtil.sanitizeStringForFileName(title);
+    }
+
+    /**
+     * helper method to get an exercise title for use in notifications, i.e. not null or empty
+     *
+     * @return a non-empty title for the exercise
+     **/
+    @JsonIgnore
+    public String getExerciseNotificationTitle() {
+        if (title == null || title.isBlank()) {
+            return "unnamed exercise";
+        }
+        return title;
     }
 }

@@ -76,9 +76,38 @@ artemis:
         destination: http://localhost:8081
     plagiarism-checks:
         plagiarism-results-limit: 100
+    security:
+        internal:
+            allowed-cidrs:
+                - 127.0.0.0/8
 
 info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service
     operatorAdminName: Some Universities Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
 
+spring:
+  ai:
+    model:
+      chat: openai
+    chat:
+      client:
+        enabled: ${artemis.hyperion.enabled}
+      memory:
+        max-messages: 20
+    openai:
+      base-url: http://localhost:1234
+      api-key: dummy-key      # most local servers ignore it
+      chat:
+        completions-path: /v1/chat/completions
+        options:
+          model: openai/gpt-oss-20b    # or whatever name your local server expects
+          temperature: 0.7
+    azure:
+      openai:
+        api-key: my-api-key-for-azure-openai
+        endpoint: https://endpoint.openai.azure.com
+        chat:
+          options:
+            deployment-name: gpt-5-mini
+            temperature: 1.0

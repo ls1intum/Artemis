@@ -28,10 +28,7 @@ import org.springframework.core.env.Environment;
  * <h3>Registration</h3>
  * To activate this filter, it must be declared in
  * {@code src/main/resources/META-INF/spring.factories}
- *
- *
  */
-
 public class SpringAIAutoConfigurationFilter implements AutoConfigurationImportFilter, EnvironmentAware {
 
     private static final Logger log = LoggerFactory.getLogger(SpringAIAutoConfigurationFilter.class);

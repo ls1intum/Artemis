@@ -127,14 +127,29 @@ public class HyperionConsistencyCheckService {
                 .lowCardinalityKeyValue(KeyValue.of("ai.span", "true")).start();
         try (Observation.Scope scope = wrapper.openScope()) {
             // @formatter:off
-            var structuralIssues = chatClient
+            var structuralIssuesResponse = chatClient
                 .prompt()
                 .system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.")
                 .user(renderedPrompt)
                 .call()
-                .entity(StructuredOutputSchema.StructuralConsistencyIssues.class);
+                .responseEntity(StructuredOutputSchema.StructuralConsistencyIssues.class);
+
+            var chatResponse = structuralIssuesResponse.getResponse();
+
+            if (chatResponse != null && chatResponse.getMetadata().getUsage() != null) {
+                var usage = chatResponse.getMetadata().getUsage();
+                log.info(
+                    "Hyperion structural check token usage: prompt={}, completion={}, total={}",
+                    usage.getPromptTokens(),
+                    usage.getCompletionTokens(),
+                    usage.getTotalTokens()
+                );
+            } else {
+                log.info("Hyperion structural check token usage not available for this provider/response");
+            }
+
             // @formatter:on
-            return toGenericConsistencyIssue(structuralIssues);
+            return toGenericConsistencyIssue(structuralIssuesResponse.entity());
         }
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
@@ -158,14 +173,29 @@ public class HyperionConsistencyCheckService {
                 .lowCardinalityKeyValue(KeyValue.of("ai.span", "true")).start();
         try (Observation.Scope scope = wrapper.openScope()) {
             // @formatter:off
-            var semanticIssues = chatClient
+            var semanticIssuesResponse = chatClient
                 .prompt()
                 .system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.")
                 .user(renderedPrompt)
                 .call()
-                .entity(StructuredOutputSchema.SemanticConsistencyIssues.class);
+                .responseEntity(StructuredOutputSchema.SemanticConsistencyIssues.class);
+
+            var chatResponse = semanticIssuesResponse.getResponse();
+
+            if (chatResponse != null && chatResponse.getMetadata().getUsage() != null) {
+                var usage = chatResponse.getMetadata().getUsage();
+                log.info(
+                    "Hyperion semantic check token usage: prompt={}, completion={}, total={}",
+                    usage.getPromptTokens(),
+                    usage.getCompletionTokens(),
+                    usage.getTotalTokens()
+                );
+            } else {
+                log.info("Hyperion semantic check token usage not available for this provider/response");
+            }
+
             // @formatter:on
-            return toGenericConsistencyIssue(semanticIssues);
+            return toGenericConsistencyIssue(semanticIssuesResponse.entity());
         }
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
@@ -206,8 +236,9 @@ public class HyperionConsistencyCheckService {
         if (structuralIssues == null || structuralIssues.issues == null) {
             return List.of();
         }
-        return structuralIssues.issues.stream().map(i -> new ConsistencyIssue(i.severity(), i.category() != null ? ConsistencyIssueCategory.valueOf(i.category().name()) : null,
-                i.description(), i.suggestedFix(), i.relatedLocations())).toList();
+        return structuralIssues.issues.stream().map(issue -> new ConsistencyIssue(issue.severity(),
+                issue.category() != null ? ConsistencyIssueCategory.valueOf(issue.category().name()) : null, issue.description(), issue.suggestedFix(), issue.relatedLocations()))
+                .toList();
     }
 
     /**
@@ -220,8 +251,9 @@ public class HyperionConsistencyCheckService {
         if (semanticIssues == null || semanticIssues.issues == null) {
             return List.of();
         }
-        return semanticIssues.issues.stream().map(i -> new ConsistencyIssue(i.severity(), i.category() != null ? ConsistencyIssueCategory.valueOf(i.category().name()) : null,
-                i.description(), i.suggestedFix(), i.relatedLocations())).toList();
+        return semanticIssues.issues.stream().map(issue -> new ConsistencyIssue(issue.severity(),
+                issue.category() != null ? ConsistencyIssueCategory.valueOf(issue.category().name()) : null, issue.description(), issue.suggestedFix(), issue.relatedLocations()))
+                .toList();
     }
 
     // Unified consistency issue used internally after parsing
