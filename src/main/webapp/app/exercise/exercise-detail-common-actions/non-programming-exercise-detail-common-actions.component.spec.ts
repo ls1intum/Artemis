@@ -21,7 +21,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

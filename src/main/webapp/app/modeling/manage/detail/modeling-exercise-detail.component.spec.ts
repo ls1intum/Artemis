@@ -29,7 +29,15 @@ describe('ModelingExercise Management Detail Component', () => {
     let eventManager: EventManager;
     let statisticsService: StatisticsService;
 
-    const model = { element: { id: '33' } };
+    const model = {
+        id: 'test-diagram-id',
+        version: '4.0.0',
+        title: 'Test Diagram',
+        type: 'ClassDiagram',
+        nodes: [],
+        edges: [],
+        assessments: {},
+    };
     const modelingExercise = { id: 123, exampleSolutionModel: JSON.stringify(model) } as ModelingExercise;
     const route = { params: of({ exerciseId: modelingExercise.id }) } as any as ActivatedRoute;
     const modelingExerciseStatistics = {

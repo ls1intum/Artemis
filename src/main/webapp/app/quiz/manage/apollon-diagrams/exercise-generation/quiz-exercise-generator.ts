@@ -1,4 +1,4 @@
-import { ApollonEditor, SVG, UMLElementType, UMLModel, UMLModelElement, UMLRelationshipType } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonNode, DiagramNodeType, SVG, UMLModel } from '@tumaet/apollon';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { convertRenderedSVGToPNG } from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
@@ -20,15 +20,15 @@ export const MAX_SIZE_UNIT = 200;
  */
 export async function generateDragAndDropQuizExercise(course: Course, title: string, model: UMLModel): Promise<DragAndDropQuestion> {
     const interactiveElements = [
-        ...Object.entries(model.interactive.elements)
+        ...Object.entries(model.nodes)
             .filter(([, include]) => include)
             .map(([id]) => id),
-        ...Object.entries(model.interactive.relationships)
+        ...Object.entries(model.edges)
             .filter(([, include]) => include)
             .map(([id]) => id),
     ];
-    const elements = [...Object.values(model.elements), ...Object.values(model.relationships)];
-
+    //const elements = [...Object.values(model.nodes), ...Object.values(model.edges)];
+    const elements = [...Object.values(model.nodes)];
     // Render the diagram's background image and store it
     const renderedDiagram = await ApollonEditor.exportModelAsSvg(model, {
         keepOriginalSize: true,
@@ -104,20 +104,18 @@ function createDragAndDropQuestion(
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItem(
-    element: UMLModelElement,
-    model: UMLModel,
-    svgSize: { width: number; height: number },
-    files: Map<string, Blob>,
-): Promise<DragAndDropMapping> {
-    const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute, UMLElementType.ObjectMethod];
-    if (element.type in UMLRelationshipType) {
+async function generateDragAndDropItem(element: ApollonNode, model: UMLModel, svgSize: { width: number; height: number }, files: Map<string, Blob>): Promise<DragAndDropMapping> {
+    //const textualElementTypes: DiagramNodeType[] = ['class', 'package'];
+    /*if (element ) {
         return generateDragAndDropItemForRelationship(element, model, svgSize, files);
     } else if (textualElementTypes.includes(element.type as UMLElementType)) {
         return generateDragAndDropItemForText(element, model, svgSize);
     } else {
         return generateDragAndDropItemForElement(element, model, svgSize, files);
     }
+
+     */
+    return generateDragAndDropItemForNode(element, model, svgSize, files);
 }
 
 /**
@@ -130,8 +128,8 @@ async function generateDragAndDropItem(
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-export async function generateDragAndDropItemForElement(
-    element: UMLModelElement,
+export async function generateDragAndDropItemForNode(
+    element: ApollonNode,
     model: UMLModel,
     svgSize: { width: number; height: number },
     files: Map<string, Blob>,
@@ -156,7 +154,7 @@ export async function generateDragAndDropItemForElement(
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItemForText(element: UMLModelElement, model: UMLModel, svgSize: { width: number; height: number }): Promise<DragAndDropMapping> {
+/*async function generateDragAndDropItemForText(element: UMLModelElement, model: UMLModel, svgSize: { width: number; height: number }): Promise<DragAndDropMapping> {
     const dragItem = new DragItem();
     dragItem.text = element.name;
     const dropLocation = computeDropLocation(element.bounds, svgSize);
@@ -164,6 +162,8 @@ async function generateDragAndDropItemForText(element: UMLModelElement, model: U
     return new DragAndDropMapping(dragItem, dropLocation);
 }
 
+
+ */
 /**
  * Create a mapping of a `DragItem` and a `DropLocation` for a `UMLRelationship`.
  *
@@ -174,7 +174,7 @@ async function generateDragAndDropItemForText(element: UMLModelElement, model: U
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
-async function generateDragAndDropItemForRelationship(
+/*async function generateDragAndDropItemForRelationship(
     element: UMLModelElement,
     model: UMLModel,
     svgSize: { width: number; height: number },
@@ -203,6 +203,8 @@ async function generateDragAndDropItemForRelationship(
 
     return new DragAndDropMapping(dragItem, dropLocation);
 }
+
+ */
 
 /**
  * Create a Drag and Drop Quiz Exercise `DropLocation` for an `Element`.
@@ -238,9 +240,9 @@ export function computeDropLocation(
  * @return {DragAndDropMapping} A list of all possible `DragAndDropMapping`s.
  */
 function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
-    const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
+    const textualElementTypes: DiagramNodeType[] = ['class', 'package'];
     const mappings = new Map<string, DragAndDropMapping[]>();
-    const textualElements = Object.values(model.elements).filter((element) => textualElementTypes.includes(element.type));
+    const textualElements = Object.values(model.nodes).filter((element) => textualElementTypes.includes(element.type));
 
     // Create all one-on-one mappings
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
@@ -255,10 +257,10 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
     // Create all mapping permutations for textual based elements within the same parent and same type
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
         const dragElement = textualElements.find((element) => element.id === dragItemElementId);
-        if (!dragElement || !dragElement.owner) {
+        if (!dragElement || !dragElement.parentId) {
             continue;
         }
-        const dragElementSiblings = textualElements.filter((element) => element.owner === dragElement.owner && element.type === dragElement.type);
+        const dragElementSiblings = textualElements.filter((element) => element.parentId === dragElement.parentId && element.type === dragElement.type);
         for (const dragElementSibling of dragElementSiblings) {
             if (dragElementSibling.id === dragItemElementId) {
                 continue;
@@ -275,12 +277,12 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
     // Create all mapping permutations for textual based elements with the same name and different parents
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
         const dragElement = textualElements.find((element) => element.id === dragItemElementId);
-        if (!dragElement || !dragElement.name) {
+        if (!dragElement || !dragElement.data.name) {
             continue;
         }
         for (const [dropLocationElementId] of dropLocations.entries()) {
             const dropElement = textualElements.find((element) => element.id === dropLocationElementId);
-            if (!dropElement || dropElement.id === dragElement.id || dropElement.owner === dragElement.owner || dropElement.name !== dragElement.name) {
+            if (!dropElement || dropElement.id === dragElement.id || dropElement.parentId === dragElement.parentId || dropElement.data.name !== dragElement.data.name) {
                 continue;
             }
             if (intermediateMappings.has(dropLocationElementId)) {

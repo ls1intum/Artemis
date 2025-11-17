@@ -23,7 +23,7 @@ import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { NgModel } from '@angular/forms';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
