@@ -23,9 +23,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -304,7 +303,7 @@ public class ExamService {
      *                        and questions for the quiz should be loaded
      * @return the exam with exercise groups
      */
-    @NotNull
+    @NonNull
     public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId, boolean withDetails) {
         log.debug("Request to get exam {} with exercise groups (with details: {})", examId, withDetails);
         if (!withDetails) {
@@ -560,7 +559,7 @@ public class ExamService {
      * @param studentExamGrades grade scores for the given studentExam with eagerly loaded latest submission and result
      * @return Student Exam results with exam grade calculated if applicable
      */
-    @NotNull
+    @NonNull
     public StudentExamWithGradeDTO calculateStudentResultWithGradeAndPoints(StudentExam studentExam, Set<ExamGradeScoreDTO> studentExamGrades) {
         // load again from the database because the exam object of the student exam might not have all the properties we need
         var exam = examRepository.findByIdElseThrow(studentExam.getExam().getId());

@@ -21,8 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -243,7 +242,7 @@ public class ParticipationUtilService {
         return result;
     }
 
-    @NotNull
+    @NonNull
     private static Submission getSubmission(StudentParticipation studentParticipation, Exercise exercise) {
         Submission submission = switch (exercise) {
             case ProgrammingExercise ignored -> new ProgrammingSubmission();

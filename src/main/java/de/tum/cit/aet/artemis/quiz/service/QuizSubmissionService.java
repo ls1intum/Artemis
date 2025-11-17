@@ -65,12 +65,9 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final QuizQuestionProgressService quizQuestionProgressService;
-
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
             QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService, QuizStatisticService quizStatisticService,
-            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService,
-            QuizQuestionProgressService quizQuestionProgressService) {
+            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService) {
         super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
@@ -80,7 +77,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         this.quizStatisticService = quizStatisticService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.websocketMessagingService = websocketMessagingService;
-        this.quizQuestionProgressService = quizQuestionProgressService;
     }
 
     /**

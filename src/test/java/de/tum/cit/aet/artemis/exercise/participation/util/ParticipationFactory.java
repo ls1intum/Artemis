@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -247,7 +247,7 @@ public class ParticipationFactory {
      * @param type The FeedbackType of the Feedback
      * @return The generated Feedback
      */
-    @NotNull
+    @NonNull
     public static Feedback createPositiveFeedback(FeedbackType type) {
         Feedback positiveFeedback = new Feedback();
         positiveFeedback.setCredits(2D);
@@ -262,7 +262,7 @@ public class ParticipationFactory {
      * @param type The FeedbackType of the Feedback
      * @return The generated Feedback
      */
-    @NotNull
+    @NonNull
     public static Feedback createNegativeFeedback(FeedbackType type) {
         Feedback negativeFeedback = new Feedback();
         negativeFeedback.setCredits(-1D);
@@ -278,7 +278,7 @@ public class ParticipationFactory {
      * @param textBlockReference The textBlockReference of the Feedback
      * @return The generated Feedback
      */
-    @NotNull
+    @NonNull
     public static Feedback createManualTextFeedback(Double credits, String textBlockReference) {
         Feedback feedback = new Feedback();
         feedback.setCredits(credits);

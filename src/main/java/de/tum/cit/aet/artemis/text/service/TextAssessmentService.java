@@ -5,8 +5,7 @@ import static org.hibernate.Hibernate.isInitialized;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
