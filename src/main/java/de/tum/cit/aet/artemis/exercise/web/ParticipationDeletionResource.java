@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.exercise.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.security.Principal;
-
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -16,7 +14,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,16 +23,13 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
  * REST controller for deleting a participation and cleaning up a build plan for a participation.
@@ -111,24 +105,24 @@ public class ParticipationDeletionResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 
-    /**
-     * DELETE /participations/:participationId/cleanup-build-plan : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
-     * This only works for programming exercises.
-     *
-     * @param participationId the participationId of the ProgrammingExerciseStudentParticipation for which the build plan should be removed
-     * @param principal       The identity of the user accessing this resource
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PutMapping("participations/{participationId}/cleanup-build-plan")
-    @EnforceAtLeastInstructor
-    @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
-        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdElseThrow(participationId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        participationAuthorizationService.checkAccessPermissionAtLeastInstructor(participation, user);
-        log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
-        participationDeletionService.cleanupBuildPlan(participation);
-        return ResponseEntity.ok().body(participation);
-    }
+    // /**
+    // * DELETE /participations/:participationId/cleanup-build-plan : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
+    // * This only works for programming exercises.
+    // *
+    // * @param participationId the participationId of the ProgrammingExerciseStudentParticipation for which the build plan should be removed
+    // * @param principal The identity of the user accessing this resource
+    // * @return the ResponseEntity with status 200 (OK)
+    // */
+    // @PutMapping("participations/{participationId}/cleanup-build-plan")
+    // @EnforceAtLeastInstructor
+    // @FeatureToggle(Feature.ProgrammingExercises)
+    // public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
+    // ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdElseThrow(participationId);
+    // User user = userRepository.getUserWithGroupsAndAuthorities();
+    // participationAuthorizationService.checkAccessPermissionAtLeastInstructor(participation, user);
+    // log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
+    // participationDeletionService.cleanupBuildPlan(participation);
+    // return ResponseEntity.ok().body(participation);
+    // }
 
 }

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.management;
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
@@ -92,9 +91,9 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
         doReturn(ContinuousIntegrationService.BuildStatus.BUILDING).when(continuousIntegrationService).getBuildStatus(any());
-        doNothing().when(continuousIntegrationService).deleteBuildPlan(any(), any());
-        doNothing().when(continuousIntegrationService).deleteProject(any());
-        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
+        // doNothing().when(continuousIntegrationService).deleteBuildPlan(any(), any());
+        // doNothing().when(continuousIntegrationService).deleteProject(any());
+        // doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
 
         mockTriggerFailedBuild(participation);
 

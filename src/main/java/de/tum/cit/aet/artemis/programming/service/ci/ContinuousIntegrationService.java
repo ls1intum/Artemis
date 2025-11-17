@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -24,10 +25,6 @@ public interface ContinuousIntegrationService extends StatelessCIService {
     String orMatchStartingWithRepoName = "|^" + ASSIGNMENT_REPO_NAME + "/"; // Needed for C build logs
 
     Pattern ASSIGNMENT_PATH = Pattern.compile(matchPathEndingWithAssignmentDirectory + orMatchStartingWithRepoName);
-
-    enum BuildStatus {
-        INACTIVE, QUEUED, BUILDING
-    }
 
     /**
      * Creates the base build plan for the given programming exercise
@@ -190,7 +187,7 @@ public interface ContinuousIntegrationService extends StatelessCIService {
      */
     // TODO: Move to a new ContinuousIntegrationPermissionService that is only
     // implemented by the Jenkins subsystem
-    void givePlanPermissions(ProgrammingExercise programmingExercise, String planName);
+    // void givePlanPermissions(ProgrammingExercise programmingExercise, String planName);
 
     /**
      * Checks if the underlying CI server is up and running and gives some additional information about the running

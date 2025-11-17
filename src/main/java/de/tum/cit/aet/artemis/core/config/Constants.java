@@ -314,7 +314,7 @@ public final class Constants {
      * The name of the Spring profile used to process build jobs in a Stateless
      * Jenkins setup.
      */
-    public static final String PROFILE_STATELESS_JENKINS = "statless-jenkins";
+    public static final String PROFILE_STATELESS_JENKINS = "stateless-jenkins";
 
     /**
      * The name of the Spring profile used for Artemis functionality.
