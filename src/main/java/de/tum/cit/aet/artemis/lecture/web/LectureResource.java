@@ -249,7 +249,7 @@ public class LectureResource {
     }
 
     /**
-     * GET /courses/:courseId/normal-lectures/with-units : get all the normal lectures of a course together with their lecture units
+     * GET /courses/:courseId/normal-lectures/with-units : get all the lectures of a course together with their lecture units
      *
      * @param courseId the courseId of the course for which the lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
