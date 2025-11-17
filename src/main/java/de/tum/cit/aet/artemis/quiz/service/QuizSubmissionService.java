@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.ws.rs.BadRequestException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -438,7 +440,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             return multipleChoiceSubmittedAnswer;
         }
         else {
-            throw new IllegalArgumentException("QuizQuestion with id " + submittedAnswer.questionId() + " is not a MultipleChoiceQuestion");
+            throw new BadRequestException("QuizQuestion with id " + submittedAnswer.questionId() + " is not a MultipleChoiceQuestion");
         }
     }
 
@@ -470,7 +472,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             return shortAnswerSubmittedAnswer;
         }
         else {
-            throw new IllegalArgumentException("QuizQuestion with id " + submittedAnswer.questionId() + " is not a ShortAnswerQuestion");
+            throw new BadRequestException("QuizQuestion with id " + submittedAnswer.questionId() + " is not a ShortAnswerQuestion");
         }
     }
 
@@ -504,7 +506,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             return dragAndDropSubmittedAnswer;
         }
         else {
-            throw new IllegalArgumentException("QuizQuestion with id " + submittedAnswer.questionId() + " is not a DragAndDropQuestion");
+            throw new BadRequestException("QuizQuestion with id " + submittedAnswer.questionId() + " is not a DragAndDropQuestion");
         }
     }
 
@@ -542,7 +544,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
                     DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer = createDragAndDropSubmittedAnswerFromDTO(dragAndDropSubmittedAnswerFromStudentDTO, quizQuestionMap);
                     submittedAnswers.add(dragAndDropSubmittedAnswer);
                 }
-                default -> throw new IllegalArgumentException("Unknown SubmittedAnswerFromStudentDTO type: " + submittedAnswerDTO.getClass().getName());
+                default -> throw new BadRequestException("Unknown SubmittedAnswerFromStudentDTO type: " + submittedAnswerDTO.getClass().getName());
             }
         }
         return submittedAnswers;
@@ -550,10 +552,10 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     public QuizSubmission createNewSubmissionFromDTO(QuizSubmissionFromStudentDTO quizSubmission, QuizExercise quizExercise) {
         if (!hasSubmittedAnswersForAllQuestions(quizSubmission, quizExercise)) {
-            throw new IllegalArgumentException("QuizSubmission does not contain submitted answers for all questions");
+            throw new BadRequestException("QuizSubmission does not contain submitted answers for all questions");
         }
         if (!hasNoDuplicateSubmittedAnswers(quizSubmission)) {
-            throw new IllegalArgumentException("QuizSubmission contains duplicate submitted answers for the same question");
+            throw new BadRequestException("QuizSubmission contains duplicate submitted answers for the same question");
         }
         QuizSubmission newQuizSubmission = new QuizSubmission();
         Set<SubmittedAnswer> submittedAnswers = createSubmittedAnswersFromDTO(quizSubmission, quizExercise);

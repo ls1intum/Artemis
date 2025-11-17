@@ -593,6 +593,84 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         }
     }
 
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @EnumSource(QuizMode.class)
+    void testQuizSubmitPractice_badRequest_missingSubmittedAnswer(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
+        quizExercise.setDuration(2);
+        quizExercise.setIsOpenForPractice(true);
+        quizExerciseService.save(quizExercise);
+
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+        // remove one of the submitted answers
+        SubmittedAnswer answerToRemove = quizSubmission.getSubmittedAnswers().iterator().next();
+        quizSubmission.removeSubmittedAnswers(answerToRemove);
+
+        QuizSubmissionFromStudentDTO quizSubmissionDTO = QuizSubmissionFromStudentDTO.of(quizSubmission);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmissionDTO, Result.class, HttpStatus.BAD_REQUEST);
+
+        verifyNoWebsocketMessageForExercise(quizExercise);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @EnumSource(QuizMode.class)
+    void testQuizSubmitPreview_badRequest_missingSubmittedAnswer(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, quizMode);
+        quizExerciseService.save(quizExercise);
+
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+        // remove one of the submitted answers
+        SubmittedAnswer answerToRemove = quizSubmission.getSubmittedAnswers().iterator().next();
+        quizSubmission.removeSubmittedAnswers(answerToRemove);
+
+        QuizSubmissionFromStudentDTO quizSubmissionDTO = QuizSubmissionFromStudentDTO.of(quizSubmission);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmissionDTO, Result.class, HttpStatus.BAD_REQUEST);
+
+        verifyNoWebsocketMessageForExercise(quizExercise);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @EnumSource(QuizMode.class)
+    void testQuizSubmitPractice_badRequest_duplicateSubmittedAnswer(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
+        quizExercise.setDuration(2);
+        quizExercise.setIsOpenForPractice(true);
+        quizExerciseService.save(quizExercise);
+
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+        // duplicate one of the submitted answers by adding another for the same question
+        QuizQuestion questionToDuplicate = quizExercise.getQuizQuestions().getFirst();
+        SubmittedAnswer extraAnswer = QuizExerciseFactory.generateSubmittedAnswerFor(questionToDuplicate, true);
+        quizSubmission.addSubmittedAnswers(extraAnswer);
+
+        QuizSubmissionFromStudentDTO quizSubmissionDTO = QuizSubmissionFromStudentDTO.of(quizSubmission);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmissionDTO, Result.class, HttpStatus.BAD_REQUEST);
+
+        verifyNoWebsocketMessageForExercise(quizExercise);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @EnumSource(QuizMode.class)
+    void testQuizSubmitPreview_badRequest_duplicateSubmittedAnswer(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, quizMode);
+        quizExerciseService.save(quizExercise);
+
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+        // duplicate one of the submitted answers by adding another for the same question
+        QuizQuestion questionToDuplicate = quizExercise.getQuizQuestions().getFirst();
+        SubmittedAnswer extraAnswer = QuizExerciseFactory.generateSubmittedAnswerFor(questionToDuplicate, true);
+        quizSubmission.addSubmittedAnswers(extraAnswer);
+
+        QuizSubmissionFromStudentDTO quizSubmissionDTO = QuizSubmissionFromStudentDTO.of(quizSubmission);
+        request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmissionDTO, Result.class, HttpStatus.BAD_REQUEST);
+
+        verifyNoWebsocketMessageForExercise(quizExercise);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitScheduledAndDeleted() throws Exception {
