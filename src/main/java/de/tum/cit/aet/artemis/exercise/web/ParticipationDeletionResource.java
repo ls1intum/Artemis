@@ -4,8 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.security.Principal;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -100,7 +99,7 @@ public class ParticipationDeletionResource {
      * @param user          the currently logged-in user who initiated the delete operation
      * @return the response to the client
      */
-    @NotNull
+    @NonNull
     private ResponseEntity<Void> deleteParticipation(StudentParticipation participation, User user) {
         String name = participation.getParticipantName();
         var logMessage = "Delete Participation " + participation.getId() + " of exercise " + participation.getExercise().getTitle() + " for " + name + " by " + user.getLogin();

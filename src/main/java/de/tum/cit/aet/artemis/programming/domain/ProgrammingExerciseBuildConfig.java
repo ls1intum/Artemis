@@ -3,13 +3,13 @@ package de.tum.cit.aet.artemis.programming.domain;
 import java.util.Objects;
 import java.util.UUID;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +74,8 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "allow_branching", columnDefinition = "boolean default false", nullable = false)
     private boolean allowBranching = false; // default value
 
-    @Column(name = "branch_regex", columnDefinition = "varchar(255) default '.*'", nullable = false)
+    @Column(name = "branch_regex", columnDefinition = "varchar(128)")
+    @Nullable
     private String branchRegex = ".*"; // default value
 
     @Size(max = 36)
@@ -210,6 +211,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
      *
      * @return The branch name regex pattern.
      */
+    @Nullable
     public String getBranchRegex() {
         return branchRegex;
     }
