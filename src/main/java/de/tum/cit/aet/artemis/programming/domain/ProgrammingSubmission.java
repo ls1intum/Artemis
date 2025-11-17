@@ -11,10 +11,10 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -61,7 +61,7 @@ public class ProgrammingSubmission extends Submission {
      * @param commitHash     the hash of the corresponding commit in the git repository in the version control system
      * @return the newly created programming submission
      */
-    @NotNull
+    @NonNull
     public static ProgrammingSubmission createFallbackSubmission(ProgrammingExerciseParticipation participation, ZonedDateTime submissionDate, String commitHash) {
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission.setParticipation((Participation) participation);

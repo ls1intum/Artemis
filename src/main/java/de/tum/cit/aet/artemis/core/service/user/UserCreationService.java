@@ -9,9 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
@@ -221,8 +220,8 @@ public class UserCreationService {
      * @param updatedUserDTO The DTO containing the to be updated values
      * @return updated user
      */
-    @NotNull
-    public User updateUser(@NotNull User user, ManagedUserVM updatedUserDTO) {
+    @NonNull
+    public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
         user.setLogin(updatedUserDTO.getLogin().toLowerCase());
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());

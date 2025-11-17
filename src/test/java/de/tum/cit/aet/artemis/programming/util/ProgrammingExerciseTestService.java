@@ -25,7 +25,6 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,8 +42,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.CanceledException;
@@ -55,6 +52,7 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.jspecify.annotations.NonNull;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.slf4j.Logger;
@@ -166,10 +164,7 @@ public class ProgrammingExerciseTestService {
     protected String defaultBranch;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCRepoPath;
-
-    @Value("${artemis.version-control.url}")
-    private URI localVCBaseUri;
+    private Path localVCBasePath;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -347,16 +342,16 @@ public class ProgrammingExerciseTestService {
         examExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
-        exerciseRepo.configureRepos(localVCRepoPath, "exerciseLocalRepo", "exerciseOriginRepo");
-        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
-        solutionRepo.configureRepos(localVCRepoPath, "solutionLocalRepo", "solutionOriginRepo");
-        auxRepo.configureRepos(localVCRepoPath, "auxLocalRepo", "auxOriginRepo");
-        sourceExerciseRepo.configureRepos(localVCRepoPath, "sourceExerciseLocalRepo", "sourceExerciseOriginRepo");
-        sourceTestRepo.configureRepos(localVCRepoPath, "sourceTestLocalRepo", "sourceTestOriginRepo");
-        sourceSolutionRepo.configureRepos(localVCRepoPath, "sourceSolutionLocalRepo", "sourceSolutionOriginRepo");
-        sourceAuxRepo.configureRepos(localVCRepoPath, "sourceAuxLocalRepo", "sourceAuxOriginRepo");
-        studentRepo.configureRepos(localVCRepoPath, "studentRepo", "studentOriginRepo");
-        studentTeamRepo.configureRepos(localVCRepoPath, "studentTeamRepo", "studentTeamOriginRepo");
+        exerciseRepo.configureRepos(localVCBasePath, "exerciseLocalRepo", "exerciseOriginRepo");
+        testRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
+        solutionRepo.configureRepos(localVCBasePath, "solutionLocalRepo", "solutionOriginRepo");
+        auxRepo.configureRepos(localVCBasePath, "auxLocalRepo", "auxOriginRepo");
+        sourceExerciseRepo.configureRepos(localVCBasePath, "sourceExerciseLocalRepo", "sourceExerciseOriginRepo");
+        sourceTestRepo.configureRepos(localVCBasePath, "sourceTestLocalRepo", "sourceTestOriginRepo");
+        sourceSolutionRepo.configureRepos(localVCBasePath, "sourceSolutionLocalRepo", "sourceSolutionOriginRepo");
+        sourceAuxRepo.configureRepos(localVCBasePath, "sourceAuxLocalRepo", "sourceAuxOriginRepo");
+        studentRepo.configureRepos(localVCBasePath, "studentRepo", "studentOriginRepo");
+        studentTeamRepo.configureRepos(localVCBasePath, "studentTeamRepo", "studentTeamOriginRepo");
 
         // TODO: we should not mock repositories any more now that everything works with LocalVC
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
@@ -416,7 +411,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private String convertToLocalVcUriString(LocalRepository localRepository) {
-        return LocalRepositoryUriUtil.convertToLocalVcUriString(localRepository.remoteBareGitRepoFile, localVCRepoPath);
+        return LocalRepositoryUriUtil.convertToLocalVcUriString(localRepository.remoteBareGitRepoFile, localVCBasePath);
     }
 
     /**
@@ -1969,7 +1964,7 @@ public class ProgrammingExerciseTestService {
             setupRepositoryMocks(exercise);
             for (var ignored : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
-                repo.configureRepos(localVCRepoPath, "studentRepo", "studentOriginRepo");
+                repo.configureRepos(localVCBasePath, "studentRepo", "studentOriginRepo");
                 // setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
                 studentRepos.add(repo);
             }
@@ -2061,7 +2056,7 @@ public class ProgrammingExerciseTestService {
         return participation;
     }
 
-    @NotNull
+    @NonNull
     private Team setupTeam(User user) {
         // create a team for the user (necessary condition before starting an exercise)
         Set<User> students = Set.of(user);
@@ -2167,7 +2162,7 @@ public class ProgrammingExerciseTestService {
         assertThat(teamLocalPath).doesNotExist();
     }
 
-    @NotNull
+    @NonNull
     private Team setupTeamForBadRequestForStartExercise() {
         setupTeamExercise();
 

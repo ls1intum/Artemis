@@ -18,7 +18,9 @@
             },
             "noInconsistencies": "Keine Inkonsistenzen gefunden",
             "inconsistenciesFound": "Es wurden folgende Inkonsistenzen gefunden",
-            "inconsistenciesFoundAlert": "Es wurden Inkonsistenzen in der Programmieraufgabe gefunden. Bitte öffne die Konsistenzprüfung für Details."
+            "inconsistenciesFoundAlert": "Es wurden Inkonsistenzen in der Programmieraufgabe gefunden. Bitte öffne die Konsistenzprüfung für Details.",
+            "checkFailedAlert": "Es gab einen Fehler bei der Konsistenzprüfung",
+            "issueHeading": "Konsistenzfehler Gefunden"
         }
     }
 }

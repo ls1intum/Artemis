@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.config.RedisCondition;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson.RedisClientListResolver;
 
 /**
- * Health indicator for the Redis backend used by LocalCI.
+ * Health indicator for the Redis middleware used by LocalCI.
  */
 @Lazy
 @Conditional(RedisCondition.class)
