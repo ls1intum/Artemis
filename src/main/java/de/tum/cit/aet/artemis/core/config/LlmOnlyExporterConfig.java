@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -24,6 +25,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter;
  * It ensures that only spans tagged with {@code ai.span=true} are exported,
  * so infrastructure spans (HTTP, DB, etc.) are ignored.
  */
+@Lazy
 @Configuration
 @ConditionalOnProperty(prefix = "management.langfuse", name = "enabled", havingValue = "true")
 public class LlmOnlyExporterConfig {

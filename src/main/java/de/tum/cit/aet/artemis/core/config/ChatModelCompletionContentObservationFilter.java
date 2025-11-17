@@ -6,6 +6,7 @@ import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.springframework.ai.content.Content;
 import org.springframework.ai.observation.ObservabilityHelper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -23,6 +24,7 @@ import io.micrometer.observation.ObservationFilter;
  * instances and marks them with {@code ai.span=true}, so that only AI spans
  * are exported by the custom {@code LlmOnlyExporterConfig}.
  */
+@Lazy
 @Component
 @ConditionalOnProperty(prefix = "management.langfuse", name = "enabled", havingValue = "true")
 public class ChatModelCompletionContentObservationFilter implements ObservationFilter {

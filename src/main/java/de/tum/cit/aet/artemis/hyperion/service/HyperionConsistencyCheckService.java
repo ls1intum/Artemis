@@ -21,9 +21,9 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.Severity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import io.micrometer.common.KeyValue;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.annotation.Observed;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -72,46 +72,37 @@ public class HyperionConsistencyCheckService {
      * @param exercise programming exercise reference to check consistency for
      * @return aggregated consistency issues
      */
+    @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { "ai.span", "true" })
     public ConsistencyCheckResponseDTO checkConsistency(ProgrammingExercise exercise) {
         log.info("Performing consistency check for exercise {}", exercise.getId());
-        // Create an observation containing LLM calls' traces
-        Observation parent = Observation.createNotStarted("hyperion.consistency", observationRegistry).contextualName("consistency check for exercise id: " + exercise.getId())
-                .lowCardinalityKeyValue(KeyValue.of("ai.span", "true"))
-                .highCardinalityKeyValue(KeyValue.of("lf.trace.name", "Consistency Check for Exercise ID: " + exercise.getId())).parentObservation(null).start();
+        var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
-        try (Observation.Scope scope = parent.openScope()) {
-            var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+        String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
+        String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
+        var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage);
 
-            String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
-            String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
-            var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage);
+        Observation parentObs = observationRegistry.getCurrentObservation();
+        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input, parentObs)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input, parentObs)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
-            var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input, parent)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
-            var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input, parent)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        // @formatter:off
+        List<ConsistencyIssue> combinedIssues = Flux.merge(
+            structuralMono.flatMapMany(Flux::fromIterable),
+            semanticMono.flatMapMany(Flux::fromIterable)
+        ).collectList().block();
+        // @formatter:on
 
-            // @formatter:off
-            List<ConsistencyIssue> combinedIssues = Flux.merge(
-                structuralMono.flatMapMany(Flux::fromIterable),
-                semanticMono.flatMapMany(Flux::fromIterable)
-            ).collectList().block();
-            // @formatter:on
-
-            List<ConsistencyIssueDTO> issueDTOs = Objects.requireNonNullElse(combinedIssues, new ArrayList<ConsistencyIssue>()).stream().map(this::mapConsistencyIssueToDto)
-                    .toList();
-            if (issueDTOs.isEmpty()) {
-                log.info("No consistency issues found for exercise {}", exercise.getId());
-            }
-            else {
-                log.info("Consistency check for exercise {} found {} issues", exercise.getId(), issueDTOs.size());
-                for (var issue : issueDTOs) {
-                    log.info("Consistency issue for exercise {}: [{}] {} - Suggested fix: {}", exercise.getId(), issue.severity(), issue.description(), issue.suggestedFix());
-                }
-            }
-            return new ConsistencyCheckResponseDTO(issueDTOs);
+        List<ConsistencyIssueDTO> issueDTOs = Objects.requireNonNullElse(combinedIssues, new ArrayList<ConsistencyIssue>()).stream().map(this::mapConsistencyIssueToDto).toList();
+        if (issueDTOs.isEmpty()) {
+            log.info("No consistency issues found for exercise {}", exercise.getId());
         }
-        finally {
-            parent.stop();
+        else {
+            log.info("Consistency check for exercise {} found {} issues", exercise.getId(), issueDTOs.size());
+            for (var issue : issueDTOs) {
+                log.info("Consistency issue for exercise {}: [{}] {} - Suggested fix: {}", exercise.getId(), issue.severity(), issue.description(), issue.suggestedFix());
+            }
         }
+        return new ConsistencyCheckResponseDTO(issueDTOs);
     }
 
     /**
@@ -121,11 +112,12 @@ public class HyperionConsistencyCheckService {
      * @return structural issues (never null)
      */
     private List<ConsistencyIssue> runStructuralCheck(Map<String, String> input, Observation parentObs) {
+        var child = Observation.createNotStarted("hyperion.consistency.structural", observationRegistry).contextualName("structural check")
+                .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of("ai.span", "true"))
+                .highCardinalityKeyValue(io.micrometer.common.KeyValue.of("lf.span.name", "structural check")).parentObservation(parentObs).start();
         var resourcePath = "/prompts/hyperion/consistency_structural.st";
         String renderedPrompt = templates.render(resourcePath, input);
-        Observation wrapper = Observation.createNotStarted("hyperion.consistency.structural", observationRegistry).parentObservation(parentObs).contextualName("structural check")
-                .lowCardinalityKeyValue(KeyValue.of("ai.span", "true")).start();
-        try (Observation.Scope scope = wrapper.openScope()) {
+        try (Observation.Scope scope = child.openScope()) {
             // @formatter:off
             var structuralIssuesResponse = chatClient
                 .prompt()
@@ -133,18 +125,15 @@ public class HyperionConsistencyCheckService {
                 .user(renderedPrompt)
                 .call()
                 .responseEntity(StructuredOutputSchema.StructuralConsistencyIssues.class);
+            // @formatter:on
 
             var chatResponse = structuralIssuesResponse.getResponse();
 
             if (chatResponse != null && chatResponse.getMetadata().getUsage() != null) {
                 var usage = chatResponse.getMetadata().getUsage();
-                log.info(
-                    "Hyperion structural check token usage: prompt={}, completion={}, total={}",
-                    usage.getPromptTokens(),
-                    usage.getCompletionTokens(),
-                    usage.getTotalTokens()
-                );
-            } else {
+                log.info("Hyperion structural check token usage: prompt={}, completion={}, total={}", usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
+            }
+            else {
                 log.info("Hyperion structural check token usage not available for this provider/response");
             }
 
@@ -156,7 +145,7 @@ public class HyperionConsistencyCheckService {
             return new ArrayList<>();
         }
         finally {
-            wrapper.stop();
+            child.stop();
         }
     }
 
@@ -167,11 +156,12 @@ public class HyperionConsistencyCheckService {
      * @return semantic issues
      */
     private List<ConsistencyIssue> runSemanticCheck(Map<String, String> input, Observation parentObs) {
+        var child = Observation.createNotStarted("hyperion.consistency.semantic", observationRegistry).contextualName("semantic check")
+                .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of("ai.span", "true"))
+                .highCardinalityKeyValue(io.micrometer.common.KeyValue.of("lf.span.name", "semantic check")).parentObservation(parentObs).start();
         var resourcePath = "/prompts/hyperion/consistency_semantic.st";
         String renderedPrompt = templates.render(resourcePath, input);
-        Observation wrapper = Observation.createNotStarted("hyperion.consistency.semantic", observationRegistry).parentObservation(parentObs).contextualName("semantic check")
-                .lowCardinalityKeyValue(KeyValue.of("ai.span", "true")).start();
-        try (Observation.Scope scope = wrapper.openScope()) {
+        try (Observation.Scope scope = child.openScope()) {
             // @formatter:off
             var semanticIssuesResponse = chatClient
                 .prompt()
@@ -179,18 +169,15 @@ public class HyperionConsistencyCheckService {
                 .user(renderedPrompt)
                 .call()
                 .responseEntity(StructuredOutputSchema.SemanticConsistencyIssues.class);
+            // @formatter:on
 
             var chatResponse = semanticIssuesResponse.getResponse();
 
             if (chatResponse != null && chatResponse.getMetadata().getUsage() != null) {
                 var usage = chatResponse.getMetadata().getUsage();
-                log.info(
-                    "Hyperion semantic check token usage: prompt={}, completion={}, total={}",
-                    usage.getPromptTokens(),
-                    usage.getCompletionTokens(),
-                    usage.getTotalTokens()
-                );
-            } else {
+                log.info("Hyperion semantic check token usage: prompt={}, completion={}, total={}", usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
+            }
+            else {
                 log.info("Hyperion semantic check token usage not available for this provider/response");
             }
 
@@ -202,7 +189,7 @@ public class HyperionConsistencyCheckService {
             return new ArrayList<>();
         }
         finally {
-            wrapper.stop();
+            child.stop();
         }
     }
 
