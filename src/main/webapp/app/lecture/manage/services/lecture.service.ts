@@ -85,9 +85,9 @@ export class LectureService {
             );
     }
 
-    findAllNormalLecturesByCourseIdWithUnits(courseId: number): Observable<EntityArrayResponseType> {
+    findAllByCourseIdWithUnits(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Lecture[]>(`api/lecture/courses/${courseId}/normal-lectures/with-units`, {
+            .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures/with-units`, {
                 observe: 'response',
             })
             .pipe(

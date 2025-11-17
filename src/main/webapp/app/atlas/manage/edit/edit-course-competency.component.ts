@@ -29,7 +29,7 @@ export abstract class EditCourseCompetencyComponent implements OnInit {
                 switchMap((parentParams) => {
                     this.courseId = Number(parentParams.get('courseId'));
 
-                    return this.lectureService.findAllNormalLecturesByCourseIdWithUnits(this.courseId);
+                    return this.lectureService.findAllByCourseIdWithUnits(this.courseId);
                 }),
             )
             .subscribe({

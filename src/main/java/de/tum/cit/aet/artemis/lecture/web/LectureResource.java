@@ -254,15 +254,15 @@ public class LectureResource {
      * @param courseId the courseId of the course for which the lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
-    @GetMapping("courses/{courseId}/normal-lectures/with-units")
+    @GetMapping("courses/{courseId}/lectures/with-units")
     @EnforceAtLeastEditor
-    public ResponseEntity<Set<Lecture>> getNormalLecturesForCourseWithLectureUnits(@PathVariable Long courseId) {
+    public ResponseEntity<Set<Lecture>> getLecturesForCourseWithLectureUnits(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        Set<Lecture> lectures = lectureRepository.findAllNormalLecturesByCourseIdWithAttachmentsAndLectureUnits(courseId);
+        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
         return ResponseEntity.ok().body(lectures);
     }
 

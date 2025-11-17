@@ -86,16 +86,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             """)
     Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
 
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-                LEFT JOIN FETCH lecture.attachments
-                LEFT JOIN FETCH lecture.lectureUnits lectureUnit
-                LEFT JOIN FETCH TREAT(lectureUnit AS AttachmentVideoUnit).attachment
-            WHERE lecture.course.id = :courseId AND NOT lecture.isTutorialLecture
-            """)
-    Set<Lecture> findAllNormalLecturesByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
-
     // TODO: this query loads too much data, we should reduce the number of left join fetches
     @Query("""
             SELECT lecture
