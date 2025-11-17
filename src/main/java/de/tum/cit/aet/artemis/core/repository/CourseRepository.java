@@ -429,7 +429,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
         return getValueElseThrow(findWithEagerLecturesById(courseId), courseId);
     }
 
-    @NotNull
+    @NonNull
     default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
     }

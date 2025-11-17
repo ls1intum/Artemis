@@ -73,21 +73,11 @@ export class LectureService {
         );
     }
 
-    findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
+    findAllByCourseId(courseId: number, withLectureUnits = false): Observable<EntityArrayResponseType> {
+        const params = new HttpParams().set('withLectureUnits', withLectureUnits ? '1' : '0');
         return this.http
             .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures`, {
-                observe: 'response',
-            })
-            .pipe(
-                map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
-                map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
-                tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
-            );
-    }
-
-    findAllByCourseIdWithUnits(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures/with-units`, {
+                params,
                 observe: 'response',
             })
             .pipe(
