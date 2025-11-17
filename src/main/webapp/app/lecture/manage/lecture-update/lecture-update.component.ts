@@ -159,7 +159,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         this.isSaving = false;
         this.processUnitMode = false;
         this.isProcessing = false;
-        this.activatedRoute.parent!.data.subscribe((data) => {
+        this.activatedRoute.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
             this.lecture.set(lecture ?? new Lecture());
