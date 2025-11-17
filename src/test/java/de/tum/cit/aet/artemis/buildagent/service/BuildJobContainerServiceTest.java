@@ -15,7 +15,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -34,7 +34,7 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
 
     private static final int MAX_XXX_VALUE = 2;
 
-    @MockitoSpyBean
+    @Autowired
     BuildJobContainerService buildJobContainerService;
 
     @Mock
