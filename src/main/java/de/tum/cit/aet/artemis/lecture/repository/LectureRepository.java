@@ -30,6 +30,11 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 @Repository
 public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
 
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+            WHERE lecture.course.id = :courseId
+            """)
     Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
