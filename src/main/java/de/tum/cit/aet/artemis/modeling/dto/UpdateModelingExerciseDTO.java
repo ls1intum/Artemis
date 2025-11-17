@@ -32,7 +32,6 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
      * @return the same exercise instance after applying updates
      */
     public ModelingExercise update(ModelingExercise exercise) {
-        exercise.setId(this.id);
         if (this.title != null) {
             exercise.setTitle(this.title);
         }

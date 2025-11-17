@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -417,7 +418,7 @@ public class ExerciseService {
      */
     @Async
     public void updatePointsInRelatedParticipantScoresWithPoints(Double originalMaxPoints, Double originalBonusPoints, Exercise updatedExercise) {
-        if (originalMaxPoints.equals(updatedExercise.getMaxPoints()) && originalBonusPoints.equals(updatedExercise.getBonusPoints())) {
+        if (Objects.equals(originalMaxPoints, updatedExercise.getMaxPoints()) && Objects.equals(originalBonusPoints, updatedExercise.getBonusPoints())) {
             return; // nothing to do since points are still correct
         }
 
@@ -799,13 +800,22 @@ public class ExerciseService {
 
     /**
      * Notifies students about exercise changes.
-     * For course exercises, notifications are used. For exam exercises, live events are used instead.
+     * <p>
+     * For <b>course exercises</b>, this uses scheduled group notifications and relies on
+     * {@code originalReleaseDate} and {@code originalAssessmentDueDate} to decide which
+     * notifications to send.
+     * </p>
+     * <p>
+     * For <b>exam exercises</b>, {@code originalReleaseDate} and {@code originalAssessmentDueDate}
+     * are ignored. Instead, a live event is sent shortly before the exam start if – and only if –
+     * the problem statement has changed.
+     * </p>
      *
-     * @param originalReleaseDate       the original release date
-     * @param originalAssessmentDueDate the original assessment due date
-     * @param originalProblemStatement  the original problem statement
+     * @param originalReleaseDate       the original release date of the course exercise
+     * @param originalAssessmentDueDate the original assessment due date of the course exercise
+     * @param originalProblemStatement  the original problem statement (used for both course and exam exercises)
      * @param updatedExercise           the updated exercise
-     * @param notificationText          custom notification text
+     * @param notificationText          custom notification text shown to students
      */
     public void notifyAboutExerciseChangesWithStatement(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate, String originalProblemStatement,
             Exercise updatedExercise, String notificationText) {
