@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static java.time.ZonedDateTime.now;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -426,6 +427,37 @@ public class ExerciseService {
         participantScoreRepository.saveAll(participantScoreList);
     }
 
+    /**
+     * Updates the points of related exercises if the points of exercises have changed
+     *
+     * @param originalMaxPoints   the original max points
+     * @param originalBonusPoints the original bonus points
+     * @param updatedExercise     the updatedExercise
+     */
+    @Async
+    public void updatePointsInRelatedParticipantScoresWithPoints(Double originalMaxPoints, Double originalBonusPoints, Exercise updatedExercise) {
+        if (originalMaxPoints.equals(updatedExercise.getMaxPoints()) && originalBonusPoints.equals(updatedExercise.getBonusPoints())) {
+            return; // nothing to do since points are still correct
+        }
+
+        List<ParticipantScore> participantScoreList = participantScoreRepository.findAllByExercise(updatedExercise);
+        for (ParticipantScore participantScore : participantScoreList) {
+            Double lastPoints = null;
+            Double lastRatedPoints = null;
+            if (participantScore.getLastScore() != null) {
+                lastPoints = roundScoreSpecifiedByCourseSettings(participantScore.getLastScore() * 0.01 * updatedExercise.getMaxPoints(),
+                        updatedExercise.getCourseViaExerciseGroupOrCourseMember());
+            }
+            if (participantScore.getLastRatedScore() != null) {
+                lastRatedPoints = roundScoreSpecifiedByCourseSettings(participantScore.getLastRatedScore() * 0.01 * updatedExercise.getMaxPoints(),
+                        updatedExercise.getCourseViaExerciseGroupOrCourseMember());
+            }
+            participantScore.setLastPoints(lastPoints);
+            participantScore.setLastRatedPoints(lastRatedPoints);
+        }
+        participantScoreRepository.saveAll(participantScoreList);
+    }
+
     public void logDeletion(Exercise exercise, Course course, User user) {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXERCISE, "exercise=" + exercise.getTitle(), "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
@@ -779,6 +811,30 @@ public class ExerciseService {
         // start sending problem statement updates within the last 5 minutes before the exam starts
         else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
                 && !Strings.CS.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
+            ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
+            api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
+        }
+    }
+
+    /**
+     * Notifies students about exercise changes.
+     * For course exercises, notifications are used. For exam exercises, live events are used instead.
+     *
+     * @param initialReleaseDate        the original release date
+     * @param originalAssessmentDueDate the original assessment due date
+     * @param originalProblemStatement  the original problem statement
+     * @param updatedExercise           the updated exercise
+     * @param notificationText          custom notification text
+     */
+    public void notifyAboutExerciseChangesWithStatement(ZonedDateTime initialReleaseDate, ZonedDateTime originalAssessmentDueDate, String originalProblemStatement,
+            Exercise updatedExercise, String notificationText) {
+        if (updatedExercise.isCourseExercise()) {
+            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExerciseWithDate(initialReleaseDate, originalAssessmentDueDate, updatedExercise,
+                    notificationText);
+        }
+        // start sending problem statement updates within the last 5 minutes before the exam starts
+        else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(updatedExercise.getExam().getStartDate()) && updatedExercise.isExamExercise()
+                && !Strings.CS.equals(originalProblemStatement, updatedExercise.getProblemStatement())) {
             ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
             api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
         }

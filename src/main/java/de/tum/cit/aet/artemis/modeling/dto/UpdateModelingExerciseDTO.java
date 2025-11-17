@@ -27,7 +27,7 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
      * Applies this DTO's fields to the given exercise, mutating it in place.
      *
      * @param exercise the exercise to update (will be mutated)
-     * @return a new ModelingExercise instance representing the updated state
+     * @return the same exercise instance after applying updates
      */
     public ModelingExercise update(ModelingExercise exercise) {
         exercise.setId(this.id);

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -236,6 +237,13 @@ public class ModelingExerciseResource {
         log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO);
 
         final ModelingExercise originalExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(updateModelingExerciseDTO.id());
+        ZonedDateTime oldDueDate = originalExercise.getDueDate();
+        ZonedDateTime oldAssessmentDueDate = originalExercise.getAssessmentDueDate();
+        ZonedDateTime oldReleaseDate = originalExercise.getReleaseDate();
+        Double oldMaxPoints = originalExercise.getMaxPoints();
+        Double oldBonusPoints = originalExercise.getBonusPoints();
+        String oldProblemStatement = originalExercise.getProblemStatement();
+
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
@@ -261,13 +269,13 @@ public class ModelingExerciseResource {
         ModelingExercise persistedExercise = exerciseService.saveWithCompetencyLinks(updatedExercise, modelingExerciseRepository::save);
 
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.updatePointsInRelatedParticipantScores(originalExercise, persistedExercise);
+        exerciseService.updatePointsInRelatedParticipantScoresWithPoints(oldMaxPoints, oldBonusPoints, persistedExercise);
 
-        participationRepository.removeIndividualDueDatesIfBeforeDueDate(persistedExercise, originalExercise.getDueDate());
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(persistedExercise, oldDueDate);
         exerciseService.checkExampleSubmissions(persistedExercise);
 
-        exerciseService.notifyAboutExerciseChanges(originalExercise, persistedExercise, notificationText);
-        slideApi.ifPresent(api -> api.handleDueDateChange(originalExercise, persistedExercise));
+        exerciseService.notifyAboutExerciseChangesWithStatement(oldReleaseDate, oldAssessmentDueDate, oldProblemStatement, persistedExercise, notificationText);
+        slideApi.ifPresent(api -> api.handleDueDateChangeWithDate(oldDueDate, persistedExercise));
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalExercise, Optional.of(persistedExercise)));
 
