@@ -9,8 +9,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +85,7 @@ class ProgrammingSubmissionWithoutResultScheduleServiceTest extends AbstractSpri
         assertThat(allSubmissions.stream().map(ProgrammingSubmission::getCommitHash)).anyMatch("hash1"::equals);
     }
 
-    private @NotNull List<ProgrammingSubmission> getAllSubmissions(ZonedDateTime startTime, ZonedDateTime endTime, Pageable pageable) {
+    private @NonNull List<ProgrammingSubmission> getAllSubmissions(ZonedDateTime startTime, ZonedDateTime endTime, Pageable pageable) {
         Slice<ProgrammingSubmission> result = programmingSubmissionTestRepository.findLatestProgrammingSubmissionsWithoutResultsInTimeRange(startTime, endTime, pageable);
         List<ProgrammingSubmission> allSubmissions = new ArrayList<>();
         allSubmissions.addAll(result.getContent());
