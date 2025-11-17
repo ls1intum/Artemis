@@ -595,8 +595,9 @@ public class GitService extends AbstractGitService {
      * @throws GitException    if the git repository state cannot be fetched.
      * @throws GitAPIException if either git status or git fetch failed.
      */
-    private boolean areLocalAndRemoteBranchesDivergent(Repository repo, Git git) throws GitException, GitAPIException {
-        if (git.status().call().isClean()) {
+    protected boolean areLocalAndRemoteBranchesDivergent(Repository repo, Git git) throws GitException, GitAPIException {
+        Status status = git.status().call();
+        if (!status.hasUncommittedChanges()) {
             return false;
         }
 
