@@ -82,7 +82,7 @@ describe('CreatePrerequisite', () => {
             body: [lecture],
             status: 200,
         });
-        jest.spyOn(lectureService, 'findAllNormalLecturesByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
+        jest.spyOn(lectureService, 'findAllByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
 
         createPrerequisiteComponentFixture.detectChanges();
 
@@ -97,7 +97,7 @@ describe('CreatePrerequisite', () => {
             body: [lecture],
             status: 200,
         });
-        jest.spyOn(lectureService, 'findAllNormalLecturesByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
+        jest.spyOn(lectureService, 'findAllByCourseIdWithUnits').mockReturnValue(of(lecturesResponse));
 
         createPrerequisiteComponentFixture.detectChanges();
 
