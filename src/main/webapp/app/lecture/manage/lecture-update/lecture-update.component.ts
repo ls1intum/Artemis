@@ -314,13 +314,13 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         } else if (this.isEditMode()) {
             this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
         } else {
-            // after create we stay on the edit page, as now attachments and lecture units are available (we need the lecture id to save them)
+            // after create we stay on the edit page, as now lecture units are available (we need the lecture id to save them)
             this.isNewlyCreatedExercise = true;
             this.isEditMode.set(true);
             this.lectureOnInit = cloneDeep(lecture);
             this.lecture.set(lecture);
             this.updateIsChangesMadeToTitleOrPeriodSection();
-            window.history.replaceState({}, '', `course-management/${lecture.course.id}/lectures/${lecture.id}/edit`);
+            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'edit']);
             this.shouldDisplayDismissWarning = true;
         }
 
