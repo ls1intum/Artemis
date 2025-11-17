@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 @Repository
 public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
 
-    Set<Lecture> findAllByCourseId(Long courseId);
+    Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO(
