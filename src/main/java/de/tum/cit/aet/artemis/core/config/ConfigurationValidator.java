@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
@@ -30,9 +31,13 @@ public class ConfigurationValidator {
 
     private final ArtemisConfigHelper artemisConfigHelper;
 
-    public ConfigurationValidator(Environment environment) {
+    private final boolean isPasskeyRequiredForAdministratorFeatures;
+
+    public ConfigurationValidator(Environment environment,
+            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
+        this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
     }
 
     /**
@@ -42,7 +47,7 @@ public class ConfigurationValidator {
     @PostConstruct
     public void validatePasskeyConfiguration() {
         boolean passkeyEnabled = artemisConfigHelper.isPasskeyEnabled(environment);
-        boolean passkeyRequiredForAdminFeatures = artemisConfigHelper.isPasskeyRequiredForAdministratorFeatures(environment);
+        boolean passkeyRequiredForAdminFeatures = isPasskeyRequiredForAdministratorFeatures;
 
         if (passkeyRequiredForAdminFeatures && !passkeyEnabled) {
             String errorMessage = String.format(
