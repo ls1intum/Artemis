@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.hibernate.NonUniqueResultException;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -79,7 +78,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
         return allExercises.stream().findFirst();
     }
 
-    @NotNull
+    @NonNull
     default FileUploadExercise findWithEagerCompetenciesByIdElseThrow(Long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
     }
@@ -87,7 +86,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
     Optional<FileUploadExercise> findWithGradingCriteriaById(Long exerciseId);
 
-    @NotNull
+    @NonNull
     default FileUploadExercise findWithGradingCriteriaByIdElseThrow(Long exerciseId) {
         return getValueElseThrow(findWithGradingCriteriaById(exerciseId), exerciseId);
     }
