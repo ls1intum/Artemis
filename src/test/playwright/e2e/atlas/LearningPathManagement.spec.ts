@@ -77,7 +77,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         const prereq2 = await courseManagementAPIRequests.createPrerequisite(course, 'Prerequisite 2', 'Prerequisite of Competency 2');
 
         // Create all relations via API
-        // Note: In the UI "Requires" is shown, but the backend uses "ASSUMES" for the tail assuming the head
+        // Note: In the UI "Requires" is shown, but the server uses "ASSUMES" for the tail assuming the head
         await courseManagementAPIRequests.createCompetencyRelation(course, prereq1.id, comp1.id, 'ASSUMES');
         await courseManagementAPIRequests.createCompetencyRelation(course, prereq2.id, comp2.id, 'ASSUMES');
         await courseManagementAPIRequests.createCompetencyRelation(course, comp1.id, comp3.id, 'ASSUMES');

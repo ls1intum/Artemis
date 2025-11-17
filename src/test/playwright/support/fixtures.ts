@@ -69,11 +69,8 @@ import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
 import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/programming/ProgrammingExercisesSubmissionsPage';
-import { CompetencyManagementPage } from './pageobjects/course/CompetencyManagementPage';
 
-/*
- * Define custom types for fixtures
- */
+// Define custom types for fixtures
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
     waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number) => Promise<void>;
@@ -138,7 +135,6 @@ export type ArtemisPageObjects = {
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
     programmingExerciseSubmissions: ProgrammingExerciseSubmissionsPage;
-    competencyManagement: CompetencyManagementPage;
     quizExerciseCreation: QuizExerciseCreationPage;
     quizExerciseDragAndDropQuiz: DragAndDropQuiz;
     quizExerciseMultipleChoice: MultipleChoiceQuiz;
@@ -184,19 +180,6 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         await use(async (exerciseId: number, interval?, timeout?) => {
             await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, exerciseId, interval, timeout);
         });
-    },
-    createCompetency: async ({ competencyManagement }, use) => {
-        await use(async (courseId: number, options: { title: string; description: string; taxonomy?: string; softDueDate?: Date | string; returnToPrevious?: boolean }) => {
-            await competencyManagement.createCompetency(courseId, options);
-        });
-    },
-    createPrerequisite: async ({ competencyManagement }, use) => {
-        await use(async (courseId: number, options: { title: string; description: string; taxonomy?: string; softDueDate?: Date | string; returnToPrevious?: boolean }) => {
-            await competencyManagement.createPrerequisite(courseId, options);
-        });
-    },
-    competencyManagement: async ({ page }, use) => {
-        await use(new CompetencyManagementPage(page));
     },
     navigationBar: async ({ page }, use) => {
         await use(new NavigationBar(page));

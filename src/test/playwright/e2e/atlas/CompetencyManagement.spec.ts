@@ -118,7 +118,7 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             taxonomy: 'UNDERSTAND',
         };
 
-        test.beforeEach('Create competency to delete', async ({ page, courseManagementAPIRequests }) => {
+        test.beforeEach('Create competency', async ({ page, courseManagementAPIRequests }) => {
             // Create competency via API
             await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
 
