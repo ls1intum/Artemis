@@ -135,8 +135,8 @@ public class LocalCIResultProcessingService {
     }
 
     /**
-     * Logs the health status of the result processor every 5 minutes.
-     * Checks if result processing is stuck by comparing processed results with the previous run.
+     * Logs the health of the result processor every 5 minutes.
+     * If there are items in the Hazelcast queue but no results have been processed since the last check, an error is logged.
      */
     @Scheduled(fixedDelay = 300_000, initialDelay = 300_000)
     public void logResultProcessorHealth() {
