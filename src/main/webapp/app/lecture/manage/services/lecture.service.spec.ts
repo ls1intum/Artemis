@@ -131,7 +131,7 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/lecture/courses/${courseId}/lectures`,
+                url: `api/lecture/courses/${courseId}/lectures?withLectureUnits=0`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -149,23 +149,6 @@ describe('Lecture Service', () => {
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
                 url: `api/lecture/courses/${courseId}/tutorial-lectures`,
-                method: 'GET',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
-        it('should get all normal lectures by courseId', async () => {
-            elemDefault.isTutorialLecture = false;
-            const returnedFromService = [elemDefault];
-            const expected = returnedFromService;
-            const courseId = 1;
-            service
-                .findAllByCourseIdWithUnits(courseId)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: `api/lecture/courses/${courseId}/normal-lectures/with-units`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
