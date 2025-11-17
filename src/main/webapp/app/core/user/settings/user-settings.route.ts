@@ -32,7 +32,7 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('app/core/user/settings/external-llm-usage-settings/external-llm-usage-settings.component').then((m) => m.ExternalLlmUsageSettingsComponent),
                 data: {
-                    pageTitle: 'artemisApp.userSettings.categories.externalLLMUsage',
+                    pageTitle: 'artemisApp.userSettings.categories.LLMUsage',
                 },
                 canActivate: [ExternalDataGuard],
             },

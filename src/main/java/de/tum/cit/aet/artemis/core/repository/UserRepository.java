@@ -746,6 +746,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
+            SET user.internalLLMUsageAccepted = :acceptDatetime
+            WHERE user.id = :userId
+            """)
+    void updateInternalLLMUsageAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
             SET user.memirisEnabled = :memirisEnabled
             WHERE user.id = :userId
             """)

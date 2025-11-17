@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -25,7 +24,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -33,6 +31,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.webauthn.api.Bytes;
 
@@ -62,7 +62,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User extends AbstractAuditingEntity implements Participant {
 
-    @NotNull
+    @NonNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     @Column(length = USERNAME_MAX_LENGTH, unique = true, nullable = false)
@@ -95,11 +95,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(length = 100)
     private String email;
 
-    @NotNull
+    @NonNull
     @Column(nullable = false)
     private boolean activated = false;
 
-    @NotNull
+    @NonNull
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false; // default value
 
@@ -198,7 +198,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "external_llm_usage_accepted")
     private ZonedDateTime externalLLMUsageAccepted = null;
 
-    @NotNull
+    @Nullable
+    @Column(name = "internal_llm_usage_accepted")
+    private ZonedDateTime internalLLMUsageAccepted = null;
+
+    @NonNull
     @Column(name = "memiris_enabled", nullable = false)
     private boolean memirisEnabled = false;
 
@@ -496,8 +500,21 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 
+    @Nullable
+    public ZonedDateTime getInternalLLMUsageAcceptedTimestamp() {
+        return internalLLMUsageAccepted;
+    }
+
+    public void setInternalLLMUsageAcceptedTimestamp(@Nullable ZonedDateTime internalLLMUsageAccepted) {
+        this.internalLLMUsageAccepted = internalLLMUsageAccepted;
+    }
+
     public boolean hasAcceptedExternalLLMUsage() {
         return externalLLMUsageAccepted != null;
+    }
+
+    public boolean hasAcceptedInternalLLMUsage() {
+        return internalLLMUsageAccepted != null;
     }
 
     /**
@@ -507,6 +524,16 @@ public class User extends AbstractAuditingEntity implements Participant {
     public void hasAcceptedExternalLLMUsageElseThrow() {
         if (externalLLMUsageAccepted == null) {
             throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
+        }
+    }
+
+    /**
+     * Checks if the user has accepted the internal (=local deployment) LLM privacy policy.
+     * If not, an {@link AccessForbiddenException} is thrown.
+     */
+    public void hasAcceptedInternalLLMUsageElseThrow() {
+        if (internalLLMUsageAccepted == null) {
+            throw new AccessForbiddenException("The user has not accepted the internal LLM privacy policy yet.");
         }
     }
 

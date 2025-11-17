@@ -289,6 +289,15 @@ export class IrisChatService implements OnDestroy {
         });
     }
 
+    public updateInternalLLMUsageConsent(accepted: boolean): void {
+        this.acceptSubscription?.unsubscribe();
+        this.acceptSubscription = this.userService.updateInternalLLMUsageConsent(accepted).subscribe(() => {
+            this.hasJustAcceptedExternalLLMUsage = accepted;
+            this.accountService.setUserAcceptedInternalLLMUsage(accepted);
+            this.closeAndStart();
+        });
+    }
+
     private replaceMessage(message: IrisMessage): boolean {
         const messages = [...this.messages.getValue()];
         const index = messages.findIndex((m) => m.id === message.id);

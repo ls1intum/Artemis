@@ -78,21 +78,21 @@ describe('UserSettingsContainerComponent', () => {
             spyOnProfileService([PROFILE_ATHENA]);
             const externalLLMLink = queryExternalLLMLink();
             expect(externalLLMLink).toBeTruthy();
-            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
+            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.LLMUsage');
         });
 
         it('should display the external LLM usage link when iris is active', () => {
             spyOnProfileService([PROFILE_IRIS]);
             const externalLLMLink = queryExternalLLMLink();
             expect(externalLLMLink).toBeTruthy();
-            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
+            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.LLMUsage');
         });
 
         it('should display the external LLM usage link when athena and iris are active', () => {
             spyOnProfileService([PROFILE_ATHENA, PROFILE_IRIS]);
             const externalLLMLink = queryExternalLLMLink();
             expect(externalLLMLink).toBeTruthy();
-            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
+            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.LLMUsage');
         });
     });
 });

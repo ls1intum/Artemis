@@ -404,6 +404,21 @@ export class AccountService implements IAccountService {
         });
     }
 
+    /**
+     * Sets internalLLMUsageAccepted to current timestamp locally if the users accepted the conditions,
+     * to omit accepting internal LLM usage popup appearing multiple time before user refreshes the page.
+     */
+    setUserAcceptedInternalLLMUsage(accepted: boolean = true): void {
+        this.userIdentity.update((currentUserIdentity) => {
+            if (!currentUserIdentity) {
+                return currentUserIdentity;
+            }
+
+            currentUserIdentity.internalLLMUsageAccepted = accepted ? dayjs() : undefined;
+            return currentUserIdentity;
+        });
+    }
+
     setUserEnabledMemiris(memirisEnabled: boolean): void {
         this.http.put('api/core/account/enable-memiris', memirisEnabled).subscribe({
             next: () => {

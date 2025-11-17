@@ -16,8 +16,11 @@ export class ExternalLlmUsageSettingsComponent implements OnInit {
 
     externalLLMUsageAccepted = signal<dayjs.Dayjs | undefined>(undefined);
 
+    internalLLMUsageAccepted = signal<dayjs.Dayjs | undefined>(undefined);
+
     ngOnInit() {
         this.updateExternalLLMUsageAccepted();
+        this.updateInternalLLMUsageAccepted();
     }
 
     private updateExternalLLMUsageAccepted() {
@@ -26,9 +29,21 @@ export class ExternalLlmUsageSettingsComponent implements OnInit {
         );
     }
 
+    private updateInternalLLMUsageAccepted() {
+        this.internalLLMUsageAccepted.set(
+            this.accountService.userIdentity()?.internalLLMUsageAccepted ? dayjs(this.accountService.userIdentity()?.internalLLMUsageAccepted) : undefined,
+        );
+    }
+
     updateExternalLLMUsageConsent(accepted: boolean) {
         this.irisChatService.updateExternalLLMUsageConsent(accepted);
         this.accountService.setUserAcceptedExternalLLMUsage(accepted);
         this.updateExternalLLMUsageAccepted();
+    }
+
+    updateInternalLLMUsageConsent(accepted: boolean) {
+        this.irisChatService.updateInternalLLMUsageConsent(accepted);
+        this.accountService.setUserAcceptedInternalLLMUsage(accepted);
+        this.updateInternalLLMUsageAccepted();
     }
 }

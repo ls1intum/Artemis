@@ -1,0 +1,131 @@
+<div class="modal-backdrop" (click)="onBackdropClick($event)">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h1 id="ai-modal-title">Choose Your AI Experience</h1>
+            <p class="subtitle">
+                Your data, your choice. Use Artemis with cutting-edge cloud models on Azure backed by enterprise-grade safeguards, or opt for our open-source stack in the
+                university datacenter for enhanced privacy.
+            </p>
+        </div>
+
+        <div class="options-container">
+            <div class="option-card cloud-card" (click)="selectCloud()">
+                <div class="icons-wrapper">
+                    <div class="icon-container">
+                        <div class="icon-circle azure">
+                            <img src="public/images/logos/logo-azure.svg" alt="Azure" class="azure-icon" />
+                        </div>
+                        <div class="icon-circle openai">
+                            <img src="public/images/logos/logo-openai.svg" alt="OpenAI" class="openai-icon" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-header">
+                    <h2>Cloud AI</h2>
+                    <span class="badge">Recommended</span>
+                </div>
+
+                <p class="description">Advanced models with fast response times. Processed in Microsoft Azure cloud inside the EU.</p>
+
+                <ul class="feature-list">
+                    <li class="feature-item checked">
+                        <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Latest AI models
+                    </li>
+
+                    <li class="feature-item checked">
+                        <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Fast response times
+                    </li>
+
+                    <li class="feature-item checked">
+                        <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Best quality responses
+                    </li>
+
+                    <li class="feature-item checked">
+                        <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Advanced reasoning capabilities
+                    </li>
+
+                    <li class="feature-item unchecked">
+                        <svg class="cross-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Data processed on internal servers
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Local AI Card -->
+            <div class="option-card local-card" (click)="selectLocal()">
+                <div class="icons-wrapper">
+                    <div class="icon-container">
+                        <div class="icon-circle gemma">
+                            <img src="public/images/logos/logo-gemma.svg" alt="Gemma" class="gemma-icon" />
+                        </div>
+                        <div class="icon-circle ollama">
+                            <img src="public/images/logos/logo-ollama.svg" alt="Ollama" class="ollama-icon" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-header">
+                    <h2>Local AI</h2>
+                    <span class="badge-experimental">Experimental</span>
+                </div>
+
+                <p class="description">Models hosted exclusively on university infrastructure. Your data never leaves university servers.</p>
+
+                <ul class="feature-list">
+                    <li class="feature-item checked">
+                        <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Data processed on internal servers
+                    </li>
+
+                    <li class="feature-item checked">
+                        <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        GDPR compliant
+                    </li>
+
+                    <li class="feature-item unchecked">
+                        <svg class="cross-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Slower response times
+                    </li>
+
+                    <li class="feature-item unchecked">
+                        <svg class="cross-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Limited model capabilities
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <button class="continue-button" (click)="selectNone()">
+            <span class="continue-button-title">Continue without AI</span>
+            <span class="continue-button-description">You can enable AI features later in your settings. Some features may not work.</span>
+        </button>
+
+        <div class="footer-note">
+            All options comply with university data protection policies •
+            <a href="#" class="learn-more-link" (click)="onLearnMoreClick($event)">Learn more</a>
+        </div>
+    </div>
+</div>

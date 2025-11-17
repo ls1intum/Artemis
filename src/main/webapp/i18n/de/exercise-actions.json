@@ -74,6 +74,12 @@
                 "popUpMessage": "Indem du akzeptierst, bestätigst du, dass du mindestens 18 Jahre alt bist und damit einverstanden bist, dass deine Interaktionen mit Artemis sowie die dafür erforderlichen kontextbezogenen Daten, wie etwa dein Code, außerhalb des Rechenzentrums der Universität verarbeitet werden dürfen. Die Verarbeitung erfolgt in der Microsoft Azure Cloud gemäß den EU-Datenschutzstandards. Dabei werden alle Daten innerhalb der EU verarbeitet und nicht gespeichert.",
                 "accept": "Akzeptieren",
                 "decline": "Ablehnen"
+            },
+            "internalLLMUsage": {
+                "popUpLabel": "Bestätigung der internen LLM-Verwendung",
+                "popUpMessage": "Indem du akzeptierst, bestätigst du, dass du mindestens 18 Jahre alt bist und damit einverstanden bist, dass deine Interaktionen mit Artemis sowie die dafür erforderlichen kontextbezogenen Daten, wie etwa dein Code, innerhalb des Rechenzentrums der Universität verarbeitet werden dürfen. Dabei werden keine Daten gespeichert.",
+                "accept": "Akzeptieren",
+                "decline": "Ablehnen"
             }
         }
     }

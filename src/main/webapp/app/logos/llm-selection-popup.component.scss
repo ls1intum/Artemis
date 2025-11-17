@@ -1,0 +1,363 @@
+/* --- BASE --- */
+html,
+body {
+    margin: 0;
+    padding: 0;
+    font-family:
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        Roboto,
+        'Helvetica Neue',
+        Arial;
+    background: #f9fafb;
+    color: #1a1a1a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-y: auto; /* page scrolls (including backdrop & anything behind popup) */
+}
+
+/* --- BACKDROP (not fixed so it scrolls with page) --- */
+.modal-backdrop {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* slight offset from top for nicer visual */
+    padding: 60px 20px;
+    box-sizing: border-box;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* --- MODAL --- */
+.modal-content {
+    background: #fff;
+    border-radius: 24px;
+    max-width: 820px;
+    width: 100%;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+    box-sizing: border-box;
+    /* NO internal scrolling - page scrolls instead */
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    margin-bottom: 10px;
+}
+.modal-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+}
+.subtitle {
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    color: #4b5563;
+    max-width: 900px;
+}
+
+/* --- OPTIONS --- */
+.options-container {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+    flex-wrap: wrap; /* allow stacking on narrow screens */
+    justify-content: center;
+}
+
+.option-card {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    width: 330px;
+    flex-shrink: 0;
+    flex-grow: 1;
+    min-width: 260px;
+    box-sizing: border-box;
+}
+
+.option-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+.cloud-card {
+    background: linear-gradient(135deg, #6fccffab 0%, #98ddffa8 100%);
+}
+.cloud-card:hover {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, #72ceff 0%, #9adfff 100%);
+}
+
+.local-card {
+    background: linear-gradient(135deg, #56ffc68c 0%, #9effdf8f 100%);
+}
+.local-card:hover {
+    border-color: #1bc03f;
+    background: linear-gradient(135deg, #58ffc8 0%, #a1ffe2 100%);
+}
+
+/* --- ICONS --- */
+.icons-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 12px;
+}
+
+.icon-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    height: 100px;
+    width: 166px;
+}
+
+.icon-circle {
+    width: 100px;
+    height: 100px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    position: absolute;
+    transition: transform 0.3s ease;
+    color: currentColor;
+}
+
+.icon-circle.azure,
+.icon-circle.gemma {
+    left: 0;
+    z-index: 2;
+}
+.icon-circle.openai,
+.icon-circle.ollama {
+    left: 67px;
+    z-index: 1;
+}
+
+.option-card:hover .icon-circle.azure,
+.option-card:hover .icon-circle.gemma {
+    transform: translateX(-6px);
+}
+.option-card:hover .icon-circle.openai,
+.option-card:hover .icon-circle.ollama {
+    transform: translateX(6px);
+}
+
+.azure-icon,
+.openai-icon,
+.gemma-icon,
+.ollama-icon {
+    width: 60px;
+    height: 60px;
+    display: block;
+}
+
+/* --- CARD HEADER --- */
+.card-header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.card-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.badge,
+.badge-experimental {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+}
+.badge {
+    background: #2563eb;
+}
+.badge-experimental {
+    background: #14946a;
+}
+
+.description {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.6;
+    margin: 0 0 4px 0;
+}
+
+/* --- FEATURE LIST (RE-ADDED) --- */
+.feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0 0;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+/* checked/unchecked coloring (SVGs use stroke="currentColor") */
+.feature-item.checked {
+    color: #064e3b;
+} /* minor accent if you want text color varied */
+.feature-item.checked .check-icon {
+    color: #3b82f6;
+} /* check mark color */
+.feature-item.unchecked .cross-icon {
+    color: #ef4444;
+} /* cross color */
+
+.check-icon,
+.cross-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+/* --- CONTINUE BUTTON --- */
+.continue-button {
+    width: 100%;
+    padding: 18px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+    box-sizing: border-box;
+}
+.continue-button:hover {
+    background: #e5e7eb;
+}
+.continue-button-title {
+    font-size: 20px;
+}
+.continue-button-description {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+/* --- FOOTER --- */
+.footer-note {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.learn-more-link {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+}
+.learn-more-link:hover {
+    text-decoration: underline;
+    color: #2563eb;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+    .modal-content {
+        padding: 32px;
+    }
+    .modal-header h1 {
+        font-size: 36px;
+    }
+    .option-card {
+        width: 100%;
+        max-width: 500px;
+    }
+}
+
+@media (max-width: 640px) {
+    .modal-content {
+        padding: 20px;
+        border-radius: 16px;
+    }
+    .modal-header h1 {
+        font-size: 26px;
+    }
+    .subtitle {
+        font-size: 15px;
+    }
+    .card-header h2 {
+        font-size: 22px;
+    }
+    .icon-circle {
+        width: 90px;
+        height: 90px;
+    }
+    .icon-container {
+        width: 160px;
+        height: 100px;
+    }
+    .icon-circle.openai,
+    .icon-circle.ollama {
+        left: 64px;
+    }
+    .azure-icon,
+    .openai-icon,
+    .gemma-icon,
+    .ollama-icon {
+        width: 50px;
+        height: 50px;
+    }
+    .continue-button-title {
+        font-size: 18px;
+    }
+    .continue-button-description {
+        font-size: 14px;
+    }
+    .modal-backdrop {
+        padding: 30px 12px;
+    }
+}

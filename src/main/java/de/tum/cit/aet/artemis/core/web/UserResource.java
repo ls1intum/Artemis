@@ -26,6 +26,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.AcceptExternalLLMUsageDTO;
+import de.tum.cit.aet.artemis.core.dto.AcceptInternalLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -99,6 +100,7 @@ public class UserResource {
             user.setCreatedBy(null);
             user.setCreatedDate(null);
             user.setExternalLLMUsageAccepted(null);
+            user.setInternalLLMUsageAccepted(null);
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -141,6 +143,24 @@ public class UserResource {
 
         ZonedDateTime hasAcceptedTimestamp = acceptExternalLLMUsageDTO.accepted() ? ZonedDateTime.now() : null;
         userRepository.updateExternalLLMUsageAcceptedToDate(user.getId(), hasAcceptedTimestamp);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PUT users/accept-internal-llm-usage : sets the internalLLMUsageAccepted flag for the user to ZonedDateTime.now() or null,
+     * depending on whether the user accepted or declined the usage of internal LLMs.
+     *
+     * @param acceptInternalLLMUsageDTO the DTO containing the user's choice regarding internal LLM usage
+     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found),
+     *         or with status 400 (Bad Request) if internal LLM usage was already accepted
+     */
+    @PutMapping("users/accept-internal-llm-usage")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> setInternalLLMUsageAcceptedToTimestamp(@RequestBody AcceptInternalLLMUsageDTO acceptInternalLLMUsageDTO) {
+        User user = userRepository.getUser();
+
+        ZonedDateTime hasAcceptedTimestamp = acceptInternalLLMUsageDTO.accepted() ? ZonedDateTime.now() : null;
+        userRepository.updateInternalLLMUsageAcceptedToDate(user.getId(), hasAcceptedTimestamp);
         return ResponseEntity.ok().build();
     }
 }
