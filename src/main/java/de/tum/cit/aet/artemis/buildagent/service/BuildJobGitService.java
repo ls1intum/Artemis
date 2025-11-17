@@ -12,10 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.CloneCommand;
@@ -37,6 +35,8 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.sshd.JGitKeyCache;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -269,7 +269,7 @@ public class BuildJobGitService extends AbstractGitService {
      * @param defaultBranch       the name of the branch that should be used as default branch
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch) {
         try {
             return openCheckedOutRepositoryFromFileSystem(localPath, remoteRepositoryUri, defaultBranch);
         }

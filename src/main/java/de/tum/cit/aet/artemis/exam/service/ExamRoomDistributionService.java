@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -66,13 +66,13 @@ public class ExamRoomDistributionService {
      * @param reserveFactor Percentage of seats that should not be included
      * @return Information regarding the combined default and maximum room capacities
      */
-    public ExamDistributionCapacityDTO getDistributionCapacitiesByIds(@NotNull Set<Long> examRoomIds, double reserveFactor) {
+    public ExamDistributionCapacityDTO getDistributionCapacitiesByIds(@NonNull Set<Long> examRoomIds, double reserveFactor) {
         final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 
         return getDistributionCapacities(examRoomsForExam, reserveFactor);
     }
 
-    private ExamDistributionCapacityDTO getDistributionCapacities(@NotNull Set<ExamRoom> examRooms, double reserveFactor) {
+    private ExamDistributionCapacityDTO getDistributionCapacities(@NonNull Set<ExamRoom> examRooms, double reserveFactor) {
         final int numberOfDefaultUsableSeats = examRooms.stream()
                 .mapToInt(examRoom -> examRoomService.getSizeAfterApplyingReserveFactor(examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity(), reserveFactor))
                 .sum();

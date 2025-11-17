@@ -10,8 +10,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -370,7 +369,7 @@ public class ExerciseUtilService {
      * @param title     The title of the exercise to look for.
      * @return The found file upload exercise.
      */
-    @NotNull
+    @NonNull
     public static FileUploadExercise findFileUploadExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {
@@ -393,7 +392,7 @@ public class ExerciseUtilService {
      * @param title     The title of the exercise to look for.
      * @return The found modeling exercise.
      */
-    @NotNull
+    @NonNull
     public static ModelingExercise findModelingExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {
@@ -416,7 +415,7 @@ public class ExerciseUtilService {
      * @param title     The title of the exercise to look for.
      * @return The found text exercise.
      */
-    @NotNull
+    @NonNull
     public static TextExercise findTextExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {
@@ -439,7 +438,7 @@ public class ExerciseUtilService {
      * @param title     The title of the exercise to look for.
      * @return The found programming exercise.
      */
-    @NotNull
+    @NonNull
     public static ProgrammingExercise findProgrammingExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
         if (exercise.isEmpty()) {
