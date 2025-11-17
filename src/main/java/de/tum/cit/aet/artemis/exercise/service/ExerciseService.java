@@ -405,26 +405,7 @@ public class ExerciseService {
      */
     @Async
     public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
-        if (originalExercise.getMaxPoints().equals(updatedExercise.getMaxPoints()) && originalExercise.getBonusPoints().equals(updatedExercise.getBonusPoints())) {
-            return; // nothing to do since points are still correct
-        }
-
-        List<ParticipantScore> participantScoreList = participantScoreRepository.findAllByExercise(updatedExercise);
-        for (ParticipantScore participantScore : participantScoreList) {
-            Double lastPoints = null;
-            Double lastRatedPoints = null;
-            if (participantScore.getLastScore() != null) {
-                lastPoints = roundScoreSpecifiedByCourseSettings(participantScore.getLastScore() * 0.01 * updatedExercise.getMaxPoints(),
-                        updatedExercise.getCourseViaExerciseGroupOrCourseMember());
-            }
-            if (participantScore.getLastRatedScore() != null) {
-                lastRatedPoints = roundScoreSpecifiedByCourseSettings(participantScore.getLastRatedScore() * 0.01 * updatedExercise.getMaxPoints(),
-                        updatedExercise.getCourseViaExerciseGroupOrCourseMember());
-            }
-            participantScore.setLastPoints(lastPoints);
-            participantScore.setLastRatedPoints(lastRatedPoints);
-        }
-        participantScoreRepository.saveAll(participantScoreList);
+        updatePointsInRelatedParticipantScoresWithPoints(originalExercise.getMaxPoints(), originalExercise.getBonusPoints(), updatedExercise);
     }
 
     /**
@@ -820,16 +801,16 @@ public class ExerciseService {
      * Notifies students about exercise changes.
      * For course exercises, notifications are used. For exam exercises, live events are used instead.
      *
-     * @param initialReleaseDate        the original release date
+     * @param originalReleaseDate       the original release date
      * @param originalAssessmentDueDate the original assessment due date
      * @param originalProblemStatement  the original problem statement
      * @param updatedExercise           the updated exercise
      * @param notificationText          custom notification text
      */
-    public void notifyAboutExerciseChangesWithStatement(ZonedDateTime initialReleaseDate, ZonedDateTime originalAssessmentDueDate, String originalProblemStatement,
+    public void notifyAboutExerciseChangesWithStatement(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate, String originalProblemStatement,
             Exercise updatedExercise, String notificationText) {
         if (updatedExercise.isCourseExercise()) {
-            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExerciseWithDate(initialReleaseDate, originalAssessmentDueDate, updatedExercise,
+            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExerciseWithDate(originalReleaseDate, originalAssessmentDueDate, updatedExercise,
                     notificationText);
         }
         // start sending problem statement updates within the last 5 minutes before the exam starts

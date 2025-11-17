@@ -6,10 +6,12 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.Positive;
 
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -100,9 +102,12 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs = exercise.getGradingCriteria() != null
-                ? exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet())
-                : Set.of();
+        Set<GradingCriterionDTO> gradingCriterionDTOs = null;
+
+        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
+        if (criteria != null && Hibernate.isInitialized(criteria)) {
+            gradingCriterionDTOs = criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        }
 
         return new UpdateModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),

@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
@@ -93,12 +94,13 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
         modelingExercise.setDiagramType(DiagramType.CommunicationDiagram);
         // Act: Update the exercise
         ModelingExercise updatedExercise;
+        UpdateModelingExerciseDTO updateModelingExerciseDTO = UpdateModelingExerciseDTO.of(modelingExercise);
         if (reEvaluate) {
-            updatedExercise = request.putWithResponseBody("/api/modeling/modeling-exercises/" + exerciseId + "/re-evaluate?deleteFeedback=false", modelingExercise,
+            updatedExercise = request.putWithResponseBody("/api/modeling/modeling-exercises/" + exerciseId + "/re-evaluate?deleteFeedback=false", updateModelingExerciseDTO,
                     ModelingExercise.class, HttpStatus.OK);
         }
         else {
-            updatedExercise = request.putWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.OK);
+            updatedExercise = request.putWithResponseBody("/api/modeling/modeling-exercises", updateModelingExerciseDTO, ModelingExercise.class, HttpStatus.OK);
         }
 
         // Assert: Verify operation succeeded

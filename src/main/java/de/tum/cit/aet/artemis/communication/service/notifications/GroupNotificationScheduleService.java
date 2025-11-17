@@ -54,19 +54,19 @@ public class GroupNotificationScheduleService {
     /**
      * Auxiliary method that checks and creates appropriate notifications about exercise updates or updates the scheduled exercise-released notification
      *
-     * @param initialReleaseDate        is the initial release date before it gets updated
+     * @param originalReleaseDate       is the initial release date before it gets updated
      * @param originalAssessmentDueDate the original assessment due date
      * @param exerciseAfterUpdate       is the updated exercise (needed to check potential difference in release date)
      * @param notificationText          holds the custom change message for the notification process
      */
-    public void checkAndCreateAppropriateNotificationsWhenUpdatingExerciseWithDate(ZonedDateTime initialReleaseDate, ZonedDateTime originalAssessmentDueDate,
+    public void checkAndCreateAppropriateNotificationsWhenUpdatingExerciseWithDate(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate,
             Exercise exerciseAfterUpdate, String notificationText) {
 
         // send exercise update notification
         groupNotificationService.notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
 
         // handle and check exercise released notification
-        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExerciseWithDate(initialReleaseDate, exerciseAfterUpdate);
+        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExerciseWithDate(originalReleaseDate, exerciseAfterUpdate);
 
         // handle and check assessed exercise submission notification
         checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExerciseWithDate(originalAssessmentDueDate, exerciseAfterUpdate);
@@ -86,16 +86,16 @@ public class GroupNotificationScheduleService {
     /**
      * Auxiliary method that checks and creates exercise-released notifications when updating an exercise
      *
-     * @param initialReleaseDate  is the initial release date before it gets updated
+     * @param originalReleaseDate is the initial release date before it gets updated
      * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
      */
-    private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExerciseWithDate(ZonedDateTime initialReleaseDate, Exercise exerciseAfterUpdate) {
+    private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExerciseWithDate(ZonedDateTime originalReleaseDate, Exercise exerciseAfterUpdate) {
         final ZonedDateTime updatedReleaseDate = exerciseAfterUpdate.getReleaseDate();
         ZonedDateTime timeNow = ZonedDateTime.now();
 
         boolean shouldNotifyAboutRelease = false;
 
-        boolean isInitialReleaseDateUndefined = initialReleaseDate == null;
+        boolean isInitialReleaseDateUndefined = originalReleaseDate == null;
         boolean isInitialReleaseDateInThePast = false;
         boolean isInitialReleaseDateNow = false;
         boolean isInitialReleaseDateInTheFuture = false;
@@ -106,10 +106,10 @@ public class GroupNotificationScheduleService {
         boolean isUpdatedReleaseDateInTheFuture = false;
 
         if (!isInitialReleaseDateUndefined) {
-            isInitialReleaseDateInThePast = initialReleaseDate.isBefore(timeNow);
+            isInitialReleaseDateInThePast = originalReleaseDate.isBefore(timeNow);
             // with buffer of 1 minute
-            isInitialReleaseDateNow = !initialReleaseDate.isBefore(timeNow.minusMinutes(1)) && !initialReleaseDate.isAfter(timeNow.plusMinutes(1));
-            isInitialReleaseDateInTheFuture = initialReleaseDate.isAfter(timeNow);
+            isInitialReleaseDateNow = !originalReleaseDate.isBefore(timeNow.minusMinutes(1)) && !originalReleaseDate.isAfter(timeNow.plusMinutes(1));
+            isInitialReleaseDateInTheFuture = originalReleaseDate.isAfter(timeNow);
         }
 
         if (!isUpdatedReleaseDateUndefined) {
@@ -131,7 +131,7 @@ public class GroupNotificationScheduleService {
             }
         }
         // no change in the release date
-        else if (!isUpdatedReleaseDateUndefined && initialReleaseDate.isEqual(updatedReleaseDate)) {
+        else if (!isUpdatedReleaseDateUndefined && originalReleaseDate.isEqual(updatedReleaseDate)) {
             return;
         }
         // if the initial release date was in the future any other combination (-> undefined/now/past) will lead to an immediate release notification or a scheduled one (future)
@@ -156,7 +156,7 @@ public class GroupNotificationScheduleService {
     }
 
     /**
-     * Auxiliary method that checks and creates exercise-released notifications when updating an exercise
+     * Auxiliary method that checks and creates assessed exercise submission notifications when updating an exercise
      *
      * @param originalAssessmentDueDate is the initial assessment due date before it gets updated
      * @param exerciseAfterUpdate       is the updated exercise (needed to check potential difference in release date)
