@@ -20,11 +20,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.validation.constraints.NotNull;
-
 import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -752,7 +751,7 @@ public class FileResource {
         }
     }
 
-    private String getResponsePathFromPublicPathString(@NotNull String publicPath) {
+    private String getResponsePathFromPublicPathString(@NonNull String publicPath) {
         // fail-safe to raise awareness if the public path is not correct (should not happen)
         if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
             throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
@@ -760,7 +759,7 @@ public class FileResource {
         return ARTEMIS_FILE_PATH_PREFIX + publicPath;
     }
 
-    private Path getActualPathFromPublicPathString(@NotNull String publicPath, FilePathType filePathType) {
+    private Path getActualPathFromPublicPathString(@NonNull String publicPath, FilePathType filePathType) {
         return FilePathConverter.fileSystemPathForExternalUri(URI.create(publicPath), filePathType);
     }
 

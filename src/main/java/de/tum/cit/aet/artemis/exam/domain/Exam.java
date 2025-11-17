@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,10 +18,11 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -182,7 +182,7 @@ public class Exam extends DomainObject {
         return title;
     }
 
-    public void setTitle(@NotNull String title) {
+    public void setTitle(@NonNull String title) {
         this.title = title.strip();
     }
 
@@ -202,30 +202,30 @@ public class Exam extends DomainObject {
         this.examWithAttendanceCheck = examWithAttendanceCheck;
     }
 
-    @NotNull
+    @NonNull
     public ZonedDateTime getVisibleDate() {
         return visibleDate;
     }
 
-    public void setVisibleDate(@NotNull ZonedDateTime visibleDate) {
+    public void setVisibleDate(@NonNull ZonedDateTime visibleDate) {
         this.visibleDate = visibleDate;
     }
 
-    @NotNull
+    @NonNull
     public ZonedDateTime getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(@NotNull ZonedDateTime startDate) {
+    public void setStartDate(@NonNull ZonedDateTime startDate) {
         this.startDate = startDate;
     }
 
-    @NotNull
+    @NonNull
     public ZonedDateTime getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(@NotNull ZonedDateTime endDate) {
+    public void setEndDate(@NonNull ZonedDateTime endDate) {
         this.endDate = endDate;
     }
 

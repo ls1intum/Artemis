@@ -17,10 +17,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -43,7 +43,7 @@ public class PersistentAuditEvent implements Serializable {
     @Column(name = "event_id")
     private Long id;
 
-    @NotNull
+    @NonNull
     @Column(nullable = false)
     private String principal;
 
