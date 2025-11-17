@@ -79,6 +79,9 @@ public class LectureUnitProcessingService {
      */
     public List<AttachmentVideoUnit> splitAndSaveUnits(LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {
 
+        // NOTE: there might be existing unis in the lecture already
+        int startIndex = lecture.getLectureUnits().size();
+
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument completePdfDocument = Loader.loadPDF(fileBytes)) {
             List<AttachmentVideoUnit> units = new ArrayList<>();
 
@@ -98,7 +101,7 @@ public class LectureUnitProcessingService {
 
             // next split the document and save each unit with its attachment
             for (int i = 0; i < lectureUnitSplitInformationDTO.units().size(); i++) {
-                AttachmentVideoUnit attachmentVideoUnit = (AttachmentVideoUnit) lecture.getLectureUnits().get(i);
+                var attachmentVideoUnit = (AttachmentVideoUnit) lecture.getLectureUnits().get(startIndex + i);
                 LectureUnitSplitDTO lectureUnitSplitDto = lectureUnitSplitInformationDTO.units().get(i);
 
                 // make sure output stream doesn't contain old data
@@ -130,6 +133,7 @@ public class LectureUnitProcessingService {
                 attachmentVideoUnit = attachmentVideoUnitService.saveAttachmentVideoUnit(attachmentVideoUnit, attachment, multipartFile, true);
                 slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(splitPdfDocument, attachmentVideoUnit, multipartFile.getOriginalFilename());
                 splitPdfDocument.close(); // make sure to close the document
+                // store the saved object
                 units.add(attachmentVideoUnit);
             }
             completePdfDocument.close();
