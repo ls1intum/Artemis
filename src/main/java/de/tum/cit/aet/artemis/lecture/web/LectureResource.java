@@ -213,20 +213,27 @@ public class LectureResource {
     }
 
     /**
-     * GET /courses/:courseId/lectures : get all the lectures of a course
+     * GET /courses/:courseId/lectures : get all the lectures of a course for the course administration page
      *
-     * @param courseId the courseId of the course for which all lectures should be returned
+     * @param withLectureUnits if set associated lecture units will also be loaded
+     * @param courseId         the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping("courses/{courseId}/lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
+        Set<Lecture> lectures;
+        if (withLectureUnits) {
+            lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
+        }
+        else {
+            lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
+        }
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -245,24 +252,6 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         Set<Lecture> lectures = lectureRepository.findAllTutorialLecturesByCourseId(courseId);
-        return ResponseEntity.ok().body(lectures);
-    }
-
-    /**
-     * GET /courses/:courseId/normal-lectures/with-units : get all the lectures of a course together with their lecture units
-     *
-     * @param courseId the courseId of the course for which the lectures should be returned
-     * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
-     */
-    @GetMapping("courses/{courseId}/lectures/with-units")
-    @EnforceAtLeastEditor
-    public ResponseEntity<Set<Lecture>> getLecturesForCourseWithLectureUnits(@PathVariable Long courseId) {
-        log.debug("REST request to get all Lectures for the course with id : {}", courseId);
-
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-
-        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
         return ResponseEntity.ok().body(lectures);
     }
 
