@@ -16,8 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -27,6 +25,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -170,7 +169,7 @@ public class RepositoryService {
      * @throws IOException If an I/O error occurs during the file content retrieval process, including issues with
      *                         opening and reading the file stream.
      */
-    public Map<String, String> getFilesContentFromBareRepository(Repository repository, @NotNull String commitHash) throws IOException {
+    public Map<String, String> getFilesContentFromBareRepository(Repository repository, @NonNull String commitHash) throws IOException {
         ObjectId commitId = repository.resolve(commitHash);
         if (commitId == null) {
             log.warn("Cannot resolve {} in the repository {}", commitHash, repository.getRemoteRepositoryUri());
@@ -287,7 +286,7 @@ public class RepositoryService {
      * @throws IOException If an I/O error occurs during the file content retrieval process, including issues with
      *                         opening and reading the file stream.
      */
-    private Map<String, String> getFileContentFromBareRepositoryForCommitId(Repository repository, @NotNull ObjectId commitId) throws IOException {
+    private Map<String, String> getFileContentFromBareRepositoryForCommitId(Repository repository, @NonNull ObjectId commitId) throws IOException {
         RevWalk revWalk = new RevWalk(repository);
         RevCommit commit = revWalk.parseCommit(commitId);
 

@@ -4,8 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
@@ -41,7 +40,7 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
             """)
     IrisSession findByIdWithMessagesAndContents(@Param("sessionId") long sessionId);
 
-    @NotNull
+    @NonNull
     default IrisSession findByIdWithMessagesElseThrow(long sessionId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdWithMessages(sessionId), sessionId);
     }
