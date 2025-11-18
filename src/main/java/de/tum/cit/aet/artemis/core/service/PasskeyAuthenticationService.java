@@ -89,7 +89,7 @@ public class PasskeyAuthenticationService {
         try {
             jwtWithSource = extractValidJwt(request, tokenProvider);
         }
-        catch (Exception exception) {
+        catch (IllegalArgumentException exception) {
             log.debug("Passkey authentication check failed: error extracting JWT", exception);
             throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY);
         }
