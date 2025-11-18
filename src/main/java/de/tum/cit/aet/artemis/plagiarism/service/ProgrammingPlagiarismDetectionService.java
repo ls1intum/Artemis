@@ -18,9 +18,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -187,7 +186,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @param minimumScore        the minimum score
      * @return the JPlag result or null if there are not enough participations
      */
-    @NotNull
+    @NonNull
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore, int minimumSize) {
         // TODO: Move minimumSize to configuration parameter in next refactoring
         long programmingExerciseId = programmingExercise.getId();
@@ -328,7 +327,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @return the JPlag Language object corresponding to the programming exercise's programming language
      * @throws BadRequestAlertException if the programming language is not supported for plagiarism check
      */
-    @NotNull
+    @NonNull
     public static Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         return switch (programmingExercise.getProgrammingLanguage()) {
             case C -> new CLanguage();
