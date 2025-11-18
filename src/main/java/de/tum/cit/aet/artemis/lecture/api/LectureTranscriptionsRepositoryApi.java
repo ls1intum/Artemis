@@ -65,6 +65,9 @@ public class LectureTranscriptionsRepositoryApi extends AbstractLectureApi {
         }
 
         LectureTranscription transcription = transcriptionOpt.get();
+        if (transcription.getLanguage() == null || transcription.getSegments() == null) {
+            return Optional.empty();
+        }
         LectureTranscriptionDTO dto = new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments());
         return Optional.of(dto);
     }
