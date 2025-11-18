@@ -13,6 +13,7 @@ This documentation covers:
 
 - Server and production environment setup
 - Security configurations and best practices
+- Hyperion AI-assisted exercise authoring setup
 - Managing SSH access and network routing
 - Monitoring, scaling, and integrating external services
 
