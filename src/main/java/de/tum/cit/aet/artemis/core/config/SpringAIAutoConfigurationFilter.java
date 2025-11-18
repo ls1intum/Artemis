@@ -12,14 +12,15 @@ import org.springframework.core.env.Environment;
  * that conditionally excludes certain Spring AI Azure/OpenAI auto-configurations from being
  * loaded into the application context.
  * <p>
- * This filter checks whether Hyperion or Atlas modules are enabled. If both are disabled,
- * all autoconfiguration fully qualified class names starting with org.springframework.ai will be
- * filtered out and not applied. If either module is enabled, the filter allows all
+ * This filter checks the value of the property defined by
+ * {@link Constants#HYPERION_ENABLED_PROPERTY_NAME}. If the property is {@code false} or absent,
+ * all auto-configuration fully qualified class names starting with org.springframework.ai will be
+ * filtered out and not applied. If the property is {@code true}, the filter allows all
  * auto-configurations to proceed (it does not re-include anything excluded elsewhere such
  * as through {@code spring.autoconfigure.exclude} in YAML).
  * <p>
- * This mechanism is useful to prevent unnecessary bean creation when both the
- * "Hyperion" and "Atlas" features are disabled, while still permitting the application to start normally.
+ * This mechanism is useful to prevent unnecessary bean creation when the
+ * "Hyperion" feature is disabled, while still permitting the application to start normally.
  * <p>
  * Note that this filter only affects the specified classes. Other exclusions (e.g. via
  * {@code spring.autoconfigure.exclude} in {@code application.yml}) still apply independently.
@@ -37,8 +38,6 @@ public class SpringAIAutoConfigurationFilter implements AutoConfigurationImportF
     @Override
     public boolean[] match(String[] autoConfigurationClasses, AutoConfigurationMetadata metadata) {
         boolean hyperionEnabled = env.getProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false);
-        boolean atlasEnabled = env.getProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, Boolean.class, false);
-        boolean springAIEnabled = hyperionEnabled || atlasEnabled;
 
         boolean[] matches = new boolean[autoConfigurationClasses.length];
         for (int i = 0; i < autoConfigurationClasses.length; i++) {
@@ -49,9 +48,9 @@ public class SpringAIAutoConfigurationFilter implements AutoConfigurationImportF
                 continue;
             }
 
-            matches[i] = springAIEnabled || !fullyQualifiedClassName.startsWith("org.springframework.ai");
+            matches[i] = hyperionEnabled || !fullyQualifiedClassName.startsWith("org.springframework.ai");
             if (!matches[i]) {
-                log.debug("Excluding auto-configuration: {} because Hyperion and Atlas are disabled", fullyQualifiedClassName);
+                log.debug("Excluding auto-configuration: {} because Hyperion is disabled", fullyQualifiedClassName);
             }
         }
         return matches;

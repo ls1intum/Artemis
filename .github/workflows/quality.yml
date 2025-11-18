@@ -35,7 +35,7 @@ jobs:
           complex_beans=$(echo "$output" | grep -o "Found [0-9]* Spring beans with constructors having more than" | grep -o "[0-9]*")
 
           # TODO these values should become zero in the future
-          max_large_classes=11
+          max_large_classes=9
           max_complex_beans=10
 
           echo "=========================================="
