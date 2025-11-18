@@ -4,6 +4,7 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'setup',
+        'spring-ai'
     ],
 };
 
