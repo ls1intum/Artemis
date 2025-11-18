@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSetting
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
+import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.AndroidFingerprintService;
@@ -70,7 +71,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
-    private final de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository passkeyCredentialsRepository;
+    private final PasskeyCredentialsRepository passkeyCredentialsRepository;
 
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;

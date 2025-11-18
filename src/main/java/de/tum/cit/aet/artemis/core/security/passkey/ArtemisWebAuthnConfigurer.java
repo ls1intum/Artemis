@@ -27,6 +27,7 @@ import org.springframework.security.web.webauthn.registration.PublicKeyCredentia
 
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
@@ -89,7 +90,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
-    private final de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository passkeyCredentialsRepository;
+    private final PasskeyCredentialsRepository passkeyCredentialsRepository;
 
     public ArtemisWebAuthnConfigurer(AuditEventRepository auditEventRepository, HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService,
             UserRepository userRepository, PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
