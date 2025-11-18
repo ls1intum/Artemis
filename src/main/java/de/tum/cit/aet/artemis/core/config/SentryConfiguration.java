@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import io.sentry.Sentry;
+import io.sentry.SentryOptions;
 import tech.jhipster.config.JHipsterConstants;
 
 @Configuration
@@ -52,12 +54,48 @@ public class SentryConfiguration {
             final String dsn = sentryDsn.get() + "?stacktrace.app.packages=de.tum.cit.aet.artemis";
             log.info("Sentry DSN: {}", dsn);
 
+            // For more fine-grained control over what we want to sample, we define a custom traces sampler.
+            // By default, it returns null to instead use the tracesSampleRate (as specified per the Sentry documentation).
+            // This filters out noise to enable us to focus on the transactions that actually impact Artemis functionality.
+            SentryOptions.TracesSamplerCallback tracesSampler = samplingContext -> {
+                HttpServletRequest request = (HttpServletRequest) samplingContext.getCustomSamplingContext().get("request");
+                String url = request.getRequestURI();
+                String method = request.getMethod();
+                if (method.equals("HEAD")) {
+                    // We're not interested in HEAD requests, so we just drop them (113 transactions per minute)
+                    return 0.0;
+                }
+                if (url.equals("/api/core/public/time")) {
+                    // Time endpoint is called very frequently, and we don't want to consider it.
+                    return 0.0;
+                }
+                if (url.equals("/api/iris/status")) {
+                    // Iris status is called often enough to warrant downsampling
+                    return 0.001;
+                }
+                if (url.equals("/management/prometheus") || url.equals("/management/info")) {
+                    // Management endpoints are not that important for Artemis to function, so we don't sample that often.
+                    // Since it's semi-common, we sample less often, but more often than for time
+                    return 0.001;
+                }
+
+                // If the transactions isn't filtered above and has a parent transaction, we inherit the parent sampling decision.
+                Boolean parentSampled = samplingContext.getTransactionContext().getParentSampled();
+                if (parentSampled != null) {
+                    return parentSampled ? 1.0 : 0.0;
+                }
+
+                // If the transaction did not have a parent, default to tracesSampleRate
+                return getTracesSampleRate();
+            };
+
             Sentry.init(options -> {
                 options.setDsn(dsn);
                 options.setSendDefaultPii(sendDefaultPii);
                 options.setEnvironment(getEnvironment());
                 options.setRelease(artemisVersion);
-                options.setTracesSampleRate(getTracesSampleRate());
+                options.setTracesSampleRate(getTracesSampleRate()); // configured as a fallback
+                options.setTracesSampler(tracesSampler);
             });
         }
         catch (Exception ex) {
@@ -67,7 +105,7 @@ public class SentryConfiguration {
     }
 
     private String getEnvironment() {
-        if (environment.isPresent() && environment.get().trim().length() > 0) {
+        if (environment.isPresent() && !environment.get().isBlank()) {
             return environment.get().trim().toLowerCase();
         }
         if (isTestServer.isPresent()) {
@@ -86,7 +124,7 @@ public class SentryConfiguration {
     /**
      * Get the traces sample rate based on the environment.
      *
-     * @return 0% for local, 100% for test and staging, 20% for production environments
+     * @return 0% for local, 100% for test and staging, 5% for production environments
      */
     private double getTracesSampleRate() {
         String env = getEnvironment();
@@ -95,9 +133,9 @@ public class SentryConfiguration {
             return 1.0;
         }
 
-        // Only "prod" get 0.2, all others (like local) are disabled
+        // Only "prod" get 0.05, all others (like local) are disabled
         return switch (env) {
-            case "prod" -> 0.2;
+            case "prod" -> 0.05;
             default -> 0.0;
         };
     }
