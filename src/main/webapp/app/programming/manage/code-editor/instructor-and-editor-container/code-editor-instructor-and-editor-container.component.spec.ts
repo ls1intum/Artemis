@@ -5,7 +5,7 @@ import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-
 import { Subject, of, throwError } from 'rxjs';
 
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { EditorState, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -36,6 +36,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
     let http: jest.Mocked<Pick<HttpClient, 'post'>>;
     let ws: jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
     let alertService: AlertService;
+    let repoService: CodeEditorRepositoryService;
+    let repoFileService: CodeEditorRepositoryFileService;
     let profileService: ProfileService;
 
     beforeAll(() => {
@@ -77,6 +79,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         http = TestBed.inject(HttpClient) as any;
         ws = TestBed.inject(HyperionWebsocketService) as any;
         profileService = TestBed.inject(ProfileService);
+        repoService = TestBed.inject(CodeEditorRepositoryService) as any;
+        repoFileService = TestBed.inject(CodeEditorRepositoryFileService) as any;
 
         // Enable Hyperion by default so property initialization is deterministic
         jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
@@ -203,5 +207,137 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
 
         expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_HYPERION);
         expect(comp.hyperionEnabled).toBeTrue();
+    });
+
+    it('should compute hyperionEnabled as false when feature disabled', async () => {
+        const isModuleFeatureActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+
+        fixture.destroy();
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalled();
+        expect(comp.hyperionEnabled).toBeFalse();
+    });
+
+    it('should trigger repository pull on FILE_UPDATED and NEW_FILE events', async () => {
+        comp.selectedRepository = RepositoryType.TEMPLATE;
+        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
+
+        const job$ = new Subject<any>();
+        (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+        const pullSpy = jest.spyOn(repoService, 'pull');
+
+        comp.generateCode();
+        await Promise.resolve();
+
+        job$.next({ type: 'FILE_UPDATED' });
+        job$.next({ type: 'NEW_FILE' });
+
+        expect(pullSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should set editor state, refresh files and cleanup on DONE', async () => {
+        comp.selectedRepository = RepositoryType.SOLUTION;
+        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-4' }));
+        const job$ = new Subject<any>();
+        (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+
+        // Fake a minimal code editor container to observe state changes
+        (comp as any).codeEditorContainer = { editorState: undefined };
+
+        const pullSpy = jest.spyOn(repoService, 'pull');
+        const getContentSpy = jest.spyOn(repoFileService, 'getRepositoryContent');
+
+        comp.generateCode();
+        await Promise.resolve();
+
+        job$.next({ type: 'DONE', success: true });
+        await Promise.resolve();
+
+        expect(pullSpy).toHaveBeenCalled();
+        expect(getContentSpy).toHaveBeenCalled();
+        // Editor state should end in CLEAN after refresh pipeline
+        expect((comp as any).codeEditorContainer.editorState).toBeDefined();
+        expect((comp as any).codeEditorContainer.editorState).toBe(EditorState.CLEAN);
+        expect(comp.isGeneratingCode()).toBeFalse();
+        expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-4');
+    });
+
+    it('should show danger alert and cleanup on ERROR event', async () => {
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        comp.selectedRepository = RepositoryType.TEMPLATE;
+        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-5' }));
+        const job$ = new Subject<any>();
+        (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+
+        comp.generateCode();
+        await Promise.resolve();
+
+        job$.next({ type: 'ERROR' });
+        await Promise.resolve();
+
+        expect(comp.isGeneratingCode()).toBeFalse();
+        expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-5');
+        expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.DANGER, translationKey: 'artemisApp.programmingExercise.codeGeneration.error' }));
+    });
+
+    it('should show danger alert and cleanup when job stream errors', async () => {
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        comp.selectedRepository = RepositoryType.TESTS;
+        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-6' }));
+        (ws.subscribeToJob as jest.Mock).mockReturnValue(throwError(() => new Error('ws')));
+
+        comp.generateCode();
+        await Promise.resolve();
+
+        expect(comp.isGeneratingCode()).toBeFalse();
+        expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-6');
+        expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.DANGER, translationKey: 'artemisApp.programmingExercise.codeGeneration.error' }));
+    });
+
+    it('should show danger alert when response has no job id', async () => {
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        comp.selectedRepository = RepositoryType.TEMPLATE;
+        (http.post as jest.Mock).mockReturnValue(of({}));
+
+        comp.generateCode();
+        await Promise.resolve();
+
+        expect(comp.isGeneratingCode()).toBeFalse();
+        expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.DANGER, translationKey: 'artemisApp.programmingExercise.codeGeneration.error' }));
+    });
+
+    it('should show timeout warning and cleanup when generation exceeds time limit', async () => {
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        comp.selectedRepository = RepositoryType.SOLUTION;
+        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-7' }));
+
+        // Intercept setTimeout to capture the scheduled callback and invoke it immediately
+        const originalSetTimeout = window.setTimeout;
+        let timeoutCallback: (() => void) | undefined;
+        // @ts-ignore
+        window.setTimeout = ((fn: () => void, _delay?: number) => {
+            timeoutCallback = fn;
+            return 1 as any;
+        }) as any;
+
+        try {
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(new Subject<any>().asObservable());
+            comp.generateCode();
+            await Promise.resolve();
+            expect(comp.isGeneratingCode()).toBeTrue();
+
+            // Simulate timeout
+            if (timeoutCallback) {
+                timeoutCallback();
+            }
+
+            expect(comp.isGeneratingCode()).toBeFalse();
+            expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-7');
+            expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout' }));
+        } finally {
+            window.setTimeout = originalSetTimeout;
+        }
     });
 });
