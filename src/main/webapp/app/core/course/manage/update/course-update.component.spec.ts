@@ -48,6 +48,7 @@ import { ProgrammingLanguage } from 'app/programming/shared/entities/programming
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
