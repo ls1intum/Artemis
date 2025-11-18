@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Enum for consistency issue severity levels.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public enum SeverityDTO {
+public enum Severity {
 
     LOW, MEDIUM, HIGH;
 }

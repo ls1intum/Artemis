@@ -16,9 +16,9 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactTypeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueCategoryDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.SeverityDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.Severity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import reactor.core.publisher.Flux;
@@ -186,16 +186,16 @@ public class HyperionConsistencyCheckService {
      * @return DTO for API responses
      */
     private ConsistencyIssueDTO mapConsistencyIssueToDto(ConsistencyIssue issue) {
-        SeverityDTO severity = switch (issue.severity() == null ? "MEDIUM" : issue.severity().toUpperCase()) {
-            case "LOW" -> SeverityDTO.LOW;
-            case "HIGH" -> SeverityDTO.HIGH;
-            default -> SeverityDTO.MEDIUM;
+        Severity severity = switch (issue.severity() == null ? "MEDIUM" : issue.severity().toUpperCase()) {
+            case "LOW" -> Severity.LOW;
+            case "HIGH" -> Severity.HIGH;
+            default -> Severity.MEDIUM;
         };
         List<ArtifactLocationDTO> locations = issue.relatedLocations() == null ? List.of()
                 : issue.relatedLocations().stream()
                         .map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactTypeDTO.PROBLEM_STATEMENT : loc.type(), loc.filePath(), loc.startLine(), loc.endLine()))
                         .toList();
-        ConsistencyIssueCategoryDTO category = issue.category() != null ? issue.category() : ConsistencyIssueCategoryDTO.METHOD_PARAMETER_MISMATCH;
+        ConsistencyIssueCategory category = issue.category() != null ? issue.category() : ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH;
         return new ConsistencyIssueDTO(severity, category, issue.description(), issue.suggestedFix(), locations);
     }
 
@@ -230,7 +230,7 @@ public class HyperionConsistencyCheckService {
     }
 
     // Unified consistency issue used internally after parsing
-    private record ConsistencyIssue(String severity, ConsistencyIssueCategoryDTO category, String description, String suggestedFix,
+    private record ConsistencyIssue(String severity, ConsistencyIssueCategory category, String description, String suggestedFix,
             List<StructuredOutputSchema.ArtifactLocation> relatedLocations) {
     }
 

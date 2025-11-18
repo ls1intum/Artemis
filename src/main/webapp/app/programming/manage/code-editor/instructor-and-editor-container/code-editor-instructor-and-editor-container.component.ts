@@ -18,7 +18,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
-import { signal } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -86,7 +85,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCheckDouble = faCheckDouble;
     private codeGenAlertService = inject(AlertService);
-    private profileService = inject(ProfileService);
     private modalService = inject(NgbModal);
     private hyperionWs = inject(HyperionWebsocketService);
     private repoService = inject(CodeEditorRepositoryService);
@@ -95,8 +93,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
-
-    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     /**
      * Starts Hyperion code generation after user confirmation.
@@ -254,6 +250,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 });
             }
         }, 1_200_000);
+    }
 
     /**
      * Checks whether a consistency check operation is currently running.
