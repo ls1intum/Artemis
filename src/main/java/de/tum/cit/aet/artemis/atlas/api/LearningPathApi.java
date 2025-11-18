@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
@@ -22,11 +21,11 @@ public class LearningPathApi extends AbstractAtlasApi {
         this.learningPathService = learningPathService;
     }
 
-    public void generateLearningPathForUser(@NotNull Course course, @NotNull User user) {
+    public void generateLearningPathForUser(@NonNull Course course, @NonNull User user) {
         learningPathService.generateLearningPathForUser(course, user);
     }
 
-    public void generateLearningPaths(@NotNull Course course) {
+    public void generateLearningPaths(@NonNull Course course) {
         learningPathService.generateLearningPaths(course);
     }
 }
