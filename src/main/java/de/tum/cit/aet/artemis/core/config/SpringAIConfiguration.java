@@ -1,11 +1,12 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import jakarta.annotation.Nullable;
+import java.util.List;
 
 import javax.sql.DataSource;
 
-import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
-import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -35,18 +36,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Lazy
 public class SpringAIConfiguration {
 
+    private static final Logger log = LoggerFactory.getLogger(SpringAIConfiguration.class);
+
     private final int maxMessages;
 
-    private final String deploymentName;
-
-    private final double temperature;
-
-    public SpringAIConfiguration(@Value("${spring.ai.chat.memory.max-messages: 20}") int maxMessages,
-            @Value("${spring.ai.azure.openai.chat.options.deployment-name: gpt-5-mini}") String deploymentName,
-            @Value("${spring.ai.azure.openai.chat.options.temperature: 1.0}") double temperature) {
+    public SpringAIConfiguration(@Value("${spring.ai.chat.memory.max-messages: 20}") int maxMessages) {
         this.maxMessages = maxMessages;
-        this.deploymentName = deploymentName;
-        this.temperature = temperature;
     }
 
     /**
@@ -80,31 +75,30 @@ public class SpringAIConfiguration {
 
     /**
      * Default Chat Client for AI features.
-     * Uses the manually configured chat model if available.
+     * Uses the manually configured Azure OpenAI model if available.
      * Includes memory advisor for conversation context retention.
-     * Supports both AzureOpenAiChatModel (production) and generic ChatModel (tests).
      *
-     * @param chatModel  the chat model to use (optional)
+     * @param chatModels chat models that can be used (optional)
      * @param chatMemory the chat memory for conversation history (optional)
      * @return a configured ChatClient with default options, or null if model is not available
      */
     @Bean
     @Lazy
-    public ChatClient chatClient(@Nullable ChatModel chatModel, @Nullable ChatMemory chatMemory) {
-        if (chatModel == null) {
+    public ChatClient chatClient(List<ChatModel> chatModels, @Nullable ChatMemory chatMemory) {
+        if (chatModels == null || chatModels.isEmpty()) {
             return null;
         }
 
-        ChatClient.Builder builder;
-
-        // Use Azure-specific options if the model is AzureOpenAiChatModel
-        if (chatModel instanceof AzureOpenAiChatModel azureModel) {
-            builder = ChatClient.builder(azureModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build());
+        for (ChatModel model : chatModels) {
+            if (model.getDefaultOptions() != null) {
+                log.info("Found Chat Model: {} with options: {}", model.getDefaultOptions().getModel(), model.getDefaultOptions());
+            }
+            else {
+                log.info("Found Chat Model: {} with no default options", model);
+            }
         }
-        else {
-            // For generic ChatModel (e.g., mocked in tests), use basic builder
-            builder = ChatClient.builder(chatModel);
-        }
+        ChatModel chatModel = chatModels.getFirst(); // Use the first available model
+        ChatClient.Builder builder = ChatClient.builder(chatModel);
 
         // Add memory advisor if available
         if (chatMemory != null) {

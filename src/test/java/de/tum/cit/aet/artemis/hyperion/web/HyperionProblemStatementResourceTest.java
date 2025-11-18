@@ -73,19 +73,20 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     private void mockConsistencyNoIssues() {
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}"))))).when(chatModel).call(any(Prompt.class));
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}"))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
     private void mockRewriteImproved() {
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement."))))).when(chatModel).call(any(Prompt.class));
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement."))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
     private void mockGenerateSuccess() {
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Draft problem statement generated successfully."))))).when(chatModel).call(any(Prompt.class));
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Draft problem statement generated successfully."))))).when(azureOpenAiChatModel)
+                .call(any(Prompt.class));
     }
 
     private void mockGenerateFailure() {
-        doThrow(new RuntimeException("AI service unavailable")).when(chatModel).call(any(Prompt.class));
+        doThrow(new RuntimeException("AI service unavailable")).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
     @Test
