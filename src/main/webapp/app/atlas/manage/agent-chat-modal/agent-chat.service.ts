@@ -18,11 +18,6 @@ interface AgentChatResponse {
     competenciesModified: boolean;
 }
 
-export interface AgentHistoryMessage {
-    content: string;
-    isUser: boolean;
-}
-
 @Injectable({
     providedIn: 'root',
 })
@@ -31,56 +26,29 @@ export class AgentChatService {
     private readonly translateService = inject(TranslateService);
     private readonly accountService = inject(AccountService);
 
-    /**
-     * Generates a unique session ID for the user's conversation in a specific course.
-     * Format: course_{courseId}_user_{userId}
-     */
-    getSessionId(courseId: number): string {
-        const userId = this.accountService.userIdentity()?.id;
-        if (userId == undefined) {
-            throw new Error(this.translateService.instant('artemisApp.agent.chat.authentication'));
-        }
-        return `course_${courseId}_user_${userId}`;
-    }
-
     sendMessage(message: string, courseId: number): Observable<AgentChatResponse> {
-        try {
-            const sessionId = this.getSessionId(courseId);
-            const request: AgentChatRequest = {
-                message,
-                sessionId,
-            };
-
-            return this.http.post<AgentChatResponse>(`api/atlas/agent/courses/${courseId}/chat`, request).pipe(
-                timeout(30000),
-                catchError(() => {
-                    return of({
-                        message: this.translateService.instant('artemisApp.agent.chat.error'),
-                        sessionId,
-                        timestamp: new Date().toISOString(),
-                        success: false,
-                        competenciesModified: false,
-                    });
-                }),
-            );
-        } catch (error) {
-            return of({
-                message: this.translateService.instant('artemisApp.agent.chat.authentication'),
-                sessionId: '',
-                timestamp: new Date().toISOString(),
-                success: false,
-                competenciesModified: false,
-            });
+        const userId = this.accountService.userIdentity()?.id;
+        if (!userId) {
+            throw new Error('User must be authenticated to use agent chat');
         }
-    }
 
-    /**
-     * Fetches conversation history for the current user in the specified course
-     */
-    getConversationHistory(courseId: number): Observable<AgentHistoryMessage[]> {
-        return this.http.get<AgentHistoryMessage[]>(`api/atlas/agent/courses/${courseId}/chat/history`).pipe(
+        const sessionId = `course_${courseId}_user_${userId}`;
+
+        const request: AgentChatRequest = {
+            message,
+            sessionId,
+        };
+
+        return this.http.post<AgentChatResponse>(`api/atlas/agent/courses/${courseId}/chat`, request).pipe(
+            timeout(30000),
             catchError(() => {
-                return of([]);
+                return of({
+                    message: this.translateService.instant('artemisApp.agent.chat.error'),
+                    sessionId,
+                    timestamp: new Date().toISOString(),
+                    success: false,
+                    competenciesModified: false,
+                });
             }),
         );
     }

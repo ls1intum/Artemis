@@ -9,8 +9,7 @@
                 "error": "Entschuldigung, aber ich habe derzeit Probleme bei der Bearbeitung deiner Anfrage. Bitte versuch es erneut.",
                 "messageTooLong": "Die Nachricht ist zu lang. Bitte kürze deine Nachricht.",
                 "you": "Du",
-                "aiAssistant": "KI-Assistent",
-                "authentication": "Du musst authentifiziert sein, um den Agenten-Chat zu nutzen."
+                "aiAssistant": "KI-Assistent"
             }
         }
     }

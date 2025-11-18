@@ -9,8 +9,7 @@
                 "error": "I apologize, but I'm having trouble processing your request right now. Please try again.",
                 "messageTooLong": "Message is too long. Please shorten your message.",
                 "you": "You",
-                "aiAssistant": "AI Assistant",
-                "authentication": "You must be authenticated to use agent chat"
+                "aiAssistant": "AI Assistant"
             }
         }
     }

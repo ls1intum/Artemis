@@ -118,12 +118,6 @@ artemis:
 spring:
     application:
         name: Artemis
-    ai:
-        chat:
-            memory:
-                repository:
-                    jdbc:
-                        initialize-schema: never  # Disable JDBC schema init for tests (H2), prod uses Liquibase
     datasource:
         url: jdbc:mysql://artemis-mysql:3306/
         type: com.zaxxer.hikari.HikariDataSource

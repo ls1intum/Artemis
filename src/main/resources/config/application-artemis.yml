@@ -117,8 +117,6 @@ spring:
     chat:
       client:
         enabled: #{${artemis.hyperion.enabled} or ${artemis.atlas.enabled}}
-      memory:
-        max-messages: 20 # Maximum number of messages to retain in conversation history per session
     # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
     azure:
       openai:
