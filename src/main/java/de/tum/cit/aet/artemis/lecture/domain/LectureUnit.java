@@ -71,7 +71,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     private int lectureUnitOrder;   // package-private, no getter/setter
 
     /**
-     * IMPORTANT: Must only be used by Lecture to set the order of its lecture units before persisting
+     * IMPORTANT: Must only be used by Lecture to set the order of its lecture units
      */
     void setLectureUnitOrder(int order) {
         this.lectureUnitOrder = order;
