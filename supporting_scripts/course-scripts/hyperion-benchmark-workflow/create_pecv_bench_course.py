@@ -78,14 +78,13 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
     fields = {
         "course": ('blob.json', json.dumps(default_course), 'application/json')
     }
-
     body, content_type = urllib3.filepost.encode_multipart_formdata(fields)
     headers = {
         'Content-Type': content_type,
     }
 
-    response = session.post(url, data=body, headers=headers)
-
+    response: requests.Response = session.post(url, data=body, headers=headers)
+    
     if response.status_code == 201:
         logging.info(f"Created course {COURSE_NAME} with shortName {course_short_name} \n {response.json()}")
     elif response.status_code == 400:
@@ -93,7 +92,7 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
         sys.exit(0)
     else:
         logging.error("Problem with the group 'students' and interacting with a test server? "
-                      "Is 'is_local_course' in 'config.ini' set to 'False'?")
+                        "Is 'is_local_course' in 'config.ini' set to 'False'?")
         raise Exception(
             f"Could not create course {COURSE_NAME}; Status code: {response.status_code}\n"
             f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-')!\n"

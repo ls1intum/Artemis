@@ -12,32 +12,32 @@ from manage_programming_exercise import create_programming_exercise
 PECV_BENCH_URL: str = "https://github.com/ls1intum/PECV-bench.git"
 PECV_BENCH_DIR: str = "pecv-bench"
 
-def clone_pecv_bench(PECV_BENCH_URL: str, PECV_BENCH_DIR: str) -> None:
+def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
     """Clones a repository if it doesn't exist, or pulls updates if it does."""
 
-    if os.path.exists(PECV_BENCH_DIR):
-        logging.info(f"Directory {PECV_BENCH_DIR} already exists. Pulling latest changes.")
+    if os.path.exists(pecv_bench_dir):
+        logging.info(f"Directory {pecv_bench_dir} already exists. Pulling latest changes.")
         try:
             subprocess.run(
                 ["git", "pull"],
-                cwd=PECV_BENCH_DIR,
+                cwd=pecv_bench_dir,
                 check=True,
             )
             logging.info("Successfully pulled latest changes.")
         except subprocess.CalledProcessError as e:
-            logging.error(f"ERROR: Failed to pull updates for {PECV_BENCH_DIR}.")
+            logging.error(f"ERROR: Failed to pull updates for {pecv_bench_dir}.")
             logging.error(f"Stderr: {e.stderr}")
             sys.exit(1)
     else:
-        logging.info(f"Cloning repository from {PECV_BENCH_URL} into {PECV_BENCH_DIR}.")
+        logging.info(f"Cloning repository from {pecv_bench_url} into {pecv_bench_dir}.")
         try:
             subprocess.run(
-                ["git", "clone", PECV_BENCH_URL, PECV_BENCH_DIR],
+                ["git", "clone", pecv_bench_url, pecv_bench_dir],
                 check=True,
             )
             logging.info("Successfully cloned the repository.")
         except subprocess.CalledProcessError as e:
-            logging.error(f"ERROR: Failed to clone repository from {PECV_BENCH_URL}.")
+            logging.error(f"ERROR: Failed to clone repository from {pecv_bench_url}.")
             logging.error(f"Stderr: {e.stderr}")
             sys.exit(1)
 
@@ -54,8 +54,8 @@ if __name__ == "__main__":
     session = requests.Session()
     login_as_admin(session)
 
-    #response_data = create_pecv_bench_course(session)
-    #course_id = response_data["id"]
-    course_id = 5
+    response_data = create_pecv_bench_course(session)
+    course_id = response_data["id"]
+    #course_id = 5
     random_slug = str(uuid.uuid4())[:8]
     create_programming_exercise(session, course_id, SERVER_URL, 1, f"Variant 1-{random_slug}")
