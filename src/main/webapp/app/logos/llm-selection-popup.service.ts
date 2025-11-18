@@ -14,7 +14,6 @@ export class LLMSelectionModalService {
 
     open(): Promise<LLMSelectionChoice> {
         this.openModalSubject.next();
-
         return new Promise((resolve) => {
             const subscription = this.choice$.subscribe((choice) => {
                 resolve(choice);

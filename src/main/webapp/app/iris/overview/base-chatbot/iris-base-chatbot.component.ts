@@ -44,6 +44,7 @@ import { facSidebar } from 'app/shared/icons/icons';
 import { User } from 'app/core/user/user.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -123,6 +124,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
+    protected llmModalService = inject(LLMSelectionModalService);
 
     // Icons
     protected readonly faTrash = faTrash;
@@ -272,6 +274,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         });
 
         this.checkIfUserAcceptedExternalLLMUsage();
+        if (!this.userAccepted) {
+            this.showAISelectionModal().then(() => {});
+        }
 
         // Focus on message textarea
         setTimeout(() => {
@@ -309,6 +314,24 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     checkIfUserAcceptedExternalLLMUsage(): void {
         this.userAccepted = !!this.accountService.userIdentity()?.externalLLMUsageAccepted;
         setTimeout(() => this.adjustTextareaRows(), 0);
+    }
+
+    async showAISelectionModal(): Promise<void> {
+        const choice = await this.llmModalService.open();
+
+        switch (choice) {
+            case 'cloud':
+                this.acceptPermission();
+                this.chatService.updateExternalLLMUsageConsent(true);
+                break;
+            case 'local':
+                this.acceptPermission();
+                this.chatService.updateInternalLLMUsageConsent(true);
+                break;
+            case 'none':
+                this.closeChat();
+                break;
+        }
     }
 
     /**

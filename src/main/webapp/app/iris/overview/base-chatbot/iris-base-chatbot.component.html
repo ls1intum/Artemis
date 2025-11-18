@@ -235,17 +235,6 @@
             </div>
         }
         <jhi-chat-status-bar [stages]="stages" />
-        @if (!userAccepted) {
-            <div class="p-chat">
-                <div class="message-text" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></div>
-                <div class="button-container">
-                    <button type="button" class="btn btn-primary" #acceptButton (click)="acceptPermission()" jhiTranslate="artemisApp.exerciseChatbot.accept"></button>
-                    @if (showDeclineButton()) {
-                        <button type="button" class="btn btn-secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
-                    }
-                </div>
-            </div>
-        }
         <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
             <fa-icon [icon]="faArrowDown" />
         </div>
