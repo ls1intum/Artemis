@@ -29,6 +29,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
@@ -36,7 +38,6 @@ import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.merge.MergeStrategy;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -412,7 +413,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         GitService.commit(studentRepository.workingCopyGitRepo).setMessage("my commit 2").call();
     }
 
-    @NonNull
+    @NotNull
     private String getCommitHash(Git repo) throws GitAPIException {
         AtomicReference<String> commitHash = new AtomicReference<>();
         repo.log().call().forEach(revCommit -> {

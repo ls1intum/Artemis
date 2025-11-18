@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service;
 
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 

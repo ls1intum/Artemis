@@ -7,9 +7,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Check;
-import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
@@ -23,7 +23,7 @@ public class ForwardedMessage extends DomainObject {
     @Column(name = "source_id", nullable = false)
     private long sourceId;
 
-    @NonNull
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "source_type", nullable = false)
     private PostingType sourceType;

@@ -3,12 +3,12 @@ package de.tum.cit.aet.artemis.core.repository;
 import java.util.Arrays;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.validation.constraints.NotNull;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -29,7 +29,7 @@ public class UserSpecs {
      * @param searchTerm term to match
      * @return specification used to chain database operations
      */
-    @NonNull
+    @NotNull
     public static Specification<User> getSearchTermSpecification(String searchTerm) {
         String extendedSearchTerm = "%" + searchTerm + "%";
         return (root, query, criteriaBuilder) -> {
@@ -48,7 +48,7 @@ public class UserSpecs {
      * @param authorities set of possible authorities
      * @return specification used to chain database operations
      */
-    @NonNull
+    @NotNull
     public static Specification<User> getAllUsersMatchingAuthorities(Set<String> authorities) {
         return (root, query, criteriaBuilder) -> {
             Join<User, Authority> joinedAuthorities = root.join(User_.AUTHORITIES, JoinType.LEFT);
@@ -66,7 +66,7 @@ public class UserSpecs {
      *
      * @return specification used to chain database operations
      */
-    @NonNull
+    @NotNull
     public static Specification<User> getAllUsersMatchingEmptyAuthorities() {
         return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.AUTHORITIES));
     }
@@ -174,7 +174,7 @@ public class UserSpecs {
      *
      * @return specification used to chain database operations
      */
-    @NonNull
+    @NotNull
     public static Specification<User> distinct() {
         return (root, query, criteriaBuilder) -> {
             if (query != null) {
@@ -189,7 +189,7 @@ public class UserSpecs {
      *
      * @return specification used to chain database operations
      */
-    @NonNull
+    @NotNull
     public static Specification<User> notSoftDeleted() {
         return (root, query, criteriaBuilder) -> {
             Predicate notDeletedPredicate = criteriaBuilder.equal(root.get(User_.DELETED), false);

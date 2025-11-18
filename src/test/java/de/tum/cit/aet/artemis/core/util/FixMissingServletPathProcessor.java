@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.core.util;
 
 import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.MappingMatch;
+import jakarta.validation.constraints.NotNull;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
  */
 public class FixMissingServletPathProcessor implements RequestPostProcessor {
 
-    @NonNull
+    @NotNull
     @Override
     public MockHttpServletRequest postProcessRequest(MockHttpServletRequest request) {
         request.setHttpServletMapping(new HttpServletMapping() {

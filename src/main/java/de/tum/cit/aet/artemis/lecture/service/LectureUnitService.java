@@ -15,10 +15,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
 import org.hibernate.Hibernate;
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -91,7 +91,7 @@ public class LectureUnitService {
      * @param user        The user that completed/uncompleted the lecture unit
      * @param completed   True if the lecture unit was completed, false otherwise
      */
-    public void setLectureUnitCompletion(@NonNull LectureUnit lectureUnit, @NonNull User user, boolean completed) {
+    public void setLectureUnitCompletion(@NotNull LectureUnit lectureUnit, @NotNull User user, boolean completed) {
         Optional<LectureUnitCompletion> existingCompletion = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId());
         if (completed) {
             if (existingCompletion.isEmpty()) {
@@ -119,7 +119,7 @@ public class LectureUnitService {
      * @param user         The user that completed/uncompleted the lecture unit
      * @param completed    True if the lecture unit was completed, false otherwise
      */
-    public void setCompletedForAllLectureUnits(List<? extends LectureUnit> lectureUnits, @NonNull User user, boolean completed) {
+    public void setCompletedForAllLectureUnits(List<? extends LectureUnit> lectureUnits, @NotNull User user, boolean completed) {
         var existingCompletion = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, user.getId());
         if (!completed) {
             lectureUnitCompletionRepository.deleteAll(existingCompletion);
@@ -159,7 +159,7 @@ public class LectureUnitService {
      *
      * @param lectureUnit lecture unit to delete
      */
-    public void removeLectureUnit(@NonNull LectureUnit lectureUnit) {
+    public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
         if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {

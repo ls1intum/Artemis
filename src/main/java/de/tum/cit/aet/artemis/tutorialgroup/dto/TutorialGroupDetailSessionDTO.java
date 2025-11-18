@@ -4,9 +4,8 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-
-import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

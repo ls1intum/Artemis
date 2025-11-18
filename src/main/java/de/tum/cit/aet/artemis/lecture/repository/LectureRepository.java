@@ -6,7 +6,8 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -182,22 +183,22 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     @Cacheable(cacheNames = "lectureTitle", key = "#lectureId", unless = "#result == null")
     String getLectureTitle(@Param("lectureId") Long lectureId);
 
-    @NonNull
+    @NotNull
     default Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
         return getValueElseThrow(findByIdWithLectureUnits(lectureId), lectureId);
     }
 
-    @NonNull
+    @NotNull
     default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {
         return getValueElseThrow(findByIdWithLectureUnitsAndCompetencies(lectureId), lectureId);
     }
 
-    @NonNull
+    @NotNull
     default Lecture findByIdWithLectureUnitsAndAttachmentsElseThrow(Long lectureId) {
         return getValueElseThrow(findByIdWithLectureUnitsAndAttachments(lectureId), lectureId);
     }
 
-    @NonNull
+    @NotNull
     default Lecture findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(Long lectureId) {
         return getValueElseThrow(findByIdWithLectureUnitsWithCompetencyLinksAndAttachments(lectureId), lectureId);
     }

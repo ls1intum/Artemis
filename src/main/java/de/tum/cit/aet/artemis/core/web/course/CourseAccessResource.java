@@ -9,7 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -396,7 +397,7 @@ public class CourseAccessResource {
      * @param group             the group to which the userLogin should be added
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
      */
-    @NonNull
+    @NotNull
     private ResponseEntity<Void> addUserToCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
         if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             Optional<User> userToAddToGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
@@ -482,7 +483,7 @@ public class CourseAccessResource {
      * @param group             the group from which the userLogin should be removed
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
      */
-    @NonNull
+    @NotNull
     private ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
         if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             throw new AccessForbiddenException();

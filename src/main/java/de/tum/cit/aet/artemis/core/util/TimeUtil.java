@@ -5,8 +5,8 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Utility class for time-related operations.
@@ -34,7 +34,7 @@ public class TimeUtil {
      * @param target the target ZonedDateTime object
      * @return the relative time of the target ZonedDateTime object compared to the origin and unit ZonedDateTime objects
      */
-    public static double toRelativeTime(@NonNull ZonedDateTime origin, @NonNull ZonedDateTime unit, @NonNull ZonedDateTime target) {
+    public static double toRelativeTime(@NotNull ZonedDateTime origin, @NotNull ZonedDateTime unit, @NotNull ZonedDateTime target) {
         return toRelativeTime(origin.toEpochSecond(), unit.toEpochSecond(), target.toEpochSecond());
     }
 
@@ -48,11 +48,11 @@ public class TimeUtil {
      * @param target the target ZonedDateTime object
      * @return the relative time of the target ZonedDateTime object compared to the origin and unit ZonedDateTime objects
      */
-    public static double toRelativeTime(@NonNull Instant origin, @NonNull Instant unit, @NonNull Instant target) {
+    public static double toRelativeTime(@NotNull Instant origin, @NotNull Instant unit, @NotNull Instant target) {
         return toRelativeTime(origin.getEpochSecond(), unit.getEpochSecond(), target.getEpochSecond());
     }
 
-    private static double toRelativeTime(@NonNull long originEpochSecond, @NonNull long unitEpochSecond, @NonNull long targetEpochSecond) {
+    private static double toRelativeTime(@NotNull long originEpochSecond, @NotNull long unitEpochSecond, @NotNull long targetEpochSecond) {
         if (originEpochSecond == unitEpochSecond) {
             return 1;
         }
@@ -91,7 +91,7 @@ public class TimeUtil {
      *
      * @param newClock the new Clock instance to set
      */
-    public static void setClock(@NonNull Clock newClock) {
+    public static void setClock(@NotNull Clock newClock) {
         clock = Objects.requireNonNull(newClock, "Clock must not be null");
 
     }

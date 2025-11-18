@@ -4,7 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -77,7 +78,7 @@ public class ScienceSettingsResource {
      */
     @PutMapping("science-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<ScienceSetting[]> saveScienceSettingsForCurrentUser(@NonNull @RequestBody ScienceSetting[] scienceSettings) {
+    public ResponseEntity<ScienceSetting[]> saveScienceSettingsForCurrentUser(@NotNull @RequestBody ScienceSetting[] scienceSettings) {
         if (scienceSettings.length == 0) {
             throw new BadRequestAlertException("Cannot save non-existing Science Settings", "ScienceSettings", "scienceSettingsEmpty");
         }

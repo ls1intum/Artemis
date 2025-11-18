@@ -9,7 +9,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
@@ -52,7 +53,7 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
             """)
     Optional<Participation> findWithEagerSubmissionsById(@Param("participationId") long participationId);
 
-    @NonNull
+    @NotNull
     default Participation findByIdWithSubmissionsElseThrow(long participationId) {
         return getValueElseThrow(findWithEagerSubmissionsById(participationId), participationId);
     }
@@ -67,7 +68,7 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
             """)
     Optional<Participation> findWithEagerSubmissionsByIdWithTeamStudents(@Param("participationId") Long participationId);
 
-    @NonNull
+    @NotNull
     default Participation findWithEagerSubmissionsByIdWithTeamStudentsElseThrow(long participationId) {
         return getValueElseThrow(findWithEagerSubmissionsByIdWithTeamStudents(participationId), participationId);
     }

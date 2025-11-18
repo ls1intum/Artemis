@@ -4,8 +4,8 @@ import java.util.Optional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
+import jakarta.validation.constraints.NotNull;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
@@ -47,7 +47,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * @param id            the id of the entity to find
      * @return the entity with the given id
      */
-    @NonNull
+    @NotNull
     public T findOneByIdElseThrow(final Specification<T> specification, ID id) {
         return this.findOneById(specification, id).orElseThrow(() -> new EntityNotFoundException(entityInformation.getEntityName(), String.valueOf(id)));
     }
@@ -59,7 +59,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * @param optional the optional to get the entity from
      * @return the entity if it exists
      */
-    @NonNull
+    @NotNull
     public <U extends T> U getValueElseThrow(Optional<U> optional) {
         return optional.orElseThrow(() -> new EntityNotFoundException(entityInformation.getEntityName()));
     }
@@ -72,7 +72,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * @param id       the id of the entity to find
      * @return the entity if it exists
      */
-    @NonNull
+    @NotNull
     public <U extends T> U getValueElseThrow(Optional<U> optional, ID id) {
         return optional.orElseThrow(() -> new EntityNotFoundException(entityInformation.getEntityName(), String.valueOf(id)));
     }
@@ -84,7 +84,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * @param optional the optional to get the entity from
      * @return the entity if it exists
      */
-    @NonNull
+    @NotNull
     public <U> U getArbitraryValueElseThrow(Optional<U> optional) {
         return optional.orElseThrow(EntityNotFoundException::new);
     }
@@ -107,7 +107,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * @param id the id of the entity to find
      * @return the entity with the given id
      */
-    @NonNull
+    @NotNull
     public T findByIdElseThrow(ID id) {
         return getValueElseThrow(findById(id), id);
     }
@@ -119,7 +119,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * @param id   the id of the entity to find, it will augment spec with an <bold>and</bold> operator
      * @return the entity that corresponds to spec and has the given id
      */
-    @NonNull
+    @NotNull
     public Optional<T> findOneById(Specification<T> spec, ID id) {
         try {
             final Specification<T> hasIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(DomainObject_.ID), id);
@@ -136,7 +136,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * @param spec the specification to apply
      * @return the entity that satisfies the given specification
      */
-    @NonNull
+    @NotNull
     public Optional<T> findOneBySpec(Specification<T> spec) {
         try {
             return Optional.of(this.getQuery(spec, Sort.unsorted()).getSingleResult());
@@ -153,7 +153,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * @param id   the id of the entity to find, it will augment spec with an <bold>and</bold> operator
      * @return the entity that corresponds to spec and has the given id
      */
-    @NonNull
+    @NotNull
     public T findOneByIdOrElseThrow(Specification<T> spec, ID id) {
         Optional<T> optional = findOneById(spec, id);
         return optional.orElseThrow();
@@ -165,7 +165,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
      * @param spec the specification to apply
      * @return the entity that satisfies the given specification
      */
-    @NonNull
+    @NotNull
     public T findOneBySpecOrElseThrow(Specification<T> spec) {
         Optional<T> optional = findOneBySpec(spec);
         return optional.orElseThrow();

@@ -6,7 +6,8 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -196,7 +197,7 @@ public class PlagiarismUtilService {
      *
      * @return The generated LinkedMultiValueMap
      */
-    @NonNull
+    @NotNull
     public LinkedMultiValueMap<String, String> getDefaultPlagiarismOptions() {
         return getPlagiarismOptions(50, 0, 0);
     }
@@ -210,7 +211,7 @@ public class PlagiarismUtilService {
      * @param minimumSize         The minimum size
      * @return The generated LinkedMultiValueMap
      */
-    @NonNull
+    @NotNull
     public LinkedMultiValueMap<String, String> getPlagiarismOptions(int similarityThreshold, int minimumScore, int minimumSize) {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("similarityThreshold", String.valueOf(similarityThreshold));

@@ -10,7 +10,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -67,7 +68,7 @@ public class QuizResultService {
      *
      * @param quizExerciseId the id of the QuizExercise that should be evaluated
      */
-    public void evaluateQuizAndUpdateStatistics(@NonNull Long quizExerciseId) {
+    public void evaluateQuizAndUpdateStatistics(@NotNull Long quizExerciseId) {
         long start = System.nanoTime();
         log.info("Starting quiz evaluation for quiz {}", quizExerciseId);
         // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
@@ -102,7 +103,7 @@ public class QuizResultService {
      * @param quizExercise the id of the QuizExercise that should be evaluated
      * @return the newly generated results
      */
-    private Set<Result> evaluateSubmissions(@NonNull QuizExercise quizExercise) {
+    private Set<Result> evaluateSubmissions(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(studentParticipations);

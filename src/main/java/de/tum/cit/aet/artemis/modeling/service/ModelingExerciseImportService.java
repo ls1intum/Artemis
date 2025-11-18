@@ -8,7 +8,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -67,7 +68,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
-    @NonNull
+    @NotNull
     public ModelingExercise importModelingExercise(ModelingExercise templateExercise, ModelingExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise.getId());
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
@@ -92,7 +93,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return the cloned TextExercise basis
      */
-    @NonNull
+    @NotNull
     private ModelingExercise copyModelingExerciseBasis(Exercise importedExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         ModelingExercise newExercise = new ModelingExercise();

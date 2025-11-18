@@ -6,8 +6,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.assertj.core.util.TriFunction;
-import org.jspecify.annotations.NonNull;
 
 /**
  * Abstract node of the java class path with additional information, preserving the package tree structure.
@@ -98,7 +99,7 @@ public abstract class ClassPathNode implements Comparable<ClassPathNode>, Iterab
      */
     public abstract Stream<ClassNode> allClassNodes();
 
-    @NonNull
+    @NotNull
     @Override
     public Iterator<ClassNode> iterator() {
         return allClassNodes().iterator();

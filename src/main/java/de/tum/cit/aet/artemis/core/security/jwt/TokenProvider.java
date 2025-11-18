@@ -8,12 +8,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
 import javax.crypto.SecretKey;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -104,7 +104,7 @@ public class TokenProvider {
      * @param rememberMe     Determines Token lifetime
      * @return JWT Token
      */
-    @NonNull
+    @NotNull
     public String createToken(Authentication authentication, boolean rememberMe) {
         return createToken(authentication, getTokenValidity(rememberMe), null);
     }
@@ -117,7 +117,7 @@ public class TokenProvider {
      * @param tool           tool this token is used for. If null, it's a general access token
      * @return JWT Token
      */
-    @NonNull
+    @NotNull
     public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
         long validity = System.currentTimeMillis() + duration;
         return createToken(authentication, null, new Date(validity), tool, null);
@@ -133,7 +133,7 @@ public class TokenProvider {
      * @param authenticatedWithPasskey can be manually set to true if the token was created with a passkey but for performance reasons, no actual WebAuthnAuthentication was created
      * @return JWT Token
      */
-    @NonNull
+    @NotNull
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
@@ -223,23 +223,23 @@ public class TokenProvider {
         return false;
     }
 
-    @NonNull
+    @NotNull
     private Claims parseClaims(String authToken) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
 
-    @NonNull
+    @NotNull
     public <T> T getClaim(String token, String claimName, Class<T> claimType) {
         Claims claims = parseClaims(token);
         return claims.get(claimName, claimType);
     }
 
-    @NonNull
+    @NotNull
     public Date getExpirationDate(String authToken) {
         return parseClaims(authToken).getExpiration();
     }
 
-    @NonNull
+    @NotNull
     public Date getIssuedAtDate(String authToken) {
         return parseClaims(authToken).getIssuedAt();
     }

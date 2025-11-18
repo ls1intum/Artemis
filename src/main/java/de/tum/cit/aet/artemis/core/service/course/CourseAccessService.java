@@ -10,7 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -155,7 +156,7 @@ public class CourseAccessService {
      * @param groupName the name of the group
      * @return list of users
      */
-    @NonNull
+    @NotNull
     public ResponseEntity<Set<User>> getAllUsersInGroup(Course course, String groupName) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var usersInGroup = userRepository.findAllByDeletedIsFalseAndGroupsContains(groupName);

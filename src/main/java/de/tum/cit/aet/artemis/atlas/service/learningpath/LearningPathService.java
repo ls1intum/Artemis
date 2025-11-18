@@ -8,7 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -121,7 +122,7 @@ public class LearningPathService {
      *
      * @param course course the learning paths are created for
      */
-    public void enableLearningPathsForCourse(@NonNull Course course) {
+    public void enableLearningPathsForCourse(@NotNull Course course) {
         course.setLearningPathsEnabled(true);
         Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
         courseLearnerProfileService.createCourseLearnerProfiles(course, students);
@@ -135,7 +136,7 @@ public class LearningPathService {
      *
      * @param course course the learning paths are created for
      */
-    public void generateLearningPaths(@NonNull Course course) {
+    public void generateLearningPaths(@NotNull Course course) {
         Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
         courseLearnerProfileService.createCourseLearnerProfiles(course, students);
         generateLearningPaths(course, students);
@@ -147,7 +148,7 @@ public class LearningPathService {
      * @param course   course the learning paths are created for
      * @param students students for which the learning paths are generated with eager loaded learner profiles
      */
-    public void generateLearningPaths(@NonNull Course course, Set<User> students) {
+    public void generateLearningPaths(@NotNull Course course, Set<User> students) {
         students.forEach(student -> generateLearningPathForUser(course, student));
         log.debug("Successfully created learning paths for all {} students in course (id={})", students.size(), course.getId());
     }
@@ -159,7 +160,7 @@ public class LearningPathService {
      * @param user   student for which the learning path is generated
      * @return the learning path of the user
      */
-    public LearningPath generateLearningPathForUser(@NonNull Course course, @NonNull User user) {
+    public LearningPath generateLearningPathForUser(@NotNull Course course, @NotNull User user) {
         var existingLearningPath = learningPathRepository.findByCourseIdAndUserId(course.getId(), user.getId());
         // the learning path has not to be generated if it already exits
         if (existingLearningPath.isPresent()) {
@@ -183,7 +184,7 @@ public class LearningPathService {
      * @param courseId the id of the course the learning paths are linked to
      * @return A wrapper object containing a list of all found learning paths and the total number of pages
      */
-    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NonNull SearchTermPageableSearchDTO<String> search, long courseId) {
+    public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull SearchTermPageableSearchDTO<String> search, long courseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LEARNING_PATH);
         final var searchTerm = search.getSearchTerm();
         final Page<LearningPath> learningPathPage = learningPathRepository.findWithEagerUserByLoginOrNameInCourse(searchTerm, courseId, pageable);
@@ -207,7 +208,7 @@ public class LearningPathService {
      *
      * @param learningPath learning path that is updated
      */
-    private void updateLearningPathProgress(@NonNull LearningPath learningPath) {
+    private void updateLearningPathProgress(@NotNull LearningPath learningPath) {
         final var userId = learningPath.getUser().getId();
         final var competencyIds = learningPath.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
         final var competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId);
@@ -297,7 +298,7 @@ public class LearningPathService {
      * @param course the course for which the health status should be generated
      * @return dto containing the health status and additional information (missing learning paths) if needed
      */
-    public LearningPathHealthDTO getHealthStatusForCourse(@NonNull Course course) {
+    public LearningPathHealthDTO getHealthStatusForCourse(@NotNull Course course) {
         Set<LearningPathHealthDTO.HealthStatus> status = new HashSet<>();
         Long numberOfMissingLearningPaths = checkMissingLearningPaths(course, status);
         checkNoCompetencies(course, status);
@@ -306,7 +307,7 @@ public class LearningPathService {
         return new LearningPathHealthDTO(status, numberOfMissingLearningPaths);
     }
 
-    private Long checkMissingLearningPaths(@NonNull Course course, @NonNull Set<LearningPathHealthDTO.HealthStatus> status) {
+    private Long checkMissingLearningPaths(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
         long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
         long numberOfLearningPaths = learningPathRepository.countLearningPathsOfEnrolledStudentsInCourse(course.getId());
         Long numberOfMissingLearningPaths = numberOfStudents - numberOfLearningPaths;
@@ -321,13 +322,13 @@ public class LearningPathService {
         return numberOfMissingLearningPaths;
     }
 
-    private void checkNoCompetencies(@NonNull Course course, @NonNull Set<LearningPathHealthDTO.HealthStatus> status) {
+    private void checkNoCompetencies(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
         if (competencyRepository.countByCourseId(course.getId()) == 0) {
             status.add(LearningPathHealthDTO.HealthStatus.NO_COMPETENCIES);
         }
     }
 
-    private void checkNoRelations(@NonNull Course course, @NonNull Set<LearningPathHealthDTO.HealthStatus> status) {
+    private void checkNoRelations(@NotNull Course course, @NotNull Set<LearningPathHealthDTO.HealthStatus> status) {
         if (competencyRelationRepository.countByCourseId(course.getId()) == 0) {
             status.add(LearningPathHealthDTO.HealthStatus.NO_RELATIONS);
         }
@@ -340,7 +341,7 @@ public class LearningPathService {
      * @param user         the user for which the progress should be loaded
      * @return dto containing the competencies and relations of the learning path
      */
-    public LearningPathCompetencyGraphDTO generateLearningPathCompetencyGraph(@NonNull LearningPath learningPath, @NonNull User user) {
+    public LearningPathCompetencyGraphDTO generateLearningPathCompetencyGraph(@NotNull LearningPath learningPath, @NotNull User user) {
         Set<CourseCompetency> competencies = learningPath.getCompetencies();
         Set<Long> competencyIds = competencies.stream().map(CourseCompetency::getId).collect(Collectors.toSet());
         Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, user.getId()).stream()

@@ -12,9 +12,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -101,7 +101,7 @@ public class BuildAgentConfiguration {
      *
      * @return The HostConfig bean.
      */
-    @NonNull
+    @NotNull
     public HostConfig hostConfig() {
         long cpuCount = 0;
         long cpuPeriod = 100000L;

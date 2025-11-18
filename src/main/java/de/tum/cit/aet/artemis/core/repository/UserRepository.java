@@ -20,7 +20,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -833,7 +834,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     /**
      * @return existing user object by current user login
      */
-    @NonNull
+    @NotNull
     default User getUser() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneByLogin(currentUserLogin));
@@ -868,7 +869,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param login the login of the user to search
      * @return the user entity if it exists
      */
-    @NonNull
+    @NotNull
     default User getUserByLoginElseThrow(String login) {
         return getValueElseThrow(findOneByLogin(login));
     }
@@ -879,7 +880,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param email the email of the user to search
      * @return the user entity if it exists
      */
-    @NonNull
+    @NotNull
     default User getUserByEmailElseThrow(String email) {
         return getValueElseThrow(findOneByEmailIgnoreCase(email));
     }
@@ -889,7 +890,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      *
      * @return currently logged-in user
      */
-    @NonNull
+    @NotNull
     default User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin));
@@ -901,7 +902,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param courseId the id of the course for which to load the user and the course learner profile
      * @return currently logged-in user
      */
-    @NonNull
+    @NotNull
     default User getUserWithGroupsAndAuthoritiesAndLearnerProfile(long courseId) {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(currentUserLogin, courseId));
@@ -912,7 +913,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      *
      * @return currently logged-in user
      */
-    @NonNull
+    @NotNull
     default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
@@ -939,8 +940,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param username the username of the user who should be retrieved from the database
      * @return the user that belongs to the given principal with eagerly loaded groups and authorities
      */
-    @NonNull
-    default User getUserWithGroupsAndAuthorities(@NonNull String username) {
+    @NotNull
+    default User getUserWithGroupsAndAuthorities(@NotNull String username) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(username));
     }
 
@@ -983,7 +984,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return findOneWithGroupsAndAuthoritiesByEmail(email);
     }
 
-    @NonNull
+    @NotNull
     default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId), userId);
     }
@@ -994,7 +995,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param userId the id of the user to find
      * @return the user with groups, authorities and organizations if it exists, else throw exception
      */
-    @NonNull
+    @NotNull
     default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId), userId);
     }

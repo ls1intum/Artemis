@@ -21,9 +21,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -584,7 +585,7 @@ public class TutorialGroupService {
      * @param isAdminOrInstructor whether the instructor of the course or is admin
      * @return A list of tutorial groups for the given course with the transient properties set for the given user.
      */
-    public Set<TutorialGroup> findAllForCourse(@NonNull Course course, @NonNull User user, boolean isAdminOrInstructor) {
+    public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user, boolean isAdminOrInstructor) {
         // do not load all sessions here as they are not needed for the overview page and would slow down the request
         Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(course.getId());
         // TODO: this is some overkill, we calculate way too many information with way too many database calls, we must reduce this
@@ -607,7 +608,7 @@ public class TutorialGroupService {
      * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
      * @return The tutorial group of the course with the transient properties set for the given user.
      */
-    public TutorialGroup getOneOfCourse(@NonNull Course course, long tutorialGroupId, @NonNull User user, boolean isAdminOrInstructor) {
+    public TutorialGroup getOneOfCourse(@NotNull Course course, long tutorialGroupId, @NotNull User user, boolean isAdminOrInstructor) {
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
         if (!course.equals(tutorialGroup.getCourse())) {
             throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
@@ -665,7 +666,7 @@ public class TutorialGroupService {
      * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
      * @return true if the user is allowed, false otherwise
      */
-    public boolean userHasManagingRightsForTutorialGroup(@NonNull TutorialGroup tutorialGroup, @NonNull User user, boolean isAdminOrInstructor) {
+    public boolean userHasManagingRightsForTutorialGroup(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
         if (isAdminOrInstructor) {
             return true;
         }
@@ -685,7 +686,7 @@ public class TutorialGroupService {
      * @param user                the user for which to check permission
      * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
      */
-    public void checkIfUserIsAllowedToChangeRegistrationsOfTutorialGroupElseThrow(@NonNull TutorialGroup tutorialGroup, @NonNull User user, boolean isAdminOrInstructor) {
+    public void checkIfUserIsAllowedToChangeRegistrationsOfTutorialGroupElseThrow(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
         // ToDo: Clarify if this is the correct permission check
         if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
@@ -699,7 +700,7 @@ public class TutorialGroupService {
      * @param user                the user for which to check permission
      * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
      */
-    public void checkIfUserIsAllowedToDeleteTutorialGroupElseThrow(@NonNull TutorialGroup tutorialGroup, @NonNull User user, boolean isAdminOrInstructor) {
+    public void checkIfUserIsAllowedToDeleteTutorialGroupElseThrow(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
         if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to delete the tutorial group: " + tutorialGroup.getId());
         }
@@ -712,7 +713,7 @@ public class TutorialGroupService {
      * @param user                the user for which to check permission
      * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
      */
-    public void checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(@NonNull TutorialGroup tutorialGroup, @NonNull User user, boolean isAdminOrInstructor) {
+    public void checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
         // ToDo: Clarify if this is the correct permission check
         if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());

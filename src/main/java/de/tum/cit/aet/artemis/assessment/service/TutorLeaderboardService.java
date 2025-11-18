@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -104,7 +105,7 @@ public class TutorLeaderboardService {
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, exercise.isExamExercise());
     }
 
-    @NonNull
+    @NotNull
     private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(Set<User> tutors, List<TutorLeaderboardAssessmentsDTO> assessments,
             List<TutorLeaderboardComplaintsDTO> complaints, List<TutorLeaderboardMoreFeedbackRequestsDTO> feedbackRequests,
             List<TutorLeaderboardComplaintResponsesDTO> complaintResponses, List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> answeredFeedbackRequests, boolean isExam) {

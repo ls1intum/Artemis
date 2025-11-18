@@ -8,8 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -135,7 +135,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         return handleModelingSubmission(exerciseId, modelingSubmission);
     }
 
-    @NonNull
+    @NotNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
         final var user = userRepository.getUserWithGroupsAndAuthorities();

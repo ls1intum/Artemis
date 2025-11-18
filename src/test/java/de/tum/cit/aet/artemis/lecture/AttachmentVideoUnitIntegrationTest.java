@@ -20,12 +20,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,11 +118,11 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/42", HttpStatus.FORBIDDEN, AttachmentVideoUnit.class);
     }
 
-    private MockHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment) throws Exception {
+    private MockHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NotNull AttachmentVideoUnit attachmentVideoUnit, @NotNull Attachment attachment) throws Exception {
         return buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null, true);
     }
 
-    private MockHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment, String fileContent,
+    private MockHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NotNull AttachmentVideoUnit attachmentVideoUnit, @NotNull Attachment attachment, String fileContent,
             boolean contentType) throws Exception {
         MockMultipartHttpServletRequestBuilder builder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, fileContent);
         if (contentType) {
@@ -130,7 +131,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         return builder;
     }
 
-    private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment,
+    private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NotNull AttachmentVideoUnit attachmentVideoUnit, @NotNull Attachment attachment,
             String fileContent) throws Exception {
         var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
@@ -144,7 +145,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         return builder.file(attachmentVideoUnitPart).file(attachmentPart);
     }
 
-    private MockHttpServletRequestBuilder buildCreateAttachmentVideoUnit(@NonNull AttachmentVideoUnit attachmentVideoUnit, @NonNull Attachment attachment) throws Exception {
+    private MockHttpServletRequestBuilder buildCreateAttachmentVideoUnit(@NotNull AttachmentVideoUnit attachmentVideoUnit, @NotNull Attachment attachment) throws Exception {
         var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
         var filePart = createAttachmentVideoUnitPdf();

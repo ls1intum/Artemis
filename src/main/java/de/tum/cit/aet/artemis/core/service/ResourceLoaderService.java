@@ -14,8 +14,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -92,7 +93,7 @@ public class ResourceLoaderService {
      * @param basePath A relative path pattern to a resource.
      * @return The resources located by the specified pathPattern.
      */
-    @NonNull
+    @NotNull
     public Resource[] getFileResources(final Path basePath) {
         return getFileResources(basePath, ALL_PATHS_ANT_PATTERN);
     }
@@ -108,7 +109,7 @@ public class ResourceLoaderService {
      * @param pattern  A pattern that limits which files in the directory of the base path are matched.
      * @return The resources located by the specified pathPattern.
      */
-    @NonNull
+    @NotNull
     public Resource[] getFileResources(final Path basePath, final String pattern) {
         checkValidPathElseThrow(basePath);
 

@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.exam.test_repository;
 
 import java.util.List;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
@@ -66,7 +67,7 @@ public interface StudentExamTestRepository extends StudentExamRepository {
      * @return the maximum of all student exam working times for the given exam
      * @throws EntityNotFoundException if no student exams could be found
      */
-    @NonNull
+    @NotNull
     default Integer findMaxWorkingTimeByExamIdElseThrow(Long examId) {
         return getArbitraryValueElseThrow(findMaxWorkingTimeByExamId(examId), Long.toString(examId));
     }

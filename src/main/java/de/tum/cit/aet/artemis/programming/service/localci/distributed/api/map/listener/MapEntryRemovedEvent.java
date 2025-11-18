@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.l
 import java.io.Serial;
 import java.io.Serializable;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
 
-public record MapEntryRemovedEvent<K, V>(@NonNull K key, @NonNull V oldValue) implements Serializable {
+public record MapEntryRemovedEvent<K, V>(@NotNull K key, @NotNull V oldValue) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

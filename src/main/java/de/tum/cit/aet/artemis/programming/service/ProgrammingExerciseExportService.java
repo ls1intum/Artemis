@@ -26,6 +26,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -40,8 +43,6 @@ import javax.xml.xpath.XPathFactory;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -229,7 +230,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @return the path to the exported exercise
      * @throws IOException if an error occurs while accessing the file system
      */
-    public Path exportProgrammingExerciseForDownload(@NonNull ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
+    public Path exportProgrammingExerciseForDownload(@NotNull ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
         // Reset grading criterion ids to null, such that Hibernate can persist them.
         if (exercise.getGradingCriteria() != null) {
             for (GradingCriterion gradingCriterion : exercise.getGradingCriteria()) {
@@ -445,7 +446,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      *                                      submissions)
      * @return a zip file containing all requested participations
      */
-    public File exportStudentRepositoriesToZipFile(ProgrammingExercise programmingExercise, @NonNull Collection<ProgrammingExerciseStudentParticipation> participations,
+    public File exportStudentRepositoriesToZipFile(ProgrammingExercise programmingExercise, @NotNull Collection<ProgrammingExerciseStudentParticipation> participations,
             RepositoryExportOptionsDTO repositoryExportOptions, Map<Long, String> participationCommitHashes) {
 
         Path outputDir = fileService.getTemporaryUniquePathWithoutPathCreation(repoDownloadClonePath, 10);
@@ -481,7 +482,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param repositoryExportOptions   the options that should be used for the export (e.g. anonymization)
      * @return List of directory paths with checked out and potentially anonymized repositories
      */
-    public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NonNull Collection<ProgrammingExerciseStudentParticipation> participations,
+    public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull Collection<ProgrammingExerciseStudentParticipation> participations,
             Map<Long, String> participationCommitHashes, Path workingDir, Path outputDir, List<String> exportErrors, RepositoryExportOptionsDTO repositoryExportOptions) {
         var programmingExerciseId = programmingExercise.getId();
         if (repositoryExportOptions.exportAllParticipants()) {

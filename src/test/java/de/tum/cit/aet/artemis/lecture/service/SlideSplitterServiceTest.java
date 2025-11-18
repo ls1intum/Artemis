@@ -18,12 +18,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.validation.constraints.NotNull;
+
 import javax.imageio.ImageIO;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -719,13 +720,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Files.walkFileTree(tempDir, new SimpleFileVisitor<>() {
 
             @Override
-            public @NonNull FileVisitResult visitFile(Path file, @NonNull BasicFileAttributes attrs) throws IOException {
+            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public @NonNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                 Files.delete(dir);
                 return FileVisitResult.CONTINUE;
             }
@@ -876,13 +877,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Files.walkFileTree(tempDir, new SimpleFileVisitor<>() {
 
             @Override
-            public @NonNull FileVisitResult visitFile(Path file, @NonNull BasicFileAttributes attrs) throws IOException {
+            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public @NonNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                 Files.delete(dir);
                 return FileVisitResult.CONTINUE;
             }

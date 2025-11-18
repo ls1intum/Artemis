@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -486,7 +487,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Long getTeamParticipationCountById(@Param("exerciseId") Long exerciseId);
 
-    @NonNull
+    @NotNull
     default Exercise findWithCompetenciesByIdElseThrow(long exerciseId) throws EntityNotFoundException {
         return getValueElseThrow(findWithCompetenciesById(exerciseId), exerciseId);
     }
@@ -497,7 +498,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @param exerciseId the exerciseId of the entity
      * @return the entity
      */
-    @NonNull
+    @NotNull
     default Exercise findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(Long exerciseId) {
         return getValueElseThrow(findWithEagerCategoriesAndTeamAssignmentConfigById(exerciseId), exerciseId);
     }
@@ -529,7 +530,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @param exerciseId the exerciseId of the exercise entity
      * @return the exercise entity
      */
-    @NonNull
+    @NotNull
     default Exercise findByIdWithStudentParticipationsElseThrow(Long exerciseId) {
         return getValueElseThrow(findByIdWithEagerParticipations(exerciseId), exerciseId);
     }

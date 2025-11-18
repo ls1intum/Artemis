@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -123,7 +124,7 @@ public class ExamDeletionService {
      *
      * @param examId the ID of the exam to be deleted
      */
-    public void delete(@NonNull long examId) {
+    public void delete(@NotNull long examId) {
         User user = userRepository.getUser();
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         log.info("User {} has requested to delete the exam {}", user.getLogin(), exam.getTitle());
@@ -172,7 +173,7 @@ public class ExamDeletionService {
      *
      * @param examId the ID of the exam to be reset
      */
-    public void reset(@NonNull Long examId) {
+    public void reset(@NotNull Long examId) {
         User user = userRepository.getUser();
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         log.info("User {} has requested to reset the exam {}", user.getLogin(), exam.getTitle());
@@ -199,7 +200,7 @@ public class ExamDeletionService {
      *
      * @param examId the ID of the exam where the student exams and participations should be deleted
      */
-    public void deleteStudentExamsAndExistingParticipationsForExam(@NonNull Long examId) {
+    public void deleteStudentExamsAndExistingParticipationsForExam(@NotNull Long examId) {
         User user = userRepository.getUser();
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         log.info("User {} has requested to delete existing student exams and participations for exam {}", user.getLogin(), exam.getTitle());
@@ -262,7 +263,7 @@ public class ExamDeletionService {
      * @param examId the ID of the exam for which the deletion summary should be fetched
      * @return the exam deletion summary
      */
-    public ExamDeletionSummaryDTO getExamDeletionSummary(@NonNull long examId) {
+    public ExamDeletionSummaryDTO getExamDeletionSummary(@NotNull long examId) {
         Set<Long> programmingExerciseIds = programmingExerciseRepository.findProgrammingExerciseIdsByExamId(examId);
         long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(programmingExerciseIds);
 

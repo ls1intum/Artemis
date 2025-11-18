@@ -4,7 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.io.IOException;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -23,7 +24,7 @@ public class PyrisAuthorizationInterceptor implements ClientHttpRequestIntercept
     @Value("${artemis.iris.secret-token}")
     private String secret;
 
-    @NonNull
+    @NotNull
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
         request.getHeaders().set(HttpHeaders.AUTHORIZATION, secret);

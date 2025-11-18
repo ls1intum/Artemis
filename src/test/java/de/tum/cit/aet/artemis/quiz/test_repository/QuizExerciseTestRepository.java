@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.test_repository;
 
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;

@@ -8,7 +8,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
 import java.util.ArrayList;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -150,7 +151,7 @@ public class RestTemplateConfiguration {
         return createShortTimeoutRestTemplate();
     }
 
-    @NonNull
+    @NotNull
     private RestTemplate initializeRestTemplateWithInterceptors(ClientHttpRequestInterceptor interceptor, RestTemplate restTemplate) {
         var interceptors = restTemplate.getInterceptors();
         if (interceptors.isEmpty()) {

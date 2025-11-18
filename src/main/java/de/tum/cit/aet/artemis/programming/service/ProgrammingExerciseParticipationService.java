@@ -10,10 +10,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -141,7 +142,7 @@ public class ProgrammingExerciseParticipationService {
      * @return the participation for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
-    @NonNull
+    @NotNull
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
         Optional<ProgrammingExerciseStudentParticipation> participation;
         if (exercise.isTeamMode()) {
@@ -165,7 +166,7 @@ public class ProgrammingExerciseParticipationService {
      * @return the participations for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
-    @NonNull
+    @NotNull
     public List<ProgrammingExerciseStudentParticipation> findStudentParticipationsByExerciseAndStudentId(Exercise exercise, String username) throws EntityNotFoundException {
         return studentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), username);
     }

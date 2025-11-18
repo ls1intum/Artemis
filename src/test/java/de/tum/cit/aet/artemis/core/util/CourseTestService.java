@@ -39,10 +39,11 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import javax.imageio.ImageIO;
 
 import org.assertj.core.data.Offset;
-import org.jspecify.annotations.NonNull;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -3121,11 +3122,11 @@ public class CourseTestService {
         assertThat(dto.registrationId()).isEqualTo(clientId);
     }
 
-    public MockHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JsonProcessingException {
+    public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course) throws JsonProcessingException {
         return buildCreateCourse(course, null);
     }
 
-    public MockHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course, String fileContent) throws JsonProcessingException {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/core/admin/courses").file(coursePart);
         if (fileContent != null) {
@@ -3135,11 +3136,11 @@ public class CourseTestService {
         return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 
-    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
+    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NotNull Course course) throws JsonProcessingException {
         return buildUpdateCourse(id, course, null);
     }
 
-    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NotNull Course course, String fileContent) throws JsonProcessingException {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/core/courses/" + id).file(coursePart);
         if (fileContent != null) {

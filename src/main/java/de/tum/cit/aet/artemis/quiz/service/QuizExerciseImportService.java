@@ -14,8 +14,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -79,7 +80,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * @param files            The potential files to be added. Null if no change to files during import. ExamImportService sends null by default
      * @return The newly created exercise
      */
-    @NonNull
+    @NotNull
     public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise, @Nullable List<MultipartFile> files) throws IOException {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
@@ -106,7 +107,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * @param importedExercise The exercise from which to copy the basis
      * @return the cloned QuizExercise basis
      */
-    @NonNull
+    @NotNull
     private QuizExercise copyQuizExerciseBasis(QuizExercise importedExercise) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         QuizExercise newExercise = new QuizExercise();

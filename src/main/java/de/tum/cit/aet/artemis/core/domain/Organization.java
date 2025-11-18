@@ -7,11 +7,11 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,12 +22,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Organization extends DomainObject {
 
-    @NonNull
+    @NotNull
     @Size(max = 100)
     @Column(name = "name", length = 100)
     private String name;
 
-    @NonNull
+    @NotNull
     @Size(max = 50)
     @Column(name = "shortName", length = 50)
     private String shortName;
@@ -41,7 +41,7 @@ public class Organization extends DomainObject {
     @Column(name = "logoUrl")
     private String logoUrl;
 
-    @NonNull
+    @NotNull
     @Column(name = "emailPattern")
     private String emailPattern;
 

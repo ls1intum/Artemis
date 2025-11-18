@@ -10,9 +10,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -304,7 +304,7 @@ public class CourseService {
      *
      * @param course the course to check
      */
-    public void checkLearningPathsEnabledElseThrow(@NonNull Course course) {
+    public void checkLearningPathsEnabledElseThrow(@NotNull Course course) {
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }

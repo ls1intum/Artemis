@@ -7,8 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
-
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -24,7 +23,7 @@ public class CleanupJobExecution extends DomainObject {
     private ZonedDateTime deleteTo;
 
     @Column(name = "deleted_at")
-    @NonNull
+    @NotNull
     private ZonedDateTime deletionTimestamp;
 
     @Enumerated(EnumType.STRING)

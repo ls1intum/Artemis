@@ -6,7 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,7 @@ public class LearningObjectService {
      * @param user           the user for which to check the completion status
      * @return true if the user completed the lecture unit or has at least one result for the exercise, false otherwise
      */
-    public boolean isCompletedByUser(@NonNull LearningObject learningObject, @NonNull User user) {
+    public boolean isCompletedByUser(@NotNull LearningObject learningObject, @NotNull User user) {
         return switch (learningObject) {
             case LectureUnit lectureUnit -> lectureUnit.isCompletedFor(user);
             case Exercise exercise -> isCompletedByUser(exercise, user);

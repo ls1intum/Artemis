@@ -6,6 +6,9 @@ import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Map;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -15,8 +18,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -29,7 +30,7 @@ public class JenkinsXmlFileUtils {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsXmlFileUtils.class);
 
-    public static Document readFromString(@NonNull String xmlString) {
+    public static Document readFromString(@NotNull String xmlString) {
         return parseDocument(xmlString);
     }
 
@@ -61,7 +62,7 @@ public class JenkinsXmlFileUtils {
 
     // Since the XML configuration of build jobs can contain the additional config of any Jenkins-plugin that has folder/job-specific settings
     // we parse the config into a document and not into a predefined DTO structure
-    private static Document parseDocument(@NonNull String configXmlText) {
+    private static Document parseDocument(@NotNull String configXmlText) {
         try {
             final DocumentBuilderFactory domFactory = getDocumentBuilderFactory();
             final var builder = domFactory.newDocumentBuilder();
@@ -80,7 +81,7 @@ public class JenkinsXmlFileUtils {
      * @return a document builder factor with secure settings for parsing xml files
      * @throws ParserConfigurationException config exception
      */
-    @NonNull
+    @NotNull
     public static DocumentBuilderFactory getDocumentBuilderFactory() throws ParserConfigurationException {
         final var domFactory = DocumentBuilderFactory.newInstance();
         domFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);

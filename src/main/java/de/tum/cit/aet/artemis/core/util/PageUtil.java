@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.core.util;
 
 import java.util.Map;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.JpaSort;
@@ -116,7 +117,7 @@ public class PageUtil {
      * @throws IllegalArgumentException if any of the parameters are invalid or missing.
      * @throws NullPointerException     if the search or columnMapping parameters are null.
      */
-    @NonNull
+    @NotNull
     public static PageRequest createDefaultPageRequest(PageableSearchDTO<String> search, ColumnMapping columnMapping) {
         String mappedColumn = columnMapping.getMappedColumnName(search.getSortedColumn());
 

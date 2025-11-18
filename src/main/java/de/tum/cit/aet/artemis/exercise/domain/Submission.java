@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
@@ -27,11 +28,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -181,7 +181,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     /**
      * @return an unmodifiable list or all non-automatic results
      */
-    @NonNull
+    @NotNull
     private List<Result> filterNonAutomaticResults() {
         return results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased())).toList();
     }

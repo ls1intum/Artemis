@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

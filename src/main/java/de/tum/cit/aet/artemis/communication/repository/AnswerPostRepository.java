@@ -6,7 +6,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
@@ -44,7 +45,7 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
      * @param answerPostId the ID of the answer post
      * @return the answer post if found and **not** linked to a conversation
      */
-    @NonNull
+    @NotNull
     default AnswerPost findAnswerPostByIdElseThrow(long answerPostId) {
         return getValueElseThrow(findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() == null), answerPostId);
     }
@@ -55,7 +56,7 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
      * @param answerPostId the ID of the answer message
      * @return the answer message if found and linked to a conversation
      */
-    @NonNull
+    @NotNull
     default AnswerPost findAnswerMessageByIdElseThrow(long answerPostId) {
         return getValueElseThrow(findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() != null), answerPostId);
     }
@@ -66,7 +67,7 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
      * @param answerPostId the ID of the answer post or message
      * @return the answer post or message if found
      */
-    @NonNull
+    @NotNull
     default AnswerPost findAnswerPostOrMessageByIdElseThrow(long answerPostId) {
         return getValueElseThrow(findById(answerPostId), answerPostId);
     }

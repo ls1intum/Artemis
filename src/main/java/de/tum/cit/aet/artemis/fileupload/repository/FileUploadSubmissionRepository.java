@@ -5,7 +5,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -68,7 +69,7 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    @NonNull
+    @NotNull
     default FileUploadSubmission findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(long submissionId) {
         return getValueElseThrow(findByIdWithEagerResultAndAssessorAndFeedback(submissionId), submissionId);
     }
@@ -81,7 +82,7 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    @NonNull
+    @NotNull
     default FileUploadSubmission findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(long submissionId) {
         return getValueElseThrow(findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(submissionId), submissionId);
     }
@@ -94,7 +95,7 @@ public interface FileUploadSubmissionRepository extends ArtemisJpaRepository<Fil
      * @param exerciseId   the id of the exercise that should be loaded from the database
      * @return the file upload submission with the given id
      */
-    @NonNull
+    @NotNull
     default FileUploadSubmission findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(long submissionId, long exerciseId) {
         return getValueElseThrow(findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(submissionId, exerciseId), submissionId);
     }

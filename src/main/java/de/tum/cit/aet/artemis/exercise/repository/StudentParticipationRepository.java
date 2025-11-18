@@ -14,7 +14,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -1059,22 +1060,22 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") long exerciseId,
             @Param("assessor") User assessor);
 
-    @NonNull
+    @NotNull
     default StudentParticipation findByIdWithResultsElseThrow(long participationId) {
         return getValueElseThrow(findWithEagerResultsById(participationId), participationId);
     }
 
-    @NonNull
+    @NotNull
     default StudentParticipation findByIdWithLatestSubmissionsResultsFeedbackElseThrow(long participationId) {
         return getValueElseThrow(findWithEagerSubmissionsResultsFeedbacksById(participationId), participationId);
     }
 
-    @NonNull
+    @NotNull
     default StudentParticipation findByIdWithSubmissionsElseThrow(long participationId) {
         return getValueElseThrow(findWithEagerSubmissionsById(participationId), participationId);
     }
 
-    @NonNull
+    @NotNull
     default StudentParticipation findByIdWithEagerTeamStudentsElseThrow(long participationId) {
         return getValueElseThrow(findByIdWithEagerTeamStudents(participationId), participationId);
     }

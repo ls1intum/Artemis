@@ -10,8 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
@@ -243,7 +243,7 @@ public class ProgrammingExerciseFactory {
         return toBeImported;
     }
 
-    public static @NonNull Set<GradingCriterion> generateGradingCriteria(Exercise exercise) {
+    public static @NotNull Set<GradingCriterion> generateGradingCriteria(Exercise exercise) {
         Set<GradingCriterion> criteria = new HashSet<>();
         GradingCriterion toBeImportedCriterion = new GradingCriterion();
         toBeImportedCriterion.setTitle("criterionTitle");

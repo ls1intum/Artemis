@@ -3,17 +3,17 @@ package de.tum.cit.aet.artemis.lti.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,11 +33,11 @@ public class LtiPlatformConfiguration extends DomainObject {
     /** Entity name for LTI platform configuration. */
     public static final String ENTITY_NAME = "ltiPlatformConfiguration";
 
-    @NonNull
+    @NotNull
     @Column(name = "registration_id", nullable = false)
     private String registrationId;
 
-    @NonNull
+    @NotNull
     @Column(name = "client_id", nullable = false)
     private String clientId;
 
@@ -49,15 +49,15 @@ public class LtiPlatformConfiguration extends DomainObject {
     @Column(name = "custom_name")
     private String customName;
 
-    @NonNull
+    @NotNull
     @Column(name = "authorization_uri", nullable = false)
     private String authorizationUri;
 
-    @NonNull
+    @NotNull
     @Column(name = "jwk_set_uri", nullable = false)
     private String jwkSetUri;
 
-    @NonNull
+    @NotNull
     @Column(name = "token_uri", nullable = false)
     private String tokenUri;
 

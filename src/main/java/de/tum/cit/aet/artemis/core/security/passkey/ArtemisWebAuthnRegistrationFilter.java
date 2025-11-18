@@ -7,8 +7,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
@@ -38,7 +38,7 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
 
     private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
-    public ArtemisWebAuthnRegistrationFilter(@NonNull UserCredentialRepository userCredentials, @NonNull WebAuthnRelyingPartyOperations rpOptions,
+    public ArtemisWebAuthnRegistrationFilter(@NotNull UserCredentialRepository userCredentials, @NotNull WebAuthnRelyingPartyOperations rpOptions,
             MailSendingService mailSendingService, UserRepository userRepository, GlobalNotificationSettingRepository globalNotificationSettingRepository) {
         super(userCredentials, rpOptions);
         this.mailSendingService = mailSendingService;

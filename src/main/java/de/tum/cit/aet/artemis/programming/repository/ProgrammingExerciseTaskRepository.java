@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
@@ -32,7 +33,7 @@ public interface ProgrammingExerciseTaskRepository extends ArtemisJpaRepository<
      * @return All tasks with solution entries and associated test cases
      * @throws EntityNotFoundException If the exercise with exerciseId does not exist
      */
-    @NonNull
+    @NotNull
     default List<ProgrammingExerciseTask> findByExerciseIdWithTestCaseElseThrow(long exerciseId) throws EntityNotFoundException {
         return getArbitraryValueElseThrow(findByExerciseIdWithTestCase(exerciseId), Long.toString(exerciseId));
     }

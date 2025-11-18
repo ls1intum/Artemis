@@ -8,7 +8,8 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.domain.Specification;
@@ -76,7 +77,7 @@ public interface TemplateProgrammingExerciseParticipationRepository
             """)
     Set<TemplateProgrammingExerciseParticipation> findAllWithLatestSubmissionByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
-    @NonNull
+    @NotNull
     default TemplateProgrammingExerciseParticipation findByExerciseIdElseThrow(final Specification<TemplateProgrammingExerciseParticipation> specification, long exerciseId) {
         final Specification<TemplateProgrammingExerciseParticipation> hasExerciseIdSpec = (root, query, criteriaBuilder) -> criteriaBuilder
                 .equal(root.get(TemplateProgrammingExerciseParticipation_.PROGRAMMING_EXERCISE).get(DomainObject_.ID), exerciseId);
@@ -92,7 +93,7 @@ public interface TemplateProgrammingExerciseParticipationRepository
      *         provided options.
      * @throws EntityNotFoundException if the template programming exercise participation with the specified exercise ID does not exist.
      */
-    @NonNull
+    @NotNull
     default TemplateProgrammingExerciseParticipation findByExerciseIdWithDynamicFetchElseThrow(long exerciseId, Collection<TemplateParticipationFetchOptions> fetchOptions)
             throws EntityNotFoundException {
         var specification = getDynamicSpecification(fetchOptions);

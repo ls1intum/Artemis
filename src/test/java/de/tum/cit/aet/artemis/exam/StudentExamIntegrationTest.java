@@ -34,9 +34,10 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.eclipse.jgit.lib.ObjectId;
 import org.json.JSONException;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -1801,7 +1802,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         deleteExamWithInstructor(exam1);
     }
 
-    @NonNull
+    @NotNull
     private StudentExam createStudentExamWithResultsAndAssessments(boolean setFields, int numberOfStudents) throws Exception {
         StudentExam studentExam = prepareStudentExamsForConduction(false, setFields, numberOfStudents).getFirst();
         var exam = examRepository.findById(studentExam.getExam().getId()).orElseThrow();
@@ -2123,7 +2124,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().mostSeverePlagiarismVerdict()).isNull();
     }
 
-    @NonNull
+    @NotNull
     private Exam configureFinalExamWithBonusExam(StudentExam finalStudentExam, StudentExam bonusStudentExam, BonusStrategy bonusStrategy) {
         var finalExam = examRepository.findById(finalStudentExam.getExam().getId()).orElseThrow();
         var bonusExam = examRepository.findById(bonusStudentExam.getExam().getId()).orElseThrow();

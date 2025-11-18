@@ -3,7 +3,8 @@ package de.tum.cit.aet.artemis.communication.service.conversation.auth;
 import static de.tum.cit.aet.artemis.communication.ConversationSettings.MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class OneToOneChatAuthorizationService extends ConversationAuthorizationS
      * @param course the course the one to one chat should be created in
      * @param user   the user that wants to create the one to one chat
      */
-    public void isAllowedToCreateOneToOneChat(@NonNull Course course, @NonNull User user) {
+    public void isAllowedToCreateOneToOneChat(@NotNull Course course, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         var createdOneToOneChats = oneToOneChatRepository.countByCreatorIdAndCourseId(userToCheck.getId(), course.getId());
         if (createdOneToOneChats >= MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE) {

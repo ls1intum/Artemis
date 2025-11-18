@@ -11,9 +11,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -400,7 +400,7 @@ public class StudentExamResource {
         return ResponseEntity.ok(testRun);
     }
 
-    @NonNull
+    @NotNull
     private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId, Long studentExamId) {
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);

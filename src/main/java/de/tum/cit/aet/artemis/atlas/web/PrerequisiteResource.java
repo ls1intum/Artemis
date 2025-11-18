@@ -5,7 +5,8 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -353,7 +354,7 @@ public class PrerequisiteResource {
      * @param course       The course for which to check the authorization role for
      * @param prerequisite The prerequisite to be accessed by the user
      */
-    private void checkCourseForPrerequisite(@NonNull Course course, @NonNull CourseCompetency prerequisite) {
+    private void checkCourseForPrerequisite(@NotNull Course course, @NotNull CourseCompetency prerequisite) {
         if (prerequisite.getCourse() == null) {
             throw new BadRequestAlertException("A prerequisite must belong to a course", ENTITY_NAME, "prerequisiteNoCourse");
         }

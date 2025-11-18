@@ -223,7 +223,7 @@ In order to load the relationships of an entity on demand, we then use one of 3 
 
 
     // ProgrammingExerciseRepository.java
-    @NonNull
+    @NotNull
     default ProgrammingExercise findByIdWithDynamicFetchElseThrow(long exerciseId, Collection<ProgrammingExerciseFetchOptions> fetchOptions) throws EntityNotFoundException {
         var specification = getDynamicSpecification(fetchOptions);
         return findOneByIdElseThrow(specification, exerciseId, "Programming Exercise");

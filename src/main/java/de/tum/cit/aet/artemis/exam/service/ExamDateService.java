@@ -7,8 +7,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -122,7 +123,7 @@ public class ExamDateService {
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
-    @NonNull
+    @NotNull
     public ZonedDateTime getLatestIndividualExamEndDate(Long examId) {
         final var exam = examRepository.findByIdElseThrow(examId);
         return getLatestIndividualExamEndDate(exam);
@@ -136,7 +137,7 @@ public class ExamDateService {
      * @param exam the exam
      * @return the latest end date or the exam end date if no student exams are found. May return <code>null</code>, if the exam has no start/end date.
      */
-    @NonNull
+    @NotNull
     public ZonedDateTime getLatestIndividualExamEndDate(Exam exam) {
         var maxWorkingTime = studentExamRepository.findMaxWorkingTimeByExamId(exam.getId());
         return maxWorkingTime.map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).orElse(exam.getEndDate());
@@ -173,7 +174,7 @@ public class ExamDateService {
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
     }
 
-    @NonNull
+    @NotNull
     public static ZonedDateTime getExamProgrammingExerciseUnlockDate(Exam exam) {
         // using start date minus 5 minutes here because unlocking will take some time.
         return exam.getStartDate().minusMinutes(EXAM_START_WAIT_TIME_MINUTES);

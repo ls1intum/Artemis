@@ -9,8 +9,9 @@ import static org.springframework.ldap.query.LdapQueryBuilder.query;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,7 +66,7 @@ public class LdapUserService {
      * @return the found Ldap user details or null if the user cannot be found
      */
     @Nullable
-    public LdapUserDto loadUserDetailsFromLdap(@NonNull String login) {
+    public LdapUserDto loadUserDetailsFromLdap(@NotNull String login) {
         try {
             Optional<LdapUserDto> ldapUserOptional = findByLogin(login);
             if (ldapUserOptional.isPresent()) {

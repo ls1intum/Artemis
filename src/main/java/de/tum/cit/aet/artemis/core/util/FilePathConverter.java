@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.core.util;
 import java.net.URI;
 import java.nio.file.Path;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -25,7 +25,7 @@ public final class FilePathConverter {
      * This is used as the root for all file storage locations.
      * Must be initialized before any file path operations are performed, typically during application startup (see ArtemisApp.java).
      */
-    @NonNull
+    @NotNull
     private static Path fileUploadPath;
 
     private FilePathConverter() {
@@ -37,14 +37,14 @@ public final class FilePathConverter {
      *
      * @param fileUploadPath the base path for file uploads
      */
-    public static void setFileUploadPath(@NonNull Path fileUploadPath) {
+    public static void setFileUploadPath(@NotNull Path fileUploadPath) {
         FilePathConverter.fileUploadPath = fileUploadPath;
     }
 
     /**
      * @return the path to the temporary files directory
      */
-    @NonNull
+    @NotNull
     public static Path getTempFilePath() {
         return fileUploadPath.resolve("images").resolve("temp");
     }
@@ -52,7 +52,7 @@ public final class FilePathConverter {
     /**
      * @return the path to the drag and drop backgrounds directory
      */
-    @NonNull
+    @NotNull
     public static Path getDragAndDropBackgroundFilePath() {
         return fileUploadPath.resolve("images").resolve("drag-and-drop").resolve("backgrounds");
     }
@@ -60,7 +60,7 @@ public final class FilePathConverter {
     /**
      * @return the path to the drag item images directory
      */
-    @NonNull
+    @NotNull
     public static Path getDragItemFilePath() {
         return fileUploadPath.resolve("images").resolve("drag-and-drop").resolve("drag-items");
     }
@@ -68,7 +68,7 @@ public final class FilePathConverter {
     /**
      * @return the path to the course icons directory
      */
-    @NonNull
+    @NotNull
     public static Path getCourseIconFilePath() {
         return fileUploadPath.resolve("images").resolve("course").resolve("icons");
     }
@@ -76,7 +76,7 @@ public final class FilePathConverter {
     /**
      * @return the path to the profile pictures directory
      */
-    @NonNull
+    @NotNull
     public static Path getProfilePictureFilePath() {
         return fileUploadPath.resolve("images").resolve("user").resolve("profile-pictures");
     }
@@ -84,7 +84,7 @@ public final class FilePathConverter {
     /**
      * @return the path to the exam user signatures directory
      */
-    @NonNull
+    @NotNull
     public static Path getExamUserSignatureFilePath() {
         return fileUploadPath.resolve("images").resolve("exam-user").resolve("signatures");
     }
@@ -92,7 +92,7 @@ public final class FilePathConverter {
     /**
      * @return the path to the student images directory
      */
-    @NonNull
+    @NotNull
     public static Path getStudentImageFilePath() {
         return fileUploadPath.resolve("images").resolve("exam-user");
     }
@@ -100,7 +100,7 @@ public final class FilePathConverter {
     /**
      * @return the path to the lecture attachments directory
      */
-    @NonNull
+    @NotNull
     public static Path getLectureAttachmentFileSystemPath() {
         return fileUploadPath.resolve("attachments").resolve("lecture");
     }
@@ -108,7 +108,7 @@ public final class FilePathConverter {
     /**
      * @return the path to the attachment video unit files directory
      */
-    @NonNull
+    @NotNull
     public static Path getAttachmentVideoUnitFileSystemPath() {
         return fileUploadPath.resolve("attachments").resolve("attachment-unit");
     }
@@ -116,7 +116,7 @@ public final class FilePathConverter {
     /**
      * @return the path to the file upload exercises directory
      */
-    @NonNull
+    @NotNull
     public static Path getFileUploadExercisesFilePath() {
         return fileUploadPath.resolve("file-upload-exercises");
     }
@@ -124,7 +124,7 @@ public final class FilePathConverter {
     /**
      * @return the path to the markdown files directory
      */
-    @NonNull
+    @NotNull
     public static Path getMarkdownFilePath() {
         return fileUploadPath.resolve("markdown");
     }
@@ -134,7 +134,7 @@ public final class FilePathConverter {
      * @param conversationId the conversation ID
      * @return the path to the markdown files for the conversation
      */
-    @NonNull
+    @NotNull
     public static Path getMarkdownFilePathForConversation(long courseId, long conversationId) {
         return getMarkdownFilePath().resolve("communication").resolve(String.valueOf(courseId)).resolve(String.valueOf(conversationId));
     }
@@ -155,8 +155,8 @@ public final class FilePathConverter {
      * @return the path to the file in the local filesystem
      * @throws FilePathParsingException if the URI cannot be parsed correctly
      */
-    @NonNull
-    public static Path fileSystemPathForExternalUri(@NonNull URI externalUri, @NonNull FilePathType filePathType) {
+    @NotNull
+    public static Path fileSystemPathForExternalUri(@NotNull URI externalUri, @NotNull FilePathType filePathType) {
         String uriPath = externalUri.getPath();
         Path path = Path.of(uriPath);
         String filename = path.getFileName().toString();
@@ -186,8 +186,8 @@ public final class FilePathConverter {
      * @return the path to the lecture attachment file
      */
 
-    @NonNull
-    private static Path getLectureAttachmentFileSystemPath(@NonNull Path path, @NonNull String filename) {
+    @NotNull
+    private static Path getLectureAttachmentFileSystemPath(@NotNull Path path, @NotNull String filename) {
         try {
             String lectureId = path.getName(2).toString();
             Long.parseLong(lectureId);
@@ -206,8 +206,8 @@ public final class FilePathConverter {
      * @throws FilePathParsingException if the path cannot be parsed correctly
      * @return the path to the attachment video unit file
      */
-    @NonNull
-    private static Path getAttachmentVideoUnitFileSystemPath(@NonNull Path path, @NonNull String filename) {
+    @NotNull
+    private static Path getAttachmentVideoUnitFileSystemPath(@NotNull Path path, @NotNull String filename) {
         try {
             String attachmentVideoUnitId = path.getName(2).toString();
             Long.parseLong(attachmentVideoUnitId);
@@ -226,8 +226,8 @@ public final class FilePathConverter {
      * @throws FilePathParsingException if the path cannot be parsed correctly
      * @return the path to the attachment video unit file
      */
-    @NonNull
-    private static Path getStudentVersionSlidesFileSystemPath(@NonNull Path path, @NonNull String filename) {
+    @NotNull
+    private static Path getStudentVersionSlidesFileSystemPath(@NotNull Path path, @NotNull String filename) {
         try {
             String attachmentVideoUnitId = path.getName(2).toString();
             Long.parseLong(attachmentVideoUnitId);
@@ -245,8 +245,8 @@ public final class FilePathConverter {
      * @param filename the name of the file
      * @return the path to the slide file
      */
-    @NonNull
-    private static Path getSlideFileSystemPath(@NonNull Path path, @NonNull String filename) {
+    @NotNull
+    private static Path getSlideFileSystemPath(@NotNull Path path, @NotNull String filename) {
         try {
             String attachmentVideoUnitId = path.getName(2).toString();
             String slideId = path.getName(4).toString();
@@ -259,8 +259,8 @@ public final class FilePathConverter {
         }
     }
 
-    @NonNull
-    private static Path getStudentImageFileSystemPath(@NonNull Path path, @NonNull String filename) {
+    @NotNull
+    private static Path getStudentImageFileSystemPath(@NotNull Path path, @NotNull String filename) {
         try {
             String studentId = path.getName(1).toString();
             Long.parseLong(studentId);
@@ -279,8 +279,8 @@ public final class FilePathConverter {
      * @param filename    the name of the file
      * @return the file system path to the file upload exercise submission
      */
-    @NonNull
-    private static Path fileSystemPathForFileUploadSubmissionExternalUri(@NonNull URI externalUri, @NonNull String filename) {
+    @NotNull
+    private static Path fileSystemPathForFileUploadSubmissionExternalUri(@NotNull URI externalUri, @NotNull String filename) {
         Path path = Path.of(externalUri.getPath());
         try {
             String expectedExerciseId = path.getName(1).toString();
@@ -313,8 +313,8 @@ public final class FilePathConverter {
      * @return the external file URI that can be used to access the file externally
      * @throws FilePathParsingException if the path cannot be parsed correctly
      */
-    @NonNull
-    public static URI externalUriForFileSystemPath(@NonNull Path path, @NonNull FilePathType filePathType, @Nullable Long entityId) {
+    @NotNull
+    public static URI externalUriForFileSystemPath(@NotNull Path path, @NotNull FilePathType filePathType, @Nullable Long entityId) {
         String filename = path.getFileName().toString();
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
 
@@ -350,8 +350,8 @@ public final class FilePathConverter {
      * @param id       the ID of the slide
      * @return the external URI for the slide file
      */
-    @NonNull
-    private static URI externalUriForSlideFileSystemPath(@NonNull Path path, @NonNull String filename, @NonNull String id) {
+    @NotNull
+    private static URI externalUriForSlideFileSystemPath(@NotNull Path path, @NotNull String filename, @NotNull String id) {
         try {
             final String expectedAttachmentVideoUnitId = path.getName(path.getNameCount() - 4).toString();
             final long attachmentVideoUnitId = Long.parseLong(expectedAttachmentVideoUnitId);
@@ -379,8 +379,8 @@ public final class FilePathConverter {
      * @return the external URI for the file upload exercise submission
      */
 
-    @NonNull
-    private static URI externalUriForFileUploadExercisesFileSystemPath(@NonNull Path path, @NonNull String filename, @NonNull String id) {
+    @NotNull
+    private static URI externalUriForFileUploadExercisesFileSystemPath(@NotNull Path path, @NotNull String filename, @NotNull String id) {
         try {
             final var expectedExerciseId = path.getName(path.getNameCount() - 3).toString();
             final long exerciseId = Long.parseLong(expectedExerciseId);
@@ -398,7 +398,7 @@ public final class FilePathConverter {
      * @param submissionId the id of the submission
      * @return path where submission for file upload exercise is stored
      */
-    @NonNull
+    @NotNull
     public static Path buildFileUploadSubmissionPath(long exerciseId, long submissionId) {
         return getFileUploadExercisesFilePath().resolve(String.valueOf(exerciseId)).resolve(String.valueOf(submissionId));
     }

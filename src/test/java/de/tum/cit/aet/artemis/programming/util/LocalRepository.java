@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -20,7 +22,6 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.URIish;
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -174,7 +175,7 @@ public class LocalRepository {
     }
 
     // This method tries to build a valid, but unique (random) LocalVCRepositoryUri from the given base path and local repository file name.
-    private static Path getRepoPath(@NonNull Path repoBasePath, @NonNull String localRepoFileName) {
+    private static Path getRepoPath(@NotNull Path repoBasePath, @NotNull String localRepoFileName) {
         var tempPrefix = ShortNameGenerator.generateRandomShortName(6);
         return repoBasePath.resolve(tempPrefix).resolve(tempPrefix + "-" + localRepoFileName + ".git");
     }

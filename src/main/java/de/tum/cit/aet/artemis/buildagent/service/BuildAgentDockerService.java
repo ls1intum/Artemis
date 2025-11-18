@@ -39,7 +39,7 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.PullResponseItem;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -452,8 +452,8 @@ public class BuildAgentDockerService {
     private boolean dockerClientNotAvailable(String additionalLogInfo) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         if (dockerClient == null) {
-            BuildAgentStatus status = distributedDataAccessService.getLocalBuildAgentStatus();
-            if ((status == BuildAgentStatus.PAUSED || status == BuildAgentStatus.SELF_PAUSED)) {
+            BuildAgentInformation.BuildAgentStatus status = distributedDataAccessService.getLocalBuildAgentStatus();
+            if ((status == BuildAgentInformation.BuildAgentStatus.PAUSED || status == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED)) {
                 log.info("Docker client is not available because the build agent is paused. {} This is expected behavior.", additionalLogInfo);
                 return true;
             }

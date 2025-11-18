@@ -72,7 +72,7 @@ public class PublicUserJwtResource {
     }
 
     /**
-     * Authenticates a User
+     * Authorizes a User
      *
      * @param loginVM   user credentials View Mode
      * @param userAgent User Agent
@@ -83,7 +83,7 @@ public class PublicUserJwtResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Map<String, String>> authenticate(@Valid @RequestBody LoginVM loginVM, @RequestHeader(HttpHeaders.USER_AGENT) String userAgent,
+    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader(HttpHeaders.USER_AGENT) String userAgent,
             @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response, HttpServletRequest request) {
 
         var username = loginVM.getUsername();

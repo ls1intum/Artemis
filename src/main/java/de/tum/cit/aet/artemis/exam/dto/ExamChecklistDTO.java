@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

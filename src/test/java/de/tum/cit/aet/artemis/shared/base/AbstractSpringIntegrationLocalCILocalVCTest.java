@@ -174,7 +174,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     // we explicitly want a mock here, as we don't want to test the actual chat model calls and avoid any autoconfiguration or instantiation of Spring AI internals
     @MockitoBean
-    protected ChatModel azureOpenAiChatModel;
+    protected ChatModel chatModel;
 
     protected URI localVCBaseUri;
 

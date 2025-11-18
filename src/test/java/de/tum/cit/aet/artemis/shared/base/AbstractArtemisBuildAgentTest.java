@@ -18,8 +18,9 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.eclipse.jgit.lib.ObjectId;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -201,7 +202,7 @@ public abstract class AbstractArtemisBuildAgentTest {
         return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
     }
 
-    private static @NonNull BuildConfig getBuildConfig() {
+    private static @NotNull BuildConfig getBuildConfig() {
         DockerRunConfig dockerRunConfig = new DockerRunConfig(true, List.of("dummy-env", "dummy-env-value"), 0, 0, 0);
         return new BuildConfig("dummy-build-script", "dummy-docker-image", "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main", ProgrammingLanguage.JAVA,
                 ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 1, "dummy-assignment-checkout-path", "dummy-test-checkout-path",

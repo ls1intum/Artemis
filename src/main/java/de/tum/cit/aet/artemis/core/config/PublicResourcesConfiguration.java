@@ -8,7 +8,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -38,7 +39,7 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
     private String fileUploadPath;
 
     @Override
-    public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
+    public void addResourceHandlers(@NotNull ResourceHandlerRegistry registry) {
         // Enable static resource serving in general from "/public" from both classpath and hosts filesystem
         addResourceHandlerForPath(registry);
 

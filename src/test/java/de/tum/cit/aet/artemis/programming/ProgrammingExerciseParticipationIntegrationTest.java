@@ -19,9 +19,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -718,7 +719,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.BAD_REQUEST, String.class);
     }
 
-    private @NonNull String generateRandomRepoUrl(ProgrammingExerciseStudentParticipation participation, boolean valid) {
+    private @NotNull String generateRandomRepoUrl(ProgrammingExerciseStudentParticipation participation, boolean valid) {
         String baseRepoPath = participation.getRepositoryUri();
         String repoUrl;
         Optional<ProgrammingExerciseStudentParticipation> foundParticipation;

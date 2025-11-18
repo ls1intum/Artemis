@@ -40,8 +40,8 @@ class PlantUmlIntegrationTest extends AbstractProgrammingIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void generatePng_asStudent_success() throws Exception {
-        try (var ignored = Mockito.mockConstruction(ByteArrayOutputStream.class, (bosMock, _) -> doReturn(UML_PNG).when(bosMock).toByteArray())) {
-            try (var ignored2 = Mockito.mockConstruction(SourceStringReader.class, (readerMock, _) -> doReturn(description).when(readerMock).outputImage(any(), any()))) {
+        try (var ignored = Mockito.mockConstruction(ByteArrayOutputStream.class, (bosMock, context) -> doReturn(UML_PNG).when(bosMock).toByteArray())) {
+            try (var ignored2 = Mockito.mockConstruction(SourceStringReader.class, (readerMock, context) -> doReturn(description).when(readerMock).outputImage(any(), any()))) {
                 final var paramMap = new LinkedMultiValueMap<String, String>();
                 paramMap.setAll(Map.of("plantuml", UML_DIAGRAM_STRING));
                 final var pngResponse = request.getPng("/api/programming/plantuml/png", HttpStatus.OK, paramMap);
@@ -59,7 +59,7 @@ class PlantUmlIntegrationTest extends AbstractProgrammingIntegrationIndependentT
             bos.write(UML_SVG.getBytes(StandardCharsets.UTF_8));
             return description;
         };
-        try (var ignored = Mockito.mockConstruction(SourceStringReader.class, (readerMock, _) -> when(readerMock.outputImage(any(), any())).then(answer))) {
+        try (var ignored = Mockito.mockConstruction(SourceStringReader.class, (readerMock, context) -> when(readerMock.outputImage(any(), any())).then(answer))) {
             final var paramMap = new LinkedMultiValueMap<String, String>();
             paramMap.setAll(Map.of("plantuml", UML_DIAGRAM_STRING));
             final var svgResponse = request.get("/api/programming/plantuml/svg", HttpStatus.OK, String.class, paramMap);

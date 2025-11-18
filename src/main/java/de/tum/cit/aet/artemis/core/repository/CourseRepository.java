@@ -10,7 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -342,12 +343,12 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
         return getValueElseThrow(Optional.ofNullable(findWithEagerTutorialGroupConfigurationsById(courseId)), courseId);
     }
 
-    @NonNull
+    @NotNull
     default Course findWithEagerOrganizationsElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(findWithEagerOrganizations(courseId), courseId);
     }
 
-    @NonNull
+    @NotNull
     default Course findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPathsElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(courseId), courseId);
     }
@@ -419,27 +420,27 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @return the populated course
      * @throws EntityNotFoundException if no course was found
      */
-    @NonNull
+    @NotNull
     default Course findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerExercisesAndExerciseDetailsAndLecturesById(courseId), courseId);
     }
 
-    @NonNull
+    @NotNull
     default Course findByIdWithLecturesElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerLecturesById(courseId), courseId);
     }
 
-    @NonNull
+    @NotNull
     default Course findByIdWithLecturesAndLectureUnitsElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerLecturesAndLectureUnitsById(courseId), courseId);
     }
 
-    @NonNull
+    @NotNull
     default Course findByIdForUpdateElseThrow(long courseId) {
         return getValueElseThrow(findForUpdateById(courseId), courseId);
     }
 
-    @NonNull
+    @NotNull
     default Course findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerCompetenciesAndPrerequisitesById(courseId), courseId);
     }

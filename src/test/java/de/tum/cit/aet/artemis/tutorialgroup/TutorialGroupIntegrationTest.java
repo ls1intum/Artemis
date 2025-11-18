@@ -20,7 +20,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -1212,7 +1213,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         });
     }
 
-    private @NonNull TutorialGroup copyTutorialGroup(TutorialGroup tutorialGroup, User tutor1) {
+    private @NotNull TutorialGroup copyTutorialGroup(TutorialGroup tutorialGroup, User tutor1) {
         TutorialGroup updatedTutorialGroup = new TutorialGroup();
         updatedTutorialGroup.setId(tutorialGroup.getId());
         updatedTutorialGroup.setTitle(tutorialGroup.getTitle());

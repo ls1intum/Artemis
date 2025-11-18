@@ -6,7 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -358,7 +359,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
                 .hasSizeLessThanOrEqualTo(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
     }
 
-    @NonNull
+    @NotNull
     private static StaticCodeAnalysisReportDTO createStaticCodeAnalysisReportDTO() {
         final String longText = "0".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH * 2);
         final StaticCodeAnalysisIssue scaIssue = new StaticCodeAnalysisIssue("some/long/file/Path.java", null, null, 0, 123, "RuleName", "scaCategory", longText, null, null);

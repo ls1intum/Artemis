@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -109,7 +109,7 @@ public class AthenaScheduleService {
         log.debug("Scheduled Athena for Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
     }
 
-    @NonNull
+    @NotNull
     private Runnable athenaRunnableForExercise(Exercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();

@@ -3,8 +3,7 @@ package de.tum.cit.aet.artemis.programming.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -45,7 +44,7 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.repositoryUri = repositoryUri;
     }
 
-    public void setRepositoryUri(@NonNull LocalVCRepositoryUri repositoryUri) {
+    public void setRepositoryUri(@NotNull LocalVCRepositoryUri repositoryUri) {
         this.repositoryUri = repositoryUri.getURI().toString();
     }
 

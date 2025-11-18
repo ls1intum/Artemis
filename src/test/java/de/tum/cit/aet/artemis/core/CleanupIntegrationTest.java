@@ -9,7 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -316,7 +317,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
     }
 
-    @NonNull
+    @NotNull
     private static PlagiarismComparison getSubmissionElementPlagiarismComparison(PlagiarismResult textPlagiarismResult1, Submission submission2, Submission submission3) {
         PlagiarismComparison plagiarismComparison2 = new PlagiarismComparison();
         plagiarismComparison2.setPlagiarismResult(textPlagiarismResult1);
@@ -333,7 +334,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         return plagiarismComparison2;
     }
 
-    @NonNull
+    @NotNull
     private static PlagiarismComparison getPlagiarismSubmissionElementPlagiarismComparison(PlagiarismResult textPlagiarismResult1, Submission submission1, Submission submission2) {
         PlagiarismComparison plagiarismComparison1 = new PlagiarismComparison();
         plagiarismComparison1.setPlagiarismResult(textPlagiarismResult1);

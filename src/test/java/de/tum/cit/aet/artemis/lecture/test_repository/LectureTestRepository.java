@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.lecture.test_repository;
 
 import java.util.Optional;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Modifying;
@@ -19,7 +20,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 @Lazy
 public interface LectureTestRepository extends LectureRepository {
 
-    @NonNull
+    @NotNull
     default Lecture findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(long lectureId) {
         return getValueElseThrow(findByIdWithAttachmentsAndLectureUnitsAndCompletions(lectureId), lectureId);
     }

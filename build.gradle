@@ -184,14 +184,9 @@ dependencies {
     implementation "de.jplag:text:${jplag_version}"
     implementation "de.jplag:typescript:${jplag_version}"
 
-    // Align all Spring AI modules to the same version
-    implementation platform("org.springframework.ai:spring-ai-bom:1.1.0")
-    // Azure OpenAI (prod, or when you want Azure)
+    implementation platform("org.springframework.ai:spring-ai-bom:1.0.3")
     implementation "org.springframework.ai:spring-ai-starter-model-azure-openai" // can also use non-azure models
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
-    // OpenAI / OpenAI-compatible (dev, localhost:1234, etc.)
-    implementation "org.springframework.ai:spring-ai-starter-model-openai"
-
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -220,8 +215,8 @@ dependencies {
     implementation "org.apache.sshd:sshd-osgi:${sshd_version}"
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
-    // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
-    implementation "net.sourceforge.plantuml:plantuml-mit:1.2025.10"
+    // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
+    implementation "net.sourceforge.plantuml:plantuml:1.2025.9"
 
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -407,9 +402,6 @@ dependencies {
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
-
-    // Nullable annotations for improved static analysis
-    implementation "org.jspecify:jspecify:1.0.0"
 
     // Helios push-based status updates
     implementation "de.tum.cit.aet:helios-status-spring-starter:${helios_status_version}"

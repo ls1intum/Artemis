@@ -10,7 +10,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.IntStream;
 
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;

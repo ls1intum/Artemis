@@ -8,6 +8,7 @@ import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -102,6 +103,9 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     protected ProgrammingExerciseGradingService gradingService;
 
     @Autowired
+    protected ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
+
+    @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
@@ -124,6 +128,9 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
 
     @Autowired
     protected UserUtilService userUtilService;
+
+    @Autowired
+    protected StudentExamService studentExamService;
 
     @Autowired
     protected ProgrammingExerciseService programmingExerciseService;

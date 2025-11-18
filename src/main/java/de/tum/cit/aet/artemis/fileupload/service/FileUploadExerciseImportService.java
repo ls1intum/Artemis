@@ -5,7 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.HashMap;
 import java.util.Optional;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -57,7 +58,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
-    @NonNull
+    @NotNull
     public FileUploadExercise importFileUploadExercise(final FileUploadExercise templateExercise, FileUploadExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
@@ -78,7 +79,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
      * @param importedExercise The exercise from which to copy the basis
      * @return the cloned TextExercise basis
      */
-    @NonNull
+    @NotNull
     private FileUploadExercise copyFileUploadExerciseBasis(FileUploadExercise importedExercise) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         FileUploadExercise newExercise = new FileUploadExercise();

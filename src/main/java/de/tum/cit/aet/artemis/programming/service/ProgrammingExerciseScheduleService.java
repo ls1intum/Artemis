@@ -8,8 +8,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -360,7 +360,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         log.debug("Scheduled Exam Programming Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
     }
 
-    @NonNull
+    @NotNull
     private Runnable buildAndTestRunnableForExercise(ProgrammingExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -390,7 +390,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exercise for which the results should be updated.
      * @return a Runnable that will update all results for the given exercise.
      */
-    @NonNull
+    @NotNull
     public Runnable updateStudentScoresRegularDueDate(final ProgrammingExercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();

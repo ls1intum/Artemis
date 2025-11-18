@@ -9,9 +9,9 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -78,7 +78,7 @@ public class MessageSpecs {
      * @param searchText Text to be searched within messages
      * @return specification used to chain DB operations
      */
-    @NonNull
+    @NotNull
     public static Specification<Post> getSearchTextSpecification(String searchText) {
         return ((root, query, criteriaBuilder) -> {
             if (searchText == null || searchText.isBlank()) {
@@ -108,7 +108,7 @@ public class MessageSpecs {
      * @param conversationIds ids of the conversation messages belong to
      * @return specification used to chain DB operations
      */
-    @NonNull
+    @NotNull
     public static Specification<Post> getConversationsSpecification(long[] conversationIds) {
         return ((root, query, criteriaBuilder) -> {
             if (conversationIds == null || conversationIds.length == 0) {
@@ -127,7 +127,7 @@ public class MessageSpecs {
      * @param courseId           id of course the posts belong to
      * @return specification used to chain DB operations
      */
-    @NonNull
+    @NotNull
     public static Specification<Post> getCourseWideChannelsSpecification(boolean filterToCourseWide, Long courseId) {
         return (root, query, criteriaBuilder) -> {
             if (!filterToCourseWide) {
@@ -149,7 +149,7 @@ public class MessageSpecs {
      * @param authorIds ids of the post authors
      * @return specification used to chain DB operations
      */
-    @NonNull
+    @NotNull
     public static Specification<Post> getAuthorSpecification(long[] authorIds) {
         return ((root, query, criteriaBuilder) -> {
             if (authorIds == null || authorIds.length == 0) {
@@ -172,7 +172,7 @@ public class MessageSpecs {
      * @param userId            id of the calling user
      * @return specification used to chain DB operations
      */
-    @NonNull
+    @NotNull
     public static Specification<Post> getAnsweredOrReactedSpecification(boolean answeredOrReacted, Long userId) {
         return ((root, query, criteriaBuilder) -> {
             if (!answeredOrReacted) {
@@ -199,7 +199,7 @@ public class MessageSpecs {
      * @param unresolved whether only the Posts without resolving answers should be fetched or not
      * @return specification used to chain DB operations
      */
-    @NonNull
+    @NotNull
     public static Specification<Post> getUnresolvedSpecification(boolean unresolved) {
         return ((root, query, criteriaBuilder) -> {
             if (!unresolved) {
@@ -228,7 +228,7 @@ public class MessageSpecs {
      * @param sortingOrder      direction of sorting (ASC, DESC)
      * @return specification used to chain DB operations
      */
-    @NonNull
+    @NotNull
     public static Specification<Post> getSortSpecification(boolean pagingEnabled, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
         return ((root, query, criteriaBuilder) -> {
             if (pagingEnabled && postSortCriterion != null && sortingOrder != null && query != null) {
@@ -257,7 +257,7 @@ public class MessageSpecs {
      *         incompatible with each other at server tests
      *         <a href="https://github.com/h2database/h2database/issues/408">...</a>
      */
-    @NonNull
+    @NotNull
     public static Specification<Post> distinct() {
         return (root, query, criteriaBuilder) -> {
             if (query != null) {
@@ -273,7 +273,7 @@ public class MessageSpecs {
      * @param pinnedOnly whether only pinned posts should be fetched
      * @return specification used to chain DB operations
      */
-    @NonNull
+    @NotNull
     public static Specification<Post> getPinnedSpecification(boolean pinnedOnly) {
         return (root, query, criteriaBuilder) -> {
             if (!pinnedOnly) {

@@ -5,8 +5,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
-import org.jspecify.annotations.NonNull;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -30,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
  * when importing exercises from the Sharing Platform.
  * </p>
  */
-public record SharingMultipartZipFile(@NonNull String name, @NonNull InputStream inputStream) implements MultipartFile, Closeable {
+public record SharingMultipartZipFile(@NotNull String name, @NotNull InputStream inputStream) implements MultipartFile, Closeable {
 
     @Override
     public String getName() {

@@ -8,8 +8,9 @@ import java.nio.file.Files;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.assertj.core.data.TemporalUnitOffset;
-import org.jspecify.annotations.NonNull;
 import org.springframework.util.ResourceUtils;
 
 public class TestResourceUtils {
@@ -28,7 +29,7 @@ public class TestResourceUtils {
         }
     }
 
-    @NonNull
+    @NotNull
     public static TemporalUnitOffset HalfSecond() {
         return within(500, ChronoUnit.MILLIS);
     }

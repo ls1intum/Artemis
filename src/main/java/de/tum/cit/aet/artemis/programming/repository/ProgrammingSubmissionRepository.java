@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
@@ -154,12 +155,12 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      * @param submissionId the id of the submission that should be loaded from the database
      * @return the programming submission with the given id
      */
-    @NonNull
+    @NotNull
     default ProgrammingSubmission findByIdWithResultsFeedbacksAssessorTestCases(long submissionId) {
         return getValueElseThrow(findWithEagerResultsFeedbacksTestCasesAssessorById(submissionId), submissionId);
     }
 
-    @NonNull
+    @NotNull
     default ProgrammingSubmission findByResultIdElseThrow(long resultId) {
         return getValueElseThrow(findByResultId(resultId));
     }

@@ -7,8 +7,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param course the course the channel should be created in
      * @param user   the user that wants to create the channel
      */
-    public void isAllowedToCreateChannel(@NonNull Course course, @NonNull User user) {
+    public void isAllowedToCreateChannel(@NotNull Course course, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, userToCheck);
     }
@@ -54,7 +55,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel the message should be created
      * @param user    the user that wants to create the message
      */
-    public void isAllowedToCreateNewAnswerPostInChannel(@NonNull Channel channel, @NonNull User user) {
+    public void isAllowedToCreateNewAnswerPostInChannel(@NotNull Channel channel, @NotNull User user) {
         var isArchivedChannel = channel.getIsArchived();
         var userToCheck = getUserIfNecessary(user);
         if (isArchivedChannel) {
@@ -72,7 +73,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel the answer message should be created
      * @param user    the user that wants to create answer the message
      */
-    public void isAllowedToCreateNewPostInChannel(@NonNull Channel channel, @NonNull User user) {
+    public void isAllowedToCreateNewPostInChannel(@NotNull Channel channel, @NotNull User user) {
         var isAnnouncementChannel = channel.getIsAnnouncementChannel();
         var isArchivedChannel = channel.getIsArchived();
         if (isArchivedChannel) {
@@ -92,7 +93,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel that should be edited
      * @param user    the user that wants to edit the channel
      */
-    public void isAllowedToUpdateChannel(@NonNull Channel channel, @NonNull User user) {
+    public void isAllowedToUpdateChannel(@NotNull Channel channel, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         if (!hasChannelModerationRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to update this channel");
@@ -106,7 +107,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param user    the user that wants to edit or delete messages
      * @return true if the user is allowed to edit or delete messages in the channel, false otherwise
      */
-    public boolean isAllowedToEditOrDeleteMessagesOfOtherUsers(@NonNull Channel channel, @NonNull User user) {
+    public boolean isAllowedToEditOrDeleteMessagesOfOtherUsers(@NotNull Channel channel, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         return hasChannelModerationRights(channel.getId(), userToCheck);
     }
@@ -117,7 +118,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel that should be deleted
      * @param user    the user that wants to delete the channel
      */
-    public void isAllowedToDeleteChannel(@NonNull Channel channel, @NonNull User user) {
+    public void isAllowedToDeleteChannel(@NotNull Channel channel, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         // either instructor or moderator who is also the creator
         var channelFromDb = channelRepository.findById(channel.getId()).orElseThrow();
@@ -179,7 +180,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param user      the user to check
      * @return true if the user has moderation rights, false otherwise
      */
-    public boolean hasChannelModerationRights(@NonNull Long channelId, @NonNull User user) {
+    public boolean hasChannelModerationRights(@NotNull Long channelId, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         var channel = channelRepository.findById(channelId);
         return isChannelModerator(channelId, userToCheck.getId()) || authorizationCheckService.isAtLeastInstructorInCourse(channel.orElseThrow().getCourse(), userToCheck);
@@ -195,7 +196,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param participant optional participant for the user
      * @return true if the user has moderation rights, false otherwise
      */
-    public boolean hasChannelModerationRights(@NonNull Channel channel, @NonNull User user, Optional<ConversationParticipantSettingsView> participant) {
+    public boolean hasChannelModerationRights(@NotNull Channel channel, @NotNull User user, Optional<ConversationParticipantSettingsView> participant) {
         return participant.map(ConversationParticipantSettingsView::isModerator).orElse(false) || authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user);
     }
 
@@ -206,7 +207,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param userLogins the logins of the users that should be registered
      * @param user       the user that wants to register the users
      */
-    public void isAllowedToRegisterUsersToChannel(@NonNull Channel channel, @Nullable List<String> userLogins, @NonNull User user) {
+    public void isAllowedToRegisterUsersToChannel(@NotNull Channel channel, @Nullable List<String> userLogins, @NotNull User user) {
         var userLoginsToCheck = Objects.requireNonNullElse(userLogins, new ArrayList<>());
         var userToCheck = getUserIfNecessary(user);
         var isJoinRequest = userLoginsToCheck.size() == 1 && userLoginsToCheck.getFirst().equals(userToCheck.getLogin());
@@ -233,7 +234,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel
      * @param user    the user that wants to grant the channel moderator role
      */
-    public void isAllowedToGrantChannelModeratorRole(@NonNull Channel channel, @NonNull User user) {
+    public void isAllowedToGrantChannelModeratorRole(@NotNull Channel channel, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         if (!hasChannelModerationRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to grant channel moderator role");
@@ -246,7 +247,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel the rights should be revoked from
      * @param user    the user that wants to revoke the channel moderator role
      */
-    public void isAllowedToRevokeChannelModeratorRole(@NonNull Channel channel, @NonNull User user) {
+    public void isAllowedToRevokeChannelModeratorRole(@NotNull Channel channel, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         if (!hasChannelModerationRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to revoke the channel moderator role");
@@ -260,7 +261,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param userLogins the logins of the users that should be removed
      * @param user       the user that wants to remove the users
      */
-    public void isAllowedToDeregisterUsersFromChannel(@NonNull Channel channel, @Nullable List<String> userLogins, @NonNull User user) {
+    public void isAllowedToDeregisterUsersFromChannel(@NotNull Channel channel, @Nullable List<String> userLogins, @NotNull User user) {
         var userLoginsToCheck = Objects.requireNonNullElse(userLogins, new ArrayList<>());
         var userToCheck = getUserIfNecessary(user);
         if (hasChannelModerationRights(channel.getId(), userToCheck)) {
@@ -282,7 +283,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel that should be archived
      * @param user    the user that wants to archive the channel
      */
-    public void isAllowedToArchiveChannel(@NonNull Channel channel, @NonNull User user) {
+    public void isAllowedToArchiveChannel(@NotNull Channel channel, @NotNull User user) {
         isAllowedToChangeArchivalStatus(channel, user);
     }
 
@@ -292,11 +293,11 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel that should be unarchived
      * @param user    the user that wants to unarchive the channel
      */
-    public void isAllowedToUnArchiveChannel(@NonNull Channel channel, @NonNull User user) {
+    public void isAllowedToUnArchiveChannel(@NotNull Channel channel, @NotNull User user) {
         isAllowedToChangeArchivalStatus(channel, user);
     }
 
-    private void isAllowedToChangeArchivalStatus(@NonNull Channel channel, @NonNull User user) {
+    private void isAllowedToChangeArchivalStatus(@NotNull Channel channel, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         if (!hasChannelModerationRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to archive/unarchive this channel");

@@ -14,10 +14,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.annotation.Nullable;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

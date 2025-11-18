@@ -6,10 +6,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -32,7 +32,7 @@ public class TeamAssignmentConfig extends DomainObject {
     private Exercise exercise;
 
     @Min(1)
-    @NonNull
+    @NotNull
     @Column(name = "min_team_size")
     private Integer minTeamSize;
 

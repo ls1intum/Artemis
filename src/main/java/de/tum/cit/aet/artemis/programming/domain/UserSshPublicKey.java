@@ -2,15 +2,15 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import java.time.ZonedDateTime;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
@@ -25,7 +25,7 @@ public class UserSshPublicKey extends DomainObject {
     /**
      * The user who is owner of the public key
      */
-    @NonNull
+    @NotNull
     @Column(name = "user_id")
     private long userId;
 
@@ -39,7 +39,7 @@ public class UserSshPublicKey extends DomainObject {
     /**
      * The actual full public ssh key of a user used to authenticate git clone and git push operations if available
      */
-    @NonNull
+    @NotNull
     @Column(name = "public_key")
     private String publicKey;
 
@@ -70,11 +70,11 @@ public class UserSshPublicKey extends DomainObject {
     @Column(name = "expiry_date")
     private ZonedDateTime expiryDate = null;
 
-    public @NonNull long getUserId() {
+    public @NotNull long getUserId() {
         return userId;
     }
 
-    public void setUserId(@NonNull long userId) {
+    public void setUserId(@NotNull long userId) {
         this.userId = userId;
     }
 

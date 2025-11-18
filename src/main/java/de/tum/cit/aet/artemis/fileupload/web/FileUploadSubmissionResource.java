@@ -7,7 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -113,7 +114,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         return handleFileUploadSubmission(exerciseId, fileUploadSubmission, file);
     }
 
-    @NonNull
+    @NotNull
     private ResponseEntity<FileUploadSubmission> handleFileUploadSubmission(long exerciseId, FileUploadSubmission fileUploadSubmission, MultipartFile file) {
         long start = System.currentTimeMillis();
         checkFileLength(file);

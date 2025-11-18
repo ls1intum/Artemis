@@ -29,6 +29,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
@@ -67,8 +70,6 @@ import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -124,7 +125,7 @@ public class GitService extends AbstractGitService {
      * @return the URI (SSH, HTTP(S), or local path)
      */
     @Override
-    protected URI getGitUri(@NonNull LocalVCRepositoryUri vcsRepositoryUri) {
+    protected URI getGitUri(@NotNull LocalVCRepositoryUri vcsRepositoryUri) {
         return vcsRepositoryUri.getLocalRepositoryPath(localVCBasePath).toUri();
     }
 
@@ -384,7 +385,7 @@ public class GitService extends AbstractGitService {
      * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri) {
         return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUri, defaultBranch, false);
     }
 
@@ -397,7 +398,7 @@ public class GitService extends AbstractGitService {
      * @param writeAccess         whether the repository should be opened with write access
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch,
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch,
             boolean writeAccess) {
         try {
             if (!Files.exists(localPath)) {
@@ -913,7 +914,7 @@ public class GitService extends AbstractGitService {
      * @return The initialized bare Repository instance.
      * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
      */
-    @NonNull
+    @NotNull
     public Repository getBareRepository(LocalVCRepositoryUri repositoryUri, boolean writeAccess) {
         return getBareRepository(repositoryUri, defaultBranch, writeAccess);
     }
@@ -1267,7 +1268,7 @@ public class GitService extends AbstractGitService {
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
-    @NonNull
+    @NotNull
     public Collection<File> getFiles(Repository repo) {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
         Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);

@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.jspecify.annotations.NonNull;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -117,27 +118,27 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
         return allExercises.stream().findFirst();
     }
 
-    @NonNull
+    @NotNull
     default TextExercise findWithGradingCriteriaByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithGradingCriteriaById(exerciseId), exerciseId);
     }
 
-    @NonNull
+    @NotNull
     default TextExercise findWithEagerCompetenciesAndCategoriesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesAndCategoriesById(exerciseId), exerciseId);
     }
 
-    @NonNull
+    @NotNull
     default TextExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
         return getValueElseThrow(findWithExampleSubmissionsAndResultsById(exerciseId), exerciseId);
     }
 
-    @NonNull
+    @NotNull
     default TextExercise findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(long exerciseId) {
         return getValueElseThrow(findWithExampleSubmissionsAndResultsAndGradingCriteriaById(exerciseId), exerciseId);
     }
 
-    @NonNull
+    @NotNull
     default TextExercise findByIdWithStudentParticipationsAndSubmissionsElseThrow(long exerciseId) {
         return getValueElseThrow(findWithStudentParticipationsAndSubmissionsById(exerciseId), exerciseId);
     }

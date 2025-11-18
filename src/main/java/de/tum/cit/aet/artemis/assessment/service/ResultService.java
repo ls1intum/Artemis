@@ -15,9 +15,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -237,7 +238,7 @@ public class ResultService {
      * @param shouldSave   whether the result should be saved or not
      * @return the updated (and potentially saved) result
      */
-    public Result storeFeedbackInResult(@NonNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+    public Result storeFeedbackInResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
         var savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
         result.setFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
@@ -256,8 +257,8 @@ public class ResultService {
      * @param shouldSave   whether the result should be saved or not
      * @return the updated (and potentially saved) result
      */
-    @NonNull
-    public Result addFeedbackToResult(@NonNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
+    @NotNull
+    public Result addFeedbackToResult(@NotNull Result result, List<Feedback> feedbackList, boolean shouldSave) {
         List<Feedback> savedFeedbacks = saveFeedbackWithHibernateWorkaround(result, feedbackList);
         result.addFeedbacks(savedFeedbacks);
         return shouldSaveResult(result, shouldSave);
@@ -441,8 +442,8 @@ public class ResultService {
         return logsAvailability;
     }
 
-    @NonNull
-    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NonNull Result result, List<Feedback> feedbackList) {
+    @NotNull
+    private List<Feedback> saveFeedbackWithHibernateWorkaround(@NotNull Result result, List<Feedback> feedbackList) {
         List<Feedback> savedFeedbacks = new ArrayList<>();
 
         // Fetch long feedback texts associated with the provided feedback list
@@ -484,8 +485,8 @@ public class ResultService {
         feedback.setResult(result);
     }
 
-    @NonNull
-    private Result shouldSaveResult(@NonNull Result result, boolean shouldSave) {
+    @NotNull
+    private Result shouldSaveResult(@NotNull Result result, boolean shouldSave) {
         if (shouldSave) {
             // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
             deleteLongFeedback(result.getFeedbacks(), result);

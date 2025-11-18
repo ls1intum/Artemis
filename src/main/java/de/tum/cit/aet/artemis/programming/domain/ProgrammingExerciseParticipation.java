@@ -3,7 +3,8 @@ package de.tum.cit.aet.artemis.programming.domain;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.jspecify.annotations.Nullable;
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
