@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -168,6 +167,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @param userId the id of the user
      * @return all student exams for the given user
      */
+    // TODO: this query is way too complex and MUST be simplified in the future
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
@@ -401,12 +401,12 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises
      */
-    @NotNull
+    @NonNull
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
         return getValueElseThrow(findWithExercisesById(studentExamId), studentExamId);
     }
 
-    @NotNull
+    @NonNull
     default StudentExam findByIdWithExercisesAndStudentParticipationsElseThrow(Long studentExamId) {
         return getValueElseThrow(findWithExercisesAndStudentParticipationsById(studentExamId));
     }
@@ -417,7 +417,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @param studentExamId the id of the student exam
      * @return the student exam with exercises, sessions and student participations
      */
-    @NotNull
+    @NonNull
     default StudentExam findByIdWithExercisesAndSessionsAndStudentParticipationsElseThrow(Long studentExamId) {
         return getValueElseThrow(findWithExercisesSubmissionPolicySessionsAndStudentParticipationsById(studentExamId), studentExamId);
     }

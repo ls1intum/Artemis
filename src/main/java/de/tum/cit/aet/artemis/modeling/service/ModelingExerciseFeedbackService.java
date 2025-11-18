@@ -107,7 +107,7 @@ public class ModelingExerciseFeedbackService {
     public void generateAutomaticNonGradedFeedback(ModelingSubmission modelingSubmission, StudentParticipation participation, ModelingExercise modelingExercise) {
         log.debug("Using athena to generate (modeling exercise) feedback request: {}", modelingExercise.getId());
 
-        Result automaticResult = createInitialResult(participation, modelingSubmission);
+        Result automaticResult = createInitialResult(modelingSubmission);
 
         try {
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
@@ -139,11 +139,10 @@ public class ModelingExerciseFeedbackService {
     /**
      * Creates an initial Result object for the automatic feedback.
      *
-     * @param participation the student participation
-     * @param submission    the submission to which the result is associated
+     * @param submission the submission to which the result is associated
      * @return the initial Result object
      */
-    private Result createInitialResult(StudentParticipation participation, Submission submission) {
+    private Result createInitialResult(Submission submission) {
         Result result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result.setRated(true);

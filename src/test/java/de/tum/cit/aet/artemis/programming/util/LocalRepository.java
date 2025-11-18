@@ -9,8 +9,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -22,6 +20,7 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.URIish;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,8 +31,8 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
  * In the case of using LocalVC with LocalCI, LocalVC contains the origin repositories,
  * they are just not kept in an external system, but rather in another folder that belongs to Artemis.
  */
-// TODO we should NOT use this class anymore for server tests and instead write proper integration tests that use the LocalVC service and the Artemis server API without mocking
-// repositories
+// TODO DO NOT USE this class anymore for server tests and instead write proper integration tests that use the LocalVC service and the Artemis server API without mocking repos
+@Deprecated
 public class LocalRepository {
 
     private static final Logger log = LoggerFactory.getLogger(LocalRepository.class);
@@ -175,7 +174,7 @@ public class LocalRepository {
     }
 
     // This method tries to build a valid, but unique (random) LocalVCRepositoryUri from the given base path and local repository file name.
-    private static Path getRepoPath(@NotNull Path repoBasePath, @NotNull String localRepoFileName) {
+    private static Path getRepoPath(@NonNull Path repoBasePath, @NonNull String localRepoFileName) {
         var tempPrefix = ShortNameGenerator.generateRandomShortName(6);
         return repoBasePath.resolve(tempPrefix).resolve(tempPrefix + "-" + localRepoFileName + ".git");
     }
