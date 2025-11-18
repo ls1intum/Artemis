@@ -5,8 +5,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -420,7 +419,7 @@ public class CompetencyResource {
      * @param operationType        the operation type (UPDATE or DELETE)
      * @param operationDescription the description of the operation for logging purposes
      */
-    private void notifyAtlasML(List<Competency> competencies, @NotNull OperationTypeDTO operationType, String operationDescription) {
+    private void notifyAtlasML(List<Competency> competencies, @NonNull OperationTypeDTO operationType, String operationDescription) {
         try {
             atlasMLApi.saveCompetencies(competencies, operationType);
         }
@@ -435,7 +434,7 @@ public class CompetencyResource {
      * @param course     The course for which to check the authorization role for
      * @param competency The competency to be accessed by the user
      */
-    private void checkCourseForCompetency(@NotNull Course course, @NotNull CourseCompetency competency) {
+    private void checkCourseForCompetency(@NonNull Course course, @NonNull CourseCompetency competency) {
         if (competency.getCourse() == null) {
             throw new BadRequestAlertException("A competency must belong to a course", ENTITY_NAME, "competencyNoCourse");
         }

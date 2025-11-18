@@ -7,8 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
@@ -39,7 +38,7 @@ public interface GlobalNotificationSettingRepository extends ArtemisJpaRepositor
             WHERE setting.userId = :userId
                 AND setting.notificationType = :notificationType
             """)
-    Optional<GlobalNotificationSetting> findByUserIdAndNotificationType(@Param("userId") long userId, @Param("notificationType") @NotNull GlobalNotificationType notificationType);
+    Optional<GlobalNotificationSetting> findByUserIdAndNotificationType(@Param("userId") long userId, @Param("notificationType") @NonNull GlobalNotificationType notificationType);
 
     /**
      * Checks whether a specific notification is enabled for a given user.
