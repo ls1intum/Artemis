@@ -293,8 +293,10 @@ public class LectureUnitService {
     /**
      * Update the competency links of an existing text unit based on the provided DTO.
      * Supports removing links, updating weights of existing ones, and adding new links.
+     * This method ensures that the managed entity's collection is updated correctly to avoid JPA issues and unnecessary database operations.
+     * It makes sure to be Hibernate compliant by modifying the existing collection rather than replacing it.
      *
-     * @param lectureUnitDto      the DTO (from the client) containing the new state of competency links
+     * @param lectureUnitDto      the DTO (from the client) containing the new state of competency links (new, existing or removed ones)
      * @param existingLectureUnit the existing DB entity to update
      */
     public void updateCompetencyLinks(LectureUnitDTO lectureUnitDto, LectureUnit existingLectureUnit) {

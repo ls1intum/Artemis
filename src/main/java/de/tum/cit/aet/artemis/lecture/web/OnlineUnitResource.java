@@ -126,13 +126,15 @@ public class OnlineUnitResource {
         existingOnlineUnit.setName(onlineUnitDto.name());
         existingOnlineUnit.setReleaseDate(onlineUnitDto.releaseDate());
 
+        // This method computes the relevant changes for competency links and applies them to the existingTextUnit
         lectureUnitService.updateCompetencyLinks(onlineUnitDto, existingOnlineUnit);
 
-        // Note: Competency links are persisted automatically (it should be done because of CascadeType.PERSIST)
+        // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
         existingOnlineUnit = onlineUnitRepository.save(existingOnlineUnit);
 
         if (competencyProgressApi.isPresent()) {
-            competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsync(originalCompetencyIds, existingOnlineUnit);
+            // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
+            competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingOnlineUnit);
         }
 
         // convert into DTO

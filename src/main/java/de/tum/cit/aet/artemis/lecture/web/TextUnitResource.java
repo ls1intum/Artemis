@@ -119,13 +119,15 @@ public class TextUnitResource {
         existingTextUnit.setName(textUnitDto.name());
         existingTextUnit.setReleaseDate(textUnitDto.releaseDate());
 
+        // This method computes the relevant changes for competency links and applies them to the existingTextUnit
         lectureUnitService.updateCompetencyLinks(textUnitDto, existingTextUnit);
 
-        // Note: Competency links are persisted automatically (it should be done because of CascadeType.PERSIST)
+        // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
         existingTextUnit = textUnitRepository.save(existingTextUnit);
 
         if (competencyProgressApi.isPresent()) {
-            competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsync(originalCompetencyIds, existingTextUnit);
+            // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
+            competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingTextUnit);
         }
 
         // convert into DTO

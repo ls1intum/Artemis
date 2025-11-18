@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -137,30 +138,25 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressForUpdatedLearningObjectAsync(LearningObject originalLearningObject, Optional<LearningObject> updatedLearningObject) {
-        SecurityUtils.setAuthorizationObject(); // Required for async
-
         Set<Long> originalCompetencyIds = originalLearningObject.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
                 .collect(Collectors.toSet());
-        Set<CourseCompetency> updatedCompetencies = updatedLearningObject
-                .map(learningObject -> learningObject.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).collect(Collectors.toSet())).orElse(Set.of());
-        Set<Long> updatedCompetencyIds = updatedCompetencies.stream().map(CourseCompetency::getId).collect(Collectors.toSet());
-
-        Set<Long> removedCompetencyIds = originalCompetencyIds.stream().filter(id -> !updatedCompetencyIds.contains(id)).collect(Collectors.toSet());
-        Set<Long> addedCompetencyIds = updatedCompetencyIds.stream().filter(id -> !originalCompetencyIds.contains(id)).collect(Collectors.toSet());
-
-        updateProgressByCompetencyIds(removedCompetencyIds);
-        if (!addedCompetencyIds.isEmpty()) {
-            updateProgressByCompetencyIdsAndLearningObject(addedCompetencyIds, originalLearningObject);
-        }
+        updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, updatedLearningObject.orElse(null));
     }
 
-    // Alternative
+    /**
+     * Asynchronously update the existing progress for all changed competencies linked to the given learning object
+     * If new competencies are added, the progress is updated for all users in the course, otherwise only the existing progresses are updated.
+     *
+     * @param originalCompetencyIds The original competency ids before the update
+     * @param updatedLearningObject The updated learning object after the update
+     */
     @Async
-    public void updateProgressForUpdatedLearningObjectAsync(Set<Long> originalCompetencyIds, LearningObject updatedLearningObject) {
+    public void updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(Set<Long> originalCompetencyIds, @Nullable LearningObject updatedLearningObject) {
         SecurityUtils.setAuthorizationObject(); // Required for async
 
-        Set<CourseCompetency> updatedCompetencies = updatedLearningObject.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency)
-                .collect(Collectors.toSet());
+        Set<CourseCompetency> updatedCompetencies = updatedLearningObject != null
+                ? updatedLearningObject.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).collect(Collectors.toSet())
+                : Set.of();
         Set<Long> updatedCompetencyIds = updatedCompetencies.stream().map(CourseCompetency::getId).collect(Collectors.toSet());
 
         Set<Long> removedCompetencyIds = originalCompetencyIds.stream().filter(id -> !updatedCompetencyIds.contains(id)).collect(Collectors.toSet());
