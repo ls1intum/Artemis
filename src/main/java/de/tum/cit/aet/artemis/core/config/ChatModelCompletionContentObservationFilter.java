@@ -80,8 +80,10 @@ public class ChatModelCompletionContentObservationFilter implements ObservationF
      * @return immutable list of prompt text strings
      */
     private List<String> processPrompts(ChatModelObservationContext chatModelObservationContext) {
-        return CollectionUtils.isEmpty((chatModelObservationContext.getRequest()).getInstructions()) ? List.of()
-                : (chatModelObservationContext.getRequest()).getInstructions().stream().map(Content::getText).toList();
+        if (chatModelObservationContext.getRequest() == null || CollectionUtils.isEmpty(chatModelObservationContext.getRequest().getInstructions())) {
+            return List.of();
+        }
+        return chatModelObservationContext.getRequest().getInstructions().stream().map(Content::getText).filter(StringUtils::hasText).toList();
     }
 
     /**
@@ -91,14 +93,11 @@ public class ChatModelCompletionContentObservationFilter implements ObservationF
      * @return immutable list of non-empty completion strings
      */
     private List<String> processCompletion(ChatModelObservationContext context) {
-        if (context.getResponse() != null && (context.getResponse()).getResults() != null && !CollectionUtils.isEmpty((context.getResponse()).getResults())) {
-            return !StringUtils.hasText((context.getResponse()).getResult().getOutput().getText()) ? List.of()
-                    : (context.getResponse()).getResults().stream().filter((generation) -> generation.getOutput() != null && StringUtils.hasText(generation.getOutput().getText()))
-                            .map((generation) -> generation.getOutput().getText()).toList();
-        }
-        else {
+        if (context.getResponse() == null || CollectionUtils.isEmpty(context.getResponse().getResults())) {
             return List.of();
         }
+        return context.getResponse().getResults().stream().filter(generation -> generation.getOutput() != null).map(generation -> generation.getOutput().getText())
+                .filter(StringUtils::hasText).toList();
     }
 
     /**

@@ -40,11 +40,9 @@ public class LlmOnlyExporterConfig {
     /**
      * Defines a custom {@link SpanExporter} bean that wraps the default
      * {@link OtlpHttpSpanExporter} and filters out non-AI spans.
-     *
-     * <p>
-     * The bean is explicitly named {@code otlpLlmTraceExporter} so that
-     * it overrides Spring Boot’s built-in OTLP exporter. This prevents
-     * duplicate exporters and ensures only this filtered exporter runs.
+     * The bean is explicitly named {@code otlpLlmTraceExporter}. Disable the default
+     * OTLP exporter (`management.otlp.tracing.export.enabled=false`) to avoid double
+     * export and rely only on this filtered exporter.
      *
      * @param endpoint   the OTLP endpoint for Langfuse (e.g., https://langfuse.de/api/public/otel/v1/traces)
      * @param authHeader the authorization header for Langfuse in the form {@code "Basic <base64(public:secret)>"}
