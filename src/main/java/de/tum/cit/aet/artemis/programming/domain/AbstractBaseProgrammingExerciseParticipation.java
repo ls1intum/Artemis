@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.validation.constraints.NotNull;
+
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,7 +32,7 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
         this.repositoryUri = repositoryUri;
     }
 
-    public void setRepositoryUri(@NotNull LocalVCRepositoryUri repositoryUri) {
+    public void setRepositoryUri(@NonNull LocalVCRepositoryUri repositoryUri) {
         this.repositoryUri = repositoryUri.getURI().toString();
     }
 

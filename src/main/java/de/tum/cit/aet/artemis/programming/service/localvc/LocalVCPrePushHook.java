@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -20,6 +18,7 @@ import org.eclipse.jgit.transport.PreReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +33,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCPrePushHook.class);
 
-    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NotNull User user) {
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NonNull User user) {
         this.localVCServletService = localVCServletService;
         this.user = user;
     }
@@ -80,10 +79,25 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
             return;
         }
 
-        // Reject pushes to anything other than the default branch.
-        if (!command.getRefName().equals("refs/heads/" + defaultBranchName)) {
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push to a branch other than the default branch.");
-            return;
+        // If branching is allowed, reject pushes to anything other than branch names that match the branch regex
+        // If branching is not allowed, reject pushes to anything other than the default branch
+        String branchPath = command.getRefName();
+        if (!branchPath.equals("refs/heads/" + defaultBranchName)) {
+            String branchName = branchPath.substring("refs/heads/".length());
+            LocalVCServletService.BranchingStatus branchingStatus = localVCServletService.isBranchNameAllowedForRepository(repository, branchName);
+            switch (branchingStatus) {
+                case BRANCHING_DISABLED -> {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push to a branch other than the default branch.");
+                    return;
+                }
+                case NAME_DOES_NOT_MATCH_REGEX -> {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
+                            "You cannot push to a branch other than the default branch that does not match the regex for branch names in this repository.");
+                    return;
+                }
+                default -> {
+                }
+            }
         }
 
         try (Git git = new Git(repository)) {

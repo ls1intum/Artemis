@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
@@ -42,26 +42,26 @@ export class AssessmentDashboardInformationEntry {
 export class AssessmentDashboardInformationComponent implements OnInit, OnChanges, OnDestroy {
     private translateService = inject(TranslateService);
 
-    @Input() isExamMode: boolean;
-    @Input() course: Course;
-    @Input() examId?: number;
-    @Input() tutorId: number;
+    readonly isExamMode = input.required<boolean>();
+    readonly course = input.required<Course>();
+    readonly examId = input<number>();
+    readonly tutorId = input.required<number>();
 
-    @Input() complaintsEnabled: boolean;
-    @Input() feedbackRequestEnabled: boolean;
+    readonly complaintsEnabled = input.required<boolean>();
+    readonly feedbackRequestEnabled = input.required<boolean>();
 
-    @Input() numberOfCorrectionRounds: number;
-    @Input() numberOfAssessmentsOfCorrectionRounds: DueDateStat[];
+    readonly numberOfCorrectionRounds = input.required<number>();
+    readonly numberOfAssessmentsOfCorrectionRounds = input.required<DueDateStat[]>();
 
-    @Input() totalNumberOfAssessments: DueDateStat;
-    @Input() numberOfSubmissions: DueDateStat;
-    @Input() numberOfTutorAssessments: number;
-    @Input() totalAssessmentPercentage: number;
+    readonly totalNumberOfAssessments = input.required<number>();
+    readonly numberOfSubmissions = input.required<DueDateStat>();
+    readonly numberOfTutorAssessments = input.required<number>();
+    readonly totalAssessmentPercentage = input.required<number>();
 
-    @Input() complaints: AssessmentDashboardInformationEntry;
-    @Input() moreFeedbackRequests: AssessmentDashboardInformationEntry;
-    @Input() assessmentLocks: AssessmentDashboardInformationEntry;
-    @Input() ratings: AssessmentDashboardInformationEntry;
+    readonly complaints = input.required<AssessmentDashboardInformationEntry>();
+    readonly moreFeedbackRequests = input.required<AssessmentDashboardInformationEntry>();
+    readonly assessmentLocks = input.required<AssessmentDashboardInformationEntry>();
+    readonly ratings = input.required<AssessmentDashboardInformationEntry>();
 
     // Graph data.
     completedAssessmentsTitle: string;
@@ -110,12 +110,12 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     }
 
     setupLinks() {
-        const examRouteIfNeeded = this.isExamMode ? ['exams', this.examId!] : [];
+        const examRouteIfNeeded = this.isExamMode() ? ['exams', this.examId()!] : [];
 
-        this.complaintsLink = ['/course-management', this.course.id].concat(examRouteIfNeeded).concat(['complaints']);
-        this.moreFeedbackRequestsLink = ['/course-management', this.course.id].concat(examRouteIfNeeded).concat(['more-feedback-requests']);
-        this.assessmentLocksLink = ['/course-management', this.course.id].concat(examRouteIfNeeded).concat(['assessment-locks']);
-        this.ratingsLink = ['/course-management', this.course.id, 'ratings'];
+        this.complaintsLink = ['/course-management', this.course().id].concat(examRouteIfNeeded).concat(['complaints']);
+        this.moreFeedbackRequestsLink = ['/course-management', this.course().id].concat(examRouteIfNeeded).concat(['more-feedback-requests']);
+        this.assessmentLocksLink = ['/course-management', this.course().id].concat(examRouteIfNeeded).concat(['assessment-locks']);
+        this.ratingsLink = ['/course-management', this.course().id, 'ratings'];
     }
 
     setupGraph() {
@@ -125,11 +125,11 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
         this.assessments = [
             {
                 name: this.openedAssessmentsTitle,
-                value: this.numberOfSubmissions.total - this.totalNumberOfAssessments.total / this.numberOfCorrectionRounds,
+                value: this.numberOfSubmissions().total - this.totalNumberOfAssessments() / this.numberOfCorrectionRounds(),
             },
             {
                 name: this.completedAssessmentsTitle,
-                value: this.totalNumberOfAssessments.total / this.numberOfCorrectionRounds,
+                value: this.totalNumberOfAssessments() / this.numberOfCorrectionRounds(),
             },
         ];
     }

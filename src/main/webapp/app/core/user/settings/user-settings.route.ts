@@ -11,6 +11,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
         data: {
             authorities: [Authority.USER],
+            usesModuleBackground: true,
         },
         children: [
             {

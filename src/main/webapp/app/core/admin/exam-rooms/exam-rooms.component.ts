@@ -1,4 +1,4 @@
-import { Component, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 import {
     ExamRoomAdminOverviewDTO,
     ExamRoomDTO,
@@ -25,7 +25,7 @@ import { AlertService } from 'app/shared/service/alert.service';
     templateUrl: './exam-rooms.component.html',
     imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
 })
-export class ExamRoomsComponent {
+export class ExamRoomsComponent implements OnInit {
     private readonly baseTranslationPath = 'artemisApp.examRooms.adminOverview';
 
     protected readonly faSort = faSort;
@@ -90,12 +90,12 @@ export class ExamRoomsComponent {
     examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
 
     // Fields for working with SortDirective
-    sortAttribute: 'id' | 'roomNumber' | 'name' | 'building' | 'defaultCapacity' | 'maxCapacity' = 'id';
+    sortAttribute: 'roomNumber' | 'name' | 'building' | 'defaultCapacity' | 'maxCapacity' = 'name';
     ascending: boolean = true;
 
-    initEffect = effect(() => {
+    ngOnInit() {
         this.loadExamRoomOverview();
-    });
+    }
 
     /**
      * Makes a REST request to fetch a new exam room overview and displays it
@@ -216,15 +216,6 @@ export class ExamRoomsComponent {
         );
     }
 
-    private getLayoutStrategyNames(examRoom: ExamRoomDTO): string {
-        return (
-            examRoom.layoutStrategies
-                ?.map((layoutStrategy) => layoutStrategy.name)
-                .sort()
-                .join(', ') ?? ''
-        );
-    }
-
     private calculateExamRoomData() {
         return this.overview()?.newestUniqueExamRooms?.map(
             (examRoomDTO) =>
@@ -232,7 +223,6 @@ export class ExamRoomsComponent {
                     ...examRoomDTO,
                     defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
                     maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
-                    layoutStrategyNames: this.getLayoutStrategyNames(examRoomDTO),
                 }) as ExamRoomDTOExtended,
         );
     }
