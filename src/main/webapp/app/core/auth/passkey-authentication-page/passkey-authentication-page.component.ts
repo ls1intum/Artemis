@@ -14,13 +14,13 @@ export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     protected readonly accountService = inject(AccountService);
 
-    userHasRegisteredAPasskey: boolean = false;
+    userHasRegisteredPasskey: boolean = false;
     returnUrl: string | undefined = undefined;
 
     private routeSubscription?: Subscription;
 
     ngOnInit() {
-        this.userHasRegisteredAPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
+        this.userHasRegisteredPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
 
         const redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey = this.accountService.isUserLoggedInWithApprovedPasskey() && this.returnUrl;
         if (redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey) {

@@ -89,6 +89,6 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.userHasRegisteredAPasskey).toBeTrue();
+        expect(component.userHasRegisteredPasskey).toBeTrue();
     });
 });
