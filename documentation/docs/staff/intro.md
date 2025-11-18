@@ -2,7 +2,6 @@
 id: intro
 title: Welcome to the Developer & Staff Guide
 sidebar_label: Introduction
-sidebar_position: 1
 ---
 
 # 🧑‍💻 Developer & Staff Setup Guide

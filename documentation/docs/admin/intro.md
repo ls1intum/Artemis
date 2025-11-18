@@ -2,7 +2,6 @@
 id: intro
 title: Welcome to the Administrator Guide
 sidebar_label: Introduction
-sidebar_position: 1
 ---
 
 # 🔐 Administrator Setup & Security Guide
