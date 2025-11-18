@@ -1,7 +1,16 @@
+import json
+import os
 import sys
 import re
+from tracemalloc import start
+
+import requests
+import zipfile
+import shutil
+
+import urllib3
 from logging_config import logging
-from typing import Dict, Any
+from typing import Dict, Any, List
 from requests import Session
 
 exercise_Ids: list[int] = []
@@ -41,7 +50,7 @@ def create_programming_exercise(session: Session, course_id: int, server_url: st
             },
         }
 
-        response = session.post(url, json=default_programming_exercise, headers=headers)
+        response: requests.Response = session.post(url, json=default_programming_exercise, headers=headers)
 
         if response.status_code == 201:
             logging.info(f"Created programming exercise {default_programming_exercise['title']} successfully")
@@ -53,26 +62,115 @@ def create_programming_exercise(session: Session, course_id: int, server_url: st
         else:
             raise Exception(f"Could not create programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
 
-def add_participation(session: Session, exercise_id: int, client_url: str) -> Dict[str, Any]:
-    """Add a participation for the exercise."""
-    url: str = f"{client_url}/exercise/exercises/{exercise_id}/participations"
-    headers: Dict[str, str] = {"Content-Type": "application/json"}
+def convert_exercise_to_zip(variant_path: str) -> None:
+    """Convert the programming exercise located at variant_path into a ZIP file.
+    variant_path: ../../pecv-bench/data/{course}/{exercise}/variants/{variant_id}
+    """
+    REPO_TYPES: List[str] = ["solution", "template", "tests"]
+    CONFIG_FILE: str = "Exercise-Details.json"
+    VARIANT_ID = os.path.basename(variant_path)  # 001
 
-    response = session.post(url, headers=headers)
-    if response.status_code == 201:
-        return response.json()
-    elif response.status_code == 403:
-        logging.info(f"Not allowed to push to following programming exercise with following id: {exercise_id}. Please double check if the exercise is part of the Course and update the exercise_Ids in the config file.")
-        sys.exit(0)
-    else:
-        response.raise_for_status()
+    output_zip_filename = f"{VARIANT_ID}-Exercise.zip" #001-Exercise.zip
+    output_zip_path = os.path.join(variant_path, output_zip_filename) #...001/001-Exercise.zip
+    logging.info(f"Final zip file: {output_zip_filename} will be created at {output_zip_path}")
+    zip_files = []
+    try:
+        for repo_type in REPO_TYPES:
+            repo_path = os.path.join(variant_path, repo_type) #001/solution
+            repo_name = f"{VARIANT_ID}-{repo_type}"  #001-solution
+            base_name = os.path.join(variant_path, repo_name)
+            if not os.path.exists(repo_path):
+                logging.error(f"Required folder {repo_type} does not exist in the variant path {variant_path}.")
+                continue
+            zip_folder_path = shutil.make_archive(base_name = base_name, format = 'zip', root_dir = repo_path)
+            logging.info(f"Created intermediate zip archive at {zip_folder_path}")
+            zip_files.append(zip_folder_path)
+    except Exception as e:
+        logging.error(f"Error while creating intermediate zip files: {e}")
+    
+    zip_files.append(os.path.join(variant_path, CONFIG_FILE))
 
-def commit(session: Session, participation_id: int, client_url: str, commits_per_student: int) -> None:
-    """Commit the participation to the repository multiple times."""
-    for _ in range(commits_per_student):
-        url: str = f"{client_url}/programming/repository/{participation_id}/commit"
-        headers: Dict[str, str] = {"Content-Type": "application/json"}
+    with zipfile.ZipFile(output_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for file in zip_files:
+            arcname = os.path.basename(file)
+            zipf.write(file, arcname=arcname)
+            logging.info(f"Added {file} to final zip as {arcname}.")
+    logging.info(f"Zip file created at {output_zip_path}")
 
-        response = session.post(url, headers=headers)
-        if response.status_code != 201:
-            response.raise_for_status()
+    logging.info("Cleaning up intermediate zip files...")
+    for temp_zip in zip_files:
+        if temp_zip.endswith('.zip') and os.path.exists(temp_zip):
+            os.remove(temp_zip)
+            logging.info(f"Removed temporary zip file: {os.path.basename(temp_zip)}")
+    
+    logging.info("Verifying contents of the final zip file...")
+    with zipfile.ZipFile(output_zip_path, 'r') as zipf:
+        zip_contents = zipf.namelist()
+        logging.info(f"Contents of {output_zip_filename}: {zip_contents}")
+
+
+# def import_programming_exercise(session: Session, course_id: int, server_url: str, json_path: str, exercise_zip_path: str) -> requests.Response:
+#     """
+#     Imports a programming exercise to the Artemis server using a multipart/form-data request.
+    
+#     The request includes two parts:
+#     1. 'programmingExercise': The configuration JSON (metadata).
+#     2. 'file': The exercise content as a ZIP archive.
+
+#     Returns the JSON response from the server (the newly created exercise object).
+#     """
+#     url: str = f"{server_url}/programming/courses/{course_id}/programming-exercises/import-from-file"
+
+#     try:
+#         with open(json_path, 'r') as f:
+#             # We load the Python dictionary, but send it as a JSON string later
+#             exercise_details: Dict[str, Any] = json.load(f)
+#     except Exception as e:
+#         logging.error(f"Failed to read programming exercise JSON file at {json_path}: {e}")
+    
+#     # Open the ZIP file handle in binary read mode ('rb')
+#     # Note: We must open the file and keep the handle for the POST request payload.
+#     # The 'requests' library handles closing the file if you use the 'files' parameter, 
+#     # but since we are manually encoding the multipart body, we need to manage the handle.
+#     try:
+#         with open(exercise_zip_path, 'rb') as file:
+#             zip_file = file.read()
+#     except Exception as e:
+#         logging.error(f"Failed to read programming exercise ZIP file at {exercise_zip_path}: {e}")
+    
+#     logging.info(f"Preparing to import exercise: {exercise_details.get('title', 'Untitled')}")
+    
+#     # Define the multipart payload structure
+#     # The syntax here is crucial for urllib3.filepost.encode_multipart_formdata:
+#     # 'name': (filename, content, content_type)
+#     files_payload = {
+#         'programmingExercise': (
+#             'Exercise-Details.json',
+#             json.dumps(exercise_details),
+#             'application/json'),
+#         'file': (
+#             exercise_zip_path,
+#             zip_file,
+#             'application/zip')
+#     }
+    
+#     # try:
+#     body, content_type = urllib3.filepost.encode_multipart_formdata(files_payload)
+#     logging.info(f"Multipart form-data body and content type prepared.")
+#     # finally:
+#     #     zip_file.close()
+    
+#     headers  = {
+#         "Content-Type": content_type
+#         }
+    
+#     logging.info(f"Sending request to: {url}")
+
+#     response: requests.Response = session.post(url, data=body, headers=headers)
+
+#     if response.status_code == 201:
+#         logging.info(f"Imported programming exercise {exercise_details.get('title', 'Untitled')} successfully")
+#         return response.json()
+#     else:
+#         logging.error(f"Failed to import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
+#         raise Exception(f"Could not import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
