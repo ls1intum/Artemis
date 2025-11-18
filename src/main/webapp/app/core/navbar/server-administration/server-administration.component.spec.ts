@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { ServerAdministrationComponent } from './server-administration.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -10,7 +10,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
-import { beforeEach, describe, it } from '@jest/globals';
 
 @Component({ template: '' })
 class MockEmptyComponent {}
@@ -21,8 +20,13 @@ describe('ServerAdministrationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ServerAdministrationComponent, TranslateModule.forRoot(), MockComponent(FeatureOverlayComponent)],
-            providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([{ path: '**', component: MockEmptyComponent }])],
+            imports: [
+                ServerAdministrationComponent,
+                TranslateModule.forRoot(),
+                MockComponent(FeatureOverlayComponent),
+                RouterTestingModule.withRoutes([{ path: '**', component: MockEmptyComponent }]),
+            ],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .overrideComponent(ServerAdministrationComponent, {
                 remove: { imports: [HasAnyAuthorityDirective] },
