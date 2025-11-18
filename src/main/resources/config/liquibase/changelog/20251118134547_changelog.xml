@@ -3,7 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20251029122219-add-is-approved-field" author="florian-glombik">
+    <changeSet id="20251118134547-add-is-approved-field" author="florian-glombik">
         <comment>Add is_approved field to ensure that a super admin approved the passkey for privileged actions</comment>
 
         <addColumn tableName="passkey_credential">
