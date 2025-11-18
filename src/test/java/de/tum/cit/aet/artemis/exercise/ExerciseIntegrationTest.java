@@ -168,12 +168,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Course course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), null);
 
-        // Keep only two students in the course to mirror the UI expectation of "1 of 2" participants
-        userUtilService.removeUserFromAllCourses(TEST_PREFIX + "student3");
-
         participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-
-        // Instructor participation must not be counted towards the student participation number
         participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "instructor1");
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -182,7 +177,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 parameters);
 
         assertThat(statistics.numberOfParticipations()).isEqualTo(1L);
-        assertThat(statistics.numberOfStudentsOrTeamsInCourse()).isEqualTo(2L);
+        assertThat(statistics.numberOfStudentsOrTeamsInCourse()).isEqualTo(3L);
     }
 
     @Test
