@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { NgStyle } from '@angular/common';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
@@ -41,14 +41,6 @@ export class CalendarEventsPerDaySectionComponent {
     days = computed<Day[]>(() => this.computeDays(this.dates()));
     zeroToTwentyFour: number[] = Array.from({ length: 24 }, (_, i) => i);
     timeLabels = this.getTimeLabelsForGrid();
-    selectedEvent = signal<CalendarEvent | undefined>(undefined);
-    isEventSelected = output<boolean>();
-
-    constructor() {
-        effect(() => {
-            this.isEventSelected.emit(this.selectedEvent() !== undefined);
-        });
-    }
 
     private computeDateToEventAndPositionMap(eventMap: Map<string, CalendarEvent[]>, dates: Dayjs[]): Map<string, CalendarEventAndMetadata[]> {
         const dateKeysToBeIncluded = new Set(dates.map((date) => date.format('YYYY-MM-DD')));
