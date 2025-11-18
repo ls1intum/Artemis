@@ -463,6 +463,11 @@ public final class Constants {
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
 
     /**
+     * The name of the property used to require passkey authentication for access to administrator features.
+     */
+    public static final String PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME = "artemis.user-management.passkey.require-for-administrator-features";
+
+    /**
      * The name of the property used to enable or disable the sharing functionality.
      */
     public static final String SHARING_ENABLED_PROPERTY_NAME = "artemis.sharing.enabled";
