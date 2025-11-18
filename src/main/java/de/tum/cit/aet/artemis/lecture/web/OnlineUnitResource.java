@@ -8,7 +8,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -30,6 +32,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -38,6 +42,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.Enf
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyDTO;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
+import de.tum.cit.aet.artemis.lecture.dto.OnlineUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
@@ -91,25 +98,47 @@ public class OnlineUnitResource {
     /**
      * PUT /lectures/:lectureId/online-units : Updates an existing online unit .
      *
-     * @param lectureId  the id of the lecture to which the online unit belongs to update
-     * @param onlineUnit the online unit to update
+     * @param lectureId     the id of the lecture to which the online unit belongs to update
+     * @param onlineUnitDto the online unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated onlineUnit
      */
     @PutMapping("lectures/{lectureId}/online-units")
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<OnlineUnit> updateOnlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnit onlineUnit) {
-        log.debug("REST request to update an online unit : {}", onlineUnit);
-        if (onlineUnit.getId() == null) {
+    public ResponseEntity<OnlineUnitDTO> updateOnlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnitDTO onlineUnitDto) {
+        log.debug("REST request to update an online unit : {}", onlineUnitDto);
+        if (onlineUnitDto.id() == null) {
             throw new BadRequestException();
         }
 
-        var existingOnlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnit.getId());
+        var existingOnlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnitDto.id());
 
+        // Validation
         checkOnlineUnitCourseAndLecture(existingOnlineUnit, lectureId);
-        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
+        lectureUnitService.validateUrlStringAndReturnUrl(existingOnlineUnit.getSource());
 
-        OnlineUnit result = lectureUnitService.saveWithCompetencyLinks(onlineUnit, onlineUnitRepository::save);
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingOnlineUnit, Optional.of(onlineUnit)));
+        // Precompute original competency IDs for progress update below
+        Set<Long> originalCompetencyIds = existingOnlineUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
+                .collect(Collectors.toSet());
+
+        // copy all attributes
+        existingOnlineUnit.setDescription(onlineUnitDto.description());
+        existingOnlineUnit.setSource(onlineUnitDto.source());
+        existingOnlineUnit.setName(onlineUnitDto.name());
+        existingOnlineUnit.setReleaseDate(onlineUnitDto.releaseDate());
+
+        lectureUnitService.updateCompetencyLinks(onlineUnitDto, existingOnlineUnit);
+
+        // Note: Competency links are persisted automatically (it should be done because of CascadeType.PERSIST)
+        existingOnlineUnit = onlineUnitRepository.save(existingOnlineUnit);
+
+        if (competencyProgressApi.isPresent()) {
+            competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsync(originalCompetencyIds, existingOnlineUnit);
+        }
+
+        // convert into DTO
+        var result = new OnlineUnitDTO(existingOnlineUnit.getId(), existingOnlineUnit.getName(), existingOnlineUnit.getReleaseDate(), existingOnlineUnit.getDescription(),
+                existingOnlineUnit.getSource(), existingOnlineUnit.getCompetencyLinks().stream()
+                        .map(link -> new CompetencyLinkDTO(new CompetencyDTO(link.getCompetency().getId()), link.getWeight())).collect(Collectors.toSet()));
 
         return ResponseEntity.ok(result);
     }

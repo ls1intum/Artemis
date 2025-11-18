@@ -154,6 +154,24 @@ public class CompetencyProgressService {
         }
     }
 
+    // Alternative
+    @Async
+    public void updateProgressForUpdatedLearningObjectAsync(Set<Long> originalCompetencyIds, LearningObject updatedLearningObject) {
+        SecurityUtils.setAuthorizationObject(); // Required for async
+
+        Set<CourseCompetency> updatedCompetencies = updatedLearningObject.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency)
+                .collect(Collectors.toSet());
+        Set<Long> updatedCompetencyIds = updatedCompetencies.stream().map(CourseCompetency::getId).collect(Collectors.toSet());
+
+        Set<Long> removedCompetencyIds = originalCompetencyIds.stream().filter(id -> !updatedCompetencyIds.contains(id)).collect(Collectors.toSet());
+        Set<Long> addedCompetencyIds = updatedCompetencyIds.stream().filter(id -> !originalCompetencyIds.contains(id)).collect(Collectors.toSet());
+
+        updateProgressByCompetencyIds(removedCompetencyIds);
+        if (!addedCompetencyIds.isEmpty()) {
+            updateProgressByCompetencyIdsAndLearningObject(addedCompetencyIds, updatedLearningObject);
+        }
+    }
+
     private void updateProgressByCompetencyIds(Set<Long> competencyIds) {
         for (long competencyId : competencyIds) {
             List<CompetencyProgress> existingProgress = competencyProgressRepository.findAllByCompetencyId(competencyId);
@@ -174,6 +192,8 @@ public class CompetencyProgressService {
             };
             existingCompetencyUsers.addAll(existingLearningObjectUsers);
             log.debug("Updating competency progress for {} users.", existingCompetencyUsers.size());
+            // TODO: this could be a very expensive operation if many users and competencies are involved, we MUST optimize this in the future
+            // Minimal changes: load all competencies only once outside the loop and reuse them inside
             existingCompetencyUsers.forEach(user -> updateCompetencyProgress(competencyId, user));
         }
     }

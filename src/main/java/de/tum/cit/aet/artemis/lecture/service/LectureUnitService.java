@@ -10,9 +10,11 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -29,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -42,6 +45,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -69,9 +73,11 @@ public class LectureUnitService {
 
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
+    private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi) {
+            Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -80,6 +86,7 @@ public class LectureUnitService {
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
+        this.competencyRepositoryApi = competencyRepositoryApi;
     }
 
     /**
@@ -281,5 +288,55 @@ public class LectureUnitService {
         }
 
         return savedLectureUnit;
+    }
+
+    /**
+     * Update the competency links of an existing text unit based on the provided DTO.
+     * Supports removing links, updating weights of existing ones, and adding new links.
+     *
+     * @param lectureUnitDto      the DTO (from the client) containing the new state of competency links
+     * @param existingLectureUnit the existing DB entity to update
+     */
+    public void updateCompetencyLinks(LectureUnitDTO lectureUnitDto, LectureUnit existingLectureUnit) {
+        if (competencyRepositoryApi.isEmpty()) {
+            return;
+        }
+        // TODO: think about optimizing this by loading all new competencies in a single query
+        if (lectureUnitDto.competencyLinks() == null || lectureUnitDto.competencyLinks().isEmpty()) {
+            // this handles the case where all competency links were removed
+            existingLectureUnit.getCompetencyLinks().clear();
+        }
+        else {
+            // 1) Existing links indexed by competency id
+            Map<Long, CompetencyLectureUnitLink> existingLinksByCompetencyId = existingLectureUnit.getCompetencyLinks().stream()
+                    .collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
+
+            // 2) New state of links (reusing existing ones where possible)
+            Set<CompetencyLectureUnitLink> updatedLinks = new HashSet<>();
+
+            for (var dtoLink : lectureUnitDto.competencyLinks()) {
+                long competencyId = dtoLink.competency().id();
+                double weight = dtoLink.weight();
+
+                var existingLink = existingLinksByCompetencyId.get(competencyId);
+                if (existingLink != null) {
+                    // reuse managed entity, just update the weight
+                    existingLink.setWeight(weight);
+                    updatedLinks.add(existingLink);
+                }
+                else {
+                    // no existing link → create a new one
+                    var competency = competencyRepositoryApi.get().findByIdElseThrow(competencyId);
+                    var newLink = new CompetencyLectureUnitLink(competency, existingLectureUnit, weight);
+
+                    updatedLinks.add(newLink);
+                }
+            }
+
+            // 3) Replace the contents of the managed collection, NOT the collection itself
+            var managedSet = existingLectureUnit.getCompetencyLinks();
+            managedSet.clear();
+            managedSet.addAll(updatedLinks);
+        }
     }
 }
