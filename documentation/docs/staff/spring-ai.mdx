@@ -1,0 +1,161 @@
+---
+id: spring-ai
+title: Spring AI
+sidebar_label: Spring AI
+sidebar_position: 3
+---
+
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Callout from "../../src/components/Callout/Callout";
+
+# Spring AI
+
+This guide explains how to set up a local LLM (Large Language Model) service for development purposes using LM Studio. This allows you to test Hyperion's AI-assisted features locally without requiring cloud API keys.
+
+<Callout variant={CalloutVariant.info}>
+    For production setups with cloud providers (OpenAI, Azure OpenAI), refer to the [Hyperion Admin Setup](https://docs.artemis.cit.tum.de/admin/setup/hyperion/) in the legacy documentation.
+</Callout>
+
+## Prerequisites
+
+- A running Artemis instance with the `local` profile
+- Sufficient disk space for downloading LLM models (typically 10-40GB per model)
+
+## Setting up LM Studio
+
+### Install LM Studio
+
+Install LM Studio using Homebrew:
+
+```bash
+brew install --cask lm-studio
+```
+
+### Download and Configure a Model
+
+#### Download LM Studio
+1. Open the **LM Studio** GUI application and choose **Developer**
+2. Download the `gpt-oss-20b` model (this will take a few moments depending on your internet connection)
+3. Make sure **"Enable local LLM service on login"** is active
+
+The GUI application enables you to see logs and interact with the model in a chat similar to ChatGPT.
+
+#### Configure LM Studio via CLI
+
+LM Studio provides a CLI tool (`lms`) for managing models and the server. For more information, see the [LM Studio CLI documentation](https://lmstudio.ai/docs/cli).
+
+1. Download a model
+
+    ```bash
+    lms get openai/gpt-oss-20b
+    ```
+2. Load the model to activate it
+
+    ```bash
+    lms load openai/gpt-oss-20b --context-length 32000
+    ```
+
+3. Start the LMS server
+
+    ```bash
+    lms server start
+    ```
+
+The LLM service should now be running on http://localhost:1234.
+
+#### Verify the Service Works
+
+Verify http://localhost:1234/api/v0/models lists the models.
+
+The model `openai/gpt-oss-20b` should appear in the list.
+
+## Configuring Artemis
+
+Add the following configuration to your `application-local.yml` file (or adapt your existing configuration accordingly):
+
+```yaml
+artemis:
+  hyperion:
+    enabled: true
+spring:
+  ai:
+    model:
+      chat: openai
+    openai:
+      base-url: http://localhost:1234
+      api-key: dummy-key # not required for local LLM service
+      chat:
+        completions-path: /v1/chat/completions
+        options:
+          model: openai/gpt-oss-20b    # or whatever name your local server expects
+          temperature: 0.7
+```
+
+<Callout variant={CalloutVariant.warning}>
+    For production setups with cloud providers (OpenAI, Azure OpenAI), refer to the [Hyperion Admin Setup](https://docs.artemis.cit.tum.de/admin/setup/hyperion/) in the legacy documentation.
+</Callout>
+
+## Testing the Integration
+
+1. Start the Artemis server
+2. Start the Artemis client
+3. Create a programming exercise and open it in the editor (click "Edit in Editor")
+4. Click the **"Check Consistency"** button in the Hyperion toolbar
+5. Observe the logs:
+
+**Artemis Server logs** should include:
+
+```
+SpringAIConfiguration      : Found Chat Model: openai/gpt-oss-20b
+```
+
+**LMS Server logs** can be viewed using:
+
+```bash
+lms log stream
+```
+
+Or by opening the LM Studio GUI and activating the Developer view.
+
+The LMS logs will show the prompt sent from Artemis, progress status, and the generated prediction.
+
+## Troubleshooting
+
+### Exit Code 6 When Loading a Model
+
+If you encounter the following error:
+
+```
+🥲 Failed to load the model
+Error loading model. (Exit code: 6)
+```
+
+This usually means the model cannot load because the required runtime engine is missing or broken.
+
+#### Fix: Repair the MLX Runtime (macOS Apple Silicon)
+
+This is a common issue on macOS with Apple Silicon when using MLX models like `gpt-oss-20b`:
+
+1. Open **LM Studio**
+2. In the left menu, click **LM Runtimes**
+3. Under **Runtime Extension Packs**, find:
+
+   **LM Studio MLX**
+
+   (Engine used for MLX / Apple Silicon models)
+
+4. If LM Studio detects an issue, a **Fix** button will appear
+5. Click **Fix** to reinstall, update, or repair the engine
+
+After the repair completes, try loading your model again.
+
+## Performance Considerations
+
+- **Model Size**: Larger models provide better results but require more RAM and processing power. The `gpt-oss-20b` model is a good balance for development.
+- **Context Length**: The `--context-length 32000` parameter controls how much text the model can process at once. Adjust based on your hardware capabilities.
+- **GPU Acceleration**: LM Studio automatically uses GPU acceleration when available (Metal on macOS, CUDA on Linux/Windows).
+
+## Related Documentation
+
+- [Hyperion Admin Setup](https://docs.artemis.cit.tum.de/admin/setup/hyperion/) - Production setup with cloud providers
+- [Server Setup](https://docs.artemis.cit.tum.de/dev/setup/server/) - General Artemis server configuration
