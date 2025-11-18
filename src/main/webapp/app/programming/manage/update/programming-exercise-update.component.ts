@@ -52,6 +52,7 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { ProgrammingExerciseVersionControlComponent } from 'app/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { FileService } from 'app/shared/service/file.service';
@@ -74,6 +75,7 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
         ProgrammingExerciseModeComponent,
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseProblemComponent,
+        ProgrammingExerciseVersionControlComponent,
         ProgrammingExerciseGradingComponent,
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
@@ -669,6 +671,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.programmingExercise.exerciseGroup = undefined;
             });
             this.isExamMode = false;
+
+            // Sync categories
+            this.exerciseCategories = this.programmingExercise.categories ?? [];
         }
         this.loadCourseExerciseCategories(courseId);
         resetProgrammingForImport(this.programmingExercise);

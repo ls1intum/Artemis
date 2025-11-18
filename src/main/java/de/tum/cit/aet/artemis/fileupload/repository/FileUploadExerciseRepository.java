@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.hibernate.NonUniqueResultException;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -53,6 +52,17 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     Set<FileUploadExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId) throws NonUniqueResultException;
 
     /**
+     * Finds a FileUploadExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or example submissions.
+     * Basic FileUploadExercise fields (exampleSolution, filePattern) are already included in the entity.
+     *
+     * @param exerciseId the id of the exercise to find
+     * @return the exercise with minimal data necessary for exercise versioning
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    Optional<FileUploadExercise> findForVersioningById(long exerciseId);
+
+    /**
      * Finds a file upload exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
      *
      * @param title    the title of the exercise
@@ -68,7 +78,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
         return allExercises.stream().findFirst();
     }
 
-    @NotNull
+    @NonNull
     default FileUploadExercise findWithEagerCompetenciesByIdElseThrow(Long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
     }
@@ -76,7 +86,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
     Optional<FileUploadExercise> findWithGradingCriteriaById(Long exerciseId);
 
-    @NotNull
+    @NonNull
     default FileUploadExercise findWithGradingCriteriaByIdElseThrow(Long exerciseId) {
         return getValueElseThrow(findWithGradingCriteriaById(exerciseId), exerciseId);
     }

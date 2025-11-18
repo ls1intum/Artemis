@@ -29,15 +29,16 @@ import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.map.IMap;
-import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
@@ -59,32 +60,32 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs}")
     private int pauseAfterConsecutiveFailures;
 
-    private IQueue<BuildJobQueueItem> buildJobQueue;
+    private DistributedQueue<BuildJobQueueItem> buildJobQueue;
 
-    private IMap<String, BuildJobQueueItem> processingJobs;
+    private DistributedMap<String, BuildJobQueueItem> processingJobs;
 
-    private IQueue<ResultQueueItem> resultQueue;
+    private DistributedQueue<ResultQueueItem> resultQueue;
 
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
+    private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
 
-    private ITopic<String> canceledBuildJobsTopic;
+    private DistributedTopic<String> canceledBuildJobsTopic;
 
-    private ITopic<String> pauseBuildAgentTopic;
+    private DistributedTopic<String> pauseBuildAgentTopic;
 
-    private ITopic<String> resumeBuildAgentTopic;
+    private DistributedTopic<String> resumeBuildAgentTopic;
 
     @Autowired
     private ApplicationContext applicationContext;
 
     @BeforeAll
     void init() {
-        processingJobs = this.hazelcastInstance.getMap("processingJobs");
-        buildJobQueue = this.hazelcastInstance.getQueue("buildJobQueue");
-        resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
-        buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
-        canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
-        pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
-        resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
+        processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
+        buildJobQueue = distributedDataAccessService.getDistributedBuildJobQueue();
+        resultQueue = distributedDataAccessService.getDistributedBuildResultQueue();
+        buildAgentInformation = distributedDataAccessService.getDistributedBuildAgentInformation();
+        pauseBuildAgentTopic = distributedDataAccessService.getPauseBuildAgentTopic();
+        resumeBuildAgentTopic = distributedDataAccessService.getResumeBuildAgentTopic();
+        canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
         // this triggers the initialization of all required beans in the application context
         // in production the DeferredEagerBeanInitializer would do this automatically
         applicationContext.getBean(SharedQueueProcessingService.class);
@@ -109,7 +110,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         });
 
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
             return buildAgent.numberOfCurrentBuildJobs() == 1 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 1
                     && buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id());
         });
@@ -158,7 +159,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         });
 
         await().pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
             return buildAgent.numberOfCurrentBuildJobs() == 2 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 2
                     && (buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getFirst().id().equals(queueItem2.id()))
                     && (buildAgent.runningBuildJobs().getLast().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getLast().id().equals(queueItem2.id()));
@@ -286,8 +287,8 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         pauseBuildAgentTopic.publish(buildAgentShortName);
 
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-            return buildAgent.status() == BuildAgentInformation.BuildAgentStatus.PAUSED;
+            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            return buildAgent.status() == BuildAgentStatus.PAUSED;
         });
 
         var queueItem = createBaseBuildJobQueueItemForTrigger();
@@ -302,8 +303,8 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         resumeBuildAgentTopic.publish(buildAgentShortName);
 
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-            return buildAgent.status() == BuildAgentInformation.BuildAgentStatus.ACTIVE;
+            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            return buildAgent.status() == BuildAgentStatus.ACTIVE;
         });
 
         await().until(() -> {
@@ -327,15 +328,15 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.add(queueItem);
 
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-            return buildAgent != null && buildAgent.status() == BuildAgentInformation.BuildAgentStatus.ACTIVE;
+            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            return buildAgent != null && buildAgent.status() == BuildAgentStatus.ACTIVE;
         });
 
         pauseBuildAgentTopic.publish(buildAgentShortName);
 
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-            return buildAgent != null && buildAgent.status() == BuildAgentInformation.BuildAgentStatus.PAUSED;
+            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            return buildAgent != null && buildAgent.status() == BuildAgentStatus.PAUSED;
         });
 
         await().until(() -> {
@@ -406,15 +407,15 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         await().until(() -> resultQueue.size() >= pauseAfterConsecutiveFailures);
 
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-            return buildAgent != null && buildAgent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
+            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            return buildAgent != null && buildAgent.status() == BuildAgentStatus.SELF_PAUSED;
         });
 
         // resume and wait for unpause not interfere with other tests
         resumeBuildAgentTopic.publish(buildAgentShortName);
         await().until(() -> {
-            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-            return buildAgent.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
+            var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
+            return buildAgent.status() != BuildAgentStatus.SELF_PAUSED;
         });
     }
 

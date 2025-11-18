@@ -18,7 +18,13 @@
 }
 @if (exercise) {
     <div class="module-bg p-3 pt-1">
-        <jhi-code-editor-container [participation]="selectedParticipation!" [buildable]="selectedRepository !== RepositoryType.TESTS" [course]="course" [allowHiddenFiles]="true">
+        <jhi-code-editor-container
+            [participation]="selectedParticipation!"
+            [buildable]="selectedRepository !== RepositoryType.TESTS"
+            [course]="course"
+            [allowHiddenFiles]="true"
+            [consistencyIssues]="consistencyIssues()"
+        >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
                 <span
@@ -154,6 +160,15 @@
                                 </div>
                             }
                         </div>
+                    @if (exercise.isAtLeastInstructor && hyperionEnabled) {
+                        <button (click)="checkConsistencies(exercise)" class="btn btn-primary me-2" [disabled]="isCheckingConsistency()">
+                            @if (isCheckingConsistency()) {
+                                <fa-icon [icon]="faCircleNotch" animation="spin" class="text-white me-2" />
+                            } @else {
+                                <fa-icon [icon]="faCheckDouble" class="me-2" />
+                            }
+                            <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
+                        </button>
                     }
                 </div>
             </div>
@@ -181,6 +196,7 @@
                 [templateParticipation]="exercise.templateParticipation!"
                 [initialEditorHeight]="'external'"
                 [enableResize]="false"
+                [consistencyIssues]="consistencyIssues()"
                 class="instructions-wrapper__content card-body p-0"
                 (instructionChange)="onInstructionChanged($event)"
             />

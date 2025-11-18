@@ -41,12 +41,16 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly IrisTextMessageContent = IrisTextMessageContent;
 
+    protected readonly faArrowUp = faArrowUp;
+    protected readonly faArrowsRotate = faArrowsRotate;
+    protected readonly faArrowDown = faArrowDown;
+
     protected readonly chatService = inject(IrisChatService);
-    private profileService = inject(ProfileService);
-    private irisSettingsService = inject(IrisSettingsService);
-    private accountService = inject(AccountService);
-    private statusService = inject(IrisStatusService);
-    private featureToggleService = inject(FeatureToggleService);
+    private readonly profileService = inject(ProfileService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
+    private readonly accountService = inject(AccountService);
+    private readonly statusService = inject(IrisStatusService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     irisActive$ = this.statusService.getActiveStatus().pipe(shareReplay(1));
 
@@ -64,11 +68,8 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     suggestion: IrisMessage | undefined;
     suggestions: IrisMessage[] = [];
 
-    faArrowUp = faArrowUp;
     upDisabled = true;
-    faArrowDown = faArrowDown;
     downDisabled = true;
-    faArrowsRotate = faArrowsRotate;
 
     stages?: IrisStageDTO[] = [];
     error?: IrisErrorMessageKey;

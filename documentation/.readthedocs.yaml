@@ -1,0 +1,28 @@
+---
+# Read the Docs configuration file for Docusaurus
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+#
+# Note: ReadTheDocs is used for PR preview builds only.
+# Primary documentation hosting is on ... (... to be defined).
+
+version: 2
+
+build:
+  os: "ubuntu-24.04"
+  tools:
+    nodejs: "22"
+  commands:
+    # Install dependencies
+    - cd documentation && npm ci
+    # Build the Docusaurus site
+    - cd documentation && npm run build
+    # Copy built files to Read the Docs output directory
+    - mkdir --parents $READTHEDOCS_OUTPUT/html/
+    - cp --recursive documentation/build/* $READTHEDOCS_OUTPUT/html/
+
+# Disable other formats since we're serving static files
+formats: []
+
+# No Python dependencies needed
+python:
+  install: []

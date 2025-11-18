@@ -69,6 +69,12 @@
                 "build.plan.id": "Die Lösungs-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
                 "repository.url": "Die Lösungs-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist."
             },
+            "student": {
+                "repository.url": "Die Studierenden-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist."
+            },
+            "instructor": {
+                "repository.type": "{{repositoryType}} ist kein gültiger Instruktor-Repository-Typ. Nur {{validTypes}} sind erlaubt."
+            },
             "auxiliary.repository": {
                 "id": "Die ID eines Hilfs-Repositories scheint gesetzt zu sein. Stelle bitte sicher, dass die ID nicht gesetzt ist.",
                 "name": "Der Name von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jeder Name gültig ist und es keine Duplikate gibt.",
@@ -140,6 +146,7 @@
             }
         },
         "notEnoughExamSeats": "Die ausgewählten Räume haben nur Kapazität für {{ numberOfUsableSeats }} der {{ numberOfExamUsers }} Klausurteilnehmer",
+        "reserveFactorOutOfRange": "Der Reservierungsfaktor muss zwischen 0 und 1 sein",
         "noRoomIDs": "Du hast keine Räume ausgewählt",
         "invalidRoomIDs": "Mindestens einer der Räume, die du ausgewählt hast, existiert nicht oder ist veraltet",
         "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
@@ -150,6 +157,13 @@
             "isNull": "Es wurde keine Beispielabgabe übermittelt.",
             "submissionIsNull": "Diese Beispielabgabe enthält keine Lösung.",
             "submissionIdMissing": "Die Abgabe muss zuerst gespeichert werden, bevor sie umgewandelt werden kann."
-        }
+        },
+        "submissionExerciseMismatch": "Die Abgabe gehört nicht zur angegebenen Aufgabe.",
+        "maxAthenaResultsReached": "Maximale Anzahl an KI-Feedback-Anfragen erreicht.",
+        "submissionAlreadyHasAthenaResult": "Die Abgabe hat bereits ein Athena-Ergebnis.",
+        "missingFeedbackSuggestionModule": "Die Aufgabe hat kein Feedback-Vorschlagsmodul konfiguriert.",
+        "examExerciseNoAccessToAthena": "Klausuraufgaben haben keinen Zugriff auf Athena.",
+        "noAccessToAthenaModule": "Die Aufgabe hat keinen Zugriff auf das ausgewählte Athena-Modul.",
+        "athenaModuleChangeAfterDueDate": "Das Athena-Modul kann nach Ablauf der Abgabefrist nicht mehr geändert werden."
     }
 }

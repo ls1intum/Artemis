@@ -240,9 +240,10 @@ export class CodeButtonComponent implements OnInit {
      *
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      * @param alwaysUsetoken if true, the token authentication method is always used, even if the user has not selected to use it
+     * @param alwaysReturnHttp if true, the http url is always returned, even if ssh is selected
      */
-    getHttpOrSshRepositoryUri(insertPlaceholder = true, alwaysUsetoken = false): string {
-        if (this.useSsh && this.sshTemplateUrl) {
+    getHttpOrSshRepositoryUri(insertPlaceholder = true, alwaysUsetoken = false, alwaysReturnHttp = false): string {
+        if (!alwaysReturnHttp && this.useSsh && this.sshTemplateUrl) {
             return this.getSshCloneUrl(this.getRepositoryUri());
         }
         const url = this.getRepositoryUri();
@@ -421,7 +422,7 @@ export class CodeButtonComponent implements OnInit {
             // Theia requires the Build Config of the programming exercise to be set
             this.programmingExerciseService.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {
                 // Merge the theiaConfig (containing the theiaImage) into the buildConfig
-                this.exercise()!.buildConfig = { ...exercise.buildConfig, ...theiaConfig };
+                this.exercise()!.buildConfig = { ...exercise.buildConfig!, ...theiaConfig };
 
                 // Set variables now, sanitize later on
                 this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
@@ -436,7 +437,7 @@ export class CodeButtonComponent implements OnInit {
 
     async startOnlineIDE() {
         const theiaImage = this.exercise()?.buildConfig?.theiaImage ?? '';
-        const repositoryUri = this.getHttpOrSshRepositoryUri(false, true);
+        const repositoryUri = this.getHttpOrSshRepositoryUri(false, true, true);
         const userName = this.user.name;
         const userEmail = this.user.email;
 

@@ -181,7 +181,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     ];
     const stats = {
         numberOfSubmissions: { inTime: 12, late: 5 },
-        totalNumberOfAssessments: { inTime: 9, late: 1 },
+        totalNumberOfAssessments: 9,
         numberOfAssessmentsOfCorrectionRounds,
         numberOfLockedAssessmentByOtherTutorsOfCorrectionRound,
     } as StatsForDashboard;
@@ -300,7 +300,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should initialize', fakeAsync(() => {
         const user = { id: 10, login: 'tutor1' } as User;
-        accountService.userIdentity = user;
+        accountService.userIdentity.set(user);
         fixture.detectChanges();
 
         expect(comp.courseId).toBe(1);
@@ -319,7 +319,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should initialize with tutor leaderboard entry', () => {
         const tutor = { id: 10, login: 'tutor1' } as User;
-        accountService.userIdentity = tutor;
+        accountService.userIdentity.set(tutor);
         const tutorLeaderBoardEntry = {
             userId: tutor.id!,
             numberOfAssessments: 3,

@@ -13,8 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 
-import jakarta.ws.rs.NotFoundException;
-
 import org.apache.commons.io.IOUtils;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -33,6 +31,7 @@ import org.springframework.test.web.client.response.MockRestResponseCreators;
 import de.tum.cit.aet.artemis.core.authentication.AuthenticationFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -77,7 +76,6 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     void tearDown() throws Exception {
         sharingPlatformMockProvider.reset();
         // reset caches!
-        exerciseSharingService.getRepositoryCache().invalidateAll();
         SecurityContextHolder.clearContext();
     }
 
@@ -195,7 +193,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
                         SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),
                 999);
 
-        assertThatThrownBy(() -> exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo)).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo)).isInstanceOf(EntityNotFoundException.class);
 
     }
 
@@ -214,15 +212,15 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
                         SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),
                 0);
 
-        assertThatThrownBy(() -> exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo)).isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo)).isInstanceOf(EntityNotFoundException.class);
 
     }
 
     @Test
-    // @Disabled("interferes with other tests :-(")
     @WithMockUser(username = INSTRUCTOR1, roles = "INSTRUCTOR")
     void testImportProgrammingExerciseFromSharing() throws URISyntaxException, IOException, GitAPIException, SharingException {
         userUtilService.addInstructor("Sharing", INSTRUCTOR1);
+        mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN);
 
         SecurityContextHolder.getContext().setAuthentication(AuthenticationFactory.createUsernamePasswordAuthentication(INSTRUCTOR1.toLowerCase()));
 
@@ -235,18 +233,15 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         try {
 
-            // doReturn(exercise).when(programmingExerciseImportFromFileService).importProgrammingExerciseFromFile(any(), any(), any(), any(), eq(true));
             SharingSetupInfo setupInfo = new SharingSetupInfo(exercise, course1, sharingInfo);
 
             ProgrammingExercise importedExercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(setupInfo);
 
             assertThat(importedExercise.getId()).isNotNull();
             assertThat(importedExercise.getPackageName()).isEqualTo(exercise.getPackageName());
-            // Verify that the import pipeline was triggered once with the expected flag
-            // verify(programmingExerciseImportFromFileService, times(1)).importProgrammingExerciseFromFile(any(), any(), any(), any(), eq(true));
         }
         finally {
-            // we have to explicitely clean up the repository, otherwise repeated tests will fail, because the repository already exists.
+            // we have to explicitly clean up the repository, otherwise repeated tests will fail, because the repository already exists.
             // we do this in a finally, because otherwise we would have to repeat it every afterEach.
             versionControlService.deleteProject(exercise.getProjectKey());
         }
