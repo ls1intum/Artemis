@@ -114,7 +114,7 @@ public class OnlineUnitResource {
 
         // Validation
         checkOnlineUnitCourseAndLecture(existingOnlineUnit, lectureId);
-        lectureUnitService.validateUrlStringAndReturnUrl(existingOnlineUnit.getSource());
+        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnitDto.source());
 
         // Precompute original competency IDs for progress update below
         Set<Long> originalCompetencyIds = existingOnlineUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)

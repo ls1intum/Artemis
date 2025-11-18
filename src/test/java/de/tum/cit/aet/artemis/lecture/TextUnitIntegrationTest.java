@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.dto.TextUnitDTO;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -106,9 +107,9 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         textUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, textUnit, 1)));
         persistTextUnitWithLecture();
         textUnit.setContent("Changed");
-        TextUnit updatedTextUnit = request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
-        assertThat(updatedTextUnit.getContent()).isEqualTo("Changed");
-        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.of(textUnit)));
+        TextUnitDTO updatedTextUnit = request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnitDTO.class, HttpStatus.OK);
+        assertThat(updatedTextUnit.content()).isEqualTo("Changed");
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of(competency.getId())), eq(textUnit));
     }
 
     @Test
@@ -130,7 +131,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<LectureUnit> orderedUnits = lecture.getLectureUnits();
 
         // Updating the lecture unit should not change order attribute
-        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", secondTextUnit, TextUnit.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", secondTextUnit, TextUnitDTO.class, HttpStatus.OK);
         databaseLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
         assertThat(lecture.getLectureUnits()).hasSize(2);
 
@@ -144,7 +145,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         persistTextUnitWithLecture();
         TextUnit textUnitFromRequest = request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
         textUnitFromRequest.setId(null);
-        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnitDTO.class, HttpStatus.BAD_REQUEST);
 
         request.get("/api/lecture/lectures/" + "2379812738912" + "/text-units/" + this.textUnit.getId(), HttpStatus.BAD_REQUEST, TextUnit.class);
     }

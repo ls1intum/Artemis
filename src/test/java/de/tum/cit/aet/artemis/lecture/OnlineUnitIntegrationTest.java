@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.dto.OnlineUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -148,9 +149,9 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.onlineUnit.setDescription("Changed");
-        this.onlineUnit = request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.OK);
-        assertThat(this.onlineUnit.getDescription()).isEqualTo("Changed");
-        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(onlineUnit), eq(Optional.of(onlineUnit)));
+        var updatedOnlineUnit = request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnitDTO.class, HttpStatus.OK);
+        assertThat(updatedOnlineUnit.description()).isEqualTo("Changed");
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of(competency.getId())), eq(onlineUnit));
     }
 
     @Test
@@ -166,7 +167,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         List<LectureUnit> orderedUnits = lecture1.getLectureUnits();
 
         // Updating the lecture unit should not change order attribute
-        request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnit, OnlineUnitDTO.class, HttpStatus.OK);
 
         List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
