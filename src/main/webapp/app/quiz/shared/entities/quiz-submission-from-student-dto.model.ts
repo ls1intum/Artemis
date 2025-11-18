@@ -78,9 +78,19 @@ function createSubmittedAnswerFromStudentDTO(submittedAnswer: SubmittedAnswer): 
     } else if (submittedAnswer.type === 'short-answer') {
         return createShortAnswerSubmittedAnswerFromStudentDTO(submittedAnswer as ShortAnswerSubmittedAnswer);
     }
-    throw new Error('Unknown submitted answer type: ' + submittedAnswer);
+    throw new Error('Unknown submitted answer type: ' + submittedAnswer.type);
 }
 
+/**
+ * Creates a serializable DTO representation of a `QuizSubmission` that only contains
+ * the information submitted by the student. It converts all concrete `SubmittedAnswer`
+ * instances (multiple-choice, drag-and-drop, short-answer) into lightweight
+ * `SubmittedAnswerFromStudentDTO` objects, removing unnecessary server-side details.
+ *
+ * \@param submission The quiz submission domain object containing the student's answers.
+ * \@returns A `QuizSubmissionFromStudentDTO` with normalized submitted answers ready
+ *          to be sent to the server or stored on the client.
+ */
 export function createQuizSubmissionFromStudentDTO(submission: QuizSubmission): QuizSubmissionFromStudentDTO {
     return {
         submittedAnswers: submission.submittedAnswers?.map((submittedAnswer) => createSubmittedAnswerFromStudentDTO(submittedAnswer)) ?? [],

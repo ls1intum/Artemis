@@ -550,6 +550,30 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         return submittedAnswers;
     }
 
+    /**
+     * Creates a new {@link QuizSubmission} entity from a client-side DTO and validates its integrity.
+     * <p>
+     * This method performs the following steps:
+     * <ul>
+     * <li>Verifies that the DTO contains exactly one submitted answer for every question in the given quiz exercise.</li>
+     * <li>Rejects duplicate submitted answers for the same question.</li>
+     * <li>Instantiates domain {@link SubmittedAnswer} objects (multiple choice, short answer, drag and drop)
+     * from the provided DTOs and attaches them to a new {@link QuizSubmission}.</li>
+     * <li>Sets the back-reference from each created {@link SubmittedAnswer} to the new submission.</li>
+     * </ul>
+     *
+     * @param quizSubmission the DTO containing the student's submitted answers for all questions of the quiz
+     * @param quizExercise   the quiz exercise that defines the questions this submission answers
+     * @return a new, non-persisted {@link QuizSubmission} populated with the converted submitted answers
+     * @throws BadRequestException     if
+     *                                     <ul>
+     *                                     <li>the DTO does not contain a submitted answer for every question in the quiz exercise, or</li>
+     *                                     <li>the DTO contains more than one submitted answer for the same question, or</li>
+     *                                     <li>a submitted answer references an unknown or incompatible question type</li>
+     *                                     </ul>
+     * @throws EntityNotFoundException if a referenced question or inner element
+     *                                     (e.g.\ answer option, spot, drag item, drop location) cannot be found in the corresponding quiz question
+     */
     public QuizSubmission createNewSubmissionFromDTO(QuizSubmissionFromStudentDTO quizSubmission, QuizExercise quizExercise) {
         if (!hasSubmittedAnswersForAllQuestions(quizSubmission, quizExercise)) {
             throw new BadRequestException("QuizSubmission does not contain submitted answers for all questions");

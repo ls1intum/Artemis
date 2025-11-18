@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -18,12 +20,15 @@ public record QuizSubmissionAfterEvaluationDTO(Long id, String submissionExercis
 
     public static QuizSubmissionAfterEvaluationDTO of(QuizSubmission submission) {
         List<ResultAfterEvaluationDTO> results = null;
-        if (submission.getResults() != null) {
+        Set<SubmittedAnswerAfterEvaluationDTO> submittedAnswers = Set.of();
+        if (Hibernate.isInitialized(submission.getResults()) && submission.getResults() != null) {
             results = submission.getResults().stream().map(ResultAfterEvaluationDTO::of).toList();
         }
+        if (Hibernate.isInitialized(submission.getSubmittedAnswers()) && submission.getSubmittedAnswers() != null) {
+            submittedAnswers = submission.getSubmittedAnswers().stream().map(SubmittedAnswerAfterEvaluationDTO::of).collect(Collectors.toSet());
+        }
         return new QuizSubmissionAfterEvaluationDTO(submission.getId(), submission.getSubmissionExerciseType(), submission.isSubmitted(), submission.getType(),
-                submission.getSubmissionDate(), submission.getScoreInPoints(),
-                submission.getSubmittedAnswers().stream().map(SubmittedAnswerAfterEvaluationDTO::of).collect(Collectors.toSet()), results);
+                submission.getSubmissionDate(), submission.getScoreInPoints(), submittedAnswers, results);
     }
 
 }
