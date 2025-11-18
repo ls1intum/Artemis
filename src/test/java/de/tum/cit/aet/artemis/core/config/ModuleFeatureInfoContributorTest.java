@@ -61,7 +61,7 @@ class ModuleFeatureInfoContributorTest {
             mockProperty(key, propertyEnabled);
         }
 
-        ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv);
+        ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv, false);
 
         Info.Builder builder = new Info.Builder();
         contributor.contribute(builder);
