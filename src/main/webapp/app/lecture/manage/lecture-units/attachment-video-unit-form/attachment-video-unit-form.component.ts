@@ -212,10 +212,11 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     });
 
     ngOnChanges() {
-        if (this.isEditMode() && this.formData()) {
-            this.setFormValues(this.formData()!);
-            if (this.formData()?.transcriptionStatus) {
-                this.transcriptionStatus.set(this.formData()!.transcriptionStatus as TranscriptionStatus);
+        const formData = this.formData();
+        if (this.isEditMode() && formData) {
+            this.setFormValues(formData);
+            if (formData.transcriptionStatus) {
+                this.transcriptionStatus.set(formData.transcriptionStatus as TranscriptionStatus);
             }
         }
     }
@@ -356,8 +357,12 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
             url.searchParams.set('video_only', '1');
             return url.toString();
         }
+        const videoInfo = urlParser.parse(videoUrl);
+        if (!videoInfo) {
+            return videoUrl;
+        }
         return urlParser.create({
-            videoInfo: urlParser.parse(videoUrl)!,
+            videoInfo,
             format: 'embed',
         });
     }

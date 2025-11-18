@@ -83,14 +83,18 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
             .create(formData, this.lectureId)
             .pipe(
                 switchMap((response) => {
-                    const lectureUnit = response.body!;
+                    const lectureUnit = response.body;
+                    if (!lectureUnit) {
+                        throw new Error('No lecture unit returned from create call');
+                    }
+                    const lectureUnitId = lectureUnit.id;
 
                     // Handle automatic transcription generation if requested
                     let transcriptionObservable = of(lectureUnit);
-                    if (generateTranscript && lectureUnit?.id) {
+                    if (generateTranscript && lectureUnitId) {
                         const transcriptionUrl = playlistUrl ?? lectureUnit.videoSource;
                         if (transcriptionUrl) {
-                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lectureId, lectureUnit.id, transcriptionUrl).pipe(
+                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lectureId, lectureUnitId, transcriptionUrl).pipe(
                                 map(() => lectureUnit),
                                 catchError((err) => {
                                     onError(this.alertService, err);
@@ -102,7 +106,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
 
                     return transcriptionObservable.pipe(
                         switchMap(() => {
-                            if (!videoTranscription) {
+                            if (!videoTranscription || !lectureUnitId) {
                                 return of(lectureUnit);
                             }
                             let transcription: LectureTranscriptionDTO;
@@ -112,8 +116,8 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
                                 this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
                                 return of(lectureUnit);
                             }
-                            transcription.lectureUnitId = lectureUnit.id!;
-                            return this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnit.id!, transcription).pipe(
+                            transcription.lectureUnitId = lectureUnitId;
+                            return this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnitId, transcription).pipe(
                                 map(() => lectureUnit),
                                 catchError((err) => {
                                     onError(this.alertService, err);
