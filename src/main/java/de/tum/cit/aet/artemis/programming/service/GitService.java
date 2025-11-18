@@ -29,9 +29,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
@@ -70,6 +67,8 @@ import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -80,13 +79,11 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -127,7 +124,7 @@ public class GitService extends AbstractGitService {
      * @return the URI (SSH, HTTP(S), or local path)
      */
     @Override
-    protected URI getGitUri(@NotNull LocalVCRepositoryUri vcsRepositoryUri) {
+    protected URI getGitUri(@NonNull LocalVCRepositoryUri vcsRepositoryUri) {
         return vcsRepositoryUri.getLocalRepositoryPath(localVCBasePath).toUri();
     }
 
@@ -387,7 +384,7 @@ public class GitService extends AbstractGitService {
      * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri) {
         return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUri, defaultBranch, false);
     }
 
@@ -400,7 +397,7 @@ public class GitService extends AbstractGitService {
      * @param writeAccess         whether the repository should be opened with write access
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch,
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch,
             boolean writeAccess) {
         try {
             if (!Files.exists(localPath)) {
@@ -461,17 +458,37 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Stage all files in the repo including new files.
+     * Stages all changes in the repository, including new, modified, and deleted files.
      *
-     * @param repo Local Repository Object.
-     * @throws GitAPIException if the staging failed.
+     * <p>
+     * The method first updates the index for deleted files (using {@code setUpdate(true)})
+     * and then stages new or modified files. It returns {@code true} if any files were staged
+     * (i.e., if there were changes in the working tree that were added to the index),
+     * or {@code false} if the repository was already clean.
+     *
+     * <p>
+     * This operation is safe for both normal and bare repositories.
+     *
+     * @param repo the local {@link Repository} to stage changes in.
+     * @return {@code true} if any changes were staged, {@code false} if nothing changed.
+     * @throws GitAPIException if staging fails.
      */
-    public void stageAllChanges(Repository repo) throws GitAPIException {
+    public boolean stageAllChanges(Repository repo) throws GitAPIException {
         try (Git git = new Git(repo)) {
-            // stage deleted files: http://stackoverflow.com/a/35601677/4013020
-            git.add().setUpdate(true).addFilepattern(".").call();
-            // stage new files
-            git.add().addFilepattern(".").call();
+            // Check repository status before staging
+            Status preStatus = git.status().call();
+            boolean hasChanges = !preStatus.isClean();
+
+            if (hasChanges) {
+                // Stage deleted files
+                git.add().setUpdate(true).addFilepattern(".").call();
+
+                // Stage new and modified files
+                git.add().addFilepattern(".").call();
+            }
+
+            // Return true only if there were any changes to stage
+            return hasChanges;
         }
     }
 
@@ -619,10 +636,10 @@ public class GitService extends AbstractGitService {
      * Stager Task #3: Filter late submissions Filter all commits after exercise due date
      *
      * @param repository                Local Repository Object.
-     * @param lastValidSubmission       The last valid submission from the database or empty, if not found
+     * @param relevantCommitHash        The relevant commit hash for the submission or null if not present
      * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      */
-    public void filterLateSubmissions(Repository repository, Optional<Submission> lastValidSubmission, ZonedDateTime filterLateSubmissionsDate) {
+    public void filterLateSubmissions(Repository repository, @Nullable String relevantCommitHash, ZonedDateTime filterLateSubmissionsDate) {
         if (filterLateSubmissionsDate == null) {
             // No date set in client and exercise has no due date
             return;
@@ -631,10 +648,9 @@ public class GitService extends AbstractGitService {
         try (Git git = new Git(repository)) {
             String commitHash;
 
-            if (lastValidSubmission.isPresent()) {
-                log.debug("Last valid submission for participation {} is {}", lastValidSubmission.get().getParticipation().getId(), lastValidSubmission.get());
-                ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) lastValidSubmission.get();
-                commitHash = programmingSubmission.getCommitHash();
+            if (relevantCommitHash != null) {
+                log.debug("Last valid commit hash is {}", relevantCommitHash);
+                commitHash = relevantCommitHash;
             }
             else {
                 log.debug("Last valid submission is not present for participation");
@@ -664,18 +680,17 @@ public class GitService extends AbstractGitService {
      * Stager Task #6: Combine all commits after last instructor commit
      *
      * @param repository             Local Repository Object.
-     * @param programmingExercise    ProgrammingExercise associated with this repo.
      * @param overwriteDefaultBranch If false keeps the default branch and creates squash commit in separate branch, if true squashes the default branch
+     * @param latestSetupCommit      The latest setup commit in the student repository
      */
-    public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise, boolean overwriteDefaultBranch) {
+    public void combineAllStudentCommits(Repository repository, boolean overwriteDefaultBranch, ObjectId latestSetupCommit) {
         try (Git studentGit = new Git(repository)) {
             setRemoteUrl(repository);
-            // Get last commit hash from template repo
-            ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUri());
 
-            if (latestHash == null) {
+            if (latestSetupCommit == null) {
                 // Template Repository is somehow empty. Should never happen
-                log.debug("Cannot find a commit in the template repo for: {}", repository.getLocalPath());
+                log.warn("Cannot find the last template commit in the student repo {}", repository.getLocalPath());
+                // Do not throw when this does not work, it is not critical
                 return;
             }
 
@@ -684,7 +699,7 @@ public class GitService extends AbstractGitService {
                 studentGit.checkout().setCreateBranch(true).setName("diff").call();
             }
 
-            studentGit.reset().setMode(ResetCommand.ResetType.SOFT).setRef(latestHash.getName()).call();
+            studentGit.reset().setMode(ResetCommand.ResetType.SOFT).setRef(latestSetupCommit.getName()).call();
             studentGit.add().addFilepattern(".").call();
             var optionalStudent = ((StudentParticipation) repository.getParticipation()).getStudents().stream().findFirst();
             var name = optionalStudent.map(User::getName).orElse(artemisGitName);
@@ -693,6 +708,7 @@ public class GitService extends AbstractGitService {
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException ex) {
             log.warn("Cannot reset the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+            // Do not throw when this does not work, it is not critical
         }
         finally {
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
@@ -706,32 +722,29 @@ public class GitService extends AbstractGitService {
      * Also removes all remotes and FETCH_HEAD since they contain data about the student.
      * Also deletes the .git/logs folder to prevent restoring commits from reflogs
      *
-     * @param repository          Local Repository Object.
-     * @param programmingExercise ProgrammingExercise associated with this repo.
+     * @param repository        Local Repository Object.
+     * @param latestSetupCommit The latest setup commit in the student repository
      */
-    public void anonymizeStudentCommits(Repository repository, ProgrammingExercise programmingExercise) {
+    public void anonymizeStudentCommits(Repository repository, ObjectId latestSetupCommit) {
         try (Git studentGit = new Git(repository)) {
             setRemoteUrl(repository);
             String copyBranchName = "copy";
             String headName = "HEAD";
 
-            // Get last commit hash from template repo
-            ObjectId latestHash = getLastCommitHash(programmingExercise.getVcsTemplateRepositoryUri());
-
-            if (latestHash == null) {
+            if (latestSetupCommit == null) {
                 // Template Repository is somehow empty. Should never happen
                 log.debug("Cannot find a commit in the template repo for: {}", repository.getLocalPath());
-                return;
+                throw new GitException("Template repository has no commits; cannot anonymize student commits");
             }
 
             // Create copy branch
             Ref copyBranch = studentGit.branchCreate().setName(copyBranchName).call();
             // Reset main branch back to template
-            studentGit.reset().setMode(ResetCommand.ResetType.HARD).setRef(ObjectId.toString(latestHash)).call();
+            studentGit.reset().setMode(ResetCommand.ResetType.HARD).setRef(ObjectId.toString(latestSetupCommit)).call();
 
             // Get list of all student commits, that is all commits up to the last template commit
             Iterable<RevCommit> commits = studentGit.log().add(copyBranch.getObjectId()).call();
-            List<RevCommit> commitList = StreamSupport.stream(commits.spliterator(), false).takeWhile(ref -> !ref.equals(latestHash))
+            List<RevCommit> commitList = StreamSupport.stream(commits.spliterator(), false).takeWhile(ref -> !ref.equals(latestSetupCommit))
                     .collect(Collectors.toCollection(ArrayList::new));
             // Sort them oldest to newest
             Collections.reverse(commitList);
@@ -762,11 +775,92 @@ public class GitService extends AbstractGitService {
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
             log.warn("Cannot anonymize the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
+            throw new GitException("Failed to anonymize repository: " + ex.getMessage(), ex);
         }
         finally {
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
             // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
             repository.close();
+        }
+    }
+
+    /**
+     * Verifies that the repository is anonymized according to expectations.
+     * - All remotes removed and no remote tracking refs exist
+     * - .git/logs directory removed and FETCH_HEAD deleted
+     * - All commits after the template's last commit use anonymized author/committer
+     * - Optionally check that at most one student commit exists after the template (when combinedExpected is true)
+     *
+     * @param repository        the local repository
+     * @param combinedExpected  whether to enforce that there is at most one student commit after the template commit
+     * @param latestSetupCommit The latest setup commit in the student repository
+     * @throws de.tum.cit.aet.artemis.core.exception.GitException if verification fails
+     */
+    public void verifyAnonymizationOrThrow(Repository repository, boolean combinedExpected, ObjectId latestSetupCommit) {
+        try (Git git = new Git(repository)) {
+            // Check remotes removed
+            if (!git.remoteList().call().isEmpty()) {
+                throw new GitException("Anonymization verification failed: repository still has remotes configured");
+            }
+            // Also ensure no remote tracking refs remain
+            try {
+                for (Ref ref : git.getRepository().getRefDatabase().getRefs()) {
+                    if (ref.getName().startsWith("refs/remotes/")) {
+                        throw new GitException("Anonymization verification failed: remote tracking refs remain");
+                    }
+                }
+            }
+            catch (java.io.IOException ioEx) {
+                throw new GitException("Failed to access refs during verification: " + ioEx.getMessage(), ioEx);
+            }
+
+            // Filesystem checks for logs and FETCH_HEAD
+            Path logsPath = Path.of(repository.getDirectory().getPath(), "logs");
+            if (Files.exists(logsPath)) {
+                throw new GitException("Anonymization verification failed: .git/logs still present");
+            }
+            Path fetchHeadPath = Path.of(repository.getDirectory().getPath(), "FETCH_HEAD");
+            if (Files.exists(fetchHeadPath)) {
+                throw new GitException("Anonymization verification failed: FETCH_HEAD still present");
+            }
+
+            // Determine last template commit
+            if (latestSetupCommit == null) {
+                throw new GitException("Cannot determine template commit for verification");
+            }
+
+            verifyCommitAnonymizationFromHead(git, latestSetupCommit, combinedExpected);
+        }
+        catch (GitAPIException | JGitInternalException e) {
+            throw new GitException("Failed during anonymization verification: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Verifies commit anonymization on the history reachable from HEAD down to (excluding) the template commit.
+     */
+    private void verifyCommitAnonymizationFromHead(Git git, ObjectId latestSetupCommit, boolean combinedExpected) throws org.eclipse.jgit.api.errors.GitAPIException, GitException {
+        Iterable<RevCommit> commits = git.log().call();
+        int studentCommitCount = 0;
+        boolean foundTemplate = false;
+        for (RevCommit commit : commits) {
+            if (commit.getId().equals(latestSetupCommit)) {
+                foundTemplate = true;
+                break;
+            }
+            PersonIdent author = commit.getAuthorIdent();
+            PersonIdent committer = commit.getCommitterIdent();
+            if (!(ANONYMIZED_STUDENT_NAME.equals(author.getName()) && ANONYMIZED_STUDENT_EMAIL.equals(author.getEmailAddress())
+                    && ANONYMIZED_STUDENT_NAME.equals(committer.getName()) && ANONYMIZED_STUDENT_EMAIL.equals(committer.getEmailAddress()))) {
+                throw new GitException("Anonymization verification failed: found non-anonymized commit");
+            }
+            studentCommitCount++;
+            if (combinedExpected && studentCommitCount > 1) {
+                throw new GitException("Anonymization verification failed: commits not combined into a single commit");
+            }
+        }
+        if (!foundTemplate) {
+            throw new GitException("Anonymization verification failed: template commit not reachable from HEAD");
         }
     }
 
@@ -800,7 +894,7 @@ public class GitService extends AbstractGitService {
      */
     public void removeRemotesFromRepository(Repository repository) {
         try (Git gitRepo = new Git(repository)) {
-            this.removeRemotes(gitRepo);
+            removeRemotes(gitRepo);
         }
         catch (EntityNotFoundException | GitAPIException | JGitInternalException | IOException ex) {
             log.warn("Cannot remove the remotes of the repo {} due to the following exception: {}", repository.getLocalPath(), ex.getMessage());
@@ -819,7 +913,7 @@ public class GitService extends AbstractGitService {
      * @return The initialized bare Repository instance.
      * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
      */
-    @NotNull
+    @NonNull
     public Repository getBareRepository(LocalVCRepositoryUri repositoryUri, boolean writeAccess) {
         return getBareRepository(repositoryUri, defaultBranch, writeAccess);
     }
@@ -928,7 +1022,7 @@ public class GitService extends AbstractGitService {
             // Create commit with the clean tree
             CommitBuilder commitBuilder = new CommitBuilder();
             commitBuilder.setTreeId(newTreeId);
-            commitBuilder.setMessage("Set up template for exercise");
+            commitBuilder.setMessage(de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
 
             // Set author and committer information based on the first commit in the source repo
             commitBuilder.setAuthor(personIdent);
@@ -1173,7 +1267,7 @@ public class GitService extends AbstractGitService {
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
-    @NotNull
+    @NonNull
     public Collection<File> getFiles(Repository repo) {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
         Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);

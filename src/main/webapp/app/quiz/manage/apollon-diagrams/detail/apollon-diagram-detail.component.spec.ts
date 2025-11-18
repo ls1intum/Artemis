@@ -73,25 +73,25 @@ describe('ApollonDiagramDetail Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('initializeApollonEditor', () => {
-        fixture.componentInstance.apollonDiagram = diagram;
-        fixture.componentInstance.initializeApollonEditor(model);
+    it('initializeApollonEditor', async () => {
+        jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
+        fixture.componentInstance.apollonDiagram.set(diagram);
+        await fixture.componentInstance.initializeApollonEditor(model);
 
-        expect(fixture.componentInstance.apollonEditor).toBeTruthy();
+        expect(fixture.componentInstance.apollonEditor()).toBeTruthy();
     });
 
     it('save', async () => {
         jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         const updateStub = jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
-        fixture.componentInstance.initializeApollonEditor(model);
-        expect(fixture.componentInstance.apollonEditor).toBeTruthy();
+        await fixture.componentInstance.initializeApollonEditor(model);
+        expect(fixture.componentInstance.apollonEditor()).toBeTruthy();
 
         // test
-        await fixture.componentInstance.apollonEditor?.nextRender;
         await fixture.componentInstance.saveDiagram();
         expect(updateStub).toHaveBeenCalledOnce();
         // clear the set time interval
@@ -100,7 +100,7 @@ describe('ApollonDiagramDetail Component', () => {
 
     it('generateExercise', async () => {
         // setup
-        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.apollonDiagram.set(diagram);
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         // TODO: we should mock this differently without require
         // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -108,14 +108,13 @@ describe('ApollonDiagramDetail Component', () => {
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(of(new Blob()));
         jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
-        fixture.componentInstance.initializeApollonEditor(model);
-        expect(fixture.componentInstance.apollonEditor).toBeTruthy();
+        await fixture.componentInstance.initializeApollonEditor(model);
+        expect(fixture.componentInstance.apollonEditor()).toBeTruthy();
         fixture.detectChanges();
 
         const emitSpy = jest.spyOn(fixture.componentInstance.closeEdit, 'emit');
 
         // test
-        await fixture.componentInstance.apollonEditor?.nextRender;
         await fixture.componentInstance.generateExercise();
 
         expect(emitSpy).toHaveBeenCalledOnce();
@@ -128,12 +127,11 @@ describe('ApollonDiagramDetail Component', () => {
         const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: {}, relationships: {} } };
 
         // setup
-        fixture.componentInstance.apollonDiagram = diagram;
-        fixture.componentInstance.initializeApollonEditor(nonInteractiveModel);
+        fixture.componentInstance.apollonDiagram.set(diagram);
+        await fixture.componentInstance.initializeApollonEditor(nonInteractiveModel);
         const errorSpy = jest.spyOn(alertService, 'error');
 
         // test
-        await fixture.componentInstance.apollonEditor?.nextRender;
         await fixture.componentInstance.generateExercise();
         expect(errorSpy).toHaveBeenCalledOnce();
 
@@ -146,15 +144,14 @@ describe('ApollonDiagramDetail Component', () => {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const module = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         jest.spyOn(module, 'convertRenderedSVGToPNG').mockReturnValue(new Blob([]));
-        fixture.componentInstance.apollonDiagram = diagram;
-        fixture.componentInstance.initializeApollonEditor(model);
+        fixture.componentInstance.apollonDiagram.set(diagram);
+        await fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child
 
-        await fixture.componentInstance.apollonEditor?.nextRender;
         expect(div.children).toHaveLength(1);
 
         // set selection
-        fixture.componentInstance.apollonEditor!.selection = {
+        fixture.componentInstance.apollonEditor()!.selection = {
             elements: Object.fromEntries(Object.keys(model.elements).map((key) => [key, true])),
             relationships: {},
         };
@@ -186,7 +183,7 @@ describe('ApollonDiagramDetail Component', () => {
         jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
         fixture.detectChanges();
-        expect(fixture.componentInstance.apollonDiagram).toEqual(diagram);
+        expect(fixture.componentInstance.apollonDiagram()).toEqual(diagram);
         fixture.componentInstance.ngOnDestroy();
     });
 
