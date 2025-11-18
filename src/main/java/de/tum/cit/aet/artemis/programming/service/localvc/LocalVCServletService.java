@@ -512,7 +512,7 @@ public class LocalVCServletService {
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
 
-        if (!exercise.getBuildConfig().isAllowBranching() || exercise.getBuildConfig().getBranchRegex() == null) {
+        if (!exercise.getBuildConfig().isAllowBranching()) {
             return BranchingStatus.BRANCHING_DISABLED;
         }
 
