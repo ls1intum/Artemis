@@ -173,7 +173,7 @@ public class HyperionConsistencyCheckService {
 
             var chatResponse = semanticIssuesResponse.getResponse();
 
-            if (chatResponse != null && chatResponse.getMetadata().getUsage() != null) {
+            if (chatResponse != null && chatResponse.getMetadata() != null && chatResponse.getMetadata().getUsage() != null) {
                 var usage = chatResponse.getMetadata().getUsage();
                 log.info("Hyperion semantic check token usage: prompt={}, completion={}, total={}", usage.getPromptTokens(), usage.getCompletionTokens(), usage.getTotalTokens());
             }
