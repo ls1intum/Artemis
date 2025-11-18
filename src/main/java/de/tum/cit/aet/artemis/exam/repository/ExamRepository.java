@@ -93,7 +93,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
     /**
-     * Query which fetches all the active exams for which the user is instructor.
+     * Query which fetches all the active exams for which the user is at least teaching assistant.
      *
      * @param groups   user groups
      * @param pageable Pageable
@@ -104,11 +104,13 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @Query("""
             SELECT e
             FROM Exam e
-            WHERE e.course.instructorGroupName IN :groups
+            WHERE (e.course.instructorGroupName IN :groups
+                    OR e.course.editorGroupName IN :groups
+                    OR e.course.teachingAssistantGroupName IN :groups)
                 AND e.visibleDate >= :fromDate
                 AND e.visibleDate <= :toDate
             """)
-    Page<Exam> findAllActiveExamsInCoursesWhereInstructor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
+    Page<Exam> findAllActiveExamsInCoursesWhereAtLeastTutor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
             @Param("toDate") ZonedDateTime toDate);
 
     /**

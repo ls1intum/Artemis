@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -76,12 +77,12 @@ public class ExamUserResource {
      * @return saved examUser ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<ExamUser> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart(value = "file", required = false) MultipartFile signatureFile,
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<ExamUserDTO> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart(value = "file", required = false) MultipartFile signatureFile,
             @PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to update {} as exam user to exam : {}", examUserDTO.login(), examId);
 
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(examUserDTO.login())
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + examUserDTO.login() + "\" does not exist"));
 
@@ -110,9 +111,9 @@ public class ExamUserResource {
         examUser.setActualRoom(examUserDTO.room());
         examUser = examUserRepository.save(examUser);
 
-        examUser.getUser().setVisibleRegistrationNumber(examUser.getUser().getRegistrationNumber());
-
-        return ResponseEntity.ok().body(examUser);
+        ExamUserDTO examUserResponseDTO = new ExamUserDTO(examUser.getUser().getLogin(), null, null, null, null, null, examUser.getActualRoom(), examUser.getActualSeat(),
+                examUser.getDidCheckImage(), examUser.getDidCheckName(), examUser.getDidCheckRegistrationNumber(), examUser.getDidCheckLogin(), examUser.getSigningImagePath());
+        return ResponseEntity.ok().body(examUserResponseDTO);
     }
 
     /**
