@@ -116,6 +116,12 @@ spring:
     2. show progress status
     3. show the generated prediction
 
+## Performance Considerations
+
+- **Model Size**: Larger models provide better results but require more RAM and processing power. The `gpt-oss-20b` model is a good balance for development.
+- **Context Length**: The `--context-length 32000` parameter controls how much text the model can process at once. Adjust based on your hardware capabilities.
+- **GPU Acceleration**: LM Studio automatically uses GPU acceleration when available (Metal on macOS, CUDA on Linux/Windows).
+
 ## 🛠 Troubleshooting
 
 ### Exit Code 6 When Loading a Model
@@ -143,9 +149,3 @@ This usually means the model cannot load because the required runtime engine is 
 5. Click **Fix** to reinstall, update, or repair the engine
 
 After the repair completes, try loading your model again.
-
-## Performance Considerations
-
-- **Model Size**: Larger models provide better results but require more RAM and processing power. The `gpt-oss-20b` model is a good balance for development.
-- **Context Length**: The `--context-length 32000` parameter controls how much text the model can process at once. Adjust based on your hardware capabilities.
-- **GPU Acceleration**: LM Studio automatically uses GPU acceleration when available (Metal on macOS, CUDA on Linux/Windows).
