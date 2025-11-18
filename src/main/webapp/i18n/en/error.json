@@ -167,7 +167,8 @@
         "athenaModuleChangeAfterDueDate": "Athena module cannot be changed after the due date has passed.",
         "passkeyAuth": {
             "notAuthenticatedWithPasskey": "You are not authenticated with a passkey. Please authenticate using a passkey to access this resource.",
-            "notSuperAdminApproved": "Your passkey is not approved by a super admin. Double check in the user settings whether your passkey was super admin approved and re-login in with the respective passkey."
+            "notSuperAdminApproved": "Your passkey is not approved by a super admin. Double check in the user settings whether your passkey was super admin approved and re-login in with the respective passkey.",
+            "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance."
         }
     }
 }

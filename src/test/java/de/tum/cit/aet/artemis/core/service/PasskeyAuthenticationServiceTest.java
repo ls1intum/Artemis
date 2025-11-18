@@ -42,11 +42,9 @@ class PasskeyAuthenticationServiceTest {
         // Given
         passkeyAuthenticationService = createService(false, true);
 
-        // When
-        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey();
-
-        // Then
-        assertThat(result).isFalse();
+        // When / Then
+        assertThatExceptionOfType(PasskeyAuthenticationException.class).isThrownBy(() -> passkeyAuthenticationService.isAuthenticatedWithPasskey()).satisfies(
+                ex -> assertThat(ex.getReason()).isEqualTo(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.PASSKEY_LOGIN_REQUIRED_BUT_FEATURE_NOT_ENABLED));
     }
 
     @Test
@@ -188,11 +186,9 @@ class PasskeyAuthenticationServiceTest {
         // Given
         passkeyAuthenticationService = createService(false, true);
 
-        // When
-        boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey(true);
-
-        // Then
-        assertThat(result).isFalse();
+        // When / Then
+        assertThatExceptionOfType(PasskeyAuthenticationException.class).isThrownBy(() -> passkeyAuthenticationService.isAuthenticatedWithPasskey(true)).satisfies(
+                ex -> assertThat(ex.getReason()).isEqualTo(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.PASSKEY_LOGIN_REQUIRED_BUT_FEATURE_NOT_ENABLED));
     }
 
     private PasskeyAuthenticationService createService(boolean passkeyEnabled, boolean isPasskeyRequiredForAdministratorFeatures) {

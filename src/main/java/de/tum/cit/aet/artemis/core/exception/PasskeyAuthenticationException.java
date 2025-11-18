@@ -25,7 +25,9 @@ public class PasskeyAuthenticationException extends AccessDeniedException {
         /**
          * The passkey is not approved by a super admin
          */
-        PASSKEY_NOT_SUPER_ADMIN_APPROVED("error.passkeyAuth.notSuperAdminApproved");
+        PASSKEY_NOT_SUPER_ADMIN_APPROVED("error.passkeyAuth.notSuperAdminApproved"),
+
+        PASSKEY_LOGIN_REQUIRED_BUT_FEATURE_NOT_ENABLED("error.passkeyAuth.loginRequiredButFeatureNotEnabled");
 
         private final String errorKey;
 

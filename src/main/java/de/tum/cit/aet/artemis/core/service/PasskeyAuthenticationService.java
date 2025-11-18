@@ -75,8 +75,7 @@ public class PasskeyAuthenticationService {
             return true;
         }
         if (!passkeyEnabled) {
-            log.warn("Cannot enforce passkey login when passkey feature is disabled");
-            return false;
+            throw new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.PASSKEY_LOGIN_REQUIRED_BUT_FEATURE_NOT_ENABLED);
         }
 
         HttpServletRequest request = getCurrentHttpRequest();
