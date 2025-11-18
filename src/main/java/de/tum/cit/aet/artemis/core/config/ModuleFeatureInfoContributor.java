@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.context.annotation.Lazy;
@@ -31,9 +32,13 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
 
     private final ArtemisConfigHelper artemisConfigHelper;
 
-    public ModuleFeatureInfoContributor(Environment environment) {
+    private final boolean isPasskeyRequiredForAdministratorFeatures;
+
+    public ModuleFeatureInfoContributor(Environment environment,
+            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
+        this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
     }
 
     @Override
@@ -60,7 +65,7 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
         if (artemisConfigHelper.isPasskeyEnabled(environment)) {
             enabledArtemisFeatures.add(Constants.FEATURE_PASSKEY);
 
-            if (artemisConfigHelper.isPasskeyRequiredForAdministratorFeatures(environment)) {
+            if (isPasskeyRequiredForAdministratorFeatures) {
                 enabledArtemisFeatures.add(Constants.FEATURE_PASSKEY_REQUIRE_ADMIN);
             }
         }
