@@ -38,7 +38,7 @@ class PasskeyAuthenticationServiceTest {
     }
 
     @Test
-    void testIsAuthenticatedWithPasskey_whenPasskeyDisabled_shouldReturnTrue() {
+    void testIsAuthenticatedWithPasskey_whenPasskeyDisabled_shouldReturnFalse() {
         // Given
         passkeyAuthenticationService = createService(false, true);
 
@@ -46,7 +46,7 @@ class PasskeyAuthenticationServiceTest {
         boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey();
 
         // Then
-        assertThat(result).isTrue();
+        assertThat(result).isFalse();
     }
 
     @Test
@@ -184,7 +184,7 @@ class PasskeyAuthenticationServiceTest {
     }
 
     @Test
-    void testIsAuthenticatedWithPasskey_whenPasskeyDisabledAndRequireSuperAdminApproval_shouldReturnTrue() {
+    void testIsAuthenticatedWithPasskey_whenPasskeyDisabledAndRequireSuperAdminApproval_shouldReturnFalse() {
         // Given
         passkeyAuthenticationService = createService(false, true);
 
@@ -192,8 +192,7 @@ class PasskeyAuthenticationServiceTest {
         boolean result = passkeyAuthenticationService.isAuthenticatedWithPasskey(true);
 
         // Then
-        // When passkey is disabled, the check is bypassed completely
-        assertThat(result).isTrue();
+        assertThat(result).isFalse();
     }
 
     private PasskeyAuthenticationService createService(boolean passkeyEnabled, boolean isPasskeyRequiredForAdministratorFeatures) {
