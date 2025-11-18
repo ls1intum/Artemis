@@ -26,6 +26,8 @@ import { Location } from '@angular/common';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -33,11 +35,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
 
     let http: jest.Mocked<Pick<HttpClient, 'post'>>;
     let ws: jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
-    let modal: jest.Mocked<Pick<NgbModal, 'open'>>;
     let alertService: AlertService;
     let profileService: ProfileService;
-    let repoService: jest.Mocked<Pick<CodeEditorRepositoryService, 'pull'>>;
-    let repoFileService: jest.Mocked<Pick<CodeEditorRepositoryFileService, 'getRepositoryContent'>>;
 
     beforeAll(() => {
         try {
@@ -65,6 +64,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
                 { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
                 { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
                 { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({} as any)) } },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             // Avoid rendering heavy template dependencies for these tests
@@ -75,10 +75,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
 
         alertService = TestBed.inject(AlertService);
         http = TestBed.inject(HttpClient) as any;
-        modal = TestBed.inject(NgbModal) as any;
         ws = TestBed.inject(HyperionWebsocketService) as any;
-        repoService = TestBed.inject(CodeEditorRepositoryService) as any;
-        repoFileService = TestBed.inject(CodeEditorRepositoryFileService) as any;
         profileService = TestBed.inject(ProfileService);
 
         // Enable Hyperion by default so property initialization is deterministic
