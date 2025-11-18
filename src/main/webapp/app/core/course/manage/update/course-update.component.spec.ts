@@ -952,7 +952,7 @@ describe('Course Management Update Component', () => {
 
             await comp.changeCommunicationEnabled();
 
-            expect(disableMessagingSpy).toHaveBeenCalled();
+            expect(disableMessagingSpy).toHaveBeenCalledOnce();
             expect(comp.messagingEnabled).toBeFalsy();
         });
 
