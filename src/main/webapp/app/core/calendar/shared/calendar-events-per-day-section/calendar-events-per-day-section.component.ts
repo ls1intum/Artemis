@@ -40,7 +40,7 @@ export class CalendarEventsPerDaySectionComponent {
     dates = input.required<Dayjs[]>();
     days = computed<Day[]>(() => this.computeDays(this.dates()));
     zeroToTwentyFour: number[] = Array.from({ length: 24 }, (_, i) => i);
-    hoursOfDay = this.getHoursOfDay();
+    timeLabels = this.getTimeLabelsForGrid();
     selectedEvent = signal<CalendarEvent | undefined>(undefined);
     isEventSelected = output<boolean>();
 
@@ -163,7 +163,7 @@ export class CalendarEventsPerDaySectionComponent {
         return this.dateToEventAndPositionMap().get(date.format('YYYY-MM-DD')) ?? [];
     }
 
-    private getHoursOfDay(): string[] {
+    private getTimeLabelsForGrid(): string[] {
         const hours = Array.from({ length: 23 }, (_, i) => `${(i + 1).toString().padStart(2, '0')}:00`);
         hours.push('00:00');
         return hours;

@@ -144,11 +144,11 @@ public class CalendarResource {
         Supplier<Set<CalendarEventDTO>> quizExerciseEventSupplier = () -> quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language);
         Supplier<Set<CalendarEventDTO>> otherExerciseEventSupplier = () -> exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language);
 
-        Set<CalendarEventDTO> tutorialEventDTOs = getEventsFromSupplierIfShouldBeIncludedAndApiAvailable(includeTutorialEvents, tutorialGroupApi, tutorialEventSupplier);
-        Set<CalendarEventDTO> examEventDTOs = getEventsFromSupplierIfShouldBeIncludedAndApiAvailable(includeExamEvents, examApi, examEventSupplier);
-        Set<CalendarEventDTO> lectureEventDTOs = getEventsFromSupplierIfShouldBeIncluded(includeLectureEvents, lectureEventSupplier);
-        Set<CalendarEventDTO> quizExerciseEventDTOs = getEventsFromSupplierIfShouldBeIncluded(includeExerciseEvents, quizExerciseEventSupplier);
-        Set<CalendarEventDTO> otherExerciseEventDTOs = getEventsFromSupplierIfShouldBeIncluded(includeExerciseEvents, otherExerciseEventSupplier);
+        Set<CalendarEventDTO> tutorialEventDTOs = getEventsIfShouldBeIncludedAndApiAvailable(includeTutorialEvents, tutorialGroupApi, tutorialEventSupplier);
+        Set<CalendarEventDTO> examEventDTOs = getEventsIfShouldBeIncludedAndApiAvailable(includeExamEvents, examApi, examEventSupplier);
+        Set<CalendarEventDTO> lectureEventDTOs = getEventsIfShouldBeIncluded(includeLectureEvents, lectureEventSupplier);
+        Set<CalendarEventDTO> quizExerciseEventDTOs = getEventsIfShouldBeIncluded(includeExerciseEvents, quizExerciseEventSupplier);
+        Set<CalendarEventDTO> otherExerciseEventDTOs = getEventsIfShouldBeIncluded(includeExerciseEvents, otherExerciseEventSupplier);
 
         Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs).flatMap(Set::stream)
                 .collect(Collectors.toSet());
@@ -165,7 +165,7 @@ public class CalendarResource {
      * @param supplier a function that returns a set of DTOs
      * @return the set retrieved by the supplier if include is true, otherwise and empty set
      */
-    private Set<CalendarEventDTO> getEventsFromSupplierIfShouldBeIncluded(boolean include, Supplier<Set<CalendarEventDTO>> supplier) {
+    private Set<CalendarEventDTO> getEventsIfShouldBeIncluded(boolean include, Supplier<Set<CalendarEventDTO>> supplier) {
         return include ? supplier.get() : Collections.emptySet();
     }
 
@@ -177,8 +177,7 @@ public class CalendarResource {
      * @param supplier    a function that returns a set of DTOs
      * @return the set retrieved by the supplier if include is true and the api is available, otherwise and empty set
      */
-    private <A> Set<CalendarEventDTO> getEventsFromSupplierIfShouldBeIncludedAndApiAvailable(boolean include, Optional<A> apiOptional,
-            Function<A, Set<CalendarEventDTO>> supplier) {
+    private <A> Set<CalendarEventDTO> getEventsIfShouldBeIncludedAndApiAvailable(boolean include, Optional<A> apiOptional, Function<A, Set<CalendarEventDTO>> supplier) {
         if (!include) {
             return Collections.emptySet();
         }

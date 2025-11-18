@@ -1,8 +1,8 @@
 <div class="frame">
     <div class="info-column">
         <div class="info-column-spacer"></div>
-        @for (hour of hoursOfDay; track hour) {
-            <div class="time-label">{{ hour }}</div>
+        @for (timeLabel of timeLabels; track timeLabel) {
+            <div class="time-label">{{ timeLabel }}</div>
         }
     </div>
     @for (day of days(); track day.id) {
