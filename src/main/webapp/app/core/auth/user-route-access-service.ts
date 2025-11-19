@@ -25,14 +25,15 @@ export class UserRouteAccessService implements CanActivate {
         let authorities = route.data['authorities'];
 
         // For programming exercise template and solution participations editors shall be allowed to view the submissions, but not for other submissions.
-        // To ensure this behavior the query parameter of the route needs to be considered and the Editor authority needs to be checked based on the query param.
+        // To ensure this behavior the query parameter of the route needs to be considered and the Editor authority needs to be added subsequently within the
+        // canActivate check, as it can not be allowed directly within the corresponding router since this would allow access to all submissions.
         if (
             (route.routeConfig?.path === ':courseId/programming-exercises/:exerciseId/participations/:participationId/submissions' ||
                 route.routeConfig?.path === ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId') &&
             route.queryParams['isTmpOrSolutionProgrParticipation'] === 'true' &&
             authorities
         ) {
-            // Create a new array instead of mutating the existing one to support readonly authority constants
+            /** Create a new array instead of mutating the existing as routes are defined as readonly {@link IS_AT_LEAST_INSTRUCTOR} */
             authorities = [...authorities, Authority.EDITOR];
         }
         // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
