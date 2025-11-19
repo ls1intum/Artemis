@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { INSTRUCTOR_AND_TUTOR_ONLY, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
 
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
@@ -228,7 +228,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/test-runs/assess',
         loadComponent: () => import('app/assessment/shared/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
         data: {
-            authorities: INSTRUCTOR_AND_TUTOR_ONLY,
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.examManagement.assessmentDashboard',
         },
         canActivate: [UserRouteAccessService],
