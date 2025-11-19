@@ -124,7 +124,7 @@ describe('Course Management Detail Component', () => {
         courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true } });
         const irisSpy = jest
             .spyOn(irisSettingsService, 'getCourseSettings')
-            .mockReturnValue(of({ courseId: 123, settings: { enabled: true, variant: { id: 'DEFAULT' }, rateLimit: {} } } as CourseIrisSettingsDTO));
+            .mockReturnValue(of({ courseId: 123, settings: { enabled: true, variant: 'DEFAULT', rateLimit: {} } } as CourseIrisSettingsDTO));
         await component.ngOnInit();
         expect(irisSpy).toHaveBeenCalledOnce();
     });

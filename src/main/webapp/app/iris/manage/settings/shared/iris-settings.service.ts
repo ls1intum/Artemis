@@ -79,7 +79,7 @@ export class IrisSettingsService {
      * Returns static list: DEFAULT and ADVANCED.
      */
     getVariants(): Observable<IrisPipelineVariant[]> {
-        return of([{ id: 'DEFAULT' }, { id: 'ADVANCED' }]);
+        return of(['DEFAULT', 'ADVANCED']);
     }
 
     /**

@@ -62,9 +62,9 @@
                         <label for="variant" class="form-label">
                             <strong jhiTranslate="artemisApp.iris.settings.variant"></strong>
                         </label>
-                        <select id="variant" class="form-select" [(ngModel)]="settings.variant.id">
-                            @for (variant of availableVariants; track variant.id) {
-                                <option [value]="variant.id">{{ variant.id }}</option>
+                        <select id="variant" class="form-select" [(ngModel)]="settings.variant">
+                            @for (variant of availableVariants; track variant) {
+                                <option [value]="variant">{{ variant }}</option>
                             }
                         </select>
                         <p class="form-text" jhiTranslate="artemisApp.iris.settings.variantHelp"></p>

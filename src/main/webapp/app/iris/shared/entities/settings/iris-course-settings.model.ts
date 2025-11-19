@@ -5,10 +5,9 @@
 
 /**
  * Pipeline variant selection for Iris (admin-only configuration).
+ * Matches the backend enum serialization as plain strings.
  */
-export interface IrisPipelineVariant {
-    id: 'DEFAULT' | 'ADVANCED';
-}
+export type IrisPipelineVariant = 'DEFAULT' | 'ADVANCED';
 
 /**
  * Rate limit configuration with optional per-course overrides.
@@ -42,13 +41,6 @@ export interface CourseIrisSettingsDTO {
 }
 
 /**
- * Helper to create a default IrisPipelineVariant.
- */
-export function createDefaultVariant(): IrisPipelineVariant {
-    return { id: 'DEFAULT' };
-}
-
-/**
  * Helper to create an empty rate limit configuration.
  */
 export function createEmptyRateLimit(): IrisRateLimitConfiguration {
@@ -61,7 +53,7 @@ export function createEmptyRateLimit(): IrisRateLimitConfiguration {
 export function createDefaultCourseSettings(): IrisCourseSettingsDTO {
     return {
         enabled: true,
-        variant: createDefaultVariant(),
+        variant: 'DEFAULT',
         rateLimit: createEmptyRateLimit(),
     };
 }

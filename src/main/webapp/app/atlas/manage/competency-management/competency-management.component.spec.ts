@@ -140,7 +140,7 @@ describe('CompetencyManagementComponent', () => {
             courseId: 1,
             settings: {
                 enabled: true,
-                variant: { id: 'DEFAULT' },
+                variant: 'DEFAULT',
                 rateLimit: {},
             },
         } as CourseIrisSettingsDTO;

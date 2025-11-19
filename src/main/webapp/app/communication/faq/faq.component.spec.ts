@@ -291,7 +291,7 @@ describe('FaqComponent', () => {
             settings: {
                 enabled: true,
                 customInstructions: '',
-                variant: { id: 'DEFAULT' },
+                variant: 'DEFAULT',
                 rateLimit: { requests: 100, timeframeHours: 24 },
             },
             effectiveRateLimit: { requests: 100, timeframeHours: 24 },

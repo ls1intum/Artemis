@@ -25,7 +25,7 @@ describe('IrisSettingsUpdateComponent', () => {
     const mockSettings: IrisCourseSettingsDTO = {
         enabled: true,
         customInstructions: 'Test instructions',
-        variant: { id: 'DEFAULT' },
+        variant: 'DEFAULT',
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 
@@ -36,7 +36,7 @@ describe('IrisSettingsUpdateComponent', () => {
         applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
     };
 
-    const mockVariants = [{ id: 'DEFAULT' }, { id: 'ADVANCED' }];
+    const mockVariants = ['DEFAULT', 'ADVANCED'];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -193,14 +193,14 @@ describe('IrisSettingsUpdateComponent', () => {
             tick();
 
             // Try to change variant as non-admin
-            component.settings = { ...mockSettings, variant: { id: 'ADVANCED' } };
+            component.settings = { ...mockSettings, variant: 'ADVANCED' };
 
             component.saveSettings();
             tick();
 
             // Variant should be restored to original
             const callArgs = updateSpy.mock.calls[0];
-            expect(callArgs[1].variant).toEqual({ id: 'DEFAULT' });
+            expect(callArgs[1].variant).toBe('DEFAULT');
         }));
 
         it('should not allow non-admins to change rate limits', fakeAsync(() => {

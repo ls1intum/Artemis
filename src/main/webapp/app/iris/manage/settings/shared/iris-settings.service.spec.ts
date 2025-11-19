@@ -14,7 +14,7 @@ describe('Iris Settings Service', () => {
         settings: {
             enabled: true,
             customInstructions: 'Test instructions',
-            variant: { id: 'DEFAULT' },
+            variant: 'DEFAULT',
             rateLimit: { requests: 100, timeframeHours: 24 },
         },
         effectiveRateLimit: { requests: 100, timeframeHours: 24 },
@@ -24,7 +24,7 @@ describe('Iris Settings Service', () => {
     const mockUpdateSettings: IrisCourseSettingsDTO = {
         enabled: false,
         customInstructions: 'Updated instructions',
-        variant: { id: 'ADVANCED' },
+        variant: 'ADVANCED',
         rateLimit: { requests: 200, timeframeHours: 48 },
     };
 
