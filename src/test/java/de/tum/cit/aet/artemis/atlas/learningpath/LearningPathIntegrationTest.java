@@ -108,7 +108,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
 
-        textUnit = createAndLinkTextUnit(student, competencies[0], true);
+        textUnit = createAndLinkTextUnit(lecture, student, competencies[0], true);
         textExercise = createAndLinkTextExercise(competencies[1], false);
     }
 
@@ -162,10 +162,6 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(competencyToImport.getId()), Optional.empty(), false, false, false, Optional.empty(),
                 false);
         return request.postWithResponseBody("/api/atlas/courses/" + course.getId() + "/competencies/import", importOptions, Competency.class, HttpStatus.CREATED);
-    }
-
-    private void deleteCompetencyRESTCall(Competency competency) throws Exception {
-        request.delete("/api/atlas/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -363,7 +359,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * This only tests if the end point successfully retrieves the health status. The correctness of the health status is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
+     * @see LearningPathServiceTest
      */
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
@@ -573,7 +569,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         learnerProfile.setRepetitionIntensity(repetitionIntensity);
         courseLearnerProfileRepository.save(learnerProfile);
 
-        createAndLinkTextUnit(student, competencies[2], false);
+        createAndLinkTextUnit(lecture, student, competencies[2], false);
         createAndLinkTextExercise(competencies[3], false);
 
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
@@ -598,8 +594,8 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         textExercise.setCompetencyLinks(Set.of());
         textExercise = exerciseRepository.save(textExercise);
 
-        TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[2], false);
-        TextUnit thirdTextUnit = createAndLinkTextUnit(student, competencies[4], false);
+        TextUnit secondTextUnit = createAndLinkTextUnit(lecture, student, competencies[2], false);
+        TextUnit thirdTextUnit = createAndLinkTextUnit(lecture, student, competencies[4], false);
 
         var result = request.get("/api/atlas/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
         verifyNavigationResult(result, textUnit, secondTextUnit, thirdTextUnit);
@@ -620,8 +616,8 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
-        TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[0], false);
-        TextUnit thirdTextUnit = createAndLinkTextUnit(student, competencies[0], false);
+        TextUnit secondTextUnit = createAndLinkTextUnit(lecture, student, competencies[0], false);
+        TextUnit thirdTextUnit = createAndLinkTextUnit(lecture, student, competencies[0], false);
 
         var result = request.get("/api/atlas/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
         verifyNavigationResult(result, List.of(textUnit), List.of(secondTextUnit, thirdTextUnit), List.of(secondTextUnit, thirdTextUnit));
@@ -637,14 +633,14 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         textExercise.setCompetencyLinks(Set.of());
         textExercise = exerciseRepository.save(textExercise);
 
-        TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[1], false);
+        TextUnit secondTextUnit = createAndLinkTextUnit(lecture, student, competencies[1], false);
         secondTextUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
         lectureUnitRepository.save(secondTextUnit);
-        TextUnit thirdTextUnit = createAndLinkTextUnit(student, competencies[2], false);
-        TextUnit fourthTextUnit = createAndLinkTextUnit(student, competencies[3], false);
+        TextUnit thirdTextUnit = createAndLinkTextUnit(lecture, student, competencies[2], false);
+        TextUnit fourthTextUnit = createAndLinkTextUnit(lecture, student, competencies[3], false);
         fourthTextUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
         lectureUnitRepository.save(fourthTextUnit);
-        TextUnit fifthTextUnit = createAndLinkTextUnit(student, competencies[4], false);
+        TextUnit fifthTextUnit = createAndLinkTextUnit(lecture, student, competencies[4], false);
 
         var result = request.get("/api/atlas/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
         verifyNavigationResult(result, textUnit, thirdTextUnit, fifthTextUnit);
@@ -773,11 +769,12 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
-        List<LearningObject> completedLectureUnits = List.of(createAndLinkTextUnit(student, competencies[4], true), createAndLinkTextUnit(student, competencies[4], true));
+        List<LearningObject> completedLectureUnits = List.of(createAndLinkTextUnit(lecture, student, competencies[4], true),
+                createAndLinkTextUnit(lecture, student, competencies[4], true));
         List<LearningObject> finishedExercises = List.of(createAndLinkTextExercise(competencies[4], true), createAndLinkTextExercise(competencies[4], true),
                 createAndLinkTextExercise(competencies[4], true));
 
-        List<LearningObject> uncompletedLectureUnits = List.of(createAndLinkTextUnit(student, competencies[4], false));
+        List<LearningObject> uncompletedLectureUnits = List.of(createAndLinkTextUnit(lecture, student, competencies[4], false));
         List<LearningObject> unfinishedExercises = List.of(createAndLinkTextExercise(competencies[4], false), createAndLinkTextExercise(competencies[4], false));
 
         int a = completedLectureUnits.size();
@@ -820,9 +817,8 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         return textExercise;
     }
 
-    private TextUnit createAndLinkTextUnit(User student, Competency competency, boolean completed) {
-        TextUnit textUnit = lectureUtilService.createTextUnit();
-        lectureUtilService.addLectureUnitsToLecture(lecture, List.of(textUnit));
+    private TextUnit createAndLinkTextUnit(Lecture lecture, User student, Competency competency, boolean completed) {
+        TextUnit textUnit = lectureUtilService.createTextUnit(lecture);
         textUnit = (TextUnit) competencyUtilService.linkLectureUnitToCompetency(competency, textUnit);
 
         if (completed) {

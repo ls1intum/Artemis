@@ -24,4 +24,8 @@ public class CompetencyRepositoryApi extends AbstractAtlasApi {
     public Set<Competency> findAllByCourseId(long courseId) {
         return competencyRepository.findAllByCourseId(courseId);
     }
+
+    public Competency findByIdElseThrow(long competencyId) {
+        return competencyRepository.findByIdElseThrow(competencyId);
+    }
 }
