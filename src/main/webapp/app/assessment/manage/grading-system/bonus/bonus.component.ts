@@ -81,12 +81,6 @@ export class BonusComponent implements OnInit {
         btnClass: 'btn-secondary',
     }));
 
-    readonly bonusStrategyDiscreteness = [BonusStrategyDiscreteness.CONTINUOUS].map((bonusStrategyDiscreteness) => ({
-        value: bonusStrategyDiscreteness,
-        labelKey: 'artemisApp.bonus.discreteness.' + BonusStrategyDiscreteness[bonusStrategyDiscreteness].toLowerCase(),
-        btnClass: 'btn-secondary',
-    }));
-
     readonly calculationSigns = [
         {
             value: this.CALCULATION_MINUS,
