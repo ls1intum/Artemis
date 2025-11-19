@@ -60,7 +60,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuiz(res.body!, false);
                 });
@@ -139,7 +139,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     loadQuizCommon(quiz: QuizExercise) {
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
             this.router.navigateByUrl('courses');
         }
         // search selected question in quizExercise based on questionId

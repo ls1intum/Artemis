@@ -75,7 +75,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         });
         this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuizSuccess(res.body!);
                 });
@@ -163,7 +163,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     loadNewData(statistic: QuizPointStatistic) {
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
             this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
@@ -178,7 +178,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     loadQuizSuccess(quizExercise: QuizExercise) {
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
             this.router.navigate(['courses']);
         }
         this.quizExercise = quizExercise;

@@ -64,7 +64,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuiz(res.body!);
                 });
@@ -130,7 +130,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      */
     loadQuiz(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be sent back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;

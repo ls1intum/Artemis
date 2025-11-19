@@ -11,7 +11,7 @@ export const scienceSettingsStructure: UserSettingsStructure<ScienceSetting> = {
     groups: [
         {
             key: 'general',
-            restrictionLevels: [Authority.USER],
+            restrictionLevels: [Authority.STUDENT],
             settings: [
                 {
                     key: 'activity',

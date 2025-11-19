@@ -768,25 +768,25 @@ describe('NavbarComponent', () => {
         {
             width: 800,
             account: { login: 'test' },
-            roles: [Authority.USER],
+            roles: [Authority.STUDENT],
             expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
         },
         {
             width: 650,
             account: { login: 'test' },
-            roles: [Authority.USER],
+            roles: [Authority.STUDENT],
             expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false },
         },
         {
             width: 600,
             account: { login: 'test' },
-            roles: [Authority.USER],
+            roles: [Authority.STUDENT],
             expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
         },
         {
             width: 470,
             account: { login: 'test' },
-            roles: [Authority.USER],
+            roles: [Authority.STUDENT],
             expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true },
         },
         {
