@@ -96,6 +96,7 @@ def convert_exercise_to_zip(variant_path: str) -> None:
             if 'template' in file:
                 new_name = os.path.join(variant_path, f"{VARIANT_ID}-exercise.zip")
                 os.rename(file, new_name)
+                logging.info(f"Renamed {file} to {new_name}")
                 arcname = os.path.basename(new_name)
                 zipf.write(new_name, arcname=arcname)
                 logging.info(f"Added {new_name} to final zip as {arcname}.")
@@ -104,6 +105,7 @@ def convert_exercise_to_zip(variant_path: str) -> None:
             zipf.write(file, arcname=arcname)
             logging.info(f"Added {file} to final zip as {arcname}.")
     logging.info(f"Zip file created at {exercise_zip_path}")
+    zip_files.append(os.path.join(variant_path, f"{VARIANT_ID}-exercise.zip"))
 
     logging.info("Cleaning up intermediate zip files...")
     for temp_zip in zip_files:
