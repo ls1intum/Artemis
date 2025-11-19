@@ -50,12 +50,16 @@ export class LLMSelectionModalComponent implements OnInit {
     }
 
     onBackdropClick(event: MouseEvent): void {
+        this.choice.emit('none');
+        this.modalService.emitChoice('none');
         if (event.target === event.currentTarget) {
             this.close();
         }
     }
 
     onLearnMoreClick(event: MouseEvent): void {
+        this.choice.emit('none');
+        this.modalService.emitChoice('none');
         event.preventDefault();
     }
 }
