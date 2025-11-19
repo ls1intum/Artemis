@@ -70,9 +70,9 @@ def convert_exercise_to_zip(variant_path: str) -> None:
     CONFIG_FILE: str = "Exercise-Details.json"
     VARIANT_ID = os.path.basename(variant_path)  # 001
 
-    output_zip_filename = f"{VARIANT_ID}-Exercise.zip" #001-Exercise.zip
-    output_zip_path = os.path.join(variant_path, output_zip_filename) #...001/001-Exercise.zip
-    logging.info(f"Final zip file: {output_zip_filename} will be created at {output_zip_path}")
+    exercise_zip_filename = f"{VARIANT_ID}-FullExercise.zip" #001-Exercise.zip
+    exercise_zip_path = os.path.join(variant_path, exercise_zip_filename) #...001/001-FullExercise.zip
+    logging.info(f"Final zip file: {exercise_zip_filename} will be created at {exercise_zip_path}")
     zip_files = []
     try:
         for repo_type in REPO_TYPES:
@@ -88,14 +88,22 @@ def convert_exercise_to_zip(variant_path: str) -> None:
     except Exception as e:
         logging.error(f"Error while creating intermediate zip files: {e}")
     
-    zip_files.append(os.path.join(variant_path, CONFIG_FILE))
+    config_file_path = os.path.join(variant_path, CONFIG_FILE)
+    zip_files.append(config_file_path)
 
-    with zipfile.ZipFile(output_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(exercise_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for file in zip_files:
+            if 'template' in file:
+                new_name = os.path.join(variant_path, f"{VARIANT_ID}-exercise.zip")
+                os.rename(file, new_name)
+                arcname = os.path.basename(new_name)
+                zipf.write(new_name, arcname=arcname)
+                logging.info(f"Added {new_name} to final zip as {arcname}.")
+                continue
             arcname = os.path.basename(file)
             zipf.write(file, arcname=arcname)
             logging.info(f"Added {file} to final zip as {arcname}.")
-    logging.info(f"Zip file created at {output_zip_path}")
+    logging.info(f"Zip file created at {exercise_zip_path}")
 
     logging.info("Cleaning up intermediate zip files...")
     for temp_zip in zip_files:
@@ -104,73 +112,71 @@ def convert_exercise_to_zip(variant_path: str) -> None:
             logging.info(f"Removed temporary zip file: {os.path.basename(temp_zip)}")
     
     logging.info("Verifying contents of the final zip file...")
-    with zipfile.ZipFile(output_zip_path, 'r') as zipf:
+    with zipfile.ZipFile(exercise_zip_path, 'r') as zipf:
         zip_contents = zipf.namelist()
-        logging.info(f"Contents of {output_zip_filename}: {zip_contents}")
+        logging.info(f"Contents of {exercise_zip_filename}: {zip_contents}")
 
 
-# def import_programming_exercise(session: Session, course_id: int, server_url: str, json_path: str, exercise_zip_path: str) -> requests.Response:
-#     """
-#     Imports a programming exercise to the Artemis server using a multipart/form-data request.
+def import_programming_exercise(session: Session, course_id: int, server_url: str, config_file_path: str, exercise_zip_path: str) -> requests.Response:
+    """
+    Imports a programming exercise to the Artemis server using a multipart/form-data request.
     
-#     The request includes two parts:
-#     1. 'programmingExercise': The configuration JSON (metadata).
-#     2. 'file': The exercise content as a ZIP archive.
+    The request includes two parts:
+    1. 'programmingExercise': The configuration JSON (metadata).
+    2. 'file': The exercise content as a ZIP archive.
 
-#     Returns the JSON response from the server (the newly created exercise object).
-#     """
-#     url: str = f"{server_url}/programming/courses/{course_id}/programming-exercises/import-from-file"
+    Returns the JSON response from the server (the newly created exercise object).
+    """
+    url: str = f"{server_url}/programming/courses/{course_id}/programming-exercises/import-from-file"
 
-#     try:
-#         with open(json_path, 'r') as f:
-#             # We load the Python dictionary, but send it as a JSON string later
-#             exercise_details: Dict[str, Any] = json.load(f)
-#     except Exception as e:
-#         logging.error(f"Failed to read programming exercise JSON file at {json_path}: {e}")
+    logging.info("Verifying contents of the final zip file...")
+    with zipfile.ZipFile(exercise_zip_path, 'r') as zipf:
+        zip_contents = zipf.namelist()
+        logging.info(f"Contents of {exercise_zip_path}: {zip_contents}")
+    try:
+        with open(config_file_path, 'r') as config_file:
+            exercise_details: Dict[str, Any] = json.load(config_file)
+            exercise_details['id'] = None  # Ensure the ID is None for import
+            logging.info(f"Loaded programming exercise details from {config_file_path}")
+        exercise_details_str = json.dumps(exercise_details)
+    except OSError as e:
+        raise Exception(f"Failed to read programming exercise JSON file at {config_file_path}: {e}")
     
-#     # Open the ZIP file handle in binary read mode ('rb')
-#     # Note: We must open the file and keep the handle for the POST request payload.
-#     # The 'requests' library handles closing the file if you use the 'files' parameter, 
-#     # but since we are manually encoding the multipart body, we need to manage the handle.
-#     try:
-#         with open(exercise_zip_path, 'rb') as file:
-#             zip_file = file.read()
-#     except Exception as e:
-#         logging.error(f"Failed to read programming exercise ZIP file at {exercise_zip_path}: {e}")
+    logging.info(f"Preparing to import exercise: {exercise_details.get('title', 'Untitled')}")
+    try:
+        with open(exercise_zip_path, 'rb') as file:
+            exercise_zip_file = file.read()
+            logging.info(f"Loaded programming exercise ZIP file from {exercise_zip_path}")
+    except OSError as e:
+        raise Exception(f"Failed to read programming exercise ZIP file at {exercise_zip_path}: {e}")
     
-#     logging.info(f"Preparing to import exercise: {exercise_details.get('title', 'Untitled')}")
+    files_payload = {
+        'programmingExercise': (
+            'Exercise-Details.json',
+            exercise_details_str,
+            'application/json'
+        ),
+        'file': (
+            os.path.basename(exercise_zip_path),
+            exercise_zip_file,
+            'application/zip'
+        )
+    }
     
-#     # Define the multipart payload structure
-#     # The syntax here is crucial for urllib3.filepost.encode_multipart_formdata:
-#     # 'name': (filename, content, content_type)
-#     files_payload = {
-#         'programmingExercise': (
-#             'Exercise-Details.json',
-#             json.dumps(exercise_details),
-#             'application/json'),
-#         'file': (
-#             exercise_zip_path,
-#             zip_file,
-#             'application/zip')
-#     }
+    body, content_type = urllib3.filepost.encode_multipart_formdata(files_payload)
+    logging.info(f"Multipart form-data body and content type prepared.")
+        
+    headers  = {
+        "Content-Type": content_type
+        }
     
-#     # try:
-#     body, content_type = urllib3.filepost.encode_multipart_formdata(files_payload)
-#     logging.info(f"Multipart form-data body and content type prepared.")
-#     # finally:
-#     #     zip_file.close()
-    
-#     headers  = {
-#         "Content-Type": content_type
-#         }
-    
-#     logging.info(f"Sending request to: {url}")
+    logging.info(f"Sending request to: {url}")
 
-#     response: requests.Response = session.post(url, data=body, headers=headers)
+    response: requests.Response = session.post(url, data=body, headers=headers)
 
-#     if response.status_code == 201:
-#         logging.info(f"Imported programming exercise {exercise_details.get('title', 'Untitled')} successfully")
-#         return response.json()
-#     else:
-#         logging.error(f"Failed to import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
-#         raise Exception(f"Could not import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
+    if response.status_code == 201:
+        logging.info(f"Imported programming exercise {exercise_details.get('title', 'Untitled')} successfully")
+        return response.json()
+    else:
+        logging.error(f"Failed to import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
+        raise Exception(f"Could not import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
