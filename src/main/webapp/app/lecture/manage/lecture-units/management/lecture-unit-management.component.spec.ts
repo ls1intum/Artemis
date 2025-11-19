@@ -10,7 +10,7 @@ import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectur
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -67,6 +67,9 @@ describe('LectureUnitManagementComponent', () => {
     let lecture: Lecture;
     let course: Course;
 
+    const lectureId = 1;
+    const route = { parent: { snapshot: { paramMap: convertToParamMap({ lectureId }) } } } as any as ActivatedRoute;
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), FaIconComponent],
@@ -91,20 +94,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(IrisSettingsService),
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        parent: {
-                            params: {
-                                subscribe: (fn_1: (value: Params) => void) =>
-                                    fn_1({
-                                        lectureId: 1,
-                                    }),
-                            },
-                        },
-                        children: [],
-                    },
-                },
+                { provide: ActivatedRoute, useValue: route },
             ],
         }).compileComponents();
         lectureUnitManagementComponentFixture = TestBed.createComponent(LectureUnitManagementComponent);

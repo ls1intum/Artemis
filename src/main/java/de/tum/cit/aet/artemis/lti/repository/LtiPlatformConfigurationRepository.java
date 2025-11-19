@@ -5,8 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -39,7 +38,7 @@ public interface LtiPlatformConfigurationRepository extends ArtemisJpaRepository
      * @return {@link LtiPlatformConfiguration} with eager-loaded courses, or {@code null} if not found.
      * @throws EntityNotFoundException if no entity with the given ID is found.
      */
-    @NotNull
+    @NonNull
     default LtiPlatformConfiguration findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(long id) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerOnlineCourseConfigurationsById(id)), id);
     }
