@@ -22,7 +22,7 @@ export class HasAnyAuthorityDirective {
     private authorities: readonly Authority[];
 
     @Input()
-    set jhiHasAnyAuthority(value: string | string[] | Authority | readonly Authority[]) {
+    set jhiHasAnyAuthority(value: string | string[] | readonly Authority[]) {
         this.authorities = typeof value === 'string' ? [value as Authority] : (value as readonly Authority[]);
         this.updateView();
         // Get notified each time authentication state changes.
