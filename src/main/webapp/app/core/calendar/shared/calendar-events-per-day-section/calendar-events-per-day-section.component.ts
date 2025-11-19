@@ -6,9 +6,24 @@ import { Dayjs } from 'dayjs/esm';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
 
-type PositionInfo = { top: number; height: number; left: number; width: number };
-type CalendarEventAndMetadata = { event: CalendarEvent; position: PositionInfo; color: string };
-type Day = { date: Dayjs; eventsAndMetadata: CalendarEventAndMetadata[]; id: string };
+interface PositionInfo {
+    top: number;
+    height: number;
+    left: number;
+    width: number;
+}
+
+interface CalendarEventAndMetadata {
+    event: CalendarEvent;
+    position: PositionInfo;
+    color: string;
+}
+
+interface Day {
+    date: Dayjs;
+    eventsAndMetadata: CalendarEventAndMetadata[];
+    id: string;
+}
 
 @Component({
     selector: 'jhi-calendar-events-per-day-section',
