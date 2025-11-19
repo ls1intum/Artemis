@@ -1,0 +1,52 @@
+<div class="modal-header">
+    <h4 class="modal-title" jhiTranslate="artemisApp.iris.memories.conflict.modalTitle"></h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+</div>
+<div class="modal-body">
+    @if (groups()?.length) {
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div
+                class="fw-semibold"
+                jhiTranslate="artemisApp.iris.memories.conflict.conflictCount"
+                [translateValues]="{ current: currentIndex() + 1, total: groups().length }"
+            ></div>
+            <div class="btn-group">
+                <button
+                    class="btn btn-sm btn-outline-secondary"
+                    (click)="prev()"
+                    [disabled]="currentIndex() === 0"
+                    jhiTranslate="artemisApp.iris.memories.conflict.previous"
+                ></button>
+                <button
+                    class="btn btn-sm btn-outline-secondary"
+                    (click)="next()"
+                    [disabled]="currentIndex() >= groups().length - 1"
+                    jhiTranslate="artemisApp.iris.memories.conflict.next"
+                ></button>
+            </div>
+        </div>
+        <div class="row g-3">
+            @for (gid of currentGroup(); track gid) {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold">{{ details[gid]?.title || gid }}</span>
+                            </div>
+                            <div class="small text-muted mb-2"><span jhiTranslate="artemisApp.iris.memories.conflict.memoryId"></span>: {{ gid }}</div>
+                            <div class="text-break mb-2">{{ details[gid]?.content }}</div>
+                            <button class="btn btn-sm btn-success" [disabled]="busy()" (click)="keep(currentIndex(), gid)">
+                                <span jhiTranslate="artemisApp.iris.memories.conflict.keepThis"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    } @else {
+        <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.conflict.noConflicts"></div>
+    }
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="close()" jhiTranslate="entity.action.close"></button>
+</div>
