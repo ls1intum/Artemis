@@ -96,7 +96,7 @@ def convert_exercise_to_zip(variant_path: str) -> None:
             if 'template' in file:
                 new_name = os.path.join(variant_path, f"{VARIANT_ID}-exercise.zip")
                 os.rename(file, new_name)
-                logging.info(f"Renamed {file} to {new_name}")
+                logging.info(f"Renamed {os.path.basename(file)} to {os.path.basename(new_name)}")
                 arcname = os.path.basename(new_name)
                 zipf.write(new_name, arcname=arcname)
                 logging.info(f"Added {new_name} to final zip as {arcname}.")
@@ -138,9 +138,12 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
     try:
         with open(config_file_path, 'r') as config_file:
             exercise_details: Dict[str, Any] = json.load(config_file)
-            exercise_details['id'] = None  # Ensure the ID is None for import
-            logging.info(f"Loaded programming exercise details from {config_file_path}")
+            exercise_details['id'] = None
+            logging.info(f"Set exercise ID to None for import.")
+            exercise_details['course'] = {'id': course_id}
+            logging.info(f"Set course ID for import.")
         exercise_details_str = json.dumps(exercise_details)
+        logging.info(f"Loaded programming exercise details from {config_file_path}")
     except OSError as e:
         raise Exception(f"Failed to read programming exercise JSON file at {config_file_path}: {e}")
     
@@ -176,7 +179,7 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
 
     response: requests.Response = session.post(url, data=body, headers=headers)
 
-    if response.status_code == 201:
+    if response.status_code == 200:
         logging.info(f"Imported programming exercise {exercise_details.get('title', 'Untitled')} successfully")
         return response.json()
     else:

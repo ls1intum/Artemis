@@ -6,6 +6,7 @@ from typing import Dict, Any, List
 config = configparser.ConfigParser()
 config.read(['config.ini'])
 
+CLIENT_URL: str = config.get('Settings', 'client_url')
 SERVER_URL: str = config.get('Settings', 'server_url')
 ADMIN_USER: str = config.get('Settings', 'admin_user')
 ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')

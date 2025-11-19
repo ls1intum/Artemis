@@ -5,7 +5,7 @@ import sys
 import uuid
 import requests
 from logging_config import logging
-from utils import login_as_admin, SERVER_URL
+from utils import login_as_admin, SERVER_URL, CLIENT_URL
 from create_pecv_bench_course import create_pecv_bench_course
 from manage_programming_exercise import create_programming_exercise, convert_exercise_to_zip, import_programming_exercise
 from pathlib import Path
@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
     response_data = create_pecv_bench_course(session)
     course_id = response_data["id"]
-    #course_id = 7
+    #course_id = 8
     #random_slug = str(uuid.uuid4())[:8]
     #create_programming_exercise(session, course_id, SERVER_URL, 1, f"Variant 1-{random_slug}")
     import_programming_exercise(session, course_id, SERVER_URL, 
