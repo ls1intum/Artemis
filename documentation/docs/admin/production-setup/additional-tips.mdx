@@ -1,5 +1,5 @@
-# Additional Tips
-
+import Callout from "../../../src/components/Callout/Callout";
+import { CalloutVariant } from "../../../src/components/Callout/Callout.types";
 
 ## Automatic Cleanup
 
@@ -76,13 +76,16 @@ StandardError=inherit
 WantedBy=multi-user.target
 ```
 
-The file should be placed at `/etc/systemd/system/artemis.service` and after running `sudo systemctl daemon-reload`,
-you can start the service using `sudo systemctl start artemis`.
-You can stop the service using `sudo systemctl stop artemis` and restart it using `sudo systemctl restart artemis`.
-Logs can be fetched using `sudo journalctl -u artemis -f -n 200`.
+* The file should be placed at `/etc/systemd/system/artemis.service` and after running `sudo systemctl daemon-reload`.
+* You can start the service using `sudo systemctl start artemis`.
+* You can stop the service using `sudo systemctl stop artemis` and restart it using `sudo systemctl restart artemis`.
+* Logs can be fetched using `sudo journalctl -u artemis -f -n 200`.
 
-`-Djava.security.egd=file:/dev/./urandom` might also be useful for other (production) setups, even if this service file is not used. This is required if repositories are cloned via SSH from the VCS.
-The default (pseudo-)random-generator `/dev/random` is blocking which results in very bad performance when using SSH due to lack of entropy.
+<Callout variant={CalloutVariant.info}>
+    `-Djava.security.egd=file:/dev/./urandom` might also be useful for other (production) setups, even if this service file is not used.
+    This is required if repositories are cloned via SSH from the VCS.
+    The default (pseudo-)random-generator `/dev/random` is blocking which results in very bad performance when using SSH due to lack of entropy.
+</Callout>
 
 
 ## Nginx Configuration Templates
@@ -155,7 +158,7 @@ resolver_timeout 5s;
 
 ## Docker Compose Setup
 
-The [development section of the documentation](https://docs.artemis.cit.tum.de/dev/setup/docker-compose.html) provides a introduction to
+The [development section of the documentation](https://docs.artemis.cit.tum.de/dev/setup/docker-compose.html) provides an introduction to
 Docker Compose setups for Artemis.
 This section provides additional information for administrators.
 

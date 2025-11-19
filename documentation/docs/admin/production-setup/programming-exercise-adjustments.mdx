@@ -19,7 +19,7 @@ There are variables for several paths:
 
   Files in this directory are usually not critical, as the latest pushed version of these repositories are
   also stored at the VCS.
-  However, changed that are saved in the online code editor but not yet committed will be lost when
+  However, changes that are saved in the online code editor but not yet committed will be lost when
   this folder is deleted.
 
 - `artemis.repo-download-clone-path`
@@ -62,7 +62,7 @@ It is extended by a `Jenkinsfile` in the same directory that will be placed insi
 The `Jenkinsfile` handles the functionality shared by all programming languages like checking out the repositories and
 loading the actual exercise-specific pipeline script from the Artemis server.
 
-<Callout variant={CalloutVariant.note}>
+<Callout variant={CalloutVariant.info}>
     When overriding the `Jenkinsfile` with a custom one, note that it **must** start either
 
     - with `pipeline` (there must not be a comment before pipeline, but there can be one at any other position,
@@ -80,11 +80,11 @@ You can override those `pipeline.groovy` files with the template mechanism descr
 Inside the `pipeline.groovy` some placeholders exist that will be filled by Artemis upon exercise creation from the
 server or exercise settings:
 
-| Variable | Replacement | Origin |
-| --- | --- | --- |
-| `#dockerImage` | The container image that the tests will run in. | Server configuration |
-| `#dockerArgs` | Additional flags passed to Docker when starting the container. | Server configuration |
-| `#isStaticCodeAnalysisEnabled` | Defines if static code analysis should be performed. | Exercise configuration |
+| Variable                       | Replacement                                                    | Origin                 |
+|--------------------------------|----------------------------------------------------------------|------------------------|
+| `#dockerImage`                 | The container image that the tests will run in.                | Server configuration   |
+| `#dockerArgs`                  | Additional flags passed to Docker when starting the container. | Server configuration   |
+| `#isStaticCodeAnalysisEnabled` | Defines if static code analysis should be performed.           | Exercise configuration |
 
 The `pipeline.groovy` file can be customized further by instructors after creating the exercise from within
 Artemis via the ‘Edit Build Plan’ button on the details page of the exercise.
@@ -95,7 +95,7 @@ Artemis via the ‘Edit Build Plan’ button on the details page of the exercise
 With Sonatype Nexus you can run a caching server in your local network for Maven dependencies.
 An alternative approach for caching is with Docker volumes, see [this section](#caching-docker-volumes).
 
-<Callout variant={CalloutVariant.note}>
+<Callout variant={CalloutVariant.info}>
   The following steps assume `artemis.example.com` is the host `10.0.73.42` and is using port `8443` for the cache.
   Adapt the URLs for your actual setup.
 </Callout>

@@ -18,7 +18,11 @@ import singleInstanceSetupImg from "./assets/distributed-setup/deployment_before
 
 Artemis usually runs with one instance of the application server:
 
-<Image src={singleInstanceSetupImg} size={ImageSize.medium} />
+<Image
+    src={singleInstanceSetupImg}
+    size={ImageSize.large}
+    alt={"System components of Artemis when running as a single instance."}
+/>
 
 
 ## Setup with multiple instances
@@ -30,7 +34,11 @@ Artemis also supports this setup (which is also used at TUM).
 
 Multiple instances of the application server are used to distribute the load:
 
-<Image src={multiInstanceSetupSimpleImg} size={ImageSize.medium} />
+<Image
+    src={multiInstanceSetupSimpleImg}
+    size={ImageSize.large}
+    alt={"System components of Artemis when running with multiple Artemis instances."}
+/>
 
 A load balancer (typically a reverse proxy such as nginx) is added, that distributes the requests
 to the different instances.
@@ -60,7 +68,11 @@ All instances of Artemis form a so-called cluster that allows them to synchroniz
 You can use the configuration argument `spring.hazelcast.interface` to configure the interface on which Hazelcast
 will listen.
 
-<Image src={deploymentHazelcastImg} size={ImageSize.medium} />
+<Image
+    src={deploymentHazelcastImg}
+    size={ImageSize.large}
+    alt={"Component diagram showing how the Hazelcast cache connects to Artemis instances."}
+/>
 
 One problem that arises with a distributed setup is that all instances have to know each other in order
 to create this cluster.
@@ -96,7 +108,7 @@ logging:
 `{{ artemis_eureka_urls }}` must be the URL where Eureka is reachable,
 `{{ artemis_ip_address }}` must be the IP under which this instance is reachable and
 `{{ artemis_eureka_instance_id }}` must be a unique identifier for this instance.
-You also have to setup the value `jhipster.registry.password` to the password of the registry
+You also have to set up the value `jhipster.registry.password` to the password of the registry
 (which you will set later).
 
 Note that Hazelcast (which requires Eureka) is by default binding to `127.0.0.1` to prevent other instances
@@ -205,7 +217,6 @@ This setting must be set for every instance, but you have to make sure to adjust
                   search-locations: file:./config-server
     ```
 
-
 3. `/opt/registry/config-server/application.yml`
 
     ```yaml
@@ -281,7 +292,11 @@ We use a so-called broker for this (named [Apache ActiveMQ Artemis](https://acti
 
 It relays message between instances:
 
-<Image src={deploymentBrokerImg} size={ImageSize.medium} />
+<Image
+    src={deploymentBrokerImg}
+    size={ImageSize.large}
+    alt={"Component diagram showing how the websocket broker is connected to Artemis."}
+/>
 
 
 #### Setup
@@ -476,11 +491,14 @@ All instances can now communicate with each other on 3 different layers:
 - WebSockets
 - File system
 
-You can see the state of all connected instances within the registry:
-
+You can see the state of all connected instances within the registry.
 It relays message between instances:
 
-<Image src={registryImg} size={ImageSize.medium} />
+<Image
+    src={registryImg}
+    size={ImageSize.large}
+    alt={"List of Artemis instances as shown in the registry user interface."}
+/>
 
 
 ## Integrated Code Lifecycle
@@ -495,8 +513,8 @@ The previously mentioned steps concerning the multiple Artemis instance setup re
 
 ### Core nodes
 
-Core nodes serve the main functionality of Artemis. In ICL, this additionally includes the :ref:`CI Management <ci_management>`,
-responsible for managing and interacting with the build job queue (adding, cancelling and viewing build jobs), and the :ref:`Local VC system <local_vc>`.
+Core nodes serve the main functionality of Artemis. In ICL, this additionally includes the [CI Management](https://artemis-platform.readthedocs.io/en/latest/dev/system-design.html#ci-management),
+responsible for managing and interacting with the build job queue (adding, cancelling and viewing build jobs), and the [Local VC system](https://artemis-platform.readthedocs.io/en/latest/user/icl/local-version-control.html#local-version-control).
 
 For ICL, the run configuration for core nodes need to include the additional profiles ``core``, ``localvc`` and ``localci``, e.g.:
 
@@ -504,7 +522,7 @@ For ICL, the run configuration for core nodes need to include the additional pro
 --spring.profiles.active=prod,core,ldap,localvc,localci,athena,scheduling,iris,lti
 ```
 
-Core nodes do not require further adjustments to the ``application-prod.yml``, as long as you have added the necessary variables as described in the :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
+Core nodes do not require further adjustments to the ``application-prod.yml``, as long as you have added the necessary variables as described in the [Integrated Code Lifecycle Setup](https://artemis-platform.readthedocs.io/en/latest/dev/setup/integrated-code-lifecycle.html).
 
 
 ### Build Agents
@@ -514,7 +532,7 @@ assessment of programming exercises. If desired, build agents can execute multip
 We recommend at least 2 CPUs and 2 GB of RAM for each concurrently running build job.
 
 Build agents do **not** require access to the Shared File System as the repositories used in the build jobs are cloned using HTTPS. Furthermore, as Build Agents do not handle client requests,
-they should be left out from the :ref:`nginx configuration <nginx_configuration>`.
+they should be left out from the [nginx configuration](#nginx-configuration).
 
 
 The run configuration contains just two profiles:
@@ -602,9 +620,14 @@ Please note that `artemis.continuous-integration.build-agent.short-name` must be
 Build agents run as [Hazelcast Lite Members](https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members) and require a full member, in our case a core node, to be running.
 Thus, before starting a build agent make sure that at least the primary node is running. You can then add and remove build agents to the cluster as desired.
 
-You can verify that a build agent has been successfully added to the cluster by checking the Build Agent View in the Server Administration. It may take a few seconds for the build agent to show up:
+You can verify that a build agent has been successfully added to the cluster by checking the Build Agent View in the Server Administration.
+It may take a few seconds for the build agent to show up:
 
-<Image src={buildAgentViewImg} size={ImageSize.medium} />
+<Image
+    src={buildAgentViewImg}
+    size={ImageSize.large}
+    alt={"List of build agents as shown in the Artemis user interface."}
+/>
 
 
 ## Running multiple instances locally
@@ -624,8 +647,7 @@ different ports and a unique instance ID for each instance.
     configuration to set the instance ID and the port, e.g. ``--server.port=8081 --eureka.instance.instanceId="Artemis:2"``.
     Also, make sure that only one instance has the ``scheduling`` profile enabled:
 
-    <Image src={runConfigImg} size={ImageSize.medium} />
-
+    <Image src={runConfigImg} size={ImageSize.large} alt={"Run configuration dialog in IntelliJ."} />
 
 3. Start the registry service, e.g., by running `docker compose -f docker/broker-registry.yml up`.
 
@@ -640,10 +662,10 @@ You should now be able to see all instances in the registry interface at `http:/
 ### Running multiple instances locally with Docker
 
 You can also run multiple instances of Artemis locally using Docker. This will start 3 Artemis instances, each running
-on a its own container. A load balancer (nginx) will be used to distribute the requests to the different instances. The
+in its own container. A load balancer (nginx) will be used to distribute the requests to the different instances. The
 load balancer will be running in a separate container and will be accessible on ports 80/443 of the host system. The
 instances will be registered in the registry service running on a separate container. The instances will use the registry
-service to discover each other and form a Hazelcast cluster. Further details can be found in :ref:`Database Cache`. The
+service to discover each other and form a Hazelcast cluster. Further details can be found in [Database Cache](#database-cache). The
 instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messages. Further details can be found in [WebSockets](#websockets). In summary, the setup will look like this:
 
 * 3 Artemis instances:
@@ -655,15 +677,18 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
 * A Registry service addressable on port 8761 of the host system: ``http://localhost:8761``
 * An ActiveMQ broker
 
+<Image
+    src={multiNodeSetupImg}
+    size={ImageSize.large}
+    alt={"Component diagram of a Artemis multi-instance deployment and how it connects to the required support services."}
+/>
 
-<Image src={multiNodeSetupImg} size={ImageSize.medium} />
-
-<Callout variant={CalloutVariant.note}>
+<Callout variant={CalloutVariant.info}>
     You don't have to start the client manually. The client files are served by the Artemis instances and can be
     accessed through the load balancer on `http(s)://localhost`.
 </Callout>
 
-<Callout variant={CalloutVariant.note}>
+<Callout variant={CalloutVariant.info}>
     You may run into the following error when starting the containers
     `No member group is available to assign partition ownership...`. This issue should resolve itself after a few
     minutes. Otherwise, you can first start the following containers:
@@ -692,7 +717,7 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
     sudo chown -R 1337:1337 docker/.docker-data
     ```
 
-    <Callout variant={CalloutVariant.note}>
+    <Callout variant={CalloutVariant.info}>
       - If you don't want to change the owner of the directories, you can create other directories with the necessary
           permissions and adjust the paths in the docker-compose file accordingly.
       - You could also use docker volumes instead of mounting local directories. You will have to adjust the docker-compose
@@ -715,7 +740,7 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
     URI. You need to change the value of the environment variable `ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI`
     in the file `docker/artemis/config/prod-multinode.env` to `tcp://host.docker.internal:2375`.
 
-    <Callout variant={CalloutVariant.note}>
+    <Callout variant={CalloutVariant.info}>
       Make sure that option "Expose daemon on tcp://localhost:2375 without TLS" is enabled. This can be found under
       Settings > General in Docker Desktop.
     </Callout>
