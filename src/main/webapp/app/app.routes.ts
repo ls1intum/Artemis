@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_USER } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_USER } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 
@@ -43,7 +43,7 @@ const routes: Routes = [
         path: 'privacy/data-exports',
         loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
         data: {
-            authorities: IS_AT_LEAST_USER,
+            authorities: IS_USER,
             pageTitle: 'artemisApp.dataExport.title',
             usesModuleBackground: true,
         },
@@ -52,7 +52,7 @@ const routes: Routes = [
         path: 'privacy/data-exports/:id',
         loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
         data: {
-            authorities: IS_AT_LEAST_USER,
+            authorities: IS_USER,
             pageTitle: 'artemisApp.dataExport.title',
             usesModuleBackground: true,
         },
@@ -105,7 +105,7 @@ const routes: Routes = [
                 pathMatch: 'full',
                 loadComponent: () => import('app/core/account/password/password.component').then((m) => m.PasswordComponent),
                 data: {
-                    authorities: IS_AT_LEAST_USER,
+                    authorities: IS_USER,
                     pageTitle: 'global.menu.account.password',
                 },
                 canActivate: [UserRouteAccessService],
@@ -139,7 +139,7 @@ const routes: Routes = [
                 pathMatch: 'full',
                 loadComponent: () => import('app/core/account/settings/settings.component').then((m) => m.SettingsComponent),
                 data: {
-                    authorities: IS_AT_LEAST_USER,
+                    authorities: IS_USER,
                     pageTitle: 'global.menu.account.settings',
                 },
                 canActivate: [UserRouteAccessService],

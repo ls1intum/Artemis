@@ -11,4 +11,4 @@ export const IS_AT_LEAST_EDITOR: readonly Authority[] = [Authority.ADMIN, Author
 export const IS_AT_LEAST_INSTRUCTOR: readonly Authority[] = [Authority.ADMIN, Authority.INSTRUCTOR];
 export const INSTRUCTOR_AND_TUTOR_ONLY: readonly Authority[] = [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA];
 export const IS_AT_LEAST_ADMIN: readonly Authority[] = [Authority.ADMIN];
-export const IS_AT_LEAST_USER: readonly Authority[] = [Authority.USER];
+export const IS_USER: readonly Authority[] = [Authority.USER];
