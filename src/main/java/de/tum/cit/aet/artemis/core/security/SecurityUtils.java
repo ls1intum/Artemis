@@ -12,8 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;

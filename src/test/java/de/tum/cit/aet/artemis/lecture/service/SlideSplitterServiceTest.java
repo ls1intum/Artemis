@@ -18,13 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.validation.constraints.NotNull;
-
 import javax.imageio.ImageIO;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,8 +64,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @BeforeEach
     void initTestCase() {
+        var lecture = lectureUtilService.createCourseWithLecture(true);
         // Create a test attachment video unit with a PDF file
-        testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(3, true);
+        testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 3, true);
 
         // Create a real PDF document for tests
         testDocument = new PDDocument();
@@ -720,13 +720,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Files.walkFileTree(tempDir, new SimpleFileVisitor<>() {
 
             @Override
-            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+            public @NonNull FileVisitResult visitFile(Path file, @NonNull BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            public @NonNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                 Files.delete(dir);
                 return FileVisitResult.CONTINUE;
             }
@@ -877,13 +877,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Files.walkFileTree(tempDir, new SimpleFileVisitor<>() {
 
             @Override
-            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+            public @NonNull FileVisitResult visitFile(Path file, @NonNull BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            public @NonNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
                 Files.delete(dir);
                 return FileVisitResult.CONTINUE;
             }
