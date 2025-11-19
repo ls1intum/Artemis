@@ -122,7 +122,7 @@
                 "loginWithPasskeyToUseAdminFeatures": "Mit Passkey anmelden um Admin-Funktionen zu nutzen",
                 "setupPasskey": "Passkey registrieren",
                 "passkeyRestrictionExplanation": "Zum Schutz der Studierendendaten und zur Sicherstellung der Zuverlässigkeit von Artemis sind Administratoraktionen nur nach Passkey-Login verfügbar.",
-                "passkeyNotYetApproved": "Dein Passkey ist noch nicht von einem Super-Administrator freigegeben.",
+                "passkeyNotYetApproved": "Dein Passkey war zum Zeitpunkt deines letzten Logins noch nicht von einem Super-Administrator freigegeben.",
                 "usedPasskeyIsNotSuperAdminApproved": "Der verwendete Passkey ist nicht von einem Super-Administrator freigegeben. Melde dich bitte mit einem freigegebenem Passkey an.",
                 "passkeyApprovalInstructions": {
                     "start": "Bitte prüfen in den ",
