@@ -257,38 +257,8 @@ Hyperion (Optional)
 
 Hyperion provides AI-assisted exercise creation features via Spring AI. No external Edutelligence service is required, only a LLM provider such as OpenAI or Azure OpenAI.
 
-Quick setup for development
-"""""""""""""""""""""""""""
-
-1. Enable the hyperion service
-
-    In your ``application-local.yml``, enable the hyperion service:
-
-   .. code-block:: yaml
-
-        artemis:
-            hyperion:
-                enabled: true
-
-2. Configure Spring AI
-
-   Set up your preferred provider (Azure OpenAI or OpenAI) in ``application-local.yml``. Examples:
-
-   .. code-block:: yaml
-
-        spring:
-          ai:
-            # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
-            azure:
-              openai:
-                api-key: <azure_openai_key> # comment out if using OpenAI
-                # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets non-azure endpoint automatically
-                endpoint: <azure_openai_endpoint> # comment out if using OpenAI
-                chat:
-                  options:
-                    deployment-name: <azure_openai_deployment_name or openai_model_name>
-                    # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
-                    temperature: 1.0
+.. note::
+   For local development with LM Studio (no cloud API keys required), see the `Spring AI Development Guide <https://ls1intum.github.io/Artemis/staff/spring-ai>`_ in the new documentation.
 
 Production setup
 """"""""""""""""
