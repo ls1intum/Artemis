@@ -96,7 +96,7 @@ describe('LectureAttachmentsComponent', () => {
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
-                { provide: ActivatedRoute, useValue: { parent: { data: of({ lecture }) } } },
+                { provide: ActivatedRoute, useValue: { data: of({ lecture }) } },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
@@ -122,7 +122,7 @@ describe('LectureAttachmentsComponent', () => {
     });
 
     it('should load existing lecture', fakeAsync(() => {
-        fixture.componentRef.setInput('lectureId', 42);
+        fixture.componentInstance.lectureId = 42;
         const findWithDetailsStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(
             of(
                 new HttpResponse({

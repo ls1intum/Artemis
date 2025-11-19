@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { debounceTime, filter, finalize, map } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -67,7 +67,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly ActionType = ActionType;
 
     private readonly activatedRoute = inject(ActivatedRoute);
-    private readonly router = inject(Router);
     private readonly lectureService = inject(LectureService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
@@ -77,22 +76,14 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     @Input() showCreationCard = true;
     @Input() showCompetencies = true;
     @Input() emitEditEvents = false;
-
     @Input() lectureId: number | undefined;
 
-    @Output()
-    onEditLectureUnitClicked: EventEmitter<LectureUnit> = new EventEmitter<LectureUnit>();
+    @Output() onEditLectureUnitClicked: EventEmitter<LectureUnit> = new EventEmitter<LectureUnit>();
 
     lectureUnits: LectureUnit[] = [];
     lecture: Lecture;
     isLoading = false;
-    updateOrderSubject: Subject<any>;
     viewButtonAvailable: Record<number, boolean> = {};
-
-    private updateOrderSubjectSubscription: Subscription;
-    private navigationEndSubscription: Subscription;
-    private activatedRouteSubscription?: Subscription;
-    private profileInfoSubscription: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -105,32 +96,16 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     };
 
     ngOnInit(): void {
-        this.navigationEndSubscription = this.router.events.pipe(filter((value) => value instanceof NavigationEnd)).subscribe(() => {
+        this.lectureId = Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
+        if (this.lectureId) {
+            // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
+            // ideally the router could load the details directly
             this.loadData();
-        });
-
-        this.updateOrderSubject = new Subject();
-        this.activatedRouteSubscription = this.activatedRoute?.parent?.params.subscribe((params) => {
-            this.lectureId ??= +params['lectureId'];
-            if (this.lectureId) {
-                // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
-                this.loadData();
-            }
-        });
-
-        // debounceTime limits the amount of put requests sent for updating the lecture unit order
-        this.updateOrderSubjectSubscription = this.updateOrderSubject.pipe(debounceTime(1000)).subscribe(() => {
-            this.updateOrder();
-        });
+        }
     }
 
     ngOnDestroy(): void {
-        this.updateOrder();
-        this.updateOrderSubjectSubscription.unsubscribe();
         this.dialogErrorSource.unsubscribe();
-        this.navigationEndSubscription.unsubscribe();
-        this.profileInfoSubscription?.unsubscribe();
-        this.activatedRouteSubscription?.unsubscribe();
     }
 
     loadData() {
@@ -154,9 +129,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                             this.viewButtonAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
                         });
                         this.initializeProfileInfo();
-                        if (this.lectureIngestionEnabled) {
-                            this.updateIngestionStates();
-                        }
                     } else {
                         this.lectureUnits = [];
                     }
@@ -183,13 +155,16 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         if (this.irisEnabled && this.lecture.course && this.lecture.course.id) {
             this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((settings) => {
                 this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+                if (this.lectureIngestionEnabled) {
+                    this.updateIngestionStates();
+                }
             });
         }
     }
 
     drop(event: CdkDragDrop<LectureUnit[]>) {
         moveItemInArray(this.lectureUnits, event.previousIndex, event.currentIndex);
-        this.updateOrderSubject.next('');
+        this.updateOrder();
     }
 
     identify(index: number, lectureUnit: LectureUnit) {
