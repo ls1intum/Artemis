@@ -224,7 +224,7 @@ public class LectureUnitResource {
             throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
         }
         if (lectureUnit.getLecture().isTutorialLecture()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new BadRequestAlertException("Units of tutorial lectures can not be ingested", ENTITY_NAME, "tutorialLectureIngestion");
         }
         if (!(lectureUnit instanceof AttachmentVideoUnit)) {
             throw new BadRequestAlertException("Only attachment video units can be ingested into Pyris", ENTITY_NAME, "invalidLectureUnitType");
