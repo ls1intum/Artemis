@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-export const routes: Routes = [
+export const featureOverviewRoutes: Routes = [
     {
         path: 'instructors',
         loadComponent: () => import('app/core/feature-overview/feature-overview.component').then((m) => m.FeatureOverviewComponent),
