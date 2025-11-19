@@ -202,7 +202,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     }
 
     @Query("""
-            SELECT lecture
+            SELECT DISTINCT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.lectureUnits lu
                 LEFT JOIN FETCH lecture.attachments

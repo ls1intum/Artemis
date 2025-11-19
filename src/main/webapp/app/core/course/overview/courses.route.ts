@@ -26,7 +26,7 @@ export enum CourseOverviewRoutePath {
     CALENDAR = 'calendar',
 }
 
-export const routes: Routes = [
+export const courseRoutes: Routes = [
     {
         path: '',
         loadComponent: () => import('app/core/course/overview/courses/courses.component').then((m) => m.CoursesComponent),
@@ -128,7 +128,7 @@ export const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                 },
-                loadChildren: () => import('app/programming/overview/programming-repository.route').then((m) => m.routes),
+                loadChildren: () => import('app/programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
             },
             {
                 path: 'exercises/modeling-exercises/:exerciseId',

@@ -133,11 +133,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         // Setting up a lecture with various kinds of content
-        ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
-        attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise, lecture1);
+        attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         attachmentOfAttachmentVideoUnit = attachmentVideoUnit.getAttachment();
-        TextUnit textUnit = lectureUtilService.createTextUnit();
-        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
+        TextUnit textUnit = lectureUtilService.createTextUnit(lecture1);
+        OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit(lecture1);
         addAttachmentToLecture();
 
         lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(exerciseUnit, attachmentVideoUnit, textUnit, onlineUnit));
@@ -298,10 +298,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         int numberOfSlides = 2;
         Lecture lectureWithSlides = LectureFactory.generateLecture(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), course1);
         lectureWithSlides = lectureRepository.save(lectureWithSlides);
-        AttachmentVideoUnit attachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlides(numberOfSlides);
+        AttachmentVideoUnit attachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlides(lectureWithSlides, numberOfSlides);
         lectureWithSlides = lectureUtilService.addLectureUnitsToLecture(lectureWithSlides, List.of(attachmentVideoUnitWithSlides));
 
-        AttachmentVideoUnit attachmentVideoUnitWithoutSlides = lectureUtilService.createAttachmentVideoUnitWithoutAttachment();
+        AttachmentVideoUnit attachmentVideoUnitWithoutSlides = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lectureWithSlides);
         lectureUtilService.addLectureUnitsToLecture(lectureWithSlides, List.of(attachmentVideoUnitWithoutSlides));
 
         List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK, Lecture.class);
