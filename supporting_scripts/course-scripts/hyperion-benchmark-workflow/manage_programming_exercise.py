@@ -179,7 +179,7 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
 
     response: requests.Response = session.post(url, data=body, headers=headers)
 
-    if response.status_code == 200:
+    if response.ok:
         logging.info(f"Imported programming exercise {exercise_details.get('title', 'Untitled')} successfully")
         return response.json()
     else:
