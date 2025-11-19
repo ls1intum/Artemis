@@ -243,6 +243,8 @@ public class CourseOverviewResource {
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
+    // TODO: this method is invoked quite often as part of course management resolve. However, it might not be necessary to fetch tutorial group configuration and online course
+    // configuration in such cases.
     @GetMapping("courses/{courseId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
