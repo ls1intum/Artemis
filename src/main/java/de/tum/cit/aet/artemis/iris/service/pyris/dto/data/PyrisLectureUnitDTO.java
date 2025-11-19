@@ -4,6 +4,8 @@ import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+// added courseId since the corresponding dto on the Pyris side expects it
+// corresponding dto on Pyris side expects more arguments
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisLectureUnitDTO(long id, long lectureId, Instant releaseDate, String name, int attachmentVersion) {
+public record PyrisLectureUnitDTO(long lectureUnitId, Long courseId, Long lectureId, Instant releaseDate, String name, Integer attachmentVersion) {
 }
