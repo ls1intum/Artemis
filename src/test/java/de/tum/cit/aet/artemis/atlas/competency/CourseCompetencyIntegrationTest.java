@@ -574,8 +574,8 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldGetCompetencyContributionsForLectureUnit() throws Exception {
             User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-            final var lectureUnit = lectureUtilService.createTextUnit();
             final var lecture = lectureUtilService.createLecture(course, ZonedDateTime.now().minusDays(1));
+            final var lectureUnit = lectureUtilService.createTextUnit(lecture);
             lectureUtilService.addLectureUnitsToLecture(lecture, List.of(lectureUnit));
             lectureUtilService.completeLectureUnitForUser(lectureUnit, student1);
             competencyUtilService.linkLectureUnitToCompetency(courseCompetency, lectureUnit);
