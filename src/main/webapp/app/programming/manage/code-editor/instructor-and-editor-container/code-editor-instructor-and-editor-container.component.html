@@ -156,8 +156,10 @@
                             <div ngbDropdownMenu class="px-2 py-1">
                                 @for (issue of consistencyIssues(); track issue) {
                                     <div class="dropdown-item d-flex align-items-center justify-content-between" style="gap: 0.5rem">
-                                        <!-- Left side: issue label -->
-                                        <span>{{ getIssueLabel(issue) }}</span>
+                                        <div class="d-flex align-items-center" style="gap: 0.25rem">
+                                            <fa-icon [icon]="getSeverityIcon(issue)" [class]="getSeverityColor(issue) + ' me-1'" />
+                                            <span>{{ getIssueLabel(issue) }}</span>
+                                        </div>
 
                                         <!-- Right side: two arrow buttons -->
                                         <div class="d-flex align-items-center" style="gap: 0.25rem">

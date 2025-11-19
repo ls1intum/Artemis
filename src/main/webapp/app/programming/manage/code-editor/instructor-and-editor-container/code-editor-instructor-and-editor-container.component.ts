@@ -7,7 +7,17 @@ import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/mana
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faArrowLeft, faArrowRight, faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import {
+    faArrowLeft,
+    faArrowRight,
+    faCircleExclamation,
+    faCircleInfo,
+    faCircleNotch,
+    faPlus,
+    faTimes,
+    faTimesCircle,
+    faTriangleExclamation,
+} from '@fortawesome/free-solid-svg-icons';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -25,7 +35,7 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { getRepoPath, humanizeCategory, severityToString } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { getRepoPath, humanizeCategory } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 
 @Component({
@@ -153,6 +163,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faTimesCircle = faTimesCircle;
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
+    faCircleExclamation = faCircleExclamation;
+    faTriangleExclamation = faTriangleExclamation;
+    faCircleInfo = faCircleInfo;
     irisSettings?: IrisSettings;
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     selectedIssue: ConsistencyIssue | undefined = undefined;
@@ -223,7 +236,33 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     getIssueLabel(issue: ConsistencyIssue) {
-        return severityToString(issue.severity) + ': ' + humanizeCategory(issue.category);
+        return humanizeCategory(issue.category);
+    }
+
+    getSeverityIcon(issue: ConsistencyIssue) {
+        switch (issue.severity) {
+            case 'HIGH':
+                return this.faCircleExclamation;
+            case 'MEDIUM':
+                return this.faTriangleExclamation;
+            case 'LOW':
+                return this.faCircleInfo;
+            default:
+                return this.faCircleInfo;
+        }
+    }
+
+    getSeverityColor(issue: ConsistencyIssue) {
+        switch (issue.severity) {
+            case 'HIGH':
+                return 'text-danger';
+            case 'MEDIUM':
+                return 'text-warning';
+            case 'LOW':
+                return 'text-info';
+            default:
+                return 'text-secondary';
+        }
     }
 
     async onIssueNavigate(issue: ConsistencyIssue, deltaIndex: number, event: Event) {
