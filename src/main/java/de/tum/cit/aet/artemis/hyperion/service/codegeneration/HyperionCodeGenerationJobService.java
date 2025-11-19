@@ -16,10 +16,10 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 @Conditional(HyperionEnabled.class)
 public class HyperionCodeGenerationJobService {
 
-    private final HyperionCodeGenerationTaskRunner taskRunner;
+    private final HyperionCodeGenerationTaskService taskService;
 
-    public HyperionCodeGenerationJobService(HyperionCodeGenerationTaskRunner taskRunner) {
-        this.taskRunner = taskRunner;
+    public HyperionCodeGenerationJobService(HyperionCodeGenerationTaskService taskService) {
+        this.taskService = taskService;
     }
 
     /**
@@ -32,7 +32,7 @@ public class HyperionCodeGenerationJobService {
      */
     public String startJob(User user, ProgrammingExercise exercise, RepositoryType repositoryType) {
         String jobId = UUID.randomUUID().toString();
-        taskRunner.runJobAsync(jobId, user, exercise, repositoryType);
+        taskService.runJobAsync(jobId, user, exercise, repositoryType);
         return jobId;
     }
 }

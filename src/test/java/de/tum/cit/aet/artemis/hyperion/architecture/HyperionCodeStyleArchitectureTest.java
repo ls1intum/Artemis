@@ -11,7 +11,7 @@ class HyperionCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     protected int dtoAsAnnotatedRecordThreshold() {
-        return 3;
+        return 0;
     }
 
     @Override
