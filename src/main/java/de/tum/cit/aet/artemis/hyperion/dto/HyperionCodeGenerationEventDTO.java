@@ -40,15 +40,31 @@ public record HyperionCodeGenerationEventDTO(TypeDTO type, String jobId, long ex
             Objects.requireNonNull(value, "value must not be null");
         }
 
+        /**
+         * Resolve an event type from its serialized value.
+         *
+         * @param value stored value or {@code null}
+         * @return known {@link TypeDTO} or {@code null}
+         */
         @JsonCreator
         public static TypeDTO fromValue(String value) {
             if (value == null) {
                 return null;
             }
-            return KNOWN_TYPES.getOrDefault(value, new TypeDTO(value));
+            return resolve(value);
         }
 
+        /**
+         * Preserve compatibility with enum style invocations.
+         *
+         * @param name canonical constant name such as {@code STARTED}
+         * @return matching {@link TypeDTO}
+         */
         public static TypeDTO valueOf(String name) {
+            return resolve(name);
+        }
+
+        private static TypeDTO resolve(String name) {
             var type = KNOWN_TYPES.get(name);
             if (type == null) {
                 throw new IllegalArgumentException("Unknown TypeDTO value: " + name);

@@ -31,15 +31,31 @@ public record ArtifactTypeDTO(@JsonValue String value) {
         Objects.requireNonNull(value, "value must not be null");
     }
 
+    /**
+     * Resolve a type from its serialized value, returning existing instances when possible.
+     *
+     * @param value stored value or {@code null}
+     * @return matching {@link ArtifactTypeDTO} or {@code null} if value is null
+     */
     @JsonCreator
     public static ArtifactTypeDTO fromValue(String value) {
         if (value == null) {
             return null;
         }
-        return KNOWN_TYPES.getOrDefault(value, new ArtifactTypeDTO(value));
+        return resolve(value);
     }
 
+    /**
+     * Mirror of the old enum API to keep switch statements working.
+     *
+     * @param name canonical name such as {@code TEMPLATE_REPOSITORY}
+     * @return matching {@link ArtifactTypeDTO}
+     */
     public static ArtifactTypeDTO valueOf(String name) {
+        return resolve(name);
+    }
+
+    private static ArtifactTypeDTO resolve(String name) {
         var type = KNOWN_TYPES.get(name);
         if (type == null) {
             throw new IllegalArgumentException("Unknown ArtifactTypeDTO value: " + name);

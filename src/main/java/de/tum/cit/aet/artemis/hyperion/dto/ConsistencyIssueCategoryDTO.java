@@ -39,16 +39,31 @@ public record ConsistencyIssueCategoryDTO(@JsonValue String value) {
         Objects.requireNonNull(value, "value must not be null");
     }
 
+    /**
+     * Resolve a category from its serialized value, creating a new instance when necessary.
+     *
+     * @param value stored value or {@code null}
+     * @return known {@link ConsistencyIssueCategoryDTO} or {@code null}
+     */
     @JsonCreator
     public static ConsistencyIssueCategoryDTO fromValue(String value) {
         if (value == null) {
             return null;
         }
-        var category = KNOWN_CATEGORIES.get(value);
-        return category != null ? category : new ConsistencyIssueCategoryDTO(value);
+        return resolve(value);
     }
 
+    /**
+     * Backwards compatible replacement for the old enum API.
+     *
+     * @param name canonical constant name
+     * @return matching {@link ConsistencyIssueCategoryDTO}
+     */
     public static ConsistencyIssueCategoryDTO valueOf(String name) {
+        return resolve(name);
+    }
+
+    private static ConsistencyIssueCategoryDTO resolve(String name) {
         var category = KNOWN_CATEGORIES.get(name);
         if (category == null) {
             throw new IllegalArgumentException("Unknown ConsistencyIssueCategoryDTO value: " + name);

@@ -181,7 +181,8 @@ class HyperionCodeGenerationExecutionServiceTest {
 
     @Test
     void cleanupRepository_withNullCommitHash_doesNotThrow() throws Exception {
-        ReflectionTestUtils.invokeMethod(service, "cleanupRepository", gitService.getOrCheckoutRepository(null, false, "main", false), (Object) null);
+        Repository mockRepository = mock(Repository.class);
+        ReflectionTestUtils.invokeMethod(service, "cleanupRepository", mockRepository, (Object) null);
     }
 
     @Test

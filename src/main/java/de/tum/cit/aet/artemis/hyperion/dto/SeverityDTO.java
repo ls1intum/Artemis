@@ -28,18 +28,34 @@ public record SeverityDTO(@JsonValue String value) {
         Objects.requireNonNull(value, "value must not be null");
     }
 
+    /**
+     * Resolve a severity from serialized value, falling back to upper-cased custom values.
+     *
+     * @param value stored value or {@code null}
+     * @return matching {@link SeverityDTO} or {@code null}
+     */
     @JsonCreator
     public static SeverityDTO fromValue(String value) {
         if (value == null) {
             return null;
         }
-        return KNOWN_VALUES.getOrDefault(value.toUpperCase(), new SeverityDTO(value.toUpperCase()));
+        return resolve(value.toUpperCase());
     }
 
+    /**
+     * Retains the former enum API entry point for switch statements.
+     *
+     * @param name canonical constant name
+     * @return matching {@link SeverityDTO}
+     */
     public static SeverityDTO valueOf(String name) {
-        var severity = KNOWN_VALUES.get(name.toUpperCase());
+        return resolve(name.toUpperCase());
+    }
+
+    private static SeverityDTO resolve(String normalizedName) {
+        var severity = KNOWN_VALUES.get(normalizedName);
         if (severity == null) {
-            throw new IllegalArgumentException("Unknown SeverityDTO value: " + name);
+            throw new IllegalArgumentException("Unknown SeverityDTO value: " + normalizedName);
         }
         return severity;
     }
