@@ -55,7 +55,7 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         this.lecture = course.getLectures().stream().findFirst().orElseThrow();
         this.lecture.setTitle("Lecture " + lecture.getId());
         this.lecture = lectureRepository.save(this.lecture);
-        this.lectureUnit = lectureUtilService.createAttachmentVideoUnit(false);
+        this.lectureUnit = lectureUtilService.createAttachmentVideoUnit(lecture, false);
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(this.lectureUnit));
     }
 

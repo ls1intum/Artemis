@@ -16,6 +16,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
@@ -28,6 +29,7 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     @JsonIgnore
     protected CompetencyLectureUnitId id = new CompetencyLectureUnitId();
 
+    @JsonIgnoreProperties("competencyLinks")
     @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
     @MapsId("lectureUnitId")
     private LectureUnit lectureUnit;
