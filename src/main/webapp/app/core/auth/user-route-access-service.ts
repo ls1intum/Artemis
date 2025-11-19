@@ -22,17 +22,18 @@ export class UserRouteAccessService implements CanActivate {
         const ltiRedirectUrl = this.handleLTIRedirect(route, state);
         const urlToStore = ltiRedirectUrl ?? state.url;
 
-        const authorities = route.data['authorities'];
+        let authorities = route.data['authorities'];
 
         // For programming exercise template and solution participations editors shall be allowed to view the submissions, but not for other submissions.
-        // To ensure this behavior the query parameter of the route needs to be considered and the Editor authority needs to be added subsequently within the
-        // canActivate check, as it can not be allowed directly within the corresponding router since this would allow access to all submissions.
+        // To ensure this behavior the query parameter of the route needs to be considered and the Editor authority needs to be checked based on the query param.
         if (
             (route.routeConfig?.path === ':courseId/programming-exercises/:exerciseId/participations/:participationId/submissions' ||
                 route.routeConfig?.path === ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/participations/:participationId') &&
-            route.queryParams['isTmpOrSolutionProgrParticipation'] === 'true'
+            route.queryParams['isTmpOrSolutionProgrParticipation'] === 'true' &&
+            authorities
         ) {
-            authorities.push(Authority.EDITOR);
+            // Create a new array instead of mutating the existing one to support readonly authority constants
+            authorities = [...authorities, Authority.EDITOR];
         }
         // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
         // that the client has an account too, if they already logged in by the server.

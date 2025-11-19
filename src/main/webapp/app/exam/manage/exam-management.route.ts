@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { INSTRUCTOR_AND_TUTOR_ONLY, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
 
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
@@ -26,7 +26,7 @@ export const examManagementRoutes: Routes = [
         path: '',
         loadComponent: () => import('app/exam/manage/exam-management/exam-management.component').then((m) => m.ExamManagementComponent),
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -39,7 +39,7 @@ export const examManagementRoutes: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -52,7 +52,7 @@ export const examManagementRoutes: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -61,7 +61,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/scores',
         loadComponent: () => import('app/exam/manage/exam-scores/exam-scores.component').then((m) => m.ExamScoresComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examScores.title',
         },
         canActivate: [UserRouteAccessService],
@@ -73,7 +73,7 @@ export const examManagementRoutes: Routes = [
             exam: ExamResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
             requestOptions: {
                 withExerciseGroups: true,
@@ -90,7 +90,7 @@ export const examManagementRoutes: Routes = [
             course: CourseResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
             requestOptions: {
                 forImport: true,
@@ -102,7 +102,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups',
         loadComponent: () => import('app/exam/manage/exercise-groups/exercise-groups.component').then((m) => m.ExerciseGroupsComponent),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -115,7 +115,7 @@ export const examManagementRoutes: Routes = [
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -128,7 +128,7 @@ export const examManagementRoutes: Routes = [
             exerciseGroup: ExerciseGroupResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -144,7 +144,7 @@ export const examManagementRoutes: Routes = [
             exam: ExamResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
             requestOptions: {
                 withStudents: true,
@@ -160,7 +160,7 @@ export const examManagementRoutes: Routes = [
             exam: ExamResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -169,7 +169,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/student-exams',
         loadComponent: () => import('app/exam/manage/student-exams/student-exams.component').then((m) => m.StudentExamsComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -178,7 +178,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/grading-system',
         loadComponent: () => import('app/assessment/manage/grading-system/grading-system.component').then((m) => m.GradingSystemComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.gradingSystem',
         },
         canActivate: [UserRouteAccessService],
@@ -188,7 +188,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/bonus',
         loadComponent: () => import('app/assessment/manage/grading-system/bonus/bonus.component').then((m) => m.BonusComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.bonus.title',
         },
         canActivate: [UserRouteAccessService],
@@ -197,7 +197,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/suspicious-behavior',
         loadComponent: () => import('app/exam/manage/suspicious-behavior/suspicious-behavior.component').then((m) => m.SuspiciousBehaviorComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.suspiciousBehavior.title',
         },
         canActivate: [UserRouteAccessService],
@@ -207,7 +207,7 @@ export const examManagementRoutes: Routes = [
         loadComponent: () =>
             import('app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component').then((m) => m.SuspiciousSessionsOverviewComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         },
         canActivate: [UserRouteAccessService],
@@ -219,7 +219,7 @@ export const examManagementRoutes: Routes = [
             exam: ExamResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -228,7 +228,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/test-runs/assess',
         loadComponent: () => import('app/assessment/shared/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
+            authorities: INSTRUCTOR_AND_TUTOR_ONLY,
             pageTitle: 'artemisApp.examManagement.assessmentDashboard',
         },
         canActivate: [UserRouteAccessService],
@@ -240,7 +240,7 @@ export const examManagementRoutes: Routes = [
             studentExam: StudentExamResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -252,7 +252,7 @@ export const examManagementRoutes: Routes = [
             studentExam: StudentExamResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -264,7 +264,7 @@ export const examManagementRoutes: Routes = [
             studentExam: StudentExamResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -284,7 +284,7 @@ export const examManagementRoutes: Routes = [
             studentExam: StudentExamResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -293,7 +293,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/student-exams/:studentExamId/summary/overview/grading-key',
         loadComponent: () => import('app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -302,7 +302,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/student-exams/:studentExamId/summary/overview/bonus-grading-key',
         loadComponent: () => import('app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
             forBonus: true,
         },
@@ -312,7 +312,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/test-runs/:testRunId/conduction',
         loadComponent: () => import('app/exam/overview/exam-participation/exam-participation.component').then((m) => m.ExamParticipationComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.exam.title',
         },
         canActivate: [UserRouteAccessService],
@@ -325,7 +325,7 @@ export const examManagementRoutes: Routes = [
             studentExam: StudentExamResolve,
         },
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.examManagement.title',
         },
         canActivate: [UserRouteAccessService],
@@ -338,7 +338,7 @@ export const examManagementRoutes: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -351,7 +351,7 @@ export const examManagementRoutes: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -364,7 +364,7 @@ export const examManagementRoutes: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -377,7 +377,7 @@ export const examManagementRoutes: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -390,7 +390,7 @@ export const examManagementRoutes: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -403,7 +403,7 @@ export const examManagementRoutes: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -416,7 +416,7 @@ export const examManagementRoutes: Routes = [
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -429,7 +429,7 @@ export const examManagementRoutes: Routes = [
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -442,7 +442,7 @@ export const examManagementRoutes: Routes = [
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.fileUploadExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -452,7 +452,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/new',
         loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -462,7 +462,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/import/:exerciseId',
         loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -472,7 +472,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/edit',
         loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -485,7 +485,7 @@ export const examManagementRoutes: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -498,7 +498,7 @@ export const examManagementRoutes: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.programmingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -511,7 +511,7 @@ export const examManagementRoutes: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.programmingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -524,7 +524,7 @@ export const examManagementRoutes: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -533,7 +533,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId',
         loadComponent: () => import('app/text/manage/detail/text-exercise-detail.component').then((m) => m.TextExerciseDetailComponent),
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -542,7 +542,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId',
         loadComponent: () => import('app/fileupload/manage/exercise-details/file-upload-exercise-detail.component').then((m) => m.FileUploadExerciseDetailComponent),
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -551,7 +551,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId',
         loadComponent: () => import('app/modeling/manage/detail/modeling-exercise-detail.component').then((m) => m.ModelingExerciseDetailComponent),
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -563,7 +563,7 @@ export const examManagementRoutes: Routes = [
             programmingExercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -580,7 +580,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId',
         loadComponent: () => import('app/quiz/manage/detail/quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -592,7 +592,7 @@ export const examManagementRoutes: Routes = [
             exercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
         },
         canActivate: [UserRouteAccessService],
@@ -604,7 +604,7 @@ export const examManagementRoutes: Routes = [
             exercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
         },
         canActivate: [UserRouteAccessService],
@@ -614,7 +614,7 @@ export const examManagementRoutes: Routes = [
         loadComponent: () =>
             import('app/programming/manage/grading/configure/programming-exercise-configure-grading.component').then((m) => m.ProgrammingExerciseConfigureGradingComponent),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -626,7 +626,7 @@ export const examManagementRoutes: Routes = [
             exercise: ProgrammingExerciseResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',
         },
         canActivate: [UserRouteAccessService],
@@ -635,7 +635,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/preview',
         loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'preview',
         },
@@ -645,7 +645,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/solution',
         loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
             mode: 'solution',
         },
@@ -655,7 +655,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/re-evaluate',
         loadComponent: () => import('app/quiz/manage/re-evaluate/quiz-re-evaluate.component').then((m) => m.QuizReEvaluateComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -664,7 +664,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/quiz-point-statistic',
         loadComponent: () => import('app/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component').then((m) => m.QuizPointStatisticComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -673,7 +673,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/quiz-statistic',
         loadComponent: () => import('app/quiz/manage/statistics/quiz-statistic/quiz-statistic.component').then((m) => m.QuizStatisticComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -685,7 +685,7 @@ export const examManagementRoutes: Routes = [
                 (m) => m.MultipleChoiceQuestionStatisticComponent,
             ),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -695,7 +695,7 @@ export const examManagementRoutes: Routes = [
         loadComponent: () =>
             import('app/quiz/manage/statistics/drag-and-drop-question-statistic/drag-and-drop-question-statistic.component').then((m) => m.DragAndDropQuestionStatisticComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -705,7 +705,7 @@ export const examManagementRoutes: Routes = [
         loadComponent: () =>
             import('app/quiz/manage/statistics/short-answer-question-statistic/short-answer-question-statistic.component').then((m) => m.ShortAnswerQuestionStatisticComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.course.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -714,7 +714,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/assessment-dashboard',
         loadComponent: () => import('app/assessment/shared/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.examManagement.assessmentDashboard',
         },
         canActivate: [UserRouteAccessService],
@@ -723,7 +723,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/assessment-dashboard/:exerciseId',
         component: ExerciseAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -732,7 +732,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/test-assessment-dashboard/:exerciseId',
         component: ExerciseAssessmentDashboardComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader',
         },
         canActivate: [UserRouteAccessService],
@@ -742,7 +742,7 @@ export const examManagementRoutes: Routes = [
             path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/scores',
             component: ExerciseScoresComponent,
             data: {
-                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                authorities: IS_AT_LEAST_TUTOR,
                 pageTitle: 'artemisApp.instructorDashboard.exerciseDashboard',
             },
             canActivate: [UserRouteAccessService],
@@ -753,7 +753,7 @@ export const examManagementRoutes: Routes = [
             path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/participations',
             component: ParticipationComponent,
             data: {
-                authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                authorities: IS_AT_LEAST_TUTOR,
                 pageTitle: 'artemisApp.participation.home.title',
             },
             canActivate: [UserRouteAccessService],
@@ -764,7 +764,7 @@ export const examManagementRoutes: Routes = [
             path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/exercise-statistics',
             component: ExerciseStatisticsComponent,
             data: {
-                authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                authorities: IS_AT_LEAST_TUTOR,
                 pageTitle: 'exercise-statistics.title',
             },
             canActivate: [UserRouteAccessService],
@@ -775,7 +775,7 @@ export const examManagementRoutes: Routes = [
             path: ':examId/exercise-groups/:exerciseGroupId/' + exerciseType + '-exercises/:exerciseId/participations/:participationId',
             component: ParticipationSubmissionComponent,
             data: {
-                authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                authorities: IS_AT_LEAST_INSTRUCTOR,
                 pageTitle: 'artemisApp.participation.home.title',
             },
             canActivate: [UserRouteAccessService],
@@ -788,7 +788,7 @@ export const examManagementRoutes: Routes = [
             exercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.exampleSubmission.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -812,7 +812,7 @@ export const examManagementRoutes: Routes = [
             exercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.exampleSubmission.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -821,7 +821,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
         loadComponent: () => import('app/modeling/manage/example-modeling/example-modeling-submission.component').then((m) => m.ExampleModelingSubmissionComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.exampleSubmission.home.editor',
         },
         canActivate: [UserRouteAccessService],
@@ -830,7 +830,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions/:submissionId/assessment',
         loadComponent: () => import('app/modeling/manage/assess/modeling-assessment-editor/modeling-assessment-editor.component').then((m) => m.ModelingAssessmentEditorComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },
         canActivate: [UserRouteAccessService],
@@ -839,7 +839,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
         component: CodeEditorTutorAssessmentContainerComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -848,7 +848,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
         component: CodeEditorTutorAssessmentContainerComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -857,7 +857,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessment',
         loadComponent: () => import('app/fileupload/manage/assess/file-upload-assessment.component').then((m) => m.FileUploadAssessmentComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -866,7 +866,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
         loadComponent: () => import('app/fileupload/manage/assess/file-upload-assessment.component').then((m) => m.FileUploadAssessmentComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -875,7 +875,7 @@ export const examManagementRoutes: Routes = [
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
         loadComponent: () => import('app/modeling/manage/assess/modeling-assessment-editor/modeling-assessment-editor.component').then((m) => m.ModelingAssessmentEditorComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
         },

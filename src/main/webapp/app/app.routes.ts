@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_USER } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 
@@ -25,7 +25,7 @@ const routes: Routes = [
     {
         path: 'admin',
         data: {
-            authorities: [Authority.ADMIN],
+            authorities: IS_AT_LEAST_ADMIN,
             usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService],
@@ -43,7 +43,7 @@ const routes: Routes = [
         path: 'privacy/data-exports',
         loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
         data: {
-            authorities: [Authority.USER],
+            authorities: IS_AT_LEAST_USER,
             pageTitle: 'artemisApp.dataExport.title',
             usesModuleBackground: true,
         },
@@ -52,7 +52,7 @@ const routes: Routes = [
         path: 'privacy/data-exports/:id',
         loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
         data: {
-            authorities: [Authority.USER],
+            authorities: IS_AT_LEAST_USER,
             pageTitle: 'artemisApp.dataExport.title',
             usesModuleBackground: true,
         },
@@ -105,7 +105,7 @@ const routes: Routes = [
                 pathMatch: 'full',
                 loadComponent: () => import('app/core/account/password/password.component').then((m) => m.PasswordComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_USER,
                     pageTitle: 'global.menu.account.password',
                 },
                 canActivate: [UserRouteAccessService],
@@ -139,7 +139,7 @@ const routes: Routes = [
                 pathMatch: 'full',
                 loadComponent: () => import('app/core/account/settings/settings.component').then((m) => m.SettingsComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_USER,
                     pageTitle: 'global.menu.account.settings',
                 },
                 canActivate: [UserRouteAccessService],
@@ -228,7 +228,7 @@ const routes: Routes = [
     {
         path: 'sharing/import/:basketToken',
         data: {
-            authorities: [Authority.EDITOR, Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.sharing.title',
         },
         loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),

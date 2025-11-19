@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_TUTOR, IS_AT_LEAST_USER } from 'app/shared/constants/authority.constants';
 import { ExternalDataGuard } from 'app/core/user/settings/external-data.guard';
 
 export const routes: Routes = [
@@ -10,7 +10,7 @@ export const routes: Routes = [
         loadComponent: () => import('app/core/user/settings/user-settings-container/user-settings-container.component').then((m) => m.UserSettingsContainerComponent),
         canActivate: [UserRouteAccessService],
         data: {
-            authorities: [Authority.USER],
+            authorities: IS_AT_LEAST_USER,
             usesModuleBackground: true,
         },
         children: [
