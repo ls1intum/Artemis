@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
@@ -73,7 +72,7 @@ public interface UserTestRepository extends UserRepository {
      * @param userId the id of the user to find
      * @return the user with learning paths if it exists, else throw exception
      */
-    @NotNull
+    @NonNull
     default User findWithLearningPathsByIdElseThrow(long userId) {
         return getValueElseThrow(findWithLearningPathsById(userId), userId);
     }

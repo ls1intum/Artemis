@@ -18,9 +18,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.eclipse.jgit.lib.ObjectId;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +27,6 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -37,7 +35,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.StartContainerCmd;
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -51,6 +48,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
@@ -67,8 +65,7 @@ public abstract class AbstractArtemisBuildAgentTest {
     protected DockerClientTestService dockerClientTestService;
 
     @Autowired
-    @Qualifier("hazelcastInstance")
-    protected HazelcastInstance hazelcastInstance;
+    protected DistributedDataAccessService distributedDataAccessService;
 
     @MockitoSpyBean
     protected BuildAgentConfiguration buildAgentConfiguration;
@@ -204,7 +201,7 @@ public abstract class AbstractArtemisBuildAgentTest {
         return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
     }
 
-    private static @NotNull BuildConfig getBuildConfig() {
+    private static @NonNull BuildConfig getBuildConfig() {
         DockerRunConfig dockerRunConfig = new DockerRunConfig(true, List.of("dummy-env", "dummy-env-value"), 0, 0, 0);
         return new BuildConfig("dummy-build-script", "dummy-docker-image", "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main", ProgrammingLanguage.JAVA,
                 ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 1, "dummy-assignment-checkout-path", "dummy-test-checkout-path",

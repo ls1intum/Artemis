@@ -18,11 +18,15 @@ const routes: Routes = [
     {
         path: '',
         loadChildren: () => import('app/core/user/settings/user-settings.route').then((m) => m.routes),
+        data: {
+            usesModuleBackground: true,
+        },
     },
     {
         path: 'admin',
         data: {
             authorities: [Authority.ADMIN],
+            usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService],
         loadChildren: () => import('app/core/admin/admin.routes'),
@@ -32,6 +36,7 @@ const routes: Routes = [
         loadComponent: () => import('app/core/legal/privacy.component').then((m) => m.PrivacyComponent),
         data: {
             pageTitle: 'artemisApp.legal.privacyStatement.title',
+            usesModuleBackground: true,
         },
     },
     {
@@ -40,6 +45,7 @@ const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.dataExport.title',
+            usesModuleBackground: true,
         },
     },
     {
@@ -48,6 +54,7 @@ const routes: Routes = [
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.dataExport.title',
+            usesModuleBackground: true,
         },
     },
     {
@@ -55,6 +62,7 @@ const routes: Routes = [
         loadComponent: () => import('app/core/legal/imprint.component').then((m) => m.ImprintComponent),
         data: {
             pageTitle: 'artemisApp.legal.imprint.title',
+            usesModuleBackground: true,
         },
     },
     {
@@ -62,16 +70,23 @@ const routes: Routes = [
         loadComponent: () => import('app/core/about-us/about-us.component').then((m) => m.AboutUsComponent),
         data: {
             pageTitle: 'overview.aboutUs',
+            usesModuleBackground: true,
         },
     },
     // ===== TEAM ====
     {
         path: 'course-management/:courseId/exercises/:exerciseId/teams',
         loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
+        data: {
+            usesModuleBackground: true,
+        },
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/teams',
         loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
+        data: {
+            usesModuleBackground: true,
+        },
     },
     // ===== ACCOUNT ====
     {
@@ -130,30 +145,34 @@ const routes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
         ],
+        data: {
+            usesModuleBackground: true,
+        },
     },
     // ===== COURSE MANAGEMENT =====
     {
         path: 'course-management',
-        loadChildren: () => import('./core/course/manage/course-management.route').then((m) => m.courseManagementState),
+        loadChildren: () => import('./core/course/manage/course-management.route').then((m) => m.courseManagementRoutes),
+        data: {
+            usesModuleBackground: true,
+        },
     },
     {
         path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
-        loadChildren: () => import('app/programming/manage/code-editor/code-editor-management-routes').then((m) => m.routes),
+        loadChildren: () => import('app/programming/manage/code-editor/code-editor-management-routes').then((m) => m.codeEditorManagementRoutes),
     },
 
     {
         path: 'courses',
-        loadChildren: () => import('app/core/course/overview/courses.route').then((m) => m.routes),
-    },
-    {
-        path: 'course-management/:courseId/lectures/:lectureId/attachments/:attachmentId',
-        pathMatch: 'full',
-        loadComponent: () => import('./lecture/manage/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
+        loadChildren: () => import('app/core/course/overview/courses.route').then((m) => m.courseRoutes),
     },
     // ===== GRADING SYSTEM =====
     {
         path: 'courses/:courseId/grading-system',
-        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemState),
+        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
+        data: {
+            usesModuleBackground: true,
+        },
     },
 
     {
@@ -178,19 +197,19 @@ const routes: Routes = [
     // ===== EXAM =====
     {
         path: 'course-management/:courseId/exams',
-        loadChildren: () => import('./exam/manage/exam-management.route').then((m) => m.examManagementRoute),
+        loadChildren: () => import('./exam/manage/exam-management.route').then((m) => m.examManagementRoutes),
     },
     {
         path: 'courses/:courseId/exams/:examId/grading-system',
-        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemState),
+        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
     },
     {
         path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',
-        loadChildren: () => import('./programming/overview/programming-repository.route').then((m) => m.routes),
+        loadChildren: () => import('./programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
     },
     {
         path: 'features',
-        loadChildren: () => import('app/core/feature-overview/feature-overview.route').then((m) => m.routes),
+        loadChildren: () => import('app/core/feature-overview/feature-overview.route').then((m) => m.featureOverviewRoutes),
     },
     {
         path: 'lti',
@@ -202,6 +221,7 @@ const routes: Routes = [
         loadComponent: () => import('app/iris/overview/about-iris/about-iris.component').then((m) => m.AboutIrisComponent),
         data: {
             pageTitle: 'artemisApp.exerciseChatbot.title',
+            usesModuleBackground: true,
         },
     },
     // ===== SHARING =====

@@ -3,20 +3,18 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-
 import { AgentChatService } from './agent-chat.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { User } from 'app/core/user/user.model';
 
 describe('AgentChatService', () => {
     let service: AgentChatService;
     let httpMock: HttpTestingController;
     let translateService: jest.Mocked<TranslateService>;
+    let accountService: AccountService;
 
     const mockTranslateService = {
         instant: jest.fn(),
-    };
-
-    const mockAccountService: { userIdentity: { id?: number; login: string } | null } = {
-        userIdentity: { id: 42, login: 'testuser' },
     };
 
     beforeEach(() => {
@@ -31,7 +29,7 @@ describe('AgentChatService', () => {
                 },
                 {
                     provide: AccountService,
-                    useValue: mockAccountService,
+                    useClass: MockAccountService,
                 },
             ],
         });
@@ -39,6 +37,9 @@ describe('AgentChatService', () => {
         service = TestBed.inject(AgentChatService);
         httpMock = TestBed.inject(HttpTestingController);
         translateService = TestBed.inject(TranslateService) as jest.Mocked<TranslateService>;
+        accountService = TestBed.inject(AccountService);
+
+        accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
 
         // Reset mocks
         jest.clearAllMocks();
@@ -155,7 +156,7 @@ describe('AgentChatService', () => {
             const message = 'Test';
 
             it('should generate sessionId with valid userId', () => {
-                mockAccountService.userIdentity = { id: 42, login: 'testuser' };
+                accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
                 const expectedSessionId = 'course_456_user_42';
 
                 service.sendMessage(message, courseId).subscribe();
@@ -172,16 +173,26 @@ describe('AgentChatService', () => {
                 });
             });
 
-            it('should throw error when userIdentity is null', () => {
-                mockAccountService.userIdentity = null;
+            it('should return error response when userIdentity is undefined', () => {
+                accountService.userIdentity.set(undefined);
 
-                expect(() => service.sendMessage(message, courseId)).toThrow('User must be authenticated to use agent chat');
+                let result: any;
+                service.sendMessage(message, courseId).subscribe((response) => {
+                    result = response;
+                });
+                expect(result.message).toBe(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
+                expect(result.success).toBeFalse();
             });
 
-            it('should throw error when userIdentity.id is undefined', () => {
-                mockAccountService.userIdentity = { id: undefined, login: 'testuser' };
+            it('should return error response when userIdentity.id is undefined', () => {
+                accountService.userIdentity.set({ id: undefined, login: 'testuser' } as User);
 
-                expect(() => service.sendMessage(message, courseId)).toThrow('User must be authenticated to use agent chat');
+                let result: any;
+                service.sendMessage(message, courseId).subscribe((response) => {
+                    result = response;
+                });
+                expect(result.message).toBe(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
+                expect(result.success).toBeFalse();
             });
         });
 
@@ -190,7 +201,7 @@ describe('AgentChatService', () => {
             const message = 'Test message';
 
             it('should make POST request to correct URL', () => {
-                mockAccountService.userIdentity = { id: 42, login: 'testuser' };
+                accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
                 const expectedUrl = `api/atlas/agent/courses/${courseId}/chat`;
 
                 service.sendMessage(message, courseId).subscribe();
@@ -207,7 +218,7 @@ describe('AgentChatService', () => {
             });
 
             it('should send request with correct body structure', () => {
-                mockAccountService.userIdentity = { id: 99, login: 'user99' };
+                accountService.userIdentity.set({ id: 99, login: 'user99' } as User);
 
                 service.sendMessage(message, courseId).subscribe();
 
@@ -233,7 +244,7 @@ describe('AgentChatService', () => {
             const message = 'Test';
 
             it('should return error response object on catchError', () => {
-                mockAccountService.userIdentity = { id: 55, login: 'testuser' };
+                accountService.userIdentity.set({ id: 55, login: 'testuser' } as User);
                 mockTranslateService.instant.mockReturnValue('Translated error message');
                 let result: any;
 
@@ -273,6 +284,135 @@ describe('AgentChatService', () => {
                 expect(result.timestamp >= beforeTime).toBeTruthy();
                 expect(result.timestamp <= afterTime).toBeTruthy();
             });
+        });
+    });
+
+    describe('getConversationHistory', () => {
+        const courseId = 123;
+        const expectedUrl = `api/atlas/agent/courses/${courseId}/chat/history`;
+
+        it('should fetch conversation history successfully', () => {
+            const mockHistory = [
+                { content: 'Hello', isUser: true },
+                { content: 'Hi there!', isUser: false },
+                { content: 'How are you?', isUser: true },
+            ];
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            expect(req.request.method).toBe('GET');
+
+            req.flush(mockHistory);
+
+            expect(result).toEqual(mockHistory);
+        });
+
+        it('should return empty array on HTTP error', () => {
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
+
+            expect(result).toEqual([]);
+        });
+
+        it('should return empty array on network failure', () => {
+            let result: any;
+            let errorOccurred = false;
+
+            service.getConversationHistory(courseId).subscribe({
+                next: (history) => {
+                    result = history;
+                },
+                error: () => {
+                    errorOccurred = true;
+                },
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.error(new ProgressEvent('Network error'));
+
+            // Verify catchError worked - no error thrown, empty array returned
+            expect(errorOccurred).toBeFalse();
+            expect(result).toEqual([]);
+        });
+
+        it('should handle empty history response', () => {
+            let result: any;
+
+            service.getConversationHistory(courseId).subscribe((history) => {
+                result = history;
+            });
+
+            const req = httpMock.expectOne(expectedUrl);
+            req.flush([]);
+
+            expect(result).toEqual([]);
+        });
+
+        it('should make GET request to correct URL with different courseId', () => {
+            const differentCourseId = 456;
+            const differentUrl = `api/atlas/agent/courses/${differentCourseId}/chat/history`;
+
+            service.getConversationHistory(differentCourseId).subscribe();
+
+            const req = httpMock.expectOne(differentUrl);
+            expect(req.request.method).toBe('GET');
+            req.flush([]);
+        });
+    });
+
+    describe('getSessionId', () => {
+        it('should generate sessionId correctly with valid user', () => {
+            accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
+            const courseId = 123;
+
+            const sessionId = service.getSessionId(courseId);
+
+            expect(sessionId).toBe('course_123_user_42');
+        });
+
+        it('should generate different sessionId for different courseId', () => {
+            accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
+
+            const sessionId1 = service.getSessionId(100);
+            const sessionId2 = service.getSessionId(200);
+
+            expect(sessionId1).toBe('course_100_user_42');
+            expect(sessionId2).toBe('course_200_user_42');
+        });
+
+        it('should generate different sessionId for different userId', () => {
+            const courseId = 123;
+
+            accountService.userIdentity.set({ id: 10, login: 'user1' } as User);
+            const sessionId1 = service.getSessionId(courseId);
+
+            accountService.userIdentity.set({ id: 20, login: 'user2' } as User);
+            const sessionId2 = service.getSessionId(courseId);
+
+            expect(sessionId1).toBe('course_123_user_10');
+            expect(sessionId2).toBe('course_123_user_20');
+        });
+
+        it('should throw error when userIdentity is undefined', () => {
+            accountService.userIdentity.set(undefined);
+
+            expect(() => service.getSessionId(123)).toThrow(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
+        });
+
+        it('should throw error when userIdentity.id is undefined', () => {
+            accountService.userIdentity.set({ id: undefined, login: 'testuser' } as User);
+
+            expect(() => service.getSessionId(123)).toThrow(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
         });
     });
 });

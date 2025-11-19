@@ -4,13 +4,12 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.PostReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
+import org.jspecify.annotations.NonNull;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
@@ -35,7 +34,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
     private final User user;
 
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService, ServerSession serverSession, @NotNull User user) {
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService, ServerSession serverSession, @NonNull User user) {
         this.localVCServletService = localVCServletService;
         this.participation = serverSession.getAttribute(SshConstants.PARTICIPATION_KEY);
         this.exercise = serverSession.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
@@ -43,7 +42,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         this.user = user;
     }
 
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService, @NotNull User user) {
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService, @NonNull User user) {
         this.localVCServletService = localVCServletService;
         this.user = user;
         // For HTTPs we are unable to store the attributes in the session or request unfortunately
@@ -96,7 +95,14 @@ public class LocalVCPostPushHook implements PostReceiveHook {
                     "Something went wrong while processing your push. Your changes were saved, but we could not test your submission. Please try again and if this issue persists, contact the course administrators.");
         }
         catch (VersionControlException e) {
-            receivePack.sendError(wrongBranchMessage);
+            boolean isBranchingAllowed = localVCServletService.isBranchingAllowedForRepository(repository);
+            if (isBranchingAllowed) {
+                String message = "Your push will not be shown in Artemis, because you are currently pushing changes on a custom (non-default) branch. Your changes are still saved correctly.";
+                receivePack.sendMessage(message);
+            }
+            else {
+                receivePack.sendError(wrongBranchMessage);
+            }
         }
     }
 }

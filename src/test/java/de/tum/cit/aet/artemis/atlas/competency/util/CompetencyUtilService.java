@@ -4,8 +4,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -189,7 +188,7 @@ public class CompetencyUtilService {
      * @param masteryThreshold The new mastery threshold
      * @return The updated Competency
      */
-    public Competency updateMasteryThreshold(@NotNull Competency competency, int masteryThreshold) {
+    public Competency updateMasteryThreshold(@NonNull Competency competency, int masteryThreshold) {
         competency.setMasteryThreshold(masteryThreshold);
         return competencyRepo.save(competency);
     }

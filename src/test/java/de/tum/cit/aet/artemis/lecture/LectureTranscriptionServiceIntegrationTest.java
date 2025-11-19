@@ -67,7 +67,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         unit.setName("U1");
         unit.setLecture(lecture);
         // Important: add to the lecture's list so @OrderColumn (or similar) is set
-        lecture.getLectureUnits().add(unit);
+        lecture.addLectureUnit(unit);
         lecture = lectureRepository.saveAndFlush(lecture);  // persists unit with a non-null list index
 
         // Re-read the persisted unit (id assigned now)
@@ -187,7 +187,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
     @Test
     void startNebulaTranscription_wrongLecture_throws() {
         var lecture1 = new Lecture();
-        lecture1.setTitle("Lecture 1");
+        lecture1.setTitle("Lecture 23791");
         lecture1 = lectureRepository.save(lecture1);
         Long lectureId = lecture1.getId();
 

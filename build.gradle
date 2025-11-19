@@ -19,20 +19,20 @@ plugins {
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.github.ben-manes.versions" version "0.53.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.google.cloud.tools.jib" version "3.4.5"
+    id "com.google.cloud.tools.jib" version "3.5.0"
     id "com.gorylenko.gradle-git-properties" version "2.5.3"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "21.1.3"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
-    id "org.owasp.dependencycheck" version "12.1.8"
+    id "org.owasp.dependencycheck" version "12.1.9"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
-    id "org.openapi.generator" version "7.16.0"
+    id "org.openapi.generator" version "7.17.0"
     id "com.google.osdetector" version "1.7.3"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.5.0"
+version = "8.5.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -42,7 +42,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.1.0"
+    gradleVersion = "9.2.0"
 }
 
 node {
@@ -166,7 +166,7 @@ dependencies {
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
-    implementation "org.glassfish.jersey.core:jersey-common:3.1.11"
+    implementation "org.glassfish.jersey.core:jersey-common:4.0.0"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -184,8 +184,14 @@ dependencies {
     implementation "de.jplag:text:${jplag_version}"
     implementation "de.jplag:typescript:${jplag_version}"
 
-    implementation platform("org.springframework.ai:spring-ai-bom:1.0.3")
+    // Align all Spring AI modules to the same version
+    implementation platform("org.springframework.ai:spring-ai-bom:1.1.0")
+    // Azure OpenAI (prod, or when you want Azure)
     implementation "org.springframework.ai:spring-ai-starter-model-azure-openai" // can also use non-azure models
+    implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
+    // OpenAI / OpenAI-compatible (dev, localhost:1234, etc.)
+    implementation "org.springframework.ai:spring-ai-starter-model-openai"
+
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -214,8 +220,9 @@ dependencies {
     implementation "org.apache.sshd:sshd-osgi:${sshd_version}"
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
-    // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2025.4"
+    // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
+    implementation "net.sourceforge.plantuml:plantuml-mit:1.2025.10"
+
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
@@ -237,7 +244,7 @@ dependencies {
 
     implementation "org.jsoup:jsoup:1.21.2"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "commons-codec:commons-codec:1.19.0"
+    implementation "commons-codec:commons-codec:1.20.0"
 
     // use the latest version to avoid security vulnerabilities
     implementation "org.springframework:spring-aop:${spring_framework_version}"
@@ -273,7 +280,7 @@ dependencies {
     implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
 
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
-    implementation "com.google.protobuf:protobuf-java:4.33.0"
+    implementation "com.google.protobuf:protobuf-java:4.33.1"
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
@@ -324,6 +331,10 @@ dependencies {
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     // Required for Hibernate multi node caching
     runtimeOnly "com.hazelcast:hazelcast-hibernate53:5.2.0"
+    // alternative for Hazelcast
+    implementation "org.redisson:redisson:${redisson_version}"
+    implementation "org.redisson:redisson-spring-boot-starter:${redisson_version}"
+
 
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
     implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
@@ -335,6 +346,8 @@ dependencies {
     implementation "org.apache.commons:commons-text:${commons_text_version}"
     implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "org.apache.commons:commons-lang3:${commons_lang3_version}"
+    implementation "org.apache.commons:commons-collections4:4.5.0"
+
     // required by eureka, but actually superseded by commons-lang3 above
     implementation "commons-lang:commons-lang:2.6"
 
@@ -372,14 +385,15 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
-    implementation "io.projectreactor.netty:reactor-netty-core:1.2.11"
+    // Note: this should be upgraded to 1.3.x when Spring is updated to 4.x
+    implementation "io.projectreactor.netty:reactor-netty-core:1.2.12"
 
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.12"
 
     // passkey functionality to simplify login
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.11.2.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.29.7.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.30.0.RELEASE"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -387,13 +401,16 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:10.5"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.6"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
+
+    // Nullable annotations for improved static analysis
+    implementation "org.jspecify:jspecify:1.0.0"
 
     // Helios push-based status updates
     implementation "de.tum.cit.aet:helios-status-spring-starter:${helios_status_version}"
@@ -417,7 +434,7 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
     // Required by JPlag
-    implementation "com.ibm.icu:icu4j-charset:77.1"
+    implementation "com.ibm.icu:icu4j-charset:78.1"
     // Required by exam session service
     implementation "com.github.seancfoley:ipaddress:5.5.1"
 
@@ -442,12 +459,13 @@ dependencies {
     // make sure to use the latest version to avoid security vulnerabilities
     runtimeOnly "commons-beanutils:commons-beanutils:1.11.0"
     checkstyle "commons-beanutils:commons-beanutils:1.11.0"
+
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 
-    implementation "com.google.errorprone:error_prone_annotations:2.43.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.44.0"
     // needed for OpenAPI generation
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
@@ -462,7 +480,7 @@ dependencies {
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
 
-    implementation "org.mnode.ical4j:ical4j:4.2.0"
+    implementation "org.mnode.ical4j:ical4j:4.2.1"
 
 
     // ---- CHECKSTYLE DEPENDENCIES ----
@@ -490,10 +508,10 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.184"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.1.0"
+    testImplementation "org.gradle:gradle-tooling-api:9.2.0"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
-    testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
-
+    testImplementation "io.zonky.test:embedded-database-spring-test:2.7.0"
+    testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
@@ -509,9 +527,9 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-params:${junit_version}"
 
     // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
-    testImplementation "org.junit.platform:junit-platform-commons:${junit_platform_version}"
-    testImplementation "org.junit.platform:junit-platform-engine:${junit_platform_version}"
-    testImplementation "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
+    testImplementation "org.junit.platform:junit-platform-commons:${junit_version}"
+    testImplementation "org.junit.platform:junit-platform-engine:${junit_version}"
+    testImplementation "org.junit.platform:junit-platform-launcher:${junit_version}"
 }
 
 // we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved

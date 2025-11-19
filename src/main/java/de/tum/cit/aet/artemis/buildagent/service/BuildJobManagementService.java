@@ -28,18 +28,47 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.topic.ITopic;
-
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
 /**
- * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.
- * It handles timeouts as well as exceptions that occur during the execution of the build job.
+ * Coordinates submission, tracking, timeout handling, and cancellation of build jobs
+ * executed by the Integrated Code Lifecycle build executor.
+ *
+ * <p>
+ * <strong>Responsibilities</strong>
+ * </p>
+ * <ul>
+ * <li>Submit build jobs and expose a {@link CompletableFuture} for their results.</li>
+ * <li>Record and stream log messages (incl. timeouts and exceptions) to the build log.</li>
+ * <li>Maintain per-node state of running jobs for targeted cancellation.</li>
+ * <li>React to cluster-wide “cancel build” events and stop the corresponding job if this node owns it.</li>
+ * </ul>
+ *
+ * <p>
+ * <strong>Concurrency model</strong>
+ * </p>
+ * <ul>
+ * <li>{@code runningFutures}/{@code runningFuturesWrapper} are concurrent maps tracking submitted jobs.</li>
+ * <li>{@code cancelledBuildJobs} is a concurrent set of job ids that were cancelled on this node.</li>
+ * <li>{@link #jobLifecycleLock} serializes the critical sections that
+ * (a) receive cancellation events and (b) submit new jobs + register them,
+ * preventing a race where a job is cancelled concurrently with (or just before) submission.</li>
+ * </ul>
+ *
+ * <p>
+ * <strong>Failure handling</strong>
+ * </p>
+ * <ul>
+ * <li>Timeouts: stop unresponsive containers and log guidance for students and instructors.</li>
+ * <li>Exceptions: log details (incl. stack trace), stop containers, and complete futures exceptionally.</li>
+ * <li>Cancellation: interrupt job execution (if running), stop containers, and clean up state.</li>
+ * </ul>
  */
 @Lazy(false)
 @Service
@@ -58,7 +87,27 @@ public class BuildJobManagementService {
 
     private final BuildLogsMap buildLogsMap;
 
-    private final ReentrantLock lock = new ReentrantLock();
+    /**
+     * Guards job lifecycle state transitions that must be atomic across multiple data structures:
+     * <ul>
+     * <li>Submission (creating and registering {@code runningFutures}).</li>
+     * <li>Cancellation event handling (checking {@code runningFutures} and invoking {@link #cancelBuildJob(String)}).</li>
+     * </ul>
+     *
+     * Without this lock, a race is possible:
+     * <ol>
+     * <li>A cluster cancel event arrives while a job is being submitted.</li>
+     * <li>The listener checks {@code runningFutures} before the job id is registered and finds nothing to cancel.</li>
+     * <li>The job gets submitted and starts running despite being cancelled.</li>
+     * </ol>
+     *
+     * By locking both the event listener and the submission path, we ensure:
+     * <ul>
+     * <li>Cancelled-before-submit: we detect the cancelled id and skip submission.</li>
+     * <li>Cancelled-during-submit: the listener will see the registration or the submitter will see the cancelled flag.</li>
+     * </ul>
+     */
+    private final ReentrantLock jobLifecycleLock = new ReentrantLock();
 
     @Value("${artemis.continuous-integration.build-timeout-seconds.max:240}")
     private int timeoutSeconds;
@@ -76,6 +125,10 @@ public class BuildJobManagementService {
      */
     private final Map<String, Future<BuildResult>> runningFutures = new ConcurrentHashMap<>();
 
+    /**
+     * Per-node registry of the public, higher-level {@link CompletableFuture} wrappers returned to callers.
+     * Used by REST/websocket layers to observe completion and stream logs.
+     */
     private final Map<String, CompletableFuture<BuildResult>> runningFuturesWrapper = new ConcurrentHashMap<>();
 
     /**
@@ -101,27 +154,33 @@ public class BuildJobManagementService {
      */
     @PostConstruct
     public void init() {
-        ITopic<String> canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
-        canceledBuildJobsTopic.addMessageListener(message -> {
-            String buildJobId = message.getMessageObject();
-            lock.lock();
+        DistributedTopic<String> canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
+        canceledBuildJobsTopic.addMessageListener(buildJobId -> {
+            jobLifecycleLock.lock();
             try {
                 if (runningFutures.containsKey(buildJobId)) {
                     cancelBuildJob(buildJobId);
                 }
             }
             finally {
-                lock.unlock();
+                jobLifecycleLock.unlock();
             }
         });
     }
 
     /**
-     * Submit a build job for a given participation to the executor service.
+     * Submit a build job to the executor and return a {@link CompletableFuture} that completes with the {@link BuildResult}.
+     * The method enforces a per-job timeout (bounded by {@code timeoutSeconds}) and ensures proper cleanup on failure.
      *
-     * @param buildJobItem The build job that should be executed.
-     * @return A future that will be completed with the build result.
-     * @throws LocalCIException If the build job could not be submitted to the executor service.
+     * <p>
+     * <strong>Concurrency & Cancellation</strong>:
+     * Submission and initial registration are serialized with {@link #jobLifecycleLock} so that a concurrent
+     * cancel signal cannot cause a job to run after it was requested to be cancelled.
+     * </p>
+     *
+     * @param buildJobItem the job to execute
+     * @return a future that completes with the build result or exceptionally on timeout/cancellation/error
+     * @throws LocalCIException if the job cannot be submitted to the executor
      */
     public CompletableFuture<BuildResult> executeBuildJob(BuildJobQueueItem buildJobItem) throws LocalCIException {
 
@@ -139,7 +198,7 @@ public class BuildJobManagementService {
          * The future is stored in the runningFutures map so that it can be cancelled if needed.
          * We add a lock to prevent the job from being submitted even though it was cancelled.
          */
-        lock.lock();
+        jobLifecycleLock.lock();
         Future<BuildResult> future;
         try {
             if (cancelledBuildJobs.contains(buildJobItem.id())) {
@@ -152,7 +211,7 @@ public class BuildJobManagementService {
             runningFutures.put(buildJobItem.id(), future);
         }
         finally {
-            lock.unlock();
+            jobLifecycleLock.unlock();
         }
 
         int buildJobTimeoutSeconds;

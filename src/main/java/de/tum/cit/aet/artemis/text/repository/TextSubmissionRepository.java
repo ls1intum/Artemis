@@ -4,8 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -38,7 +37,7 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
     @EntityGraph(type = LOAD, attributePaths = { "results.assessor" })
     Optional<TextSubmission> findWithEagerResultsAssessorById(long submissionId);
 
-    @NotNull
+    @NonNull
     default TextSubmission findWithEagerResultsAssessorByIdElseThrow(long submissionId) {
         return getValueElseThrow(findWithEagerResultsAssessorById(submissionId), submissionId);
     }
@@ -53,12 +52,12 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
     @EntityGraph(type = LOAD, attributePaths = { "results.assessor", "blocks", "results.feedbacks" })
     Optional<TextSubmission> findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(long resultId);
 
-    @NotNull
+    @NonNull
     default TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(long resultId) {
         return getValueElseThrow(findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId));
     }
 
-    @NotNull
+    @NonNull
     default TextSubmission findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(long submissionId) {
         return getValueElseThrow(findWithEagerParticipationExerciseResultAssessorAssessmentNoteById(submissionId), submissionId);
     }
