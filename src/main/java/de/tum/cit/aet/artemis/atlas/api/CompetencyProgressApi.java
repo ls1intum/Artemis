@@ -45,6 +45,10 @@ public class CompetencyProgressApi extends AbstractAtlasApi {
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(originalLearningObject, updatedLearningObject);
     }
 
+    public void updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(Set<Long> originalCompetencyIds, LearningObject updatedLearningObject) {
+        competencyProgressService.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, updatedLearningObject);
+    }
+
     public void updateProgressByLearningObjectSync(LearningObject learningObject, Set<User> users) {
         competencyProgressService.updateProgressByLearningObjectSync(learningObject, users);
     }
