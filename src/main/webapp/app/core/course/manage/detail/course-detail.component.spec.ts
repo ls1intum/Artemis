@@ -28,7 +28,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { CourseIrisSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
@@ -122,7 +122,9 @@ describe('Course Management Detail Component', () => {
     it('should make iris settings call when instructor', async () => {
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
         courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true } });
-        const irisSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of({} as IrisCourseSettings));
+        const irisSpy = jest
+            .spyOn(irisSettingsService, 'getCourseSettings')
+            .mockReturnValue(of({ courseId: 123, settings: { enabled: true, variant: { id: 'DEFAULT' }, rateLimit: {} } } as CourseIrisSettingsDTO));
         await component.ngOnInit();
         expect(irisSpy).toHaveBeenCalledOnce();
     });
