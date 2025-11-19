@@ -47,7 +47,6 @@ You only need to modify them if your specific work or production environments re
        user-management:
            use-external: true
            password-reset:
-                credential-provider: <provider>  # Example: TUMonline
                 links:
                     en: '<link>'
                     de: '<link>'
