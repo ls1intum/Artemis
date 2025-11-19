@@ -15,7 +15,7 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
@@ -595,7 +595,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'example-submissions':
                 // Hide example submission dashboard for non instructor users
-                if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR])) {
+                if (this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) {
                     this.addTranslationAsCrumb(currentPath, segment);
                 }
                 break;
