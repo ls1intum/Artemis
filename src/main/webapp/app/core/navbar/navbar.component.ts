@@ -157,8 +157,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             neededWidthForIconOptionsToBeInMainNavBar = 580 + nameLength;
             neededWidthToNotRequireCollapse = 700 + nameLength;
 
-            const hasServerAdminOption = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN]);
-            const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect([Authority.TUTOR, Authority.INSTRUCTOR, Authority.EDITOR, Authority.ADMIN]);
+            const hasServerAdminOption = this.accountService.isAdmin();
+            const hasCourseManageOption = this.accountService.isAtLeastTutor();
             if (hasCourseManageOption) {
                 neededWidthToNotRequireCollapse += 200;
                 neededWidthToDisplayCollapsedOptionsHorizontally += 200;

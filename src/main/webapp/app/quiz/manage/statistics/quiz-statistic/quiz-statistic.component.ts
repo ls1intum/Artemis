@@ -5,7 +5,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
@@ -50,7 +49,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         });
         this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
+            if (this.accountService.isAtLeastTutor()) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuizSuccess(res.body!);
                 });
@@ -62,7 +61,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
             // ask for new Data if the websocket for new statistical data was notified
             this.websocketService.receive(this.websocketChannelForData).subscribe(() => {
-                if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
+                if (this.accountService.isAtLeastTutor()) {
                     this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                         this.loadQuizSuccess(res.body!);
                     });
@@ -84,7 +83,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
      */
     loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be sent back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
+        if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;

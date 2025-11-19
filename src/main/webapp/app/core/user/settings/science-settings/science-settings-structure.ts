@@ -1,4 +1,4 @@
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting, UserSettingsStructure } from '../user-settings.model';
 
@@ -11,7 +11,7 @@ export const scienceSettingsStructure: UserSettingsStructure<ScienceSetting> = {
     groups: [
         {
             key: 'general',
-            restrictionLevels: [Authority.STUDENT],
+            restrictionLevels: IS_AT_LEAST_STUDENT,
             settings: [
                 {
                     key: 'activity',

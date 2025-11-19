@@ -7,7 +7,7 @@ export enum Authority {
 }
 
 export const IS_AT_LEAST_ADMIN: readonly Authority[] = [Authority.ADMIN];
-export const IS_AT_LEAST_INSTRUCTOR: readonly Authority[] = [Authority.INSTRUCTOR, ...IS_AT_LEAST_ADMIN];
-export const IS_AT_LEAST_EDITOR: readonly Authority[] = [Authority.EDITOR, ...IS_AT_LEAST_INSTRUCTOR];
-export const IS_AT_LEAST_TUTOR: readonly Authority[] = [Authority.TUTOR, ...IS_AT_LEAST_EDITOR];
-export const IS_AT_LEAST_STUDENT: readonly Authority[] = [Authority.STUDENT, ...IS_AT_LEAST_TUTOR];
+export const IS_AT_LEAST_INSTRUCTOR: readonly Authority[] = [Authority.ADMIN, Authority.INSTRUCTOR];
+export const IS_AT_LEAST_EDITOR: readonly Authority[] = [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR];
+export const IS_AT_LEAST_TUTOR: readonly Authority[] = [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR];
+export const IS_AT_LEAST_STUDENT: readonly Authority[] = [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR, Authority.STUDENT];

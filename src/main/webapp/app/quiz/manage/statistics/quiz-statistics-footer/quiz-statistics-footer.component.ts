@@ -11,7 +11,6 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { MultipleChoiceQuestionStatistic } from 'app/quiz/shared/entities/multiple-choice-question-statistic.model';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
@@ -64,7 +63,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
+            if (this.accountService.isAtLeastTutor()) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuiz(res.body!);
                 });
@@ -130,7 +129,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      */
     loadQuiz(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be sent back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR])) {
+        if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
