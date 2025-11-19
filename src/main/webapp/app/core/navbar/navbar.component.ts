@@ -594,7 +594,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'overview':
                 break;
             case 'example-submissions':
-                // Hide example submission dashboard for non instructor users
+                // Hide example submission dashboard for non editor users
                 if (this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) {
                     this.addTranslationAsCrumb(currentPath, segment);
                 }
