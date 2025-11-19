@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { IS_USER } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const programmingRepositoryRoutes: Routes = [
@@ -7,7 +7,7 @@ export const programmingRepositoryRoutes: Routes = [
         path: ':repositoryId',
         loadComponent: () => import('app/programming/shared/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
         data: {
-            authorities: IS_USER,
+            authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.repository.title',
         },
         canActivate: [UserRouteAccessService],
@@ -16,7 +16,7 @@ export const programmingRepositoryRoutes: Routes = [
         path: ':repositoryId/commit-history',
         loadComponent: () => import('app/programming/shared/commit-history/commit-history.component').then((m) => m.CommitHistoryComponent),
         data: {
-            authorities: IS_USER,
+            authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.repository.commitHistory.title',
         },
         canActivate: [UserRouteAccessService],
@@ -25,7 +25,7 @@ export const programmingRepositoryRoutes: Routes = [
         path: ':repositoryId/commit-history/:commitHash',
         loadComponent: () => import('app/programming/manage/commit-details-view/commit-details-view.component').then((m) => m.CommitDetailsViewComponent),
         data: {
-            authorities: IS_USER,
+            authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.repository.commitHistory.commitDetails.title',
         },
         canActivate: [UserRouteAccessService],
