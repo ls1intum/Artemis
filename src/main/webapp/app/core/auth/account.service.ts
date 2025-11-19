@@ -10,7 +10,7 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import dayjs from 'dayjs/esm';
@@ -19,8 +19,8 @@ import { addPublicFilePrefix } from 'app/app.constants';
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
     authenticate: (identity?: User) => void;
-    hasAnyAuthority: (authorities: string[]) => Promise<boolean>;
-    hasAnyAuthorityDirect: (authorities: string[]) => boolean;
+    hasAnyAuthority: (authorities: readonly Authority[]) => Promise<boolean>;
+    hasAnyAuthorityDirect: (authorities: readonly Authority[]) => boolean;
     hasAuthority: (authority: string) => Promise<boolean>;
     identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
@@ -97,11 +97,11 @@ export class AccountService implements IAccountService {
         });
     }
 
-    hasAnyAuthority(authorities: string[]): Promise<boolean> {
+    hasAnyAuthority(authorities: readonly Authority[]): Promise<boolean> {
         return Promise.resolve(this.hasAnyAuthorityDirect(authorities));
     }
 
-    hasAnyAuthorityDirect(authorities: string[]): boolean {
+    hasAnyAuthorityDirect(authorities: readonly Authority[]): boolean {
         if (!this.authenticated() || !this.userIdentity()?.authorities) {
             return false;
         }

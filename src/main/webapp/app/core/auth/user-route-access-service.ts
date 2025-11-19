@@ -67,7 +67,7 @@ export class UserRouteAccessService implements CanActivate {
      * @param url Current url.
      * @return True if authorities are empty or null, False if user not logged in or does not have required authorities.
      */
-    checkLogin(authorities: string[], url: string): Promise<boolean> {
+    checkLogin(authorities: readonly Authority[], url: string): Promise<boolean> {
         const accountService = this.accountService;
         return Promise.resolve(
             accountService.identity().then((account) => {

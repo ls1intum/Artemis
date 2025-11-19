@@ -1,5 +1,6 @@
 import { Directive, Input, TemplateRef, ViewContainerRef, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 /**
  * @whatItDoes Conditionally includes an HTML element if current user has any
@@ -18,11 +19,11 @@ export class HasAnyAuthorityDirective {
     private templateRef = inject<TemplateRef<any>>(TemplateRef);
     private viewContainerRef = inject(ViewContainerRef);
 
-    private authorities: string[];
+    private authorities: readonly Authority[];
 
     @Input()
-    set jhiHasAnyAuthority(value: string | string[]) {
-        this.authorities = typeof value === 'string' ? [<string>value] : <string[]>value;
+    set jhiHasAnyAuthority(value: string | string[] | Authority | readonly Authority[]) {
+        this.authorities = typeof value === 'string' ? [value as Authority] : (value as readonly Authority[]);
         this.updateView();
         // Get notified each time authentication state changes.
         this.accountService.getAuthenticationState().subscribe(() => this.updateView());
