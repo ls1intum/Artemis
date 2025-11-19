@@ -127,7 +127,7 @@
                 "passkeyApprovalInstructions": {
                     "start": "Bitte prüfen in den ",
                     "link": "Benutzereinstellungen",
-                    "end": " ob dein Passkey freigegeben wurde. Wenn dein Passkey freigegeben ist, melden dich bitte erneut mit deinem Passkey an."
+                    "end": " ob dein Passkey freigegeben wurde. Wenn dein Passkey freigegeben ist, melde dich bitte erneut mit deinem Passkey an."
                 },
                 "upcomingExamsAndExercises": "Kommende Prüfungen & Übungen",
                 "userManagement": "Verwaltung von Nutzer:innen",
