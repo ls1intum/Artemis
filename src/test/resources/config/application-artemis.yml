@@ -37,7 +37,6 @@ artemis:
         course-registration:
             allowed-username-pattern: .*
         password-reset:
-            credential-provider: <provider>
             links:
                 en: '<link>'
                 de: '<link>'
