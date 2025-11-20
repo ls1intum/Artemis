@@ -227,10 +227,28 @@ export class LectureUpdateUnitsComponent implements OnInit {
             .pipe(
                 switchMap((response) => {
                     const lectureUnit = response.body!;
-                    if (lectureUnit) {
-                        this.triggerTranscriptionIfEnabled(lectureUnit, generateTranscript, attachmentVideoUnitFormData.playlistUrl);
+                    const lectureUnitId = lectureUnit.id!;
+
+                    // First: Handle automatic transcription generation if requested
+                    let transcriptionObservable = of(lectureUnit);
+                    if (generateTranscript && lectureUnitId) {
+                        const transcriptionUrl = attachmentVideoUnitFormData.playlistUrl ?? lectureUnit.videoSource;
+                        if (transcriptionUrl) {
+                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lecture.id!, lectureUnitId, transcriptionUrl).pipe(
+                                map(() => lectureUnit),
+                                catchError((err) => {
+                                    onError(this.alertService, err);
+                                    return of(lectureUnit);
+                                }),
+                            );
+                        }
                     }
-                    if (!videoTranscription) {
+
+                    return transcriptionObservable;
+                }),
+                switchMap((lectureUnit) => {
+                    // Second: Handle manual transcription save if provided
+                    if (!videoTranscription || !lectureUnit.id) {
                         return of(lectureUnit);
                     }
 
@@ -242,9 +260,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
                         return of(lectureUnit);
                     }
 
-                    transcription.lectureUnitId = lectureUnit.id!;
+                    transcription.lectureUnitId = lectureUnit.id;
 
-                    return this.lectureTranscriptionService.createTranscription(this.lecture.id!, lectureUnit.id!, transcription).pipe(
+                    return this.lectureTranscriptionService.createTranscription(this.lecture.id!, lectureUnit.id, transcription).pipe(
                         map(() => lectureUnit),
                         // Swallow transcription errors so the primary save still counts as success
                         catchError((err) => {
@@ -346,18 +364,5 @@ export class LectureUpdateUnitsComponent implements OnInit {
                         break;
                 }
             });
-    }
-
-    private triggerTranscriptionIfEnabled(unit: AttachmentVideoUnit | undefined, generateTranscript: boolean | undefined, playlistUrl?: string): void {
-        if (!this.isEditingLectureUnit && generateTranscript && unit?.id) {
-            const transcriptionUrl = playlistUrl ?? unit.videoSource;
-
-            if (!transcriptionUrl) {
-                return; // No transcription URL available
-            }
-
-            this.attachmentVideoUnitService.startTranscription(this.lecture.id!, unit.id, transcriptionUrl).subscribe();
-        }
-        // When editing, disabled, or missing data, simply do nothing
     }
 }

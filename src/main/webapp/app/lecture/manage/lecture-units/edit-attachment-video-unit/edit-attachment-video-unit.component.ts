@@ -3,7 +3,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, finalize, map, switchMap, take } from 'rxjs/operators';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { AttachmentVideoUnit, TranscriptionStatus, TranscriptionStatusDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -89,7 +89,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                             fileName: this.attachment.link,
                         },
                         transcriptionProperties: {
-                            videoTranscription: transcription ? JSON.stringify(transcription) : '',
+                            videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
                         },
                         transcriptionStatus: transcriptionStatus,
                     };
@@ -107,6 +107,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
+        const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
         const playlistUrl = attachmentVideoUnitFormData.playlistUrl;
 
         // optional update notification text for students
@@ -156,21 +157,51 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
 
         cancelIfNeeded$
             .pipe(
-                switchMap(() => this.attachmentVideoUnitService.update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)),
-                switchMap(() => {
-                    // Handle transcription generation if requested
-                    if (generateTranscript && this.attachmentVideoUnit.id) {
+                switchMap((response) => {
+                    const lectureUnit = response.body!;
+                    const lectureUnitId = lectureUnit.id!;
+
+                    // First: Handle automatic transcription generation if requested
+                    let transcriptionObservable = of(lectureUnit);
+                    if (generateTranscript && lectureUnitId) {
                         const transcriptionUrl = playlistUrl ?? this.attachmentVideoUnit.videoSource;
                         if (transcriptionUrl) {
-                            return this.attachmentVideoUnitService.startTranscription(this.lectureId, this.attachmentVideoUnit.id, transcriptionUrl).pipe(
+                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lectureId, lectureUnitId, transcriptionUrl).pipe(
+                                map(() => lectureUnit),
                                 catchError((err) => {
                                     onError(this.alertService, err);
-                                    return of(undefined);
+                                    return of(lectureUnit);
                                 }),
                             );
                         }
                     }
-                    return of(undefined);
+
+                    return transcriptionObservable;
+                }),
+                switchMap((lectureUnit) => {
+                    // Second: Handle manual transcription save if provided
+                    if (!videoTranscription || !lectureUnit.id) {
+                        return of(lectureUnit);
+                    }
+
+                    let transcription: LectureTranscriptionDTO;
+                    try {
+                        transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
+                    } catch (e) {
+                        this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
+                        return of(lectureUnit);
+                    }
+
+                    transcription.lectureUnitId = lectureUnit.id;
+
+                    return this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnit.id, transcription).pipe(
+                        map(() => lectureUnit),
+                        // Swallow transcription errors so the primary save still counts as success
+                        catchError((err) => {
+                            onError(this.alertService, err);
+                            return of(lectureUnit);
+                        }),
+                    );
                 }),
                 finalize(() => (this.isLoading = false)),
             )

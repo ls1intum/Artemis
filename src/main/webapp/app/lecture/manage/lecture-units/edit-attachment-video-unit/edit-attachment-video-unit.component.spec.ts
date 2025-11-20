@@ -251,7 +251,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.formData?.transcriptionProperties?.videoTranscription).toBe('');
+        expect(component.formData?.transcriptionProperties?.videoTranscription).toBeUndefined();
     });
 
     it('should handle transcription status when present', () => {

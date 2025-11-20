@@ -67,7 +67,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         unit.setName("U1");
         unit.setLecture(lecture);
         // Important: add to the lecture's list so @OrderColumn (or similar) is set
-        lecture.getLectureUnits().add(unit);
+        lecture.addLectureUnit(unit);
         lecture = lectureRepository.saveAndFlush(lecture);  // persists unit with a non-null list index
 
         // Re-read the persisted unit (id assigned now)

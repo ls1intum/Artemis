@@ -40,13 +40,13 @@
 
     @if (shouldShowTranscriptionStatus()) {
         <div class="mt-3 mb-3">
-            @if (transcriptionStatus?.status === TranscriptionStatus.PENDING || transcriptionStatus?.status === TranscriptionStatus.PROCESSING) {
+            @if (transcriptionStatus() === TranscriptionStatus.PENDING || transcriptionStatus() === TranscriptionStatus.PROCESSING) {
                 <div class="alert alert-info d-flex align-items-center" role="alert">
                     <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
                     <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.statusProcessing"></span>
                 </div>
             }
-            @if (transcriptionStatus?.status === TranscriptionStatus.FAILED) {
+            @if (transcriptionStatus() === TranscriptionStatus.FAILED) {
                 <div class="alert alert-danger d-flex align-items-center" role="alert">
                     <fa-icon [icon]="faExclamationTriangle" class="me-2" />
                     <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.statusFailed"></span>
@@ -60,10 +60,20 @@
     }
 
     @if (!!videoUrl()) {
-        <div class="video-player-container">
-            <div class="ratio ratio-16x9">
-                <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+        @if (isLoading()) {
+            <div class="d-flex justify-content-center p-3">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.loading">Loading...</span>
+                </div>
             </div>
-        </div>
+        } @else if (playlistUrl() && hasTranscript()) {
+            <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
+        } @else {
+            <div class="video-player-container">
+                <div class="ratio ratio-16x9">
+                    <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+                </div>
+            </div>
+        }
     }
 </jhi-lecture-unit-card>

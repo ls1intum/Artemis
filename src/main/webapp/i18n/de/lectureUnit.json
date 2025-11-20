@@ -177,7 +177,7 @@
                 "error": "Transkriptgenerierung konnte nicht gestartet werden.",
                 "pendingWarning": "Transkription läuft ({{ status }})",
                 "overwriteWarning": "Das Generieren eines neuen Transkripts überschreibt die vorhandene Transkription für dieses Video.",
-                "statusProcessing": "Für dieses Video wird eine Transkription generiert. Dies kann einige Minuten dauern. Bitte schaue später noch einmal nach.",
+                "statusProcessing": "Bitte überprüfe den Status der Transkription etwas später",
                 "statusFailed": "Die Transkriptionsgenerierung für dieses Video ist fehlgeschlagen. Du kannst es erneut versuchen.",
                 "editStatusProcessing": "Für dieses Video wird derzeit eine Transkription generiert.",
                 "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen.",
@@ -186,6 +186,16 @@
                 "cancelSuccess": "Transkription erfolgreich abgebrochen.",
                 "cancelError": "Transkription konnte nicht abgebrochen werden. Bitte versuchen Sie es erneut.",
                 "cancelledDueToVideoChange": "Vorherige Transkription wurde aufgrund einer Video-URL-Änderung abgebrochen."
+            },
+            "videoPlayer": {
+                "transcript": "Transkript",
+                "searchPlaceholder": "Transkript durchsuchen...",
+                "clearSearch": "Suche löschen",
+                "previousResult": "Vorheriges Ergebnis",
+                "nextResult": "Nächstes Ergebnis",
+                "noResults": "Keine Ergebnisse",
+                "noMatchingTranscript": "Kein passendes Transkript gefunden",
+                "loading": "Lädt..."
             }
         },
         "exerciseUnit": {

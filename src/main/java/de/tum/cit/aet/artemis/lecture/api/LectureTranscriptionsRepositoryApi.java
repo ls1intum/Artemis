@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
+import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 
 /**
@@ -49,6 +50,42 @@ public class LectureTranscriptionsRepositoryApi extends AbstractLectureApi {
 
     public List<LectureTranscription> findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus status) {
         return lectureTranscriptionRepository.findByTranscriptionStatusAndJobIdIsNotNull(status);
+    }
+
+    /**
+     * Gets the transcript DTO for a lecture unit.
+     *
+     * @param lectureUnitId the ID of the lecture unit
+     * @return Optional containing the transcript DTO if found, empty otherwise
+     */
+    public Optional<LectureTranscriptionDTO> getTranscript(Long lectureUnitId) {
+        Optional<LectureTranscription> transcriptionOpt = findByLectureUnit_Id(lectureUnitId);
+        if (transcriptionOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        LectureTranscription transcription = transcriptionOpt.get();
+        if (transcription.getLanguage() == null || transcription.getSegments() == null) {
+            return Optional.empty();
+        }
+        LectureTranscriptionDTO dto = new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments());
+        return Optional.of(dto);
+    }
+
+    /**
+     * Gets the transcription status for a lecture unit.
+     *
+     * @param lectureUnitId the ID of the lecture unit
+     * @return Optional containing the transcription status name if found, empty otherwise
+     */
+    public Optional<String> getTranscriptStatus(Long lectureUnitId) {
+        Optional<LectureTranscription> transcriptionOpt = findByLectureUnit_Id(lectureUnitId);
+        if (transcriptionOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        LectureTranscription transcription = transcriptionOpt.get();
+        return Optional.of(transcription.getTranscriptionStatus().name());
     }
 
 }

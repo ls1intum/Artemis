@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.communication.domain;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
@@ -12,6 +11,7 @@ import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

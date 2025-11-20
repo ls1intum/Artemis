@@ -87,7 +87,7 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
         lectureUnit = new AttachmentVideoUnit();
         lectureUnit.setName("Test Video Unit");
         lectureUnit.setLecture(lecture);
-        lecture.getLectureUnits().add(lectureUnit);
+        lecture.addLectureUnit(lectureUnit);
         lecture = lectureRepository.saveAndFlush(lecture);
         lectureUnit = (AttachmentVideoUnit) lecture.getLectureUnits().get(0);
     }

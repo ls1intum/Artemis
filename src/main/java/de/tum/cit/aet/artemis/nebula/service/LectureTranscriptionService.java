@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.nebula.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,6 +43,8 @@ public class LectureTranscriptionService {
 
     private static final Logger log = LoggerFactory.getLogger(LectureTranscriptionService.class);
 
+    private static final int MAX_FAILURES = 3;
+
     private final LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi;
 
     private final LectureUnitRepositoryApi lectureUnitRepositoryApi;
@@ -50,6 +54,8 @@ public class LectureTranscriptionService {
     private final String nebulaBaseUrl;
 
     private final String nebulaSecretToken;
+
+    private final ConcurrentHashMap<String, Integer> failureCountMap = new ConcurrentHashMap<>();
 
     public LectureTranscriptionService(LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi, LectureUnitRepositoryApi lectureUnitRepositoryApi,
             @Qualifier("nebulaRestTemplate") RestTemplate restTemplate, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
@@ -88,6 +94,9 @@ public class LectureTranscriptionService {
                 return;
             }
 
+            // Clear failure counter on successful response
+            failureCountMap.remove(jobId);
+
             if (response.isCompleted()) {
                 if (transcription.getLectureUnit() == null) {
                     log.error("Transcription has no associated lecture unit for jobId={}", jobId);
@@ -107,6 +116,13 @@ public class LectureTranscriptionService {
         }
         catch (Exception e) {
             log.error("Error while polling transcription job {}: {}", jobId, e.getMessage(), e);
+
+            int failures = failureCountMap.merge(jobId, 1, Integer::sum);
+
+            if (failures >= MAX_FAILURES) {
+                markTranscriptionAsFailed(transcription, "Failed after " + failures + " attempts: " + e.getMessage());
+                failureCountMap.remove(jobId);
+            }
         }
     }
 

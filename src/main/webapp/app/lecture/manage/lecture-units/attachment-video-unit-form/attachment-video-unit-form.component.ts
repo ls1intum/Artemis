@@ -13,11 +13,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { HttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { TranscriptionStatus, TranscriptionStatusDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -123,7 +121,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
-    private readonly http = inject(HttpClient);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     canGenerateTranscript = signal(false);
     playlistUrl = signal<string | undefined>(undefined);
     transcriptionStatus = signal<TranscriptionStatusDTO | undefined>(undefined);
@@ -225,11 +223,11 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     });
 
     ngOnChanges() {
-        if (this.isEditMode() && this.formData()) {
-            this.setFormValues(this.formData()!);
-            // Set transcription status if provided
-            if (this.formData()?.transcriptionStatus) {
-                this.transcriptionStatus.set(this.formData()!.transcriptionStatus);
+        const formData = this.formData();
+        if (this.isEditMode() && formData) {
+            this.setFormValues(formData);
+            if (formData.transcriptionStatus) {
+                this.transcriptionStatus.set(formData.transcriptionStatus as TranscriptionStatus);
             }
         }
     }
@@ -283,31 +281,24 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         return this.form.get('videoTranscription');
     }
 
-    checkTumLivePlaylist(originalUrl: string): void {
-        const parsedUrl = new URL(originalUrl);
-
-        if (parsedUrl.host === 'live.rbg.tum.de') {
-            this.http
-                .get('api/nebula/video-utils/tum-live-playlist', {
-                    params: { url: originalUrl },
-                    responseType: 'text',
-                })
-                .subscribe({
-                    next: (playlist) => {
-                        this.canGenerateTranscript.set(true);
-                        this.playlistUrl.set(playlist);
-                    },
-                    error: (error) => {
-                        this.canGenerateTranscript.set(false);
-                        this.playlistUrl.set(undefined);
-                        this.form.get('generateTranscript')?.setValue(false);
-                    },
-                });
-        } else {
-            this.canGenerateTranscript.set(false);
-            this.playlistUrl.set(undefined);
-            this.form.get('generateTranscript')?.setValue(false);
-        }
+    checkPlaylistAvailability(originalUrl: string): void {
+        this.attachmentVideoUnitService.getPlaylistUrl(originalUrl).subscribe({
+            next: (playlist) => {
+                if (playlist) {
+                    this.canGenerateTranscript.set(true);
+                    this.playlistUrl.set(playlist);
+                } else {
+                    this.canGenerateTranscript.set(false);
+                    this.playlistUrl.set(undefined);
+                    this.form.get('generateTranscript')?.setValue(false);
+                }
+            },
+            error: () => {
+                this.canGenerateTranscript.set(false);
+                this.playlistUrl.set(undefined);
+                this.form.get('generateTranscript')?.setValue(false);
+            },
+        });
     }
 
     submitForm() {
@@ -361,7 +352,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         const embeddedUrl = this.extractEmbeddedUrl(originalUrl);
         this.videoSourceControl!.setValue(embeddedUrl);
 
-        this.checkTumLivePlaylist(originalUrl);
+        this.checkPlaylistAvailability(originalUrl);
     }
 
     extractEmbeddedUrl(videoUrl: string) {
@@ -370,8 +361,12 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
             url.searchParams.set('video_only', '1');
             return url.toString();
         }
+        const videoInfo = urlParser.parse(videoUrl);
+        if (!videoInfo) {
+            return videoUrl;
+        }
         return urlParser.create({
-            videoInfo: urlParser.parse(videoUrl)!,
+            videoInfo,
             format: 'embed',
         });
     }

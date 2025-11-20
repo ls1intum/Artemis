@@ -119,7 +119,7 @@ describe('TextUnitComponent', () => {
         isolatedViewButton.nativeElement.click();
 
         // assertions against the stub window (not the real document)
-        expect(openStub).toHaveBeenCalledOnce();
+        expect(openStub).toHaveBeenCalledWith('', '_blank');
         expect((fakeWin as any).focus).toHaveBeenCalledOnce();
         expect(fakeWin.document.title).toBe(textUnit.name);
         expect(fakeWin.document.body.className).toBe('markdown-body');

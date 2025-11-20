@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -22,6 +22,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+
+type StartTxReturn = ReturnType<AttachmentVideoUnitService['startTranscription']>;
 
 describe('CreateAttachmentVideoUnitComponent', () => {
     let createAttachmentVideoUnitComponentFixture: ComponentFixture<CreateAttachmentVideoUnitComponent>;
@@ -194,7 +196,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
     it('should start transcription when generateTranscript is true and playlistUrl is provided', fakeAsync(() => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
-        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as any);
+        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as StartTxReturn);
 
         const attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.id = 1;
@@ -224,6 +226,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
 
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         createAttachmentVideoUnitComponentFixture.detectChanges();
+        tick();
 
         expect(startTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, playlistUrl);
     }));
@@ -231,7 +234,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
     it('should start transcription with videoSource when generateTranscript is true and no playlistUrl', fakeAsync(() => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
-        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as any);
+        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as StartTxReturn);
 
         const attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.id = 1;
@@ -259,6 +262,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
 
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         createAttachmentVideoUnitComponentFixture.detectChanges();
+        tick();
 
         expect(startTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, 'https://example.com/video.mp4');
     }));
