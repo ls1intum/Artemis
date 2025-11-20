@@ -345,6 +345,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
                         };
                         break;
                     case LectureUnitType.ATTACHMENT_VIDEO:
+                        // Set initial form data
                         this.attachmentVideoUnitFormData = {
                             formProperties: {
                                 name: this.currentlyProcessedAttachmentVideoUnit.name,
@@ -361,6 +362,24 @@ export class LectureUpdateUnitsComponent implements OnInit {
                             },
                             transcriptionStatus: transcriptionStatus,
                         };
+
+                        // Check if playlist URL is available for existing video to enable transcription generation
+                        if (this.currentlyProcessedAttachmentVideoUnit.videoSource) {
+                            this.attachmentVideoUnitService.getPlaylistUrl(this.currentlyProcessedAttachmentVideoUnit.videoSource).subscribe({
+                                next: (playlist) => {
+                                    if (playlist) {
+                                        // Update formData with the playlist URL
+                                        this.attachmentVideoUnitFormData = {
+                                            ...this.attachmentVideoUnitFormData,
+                                            playlistUrl: playlist,
+                                        };
+                                    }
+                                },
+                                error: () => {
+                                    // Playlist URL not available, transcription generation won't be possible
+                                },
+                            });
+                        }
                         break;
                 }
             });

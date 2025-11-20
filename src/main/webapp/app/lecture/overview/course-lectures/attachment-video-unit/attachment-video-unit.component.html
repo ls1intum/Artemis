@@ -60,6 +60,14 @@
     }
 
     @if (!!videoUrl()) {
+        @if (playlistUrl() && !transcriptionStatus()) {
+            <div class="mb-3">
+                <span class="badge bg-info">
+                    <fa-icon [icon]="faFileLines" class="me-1" />
+                    <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptAvailable"></span>
+                </span>
+            </div>
+        }
         @if (isLoading()) {
             <div class="d-flex justify-content-center p-3">
                 <div class="spinner-border" role="status">

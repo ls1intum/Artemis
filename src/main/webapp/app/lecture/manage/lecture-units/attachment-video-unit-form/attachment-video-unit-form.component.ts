@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, ViewChild, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnChanges, ViewChild, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
@@ -153,6 +153,17 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
 
+    constructor() {
+        // Watch for changes to formData.playlistUrl in edit mode
+        effect(() => {
+            const formData = this.formData();
+            if (this.isEditMode() && formData?.playlistUrl) {
+                this.playlistUrl.set(formData.playlistUrl);
+                this.canGenerateTranscript.set(true);
+            }
+        });
+    }
+
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
         description: [undefined as string | undefined, [Validators.maxLength(1000)]],
@@ -217,6 +228,11 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
             this.setFormValues(formData);
             const newStatus = formData.transcriptionStatus ? (formData.transcriptionStatus as TranscriptionStatus) : undefined;
             this.transcriptionStatus.set(newStatus);
+            // Set playlist URL if available from formData (for existing videos)
+            if (formData.playlistUrl) {
+                this.playlistUrl.set(formData.playlistUrl);
+                this.canGenerateTranscript.set(true);
+            }
         } else {
             this.transcriptionStatus.set(undefined);
         }

@@ -387,4 +387,51 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
+
+    it('should fetch playlist URL when editing existing video with videoSource', () => {
+        const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl').mockReturnValue(of(playlistUrl));
+
+        fixture.detectChanges();
+
+        expect(getPlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource);
+
+        // Wait for async operation
+        return fixture.whenStable().then(() => {
+            const formComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+            expect(formComponent.formData()?.playlistUrl).toBe(playlistUrl);
+        });
+    });
+
+    it('should not fetch playlist URL when videoSource is missing', () => {
+        attachmentVideoUnit.videoSource = undefined;
+        jest.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: attachmentVideoUnit,
+                    status: 200,
+                }),
+            ),
+        );
+
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl');
+
+        fixture.detectChanges();
+
+        expect(getPlaylistUrlSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle playlist URL fetch failure gracefully', () => {
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl').mockReturnValue(throwError(() => new Error('Not found')));
+
+        fixture.detectChanges();
+
+        expect(getPlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource);
+
+        // Should still initialize form data without playlist URL
+        return fixture.whenStable().then(() => {
+            const formComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+            expect(formComponent.formData()?.playlistUrl).toBeUndefined();
+        });
+    });
 });

@@ -1028,4 +1028,102 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(wizardUnitComponent.attachmentVideoUnitFormData?.transcriptionStatus).toEqual(transcriptionStatus);
         });
     }));
+
+    it('should fetch playlist URL when editing attachment video unit with videoSource', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        const attachment = new Attachment();
+        attachment.id = 1;
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
+        attachment.name = 'test';
+        attachment.link = '/path/to/file';
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.attachment = attachment;
+        attachmentVideoUnit.videoSource = 'https://live.rbg.tum.de/w/test/26';
+
+        const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl').mockReturnValue(of(playlistUrl));
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
+
+        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+        tick();
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(getPlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource);
+            expect(wizardUnitComponent.attachmentVideoUnitFormData?.playlistUrl).toBe(playlistUrl);
+        });
+    }));
+
+    it('should not fetch playlist URL when editing attachment video unit without videoSource', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        const attachment = new Attachment();
+        attachment.id = 1;
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
+        attachment.name = 'test';
+        attachment.link = '/path/to/file';
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.attachment = attachment;
+        attachmentVideoUnit.videoSource = undefined;
+
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl');
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
+
+        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+        tick();
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(getPlaylistUrlSpy).not.toHaveBeenCalled();
+            expect(wizardUnitComponent.attachmentVideoUnitFormData?.playlistUrl).toBeUndefined();
+        });
+    }));
+
+    it('should handle playlist URL fetch failure gracefully when editing', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        const attachment = new Attachment();
+        attachment.id = 1;
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
+        attachment.name = 'test';
+        attachment.link = '/path/to/file';
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.attachment = attachment;
+        attachmentVideoUnit.videoSource = 'https://live.rbg.tum.de/w/test/26';
+
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl').mockReturnValue(throwError(() => new Error('Not found')));
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
+
+        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+        tick();
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(getPlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource);
+            // Should still initialize form data without playlist URL
+            expect(wizardUnitComponent.attachmentVideoUnitFormData?.playlistUrl).toBeUndefined();
+        });
+    }));
 });

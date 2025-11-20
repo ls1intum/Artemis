@@ -48,6 +48,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     protected readonly faDownload = faDownload;
     protected readonly faSpinner = faSpinner;
     protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faFileLines = faFileLines;
     protected readonly TranscriptionStatus = TranscriptionStatus;
 
     private readonly destroyRef = inject(DestroyRef);
