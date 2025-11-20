@@ -344,9 +344,9 @@ public class CourseUtilService {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {
                 TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().orElseThrow();
-                TextUnit textUnit = lectureUtilService.createTextUnit();
-                AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(withFiles);
-                ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
+                TextUnit textUnit = lectureUtilService.createTextUnit(lectures.get(i));
+                AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lectures.get(i), withFiles);
+                ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise, lectures.get(i));
                 lectures.set(i, lectureUtilService.addLectureUnitsToLecture(lectures.get(i), List.of(textUnit, attachmentVideoUnit, exerciseUnit)));
             }
             course.setLectures(new HashSet<>(lectures));
