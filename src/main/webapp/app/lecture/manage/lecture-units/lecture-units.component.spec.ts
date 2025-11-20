@@ -689,6 +689,106 @@ describe('LectureUpdateUnitsComponent', () => {
         });
     }));
 
+    it('should fetch playlist URL when starting to edit a video unit with videoSource', fakeAsync(() => {
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+        const attachment = new Attachment();
+        attachment.id = 1;
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.name = 'test';
+        attachment.link = '/path/to/file';
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.attachment = attachment;
+        attachmentVideoUnit.videoSource = 'https://live.rbg.tum.de/w/test/123?video_only=1';
+
+        const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl').mockReturnValue(of(playlistUrl));
+
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+
+        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+        tick();
+
+        expect(getPlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(wizardUnitComponent.attachmentVideoUnitFormData?.playlistUrl).toBe(playlistUrl);
+        });
+    }));
+
+    it('should handle playlist URL fetch failure gracefully when editing a video unit', fakeAsync(() => {
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+        const attachment = new Attachment();
+        attachment.id = 1;
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.name = 'test';
+        attachment.link = '/path/to/file';
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.attachment = attachment;
+        attachmentVideoUnit.videoSource = 'https://example.com/video';
+
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl').mockReturnValue(throwError(() => new Error('Not found')));
+
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+
+        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+        tick();
+
+        expect(getPlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            // Should still open the form even if playlist URL fetch fails
+            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
+            // playlistUrl should not be set
+            expect(wizardUnitComponent.attachmentVideoUnitFormData?.playlistUrl).toBeUndefined();
+        });
+    }));
+
+    it('should not fetch playlist URL when starting to edit a video unit without videoSource', fakeAsync(() => {
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+        const attachment = new Attachment();
+        attachment.id = 1;
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.name = 'test';
+        attachment.link = '/path/to/file';
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.attachment = attachment;
+        // No videoSource set
+
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl');
+
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+
+        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+        tick();
+
+        expect(getPlaylistUrlSpy).not.toHaveBeenCalled();
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
+        });
+    }));
+
     it('should create transcription when creating a video unit with transcription properties', fakeAsync(() => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
