@@ -22,7 +22,8 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -49,6 +50,9 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
     private User student;
 
     private Course course;
+
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
 
     @BeforeEach
     void setup() {
@@ -85,7 +89,10 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
     @ParameterizedTest(name = "{displayName} [{index}] {arguments}")
     @ValueSource(booleans = { true, false })
     void testIsCompletedByUserLectureUnit(boolean completed) {
-        var lectureUnit = LectureFactory.generateAttachmentVideoUnit();
+        var lecture = lectureUtilService.createCourseWithLecture(true);
+        var lectureUnit = new TextUnit();
+        lectureUnit.setLecture(lecture);
+        lectureUnit = lectureUnitRepository.save(lectureUnit);
 
         if (completed) {
             lectureUtilService.completeLectureUnitForUser(lectureUnit, student);

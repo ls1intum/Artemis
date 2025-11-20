@@ -7,7 +7,6 @@ import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/ser
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -54,13 +53,13 @@ export interface OrderedPage {
 export interface HiddenPage {
     slideId: string;
     date: dayjs.Dayjs;
-    exerciseId: number | null;
+    exerciseId: number | undefined;
 }
 
 export interface HiddenPageMap {
     [slideId: string]: {
         date: dayjs.Dayjs;
-        exerciseId: number | null;
+        exerciseId: number | undefined;
     };
 }
 
@@ -94,8 +93,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     protected readonly Object = Object;
     protected readonly Array = Array;
 
+    courseId: number;
+
     // Signals
-    course = signal<Course | undefined>(undefined);
     attachment = signal<Attachment | undefined>(undefined);
     attachmentVideoUnit = signal<AttachmentVideoUnit | undefined>(undefined);
     isPdfLoading = signal<boolean>(false);
@@ -155,9 +155,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.isPdfLoading.set(true);
+        this.courseId = Number(this.route?.parent?.snapshot.paramMap.get('courseId'));
         this.route.data.subscribe((data) => {
-            this.course.set(data.course);
-
             if ('attachment' in data) {
                 this.attachment.set(data.attachment);
                 this.fetchPdfFile('attachment');
@@ -173,7 +172,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                             page.id,
                             {
                                 date: dayjs(page.hidden),
-                                exerciseId: page.exercise?.id ?? null,
+                                exerciseId: page.exercise?.id ?? undefined,
                             },
                         ]),
                 );
@@ -193,12 +192,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param slides Optional array of slides (only used for attachmentVideoUnit)
      */
     private fetchPdfFile(fileType: 'attachment' | 'attachmentVideoUnit', slides?: Slide[]): void {
-        const courseId = this.course()!.id!;
         let subscription: Subscription;
 
         if (fileType === 'attachment') {
             subscription = this.attachmentService
-                .getAttachmentFile(courseId, this.attachment()!.id!)
+                .getAttachmentFile(this.courseId, this.attachment()!.id!)
                 .pipe(finalize(() => this.isPdfLoading.set(false)))
                 .subscribe({
                     next: (blob: Blob) => this.processPdfBlob(blob, slides),
@@ -208,7 +206,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentSub = subscription;
         } else {
             subscription = this.attachmentVideoUnitService
-                .getAttachmentFile(courseId, this.attachmentVideoUnit()!.id!)
+                .getAttachmentFile(this.courseId, this.attachmentVideoUnit()!.id!)
                 .pipe(finalize(() => this.isPdfLoading.set(false)))
                 .subscribe({
                     next: (blob: Blob) => this.processPdfBlob(blob, slides),
@@ -386,7 +384,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         return Object.entries(this.hiddenPages()).map(([slideId, pageData]) => ({
             slideId,
             date: pageData.date,
-            exerciseId: pageData.exerciseId ?? null,
+            exerciseId: pageData.exerciseId ?? undefined,
         }));
     }
 
@@ -572,7 +570,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     async applyOperations(studentVersion: boolean = false): Promise<{
         instructorPdf: PDFDocument;
-        studentPdf: PDFDocument | null;
+        studentPdf: PDFDocument | undefined;
     }> {
         const originalSource = this.sourcePDFs().get('original');
         if (!originalSource) {
@@ -581,7 +579,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         const instructorPdf = await this.createPdfDocument(originalSource.pdfDocument, this.operations(), this.pageOrder());
 
-        let studentPdf = null;
+        let studentPdf = undefined;
         if (studentVersion) {
             const hiddenSlideIds = Object.keys(this.hiddenPages());
             if (hiddenSlideIds.length > 0) {
@@ -874,7 +872,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         }
         this.isPdfLoading.set(true);
         this.isAppendingFile.set(true);
-        let objectUrl: string | null = null;
+        let objectUrl: string | undefined = undefined;
         try {
             const newPdfBytes = await file!.arrayBuffer();
             objectUrl = URL.createObjectURL(file!);
@@ -1014,9 +1012,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     navigateToCourseManagement(): void {
         if (this.attachment()) {
-            this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+            this.router.navigate(['course-management', this.courseId, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
         } else {
-            this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
+            this.router.navigate(['course-management', this.courseId, 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
         }
     }
 }

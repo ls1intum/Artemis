@@ -28,9 +28,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.io.FileUtils;
@@ -39,6 +36,8 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -107,7 +106,7 @@ public class FileUtil {
      * @param markdown     boolean which is set to true, when we are uploading a file within the markdown editor
      * @return The external URI of the file
      */
-    @NotNull
+    @NonNull
     public static URI handleSaveFile(MultipartFile file, boolean keepFilename, boolean markdown) {
         // check for file type
         String filename = checkAndSanitizeFilename(file.getOriginalFilename());
@@ -160,7 +159,7 @@ public class FileUtil {
      * @param keepFilename whether to keep the original filename or not
      * @return the path where the file was saved
      */
-    @NotNull
+    @NonNull
     public static Path saveFile(MultipartFile file, Path basePath, FilePathType filePathType, boolean keepFilename) {
         String sanitizedFilename = checkAndSanitizeFilename(file.getOriginalFilename());
         validateExtension(sanitizedFilename, false);
@@ -176,7 +175,7 @@ public class FileUtil {
      * @param fullSanitizedPath the full path to save the file to
      * @return the path where the file was saved
      */
-    @NotNull
+    @NonNull
     public static Path saveFile(MultipartFile file, Path fullSanitizedPath) {
         copyFile(file, fullSanitizedPath);
         return fullSanitizedPath;
@@ -199,7 +198,7 @@ public class FileUtil {
      * @return the sanitized filename
      * @throws IllegalArgumentException if the filename is null
      */
-    @NotNull
+    @NonNull
     public static String checkAndSanitizeFilename(@Nullable String filename) {
         if (filename == null) {
             throw new IllegalArgumentException("Filename cannot be null");
@@ -248,7 +247,7 @@ public class FileUtil {
      * @param filePathType the type of the file path
      * @return the resulting file path or null on error
      */
-    public static Path copyExistingFileToTarget(@NotNull Path oldFilePath, @NotNull Path targetFolder, FilePathType filePathType) {
+    public static Path copyExistingFileToTarget(@NonNull Path oldFilePath, @NonNull Path targetFolder, FilePathType filePathType) {
         if (oldFilePath != null && !pathContains(oldFilePath, Path.of(("files/temp")))) {
             String filename = oldFilePath.getFileName().toString();
             try {
@@ -271,7 +270,7 @@ public class FileUtil {
      * @param subPath sub-path URI to search for
      * @throws IllegalArgumentException if the provided path does not start with the provided sub-path or the provided legacy-sub-path
      */
-    public static void sanitizeByCheckingIfPathStartsWithSubPathElseThrow(@NotNull URI path, @NotNull URI subPath) {
+    public static void sanitizeByCheckingIfPathStartsWithSubPathElseThrow(@NonNull URI path, @NonNull URI subPath) {
         // Removes redundant elements (e.g. ../ or ./) from the path and sub-path
         URI normalisedPath = path.normalize();
         URI normalisedSubPath = subPath.normalize();
@@ -304,8 +303,8 @@ public class FileUtil {
      * @param filePathType the type of the file path
      * @return the prefix ending with an underscore character as a separator
      */
-    @NotNull
-    public static String generateTargetFilenameBase(@NotNull FilePathType filePathType) {
+    @NonNull
+    public static String generateTargetFilenameBase(@NonNull FilePathType filePathType) {
         return switch (filePathType) {
             case DRAG_AND_DROP_BACKGROUND -> "DragAndDropBackground_";
             case DRAG_ITEM -> "DragItem_";
