@@ -175,6 +175,16 @@
             "transcription": {
                 "started": "Transcript generation started.",
                 "error": "Failed to start transcript generation."
+            },
+            "videoPlayer": {
+                "transcript": "Transcript",
+                "searchPlaceholder": "Search transcript...",
+                "clearSearch": "Clear search",
+                "previousResult": "Previous result",
+                "nextResult": "Next result",
+                "noResults": "No results",
+                "noMatchingTranscript": "No matching transcript found",
+                "loading": "Loading..."
             }
         },
         "exerciseUnit": {
