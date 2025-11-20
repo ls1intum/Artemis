@@ -40,7 +40,8 @@ jest.mock('hls.js', () => ({
 
 // ---- Imports AFTER the mock ----
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranscriptSegment, VideoPlayerComponent } from './video-player.component';
+import { VideoPlayerComponent } from './video-player.component';
+import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 
 describe('VideoPlayerComponent', () => {
     let fixture: ComponentFixture<VideoPlayerComponent>;

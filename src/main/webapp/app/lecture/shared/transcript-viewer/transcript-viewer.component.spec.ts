@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranscriptSegment, TranscriptViewerComponent } from './transcript-viewer.component';
+import { TranscriptViewerComponent } from './transcript-viewer.component';
+import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { TranslateModule } from '@ngx-translate/core';
 
 describe('TranscriptViewerComponent', () => {
