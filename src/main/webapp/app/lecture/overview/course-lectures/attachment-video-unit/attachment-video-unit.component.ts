@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
@@ -41,6 +42,7 @@ import { map } from 'rxjs/operators';
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
     protected readonly faDownload = faDownload;
 
+    private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
@@ -101,20 +103,23 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
 
             // Try to resolve a .m3u8 playlist URL through the backend API
-            this.attachmentVideoUnitService.getPlaylistUrl(src).subscribe({
-                next: (resolvedUrl) => {
-                    if (resolvedUrl) {
-                        this.playlistUrl.set(resolvedUrl);
-                        this.fetchTranscript();
-                    }
-                    this.isLoading.set(false);
-                },
-                error: () => {
-                    // Failed to resolve playlist URL, will fall back to iframe
-                    this.playlistUrl.set(undefined);
-                    this.isLoading.set(false);
-                },
-            });
+            this.attachmentVideoUnitService
+                .getPlaylistUrl(src)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (resolvedUrl) => {
+                        if (resolvedUrl) {
+                            this.playlistUrl.set(resolvedUrl);
+                            this.fetchTranscript();
+                        }
+                        this.isLoading.set(false);
+                    },
+                    error: () => {
+                        // Failed to resolve playlist URL, will fall back to iframe
+                        this.playlistUrl.set(undefined);
+                        this.isLoading.set(false);
+                    },
+                });
         }
     }
 
@@ -131,6 +136,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     // Filter and map to ensure all required fields are present
                     return dto.segments.filter((seg): seg is TranscriptSegment => seg.startTime != null && seg.endTime != null && seg.text != null) as TranscriptSegment[];
                 }),
+                takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
                 next: (segments) => {
