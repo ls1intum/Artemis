@@ -126,8 +126,9 @@ public class SlideSplitterService {
                 int slideNumber = page + 1;
                 String filename = fileNameWithOutExt + "_" + attachmentVideoUnit.getId() + "_Slide_" + slideNumber + ".png";
                 MultipartFile slideFile = FileUtil.convertByteArrayToMultipart(filename, ".png", imageInByte);
-                Path savePath = FileUtil.saveFile(slideFile, FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnit.getId().toString())
-                        .resolve("slide").resolve(String.valueOf(slideNumber)).resolve(filename));
+                var path = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnit.getId().toString()).resolve("slide")
+                        .resolve(String.valueOf(slideNumber)).resolve(filename);
+                Path savePath = FileUtil.saveFile(slideFile, path);
 
                 Slide slideEntity = new Slide();
                 slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) slideNumber).toString());

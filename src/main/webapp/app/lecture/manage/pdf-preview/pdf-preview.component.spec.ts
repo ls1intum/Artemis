@@ -1,7 +1,7 @@
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { Subscription, of, throwError } from 'rxjs';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -67,6 +67,11 @@ describe('PdfPreviewComponent', () => {
             delete: jest.fn().mockReturnValue(of({})),
         };
         routeMock = {
+            parent: {
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: 1 }),
+                },
+            },
             data: of({
                 course: { id: 1, name: 'Example Course' },
                 attachment: { id: 1, name: 'Example PDF', lecture: { id: 1 } },
@@ -185,14 +190,13 @@ describe('PdfPreviewComponent', () => {
             attachmentUnitServiceMock.getAttachmentFile.mockReturnValue(of(mockBlob));
 
             routeMock.data = of({
-                course: { id: 1, name: 'Example Course' },
                 attachmentVideoUnit: mockAttachmentUnit,
             });
 
             component.ngOnInit();
             tick();
 
-            expect(component.course()).toEqual({ id: 1, name: 'Example Course' });
+            expect(component.courseId).toBe(1);
             expect(component.attachmentVideoUnit()).toEqual(mockAttachmentUnit);
 
             expect(Object.keys(component.initialHiddenPages())).toContain('slide2');
@@ -303,7 +307,7 @@ describe('PdfPreviewComponent', () => {
             const mockDate5 = dayjs('2024-05-05');
 
             component.hiddenPages.set({
-                slide1: { date: mockDate1, exerciseId: null },
+                slide1: { date: mockDate1, exerciseId: undefined },
                 slide3: { date: mockDate3, exerciseId: 123 },
                 slide5: { date: mockDate5, exerciseId: 456 },
             });
@@ -311,7 +315,7 @@ describe('PdfPreviewComponent', () => {
             const hiddenPages = component.getHiddenPages();
 
             expect(hiddenPages).toHaveLength(3);
-            expect(hiddenPages).toContainEqual({ slideId: 'slide1', date: mockDate1, exerciseId: null });
+            expect(hiddenPages).toContainEqual({ slideId: 'slide1', date: mockDate1, exerciseId: undefined });
             expect(hiddenPages).toContainEqual({ slideId: 'slide3', date: mockDate3, exerciseId: 123 });
             expect(hiddenPages).toContainEqual({ slideId: 'slide5', date: mockDate5, exerciseId: 456 });
         });
@@ -325,7 +329,7 @@ describe('PdfPreviewComponent', () => {
 
     describe('Attachment Update', () => {
         it('should update an attachment successfully', async () => {
-            component.course.set({ id: 456 });
+            component.courseId = 456;
             component.attachment.set({ id: 1, name: 'Test PDF', version: 1, lecture: { id: 123 } });
             component.attachmentToBeEdited.set(undefined);
 
@@ -333,7 +337,7 @@ describe('PdfPreviewComponent', () => {
                 instructorPdf: {
                     save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
                 } as any,
-                studentPdf: null,
+                studentPdf: undefined,
             });
 
             attachmentServiceMock.update.mockReturnValue(of({}));
@@ -370,7 +374,7 @@ describe('PdfPreviewComponent', () => {
                 instructorPdf: {
                     save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
                 } as any,
-                studentPdf: null,
+                studentPdf: undefined,
             });
 
             component.pageOrder.set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]);
@@ -464,7 +468,7 @@ describe('PdfPreviewComponent', () => {
                 instructorPdf: {
                     save: jest.fn().mockResolvedValue(new Uint8Array(new Array(MAX_FILE_SIZE + 1000))),
                 } as any,
-                studentPdf: null,
+                studentPdf: undefined,
             });
 
             await component.updateAttachmentWithFile();
@@ -482,7 +486,7 @@ describe('PdfPreviewComponent', () => {
                 instructorPdf: {
                     save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
                 } as any,
-                studentPdf: null,
+                studentPdf: undefined,
             });
 
             const mockError = new Error('Update failed');
@@ -508,7 +512,7 @@ describe('PdfPreviewComponent', () => {
                 instructorPdf: {
                     save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
                 } as any,
-                studentPdf: null,
+                studentPdf: undefined,
             });
 
             jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
@@ -622,8 +626,8 @@ describe('PdfPreviewComponent', () => {
             component.selectedPages.set(new Set([{ slideId: 'slide2', initialIndex: 2, order: 2 } as any, { slideId: 'slide4', initialIndex: 4, order: 4 } as any]));
 
             component.hiddenPages.set({
-                slide2: { date: dayjs(), exerciseId: null },
-                slide3: { date: dayjs(), exerciseId: null },
+                slide2: { date: dayjs(), exerciseId: undefined },
+                slide3: { date: dayjs(), exerciseId: undefined },
             });
 
             component.deleteSelectedSlides();
@@ -668,7 +672,7 @@ describe('PdfPreviewComponent', () => {
     describe('Attachment Deletion', () => {
         it('should delete the attachment and navigate to attachments on success', () => {
             component.attachment.set({ id: 1, lecture: { id: 2 } });
-            component.course.set({ id: 3 });
+            component.courseId = 3;
 
             component.deleteAttachmentFile();
 
@@ -680,7 +684,7 @@ describe('PdfPreviewComponent', () => {
         it('should delete the attachment video unit and navigate to unit management on success', () => {
             component.attachment.set(undefined);
             component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
-            component.course.set({ id: 6 });
+            component.courseId = 6;
 
             component.deleteAttachmentFile();
 
@@ -693,7 +697,7 @@ describe('PdfPreviewComponent', () => {
             const error = { message: 'Deletion failed' };
             attachmentServiceMock.delete.mockReturnValue(throwError(() => error));
             component.attachment.set({ id: 1, lecture: { id: 2 } });
-            component.course.set({ id: 3 });
+            component.courseId = 3;
 
             component.deleteAttachmentFile();
 
@@ -706,7 +710,7 @@ describe('PdfPreviewComponent', () => {
             lectureUnitServiceMock.delete.mockReturnValue(throwError(() => error));
             component.attachment.set(undefined);
             component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
-            component.course.set({ id: 6 });
+            component.courseId = 6;
 
             component.deleteAttachmentFile();
 
@@ -718,11 +722,11 @@ describe('PdfPreviewComponent', () => {
     describe('Page Visibility Management', () => {
         it('should hide pages by adding to hiddenPages', () => {
             component.hiddenPages.set({
-                slide1: { date: dayjs(), exerciseId: null },
+                slide1: { date: dayjs(), exerciseId: undefined },
             });
 
             const pages = [
-                { slideId: 'slide2', date: dayjs(), exerciseId: null },
+                { slideId: 'slide2', date: dayjs(), exerciseId: undefined },
                 { slideId: 'slide3', date: dayjs(), exerciseId: 123 },
             ];
 
@@ -742,8 +746,8 @@ describe('PdfPreviewComponent', () => {
 
         it('should show pages by removing from hiddenPages', () => {
             component.hiddenPages.set({
-                slide1: { date: dayjs(), exerciseId: null },
-                slide2: { date: dayjs(), exerciseId: null },
+                slide1: { date: dayjs(), exerciseId: undefined },
+                slide2: { date: dayjs(), exerciseId: undefined },
                 slide3: { date: dayjs(), exerciseId: 123 },
             });
 
@@ -766,7 +770,7 @@ describe('PdfPreviewComponent', () => {
     describe('Navigation', () => {
         it('should navigate to attachments page when attachment is present', () => {
             component.attachment.set({ id: 1, lecture: { id: 2 } });
-            component.course.set({ id: 3 });
+            component.courseId = 3;
 
             component.navigateToCourseManagement();
 
@@ -776,7 +780,7 @@ describe('PdfPreviewComponent', () => {
         it('should navigate to unit management page when attachmentUnit is present', () => {
             component.attachment.set(undefined);
             component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
-            component.course.set({ id: 6 });
+            component.courseId = 6;
 
             component.navigateToCourseManagement();
 
@@ -791,13 +795,13 @@ describe('PdfPreviewComponent', () => {
             const date3 = dayjs('2024-01-03');
 
             const initialHiddenPages = {
-                slide1: { date: date1, exerciseId: null },
-                slide2: { date: date2, exerciseId: null },
+                slide1: { date: date1, exerciseId: undefined },
+                slide2: { date: date2, exerciseId: undefined },
             };
 
             const changedHiddenPages = {
-                slide1: { date: date1, exerciseId: null },
-                slide3: { date: date3, exerciseId: null },
+                slide1: { date: date1, exerciseId: undefined },
+                slide3: { date: date3, exerciseId: undefined },
             };
 
             component.initialHiddenPages.set({ ...initialHiddenPages });
@@ -811,8 +815,8 @@ describe('PdfPreviewComponent', () => {
             const date2 = dayjs('2024-01-02');
 
             const hiddenPages = {
-                slide1: { date: date1, exerciseId: null },
-                slide2: { date: date2, exerciseId: null },
+                slide1: { date: date1, exerciseId: undefined },
+                slide2: { date: date2, exerciseId: undefined },
             };
 
             component.initialHiddenPages.set({ ...hiddenPages });
@@ -830,8 +834,8 @@ describe('PdfPreviewComponent', () => {
             };
 
             component.hiddenPages.set({
-                slide1: { date: dayjs(), exerciseId: null },
-                slide3: { date: dayjs(), exerciseId: null },
+                slide1: { date: dayjs(), exerciseId: undefined },
+                slide3: { date: dayjs(), exerciseId: undefined },
             });
 
             component.selectedPages.set(new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide5', initialIndex: 5, order: 5 } as any]));
@@ -866,8 +870,8 @@ describe('PdfPreviewComponent', () => {
             ];
 
             component.hiddenPages.set({
-                slide1: { date: dayjs(), exerciseId: null },
-                slide3: { date: dayjs(), exerciseId: null },
+                slide1: { date: dayjs(), exerciseId: undefined },
+                slide3: { date: dayjs(), exerciseId: undefined },
             });
 
             component.selectedPages.set(new Set([{ slideId: 'slide2', initialIndex: 2, order: 2 } as any, { slideId: 'slide7', initialIndex: 7, order: 7 } as any]));
@@ -893,8 +897,8 @@ describe('PdfPreviewComponent', () => {
             const updatedDate = dayjs('2024-06-01');
 
             component.hiddenPages.set({
-                slide1: { date: dayjs(), exerciseId: null },
-                slide5: { date: initialDate, exerciseId: null },
+                slide1: { date: dayjs(), exerciseId: undefined },
+                slide5: { date: initialDate, exerciseId: undefined },
             });
 
             const updatedHiddenPage = {
@@ -964,9 +968,9 @@ describe('PdfPreviewComponent', () => {
         it('should correctly process show pages operation', () => {
             const mockDate = dayjs('2024-01-01');
             component.hiddenPages.set({
-                slide1: { date: mockDate, exerciseId: null },
+                slide1: { date: mockDate, exerciseId: undefined },
                 slide2: { date: mockDate, exerciseId: 123 },
-                slide3: { date: mockDate, exerciseId: null },
+                slide3: { date: mockDate, exerciseId: undefined },
             });
 
             const selectedPages = new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide3', initialIndex: 3, order: 3 } as any]);
@@ -1020,14 +1024,14 @@ describe('PdfPreviewComponent', () => {
             expect(component.hasHiddenPages()).toBeFalse();
 
             component.hiddenPages.set({
-                slide1: { date: dayjs(), exerciseId: null },
+                slide1: { date: dayjs(), exerciseId: undefined },
             });
             expect(component.hasHiddenPages()).toBeTrue();
         });
 
         it('should correctly compute hasHiddenSelectedPages property', () => {
             component.hiddenPages.set({
-                slide1: { date: dayjs(), exerciseId: null },
+                slide1: { date: dayjs(), exerciseId: undefined },
                 slide3: { date: dayjs(), exerciseId: 123 },
             });
 
@@ -1053,7 +1057,7 @@ describe('PdfPreviewComponent', () => {
             component.operations.set([]);
 
             component.initialHiddenPages.set({});
-            component.hiddenPages.set({ slide1: { date: dayjs(), exerciseId: null } });
+            component.hiddenPages.set({ slide1: { date: dayjs(), exerciseId: undefined } });
             expect(component.hasChanges()).toBeTrue();
             component.hiddenPages.set({});
 
@@ -1070,7 +1074,7 @@ describe('PdfPreviewComponent', () => {
         it('should handle empty file input when merging PDF', async () => {
             const mockEvent = {
                 target: {
-                    files: [null],
+                    files: [undefined],
                     value: '',
                 },
             };
@@ -1138,7 +1142,7 @@ describe('PdfPreviewComponent', () => {
                     copyPages: jest.fn().mockResolvedValue([{}, {}]),
                 } as unknown as PDFDocument;
 
-                let mockStudentPdf = null;
+                let mockStudentPdf = undefined;
 
                 if (studentVersion && Object.keys(component.hiddenPages()).length > 0) {
                     mockStudentPdf = {
@@ -1160,7 +1164,7 @@ describe('PdfPreviewComponent', () => {
             });
 
             component.hiddenPages.set({
-                slide2: { date: dayjs(), exerciseId: null },
+                slide2: { date: dayjs(), exerciseId: undefined },
             });
 
             component.pageOrder.set([
@@ -1211,13 +1215,13 @@ describe('PdfPreviewComponent', () => {
             jest.spyOn(component, 'applyOperations').mockImplementation(async () => {
                 return {
                     instructorPdf: mockPdf as any,
-                    studentPdf: null,
+                    studentPdf: undefined,
                 };
             });
 
             const result = await component.applyOperations(true);
 
-            expect(result.studentPdf).toBeNull();
+            expect(result.studentPdf).toBeUndefined();
         });
     });
 
@@ -1529,7 +1533,7 @@ describe('PdfPreviewComponent', () => {
                 .mockImplementationOnce(() => Promise.resolve(mockStudentPdf));
 
             component.hiddenPages.set({
-                slide2: { date: dayjs(), exerciseId: null },
+                slide2: { date: dayjs(), exerciseId: undefined },
             });
 
             jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([
@@ -1555,7 +1559,7 @@ describe('PdfPreviewComponent', () => {
             const result = await component.applyOperations(true);
 
             expect(result.instructorPdf).toBeDefined();
-            expect(result.studentPdf).toBeNull();
+            expect(result.studentPdf).toBeUndefined();
         });
 
         it('should throw an error when original PDF source is not found', async () => {
@@ -1642,7 +1646,7 @@ describe('PdfPreviewComponent', () => {
             expect(mockInstructorPdf.removePage).toHaveBeenCalled();
             expect(mockInstructorPdf.addPage).toHaveBeenCalled();
             expect(result.instructorPdf).toBeDefined();
-            expect(result.studentPdf).toBeNull();
+            expect(result.studentPdf).toBeUndefined();
         });
     });
 
@@ -1670,7 +1674,7 @@ describe('PdfPreviewComponent', () => {
             const futureDate2 = dayjs().add(5, 'days');
 
             component.hiddenPages.set({
-                slide1: { date: futureDate1, exerciseId: null },
+                slide1: { date: futureDate1, exerciseId: undefined },
                 slide2: { date: futureDate2, exerciseId: 123 },
             });
 
@@ -1684,7 +1688,7 @@ describe('PdfPreviewComponent', () => {
             const FOREVER = dayjs('9999-12-31');
 
             component.hiddenPages.set({
-                slide1: { date: FOREVER, exerciseId: null },
+                slide1: { date: FOREVER, exerciseId: undefined },
             });
 
             const result = component['validateHiddenSlidesDates']();
@@ -1698,7 +1702,7 @@ describe('PdfPreviewComponent', () => {
             const futureDate = dayjs().add(1, 'day');
 
             component.hiddenPages.set({
-                slide1: { date: futureDate, exerciseId: null },
+                slide1: { date: futureDate, exerciseId: undefined },
                 slide2: { date: pastDate, exerciseId: 123 },
             });
 
@@ -1714,9 +1718,9 @@ describe('PdfPreviewComponent', () => {
             const futureDate = dayjs().add(1, 'day');
 
             component.hiddenPages.set({
-                slide1: { date: pastDate1, exerciseId: null },
+                slide1: { date: pastDate1, exerciseId: undefined },
                 slide2: { date: futureDate, exerciseId: 123 },
-                slide3: { date: pastDate2, exerciseId: null },
+                slide3: { date: pastDate2, exerciseId: undefined },
             });
 
             const result = component['validateHiddenSlidesDates']();
@@ -1795,7 +1799,7 @@ describe('PdfPreviewComponent', () => {
             });
 
             component.hiddenPages.set({
-                slide1: { date: mockDate, exerciseId: null },
+                slide1: { date: mockDate, exerciseId: undefined },
             });
 
             jest.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
@@ -1847,7 +1851,7 @@ describe('PdfPreviewComponent', () => {
 
             jest.spyOn(component, 'applyOperations').mockResolvedValue({
                 instructorPdf: mockInstructorPdf as any,
-                studentPdf: null,
+                studentPdf: undefined,
             });
 
             jest.spyOn(component as any, 'updateAttachmentVideoUnit').mockResolvedValue(undefined);
