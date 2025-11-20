@@ -1,0 +1,69 @@
+<div class="transcript-column">
+    <div class="transcript-header">
+        <div class="transcript-title" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.transcript">Transcript</div>
+
+        <!-- Search Box -->
+        <div class="search-container">
+            <div class="search-input-wrapper">
+                <fa-icon [icon]="faSearch" class="search-icon" />
+                <input
+                    type="text"
+                    class="search-input"
+                    [placeholder]="'artemisApp.attachmentVideoUnit.videoPlayer.searchPlaceholder' | translate"
+                    [ngModel]="searchQuery()"
+                    (ngModelChange)="onSearchQueryChange($event)"
+                />
+                @if (searchQuery()) {
+                    <button class="clear-button" (click)="clearSearch()" [title]="'artemisApp.attachmentVideoUnit.videoPlayer.clearSearch' | translate">
+                        <fa-icon [icon]="faTimes" />
+                    </button>
+                }
+            </div>
+
+            <!-- Search Navigation -->
+            @if (isSearchActive()) {
+                <div class="search-nav">
+                    <span class="search-results">
+                        @if (searchResultsCount() > 0) {
+                            {{ currentSearchIndex() + 1 }} / {{ searchResultsCount() }}
+                        } @else {
+                            {{ 'artemisApp.attachmentVideoUnit.videoPlayer.noResults' | translate }}
+                        }
+                    </span>
+                    <button
+                        class="nav-button"
+                        (click)="previousSearchResult()"
+                        [disabled]="searchResultsCount() === 0"
+                        [title]="'artemisApp.attachmentVideoUnit.videoPlayer.previousResult' | translate"
+                    >
+                        <fa-icon [icon]="faChevronUp" />
+                    </button>
+                    <button
+                        class="nav-button"
+                        (click)="nextSearchResult()"
+                        [disabled]="searchResultsCount() === 0"
+                        [title]="'artemisApp.attachmentVideoUnit.videoPlayer.nextResult' | translate"
+                    >
+                        <fa-icon [icon]="faChevronDown" />
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="transcript-list">
+        @for (segment of filteredSegments(); track segment.startTime) {
+            <div
+                class="transcript-line"
+                [id]="'segment-' + segment.startTime"
+                (click)="onSegmentClick(segment.startTime)"
+                [class.active]="currentSegmentIndex() >= 0 && segment.startTime === transcriptSegments()[currentSegmentIndex()].startTime"
+                [class.search-result]="isCurrentSearchResult(segment)"
+                [innerHTML]="highlightText(segment.text)"
+            ></div>
+        }
+        @if (filteredSegments().length === 0 && transcriptSegments().length > 0) {
+            <div class="no-results" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.noMatchingTranscript">No matching transcript found</div>
+        }
+    </div>
+</div>
