@@ -8,6 +8,8 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
@@ -70,10 +73,13 @@ public class UserResource {
 
     private final UserRepository userRepository;
 
-    public UserResource(UserRepository userRepository, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
+    private final AuditEventRepository auditEventRepository;
+
+    public UserResource(AuditEventRepository auditEventRepository, UserRepository userRepository, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
         this.userRepository = userRepository;
         this.ltiApi = ltiApi;
         this.userCreationService = userCreationService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -142,8 +148,11 @@ public class UserResource {
         User user = userRepository.getUser();
         ZonedDateTime hasSelectedTimestamp = ZonedDateTime.now();
         AiSelectionDecision selectedLLMUsage = selectedLLMUsageDTO.selection();
+        AiSelectionDecision before = user.getAiSelectionDecision();
         userRepository.updateSelectedLLMUsageToDate(user.getId(), hasSelectedTimestamp);
         userRepository.updateSelectedLLMUsageToEnum(user.getId(), selectedLLMUsage);
+        var auditEvent = new AuditEvent(user.getLogin(), Constants.AI_SELECTION_DECISION, "before=" + before + ";after=" + selectedLLMUsage + ";at=" + hasSelectedTimestamp);
+        auditEventRepository.add(auditEvent);
         return ResponseEntity.ok().build();
     }
 }
