@@ -53,11 +53,11 @@ public class ParticipationFilterService {
             return Set.of();
         }
 
-        if (ExerciseType.PROGRAMMING.equals(exercise.getExerciseType())) {
-            return findStudentParticipationsForProgrammingExercises(participationsInExercise);
+        if (ExerciseType.PROGRAMMING.equals(exercise.getExerciseType()) || ExerciseType.QUIZ.equals(exercise.getExerciseType())) {
+            return findStudentParticipationsForMultipleParticipationExercises(participationsInExercise);
         }
         else {
-            return Set.of(findStudentParticipationForNonProgrammingExercises(participationsInExercise));
+            return Set.of(findStudentParticipationForSingleParticipationExercises(participationsInExercise));
         }
     }
 
@@ -96,22 +96,37 @@ public class ParticipationFilterService {
         participation.setExercise(null);
     }
 
-    private Set<StudentParticipation> findStudentParticipationsForProgrammingExercises(Set<StudentParticipation> participations) {
+    /**
+     * Validates and returns the student participations for exercises that allow multiple participations (programming and quiz),
+     * which may include at most one graded and one practice participation.
+     *
+     * @param participations the set of participations in the exercise to validate
+     * @return the valid set of participations (empty, only graded, only practice, or both)
+     * @throws IllegalArgumentException if there are multiple graded or multiple practice participations
+     */
+    private Set<StudentParticipation> findStudentParticipationsForMultipleParticipationExercises(Set<StudentParticipation> participations) {
         var gradedParticipations = participations.stream().filter(p -> !p.isPracticeMode()).collect(Collectors.toSet());
         if (gradedParticipations.size() > 1) {
-            throw new IllegalArgumentException("There cannot be more than one graded participation per student for programming exercises");
+            throw new IllegalArgumentException("There cannot be more than one graded participation per student for programming or quiz exercises");
         }
         var practiceParticipations = participations.stream().filter(Participation::isPracticeMode).collect(Collectors.toSet());
         if (practiceParticipations.size() > 1) {
-            throw new IllegalArgumentException("There cannot be more than one practice participation per student for programming exercises");
+            throw new IllegalArgumentException("There cannot be more than one practice participation per student for programming or quiz exercises");
         }
 
         return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).collect(Collectors.toSet());
     }
 
-    private StudentParticipation findStudentParticipationForNonProgrammingExercises(Set<StudentParticipation> participations) {
+    /**
+     * Validates and returns the student participations for exercises that allow only a single participation (non-programming and non-quiz).
+     *
+     * @param participations the set of participations in the exercise to validate
+     * @return the valid set of participations (empty or singleton set)
+     * @throws IllegalArgumentException if there are multiple participations
+     */
+    private StudentParticipation findStudentParticipationForSingleParticipationExercises(Set<StudentParticipation> participations) {
         if (participations.size() > 1) {
-            throw new IllegalArgumentException("There cannot be more than one participation per student for non-programming exercises");
+            throw new IllegalArgumentException("Only one participation per student is allowed for exercises other than programming or quiz.");
         }
         return participations.iterator().next();
     }
