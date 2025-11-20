@@ -154,7 +154,11 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
 
     constructor() {
-        // Watch for changes to formData.playlistUrl in edit mode
+        /**
+         * Watch for changes to formData.playlistUrl in edit mode.
+         * When editing an existing video unit, if a playlist URL becomes available,
+         * it enables the transcript generation checkbox.
+         */
         effect(() => {
             const formData = this.formData();
             if (this.isEditMode() && formData?.playlistUrl) {

@@ -363,7 +363,12 @@ export class LectureUpdateUnitsComponent implements OnInit {
                             transcriptionStatus: transcriptionStatus,
                         };
 
-                        // Check if playlist URL is available for existing video to enable transcription generation
+                        /**
+                         * Check if playlist URL is available for existing video to enable transcription generation.
+                         * If a playlist URL can be resolved from the video source, it will be added to formData,
+                         * which enables the transcript generation checkbox in the form.
+                         * This check is done asynchronously after initial form data is set to avoid blocking the UI.
+                         */
                         if (this.currentlyProcessedAttachmentVideoUnit.videoSource) {
                             this.attachmentVideoUnitService.getPlaylistUrl(this.currentlyProcessedAttachmentVideoUnit.videoSource).subscribe({
                                 next: (playlist) => {
