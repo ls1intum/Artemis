@@ -15,7 +15,7 @@ export interface ChannelFormData {
 
 export type ChannelType = 'PUBLIC' | 'PRIVATE';
 
-export const channelRegex = new RegExp('^[a-z0-9-]{1}[a-z0-9: \\-]{0,30}$');
+export const channelRegex = new RegExp('^[a-z0-9-]{1}[a-z0-9:\\-]{0,30}$');
 
 @Component({
     selector: 'jhi-channel-form',
