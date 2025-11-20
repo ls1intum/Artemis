@@ -1,0 +1,114 @@
+---
+id: assessment
+title: Assessment and Feedback
+sidebar_label: Assessment and Feedback
+sidebar_position: 3
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import complaintSubmissionImg from './assets/assessment/complaint-submission.png';
+import moreFeedbackImg from './assets/assessment/more-feedback.png';
+import studentFeedbackImg from './assets/assessment/student-feedback.png';
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+# Assessment and Feedback
+
+## Overview
+
+Artemis uses different modes of assessment depending on the exercise type:
+
+- **Automatic Assessment:** Your submissions are automatically graded (e.g., quiz exercises, programming exercises with test cases).
+- **Manual Assessment:** Reviewers (tutors or instructors) manually grade your submissions.
+- **Semi-Automatic Assessment:** Automatic grading provides a starting point, which reviewers then improve manually.
+
+After an exercise's due date passes, your submission will be assessed according to the configured assessment mode. Once the assessment is complete and the assessment due date has passed, you'll receive detailed feedback on your work.
+
+---
+
+## Receiving Feedback
+
+After the assessment due date, you can view your:
+
+- **Score:** Points achieved out of the total possible points
+- **Feedback:** Detailed comments on your submission, often organized by grading criteria
+- **Assessment:** Any inline annotations or corrections made by reviewers
+
+<Callout variant={CalloutVariant.info}>
+    <p>For programming exercises with automatic grading, you may receive immediate feedback during the working period if configured by your instructor.</p>
+</Callout>
+
+---
+
+## Double-Blind Assessment
+
+Manual assessments in Artemis are **double-blind**:
+
+- Reviewers don't see your name when grading your submission
+- You don't see the reviewer's identity
+
+This ensures objectivity and minimizes bias in the grading process.
+
+---
+
+## Complaints
+
+If you believe an assessment was incorrect or unfair, you can submit a **complaint** (if enabled by your instructor).
+
+### How Complaints Work
+
+1. **Complaint Tokens:** Your instructor sets a maximum number of complaints you can submit per course. Each complaint uses one token.
+2. **Token Return:** If your complaint is accepted, the token is returned to you, so you can submit more complaints.
+3. **Deadline:** Complaints must be submitted before the complaint due date set by your instructor.
+
+### Submitting a Complaint
+
+1. Open the assessed exercise
+2. Click the **"Complain"** button below the exercise instructions
+3. Write a clear justification explaining why the assessment should be reconsidered
+4. Submit your complaint
+
+<Image src={complaintSubmissionImg} alt={"Complaint Submission"} size={ImageSize.medium}></Image>
+
+A reviewer will evaluate your complaint and either:
+- **Accept it:** Your score may be adjusted (up or down) with additional feedback
+- **Reject it:** The reviewer will explain why the original assessment stands
+
+<Callout variant={CalloutVariant.warning}>
+    <p>Once you submit a complaint, you cannot submit a "More Feedback Request" for the same exercise.</p>
+</Callout>
+
+---
+
+## More Feedback Requests
+
+If you want additional clarification or feedback but don't want to dispute your score, you can submit a **More Feedback Request**.
+
+### Key Differences from Complaints
+
+- **No Token Required:** More feedback requests don't use complaint tokens
+- **Score Cannot Change:** Reviewers cannot modify your score when responding to a feedback request
+- **Cannot Complain After:** Submitting a more feedback request removes your ability to complain about that exercise
+
+<Image src={moreFeedbackImg} alt={"More Feedback Request"} size={ImageSize.medium}></Image>
+
+<Callout variant={CalloutVariant.danger}>
+    <p><strong>Important:</strong> Sending a More Feedback Request removes the option to complain entirely, even if the reviewer made a mistake during the initial assessment. Choose carefully!</p>
+</Callout>
+
+---
+
+## Rating Feedback Quality
+
+After receiving feedback (including responses to complaints or more feedback requests), you can rate the quality of the feedback you received.
+
+<Image src={studentFeedbackImg} alt={"Student Feedback Rating"} size={ImageSize.medium}></Image>
+
+Your ratings help:
+- Motivate reviewers to provide high-quality, helpful feedback
+- Instructors monitor and improve the assessment process
+- Other students benefit from better feedback in the future
+
+<Callout variant={CalloutVariant.info}>
+    <p>Be fair and constructive when rating feedback. Consider whether the feedback helps you understand your mistakes and improve.</p>
+</Callout>

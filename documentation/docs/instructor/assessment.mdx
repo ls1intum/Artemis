@@ -1,0 +1,218 @@
+---
+id: assessment
+title: Assessment and Grading
+sidebar_label: Assessment and Grading
+sidebar_position: 2
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import assessmentDashboardImg from './assets/assessment/assessment-dashboard.png';
+import assessmentDashboardButtonImg from './assets/assessment/assessment-dashboard-button.png';
+import exerciseDashboardImg from './assets/assessment/exercise-dashboard.png';
+import gradingCriteriaImg from './assets/assessment/grading-criteria.png';
+import instructorExampleSubmissionImg from './assets/assessment/instructor-example-submission.png';
+import instructorExampleAssessmentImg from './assets/assessment/instructor-example-assessment.png';
+import reviewerExerciseStatusImg from './assets/assessment/reviewer-exercise-status.png';
+import reviewerAssessmentInstructionsImg from './assets/assessment/reviewer-assessment-instructions.png';
+import reviewerReadConfirmImg from './assets/assessment/reviewer-read-confirm.png';
+import reviewerAssessCorrectlyImg from './assets/assessment/reviewer-assess-correctly.png';
+import acceptComplaintImg from './assets/assessment/accept-complaint.png';
+import rejectComplaintImg from './assets/assessment/reject-complaint.png';
+import lockImg from './assets/assessment/lock.png';
+import leaderboardImg from './assets/assessment/leaderboard.png';
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+# Assessment and Grading
+
+## Overview
+
+Artemis offers three different modes of exercise assessment:
+
+- **Manual:** Reviewers must manually grade student submissions.
+- **Automatic:** Artemis automatically grades student submissions (e.g., via test cases for programming exercises or answer checking for quizzes).
+- **Semi-Automatic:** Artemis provides an automatic starting point that reviewers can manually improve afterward.
+
+<Callout variant={CalloutVariant.info}>
+    <p>Manual assessment is available for programming, text, modeling, and file upload exercises. Quiz exercises use automatic assessment only.</p>
+</Callout>
+
+---
+
+## Manual Assessment Process
+
+Manual assessment involves the following workflow:
+
+1. **Submission:** Students submit their assignments through Artemis.
+2. **Review:** Reviewers access submitted work and place a **lock** on the submission to prevent conflicts with other reviewers.
+3. **Evaluation:** Reviewers assign scores and provide feedback based on established grading criteria.
+4. **Submission:** Reviewers submit their assessment (or cancel to unlock for others).
+5. **Student Feedback:** Students can rate feedback quality, motivating high-quality assessments.
+
+---
+
+## Assessment Dashboard
+
+The assessment dashboard provides an overview of assessment progress across all exercises in a course.
+
+<table>
+<tr>
+<td><Image src={assessmentDashboardButtonImg} alt={"Assessment Dashboard Button"} size={ImageSize.small} hideBorder={true}></Image></td>
+<td><Image src={assessmentDashboardImg} alt={"Assessment Dashboard"} size={ImageSize.medium} hideBorder={true}></Image></td>
+</tr>
+</table>
+
+The dashboard displays:
+
+- Exercise state (e.g., released, due date passed)
+- Total number of submissions
+- Number of assessed submissions
+- Number of complaints and feedback requests
+- Average student rating for each exercise
+
+Each exercise has its own **Exercise Dashboard** accessible from this view, showing detailed information for that specific exercise.
+
+<Image src={exerciseDashboardImg} alt={"Exercise Dashboard"} size={ImageSize.large}></Image>
+
+<Callout variant={CalloutVariant.info}>
+    <p>Locks on submissions automatically expire after 24 hours, but reviewers can also unlock manually if needed.</p>
+</Callout>
+
+---
+
+## Structured Grading Criteria
+
+Artemis supports **structured grading instructions** (similar to grading rubrics) to ensure consistency, fairness, and transparency.
+
+<Image src={gradingCriteriaImg} alt={"Grading Criteria in Assessment Interface"} size={ImageSize.large}></Image>
+
+### Benefits
+
+- **Consistency:** All reviewers follow the same criteria
+- **Speed:** Drag-and-drop feedback blocks with predefined points
+- **Transparency:** Students understand how their work is evaluated
+- **Fairness:** Objective standards reduce bias
+
+Grading criteria include predefined feedback text and point values that can be quickly applied to submissions.
+
+---
+
+## Integrated Training Process
+
+To ensure consistent and high-quality assessments, Artemis provides an **integrated training process** for reviewers using example submissions and assessments.
+
+### Training Workflow
+
+| Step | Description | Screenshot |
+|------|-------------|------------|
+| **1. Create Example Submission** | The instructor creates an example submission and selects an assessment mode:<br/>- **Read and Confirm:** Reviewers read and acknowledge understanding<br/>- **Assess Correctly:** Reviewers must assess the example correctly to proceed | <Image src={instructorExampleSubmissionImg} alt={"Example Submission Creation"} size={ImageSize.medium} hideBorder={true}></Image> |
+| **2. Add Example Assessment** | The instructor adds an example assessment showing the correct grading. Actual student submissions can be imported as examples to increase realism and reduce effort. | <Image src={instructorExampleAssessmentImg} alt={"Example Assessment"} size={ImageSize.medium} hideBorder={true}></Image> |
+| **3. Reviewer Views Status** | Reviewers see their training progress and exercise status throughout the process. | <Image src={reviewerExerciseStatusImg} alt={"Exercise Status for Reviewer"} size={ImageSize.small} hideBorder={true}></Image> |
+| **4. Review Instructions** | Reviewers read the grading instructions (problem statement, grading criteria, example solution) and confirm understanding. | <Image src={reviewerAssessmentInstructionsImg} alt={"Assessment Instructions"} size={ImageSize.medium} hideBorder={true}></Image> |
+| **5a. Read and Confirm Mode** | If the assessment mode is "Read and Confirm," reviewers read example submissions and assessments, then confirm they understand. | <Image src={reviewerReadConfirmImg} alt={"Read and Confirm Example"} size={ImageSize.medium} hideBorder={true}></Image> |
+| **5b. Assess Correctly Mode** | If the assessment mode is "Assess Correctly," Artemis compares the reviewer's assessment with the instructor's example. If they don't match, feedback explains the differences. | <Image src={reviewerAssessCorrectlyImg} alt={"Assess Correctly Feedback"} size={ImageSize.medium} hideBorder={true}></Image> |
+
+<Callout variant={CalloutVariant.tip}>
+    <p>Using actual student submissions as training examples makes the training more realistic and reduces instructor workload.</p>
+</Callout>
+
+---
+
+## Double-Blind Grading
+
+Manual assessment in Artemis is **double-blind**:
+
+- Reviewers don't see student names during assessment
+- Students don't see reviewer identities
+
+This minimizes bias and increases assessment objectivity.
+
+---
+
+## Handling Complaints
+
+After receiving a grade, students can submit **complaints** if they believe the assessment needs revision (if you've enabled this feature).
+
+### Complaint Token System
+
+- Instructors set a maximum number of complaints per student per course
+- Each complaint uses one "token"
+- If accepted, the token is returned to the student
+- Students can submit unlimited complaints as long as they're accepted
+
+### Complaint Review Process
+
+1. Student submits a complaint with justification
+2. Reviewer accesses the complaint from the Exercise Dashboard
+3. Reviewer evaluates and decides:
+
+| Decision | Action | Screenshot |
+|----------|--------|------------|
+| **Accept** | Add or modify feedback blocks (positive or negative points) and click "Accept complaint" | <Image src={acceptComplaintImg} alt={"Accept Complaint"} size={ImageSize.small} hideBorder={true}></Image> |
+| **Reject** | Explain why the complaint is rejected and click "Reject complaint" | <Image src={rejectComplaintImg} alt={"Reject Complaint"} size={ImageSize.small} hideBorder={true}></Image> |
+| **Unsure** | Remove the lock so another reviewer can evaluate | <Image src={lockImg} alt={"Unlock Complaint"} size={ImageSize.small} hideBorder={true}></Image> |
+
+<Callout variant={CalloutVariant.warning}>
+    <p>Complaints can result in score increases or decreases based on the reassessment. Be thorough and fair.</p>
+</Callout>
+
+---
+
+## More Feedback Requests
+
+Students can also submit **More Feedback Requests** to ask for clarification without disputing their score.
+
+<Callout variant={CalloutVariant.info}>
+    <p>More feedback requests don't cost tokens, but reviewers <strong>cannot change the score</strong> when responding.</p>
+</Callout>
+
+The review process is identical to handling complaints, except:
+- No token is consumed
+- The score cannot be modified
+- Students lose the ability to complain after requesting more feedback
+
+---
+
+## Grading Leaderboard
+
+The **Grading Leaderboard** helps instructors monitor reviewer performance and motivate high-quality assessments.
+
+<Image src={leaderboardImg} alt={"Grading Leaderboard"} size={ImageSize.large}></Image>
+
+### Displayed Metrics
+
+- Number of assessments completed by each reviewer
+- Number of feedback requests received
+- Number of accepted complaints
+- Average score given by the reviewer
+- Average rating received from students
+
+<Callout variant={CalloutVariant.tip}>
+    <p>Artemis automatically detects "Issues with reviewer performance" when reviewers significantly deviate from the average, helping you identify potential problems early.</p>
+</Callout>
+
+The leaderboard is visible to all reviewers, creating transparency and encouraging consistent, fair grading.
+
+---
+
+## Automatic Assessment
+
+Automatic assessment is available for:
+
+- **Quiz Exercises:** Artemis automatically grades submissions after the due date (only mode available for quizzes). See the [Quiz Exercises](../student/quiz-training) section for details.
+- **Programming Exercises:** Instructor-written test cases run against student submissions, either during or after the due date. See the [Programming Exercises](./programming) guide for more information.
+
+<Callout variant={CalloutVariant.info}>
+    <p>You can enable complaints for automatically graded programming exercises, allowing students to dispute test results.</p>
+</Callout>
+
+---
+
+## Exercise-Specific Assessment
+
+For detailed information on assessment for specific exercise types, see:
+
+- **Programming Exercises:** [Programming Guide](./programming)
+- **Text Exercises:** See the old documentation at `/docs/user/exercises/textual.rst` (migration pending)
+- **Modeling Exercises:** See the old documentation at `/docs/user/exercises/modeling.rst` (migration pending)
+- **File Upload Exercises:** See the old documentation at `/docs/user/exercises/file-upload.rst` (migration pending)
