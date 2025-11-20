@@ -10,7 +10,7 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Authority, IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import dayjs from 'dayjs/esm';
@@ -235,6 +235,10 @@ export class AccountService implements IAccountService {
 
     isAdmin(): boolean {
         return this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
+    }
+
+    isAtLeastTutor(): boolean {
+        return this.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
     }
 
     isAuthenticated(): boolean {
