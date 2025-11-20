@@ -1,10 +1,14 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { firstValueFrom } from 'rxjs';
+import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
     faDownload,
     faExclamationTriangle,
@@ -29,13 +33,14 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, FaIconComponent],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, FaIconComponent, VideoPlayerComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
@@ -45,18 +50,22 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly TranscriptionStatus = TranscriptionStatus;
 
+    private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
     private readonly accountService = inject(AccountService);
 
+    readonly transcriptSegments = signal<TranscriptSegment[]>([]);
+    readonly playlistUrl = signal<string | undefined>(undefined);
+    readonly isLoading = signal<boolean>(false);
+    readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
     transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
     isLoadingTranscriptionStatus = signal(false);
 
-    private readonly videoUrlAllowList = [
-        // TUM-Live. Example: 'https://live.rbg.tum.de/w/test/26?video_only=1'
-        RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'),
-    ];
+    // TODO: This must use a server configuration to make it compatible with deployments other than TUM
+    private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
 
     ngOnInit() {
         // Load transcription status if user is instructor or admin and video source exists
@@ -88,6 +97,99 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     });
 
     /**
+     * Return the URL of the video source
+     */
+    readonly videoUrl = computed(() => this.computeVideoUrl());
+
+    /**
+     * Computes the video URL based on the video source.
+     * Returns undefined if the source is invalid or doesn't match the allow list.
+     */
+    private computeVideoUrl(): string | undefined {
+        const source = this.lectureUnit().videoSource;
+        if (!source) {
+            return undefined;
+        }
+        // Check if it matches the allow list (e.g., TUM Live URLs)
+        if (this.videoUrlAllowList.some((r) => r.test(source))) {
+            return source;
+        }
+        // Check if urlParser can parse it (e.g., YouTube, Vimeo, etc.)
+        if (urlParser) {
+            const parsed = urlParser.parse(source);
+            if (parsed) {
+                return source;
+            }
+        }
+        return undefined;
+    }
+
+    override toggleCollapse(isCollapsed: boolean): void {
+        super.toggleCollapse(isCollapsed);
+
+        if (!isCollapsed) {
+            this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
+
+            // reset stale state
+            this.transcriptSegments.set([]);
+            this.playlistUrl.set(undefined);
+            this.isLoading.set(true);
+
+            const src = this.lectureUnit().videoSource;
+
+            if (!src) {
+                this.isLoading.set(false);
+                return;
+            }
+
+            // Try to resolve a .m3u8 playlist URL through the backend API
+            this.attachmentVideoUnitService
+                .getPlaylistUrl(src)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: (resolvedUrl) => {
+                        if (resolvedUrl) {
+                            this.playlistUrl.set(resolvedUrl);
+                            this.fetchTranscript();
+                        }
+                        this.isLoading.set(false);
+                    },
+                    error: () => {
+                        // Failed to resolve playlist URL, will fall back to iframe
+                        this.playlistUrl.set(undefined);
+                        this.isLoading.set(false);
+                    },
+                });
+        }
+    }
+
+    private fetchTranscript(): void {
+        const id = this.lectureUnit().id!;
+
+        this.lectureTranscriptionService
+            .getTranscription(id)
+            .pipe(
+                map((dto) => {
+                    if (!dto || !dto.segments) {
+                        return [];
+                    }
+                    // Filter and map to ensure all required fields are present
+                    return dto.segments.filter((seg): seg is TranscriptSegment => seg.startTime != null && seg.endTime != null && seg.text != null) as TranscriptSegment[];
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe({
+                next: (segments) => {
+                    this.transcriptSegments.set(segments);
+                },
+                error: () => {
+                    // Failed to fetch transcript, video player will work without it
+                    this.transcriptSegments.set([]);
+                },
+            });
+    }
+
+    /**
      * Returns the name of the attachment file (including its file extension)
      */
     getFileName(): string {
@@ -98,19 +200,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
         return '';
     }
-
-    /**
-     * Return the URL of the video source
-     */
-    readonly videoUrl = computed(() => {
-        if (this.lectureUnit().videoSource) {
-            const source = this.lectureUnit().videoSource!;
-            if (this.videoUrlAllowList.some((r) => r.test(source)) || !urlParser || urlParser.parse(source)) {
-                return source;
-            }
-        }
-        return undefined;
-    });
 
     /**
      * Downloads the file as the student version if available, otherwise the instructor version

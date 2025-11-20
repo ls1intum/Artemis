@@ -60,10 +60,20 @@
     }
 
     @if (!!videoUrl()) {
-        <div class="video-player-container">
-            <div class="ratio ratio-16x9">
-                <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+        @if (isLoading()) {
+            <div class="d-flex justify-content-center p-3">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.loading">Loading...</span>
+                </div>
             </div>
-        </div>
+        } @else if (playlistUrl() && hasTranscript()) {
+            <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
+        } @else {
+            <div class="video-player-container">
+                <div class="ratio ratio-16x9">
+                    <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+                </div>
+            </div>
+        }
     }
 </jhi-lecture-unit-card>

@@ -181,6 +181,16 @@
                 "statusFailed": "Die Transkriptionsgenerierung für dieses Video ist fehlgeschlagen. Du kannst es erneut versuchen.",
                 "editStatusProcessing": "Für dieses Video wird derzeit eine Transkription generiert.",
                 "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen."
+            },
+            "videoPlayer": {
+                "transcript": "Transkript",
+                "searchPlaceholder": "Transkript durchsuchen...",
+                "clearSearch": "Suche löschen",
+                "previousResult": "Vorheriges Ergebnis",
+                "nextResult": "Nächstes Ergebnis",
+                "noResults": "Keine Ergebnisse",
+                "noMatchingTranscript": "Kein passendes Transkript gefunden",
+                "loading": "Lädt..."
             }
         },
         "exerciseUnit": {

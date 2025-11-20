@@ -79,6 +79,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaConstructor;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -91,6 +92,8 @@ import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.cit.aet.artemis.core.config.PublicResourcesConfiguration;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
@@ -526,4 +529,28 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
+    @Test
+    void ensureOnlyLectureClassIsUpdatingUnitOrder() {
+        ArchRule rule = methods().that().haveName("setLectureUnitOrder").and().areDeclaredIn(LectureUnit.class).should(onlyBeCalledBy(Lecture.class))
+                .because("Only Lecture class should manage the order of lecture units");
+
+        rule.check(allClasses);
+    }
+
+    private ArchCondition<JavaMethod> onlyBeCalledBy(Class<?> allowedCaller) {
+        return new ArchCondition<>("only be called by " + allowedCaller.getSimpleName()) {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                Set<JavaMethodCall> calls = method.getCallsOfSelf();
+                for (JavaMethodCall call : calls) {
+                    JavaClass caller = call.getOriginOwner();
+                    if (!caller.isAssignableTo(allowedCaller)) {
+                        events.add(violated(call,
+                                String.format("%s calls %s, but only %s should call this method", caller.getName(), method.getFullName(), allowedCaller.getSimpleName())));
+                    }
+                }
+            }
+        };
+    }
 }

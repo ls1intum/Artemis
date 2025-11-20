@@ -8,8 +8,6 @@ import java.util.Optional;
 
 import jakarta.validation.Valid;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -38,10 +36,6 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 @RequestMapping("api/lecture/")
 public class LectureTranscriptionResource {
 
-    private static final String ENTITY_NAME = "lecture transcription";
-
-    private static final Logger log = LoggerFactory.getLogger(LectureTranscriptionResource.class);
-
     private final LectureTranscriptionRepository lectureTranscriptionRepository;
 
     private final LectureUnitRepository lectureUnitRepository;
@@ -58,6 +52,7 @@ public class LectureTranscriptionResource {
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
     }
 
+    // TODO: this must either be moved into an Admin Resource or used differently
     /**
      * POST /transcription : Create a new transcription.
      *
