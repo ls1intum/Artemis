@@ -344,6 +344,12 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         return this.showInlineFeedback && result?.feedbacks ? result.feedbacks : [];
     }
 
+    /**
+     * Scrolls the Monaco editor to the specified line immediately.
+     *
+     * @param {number} lineNumber
+     *        The line to reveal in the editor.
+     */
     jumpToLine(lineNumber: number) {
         this.monacoEditor.editor().revealLine(lineNumber, editor.ScrollType.Immediate);
     }

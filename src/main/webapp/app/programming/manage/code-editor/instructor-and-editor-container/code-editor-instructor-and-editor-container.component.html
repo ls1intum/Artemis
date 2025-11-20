@@ -166,10 +166,10 @@
                                         <!-- Right side: two arrow buttons -->
                                         <div class="d-flex align-items-center" style="gap: 0.25rem">
                                             <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" (click)="onIssueNavigate(issue, -1, $event)">
-                                                <fa-icon [icon]="faArrowLeft" class="opacity-75" />
+                                                <fa-icon [icon]="faArrowLeft" class="text-primary" />
                                             </button>
 
-                                            <span class="text-muted small">
+                                            <span class="text-primary small">
                                                 @if (selectedIssue === issue) {
                                                     {{ locationIndex + 1 }}/{{ issue.relatedLocations.length }}
                                                 } @else {
@@ -178,7 +178,7 @@
                                             </span>
 
                                             <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" (click)="onIssueNavigate(issue, 1, $event)">
-                                                <fa-icon [icon]="faArrowRight" class="opacity-75" />
+                                                <fa-icon [icon]="faArrowRight" class="text-primary" />
                                             </button>
                                         </div>
                                     </div>

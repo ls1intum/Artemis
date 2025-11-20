@@ -245,10 +245,28 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
-    getIssueLabel(issue: ConsistencyIssue) {
+    /**
+     * Produces a human-readable label for the issue based on its category.
+     *
+     * @param {ConsistencyIssue} issue
+     *        The issue whose category is converted to a readable label.
+     *
+     * @returns {string}
+     *          The humanized category name.
+     */
+    getIssueLabel(issue: ConsistencyIssue): string {
         return humanizeCategory(issue.category);
     }
 
+    /**
+     * Returns the appropriate FontAwesome icon for the given issue severity.
+     *
+     * @param {ConsistencyIssue} issue
+     *        The issue whose severity determines the returned icon.
+     *
+     * @returns
+     *          A FontAwesome icon representing high, medium, or low severity.
+     */
     getSeverityIcon(issue: ConsistencyIssue) {
         switch (issue.severity) {
             case 'HIGH':
@@ -262,6 +280,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    /**
+     * Returns a Bootstrap text color class based on the issue's severity.
+     *
+     * @param {ConsistencyIssue} issue
+     *        The issue whose severity determines the color.
+     *
+     * @returns
+     *          A text color class (`text-danger`, `text-warning`, `text-info`, or `text-secondary`).
+     */
     getSeverityColor(issue: ConsistencyIssue) {
         switch (issue.severity) {
             case 'HIGH':
@@ -275,13 +302,27 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
-    async onIssueNavigate(issue: ConsistencyIssue, deltaIndex: number, event: Event) {
+    /**
+     * Navigates between issue locations in the dropdown and updates the editor accordingly.
+     *
+     * If navigating within the same issue, the location index is advanced (with wrap-around).
+     * If switching to a new issue, the first or last location is selected based on `deltaIndex`.
+     *
+     * The method prepares the jump target (file + line), switches repositories if needed,
+     * and triggers file loading. If the file is already open, the jump executes immediately;
+     * otherwise it runs after the editor’s file-load event.
+     *
+     * @param {ConsistencyIssue} issue   The issue being navigated.
+     * @param {1 | -1} deltaIndex        Direction of navigation (forward or backward).
+     * @param {Event} event              The originating UI event.
+     */
+    async onIssueNavigate(issue: ConsistencyIssue, deltaIndex: 1 | -1, event: Event) {
         if (issue === this.selectedIssue) {
             // Stay in bounds of the array
             this.locationIndex = (this.locationIndex + this.selectedIssue.relatedLocations.length + deltaIndex) % this.selectedIssue.relatedLocations.length;
         } else {
             this.selectedIssue = issue;
-            this.locationIndex = 0;
+            this.locationIndex = deltaIndex === 1 ? 0 : issue.relatedLocations.length - 1;
         }
 
         // Set parameters for when fileLoad is called
@@ -305,7 +346,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         // We need to wait for the editor to be fully loaded,
         // else the file content does not show
         setTimeout(() => {
-            // This will load the fill and signal to fileLoad when finished loading
+            // File already loaded, file load event will not fire
+            if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
+                this.fileLoad(this.fileToJumpOn!);
+                return;
+            }
+
+            // Will load file and signal to fileLoad when finished loading
             this.codeEditorContainer.selectedFile = this.fileToJumpOn;
         }, 0);
     }

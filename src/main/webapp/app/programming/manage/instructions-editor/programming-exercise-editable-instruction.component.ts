@@ -298,6 +298,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.markdownEditorMonaco?.monacoEditor?.setAnnotations(lineWarnings as Annotation[]);
     };
 
+    /**
+     * Scrolls the Monaco editor to the specified line immediately.
+     *
+     * @param {number} lineNumber
+     *        The line to reveal in the editor.
+     */
     jumpToLine(lineNumber: number) {
         this.markdownEditorMonaco?.monacoEditor.revealLine(lineNumber, editor.ScrollType.Immediate);
     }
