@@ -140,7 +140,6 @@ public class UserResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setSelectedLLMUsageToTimestampAndEnum(@RequestBody SelectedLLMUsageDTO selectedLLMUsageDTO) {
         User user = userRepository.getUser();
-
         ZonedDateTime hasSelectedTimestamp = ZonedDateTime.now();
         AiSelectionDecision selectedLLMUsage = selectedLLMUsageDTO.selection();
         userRepository.updateSelectedLLMUsageToDate(user.getId(), hasSelectedTimestamp);
