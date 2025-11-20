@@ -36,7 +36,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { getRepoPath, humanizeCategory } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
-import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -71,92 +70,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
 
-    //TODO: Remove
-    mockIssues: ConsistencyIssue[] = [
-        {
-            severity: ConsistencyIssue.SeverityEnum.Low,
-            category: ConsistencyIssue.CategoryEnum.MethodReturnTypeMismatch,
-            description: 'Description 1.',
-            suggestedFix: 'Fix 1',
-            relatedLocations: [
-                {
-                    type: ArtifactLocation.TypeEnum.TemplateRepository,
-                    filePath: 'template_repository/src/TESTI/BubbleSort.java',
-                    startLine: 1,
-                    endLine: 10,
-                },
-                {
-                    type: ArtifactLocation.TypeEnum.SolutionRepository,
-                    filePath: 'solution_repository/src/TESTI/BubbleSort.java',
-                    startLine: 1,
-                    endLine: 10,
-                },
-            ],
-        },
-        {
-            severity: ConsistencyIssue.SeverityEnum.Medium,
-            category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
-            description: 'Description 2',
-            suggestedFix: 'Fix 2',
-            relatedLocations: [
-                {
-                    type: ArtifactLocation.TypeEnum.SolutionRepository,
-                    filePath: 'solution_repository/src/TESTI/BubbleSort.java',
-                    startLine: 1,
-                    endLine: 15,
-                },
-                {
-                    type: ArtifactLocation.TypeEnum.TemplateRepository,
-                    filePath: 'template_repository/src/TESTI/BubbleSort.java',
-                    startLine: 1,
-                    endLine: 15,
-                },
-                {
-                    type: ArtifactLocation.TypeEnum.TestsRepository,
-                    filePath: 'tests_repository/test/TESTI/MethodTest.java',
-                    startLine: 1,
-                    endLine: 15,
-                },
-            ],
-        },
-        {
-            severity: ConsistencyIssue.SeverityEnum.Low,
-            category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
-            description: 'Description 2',
-            suggestedFix: 'Fix 2',
-            relatedLocations: [
-                {
-                    type: ArtifactLocation.TypeEnum.ProblemStatement,
-                    filePath: 'problem_statement.md',
-                    startLine: 1,
-                    endLine: 17,
-                },
-                {
-                    type: ArtifactLocation.TypeEnum.TestsRepository,
-                    filePath: 'tests_repository/test/TESTI/MethodTest.java',
-                    startLine: 1,
-                    endLine: 17,
-                },
-            ],
-        },
-        {
-            severity: ConsistencyIssue.SeverityEnum.High,
-            category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
-            description: 'Description 2',
-            suggestedFix: 'Fix 2',
-            relatedLocations: [
-                {
-                    type: ArtifactLocation.TypeEnum.TestsRepository,
-                    filePath: 'tests_repository/test/TESTI/MethodTest.java',
-                    startLine: 1,
-                    endLine: 18,
-                },
-            ],
-        },
-    ];
-
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly consistencyIssues = signal<ConsistencyIssue[]>(this.mockIssues);
+    readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
     readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
 
     private consistencyCheckService = inject(ConsistencyCheckService);
@@ -165,6 +80,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private lineJumpOnFileLoad: number | undefined = undefined;
     private fileToJumpOn: string | undefined = undefined;
+    selectedIssue: ConsistencyIssue | undefined = undefined;
+    locationIndex: number = 0;
 
     // Icons
     faPlus = faPlus;
@@ -178,8 +95,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faCircleInfo = faCircleInfo;
     irisSettings?: IrisSettings;
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
-    selectedIssue: ConsistencyIssue | undefined = undefined;
-    locationIndex: number = 0;
 
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -357,6 +272,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }, 0);
     }
 
+    /**
+     * Performs a deferred jump to a specific line after a file has finished loading.
+     *
+     * @param {string} fileName
+     *        The name of the file that was just loaded.
+     */
     fileLoad(fileName: string) {
         if (this.lineJumpOnFileLoad && this.fileToJumpOn === fileName) {
             this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);

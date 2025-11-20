@@ -102,7 +102,21 @@ export function issuesForSelectedFile(
     return inlineIssues;
 }
 
-export function getRepoPath(loc: ArtifactLocation) {
+/**
+ * Normalizes a repository-relative file path from an artifact location.
+ *
+ * If the location refers to the problem statement, the fixed filename
+ * `problem_statement.md` is returned. Otherwise, known repository prefixes
+ * (`template_repository`, `solution_repository`, `tests_repository`)
+ * are removed, returning only the internal path.
+ *
+ * @param {ArtifactLocation} loc
+ *        The artifact location containing the raw repository file path.
+ *
+ * @returns {string}
+ *          The normalized file path inside the repository.
+ */
+export function getRepoPath(loc: ArtifactLocation): string {
     // Problem statement filePath is either problem_statement.md or empty
     const isProblemStatement = loc.filePath === 'problem_statement.md' || loc.filePath === '';
     // Remove the first part of e.g. template_repository/src/TEST/BubbleSort.java
